@@ -68,8 +68,8 @@ import { buildArtifactPermalink } from '@/utils/artifactLinks';
 import { exportToPDF } from '@/utils/pdfExport';
 
 import { type Comment, CommentsSection } from '../MyWork/shared';
-import { EmbeddedView } from '../shared/NModeBlocks';
 import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
+import { EmbeddedView } from '../shared/NModeBlocks';
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 import { ToolCanvas } from './ToolCanvas';
 import { computeToolCompletionItems, computeToolReviewGaps } from './toolCompletion';
@@ -1296,7 +1296,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                     setComments(updated || []);
                     toast.success(isPolish ? 'Komentarz dodany' : 'Comment added');
                   } catch {
-                    toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+                    toast.error(
+                      isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment'
+                    );
                   }
                 }}
                 onDeleteComment={async (commentId) => {
@@ -1306,7 +1308,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                     setComments(updated || []);
                     toast.success(isPolish ? 'Komentarz usunięty' : 'Comment deleted');
                   } catch {
-                    toast.error(isPolish ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
+                    toast.error(
+                      isPolish ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment'
+                    );
                   }
                 }}
                 onLikeComment={async (commentId) => {
@@ -1858,9 +1862,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       >
         <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
-            <div className="text-xs uppercase tracking-wide text-slate-500">
-              Consultify • Tools
-            </div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">Consultify • Tools</div>
             <h1 className="text-2xl font-bold mt-1">Tool Report</h1>
             <div className="text-sm text-slate-700 mt-1">
               {toolMeta.name} • {sessionName || toolSessionId || '—'}

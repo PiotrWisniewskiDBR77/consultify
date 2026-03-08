@@ -32,8 +32,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 interface Model {
   id: string;

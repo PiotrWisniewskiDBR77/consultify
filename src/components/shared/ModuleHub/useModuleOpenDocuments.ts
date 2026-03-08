@@ -83,7 +83,10 @@ export const useModuleOpenDocuments = (
     if (!maxOpen) return;
     if (openDocuments.length <= maxOpen) return;
     setOpenDocuments((prev) => prev.slice(0, maxOpen));
-    if (activeDocumentId && !openDocuments.slice(0, maxOpen).some((d) => d.id === activeDocumentId)) {
+    if (
+      activeDocumentId &&
+      !openDocuments.slice(0, maxOpen).some((d) => d.id === activeDocumentId)
+    ) {
       setActiveDocumentId(openDocuments[0]?.id ?? null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

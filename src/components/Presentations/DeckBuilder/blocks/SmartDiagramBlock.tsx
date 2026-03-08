@@ -26,16 +26,18 @@ export const SmartDiagramBlock: React.FC<Props> = ({ block, theme }) => {
       return <PyramidDiagram items={items} theme={theme} />;
     case 'timeline_horizontal':
     case 'timeline_vertical':
-      return <TimelineDiagram items={items} theme={theme} vertical={diagramKind.includes('vertical')} />;
+      return (
+        <TimelineDiagram items={items} theme={theme} vertical={diagramKind.includes('vertical')} />
+      );
     default:
       return <ProcessSteps items={items} theme={theme} />;
   }
 };
 
-const ProcessSteps: React.FC<{ items: { label: string; description?: string }[]; theme: CuratedColorSet }> = ({
-  items,
-  theme,
-}) => (
+const ProcessSteps: React.FC<{
+  items: { label: string; description?: string }[];
+  theme: CuratedColorSet;
+}> = ({ items, theme }) => (
   <div className="flex items-center gap-1">
     {items.map((item, i) => (
       <React.Fragment key={i}>
@@ -53,9 +55,7 @@ const ProcessSteps: React.FC<{ items: { label: string; description?: string }[];
             {item.label}
           </p>
         </div>
-        {i < items.length - 1 && (
-          <div className="text-slate-300 text-lg flex-shrink-0">&rarr;</div>
-        )}
+        {i < items.length - 1 && <div className="text-slate-300 text-lg flex-shrink-0">&rarr;</div>}
       </React.Fragment>
     ))}
   </div>
@@ -84,14 +84,15 @@ const FunnelDiagram: React.FC<{ items: { label: string }[]; theme: CuratedColorS
   </div>
 );
 
-const MatrixDiagram: React.FC<{ items: { label: string; description?: string }[]; theme: CuratedColorSet; kind: string }> = ({
-  items,
-  theme,
-  kind,
-}) => {
-  const labels = kind === 'swot'
-    ? ['Strengths', 'Weaknesses', 'Opportunities', 'Threats']
-    : items.map((i) => i.label);
+const MatrixDiagram: React.FC<{
+  items: { label: string; description?: string }[];
+  theme: CuratedColorSet;
+  kind: string;
+}> = ({ items, theme, kind }) => {
+  const labels =
+    kind === 'swot'
+      ? ['Strengths', 'Weaknesses', 'Opportunities', 'Threats']
+      : items.map((i) => i.label);
   const quadrants = labels.slice(0, 4);
 
   return (
@@ -146,7 +147,10 @@ const TimelineDiagram: React.FC<{
 }> = ({ items, theme, vertical }) => {
   if (vertical) {
     return (
-      <div className="flex flex-col gap-2 pl-4 border-l-2" style={{ borderColor: theme.colors.primary + '30' }}>
+      <div
+        className="flex flex-col gap-2 pl-4 border-l-2"
+        style={{ borderColor: theme.colors.primary + '30' }}
+      >
         {items.map((item, i) => (
           <div key={i} className="relative">
             <div

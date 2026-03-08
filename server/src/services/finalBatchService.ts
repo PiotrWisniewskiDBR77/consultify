@@ -220,6 +220,16 @@ class FinalBatchService {
     proposedChanges: object; previewDiff?: string; rbacRequiredRole?: string;
     idempotencyKey?: string; proposedBy: string;
   }) {
+    if (data.idempotencyKey) {
+      const existing = await queryHelpers.queryFirst<{ id: string }>(
+        `SELECT id FROM ai_typed_actions WHERE organization_id=$1 AND idempotency_key=$2 LIMIT 1`,
+        [orgId, data.idempotencyKey],
+      );
+      if (existing?.id) {
+        return { id: existing.id, reused: true };
+      }
+    }
+
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO ai_typed_actions (id, organization_id, action_type, target_entity_type, target_entity_id, proposed_changes, preview_diff, rbac_required_role, idempotency_key, proposed_by)
@@ -228,7 +238,7 @@ class FinalBatchService {
        JSON.stringify(data.proposedChanges), data.previewDiff ?? null,
        data.rbacRequiredRole ?? null, data.idempotencyKey ?? null, data.proposedBy],
     );
-    return { id };
+    return { id, reused: false };
   }
 
   async getProposedActions(orgId: string, status?: string) {
@@ -238,33 +248,49 @@ class FinalBatchService {
     return queryHelpers.queryAll(sql, status ? [orgId, status] : [orgId]);
   }
 
-  async acceptAction(actionId: string, acceptedBy: string) {
-    await queryHelpers.queryRun(
-      `UPDATE ai_typed_actions SET status='accepted', accepted_by=$1 WHERE id=$2 AND status='proposed'`,
-      [acceptedBy, actionId],
+  async acceptAction(orgId: string, actionId: string, acceptedBy: string, actorRole?: string) {
+    const action = await this.getAction(orgId, actionId);
+    if (!action) return { ok: false, reason: 'not_found' };
+    if ((action as any).status !== 'proposed') return { ok: false, reason: 'invalid_state' };
+
+    const requiredRole = (action as any).rbac_required_role as string | undefined;
+    if (!this.hasRequiredRole(actorRole, requiredRole)) {
+      return { ok: false, reason: 'insufficient_role', requiredRole };
+    }
+
+    const result = await queryHelpers.queryRun(
+      `UPDATE ai_typed_actions
+       SET status='accepted', accepted_by=$1
+       WHERE id=$2 AND organization_id=$3 AND status='proposed'`,
+      [acceptedBy, actionId, orgId],
     );
-    return { ok: true };
+    return { ok: result.changes > 0 };
   }
 
-  async executeAction(actionId: string, result?: object) {
-    await queryHelpers.queryRun(
-      `UPDATE ai_typed_actions SET status='executed', executed_at=CURRENT_TIMESTAMP, execution_result=$1 WHERE id=$2 AND status='accepted'`,
-      [result ? JSON.stringify(result) : null, actionId],
+  async executeAction(orgId: string, actionId: string, result?: object) {
+    const updateResult = await queryHelpers.queryRun(
+      `UPDATE ai_typed_actions
+       SET status='executed', executed_at=CURRENT_TIMESTAMP, execution_result=$1
+       WHERE id=$2 AND organization_id=$3 AND status='accepted'`,
+      [result ? JSON.stringify(result) : null, actionId, orgId],
     );
-    return { ok: true };
+    return { ok: updateResult.changes > 0 };
   }
 
-  async rejectAction(actionId: string) {
-    await queryHelpers.queryRun(
-      `UPDATE ai_typed_actions SET status='rejected' WHERE id=$1 AND status='proposed'`,
-      [actionId],
+  async rejectAction(orgId: string, actionId: string) {
+    const result = await queryHelpers.queryRun(
+      `UPDATE ai_typed_actions
+       SET status='rejected'
+       WHERE id=$1 AND organization_id=$2 AND status='proposed'`,
+      [actionId, orgId],
     );
-    return { ok: true };
+    return { ok: result.changes > 0 };
   }
 
-  async getAction(actionId: string) {
+  async getAction(orgId: string, actionId: string) {
     return queryHelpers.queryFirst(
-      `SELECT * FROM ai_typed_actions WHERE id=$1`, [actionId],
+      `SELECT * FROM ai_typed_actions WHERE id=$1 AND organization_id=$2`,
+      [actionId, orgId],
     );
   }
 
@@ -360,6 +386,36 @@ class FinalBatchService {
       `SELECT * FROM ai_playbook_executions WHERE playbook_id=$1 ORDER BY created_at DESC LIMIT $2`,
       [playbookId, limit],
     );
+  }
+
+  private hasRequiredRole(actorRole?: string, requiredRole?: string): boolean {
+    if (!requiredRole) return true;
+    return this.roleRank(actorRole) >= this.roleRank(requiredRole);
+  }
+
+  private roleRank(role?: string): number {
+    const normalized = String(role || 'VIEWER').trim().toUpperCase();
+    switch (normalized) {
+      case 'SUPERADMIN':
+      case 'SUPER_ADMIN':
+      case 'OWNER':
+        return 5;
+      case 'ADMIN':
+      case 'ADMINISTRATOR':
+        return 4;
+      case 'PROJECT_MANAGER':
+      case 'MANAGER':
+        return 3;
+      case 'TEAM_MEMBER':
+      case 'MEMBER':
+      case 'USER':
+        return 2;
+      case 'VIEWER':
+      case 'GUEST':
+      case 'CLIENT':
+      default:
+        return 1;
+    }
   }
 }
 

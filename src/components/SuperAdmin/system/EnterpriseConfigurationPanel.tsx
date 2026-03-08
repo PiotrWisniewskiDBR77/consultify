@@ -111,10 +111,13 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       await Api.rollbackSystemConfig(historyConfig.id, version.id, reason);
       toast.success('Rollback completed');
       // Refresh both the configs list and the versions list
-      await Promise.allSettled([fetchConfigs(), (async () => {
-        const data = await Api.getSystemConfigVersions(historyConfig.id);
-        setVersions((data as any)?.versions || []);
-      })()]);
+      await Promise.allSettled([
+        fetchConfigs(),
+        (async () => {
+          const data = await Api.getSystemConfigVersions(historyConfig.id);
+          setVersions((data as any)?.versions || []);
+        })(),
+      ]);
     } catch (e) {
       console.error('Rollback failed:', e);
       toast.error('Failed to rollback configuration');
@@ -322,7 +325,9 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="text-sm text-slate-600 dark:text-slate-400">Total Configs</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">{configs.length}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            {configs.length}
+          </div>
         </div>
         <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
           <div className="text-sm text-slate-600 dark:text-slate-400">Sensitive</div>
@@ -455,7 +460,9 @@ const ConfigRow: React.FC<{
     <div className="flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors border-b border-slate-200 dark:border-white/5 last:border-b-0">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <code className="text-sm text-primary-600 dark:text-primary-400 font-mono">{config.key}</code>
+          <code className="text-sm text-primary-600 dark:text-primary-400 font-mono">
+            {config.key}
+          </code>
           <span className="text-xs text-slate-500 dark:text-slate-400">
             {TYPE_ICONS[config.type]}
           </span>

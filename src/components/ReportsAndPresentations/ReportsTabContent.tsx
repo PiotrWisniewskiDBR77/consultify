@@ -229,7 +229,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
     },
     {
       id: 'archive',
-      label: t('rap.actions.archive', 'Archiwizuj'),
+      label: t('rap.actions.delete', 'Usuń'),
       icon: Archive,
       divider: true,
       variant: 'danger',
@@ -350,6 +350,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
           data={filteredData}
           selectedRowId={selectedId}
           onRowClick={(row) => setSelectedId(row.id)}
+          onRowDoubleClick={(row) => navigate(`/reports/builder/${row.id}`)}
           getRowActions={(row) => getRowActions(row as unknown as ReportItem)}
           activeFilters={activeFilters}
           onFilterChange={onFilterChange}

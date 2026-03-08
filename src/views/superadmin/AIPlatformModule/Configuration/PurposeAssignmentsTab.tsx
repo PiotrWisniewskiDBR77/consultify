@@ -9,8 +9,8 @@ import { Plus, RefreshCw, Save, Settings, Trash2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
-import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { Api } from '@/services/api';
+import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 type PurposeRow = {
   purpose: string;

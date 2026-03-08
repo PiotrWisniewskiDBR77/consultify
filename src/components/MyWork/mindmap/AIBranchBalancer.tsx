@@ -35,19 +35,21 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
     const ideaNodes = nodes.filter((n) => n.id !== 'root' && !n.id.startsWith('branch-'));
     const total = ideaNodes.length || 1;
 
-    return branchNodes.map((bn) => {
-      const childCount = edges.filter((e) => e.source === bn.id).length;
-      // Also count grandchildren
-      const directChildIds = edges.filter((e) => e.source === bn.id).map((e) => e.target);
-      const grandChildCount = edges.filter((e) => directChildIds.includes(e.source)).length;
-      const totalCount = childCount + grandChildCount;
-      return {
-        branchKey: bn.data?.branchKey || bn.id,
-        label: bn.data?.label || bn.data?.branchKey || bn.id,
-        count: totalCount,
-        percentage: Math.round((totalCount / total) * 100),
-      };
-    }).sort((a, b) => a.count - b.count);
+    return branchNodes
+      .map((bn) => {
+        const childCount = edges.filter((e) => e.source === bn.id).length;
+        // Also count grandchildren
+        const directChildIds = edges.filter((e) => e.source === bn.id).map((e) => e.target);
+        const grandChildCount = edges.filter((e) => directChildIds.includes(e.source)).length;
+        const totalCount = childCount + grandChildCount;
+        return {
+          branchKey: bn.data?.branchKey || bn.id,
+          label: bn.data?.label || bn.data?.branchKey || bn.id,
+          count: totalCount,
+          percentage: Math.round((totalCount / total) * 100),
+        };
+      })
+      .sort((a, b) => a.count - b.count);
   }, [edges, nodes]);
 
   const isUnbalanced = useMemo(() => {
@@ -56,11 +58,14 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
     const min = Math.min(...branches.map((b) => b.count));
     const total = branches.reduce((s, b) => s + b.count, 0);
     if (total < 6) return false;
-    return max > 0 && (max - min) >= 3 && (max / Math.max(1, min)) >= 3;
+    return max > 0 && max - min >= 3 && max / Math.max(1, min) >= 3;
   }, [branches]);
 
   const emptyBranches = useMemo(() => branches.filter((b) => b.count === 0), [branches]);
-  const weakBranches = useMemo(() => branches.filter((b) => b.count > 0 && b.count <= 1), [branches]);
+  const weakBranches = useMemo(
+    () => branches.filter((b) => b.count > 0 && b.count <= 1),
+    [branches]
+  );
 
   useEffect(() => {
     setDismissed(false);
@@ -76,7 +81,10 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
           <span className="text-[11px] font-bold text-blue-700 dark:text-blue-300 flex-1">
             {isPl ? 'Mapa niezbalansowana' : 'Unbalanced Map'}
           </span>
-          <button onClick={() => setDismissed(true)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={() => setDismissed(true)}
+            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={12} />
           </button>
         </div>
@@ -85,7 +93,9 @@ export const AIBranchBalancer: React.FC<AIBranchBalancerProps> = ({
           {/* Branch bars */}
           {branches.map((b) => (
             <div key={b.branchKey} className="flex items-center gap-2">
-              <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400 w-16 truncate">{b.label}</span>
+              <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400 w-16 truncate">
+                {b.label}
+              </span>
               <div className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${

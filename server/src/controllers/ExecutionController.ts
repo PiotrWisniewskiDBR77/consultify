@@ -10,6 +10,7 @@
 
 import type { Response } from 'express';
 
+import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as DbPromise from '../utils/DbPromise.js';
@@ -271,6 +272,20 @@ export class ExecutionController {
         errors,
         message: canAdvance ? 'Gate check passed' : 'Gate check failed',
       });
+
+      if (!canAdvance) {
+        await dispatchProjectCommunicationEvent({
+          organizationId: orgId,
+          projectId,
+          eventType: 'gate_pending',
+          title: `Gate pending${initiativeId ? ' for initiative' : ''}`,
+          body: errors.join(' ') || 'Execution gate requires follow-up before status can advance.',
+          deepLink: initiativeId ? `/initiatives/${initiativeId}` : `/execution?projectId=${projectId}`,
+          severity: 'high',
+        }).catch((err: any) =>
+          logger.warn('[ExecutionController] Gate communication sync failed:', err?.message)
+        );
+      }
     }
   );
 

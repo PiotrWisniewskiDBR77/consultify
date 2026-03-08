@@ -11,6 +11,7 @@
  */
 import { all as dbAll } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 
 export interface RiskSignal {
   id: string;
@@ -87,10 +88,14 @@ export async function detectRiskSignals(
     )) || []) as Array<{ id: string }>;
     const dismissedIds = new Set(dismissedRows.map((r) => String(r.id)));
 
+    const initiativeColumns = await getTableColumns('initiatives');
+    const initiativeSelect = (column: string) =>
+      initiativeColumns.has(column) ? column : `NULL as ${column}`;
+
     let initQuery = `
-      SELECT id, name, status, priority, planned_end_date, planned_start_date,
-             start_date, sla_deadline, blocked_reason, blocked_at, progress,
-             owner_business_id, owner_execution_id
+      SELECT id, name, status, ${initiativeSelect('priority')}, ${initiativeSelect('planned_end_date')}, ${initiativeSelect('planned_start_date')},
+             ${initiativeSelect('start_date')}, ${initiativeSelect('sla_deadline')}, ${initiativeSelect('blocked_reason')}, ${initiativeSelect('blocked_at')}, ${initiativeSelect('progress')},
+             ${initiativeSelect('owner_business_id')}, ${initiativeSelect('owner_execution_id')}
       FROM initiatives
       WHERE organization_id = ?
         AND status NOT IN ('DONE', 'CANCELLED', 'ARCHIVED')

@@ -52,7 +52,7 @@ router.delete('/channels/:channelId', asyncHandler(async (req: AuthRequest, res:
 
 router.post('/channels/:channelId/presence', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ userName: z.string().optional(), userColor: z.string().optional(), cursorState: z.record(z.unknown()).optional(), activeElement: z.string().optional() });
+  const s = z.object({ userName: z.string().optional(), userColor: z.string().optional(), cursorState: z.record(z.string(), z.unknown()).optional(), activeElement: z.string().optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   const r = await realtimePlatformService.upsertPresence(req.params.channelId, { userId: id.userId, ...p.data });
   res.status(201).json(r);
@@ -130,7 +130,7 @@ router.delete('/crdt/documents/:docId', asyncHandler(async (req: AuthRequest, re
 
 router.post('/facilitation/sessions', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ toolSessionId: z.string(), settings: z.record(z.unknown()).optional() });
+  const s = z.object({ toolSessionId: z.string(), settings: z.record(z.string(), z.unknown()).optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   const r = await realtimePlatformService.createFacilitationSession(id.orgId, { ...p.data, facilitatorId: id.userId });
   res.status(201).json(r);
@@ -145,7 +145,7 @@ router.get('/facilitation/sessions/:sessionId', asyncHandler(async (req: AuthReq
 
 router.put('/facilitation/sessions/:sessionId/timer', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ timerState: z.record(z.unknown()) });
+  const s = z.object({ timerState: z.record(z.string(), z.unknown()) });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.json(await realtimePlatformService.updateTimerState(req.params.sessionId, p.data.timerState));
 }));
@@ -196,7 +196,7 @@ router.get('/facilitation/sessions/:sessionId/roles', asyncHandler(async (req: A
 
 router.post('/facilitation/sessions/:sessionId/outcomes', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ outcomeType: z.string().optional(), title: z.string(), description: z.string().optional(), voteSummary: z.record(z.unknown()).optional(), exportedToType: z.string().optional(), exportedToId: z.string().optional() });
+  const s = z.object({ outcomeType: z.string().optional(), title: z.string(), description: z.string().optional(), voteSummary: z.record(z.string(), z.unknown()).optional(), exportedToType: z.string().optional(), exportedToId: z.string().optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   const r = await realtimePlatformService.createOutcome(req.params.sessionId, p.data);
   res.status(201).json(r);
@@ -220,7 +220,7 @@ router.put('/facilitation/outcomes/:outcomeId/export', asyncHandler(async (req: 
 
 router.post('/tool-sessions/:toolSessionId/presence', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ userName: z.string().optional(), userColor: z.string().optional(), cursorState: z.record(z.unknown()).optional(), activeBlockId: z.string().optional(), editingField: z.string().optional() });
+  const s = z.object({ userName: z.string().optional(), userColor: z.string().optional(), cursorState: z.record(z.string(), z.unknown()).optional(), activeBlockId: z.string().optional(), editingField: z.string().optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   const r = await realtimePlatformService.upsertToolPresence(id.orgId, { toolSessionId: req.params.toolSessionId, userId: id.userId, ...p.data });
   res.status(201).json(r);

@@ -24,7 +24,7 @@ const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: 
 
 router.post('/connectors', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ connectorType: z.string(), connectorName: z.string(), configJson: z.record(z.unknown()).optional(), secretsRef: z.string().optional(), allowlistDomains: z.array(z.string()).optional() });
+  const s = z.object({ connectorType: z.string(), connectorName: z.string(), configJson: z.record(z.string(), z.unknown()).optional(), secretsRef: z.string().optional(), allowlistDomains: z.array(z.string()).optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.status(201).json(await enterprisePlatformService.createConnector(id.orgId, { ...p.data, createdBy: id.userId }));
 }));
@@ -55,12 +55,14 @@ router.post('/connectors/:connectorId/health-check', asyncHandler(async (req: Au
   const id = requireUser(req, res); if (!id) return;
   const s = z.object({ healthStatus: z.string() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
-  res.json(await enterprisePlatformService.healthCheckConnector(req.params.connectorId, p.data.healthStatus));
+  const result = await enterprisePlatformService.healthCheckConnector(id.orgId, req.params.connectorId, p.data.healthStatus);
+  if (!result.ok) { res.status(404).json({ error: 'Connector not found' }); return; }
+  res.json(result);
 }));
 
 router.post('/queue', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ connectorId: z.string(), direction: z.string().optional(), payloadJson: z.record(z.unknown()), maxRetries: z.number().optional() });
+  const s = z.object({ connectorId: z.string(), direction: z.string().optional(), payloadJson: z.record(z.string(), z.unknown()), maxRetries: z.number().optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.status(201).json(await enterprisePlatformService.enqueueMessage(id.orgId, p.data));
 }));
@@ -75,7 +77,9 @@ router.post('/queue/:itemId/process', asyncHandler(async (req: AuthRequest, res:
   const id = requireUser(req, res); if (!id) return;
   const s = z.object({ success: z.boolean(), errorMessage: z.string().optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
-  res.json(await enterprisePlatformService.processQueueItem(req.params.itemId, p.data.success, p.data.errorMessage));
+  const result = await enterprisePlatformService.processQueueItem(id.orgId, req.params.itemId, p.data.success, p.data.errorMessage);
+  if (!result.ok) { res.status(404).json({ error: 'Queue item not found' }); return; }
+  res.json(result);
 }));
 
 router.post('/secrets', asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -100,7 +104,7 @@ router.delete('/secrets/:secretId', asyncHandler(async (req: AuthRequest, res: R
 
 router.post('/metrics', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ metricName: z.string(), metricType: z.string().optional(), value: z.number(), labels: z.record(z.unknown()).optional() });
+  const s = z.object({ metricName: z.string(), metricType: z.string().optional(), value: z.number(), labels: z.record(z.string(), z.unknown()).optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.status(201).json(await enterprisePlatformService.recordMetric({ ...p.data, organizationId: id.orgId }));
 }));
@@ -108,7 +112,7 @@ router.post('/metrics', asyncHandler(async (req: AuthRequest, res: Response) => 
 router.get('/metrics/:metricName', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
   const since = req.query.since as string | undefined;
-  res.json({ metrics: await enterprisePlatformService.getMetrics(req.params.metricName, since) });
+  res.json({ metrics: await enterprisePlatformService.getMetrics(id.orgId, req.params.metricName, since) });
 }));
 
 router.post('/slos', asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -127,19 +131,21 @@ router.put('/slos/:sloId', asyncHandler(async (req: AuthRequest, res: Response) 
   const id = requireUser(req, res); if (!id) return;
   const s = z.object({ currentPercentage: z.number(), budgetRemaining: z.number() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
-  res.json(await enterprisePlatformService.updateSloStatus(req.params.sloId, p.data.currentPercentage, p.data.budgetRemaining));
+  const result = await enterprisePlatformService.updateSloStatus(id.orgId, req.params.sloId, p.data.currentPercentage, p.data.budgetRemaining);
+  if (!result.ok) { res.status(404).json({ error: 'SLO not found' }); return; }
+  res.json(result);
 }));
 
 router.post('/traces', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ traceId: z.string(), spanId: z.string(), parentSpanId: z.string().optional(), operationName: z.string(), serviceName: z.string().optional(), durationMs: z.number().optional(), statusCode: z.string().optional(), attributes: z.record(z.unknown()).optional(), startedAt: z.string().optional(), endedAt: z.string().optional() });
+  const s = z.object({ traceId: z.string(), spanId: z.string(), parentSpanId: z.string().optional(), operationName: z.string(), serviceName: z.string().optional(), durationMs: z.number().optional(), statusCode: z.string().optional(), attributes: z.record(z.string(), z.unknown()).optional(), startedAt: z.string().optional(), endedAt: z.string().optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
-  res.status(201).json(await enterprisePlatformService.recordTrace(p.data));
+  res.status(201).json(await enterprisePlatformService.recordTrace({ ...p.data, organizationId: id.orgId }));
 }));
 
 router.get('/traces/:traceId', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  res.json({ spans: await enterprisePlatformService.getTrace(req.params.traceId) });
+  res.json({ spans: await enterprisePlatformService.getTrace(id.orgId, req.params.traceId) });
 }));
 
 router.post('/dr-drills', asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -151,9 +157,11 @@ router.post('/dr-drills', asyncHandler(async (req: AuthRequest, res: Response) =
 
 router.put('/dr-drills/:drillId', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ status: z.string(), resultsJson: z.record(z.unknown()).optional() });
+  const s = z.object({ status: z.string(), resultsJson: z.record(z.string(), z.unknown()).optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
-  res.json(await enterprisePlatformService.updateDrDrill(req.params.drillId, p.data));
+  const result = await enterprisePlatformService.updateDrDrill(id.orgId, req.params.drillId, p.data);
+  if (!result.ok) { res.status(404).json({ error: 'DR drill not found' }); return; }
+  res.json(result);
 }));
 
 router.get('/dr-drills', asyncHandler(async (req: AuthRequest, res: Response) => {

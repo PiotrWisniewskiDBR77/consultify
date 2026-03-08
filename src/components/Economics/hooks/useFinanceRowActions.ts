@@ -57,7 +57,7 @@ export function useFinanceRowActions({
           const rawId = getBudgetRawId(row.id);
           await Api.delete(`/api/economics/budgets/${rawId}`);
           await loadBudgets();
-        } else if (row.kind === 'analysis') {
+        } else if (row.kind === 'analysis' || row.kind === 'investment') {
           await Api.delete(`/api/economics/financial-analyses/${row.id}`);
           await loadAnalyses();
         } else if (row.kind === 'valuation') {
@@ -104,10 +104,10 @@ export function useFinanceRowActions({
             periodEnd: detail.periodEnd || detail.period_end,
           });
           await loadBudgets();
-        } else if (row.kind === 'analysis') {
+        } else if (row.kind === 'analysis' || row.kind === 'investment') {
           await Api.post('/api/economics/financial-analyses', {
             title: copyTitle,
-            analysisType: 'comprehensive',
+            analysisType: row.kind === 'investment' ? 'investment_case' : 'comprehensive',
             currency: 'PLN',
           });
           await loadAnalyses();
@@ -150,6 +150,7 @@ export function useFinanceRowActions({
           onClick: () => handleDuplicate(row),
         },
         ...(row.kind === 'analysis' ||
+        row.kind === 'investment' ||
         row.kind === 'models' ||
         row.kind === 'valuation' ||
         (row.kind === 'prediction' && (row as FinanceModelRow).predictionType === 'model')
@@ -189,7 +190,7 @@ export function useFinanceRowActions({
         }
       }
 
-      if (row.kind === 'analysis') {
+      if (row.kind === 'analysis' || row.kind === 'investment') {
         if (row.status !== 'APPROVED') {
           tabSpecific.push({
             id: 'approve',

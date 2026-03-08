@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { verifyAdmin } from '../../middleware/admin.middleware.js';
 import { isAuthenticated, verifyToken } from '../../middleware/auth.middleware.js';
 import { createIssueFromTask, parseJiraConfig } from '../../services/integrations/jiraOrgClient.js';
+import { dispatchProjectCommunicationEvent } from '../../services/integrations/communicationSyncService.js';
 import { SlackServiceClass } from '../../services/slackService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
@@ -300,6 +301,46 @@ router.post(
     }
 
     return res.status(400).json({ error: 'Integrations schema not supported for test' });
+  })
+);
+
+router.post(
+  '/communications/dispatch',
+  verifyToken,
+  verifyAdmin,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const eventType = String(req.body?.eventType || '').trim() as
+      | 'decision_required'
+      | 'gate_pending'
+      | 'task_due'
+      | 'risk_alert'
+      | 'blocker_detected';
+    const title = String(req.body?.title || '').trim();
+    const body = String(req.body?.body || '').trim();
+    const projectId = req.body?.projectId ? String(req.body.projectId) : null;
+    const deepLink = req.body?.deepLink ? String(req.body.deepLink) : null;
+
+    if (!eventType || !title || !body) {
+      return res.status(400).json({ error: 'eventType, title, and body are required' });
+    }
+
+    const deliveries = await dispatchProjectCommunicationEvent({
+      organizationId: orgId,
+      projectId,
+      eventType,
+      title,
+      body,
+      deepLink,
+      severity: 'normal',
+    });
+
+    return res.json({
+      success: deliveries.some((item) => item.success),
+      deliveries,
+    });
   })
 );
 

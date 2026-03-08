@@ -1,7 +1,7 @@
-import React, { useCallback, useState } from 'react';
-import { type EdgeProps } from 'reactflow';
 // @ts-ignore reactflow version mismatch
 import { EdgeLabelRenderer, getSmoothStepPath } from '@reactflow/core';
+import React, { useCallback, useState } from 'react';
+import { type EdgeProps } from 'reactflow';
 
 export const LabeledEdge: React.FC<EdgeProps> = ({
   id,
@@ -29,11 +29,14 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
   const [editValue, setEditValue] = useState(String(data?.label || ''));
   const label = String(data?.label || '');
 
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditValue(label);
-    setEditing(true);
-  }, [label]);
+  const handleDoubleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setEditValue(label);
+      setEditing(true);
+    },
+    [label]
+  );
 
   const handleConfirm = useCallback(() => {
     setEditing(false);
@@ -62,7 +65,7 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
 
   const gradientId = `edge-gradient-${id}`;
   const strokeColor = (style?.stroke as string) || '#8b5cf6';
-  const strokeWidth = selected ? 3 : ((style?.strokeWidth as number) || 2);
+  const strokeWidth = selected ? 3 : (style?.strokeWidth as number) || 2;
 
   return (
     <>
@@ -93,7 +96,15 @@ export const LabeledEdge: React.FC<EdgeProps> = ({
         stroke={`url(#${gradientId})`}
         strokeWidth={strokeWidth}
         strokeLinecap="round"
-        strokeDasharray={data?.edgeStyle === 'dashed' ? '8 4' : data?.edgeStyle === 'dotted' ? '2 4' : data?.edgeStyle === 'wavy' ? '6 3 2 3' : undefined}
+        strokeDasharray={
+          data?.edgeStyle === 'dashed'
+            ? '8 4'
+            : data?.edgeStyle === 'dotted'
+              ? '2 4'
+              : data?.edgeStyle === 'wavy'
+                ? '6 3 2 3'
+                : undefined
+        }
         markerEnd={markerEnd}
       />
 

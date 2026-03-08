@@ -21,6 +21,7 @@ export interface Invoice {
 
 export enum AppView {
   AI_CHAT = 'AI_CHAT', // Main welcome screen with AI Chat
+  APP_INTRO = 'APP_INTRO', // In-app orientation screen
   INTERVIEW = 'INTERVIEW', // AI Interview - structured knowledge gathering (was Project Intelligence)
   DISCOVERY_CONSULTANT = 'DISCOVERY_CONSULTANT', // AI Discovery with Canvas (legacy alias for INTERVIEW)
 

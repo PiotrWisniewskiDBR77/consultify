@@ -14,8 +14,8 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { LegalDocType, LegalDocument } from '../../types';
 import { Api } from '../../services/api';
+import { LegalDocType, LegalDocument } from '../../types';
 
 type SuperAdminLegalViewProps = Record<string, never>;
 
@@ -308,10 +308,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
             {documents.map((doc) => (
-              <tr
-                key={doc.id}
-                className="hover:bg-slate-50 dark:hover:bg-navy-800/20"
-              >
+              <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
                 <td className="px-4 py-3">
                   <span className="text-sm font-medium text-slate-900 dark:text-white">
                     {doc.doc_type}

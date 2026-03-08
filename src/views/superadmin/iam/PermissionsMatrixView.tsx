@@ -257,7 +257,9 @@ const PermissionsMatrixView: React.FC = () => {
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
           <div className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>{typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}</span>
+            <span>
+              {typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}
+            </span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>
@@ -480,7 +482,7 @@ const PermissionsMatrixView: React.FC = () => {
                     value={formData.key}
                     onChange={(e) => setFormData({ ...formData, key: e.target.value })}
                     placeholder="e.g., users:read"
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-slate-100"
                   />
                 </div>
               )}

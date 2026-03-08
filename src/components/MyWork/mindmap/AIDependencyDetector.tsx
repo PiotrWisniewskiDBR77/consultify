@@ -34,7 +34,10 @@ interface AIDependencyDetectorProps {
   onAddAll: (deps: DetectedDependency[]) => void;
 }
 
-const TYPE_CONFIG: Record<string, { color: string; label: string; labelPl: string; dash?: string }> = {
+const TYPE_CONFIG: Record<
+  string,
+  { color: string; label: string; labelPl: string; dash?: string }
+> = {
   depends_on: { color: '#ef4444', label: 'Depends on', labelPl: 'Zależy od' },
   enables: { color: '#22c55e', label: 'Enables', labelPl: 'Umożliwia' },
   conflicts_with: { color: '#f59e0b', label: 'Conflicts with', labelPl: 'Konflikt z', dash: '5 5' },
@@ -63,11 +66,17 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
     setLoading(true);
     try {
       const ideaNodes = nodes.filter((n) => n.id !== 'root' && !n.id.startsWith('branch-'));
-      const nodeLabels = ideaNodes.map((n) => `[${n.data?.branchKey || '?'}] ${n.data?.label || n.id}`);
+      const nodeLabels = ideaNodes.map(
+        (n) => `[${n.data?.branchKey || '?'}] ${n.data?.label || n.id}`
+      );
 
       const res = await Api.getMyIdeaAISuggestions(ideaId, {
         seedText: `Analyze dependencies between these mind map nodes for "${ideaTitle}". Find cross-branch relationships (depends_on, enables, conflicts_with, related_to). Nodes:\n${nodeLabels.join('\n')}\n\nReturn JSON array: [{"sourceIdx":0,"targetIdx":1,"type":"depends_on|enables|conflicts_with|related_to","relationship":"brief description","confidence":0.8}]`,
-        mapNodes: nodes.map((n) => ({ id: n.id, type: 'idea', data: { label: n.data?.label, branchKey: n.data?.branchKey } })),
+        mapNodes: nodes.map((n) => ({
+          id: n.id,
+          type: 'idea',
+          data: { label: n.data?.label, branchKey: n.data?.branchKey },
+        })),
         activeTool: 'mindmap',
         language: i18n.language,
       });
@@ -86,7 +95,9 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
 
           // Check if edge already exists
           const exists = edges.some(
-            (e) => (e.source === srcNode.id && e.target === tgtNode.id) || (e.source === tgtNode.id && e.target === srcNode.id)
+            (e) =>
+              (e.source === srcNode.id && e.target === tgtNode.id) ||
+              (e.source === tgtNode.id && e.target === srcNode.id)
           );
           if (exists) continue;
 
@@ -100,7 +111,9 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
             targetBranch: tgtNode.data?.branchKey || '?',
             relationship: s.detail || s.text || s.relationship || '',
             confidence: s.confidence ?? 0.7,
-            type: (['depends_on', 'enables', 'conflicts_with', 'related_to'].includes(s.category) ? s.category : 'related_to') as DetectedDependency['type'],
+            type: (['depends_on', 'enables', 'conflicts_with', 'related_to'].includes(s.category)
+              ? s.category
+              : 'related_to') as DetectedDependency['type'],
           });
         }
         setDependencies(detected);
@@ -112,18 +125,24 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
     }
   }, [edges, i18n.language, ideaId, ideaTitle, nodes]);
 
-  const handleApply = useCallback((dep: DetectedDependency) => {
-    onAddDependency(dep);
-    setApplied((prev) => new Set([...prev, dep.id]));
-    toast.success(isPl ? 'Dodano zależność' : 'Dependency added', { duration: 800 });
-  }, [isPl, onAddDependency]);
+  const handleApply = useCallback(
+    (dep: DetectedDependency) => {
+      onAddDependency(dep);
+      setApplied((prev) => new Set([...prev, dep.id]));
+      toast.success(isPl ? 'Dodano zależność' : 'Dependency added', { duration: 800 });
+    },
+    [isPl, onAddDependency]
+  );
 
   const handleApplyAll = useCallback(() => {
     const unapplied = dependencies.filter((d) => !applied.has(d.id));
     if (unapplied.length === 0) return;
     onAddAll(unapplied);
     setApplied(new Set(dependencies.map((d) => d.id)));
-    toast.success(isPl ? `Dodano ${unapplied.length} zależności` : `Added ${unapplied.length} dependencies`, { duration: 1200 });
+    toast.success(
+      isPl ? `Dodano ${unapplied.length} zależności` : `Added ${unapplied.length} dependencies`,
+      { duration: 1200 }
+    );
   }, [applied, dependencies, isPl, onAddAll]);
 
   if (!open) return null;
@@ -140,10 +159,15 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
               </h3>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              {isPl ? 'AI analizuje powiązania między nodami z różnych gałęzi.' : 'AI analyzes relationships between nodes across different branches.'}
+              {isPl
+                ? 'AI analizuje powiązania między nodami z różnych gałęzi.'
+                : 'AI analyzes relationships between nodes across different branches.'}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
@@ -153,7 +177,9 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
             <div className="text-center py-8">
               <GitMerge size={36} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
-                {isPl ? 'Wykryj ukryte zależności między pomysłami.' : 'Discover hidden dependencies between ideas.'}
+                {isPl
+                  ? 'Wykryj ukryte zależności między pomysłami.'
+                  : 'Discover hidden dependencies between ideas.'}
               </p>
               <button
                 onClick={detectDependencies}
@@ -169,7 +195,9 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8">
               <Loader2 size={16} className="animate-spin text-violet-500" />
-              <span className="text-[11px] text-slate-500">{isPl ? 'Analizuję powiązania...' : 'Analyzing connections...'}</span>
+              <span className="text-[11px] text-slate-500">
+                {isPl ? 'Analizuję powiązania...' : 'Analyzing connections...'}
+              </span>
             </div>
           )}
 
@@ -179,29 +207,45 @@ export const AIDependencyDetector: React.FC<AIDependencyDetectorProps> = ({
                 const cfg = TYPE_CONFIG[dep.type] || TYPE_CONFIG.related_to;
                 const isApplied = applied.has(dep.id);
                 return (
-                  <div key={dep.id} className={`p-3 rounded-xl border transition-all ${isApplied ? 'border-emerald-400/30 bg-emerald-500/5' : 'border-slate-200/30 dark:border-navy-700/30 bg-slate-50/30 dark:bg-navy-950/10'}`}>
+                  <div
+                    key={dep.id}
+                    className={`p-3 rounded-xl border transition-all ${isApplied ? 'border-emerald-400/30 bg-emerald-500/5' : 'border-slate-200/30 dark:border-navy-700/30 bg-slate-50/30 dark:bg-navy-950/10'}`}
+                  >
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${cfg.color}15`, color: cfg.color }}>
+                      <span
+                        className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                        style={{ backgroundColor: `${cfg.color}15`, color: cfg.color }}
+                      >
                         {isPl ? cfg.labelPl : cfg.label}
                       </span>
-                      <span className="text-[9px] text-slate-400">{Math.round(dep.confidence * 100)}%</span>
-                      {isApplied && <span className="text-[9px] text-emerald-500 font-bold ml-auto">ADDED</span>}
+                      <span className="text-[9px] text-slate-400">
+                        {Math.round(dep.confidence * 100)}%
+                      </span>
+                      {isApplied && (
+                        <span className="text-[9px] text-emerald-500 font-bold ml-auto">ADDED</span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2 text-[11px]">
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-slate-700 dark:text-slate-200 truncate">{dep.sourceLabel}</div>
+                        <div className="font-medium text-slate-700 dark:text-slate-200 truncate">
+                          {dep.sourceLabel}
+                        </div>
                         <div className="text-[9px] text-slate-400">{dep.sourceBranch}</div>
                       </div>
                       <ArrowRight size={14} style={{ color: cfg.color }} className="shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-slate-700 dark:text-slate-200 truncate">{dep.targetLabel}</div>
+                        <div className="font-medium text-slate-700 dark:text-slate-200 truncate">
+                          {dep.targetLabel}
+                        </div>
                         <div className="text-[9px] text-slate-400">{dep.targetBranch}</div>
                       </div>
                     </div>
 
                     {dep.relationship && (
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">{dep.relationship}</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
+                        {dep.relationship}
+                      </div>
                     )}
 
                     {!isApplied && (

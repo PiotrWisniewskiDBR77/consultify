@@ -35,19 +35,149 @@ interface SlashCommand {
 }
 
 const COMMANDS: SlashCommand[] = [
-  { id: 'ai-expand', icon: GitBranch, labelPl: 'AI Rozbuduj', labelEn: 'AI Expand', descPl: 'Rozbuduj mapę z AI', descEn: 'Expand map with AI', keywords: ['ai', 'expand', 'rozbuduj'], action: 'ai_expand', category: 'ai' },
-  { id: 'ai-challenge', icon: Target, labelPl: 'AI Kwestionuj', labelEn: 'AI Challenge', descPl: 'Kwestionuj zaznaczenie', descEn: 'Challenge selection', keywords: ['ai', 'challenge', 'kwestionuj'], action: 'ai_challenge', category: 'ai' },
-  { id: 'ai-brainstorm', icon: Brain, labelPl: 'AI Brainstorm', labelEn: 'AI Brainstorm', descPl: 'Generuj pomysły', descEn: 'Generate ideas', keywords: ['ai', 'brainstorm', 'pomysly'], action: 'ai_brainstorm', category: 'ai' },
-  { id: 'ai-summarize', icon: FileText, labelPl: 'AI Podsumuj', labelEn: 'AI Summarize', descPl: 'Podsumuj mapę', descEn: 'Summarize map', keywords: ['ai', 'summarize', 'podsumuj'], action: 'ai_summarize', category: 'ai' },
-  { id: 'sticky', icon: StickyNote, labelPl: 'Notatka', labelEn: 'Sticky note', descPl: 'Dodaj sticky note', descEn: 'Add sticky note', keywords: ['sticky', 'notatka', 'note'], action: 'wb_add_sticky', category: 'element' },
-  { id: 'text', icon: Type, labelPl: 'Tekst', labelEn: 'Text', descPl: 'Dodaj blok tekstu', descEn: 'Add text block', keywords: ['text', 'tekst'], action: 'wb_add_text', category: 'element' },
-  { id: 'frame', icon: Frame, labelPl: 'Rama', labelEn: 'Frame', descPl: 'Dodaj ramę/sekcję', descEn: 'Add frame/section', keywords: ['frame', 'rama', 'sekcja'], action: 'wb_add_frame', category: 'element' },
-  { id: 'image', icon: ImageIcon, labelPl: 'Obraz', labelEn: 'Image', descPl: 'Dodaj obraz', descEn: 'Add image', keywords: ['image', 'obraz', 'zdjecie'], action: 'wb_add_image', category: 'element' },
-  { id: 'link', icon: Link2, labelPl: 'Link', labelEn: 'Link', descPl: 'Dodaj link', descEn: 'Add link', keywords: ['link', 'url'], action: 'wb_add_link', category: 'element' },
-  { id: 'template-swot', icon: Layers, labelPl: 'Szablon SWOT', labelEn: 'Template SWOT', descPl: 'Analiza SWOT', descEn: 'SWOT Analysis', keywords: ['template', 'swot', 'szablon'], action: 'template_swot', category: 'template' },
-  { id: 'template-bmc', icon: Layers, labelPl: 'Business Model Canvas', labelEn: 'Business Model Canvas', descPl: '9 bloków modelu', descEn: '9 building blocks', keywords: ['template', 'bmc', 'canvas', 'business'], action: 'template_bmc', category: 'template' },
-  { id: 'from-assessment', icon: Search, labelPl: 'Z assessmentu', labelEn: 'From assessment', descPl: 'Importuj gaps', descEn: 'Import gaps', keywords: ['assessment', 'import', 'gaps'], action: 'import_assessment', category: 'import' },
-  { id: 'from-interview', icon: Search, labelPl: 'Z wywiadu', labelEn: 'From interview', descPl: 'Importuj insights', descEn: 'Import insights', keywords: ['interview', 'import', 'insights', 'wywiad'], action: 'import_interview', category: 'import' },
+  {
+    id: 'ai-expand',
+    icon: GitBranch,
+    labelPl: 'AI Rozbuduj',
+    labelEn: 'AI Expand',
+    descPl: 'Rozbuduj mapę z AI',
+    descEn: 'Expand map with AI',
+    keywords: ['ai', 'expand', 'rozbuduj'],
+    action: 'ai_expand',
+    category: 'ai',
+  },
+  {
+    id: 'ai-challenge',
+    icon: Target,
+    labelPl: 'AI Kwestionuj',
+    labelEn: 'AI Challenge',
+    descPl: 'Kwestionuj zaznaczenie',
+    descEn: 'Challenge selection',
+    keywords: ['ai', 'challenge', 'kwestionuj'],
+    action: 'ai_challenge',
+    category: 'ai',
+  },
+  {
+    id: 'ai-brainstorm',
+    icon: Brain,
+    labelPl: 'AI Brainstorm',
+    labelEn: 'AI Brainstorm',
+    descPl: 'Generuj pomysły',
+    descEn: 'Generate ideas',
+    keywords: ['ai', 'brainstorm', 'pomysly'],
+    action: 'ai_brainstorm',
+    category: 'ai',
+  },
+  {
+    id: 'ai-summarize',
+    icon: FileText,
+    labelPl: 'AI Podsumuj',
+    labelEn: 'AI Summarize',
+    descPl: 'Podsumuj mapę',
+    descEn: 'Summarize map',
+    keywords: ['ai', 'summarize', 'podsumuj'],
+    action: 'ai_summarize',
+    category: 'ai',
+  },
+  {
+    id: 'sticky',
+    icon: StickyNote,
+    labelPl: 'Notatka',
+    labelEn: 'Sticky note',
+    descPl: 'Dodaj sticky note',
+    descEn: 'Add sticky note',
+    keywords: ['sticky', 'notatka', 'note'],
+    action: 'wb_add_sticky',
+    category: 'element',
+  },
+  {
+    id: 'text',
+    icon: Type,
+    labelPl: 'Tekst',
+    labelEn: 'Text',
+    descPl: 'Dodaj blok tekstu',
+    descEn: 'Add text block',
+    keywords: ['text', 'tekst'],
+    action: 'wb_add_text',
+    category: 'element',
+  },
+  {
+    id: 'frame',
+    icon: Frame,
+    labelPl: 'Rama',
+    labelEn: 'Frame',
+    descPl: 'Dodaj ramę/sekcję',
+    descEn: 'Add frame/section',
+    keywords: ['frame', 'rama', 'sekcja'],
+    action: 'wb_add_frame',
+    category: 'element',
+  },
+  {
+    id: 'image',
+    icon: ImageIcon,
+    labelPl: 'Obraz',
+    labelEn: 'Image',
+    descPl: 'Dodaj obraz',
+    descEn: 'Add image',
+    keywords: ['image', 'obraz', 'zdjecie'],
+    action: 'wb_add_image',
+    category: 'element',
+  },
+  {
+    id: 'link',
+    icon: Link2,
+    labelPl: 'Link',
+    labelEn: 'Link',
+    descPl: 'Dodaj link',
+    descEn: 'Add link',
+    keywords: ['link', 'url'],
+    action: 'wb_add_link',
+    category: 'element',
+  },
+  {
+    id: 'template-swot',
+    icon: Layers,
+    labelPl: 'Szablon SWOT',
+    labelEn: 'Template SWOT',
+    descPl: 'Analiza SWOT',
+    descEn: 'SWOT Analysis',
+    keywords: ['template', 'swot', 'szablon'],
+    action: 'template_swot',
+    category: 'template',
+  },
+  {
+    id: 'template-bmc',
+    icon: Layers,
+    labelPl: 'Business Model Canvas',
+    labelEn: 'Business Model Canvas',
+    descPl: '9 bloków modelu',
+    descEn: '9 building blocks',
+    keywords: ['template', 'bmc', 'canvas', 'business'],
+    action: 'template_bmc',
+    category: 'template',
+  },
+  {
+    id: 'from-assessment',
+    icon: Search,
+    labelPl: 'Z assessmentu',
+    labelEn: 'From assessment',
+    descPl: 'Importuj gaps',
+    descEn: 'Import gaps',
+    keywords: ['assessment', 'import', 'gaps'],
+    action: 'import_assessment',
+    category: 'import',
+  },
+  {
+    id: 'from-interview',
+    icon: Search,
+    labelPl: 'Z wywiadu',
+    labelEn: 'From interview',
+    descPl: 'Importuj insights',
+    descEn: 'Import insights',
+    keywords: ['interview', 'import', 'insights', 'wywiad'],
+    action: 'import_interview',
+    category: 'import',
+  },
 ];
 
 const CATEGORY_LABELS: Record<string, { pl: string; en: string }> = {
@@ -99,10 +229,11 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
   const filtered = useMemo(() => {
     const q = query.toLowerCase().replace(/^\//, '');
     if (!q) return COMMANDS;
-    return COMMANDS.filter((cmd) =>
-      cmd.keywords.some((k) => k.includes(q)) ||
-      cmd.labelEn.toLowerCase().includes(q) ||
-      cmd.labelPl.toLowerCase().includes(q)
+    return COMMANDS.filter(
+      (cmd) =>
+        cmd.keywords.some((k) => k.includes(q)) ||
+        cmd.labelEn.toLowerCase().includes(q) ||
+        cmd.labelPl.toLowerCase().includes(q)
     );
   }, [query]);
 
@@ -117,20 +248,37 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
 
   const flatList = useMemo(() => filtered, [filtered]);
 
-  const handleSelect = useCallback((cmd: SlashCommand) => {
-    onCommand(cmd.action);
-    onClose();
-  }, [onClose, onCommand]);
+  const handleSelect = useCallback(
+    (cmd: SlashCommand) => {
+      onCommand(cmd.action);
+      onClose();
+    },
+    [onClose, onCommand]
+  );
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') { onClose(); return; }
-    if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIdx((i) => Math.min(i + 1, flatList.length - 1)); return; }
-    if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIdx((i) => Math.max(i - 1, 0)); return; }
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (flatList[selectedIdx]) handleSelect(flatList[selectedIdx]);
-    }
-  }, [flatList, handleSelect, onClose, selectedIdx]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIdx((i) => Math.min(i + 1, flatList.length - 1));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIdx((i) => Math.max(i - 1, 0));
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (flatList[selectedIdx]) handleSelect(flatList[selectedIdx]);
+      }
+    },
+    [flatList, handleSelect, onClose, selectedIdx]
+  );
 
   if (!open) return null;
 
@@ -150,7 +298,10 @@ export const IdeaSlashCommandMenu: React.FC<IdeaSlashCommandMenuProps> = ({
           <input
             ref={inputRef}
             value={query}
-            onChange={(e) => { setQuery(e.target.value); setSelectedIdx(0); }}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelectedIdx(0);
+            }}
             onKeyDown={handleKeyDown}
             placeholder={isPl ? 'Wpisz polecenie…' : 'Type a command…'}
             className="flex-1 bg-transparent text-xs text-slate-800 dark:text-slate-200 outline-none placeholder:text-slate-400"

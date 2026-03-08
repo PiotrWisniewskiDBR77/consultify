@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { API_URL, getHeaders } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+
 import { ExportButton } from '../Finance/ExportButton';
 
 type ValuationSourceType = 'financial_model' | 'budget' | 'manual';
@@ -225,7 +226,15 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
     } finally {
       setBusy(false);
     }
-  }, [createHorizonYears, createSourceId, createSourceType, createTitle, fetchValuations, t, onValuationChanged]);
+  }, [
+    createHorizonYears,
+    createSourceId,
+    createSourceType,
+    createTitle,
+    fetchValuations,
+    t,
+    onValuationChanged,
+  ]);
 
   const handleSaveAssumptions = useCallback(async () => {
     if (!selectedId) return;
@@ -414,17 +423,23 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
         });
         const initiativeId = d?.initiativeId;
         if (initiativeId) {
-          toast((toastMsg) => (
-            <div className="flex items-center gap-3">
-              <span>{t('valuation.advisory.convertOk', 'Initiative created')}</span>
-              <button
-                className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline whitespace-nowrap"
-                onClick={() => { toast.dismiss(toastMsg.id); navigate(`/initiatives?open=${initiativeId}`); }}
-              >
-                {t('valuation.advisory.openInitiative', 'Otwórz')}
-              </button>
-            </div>
-          ), { duration: 6000 });
+          toast(
+            (toastMsg) => (
+              <div className="flex items-center gap-3">
+                <span>{t('valuation.advisory.convertOk', 'Initiative created')}</span>
+                <button
+                  className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline whitespace-nowrap"
+                  onClick={() => {
+                    toast.dismiss(toastMsg.id);
+                    navigate(`/initiatives?open=${initiativeId}`);
+                  }}
+                >
+                  {t('valuation.advisory.openInitiative', 'Otwórz')}
+                </button>
+              </div>
+            ),
+            { duration: 6000 }
+          );
         } else {
           toast.success(t('valuation.advisory.convertOk', 'Initiative created'));
         }
@@ -500,7 +515,13 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
           </div>
         )}
 
-        <div className={hideSidebar ? 'w-full' : 'col-span-8 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5'}>
+        <div
+          className={
+            hideSidebar
+              ? 'w-full'
+              : 'col-span-8 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-5'
+          }
+        >
           {!selectedId || !selected ? (
             <div className="h-[520px] flex items-center justify-center text-sm text-slate-500 dark:text-slate-400">
               {t('valuation.detail.empty', 'Select a valuation to continue')}
@@ -517,22 +538,24 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                       {t('valuation.detail.status', 'Status')}: {selected.status} •{' '}
                       {t('valuation.detail.currency', 'Currency')}: {selected.currency}
                     </span>
-                    {selected.source_type && selected.source_type !== 'manual' && selected.source_id && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (selected.source_type === 'financial_model') {
-                            navigate(`/economics?tab=models&openId=${selected.source_id}`);
-                          } else if (selected.source_type === 'budget') {
-                            navigate(`/economics?tab=prediction&openId=${selected.source_id}`);
-                          }
-                        }}
-                        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition font-medium"
-                      >
-                        <ExternalLink size={10} />
-                        {t('valuation.detail.viewSource', 'View source')}
-                      </button>
-                    )}
+                    {selected.source_type &&
+                      selected.source_type !== 'manual' &&
+                      selected.source_id && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (selected.source_type === 'financial_model') {
+                              navigate(`/economics?tab=models&openId=${selected.source_id}`);
+                            } else if (selected.source_type === 'budget') {
+                              navigate(`/economics?tab=prediction&openId=${selected.source_id}`);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 transition font-medium"
+                        >
+                          <ExternalLink size={10} />
+                          {t('valuation.detail.viewSource', 'View source')}
+                        </button>
+                      )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -655,14 +678,31 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                 { label: t('valuation.macro.gdpPl', 'GDP PL ~2.5%'), value: 2.5 },
                                 { label: t('valuation.macro.gdpEu', 'GDP EU ~1.5%'), value: 1.5 },
                                 { label: t('valuation.macro.gdpUs', 'GDP US ~2.0%'), value: 2.0 },
-                                { label: t('valuation.macro.inflationTarget', 'Inflation target ~2.5%'), value: 2.5 },
-                                { label: t('valuation.macro.techGrowth', 'Tech sector ~4.0%'), value: 4.0 },
-                                { label: t('valuation.macro.conservative', 'Conservative ~1.0%'), value: 1.0 },
+                                {
+                                  label: t(
+                                    'valuation.macro.inflationTarget',
+                                    'Inflation target ~2.5%'
+                                  ),
+                                  value: 2.5,
+                                },
+                                {
+                                  label: t('valuation.macro.techGrowth', 'Tech sector ~4.0%'),
+                                  value: 4.0,
+                                },
+                                {
+                                  label: t('valuation.macro.conservative', 'Conservative ~1.0%'),
+                                  value: 1.0,
+                                },
                               ].map((preset) => (
                                 <button
                                   key={preset.label}
                                   type="button"
-                                  onClick={() => setAssumptions((p) => ({ ...p, terminalGrowthPercent: preset.value }))}
+                                  onClick={() =>
+                                    setAssumptions((p) => ({
+                                      ...p,
+                                      terminalGrowthPercent: preset.value,
+                                    }))
+                                  }
                                   className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
                                     assumptions.terminalGrowthPercent === preset.value
                                       ? 'border-purple-500 bg-purple-500/10 text-purple-600 dark:text-purple-300'
@@ -935,27 +975,53 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
                               <div className="px-4 py-2 border-b border-slate-200 dark:border-navy-700">
                                 <h4 className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
-                                  {t('valuation.advisory.driverDecomposition', 'Value Driver Decomposition')}
+                                  {t(
+                                    'valuation.advisory.driverDecomposition',
+                                    'Value Driver Decomposition'
+                                  )}
                                 </h4>
                               </div>
                               <table className="w-full text-xs">
                                 <thead>
                                   <tr className="text-slate-500 border-b border-slate-200 dark:border-navy-700">
-                                    <th className="px-3 py-1.5 text-left">{t('valuation.advisory.driver', 'Driver')}</th>
-                                    <th className="px-3 py-1.5 text-right">{t('valuation.advisory.current', 'Current')}</th>
-                                    <th className="px-3 py-1.5 text-right">{t('valuation.advisory.change', 'Change')}</th>
-                                    <th className="px-3 py-1.5 text-right">{t('valuation.advisory.evImpact', 'EV Impact')}</th>
-                                    <th className="px-3 py-1.5 text-left">{t('valuation.advisory.lever', 'Lever')}</th>
+                                    <th className="px-3 py-1.5 text-left">
+                                      {t('valuation.advisory.driver', 'Driver')}
+                                    </th>
+                                    <th className="px-3 py-1.5 text-right">
+                                      {t('valuation.advisory.current', 'Current')}
+                                    </th>
+                                    <th className="px-3 py-1.5 text-right">
+                                      {t('valuation.advisory.change', 'Change')}
+                                    </th>
+                                    <th className="px-3 py-1.5 text-right">
+                                      {t('valuation.advisory.evImpact', 'EV Impact')}
+                                    </th>
+                                    <th className="px-3 py-1.5 text-left">
+                                      {t('valuation.advisory.lever', 'Lever')}
+                                    </th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {advisory.driverDecomposition.drivers.map((d: any, i: number) => (
-                                    <tr key={i} className="border-b border-slate-100 dark:border-navy-700 last:border-0">
-                                      <td className="px-3 py-1.5 font-medium text-slate-800 dark:text-slate-200">{d.driver}</td>
-                                      <td className="px-3 py-1.5 text-right font-mono text-slate-600 dark:text-slate-400">{d.currentValue}</td>
-                                      <td className="px-3 py-1.5 text-right font-mono text-purple-600 dark:text-purple-400">{d.change}</td>
-                                      <td className="px-3 py-1.5 text-right font-mono text-emerald-600 dark:text-emerald-400">{d.evImpactDirection} {d.evImpactMagnitude}</td>
-                                      <td className="px-3 py-1.5 text-slate-500 dark:text-slate-400 max-w-[200px] truncate">{d.lever}</td>
+                                    <tr
+                                      key={i}
+                                      className="border-b border-slate-100 dark:border-navy-700 last:border-0"
+                                    >
+                                      <td className="px-3 py-1.5 font-medium text-slate-800 dark:text-slate-200">
+                                        {d.driver}
+                                      </td>
+                                      <td className="px-3 py-1.5 text-right font-mono text-slate-600 dark:text-slate-400">
+                                        {d.currentValue}
+                                      </td>
+                                      <td className="px-3 py-1.5 text-right font-mono text-purple-600 dark:text-purple-400">
+                                        {d.change}
+                                      </td>
+                                      <td className="px-3 py-1.5 text-right font-mono text-emerald-600 dark:text-emerald-400">
+                                        {d.evImpactDirection} {d.evImpactMagnitude}
+                                      </td>
+                                      <td className="px-3 py-1.5 text-slate-500 dark:text-slate-400 max-w-[200px] truncate">
+                                        {d.lever}
+                                      </td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -968,35 +1034,47 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             </div>
                           )}
                           <div className="space-y-2">
-                          {advisory.recommendations.slice(0, 6).map((r: any) => (
-                            <div
-                              key={r.id}
-                              className="p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700"
-                            >
-                              <div className="text-sm font-medium text-slate-900 dark:text-white">
-                                {r.title}
-                              </div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                {r.category} • {r.impactTier} • {r.effort}
-                              </div>
-                              <div className="text-xs text-slate-600 dark:text-slate-300 mt-2 line-clamp-3">
-                                {r.mechanism || r.hypothesis}
-                              </div>
-                              <button
-                                disabled={busy}
-                                onClick={() => handleConvertRecommendation(String(r.id))}
-                                className="mt-2 inline-flex items-center gap-2 text-xs text-purple-700 dark:text-purple-300 hover:underline"
+                            {advisory.recommendations.slice(0, 6).map((r: any) => (
+                              <div
+                                key={r.id}
+                                className="p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700"
                               >
-                                <CheckCircle2 size={14} />
-                                {t('valuation.advisory.convert', 'Create initiative')}
-                              </button>
-                            </div>
-                          ))}
+                                <div className="text-sm font-medium text-slate-900 dark:text-white">
+                                  {r.title}
+                                </div>
+                                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                  {r.category} • {r.impactTier} • {r.effort}
+                                </div>
+                                <div className="text-xs text-slate-600 dark:text-slate-300 mt-2 line-clamp-3">
+                                  {r.mechanism || r.hypothesis}
+                                </div>
+                                <button
+                                  disabled={busy}
+                                  onClick={() => handleConvertRecommendation(String(r.id))}
+                                  className="mt-2 inline-flex items-center gap-2 text-xs text-purple-700 dark:text-purple-300 hover:underline"
+                                >
+                                  <CheckCircle2 size={14} />
+                                  {t('valuation.advisory.convert', 'Create initiative')}
+                                </button>
+                              </div>
+                            ))}
                           </div>
                           {(advisory.guardrails?.length > 0 || advisory.complianceFlags) && (
                             <div className="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20">
                               <div className="flex items-start gap-2">
-                                <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+                                <svg
+                                  className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+                                  />
+                                </svg>
                                 <div>
                                   <div className="text-xs font-semibold text-amber-900 dark:text-amber-300 mb-1">
                                     {t('valuation.advisory.complianceNotice', 'Compliance Notice')}
@@ -1029,9 +1107,12 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                             <button
                               onClick={async () => {
                                 try {
-                                  const res = await fetch(`${API_URL}/economics/valuations/${selectedId}/export/negotiation-pack`, {
-                                    headers: getHeaders(),
-                                  });
+                                  const res = await fetch(
+                                    `${API_URL}/economics/valuations/${selectedId}/export/negotiation-pack`,
+                                    {
+                                      headers: getHeaders(),
+                                    }
+                                  );
                                   if (res.ok) {
                                     const blob = await res.blob();
                                     const url = URL.createObjectURL(blob);
@@ -1040,9 +1121,13 @@ export const ValuationWorkspace: React.FC<ValuationWorkspaceProps> = ({
                                     a.download = `negotiation-pack-${selectedId?.slice(0, 8)}.md`;
                                     a.click();
                                     URL.revokeObjectURL(url);
-                                    toast.success(t('valuation.negotiation.exported', 'Pack exported'));
+                                    toast.success(
+                                      t('valuation.negotiation.exported', 'Pack exported')
+                                    );
                                   }
-                                } catch { toast.error('Export failed'); }
+                                } catch {
+                                  toast.error(t('valuation.export.failed', 'Export failed'));
+                                }
                               }}
                               className="px-3 py-1.5 rounded-lg text-xs border border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800"
                             >

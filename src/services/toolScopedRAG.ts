@@ -156,7 +156,7 @@ export function expandQueryWithContext(query: string, context: ToolRAGContext): 
  * from a static mapping of which tools have dedicated content.
  */
 export function getAvailableKnowledgePacks(
-  toolSlug: string,
+  toolSlug: string
 ): { packType: string; available: boolean; path: string }[] {
   return PACK_TYPES.map((packType) => ({
     packType,

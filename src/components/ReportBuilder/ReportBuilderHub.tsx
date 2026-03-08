@@ -28,12 +28,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
-import {
-  type FilterChip,
-  type ModuleTab,
-  type ViewMode,
-  ModuleHub,
-} from '../shared/ModuleHub';
+import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { ScheduleReportModal } from './ScheduleReportModal';
 
@@ -77,11 +72,34 @@ type HubTab = 'my_reports' | 'r1_r4' | 'templates' | 'schedules';
 
 const R1_R4_TYPES = ['R1', 'R2', 'R3', 'R4'] as const;
 
-const R_TYPE_META: Record<string, { label: string; labelPl: string; color: string; dotColor: string }> = {
-  R1: { label: 'Weekly Execution', labelPl: 'Raport tygodniowy', color: 'text-blue-400', dotColor: 'bg-blue-400' },
-  R2: { label: 'Steering Committee', labelPl: 'Komitet sterujący', color: 'text-purple-400', dotColor: 'bg-purple-400' },
-  R3: { label: 'Benefits Tracking', labelPl: 'Śledzenie korzyści', color: 'text-emerald-400', dotColor: 'bg-emerald-400' },
-  R4: { label: 'Portfolio Overview', labelPl: 'Przegląd portfela', color: 'text-amber-400', dotColor: 'bg-amber-400' },
+const R_TYPE_META: Record<
+  string,
+  { label: string; labelPl: string; color: string; dotColor: string }
+> = {
+  R1: {
+    label: 'Weekly Execution',
+    labelPl: 'Raport tygodniowy',
+    color: 'text-blue-400',
+    dotColor: 'bg-blue-400',
+  },
+  R2: {
+    label: 'Steering Committee',
+    labelPl: 'Komitet sterujący',
+    color: 'text-purple-400',
+    dotColor: 'bg-purple-400',
+  },
+  R3: {
+    label: 'Benefits Tracking',
+    labelPl: 'Śledzenie korzyści',
+    color: 'text-emerald-400',
+    dotColor: 'bg-emerald-400',
+  },
+  R4: {
+    label: 'Portfolio Overview',
+    labelPl: 'Przegląd portfela',
+    color: 'text-amber-400',
+    dotColor: 'bg-amber-400',
+  },
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -177,7 +195,9 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                 return {
                   id: String(s.reportId || rpt.id || ''),
                   type: 'report' as const,
-                  subType: String(rpt.reportTypeV3 || rpt.report_type_v3 || rpt.sourceFramework || 'report'),
+                  subType: String(
+                    rpt.reportTypeV3 || rpt.report_type_v3 || rpt.sourceFramework || 'report'
+                  ),
                   name: String(rpt.title || 'Report'),
                   status: String(rpt.status || 'DRAFT') as any,
                 };
@@ -234,8 +254,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
     if (!searchQuery) return schedules;
     const q = searchQuery.toLowerCase();
     return schedules.filter(
-      (s) =>
-        s.name?.toLowerCase().includes(q) || s.frequency?.toLowerCase().includes(q)
+      (s) => s.name?.toLowerCase().includes(q) || s.frequency?.toLowerCase().includes(q)
     );
   }, [schedules, searchQuery]);
 
@@ -270,7 +289,13 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
         count: filteredSchedules.length,
       },
     ],
-    [t, filteredReports.length, r1r4Reports.length, filteredTemplates.length, filteredSchedules.length]
+    [
+      t,
+      filteredReports.length,
+      r1r4Reports.length,
+      filteredTemplates.length,
+      filteredSchedules.length,
+    ]
   );
 
   // -----------------------------------------------------------------------
@@ -280,9 +305,9 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
   const handleRowClick = useCallback(
     (row: BuilderReport) => {
       // Track open report in backend sessions (best-effort, do not block navigation)
-      Api.post(`/api/report-builder/${row.id}/session/open`, { navigationState: { from: 'hub' } }).catch(
-        () => null
-      );
+      Api.post(`/api/report-builder/${row.id}/session/open`, {
+        navigationState: { from: 'hub' },
+      }).catch(() => null);
 
       // Open in UI dynamic menu (local)
       setOpenDocuments((prev) => {
@@ -716,9 +741,7 @@ export const ReportBuilderHub: React.FC<ReportBuilderHubProps> = ({
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${s.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`}
                     />
-                    {s.isActive
-                      ? t('rbHub.active', 'Aktywny')
-                      : t('rbHub.paused', 'Wstrzymany')}
+                    {s.isActive ? t('rbHub.active', 'Aktywny') : t('rbHub.paused', 'Wstrzymany')}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">

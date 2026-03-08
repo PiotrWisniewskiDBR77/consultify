@@ -30,6 +30,9 @@ type DeviationCase = {
   periodEnd?: string | null;
   deviationSummary?: string | null;
   rcaText?: string | null;
+  evidenceText?: string | null;
+  evidenceRef?: string | null;
+  resolutionNotes?: string | null;
   actions?: DeviationAction[];
 };
 
@@ -65,6 +68,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
   const [newActionTitle, setNewActionTitle] = useState('');
   const [newActionDue, setNewActionDue] = useState('');
   const [caseBusy, setCaseBusy] = useState(false);
+  const [closeEvidenceText, setCloseEvidenceText] = useState('');
+  const [closeEvidenceRef, setCloseEvidenceRef] = useState('');
+  const [closeResolutionNotes, setCloseResolutionNotes] = useState('');
 
   const [newValue, setNewValue] = useState('');
   const [newDate, setNewDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -141,9 +147,15 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
         const first = Array.isArray(list) && list.length > 0 ? (list[0] as DeviationCase) : null;
         setOpenCase(first);
         setRcaDraft(first?.rcaText || '');
+        setCloseEvidenceText(first?.evidenceText || '');
+        setCloseEvidenceRef(first?.evidenceRef || '');
+        setCloseResolutionNotes(first?.resolutionNotes || '');
       } else {
         setOpenCase(null);
         setRcaDraft('');
+        setCloseEvidenceText('');
+        setCloseEvidenceRef('');
+        setCloseResolutionNotes('');
       }
 
       if (mappingsRes.status === 'fulfilled') {
@@ -444,16 +456,35 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
     }
   }, [openCase?.id, fetchData]);
 
+  const handleUpdateActionStatus = useCallback(
+    async (action: DeviationAction, status: DeviationAction['status']) => {
+      if (!openCase?.id) return;
+      setCaseBusy(true);
+      try {
+        await Api.put(`/benefits/deviation-cases/${openCase.id}/actions/${action.id}`, { status });
+        fetchData();
+      } finally {
+        setCaseBusy(false);
+      }
+    },
+    [openCase?.id, fetchData]
+  );
+
   const handleClose = useCallback(async () => {
     if (!openCase?.id) return;
+    if (!closeEvidenceText.trim() && !closeEvidenceRef.trim()) return;
     setCaseBusy(true);
     try {
-      await Api.post(`/benefits/deviation-cases/${openCase.id}/close`, {});
+      await Api.post(`/benefits/deviation-cases/${openCase.id}/close`, {
+        evidenceText: closeEvidenceText.trim() || undefined,
+        evidenceRef: closeEvidenceRef.trim() || undefined,
+        resolutionNotes: closeResolutionNotes.trim() || undefined,
+      });
       fetchData();
     } finally {
       setCaseBusy(false);
     }
-  }, [openCase?.id, fetchData]);
+  }, [openCase?.id, closeEvidenceRef, closeEvidenceText, closeResolutionNotes, fetchData]);
 
   return (
     <>
@@ -573,7 +604,9 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     </button>
                     <button
                       type="button"
-                      disabled={caseBusy}
+                      disabled={
+                        caseBusy || (!closeEvidenceText.trim() && !closeEvidenceRef.trim())
+                      }
                       onClick={() => void handleClose()}
                       className="h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors disabled:opacity-60"
                     >
@@ -615,9 +648,36 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                             key={a.id}
                             className="flex items-center justify-between gap-2 text-sm"
                           >
-                            <span className="text-slate-700 dark:text-slate-200 truncate">
-                              {a.title}
-                            </span>
+                            <button
+                              type="button"
+                              disabled={caseBusy}
+                              onClick={() =>
+                                void handleUpdateActionStatus(
+                                  a,
+                                  a.status === 'DONE' ? 'OPEN' : 'DONE'
+                                )
+                              }
+                              className="flex min-w-0 items-center gap-2 text-left"
+                            >
+                              <span
+                                className={`inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border text-[10px] ${
+                                  a.status === 'DONE'
+                                    ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
+                                    : 'border-slate-300 dark:border-navy-600 text-slate-400'
+                                }`}
+                              >
+                                {a.status === 'DONE' ? '✓' : ''}
+                              </span>
+                              <span
+                                className={`truncate ${
+                                  a.status === 'DONE'
+                                    ? 'text-slate-500 line-through dark:text-slate-400'
+                                    : 'text-slate-700 dark:text-slate-200'
+                                }`}
+                              >
+                                {a.title}
+                              </span>
+                            </button>
                             <span className="text-xs text-slate-500 dark:text-slate-400 shrink-0">
                               {a.status}
                               {a.dueDate ? ` · ${a.dueDate}` : ''}
@@ -653,6 +713,45 @@ export const KPITimeSeriesDrawer: React.FC<KPITimeSeriesDrawerProps> = ({
                     >
                       {t('results.deviation.addAction', 'Add action')}
                     </button>
+                  </div>
+
+                  <div className="space-y-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/60 dark:bg-navy-900/30 p-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t('results.deviation.closeEvidence', 'Closure evidence')}
+                    </div>
+                    <textarea
+                      className={`${inputCls} min-h-[88px] resize-none py-2`}
+                      value={closeEvidenceText}
+                      onChange={(e) => setCloseEvidenceText(e.target.value)}
+                      placeholder={t(
+                        'results.deviation.closeEvidenceText',
+                        'Describe the evidence that confirms the deviation is closed.'
+                      )}
+                    />
+                    <input
+                      className={inputCls}
+                      value={closeEvidenceRef}
+                      onChange={(e) => setCloseEvidenceRef(e.target.value)}
+                      placeholder={t(
+                        'results.deviation.closeEvidenceRef',
+                        'Link to task, report, attachment, or external proof (optional)'
+                      )}
+                    />
+                    <textarea
+                      className={`${inputCls} min-h-[72px] resize-none py-2`}
+                      value={closeResolutionNotes}
+                      onChange={(e) => setCloseResolutionNotes(e.target.value)}
+                      placeholder={t(
+                        'results.deviation.closeResolutionNotes',
+                        'Resolution notes for audit trail (optional)'
+                      )}
+                    />
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {t(
+                        'results.deviation.closeEvidenceHint',
+                        'At least one evidence field is required to close the case.'
+                      )}
+                    </div>
                   </div>
                 </div>
               ) : null}

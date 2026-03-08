@@ -109,7 +109,9 @@ function capturePageContext(): CapturedContext {
   };
 
   const matchedKey = Object.keys(moduleMap).find((key) => pathname.startsWith(key));
-  const moduleName = matchedKey ? moduleMap[matchedKey] : pathname.split('/').filter(Boolean)[0] || 'Home';
+  const moduleName = matchedKey
+    ? moduleMap[matchedKey]
+    : pathname.split('/').filter(Boolean)[0] || 'Home';
 
   const pageTitle = document.title?.replace(/\s*[-|].*$/, '') || moduleName;
 
@@ -188,7 +190,8 @@ export const FeedbackSidePanel: React.FC = () => {
     wasOpenRef.current = isOpen;
   }, [isOpen]);
 
-  const currentContext = capturedCtx?.routePath || (typeof window !== 'undefined' ? window.location.pathname : '/');
+  const currentContext =
+    capturedCtx?.routePath || (typeof window !== 'undefined' ? window.location.pathname : '/');
 
   // Fetch AI insights when panel opens
   useEffect(() => {
@@ -260,7 +263,8 @@ export const FeedbackSidePanel: React.FC = () => {
     setIsSubmitting(true);
     const ctx = capturedCtx || capturePageContext();
     const structuredBlocks: string[] = [];
-    if (stepsToReproduce.trim()) structuredBlocks.push(`Steps to reproduce:\n${stepsToReproduce.trim()}`);
+    if (stepsToReproduce.trim())
+      structuredBlocks.push(`Steps to reproduce:\n${stepsToReproduce.trim()}`);
     if (expectedBehavior.trim()) structuredBlocks.push(`Expected:\n${expectedBehavior.trim()}`);
     if (actualBehavior.trim()) structuredBlocks.push(`Actual:\n${actualBehavior.trim()}`);
     if (impactNotes.trim()) structuredBlocks.push(`Impact:\n${impactNotes.trim()}`);
@@ -352,13 +356,17 @@ export const FeedbackSidePanel: React.FC = () => {
       const data = json?.data || json;
       if (data?.title) setReportTitle(String(data.title));
       if (data?.summary) setMessage(String(data.summary));
-      if (data?.steps) setStepsToReproduce(Array.isArray(data.steps) ? data.steps.join('\n') : String(data.steps));
+      if (data?.steps)
+        setStepsToReproduce(Array.isArray(data.steps) ? data.steps.join('\n') : String(data.steps));
       if (data?.expected) setExpectedBehavior(String(data.expected));
       if (data?.actual) setActualBehavior(String(data.actual));
       if (data?.impact) setImpactNotes(String(data.impact));
-      if (Array.isArray(data?.questionsToClarify)) setAiQuestions(data.questionsToClarify.map(String));
+      if (Array.isArray(data?.questionsToClarify))
+        setAiQuestions(data.questionsToClarify.map(String));
       if (typeof data?.isLikelyBug === 'boolean' && reportType === 'BUG' && !data.isLikelyBug) {
-        toast(t('feedback.ai.maybeNotBug', 'AI suggests this might not be a bug. Please double-check.'));
+        toast(
+          t('feedback.ai.maybeNotBug', 'AI suggests this might not be a bug. Please double-check.')
+        );
       }
     } catch (e) {
       toast.error(t('feedback.ai.failed', 'AI assist failed. Please try again.'));
@@ -892,8 +900,16 @@ export const FeedbackSidePanel: React.FC = () => {
           icon: ThumbsDown,
           color: 'text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20',
         },
-        { rating: 3, icon: Meh, color: 'text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20' },
-        { rating: 4, icon: Smile, color: 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20' },
+        {
+          rating: 3,
+          icon: Meh,
+          color: 'text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20',
+        },
+        {
+          rating: 4,
+          icon: Smile,
+          color: 'text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20',
+        },
         {
           rating: 5,
           icon: ThumbsUp,

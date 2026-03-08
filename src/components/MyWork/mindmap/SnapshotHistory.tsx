@@ -93,23 +93,29 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
     toast.success(isPl ? 'Snapshot zapisany' : 'Snapshot saved', { duration: 1000 });
   }, [currentEdges, currentNodes, ideaId, isPl, snapshots]);
 
-  const handleRestore = useCallback((snapshot: MapSnapshot) => {
-    const confirmed = window.confirm(
-      isPl
-        ? `Przywrócić "${snapshot.label}"? Obecna mapa zostanie zastąpiona.`
-        : `Restore "${snapshot.label}"? Current map will be replaced.`
-    );
-    if (!confirmed) return;
-    onRestore(snapshot.nodes, snapshot.edges);
-    toast.success(isPl ? 'Przywrócono snapshot' : 'Snapshot restored', { duration: 1200 });
-    onClose();
-  }, [isPl, onClose, onRestore]);
+  const handleRestore = useCallback(
+    (snapshot: MapSnapshot) => {
+      const confirmed = window.confirm(
+        isPl
+          ? `Przywrócić "${snapshot.label}"? Obecna mapa zostanie zastąpiona.`
+          : `Restore "${snapshot.label}"? Current map will be replaced.`
+      );
+      if (!confirmed) return;
+      onRestore(snapshot.nodes, snapshot.edges);
+      toast.success(isPl ? 'Przywrócono snapshot' : 'Snapshot restored', { duration: 1200 });
+      onClose();
+    },
+    [isPl, onClose, onRestore]
+  );
 
-  const handleDelete = useCallback((id: string) => {
-    const updated = snapshots.filter((s) => s.id !== id);
-    setSnapshots(updated);
-    saveSnapshots(ideaId, updated);
-  }, [ideaId, snapshots]);
+  const handleDelete = useCallback(
+    (id: string) => {
+      const updated = snapshots.filter((s) => s.id !== id);
+      setSnapshots(updated);
+      saveSnapshots(ideaId, updated);
+    },
+    [ideaId, snapshots]
+  );
 
   const formatTime = useCallback((ts: number) => {
     const d = new Date(ts);
@@ -128,7 +134,10 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
               {isPl ? 'Historia snapshotów' : 'Snapshot History'}
             </h3>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
@@ -158,7 +167,9 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
                 >
                   <Calendar size={12} className="text-slate-400 shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">{snap.label}</div>
+                    <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                      {snap.label}
+                    </div>
                     <div className="text-[9px] text-slate-400 mt-0.5">
                       {formatTime(snap.timestamp)} · {snap.nodeCount} nodes · {snap.edgeCount} edges
                     </div>

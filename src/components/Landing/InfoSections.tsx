@@ -593,13 +593,19 @@ export const InfoSections: React.FC = () => {
                     {t('landing.howItWorks.teaser.title', 'See it live (20s)')}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {t('landing.howItWorks.teaser.subtitle', 'Public teaser. Full version after login.')}
+                    {t(
+                      'landing.howItWorks.teaser.subtitle',
+                      'Public teaser. Full version after login.'
+                    )}
                   </p>
                 </div>
                 <button
                   onClick={async () => {
                     try {
-                      howItWorksTeaserRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      howItWorksTeaserRef.current?.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                      });
                       await howItWorksTeaserRef.current?.play();
                     } catch {
                       // ignore autoplay restrictions
@@ -619,11 +625,15 @@ export const InfoSections: React.FC = () => {
                   controls
                   onPlay={() => {
                     setHowItWorksTeaserEnded(false);
-                    trackFunnelEvent('landing_video_teaser_started', { filmId: LANDING_FILMS.film2.id });
+                    trackFunnelEvent('landing_video_teaser_started', {
+                      filmId: LANDING_FILMS.film2.id,
+                    });
                   }}
                   onEnded={() => {
                     setHowItWorksTeaserEnded(true);
-                    trackFunnelEvent('landing_video_teaser_completed', { filmId: LANDING_FILMS.film2.id });
+                    trackFunnelEvent('landing_video_teaser_completed', {
+                      filmId: LANDING_FILMS.film2.id,
+                    });
                   }}
                 >
                   <source src={LANDING_FILMS.film2.teaserUrl} type="video/mp4" />

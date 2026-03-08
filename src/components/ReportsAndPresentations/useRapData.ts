@@ -315,13 +315,13 @@ export function useRapActions() {
           headers: getHeaders(),
         });
         if (res.ok) {
-          toast.success(t('rap.toast.archived', 'Archived'));
+          toast.success(t('rap.toast.deleted', 'Deleted'));
           return true;
         }
       } catch {
         /* noop */
       }
-      toast.error(t('rap.toast.archiveFailed', 'Failed to archive'));
+      toast.error(t('rap.toast.deleteFailed', 'Failed to delete'));
       return false;
     },
     [t]
@@ -335,13 +335,13 @@ export function useRapActions() {
           headers: getHeaders(),
         });
         if (res.ok) {
-          toast.success(t('rap.toast.archived', 'Archived'));
+          toast.success(t('rap.toast.deleted', 'Deleted'));
           return true;
         }
       } catch {
         /* noop */
       }
-      toast.error(t('rap.toast.archiveFailed', 'Failed to archive'));
+      toast.error(t('rap.toast.deleteFailed', 'Failed to delete'));
       return false;
     },
     [t]

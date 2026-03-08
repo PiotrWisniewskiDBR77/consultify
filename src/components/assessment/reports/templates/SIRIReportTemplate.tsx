@@ -313,7 +313,9 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">{a.name}</div>
                   </td>
-                  <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">{a.buildingBlock}</td>
+                  <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
+                    {a.buildingBlock}
+                  </td>
                   <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
                     {String(a.dimension || '').replace(/_/g, ' ')}
                   </td>
@@ -353,17 +355,10 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
             </thead>
             <tbody>
               {compute16DScores(data).map((s) => (
-                <tr
-                  key={s.areaId}
-                  className="border-t border-slate-200/60 dark:border-navy-800"
-                >
+                <tr key={s.areaId} className="border-t border-slate-200/60 dark:border-navy-800">
                   <td className="py-2 pr-4">
-                    <div className="font-semibold text-navy-900 dark:text-white">
-                      {s.areaPL}
-                    </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {s.areaName}
-                    </div>
+                    <div className="font-semibold text-navy-900 dark:text-white">{s.areaPL}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{s.areaName}</div>
                   </td>
                   <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
                     {s.buildingBlock}
@@ -383,9 +378,7 @@ export const SIRIReportTemplate: React.FC<SIRIReportTemplateProps> = ({
                         -{s.gap.toFixed(1)}
                       </span>
                     ) : (
-                      <span className="text-emerald-600 dark:text-emerald-400 text-xs">
-                        OK
-                      </span>
+                      <span className="text-emerald-600 dark:text-emerald-400 text-xs">OK</span>
                     )}
                   </td>
                 </tr>

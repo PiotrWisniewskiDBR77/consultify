@@ -217,9 +217,7 @@ const CustomerLifecycleView: React.FC = () => {
             </div>
             <div>
               <p className="text-2xl font-bold text-slate-900 dark:text-white">{stages.length}</p>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
-                Lifecycle Stages
-              </span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Lifecycle Stages</span>
             </div>
           </div>
         </Card>
@@ -247,9 +245,7 @@ const CustomerLifecycleView: React.FC = () => {
               <p className="text-2xl font-bold text-slate-900 dark:text-white">
                 {stats?.totalTransitions || 0}
               </p>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
-                Total Transitions
-              </span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Total Transitions</span>
             </div>
           </div>
         </Card>
@@ -262,9 +258,7 @@ const CustomerLifecycleView: React.FC = () => {
               <p className="text-2xl font-bold text-slate-900 dark:text-white">
                 {transitions.length}
               </p>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
-                Recent Transitions
-              </span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Recent Transitions</span>
             </div>
           </div>
         </Card>
@@ -278,9 +272,7 @@ const CustomerLifecycleView: React.FC = () => {
         {stages.length === 0 ? (
           <div className="text-center py-12">
             <Circle className="w-16 h-16 text-gray-600 dark:text-gray-400 mx-auto mb-4" />
-            <p className="text-slate-600 dark:text-slate-400 mb-4">
-              No lifecycle stages defined
-            </p>
+            <p className="text-slate-600 dark:text-slate-400 mb-4">No lifecycle stages defined</p>
             <button
               onClick={() => setShowCreateModal(true)}
               className="text-blue-400 hover:text-blue-300"

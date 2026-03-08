@@ -41,7 +41,10 @@ function deriveTrend(kpi: { latestValue?: number | null; prevValue?: number | nu
   return 'stable';
 }
 
-function deriveNeedsEntry(kpi: { latestMeasurementDate?: string | null; measurementFrequency?: string }): boolean {
+function deriveNeedsEntry(kpi: {
+  latestMeasurementDate?: string | null;
+  measurementFrequency?: string;
+}): boolean {
   const latest = kpi.latestMeasurementDate;
   if (!latest) return true;
   const d = new Date(latest);
@@ -78,8 +81,7 @@ export const OperationalAnalysisView: React.FC = () => {
         Api.get('/benefits/kpi-mappings'),
       ]);
 
-      const kpisPayload: any =
-        kpisRes.status === 'fulfilled' ? (kpisRes.value as any) : null;
+      const kpisPayload: any = kpisRes.status === 'fulfilled' ? (kpisRes.value as any) : null;
       const kpisList = (kpisPayload?.data || []) as any[];
 
       const mappingsPayload: any =
@@ -89,8 +91,12 @@ export const OperationalAnalysisView: React.FC = () => {
       const byKpi = new Map<string, Array<{ id: string; name: string }>>();
       for (const m of mappingsList || []) {
         const kpiId = String((m as any).kpiId || (m as any).kpi_id || '').trim();
-        const initiativeId = String((m as any).initiativeId || (m as any).initiative_id || '').trim();
-        const initiativeName = String((m as any).initiativeName || (m as any).initiative_name || '').trim();
+        const initiativeId = String(
+          (m as any).initiativeId || (m as any).initiative_id || ''
+        ).trim();
+        const initiativeName = String(
+          (m as any).initiativeName || (m as any).initiative_name || ''
+        ).trim();
         if (!kpiId || !initiativeId) continue;
         const arr = byKpi.get(kpiId) || [];
         if (!arr.some((x) => x.id === initiativeId)) {
@@ -105,7 +111,11 @@ export const OperationalAnalysisView: React.FC = () => {
         const legacyInitiativeName = k?.initiativeName || k?.initiative_name || null;
         const derivedInitiativeName =
           legacyInitiativeName ||
-          (linked.length === 1 ? linked[0]?.name : linked.length > 1 ? `${linked[0]?.name} +${linked.length - 1}` : null);
+          (linked.length === 1
+            ? linked[0]?.name
+            : linked.length > 1
+              ? `${linked[0]?.name} +${linked.length - 1}`
+              : null);
 
         return {
           ...k,
@@ -334,10 +344,7 @@ export const OperationalAnalysisView: React.FC = () => {
                     );
                     const max = series.length ? Math.max(...series.map((v) => Math.abs(v))) : 0;
                     const base = max > 0 ? max : 1;
-                    const bars =
-                      series.length > 0
-                        ? series
-                        : [0];
+                    const bars = series.length > 0 ? series : [0];
                     return bars.map((v, idx) => (
                       <div
                         key={idx}
@@ -409,15 +416,14 @@ export const OperationalAnalysisView: React.FC = () => {
                     );
                     const max = series.length ? Math.max(...series.map((v) => Math.abs(v))) : 0;
                     const base = max > 0 ? max : 1;
-                    const bars =
-                      series.length > 0
-                        ? series
-                        : [0];
+                    const bars = series.length > 0 ? series : [0];
                     return bars.map((v, idx) => (
                       <div
                         key={idx}
                         className="flex-1 rounded-sm bg-slate-600 min-h-[2px]"
-                        style={{ height: `${Math.max(12, Math.round((Math.abs(v) / base) * 100))}%` }}
+                        style={{
+                          height: `${Math.max(12, Math.round((Math.abs(v) / base) * 100))}%`,
+                        }}
                       />
                     ));
                   })()}

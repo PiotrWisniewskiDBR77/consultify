@@ -32,20 +32,23 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
   const [extractedIdeas, setExtractedIdeas] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    if (file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setText(String(ev.target?.result || ''));
-      };
-      reader.readAsText(file);
-    } else {
-      toast.error(isPl ? 'Obsługiwane formaty: .txt, .md' : 'Supported formats: .txt, .md');
-    }
-  }, [isPl]);
+      if (file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setText(String(ev.target?.result || ''));
+        };
+        reader.readAsText(file);
+      } else {
+        toast.error(isPl ? 'Obsługiwane formaty: .txt, .md' : 'Supported formats: .txt, .md');
+      }
+    },
+    [isPl]
+  );
 
   const extractIdeas = useCallback(async () => {
     if (!text.trim()) return;
@@ -72,7 +75,9 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
     if (extractedIdeas.length === 0) return;
     onAddNodes(extractedIdeas);
     toast.success(
-      isPl ? `Dodano ${extractedIdeas.length} pomysłów z dokumentu` : `Added ${extractedIdeas.length} ideas from document`,
+      isPl
+        ? `Dodano ${extractedIdeas.length} pomysłów z dokumentu`
+        : `Added ${extractedIdeas.length} ideas from document`,
       { duration: 1500 }
     );
     setText('');
@@ -92,7 +97,10 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
               {isPl ? 'Dokument → Mapa' : 'Document → Map'}
             </h3>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
@@ -112,7 +120,9 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
             value={text}
             onChange={(e) => setText(e.target.value)}
             rows={6}
-            placeholder={isPl ? 'Lub wklej tekst dokumentu tutaj...' : 'Or paste document text here...'}
+            placeholder={
+              isPl ? 'Lub wklej tekst dokumentu tutaj...' : 'Or paste document text here...'
+            }
             className="w-full px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none mb-3"
           />
 
@@ -124,8 +134,12 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
             {loading
-              ? (isPl ? 'Ekstrakcja...' : 'Extracting...')
-              : (isPl ? 'Wyodrębnij pomysły z AI' : 'Extract ideas with AI')}
+              ? isPl
+                ? 'Ekstrakcja...'
+                : 'Extracting...'
+              : isPl
+                ? 'Wyodrębnij pomysły z AI'
+                : 'Extract ideas with AI'}
           </button>
 
           {/* Extracted ideas */}
@@ -136,7 +150,10 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
               </div>
               <div className="space-y-1 max-h-[200px] overflow-y-auto">
                 {extractedIdeas.map((idea, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-blue-500/5 border border-blue-400/10">
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 p-2 rounded-xl bg-blue-500/5 border border-blue-400/10"
+                  >
                     <Sparkles size={10} className="text-blue-500 shrink-0" />
                     <span className="text-[11px] text-slate-700 dark:text-slate-200">{idea}</span>
                   </div>
@@ -147,7 +164,10 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
         </div>
 
         <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
-          <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+          >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button
@@ -156,7 +176,9 @@ export const DocumentToMap: React.FC<DocumentToMapProps> = ({
             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-blue-500/15 to-cyan-500/10 text-blue-700 dark:text-blue-300 hover:from-blue-500/25 hover:to-cyan-500/15 border border-blue-500/10 transition-all disabled:opacity-40"
           >
             <FileText size={12} />
-            {isPl ? `Dodaj ${extractedIdeas.length} pomysłów` : `Add ${extractedIdeas.length} ideas`}
+            {isPl
+              ? `Dodaj ${extractedIdeas.length} pomysłów`
+              : `Add ${extractedIdeas.length} ideas`}
           </button>
         </div>
       </div>

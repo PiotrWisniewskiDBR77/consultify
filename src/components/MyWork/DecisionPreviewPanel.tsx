@@ -221,7 +221,9 @@ export const DecisionPreviewBody: React.FC<{
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className={statusPill}>{isPolish ? status : status[0] + status.slice(1).toLowerCase()}</span>
+            <span className={statusPill}>
+              {isPolish ? status : status[0] + status.slice(1).toLowerCase()}
+            </span>
             <span className={priPill}>
               {isPolish
                 ? pri === 'CRITICAL'
@@ -580,7 +582,10 @@ export const DecisionPreviewFooter: React.FC<{
             >
               <AlarmClockOff size={14} />
               {isPolish ? 'Odłóż' : 'Snooze'}
-              <ChevronDown size={12} className={`transition-transform ${snoozeOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                size={12}
+                className={`transition-transform ${snoozeOpen ? 'rotate-180' : ''}`}
+              />
             </button>
             {snoozeOpen ? (
               <>
@@ -655,7 +660,11 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
     try {
       setLoading(true);
       const d = (await Api.getDecision(decisionId)) as DecisionPreviewData;
-      setDecision({ ...d, id: String((d as any)?.id || decisionId), title: String((d as any)?.title || 'Decision') });
+      setDecision({
+        ...d,
+        id: String((d as any)?.id || decisionId),
+        title: String((d as any)?.title || 'Decision'),
+      });
       try {
         const b = (await Api.get(`/my-work/decisions/${decisionId}/brief`)) as DecisionBrief;
         setBrief(b && typeof (b as any)?.summary === 'string' ? b : null);
@@ -854,7 +863,9 @@ export const DecisionPreviewPanel: React.FC<DecisionPreviewPanelProps> = ({
     try {
       await Api.escalateDecision(
         decisionId,
-        isPolish ? 'Eskalacja z preview — wymaga reakcji' : 'Escalated from preview — needs attention'
+        isPolish
+          ? 'Eskalacja z preview — wymaga reakcji'
+          : 'Escalated from preview — needs attention'
       );
       toast.success(isPolish ? 'Eskaluowano' : 'Escalated');
       onDidMutate?.();

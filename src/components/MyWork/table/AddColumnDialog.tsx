@@ -85,7 +85,12 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
   }, []);
 
   const handleAdd = useCallback(() => {
-    const key = name.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') || `col_${Date.now()}`;
+    const key =
+      name
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '') || `col_${Date.now()}`;
     if (existingKeys.includes(key)) return;
 
     const optionsList = options
@@ -128,7 +133,10 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
           <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
             {isPl ? 'Dodaj kolumnę' : 'Add Column'}
           </h3>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={16} className="text-slate-400" />
           </button>
         </div>
@@ -203,7 +211,9 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                 className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
               />
               <p className="mt-1 text-[9px] text-slate-400">
-                {isPl ? 'Użyj {nazwa_kolumny} aby odwołać się do wartości' : 'Use {column_key} to reference values'}
+                {isPl
+                  ? 'Użyj {nazwa_kolumny} aby odwołać się do wartości'
+                  : 'Use {column_key} to reference values'}
               </p>
             </div>
           )}
@@ -216,7 +226,11 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
               <textarea
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
-                placeholder={isPl ? 'Oceń ryzyko na podstawie kontekstu firmy...' : 'Assess risk based on company context...'}
+                placeholder={
+                  isPl
+                    ? 'Oceń ryzyko na podstawie kontekstu firmy...'
+                    : 'Assess risk based on company context...'
+                }
                 rows={3}
                 className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30 resize-none"
               />
@@ -227,7 +241,10 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60">
           <button
-            onClick={() => { reset(); onClose(); }}
+            onClick={() => {
+              reset();
+              onClose();
+            }}
             className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
           >
             {isPl ? 'Anuluj' : 'Cancel'}

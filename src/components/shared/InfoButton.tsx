@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { CARD_DOCS, CardDocumentation } from '../../config/cardDocumentation';
+import { getCardDocumentation } from '../../config/cardDocumentation';
 
 // CSS for card info button animation
 const infoAnimationStyle = `
@@ -63,7 +63,7 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const docs = (CARD_DOCS as any)[cardId];
+  const docs = getCardDocumentation(cardId);
 
   // Close panel when clicking outside
   useEffect(() => {
@@ -270,23 +270,28 @@ export const InfoButton: React.FC<InfoButtonProps> = ({
                     Related Documentation
                   </h3>
                   <div className="space-y-2">
-                    {docs.relatedDocs.map((doc: any, index: number) => (
-                      <a
-                        key={index}
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors group"
-                      >
-                        <span className="text-sm text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                          {doc.title}
-                        </span>
-                        <ExternalLink
-                          size={14}
-                          className="text-slate-400 dark:text-slate-500 group-hover:text-blue-500 ml-auto"
-                        />
-                      </a>
-                    ))}
+                    {docs.relatedDocs.map((doc: any, index: number) => {
+                      const normalizedDoc =
+                        typeof doc === 'string' ? { title: doc, url: '#' } : doc;
+
+                      return (
+                        <a
+                          key={index}
+                          href={normalizedDoc.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors group"
+                        >
+                          <span className="text-sm text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                            {normalizedDoc.title}
+                          </span>
+                          <ExternalLink
+                            size={14}
+                            className="text-slate-400 dark:text-slate-500 group-hover:text-blue-500 ml-auto"
+                          />
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               )}

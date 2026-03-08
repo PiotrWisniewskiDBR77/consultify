@@ -43,8 +43,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Drzewo problemów MECE',
     category: 'strategy',
     archetype: 'D',
-    description: 'Decompose a complex problem into mutually exclusive, collectively exhaustive branches to ensure complete coverage.',
-    descriptionPL: 'Dekompozycja złożonego problemu na wzajemnie wykluczające się, łącznie wyczerpujące gałęzie.',
+    description:
+      'Decompose a complex problem into mutually exclusive, collectively exhaustive branches to ensure complete coverage.',
+    descriptionPL:
+      'Dekompozycja złożonego problemu na wzajemnie wykluczające się, łącznie wyczerpujące gałęzie.',
     tags: ['problem-solving', 'decomposition', 'analysis'],
     outputMapping: {
       reportSections: ['Problem Statement', 'Issue Branches', 'Key Findings'],
@@ -58,8 +60,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Strategia oparta na hipotezach',
     category: 'strategy',
     archetype: 'D',
-    description: 'Structure strategic analysis around testable hypotheses with supporting/refuting evidence.',
-    descriptionPL: 'Strukturyzacja analizy strategicznej wokół testowalnych hipotez z dowodami za i przeciw.',
+    description:
+      'Structure strategic analysis around testable hypotheses with supporting/refuting evidence.',
+    descriptionPL:
+      'Strukturyzacja analizy strategicznej wokół testowalnych hipotez z dowodami za i przeciw.',
     tags: ['hypothesis', 'evidence', 'strategy'],
     outputMapping: {
       reportSections: ['Hypothesis Set', 'Evidence Matrix', 'Conclusions'],
@@ -73,8 +77,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Zasada piramidy',
     category: 'strategy',
     archetype: 'D',
-    description: 'Structure communication top-down: answer first, then supporting arguments grouped logically.',
-    descriptionPL: 'Strukturyzacja komunikacji top-down: odpowiedź najpierw, potem argumenty pogrupowane logicznie.',
+    description:
+      'Structure communication top-down: answer first, then supporting arguments grouped logically.',
+    descriptionPL:
+      'Strukturyzacja komunikacji top-down: odpowiedź najpierw, potem argumenty pogrupowane logicznie.',
     tags: ['communication', 'structure', 'storytelling'],
     outputMapping: {
       reportSections: ['Governing Thought', 'Key Arguments', 'Supporting Detail'],
@@ -88,8 +94,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Analiza PESTEL',
     category: 'strategy',
     archetype: 'A',
-    description: 'Scan macro-environment across Political, Economic, Social, Technological, Environmental, and Legal factors.',
-    descriptionPL: 'Skan makrootoczenia: czynniki polityczne, ekonomiczne, społeczne, technologiczne, środowiskowe i prawne.',
+    description:
+      'Scan macro-environment across Political, Economic, Social, Technological, Environmental, and Legal factors.',
+    descriptionPL:
+      'Skan makrootoczenia: czynniki polityczne, ekonomiczne, społeczne, technologiczne, środowiskowe i prawne.',
     tags: ['macro', 'environment', 'scanning'],
     outputMapping: {
       reportSections: ['Factor Analysis', 'Impact Assessment', 'Strategic Implications'],
@@ -103,8 +111,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Sizing rynku (TAM/SAM/SOM)',
     category: 'strategy',
     archetype: 'H',
-    description: 'Estimate total, serviceable, and obtainable market sizes using top-down and bottom-up approaches.',
-    descriptionPL: 'Szacowanie rynku całkowitego, adresowalnego i osiągalnego metodami top-down i bottom-up.',
+    description:
+      'Estimate total, serviceable, and obtainable market sizes using top-down and bottom-up approaches.',
+    descriptionPL:
+      'Szacowanie rynku całkowitego, adresowalnego i osiągalnego metodami top-down i bottom-up.',
     tags: ['market', 'sizing', 'economics'],
     outputMapping: {
       reportSections: ['Market Definition', 'Sizing Methodology', 'TAM/SAM/SOM Estimates'],
@@ -118,7 +128,8 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Segmentacja klientów',
     category: 'strategy',
     archetype: 'C',
-    description: 'Divide customer base into actionable segments based on needs, value, and behavior.',
+    description:
+      'Divide customer base into actionable segments based on needs, value, and behavior.',
     descriptionPL: 'Podział bazy klientów na segmenty wg potrzeb, wartości i zachowań.',
     tags: ['customers', 'segmentation', 'targeting'],
     outputMapping: {
@@ -133,8 +144,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Jobs To Be Done',
     category: 'strategy',
     archetype: 'A',
-    description: 'Identify the functional, emotional, and social jobs customers hire products to do.',
-    descriptionPL: 'Identyfikacja funkcjonalnych, emocjonalnych i społecznych zadań, do których klienci „zatrudniają" produkty.',
+    description:
+      'Identify the functional, emotional, and social jobs customers hire products to do.',
+    descriptionPL:
+      'Identyfikacja funkcjonalnych, emocjonalnych i społecznych zadań, do których klienci „zatrudniają" produkty.',
     tags: ['innovation', 'customer', 'needs'],
     outputMapping: {
       reportSections: ['Job Map', 'Unmet Needs', 'Opportunity Scoring'],
@@ -148,8 +161,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Benchmarking konkurencyjny',
     category: 'strategy',
     archetype: 'E',
-    description: 'Compare performance against competitors across key dimensions to identify gaps and advantages.',
-    descriptionPL: 'Porównanie wyników z konkurencją w kluczowych wymiarach — identyfikacja luk i przewag.',
+    description:
+      'Compare performance against competitors across key dimensions to identify gaps and advantages.',
+    descriptionPL:
+      'Porównanie wyników z konkurencją w kluczowych wymiarach — identyfikacja luk i przewag.',
     tags: ['competition', 'benchmarking', 'analysis'],
     outputMapping: {
       reportSections: ['Benchmark Dimensions', 'Competitor Profiles', 'Gap Analysis'],
@@ -163,8 +178,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Strategie generyczne Portera',
     category: 'strategy',
     archetype: 'B',
-    description: 'Choose between cost leadership, differentiation, or focus as the basis for competitive advantage.',
-    descriptionPL: 'Wybór między przywództwem kosztowym, różnicowaniem lub koncentracją jako bazą przewagi.',
+    description:
+      'Choose between cost leadership, differentiation, or focus as the basis for competitive advantage.',
+    descriptionPL:
+      'Wybór między przywództwem kosztowym, różnicowaniem lub koncentracją jako bazą przewagi.',
     tags: ['porter', 'competitive-advantage', 'positioning'],
     outputMapping: {
       reportSections: ['Strategic Options', 'Fit Assessment', 'Recommended Strategy'],
@@ -178,7 +195,8 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Pozycjonowanie strategiczne',
     category: 'strategy',
     archetype: 'B',
-    description: 'Define where to play and how to win by mapping competitive position on key dimensions.',
+    description:
+      'Define where to play and how to win by mapping competitive position on key dimensions.',
     descriptionPL: 'Określenie „gdzie grać" i „jak wygrać" przez mapowanie pozycji konkurencyjnej.',
     tags: ['positioning', 'where-to-play', 'how-to-win'],
     outputMapping: {
@@ -193,8 +211,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Analiza VRIO',
     category: 'strategy',
     archetype: 'E',
-    description: 'Evaluate resources for Value, Rarity, Imitability, and Organization to identify sustainable advantages.',
-    descriptionPL: 'Ocena zasobów pod kątem wartości, rzadkości, imitowalności i organizacji — trwałe przewagi.',
+    description:
+      'Evaluate resources for Value, Rarity, Imitability, and Organization to identify sustainable advantages.',
+    descriptionPL:
+      'Ocena zasobów pod kątem wartości, rzadkości, imitowalności i organizacji — trwałe przewagi.',
     tags: ['resources', 'competitive-advantage', 'capabilities'],
     outputMapping: {
       reportSections: ['Resource Inventory', 'VRIO Assessment', 'Advantage Map'],
@@ -208,8 +228,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Kluczowe kompetencje',
     category: 'strategy',
     archetype: 'A',
-    description: 'Identify and leverage core competencies that provide access to markets, customer benefits, and are hard to imitate.',
-    descriptionPL: 'Identyfikacja kluczowych kompetencji dających dostęp do rynków, korzyści klientom i trudnych do imitacji.',
+    description:
+      'Identify and leverage core competencies that provide access to markets, customer benefits, and are hard to imitate.',
+    descriptionPL:
+      'Identyfikacja kluczowych kompetencji dających dostęp do rynków, korzyści klientom i trudnych do imitacji.',
     tags: ['competencies', 'capabilities', 'advantage'],
     outputMapping: {
       reportSections: ['Competency Identification', 'Leverage Assessment', 'Development Plan'],
@@ -223,8 +245,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Strategia błękitnego oceanu',
     category: 'strategy',
     archetype: 'A',
-    description: 'Create uncontested market space by simultaneously pursuing differentiation and low cost.',
-    descriptionPL: 'Tworzenie niekwestionowanej przestrzeni rynkowej przez jednoczesne różnicowanie i niski koszt.',
+    description:
+      'Create uncontested market space by simultaneously pursuing differentiation and low cost.',
+    descriptionPL:
+      'Tworzenie niekwestionowanej przestrzeni rynkowej przez jednoczesne różnicowanie i niski koszt.',
     tags: ['innovation', 'market-creation', 'differentiation'],
     outputMapping: {
       reportSections: ['Strategy Canvas', 'Value Innovation', 'New Market Space'],
@@ -238,8 +262,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Siatka ERRC',
     category: 'strategy',
     archetype: 'A',
-    description: 'Eliminate, Reduce, Raise, Create — four actions framework to reshape value curves.',
-    descriptionPL: 'Eliminuj, Redukuj, Podnieś, Stwórz — cztery akcje do przebudowy krzywej wartości.',
+    description:
+      'Eliminate, Reduce, Raise, Create — four actions framework to reshape value curves.',
+    descriptionPL:
+      'Eliminuj, Redukuj, Podnieś, Stwórz — cztery akcje do przebudowy krzywej wartości.',
     tags: ['blue-ocean', 'value-curve', 'innovation'],
     outputMapping: {
       reportSections: ['Current Value Curve', 'ERRC Actions', 'New Value Curve'],
@@ -253,8 +279,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Macierz GE-McKinsey 9-Box',
     category: 'strategy',
     archetype: 'C',
-    description: 'Prioritize business units or products on industry attractiveness vs competitive strength.',
-    descriptionPL: 'Priorytetyzacja jednostek biznesowych wg atrakcyjności branży vs siły konkurencyjnej.',
+    description:
+      'Prioritize business units or products on industry attractiveness vs competitive strength.',
+    descriptionPL:
+      'Priorytetyzacja jednostek biznesowych wg atrakcyjności branży vs siły konkurencyjnej.',
     tags: ['portfolio', 'prioritization', 'matrix'],
     outputMapping: {
       reportSections: ['Scoring Criteria', 'Unit Placement', 'Investment Recommendations'],
@@ -269,7 +297,8 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     category: 'strategy',
     archetype: 'H',
     description: 'Model how unit costs decline predictably with cumulative production volume.',
-    descriptionPL: 'Modelowanie spadku kosztów jednostkowych wraz ze skumulowanym wolumenem produkcji.',
+    descriptionPL:
+      'Modelowanie spadku kosztów jednostkowych wraz ze skumulowanym wolumenem produkcji.',
     tags: ['cost', 'scale', 'economics'],
     outputMapping: {
       reportSections: ['Cost Baseline', 'Experience Rate', 'Competitive Implications'],
@@ -298,8 +327,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Trzy horyzonty',
     category: 'strategy',
     archetype: 'G',
-    description: 'Balance investment across core business (H1), emerging opportunities (H2), and future bets (H3).',
-    descriptionPL: 'Balansowanie inwestycji: core business (H1), nowe szanse (H2), przyszłe zakłady (H3).',
+    description:
+      'Balance investment across core business (H1), emerging opportunities (H2), and future bets (H3).',
+    descriptionPL:
+      'Balansowanie inwestycji: core business (H1), nowe szanse (H2), przyszłe zakłady (H3).',
     tags: ['horizons', 'innovation', 'portfolio'],
     outputMapping: {
       reportSections: ['Horizon Classification', 'Investment Balance', 'Migration Plan'],
@@ -328,8 +359,10 @@ const STRATEGY_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Zrównoważona karta wyników',
     category: 'strategy',
     archetype: 'E',
-    description: 'Translate strategy into objectives and measures across Financial, Customer, Process, and Learning perspectives.',
-    descriptionPL: 'Przełożenie strategii na cele i mierniki w perspektywach: finansowej, klienta, procesów i rozwoju.',
+    description:
+      'Translate strategy into objectives and measures across Financial, Customer, Process, and Learning perspectives.',
+    descriptionPL:
+      'Przełożenie strategii na cele i mierniki w perspektywach: finansowej, klienta, procesów i rozwoju.',
     tags: ['scorecard', 'kpi', 'strategy-execution'],
     outputMapping: {
       reportSections: ['Strategy Map', 'Perspective Objectives', 'KPI Definitions'],
@@ -350,8 +383,10 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Mapowanie strumienia wartości (VSM)',
     category: 'operations',
     archetype: 'F',
-    description: 'Visualize end-to-end material and information flow to identify waste and improvement opportunities.',
-    descriptionPL: 'Wizualizacja przepływu materiałów i informacji end-to-end — identyfikacja marnotrawstw.',
+    description:
+      'Visualize end-to-end material and information flow to identify waste and improvement opportunities.',
+    descriptionPL:
+      'Wizualizacja przepływu materiałów i informacji end-to-end — identyfikacja marnotrawstw.',
     tags: ['lean', 'flow', 'waste'],
     outputMapping: {
       reportSections: ['Current State Map', 'Waste Identification', 'Future State Design'],
@@ -380,11 +415,18 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'DMAIC',
     category: 'operations',
     archetype: 'G',
-    description: 'Define-Measure-Analyze-Improve-Control cycle for data-driven process improvement.',
-    descriptionPL: 'Cykl Define-Measure-Analyze-Improve-Control do doskonalenia procesów opartego na danych.',
+    description:
+      'Define-Measure-Analyze-Improve-Control cycle for data-driven process improvement.',
+    descriptionPL:
+      'Cykl Define-Measure-Analyze-Improve-Control do doskonalenia procesów opartego na danych.',
     tags: ['six-sigma', 'improvement', 'data-driven'],
     outputMapping: {
-      reportSections: ['Problem Definition', 'Measurement Plan', 'Root Cause Analysis', 'Improvement Actions'],
+      reportSections: [
+        'Problem Definition',
+        'Measurement Plan',
+        'Root Cause Analysis',
+        'Improvement Actions',
+      ],
       deckSlides: ['DMAIC Phases', 'Results Summary'],
       initiativeCategories: ['quality', 'process-improvement'],
     },
@@ -395,8 +437,10 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Kaizen / PDCA',
     category: 'operations',
     archetype: 'G',
-    description: 'Plan-Do-Check-Act continuous improvement cycle for incremental operational gains.',
-    descriptionPL: 'Cykl Plan-Do-Check-Act ciągłego doskonalenia dla przyrostowych usprawnień operacyjnych.',
+    description:
+      'Plan-Do-Check-Act continuous improvement cycle for incremental operational gains.',
+    descriptionPL:
+      'Cykl Plan-Do-Check-Act ciągłego doskonalenia dla przyrostowych usprawnień operacyjnych.',
     tags: ['kaizen', 'continuous-improvement', 'pdca'],
     outputMapping: {
       reportSections: ['Current Condition', 'Target Condition', 'Action Plan'],
@@ -410,8 +454,10 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Gemba Walk',
     category: 'operations',
     archetype: 'F',
-    description: 'Structured observation at the place where work happens to identify waste and improvement ideas.',
-    descriptionPL: 'Strukturyzowana obserwacja w miejscu pracy — identyfikacja marnotrawstw i pomysłów na usprawnienia.',
+    description:
+      'Structured observation at the place where work happens to identify waste and improvement ideas.',
+    descriptionPL:
+      'Strukturyzowana obserwacja w miejscu pracy — identyfikacja marnotrawstw i pomysłów na usprawnienia.',
     tags: ['lean', 'observation', 'gemba'],
     outputMapping: {
       reportSections: ['Observation Log', 'Findings Summary', 'Action Items'],
@@ -425,8 +471,10 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Praca standardowa',
     category: 'operations',
     archetype: 'F',
-    description: 'Document the current best-known method for performing a task to ensure consistency and enable improvement.',
-    descriptionPL: 'Dokumentacja najlepszej znanej metody wykonania zadania — powtarzalność i baza do usprawnień.',
+    description:
+      'Document the current best-known method for performing a task to ensure consistency and enable improvement.',
+    descriptionPL:
+      'Dokumentacja najlepszej znanej metody wykonania zadania — powtarzalność i baza do usprawnień.',
     tags: ['lean', 'standardization', 'sop'],
     outputMapping: {
       reportSections: ['Work Sequence', 'Takt Time Analysis', 'Standard Work Sheet'],
@@ -440,8 +488,10 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: '5S Organizacja stanowiska pracy',
     category: 'operations',
     archetype: 'A',
-    description: 'Sort, Set in Order, Shine, Standardize, Sustain — workplace organization methodology.',
-    descriptionPL: 'Selekcja, Systematyka, Sprzątanie, Standaryzacja, Samodyscyplina — metodologia organizacji.',
+    description:
+      'Sort, Set in Order, Shine, Standardize, Sustain — workplace organization methodology.',
+    descriptionPL:
+      'Selekcja, Systematyka, Sprzątanie, Standaryzacja, Samodyscyplina — metodologia organizacji.',
     tags: ['lean', '5s', 'workplace'],
     outputMapping: {
       reportSections: ['Current State Audit', '5S Action Plan', 'Sustain Checklist'],
@@ -456,7 +506,8 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     category: 'operations',
     archetype: 'D',
     description: 'Drill to root causes using 5 Whys and Ishikawa diagrams to prevent recurrence.',
-    descriptionPL: 'Dotarcie do przyczyn źródłowych metodą 5 Why i diagramem Ishikawy — zapobieganie nawrotom.',
+    descriptionPL:
+      'Dotarcie do przyczyn źródłowych metodą 5 Why i diagramem Ishikawy — zapobieganie nawrotom.',
     tags: ['root-cause', 'problem-solving', 'quality'],
     outputMapping: {
       reportSections: ['Problem Statement', 'Cause Analysis', 'Countermeasures'],
@@ -470,8 +521,10 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Kanban i limity WIP',
     category: 'operations',
     archetype: 'F',
-    description: 'Visualize workflow, limit work-in-progress, and manage flow to improve lead time.',
-    descriptionPL: 'Wizualizacja przepływu pracy, limitowanie WIP i zarządzanie flow — poprawa lead time.',
+    description:
+      'Visualize workflow, limit work-in-progress, and manage flow to improve lead time.',
+    descriptionPL:
+      'Wizualizacja przepływu pracy, limitowanie WIP i zarządzanie flow — poprawa lead time.',
     tags: ['kanban', 'flow', 'wip'],
     outputMapping: {
       reportSections: ['Board Design', 'WIP Policy', 'Flow Metrics'],
@@ -485,7 +538,8 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Analiza wąskich gardeł (TOC)',
     category: 'operations',
     archetype: 'F',
-    description: 'Identify and exploit the system constraint using Theory of Constraints principles.',
+    description:
+      'Identify and exploit the system constraint using Theory of Constraints principles.',
     descriptionPL: 'Identyfikacja i eksploatacja ograniczenia systemowego wg Teorii Ograniczeń.',
     tags: ['toc', 'bottleneck', 'throughput'],
     outputMapping: {
@@ -500,8 +554,10 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'SMED (przezbrojenie w jednocyfrowej liczbie minut)',
     category: 'operations',
     archetype: 'F',
-    description: 'Reduce changeover time by converting internal setup to external and streamlining steps.',
-    descriptionPL: 'Redukcja czasu przezbrojenia przez konwersję czynności wewnętrznych na zewnętrzne.',
+    description:
+      'Reduce changeover time by converting internal setup to external and streamlining steps.',
+    descriptionPL:
+      'Redukcja czasu przezbrojenia przez konwersję czynności wewnętrznych na zewnętrzne.',
     tags: ['smed', 'changeover', 'lean'],
     outputMapping: {
       reportSections: ['Step Classification', 'Conversion Plan', 'Time Reduction Estimate'],
@@ -530,8 +586,10 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'TPM (Totalne utrzymanie ruchu)',
     category: 'operations',
     archetype: 'A',
-    description: 'Engage all employees in proactive equipment maintenance to eliminate breakdowns and defects.',
-    descriptionPL: 'Zaangażowanie wszystkich pracowników w proaktywne utrzymanie ruchu — eliminacja awarii i defektów.',
+    description:
+      'Engage all employees in proactive equipment maintenance to eliminate breakdowns and defects.',
+    descriptionPL:
+      'Zaangażowanie wszystkich pracowników w proaktywne utrzymanie ruchu — eliminacja awarii i defektów.',
     tags: ['tpm', 'maintenance', 'reliability'],
     outputMapping: {
       reportSections: ['Pillar Assessment', 'Loss Structure', 'Implementation Roadmap'],
@@ -545,8 +603,10 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Karty kontrolne SPC',
     category: 'operations',
     archetype: 'E',
-    description: 'Monitor process stability using statistical control charts to distinguish common from special cause variation.',
-    descriptionPL: 'Monitorowanie stabilności procesu kartami kontrolnymi — rozróżnienie przyczyn zwykłych od specjalnych.',
+    description:
+      'Monitor process stability using statistical control charts to distinguish common from special cause variation.',
+    descriptionPL:
+      'Monitorowanie stabilności procesu kartami kontrolnymi — rozróżnienie przyczyn zwykłych od specjalnych.',
     tags: ['spc', 'quality', 'statistics'],
     outputMapping: {
       reportSections: ['Control Chart Setup', 'Stability Analysis', 'Out-of-Control Actions'],
@@ -561,7 +621,8 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     category: 'operations',
     archetype: 'E',
     description: 'Quantify how well a process meets specification limits using Cp and Cpk indices.',
-    descriptionPL: 'Kwantyfikacja zdolności procesu do spełnienia limitów specyfikacji wskaźnikami Cp i Cpk.',
+    descriptionPL:
+      'Kwantyfikacja zdolności procesu do spełnienia limitów specyfikacji wskaźnikami Cp i Cpk.',
     tags: ['capability', 'quality', 'six-sigma'],
     outputMapping: {
       reportSections: ['Specification Limits', 'Capability Indices', 'Improvement Targets'],
@@ -575,8 +636,10 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'FMEA (Analiza przyczyn i skutków wad)',
     category: 'operations',
     archetype: 'E',
-    description: 'Systematically identify potential failure modes, assess risk, and prioritize preventive actions.',
-    descriptionPL: 'Systematyczna identyfikacja potencjalnych wad, ocena ryzyka i priorytetyzacja działań zapobiegawczych.',
+    description:
+      'Systematically identify potential failure modes, assess risk, and prioritize preventive actions.',
+    descriptionPL:
+      'Systematyczna identyfikacja potencjalnych wad, ocena ryzyka i priorytetyzacja działań zapobiegawczych.',
     tags: ['fmea', 'risk', 'quality'],
     outputMapping: {
       reportSections: ['Failure Mode Inventory', 'RPN Scoring', 'Mitigation Plan'],
@@ -590,8 +653,10 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Analiza zapasów ABC-XYZ',
     category: 'operations',
     archetype: 'C',
-    description: 'Classify inventory by value (ABC) and demand variability (XYZ) to set differentiated policies.',
-    descriptionPL: 'Klasyfikacja zapasów wg wartości (ABC) i zmienności popytu (XYZ) — zróżnicowane polityki.',
+    description:
+      'Classify inventory by value (ABC) and demand variability (XYZ) to set differentiated policies.',
+    descriptionPL:
+      'Klasyfikacja zapasów wg wartości (ABC) i zmienności popytu (XYZ) — zróżnicowane polityki.',
     tags: ['inventory', 'classification', 'supply-chain'],
     outputMapping: {
       reportSections: ['Classification Matrix', 'Policy Recommendations', 'Financial Impact'],
@@ -605,8 +670,10 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Zapas bezpieczeństwa i punkt zamawiania',
     category: 'operations',
     archetype: 'H',
-    description: 'Calculate optimal safety stock levels and reorder points balancing service level and inventory cost.',
-    descriptionPL: 'Obliczanie optymalnych zapasów bezpieczeństwa i punktów zamawiania — balans poziomu obsługi i kosztów.',
+    description:
+      'Calculate optimal safety stock levels and reorder points balancing service level and inventory cost.',
+    descriptionPL:
+      'Obliczanie optymalnych zapasów bezpieczeństwa i punktów zamawiania — balans poziomu obsługi i kosztów.',
     tags: ['inventory', 'replenishment', 'optimization'],
     outputMapping: {
       reportSections: ['Demand Analysis', 'Safety Stock Calculation', 'Policy Parameters'],
@@ -621,7 +688,8 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     category: 'operations',
     archetype: 'G',
     description: 'Align demand, supply, and financial plans in a monthly cross-functional cadence.',
-    descriptionPL: 'Wyrównanie planów popytu, podaży i finansów w miesięcznym cyklu cross-funkcyjnym.',
+    descriptionPL:
+      'Wyrównanie planów popytu, podaży i finansów w miesięcznym cyklu cross-funkcyjnym.',
     tags: ['s&op', 'planning', 'alignment'],
     outputMapping: {
       reportSections: ['Process Design', 'Cadence Definition', 'KPI Framework'],
@@ -635,8 +703,10 @@ const OPERATIONS_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Model SCOR',
     category: 'operations',
     archetype: 'F',
-    description: 'Map supply chain processes using Plan-Source-Make-Deliver-Return-Enable framework.',
-    descriptionPL: 'Mapowanie procesów łańcucha dostaw wg frameworka Plan-Source-Make-Deliver-Return-Enable.',
+    description:
+      'Map supply chain processes using Plan-Source-Make-Deliver-Return-Enable framework.',
+    descriptionPL:
+      'Mapowanie procesów łańcucha dostaw wg frameworka Plan-Source-Make-Deliver-Return-Enable.',
     tags: ['scor', 'supply-chain', 'process'],
     outputMapping: {
       reportSections: ['Process Mapping', 'Performance Attributes', 'Best Practice Gaps'],
@@ -657,8 +727,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Ocena transformacji cyfrowej',
     category: 'digital_transformation',
     archetype: 'E',
-    description: 'Assess organizational digital maturity across key dimensions to set transformation priorities.',
-    descriptionPL: 'Ocena dojrzałości cyfrowej organizacji w kluczowych wymiarach — priorytetyzacja transformacji.',
+    description:
+      'Assess organizational digital maturity across key dimensions to set transformation priorities.',
+    descriptionPL:
+      'Ocena dojrzałości cyfrowej organizacji w kluczowych wymiarach — priorytetyzacja transformacji.',
     tags: ['assessment', 'maturity', 'digital'],
     outputMapping: {
       reportSections: ['Maturity Scores', 'Gap Analysis', 'Priority Roadmap'],
@@ -672,8 +744,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Docelowy model operacyjny (TOM)',
     category: 'digital_transformation',
     archetype: 'A',
-    description: 'Design the future-state operating model covering people, process, technology, and governance.',
-    descriptionPL: 'Projektowanie docelowego modelu operacyjnego: ludzie, procesy, technologia, governance.',
+    description:
+      'Design the future-state operating model covering people, process, technology, and governance.',
+    descriptionPL:
+      'Projektowanie docelowego modelu operacyjnego: ludzie, procesy, technologia, governance.',
     tags: ['operating-model', 'design', 'transformation'],
     outputMapping: {
       reportSections: ['Current vs Target Model', 'Design Principles', 'Transition Plan'],
@@ -687,8 +761,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Roadmapa transformacji',
     category: 'digital_transformation',
     archetype: 'G',
-    description: 'Sequence transformation initiatives into waves with dependencies, milestones, and value checkpoints.',
-    descriptionPL: 'Sekwencjonowanie inicjatyw transformacyjnych w fale z zależnościami, kamieniami milowymi i checkpointami wartości.',
+    description:
+      'Sequence transformation initiatives into waves with dependencies, milestones, and value checkpoints.',
+    descriptionPL:
+      'Sekwencjonowanie inicjatyw transformacyjnych w fale z zależnościami, kamieniami milowymi i checkpointami wartości.',
     tags: ['roadmap', 'sequencing', 'transformation'],
     outputMapping: {
       reportSections: ['Wave Design', 'Dependencies', 'Value Milestones'],
@@ -702,8 +778,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Business case korzyści i śledzenie wartości',
     category: 'digital_transformation',
     archetype: 'H',
-    description: 'Build benefits cases and track value realization throughout the transformation lifecycle.',
-    descriptionPL: 'Budowanie business case korzyści i śledzenie realizacji wartości w cyklu transformacji.',
+    description:
+      'Build benefits cases and track value realization throughout the transformation lifecycle.',
+    descriptionPL:
+      'Budowanie business case korzyści i śledzenie realizacji wartości w cyklu transformacji.',
     tags: ['benefits', 'value', 'tracking'],
     outputMapping: {
       reportSections: ['Benefits Register', 'Value Tracking Framework', 'Realization Report'],
@@ -717,8 +795,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Mapa architektury stanu obecnego',
     category: 'digital_transformation',
     archetype: 'F',
-    description: 'Document the current application, data, and technology landscape as a baseline for transformation.',
-    descriptionPL: 'Dokumentacja obecnego krajobrazu aplikacji, danych i technologii jako bazy do transformacji.',
+    description:
+      'Document the current application, data, and technology landscape as a baseline for transformation.',
+    descriptionPL:
+      'Dokumentacja obecnego krajobrazu aplikacji, danych i technologii jako bazy do transformacji.',
     tags: ['architecture', 'current-state', 'mapping'],
     outputMapping: {
       reportSections: ['Application Landscape', 'Integration Map', 'Technical Debt Assessment'],
@@ -732,8 +812,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Blueprint architektury docelowej',
     category: 'digital_transformation',
     archetype: 'F',
-    description: 'Design the target-state architecture aligned with business strategy and technology standards.',
-    descriptionPL: 'Projektowanie architektury docelowej zgodnej ze strategią biznesową i standardami technologicznymi.',
+    description:
+      'Design the target-state architecture aligned with business strategy and technology standards.',
+    descriptionPL:
+      'Projektowanie architektury docelowej zgodnej ze strategią biznesową i standardami technologicznymi.',
     tags: ['architecture', 'target-state', 'blueprint'],
     outputMapping: {
       reportSections: ['Architecture Principles', 'Target Blueprint', 'Migration Path'],
@@ -747,8 +829,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Racjonalizacja portfela aplikacji',
     category: 'digital_transformation',
     archetype: 'C',
-    description: 'Assess and rationalize the application portfolio using TIME (Tolerate, Invest, Migrate, Eliminate).',
-    descriptionPL: 'Ocena i racjonalizacja portfela aplikacji metodą TIME (Toleruj, Inwestuj, Migruj, Eliminuj).',
+    description:
+      'Assess and rationalize the application portfolio using TIME (Tolerate, Invest, Migrate, Eliminate).',
+    descriptionPL:
+      'Ocena i racjonalizacja portfela aplikacji metodą TIME (Toleruj, Inwestuj, Migruj, Eliminuj).',
     tags: ['applications', 'rationalization', 'portfolio'],
     outputMapping: {
       reportSections: ['Portfolio Inventory', 'TIME Classification', 'Rationalization Plan'],
@@ -762,8 +846,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Standardy technologiczne i guardrails',
     category: 'digital_transformation',
     archetype: 'A',
-    description: 'Define technology standards, approved patterns, and guardrails to guide consistent technology decisions.',
-    descriptionPL: 'Definicja standardów technologicznych, zatwierdzonych wzorców i guardrails dla spójnych decyzji.',
+    description:
+      'Define technology standards, approved patterns, and guardrails to guide consistent technology decisions.',
+    descriptionPL:
+      'Definicja standardów technologicznych, zatwierdzonych wzorców i guardrails dla spójnych decyzji.',
     tags: ['standards', 'governance', 'technology'],
     outputMapping: {
       reportSections: ['Standards Catalog', 'Decision Framework', 'Compliance Checklist'],
@@ -777,8 +863,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Strategia danych i model operacyjny danych',
     category: 'digital_transformation',
     archetype: 'A',
-    description: 'Define how the organization will collect, manage, and leverage data as a strategic asset.',
-    descriptionPL: 'Określenie jak organizacja będzie zbierać, zarządzać i wykorzystywać dane jako zasób strategiczny.',
+    description:
+      'Define how the organization will collect, manage, and leverage data as a strategic asset.',
+    descriptionPL:
+      'Określenie jak organizacja będzie zbierać, zarządzać i wykorzystywać dane jako zasób strategiczny.',
     tags: ['data', 'strategy', 'operating-model'],
     outputMapping: {
       reportSections: ['Data Vision', 'Operating Model Design', 'Capability Roadmap'],
@@ -792,8 +880,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Zarządzanie danymi (Data Governance)',
     category: 'digital_transformation',
     archetype: 'A',
-    description: 'Establish roles, policies, and processes for managing data quality, access, and lifecycle.',
-    descriptionPL: 'Ustanowienie ról, polityk i procesów zarządzania jakością, dostępem i cyklem życia danych.',
+    description:
+      'Establish roles, policies, and processes for managing data quality, access, and lifecycle.',
+    descriptionPL:
+      'Ustanowienie ról, polityk i procesów zarządzania jakością, dostępem i cyklem życia danych.',
     tags: ['data', 'governance', 'quality'],
     outputMapping: {
       reportSections: ['Governance Framework', 'Roles & Responsibilities', 'Policy Catalog'],
@@ -819,11 +909,13 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
   {
     slug: 'ai-use-case-factory',
     name: 'AI Use-Case Factory',
-    namePL: 'Fabryka use-case\'ów AI',
+    namePL: "Fabryka use-case'ów AI",
     category: 'digital_transformation',
     archetype: 'C',
-    description: 'Systematically identify, prioritize, and pipeline AI use cases from ideation to production.',
-    descriptionPL: 'Systematyczna identyfikacja, priorytetyzacja i pipeline use-case\'ów AI od idei do produkcji.',
+    description:
+      'Systematically identify, prioritize, and pipeline AI use cases from ideation to production.',
+    descriptionPL:
+      "Systematyczna identyfikacja, priorytetyzacja i pipeline use-case'ów AI od idei do produkcji.",
     tags: ['ai', 'use-cases', 'pipeline'],
     outputMapping: {
       reportSections: ['Use Case Inventory', 'Feasibility Scoring', 'Pipeline Design'],
@@ -837,8 +929,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Process Mining',
     category: 'digital_transformation',
     archetype: 'F',
-    description: 'Discover actual process flows from event logs to identify deviations, bottlenecks, and automation opportunities.',
-    descriptionPL: 'Odkrywanie rzeczywistych przepływów procesów z logów zdarzeń — odchylenia, wąskie gardła, automatyzacja.',
+    description:
+      'Discover actual process flows from event logs to identify deviations, bottlenecks, and automation opportunities.',
+    descriptionPL:
+      'Odkrywanie rzeczywistych przepływów procesów z logów zdarzeń — odchylenia, wąskie gardła, automatyzacja.',
     tags: ['process-mining', 'discovery', 'automation'],
     outputMapping: {
       reportSections: ['Process Discovery', 'Conformance Analysis', 'Optimization Opportunities'],
@@ -852,8 +946,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Ocena potencjału automatyzacji',
     category: 'digital_transformation',
     archetype: 'C',
-    description: 'Scan processes for automation potential, score feasibility, and build a prioritized automation backlog.',
-    descriptionPL: 'Skanowanie procesów pod potencjał automatyzacji, scoring wykonalności i priorytetyzowany backlog.',
+    description:
+      'Scan processes for automation potential, score feasibility, and build a prioritized automation backlog.',
+    descriptionPL:
+      'Skanowanie procesów pod potencjał automatyzacji, scoring wykonalności i priorytetyzowany backlog.',
     tags: ['automation', 'assessment', 'backlog'],
     outputMapping: {
       reportSections: ['Opportunity Scan', 'Feasibility Scoring', 'Automation Backlog'],
@@ -867,8 +963,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Mapa cyfryzacji ścieżki klienta',
     category: 'digital_transformation',
     archetype: 'F',
-    description: 'Map the customer journey and identify digitization opportunities at each touchpoint.',
-    descriptionPL: 'Mapowanie ścieżki klienta i identyfikacja możliwości cyfryzacji w każdym punkcie styku.',
+    description:
+      'Map the customer journey and identify digitization opportunities at each touchpoint.',
+    descriptionPL:
+      'Mapowanie ścieżki klienta i identyfikacja możliwości cyfryzacji w każdym punkcie styku.',
     tags: ['customer-journey', 'digitization', 'experience'],
     outputMapping: {
       reportSections: ['Journey Map', 'Digital Opportunities', 'Experience Improvements'],
@@ -882,8 +980,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Produktowy model operacyjny',
     category: 'digital_transformation',
     archetype: 'A',
-    description: 'Shift from project to product mindset with persistent teams, backlogs, and outcome metrics.',
-    descriptionPL: 'Przejście z myślenia projektowego na produktowe: stałe zespoły, backlogi i metryki wyników.',
+    description:
+      'Shift from project to product mindset with persistent teams, backlogs, and outcome metrics.',
+    descriptionPL:
+      'Przejście z myślenia projektowego na produktowe: stałe zespoły, backlogi i metryki wyników.',
     tags: ['product', 'operating-model', 'agile'],
     outputMapping: {
       reportSections: ['Product Taxonomy', 'Team Topology', 'Metrics Framework'],
@@ -897,8 +997,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Agile w skali',
     category: 'digital_transformation',
     archetype: 'G',
-    description: 'Scale agile practices across the organization with appropriate frameworks, cadences, and governance.',
-    descriptionPL: 'Skalowanie praktyk agile w organizacji z odpowiednimi frameworkami, kadencjami i governance.',
+    description:
+      'Scale agile practices across the organization with appropriate frameworks, cadences, and governance.',
+    descriptionPL:
+      'Skalowanie praktyk agile w organizacji z odpowiednimi frameworkami, kadencjami i governance.',
     tags: ['agile', 'scaling', 'organization'],
     outputMapping: {
       reportSections: ['Scaling Framework Selection', 'Implementation Plan', 'Governance Design'],
@@ -912,8 +1014,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Analiza luk kompetencyjnych',
     category: 'digital_transformation',
     archetype: 'E',
-    description: 'Map current vs required capabilities and skills to build targeted development and hiring plans.',
-    descriptionPL: 'Mapowanie obecnych vs wymaganych kompetencji i umiejętności — plany rozwoju i rekrutacji.',
+    description:
+      'Map current vs required capabilities and skills to build targeted development and hiring plans.',
+    descriptionPL:
+      'Mapowanie obecnych vs wymaganych kompetencji i umiejętności — plany rozwoju i rekrutacji.',
     tags: ['skills', 'capabilities', 'gap-analysis'],
     outputMapping: {
       reportSections: ['Capability Map', 'Gap Assessment', 'Development Plan'],
@@ -927,8 +1031,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Plan zarządzania zmianą (ADKAR)',
     category: 'digital_transformation',
     archetype: 'G',
-    description: 'Plan organizational change using ADKAR: Awareness, Desire, Knowledge, Ability, Reinforcement.',
-    descriptionPL: 'Planowanie zmiany organizacyjnej wg ADKAR: Świadomość, Chęć, Wiedza, Umiejętność, Utrwalenie.',
+    description:
+      'Plan organizational change using ADKAR: Awareness, Desire, Knowledge, Ability, Reinforcement.',
+    descriptionPL:
+      'Planowanie zmiany organizacyjnej wg ADKAR: Świadomość, Chęć, Wiedza, Umiejętność, Utrwalenie.',
     tags: ['change-management', 'adkar', 'people'],
     outputMapping: {
       reportSections: ['Stakeholder Analysis', 'ADKAR Assessment', 'Change Plan'],
@@ -942,8 +1048,10 @@ const DIGITAL_TRANSFORMATION_TEMPLATES: ConsultingTemplate[] = [
     namePL: 'Ocena ryzyk cyfrowych',
     category: 'digital_transformation',
     archetype: 'E',
-    description: 'Identify and assess digital-specific risks across cyber, data, technology, and third-party domains.',
-    descriptionPL: 'Identyfikacja i ocena ryzyk cyfrowych: cyber, dane, technologia, dostawcy zewnętrzni.',
+    description:
+      'Identify and assess digital-specific risks across cyber, data, technology, and third-party domains.',
+    descriptionPL:
+      'Identyfikacja i ocena ryzyk cyfrowych: cyber, dane, technologia, dostawcy zewnętrzni.',
     tags: ['risk', 'digital', 'cybersecurity'],
     outputMapping: {
       reportSections: ['Risk Inventory', 'Impact Assessment', 'Mitigation Plan'],
@@ -963,9 +1071,7 @@ const ALL_TEMPLATES: ConsultingTemplate[] = [
   ...DIGITAL_TRANSFORMATION_TEMPLATES,
 ];
 
-const SLUG_INDEX = new Map<string, ConsultingTemplate>(
-  ALL_TEMPLATES.map((t) => [t.slug, t])
-);
+const SLUG_INDEX = new Map<string, ConsultingTemplate>(ALL_TEMPLATES.map((t) => [t.slug, t]));
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -987,7 +1093,12 @@ export function getAllTemplates(): ConsultingTemplate[] {
   return [...ALL_TEMPLATES];
 }
 
-export { ALL_TEMPLATES, STRATEGY_TEMPLATES, OPERATIONS_TEMPLATES, DIGITAL_TRANSFORMATION_TEMPLATES };
+export {
+  ALL_TEMPLATES,
+  DIGITAL_TRANSFORMATION_TEMPLATES,
+  OPERATIONS_TEMPLATES,
+  STRATEGY_TEMPLATES,
+};
 
 // ---------------------------------------------------------------------------
 // API-backed functions (DB first, in-memory fallback)

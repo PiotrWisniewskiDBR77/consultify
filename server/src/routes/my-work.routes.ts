@@ -11,29 +11,48 @@
  * - Uses small state tables created with IF NOT EXISTS for triage/focus persistence.
  */
 
-import path from 'path';
 import { type Response, Router } from 'express';
 import multer from 'multer';
+import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../middleware/demoGuard.middleware.js';
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import { requireAudit } from '../middleware/requireAudit.middleware.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import type { OutcomeType } from '../services/ideaClusterService.js';
+import { createOutcomeFromCluster, materializeClusters } from '../services/ideaClusterService.js';
+import inboxService from '../services/inboxService.js';
 import NotificationService from '../services/notificationService.js';
+import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
-import { normalizeGraphForStorage, validateAndNormalizeGraph } from '../validators/ideaWorkspaceGraph.validators.js';
-import { materializeClusters, createOutcomeFromCluster } from '../services/ideaClusterService.js';
-import type { OutcomeType } from '../services/ideaClusterService.js';
-import inboxService from '../services/inboxService.js';
-import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
-import { z } from 'zod';
+import {
+  ensureLatestSchema,
+  normalizeGraphForStorage,
+  validateAndNormalizeGraph,
+} from '../validators/ideaWorkspaceGraph.validators.js';
 
 const router = Router();
+
+const isPostgres = process.env.DB_TYPE === 'postgres';
+const nowSql = () => (isPostgres ? 'CURRENT_TIMESTAMP' : "datetime('now')");
+const daysAgoSql = (days: number) =>
+  isPostgres ? `CURRENT_TIMESTAMP - INTERVAL '${days} days'` : `datetime('now', '-${days} days')`;
+const daysAheadSql = (days: number) =>
+  isPostgres ? `CURRENT_TIMESTAMP + INTERVAL '${days} days'` : `datetime('now', '+${days} days')`;
+const weekBucketSql = (column: string) =>
+  isPostgres
+    ? `to_char(date_trunc('week', ${column}), 'IYYY-"W"IW')`
+    : `strftime('%Y-W%W', ${column})`;
+const dayDiffSql = (endColumn: string, startColumn: string) =>
+  isPostgres
+    ? `EXTRACT(EPOCH FROM (${endColumn} - ${startColumn})) / 86400.0`
+    : `julianday(${endColumn}) - julianday(${startColumn})`;
 
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
@@ -342,10 +361,7 @@ const mapNotificationToInboxType = (type?: string | null): InboxItemType => {
 };
 
 /** V4-INBX-01: Map item to canonical type for routing/filtering */
-const toCanonicalItemType = (
-  key: InboxItemKey,
-  inboxType: InboxItemType
-): CanonicalItemType => {
+const toCanonicalItemType = (key: InboxItemKey, inboxType: InboxItemType): CanonicalItemType => {
   if (key.startsWith('task:')) return 'task';
   if (key.startsWith('decision:')) return 'decision';
   if (key.startsWith('notification:')) {
@@ -369,7 +385,11 @@ const suggestTriageAction = (
 
   // SLA-breached overdue items → suggest accept_today (urgent)
   if (item.sla?.isBreached && item.section === 'overdue_sla_breach') {
-    return { action: 'accept_today', reason: 'SLA breached — needs immediate attention', confidence: 0.98 };
+    return {
+      action: 'accept_today',
+      reason: 'SLA breached — needs immediate attention',
+      confidence: 0.98,
+    };
   }
 
   // Critical/high urgency decisions → suggest accept_today
@@ -377,12 +397,20 @@ const suggestTriageAction = (
     item.type === 'decision_request' &&
     (item.urgency === 'critical' || item.urgency === 'high')
   ) {
-    return { action: 'accept_today', reason: 'High-priority decision awaiting you', confidence: 0.9 };
+    return {
+      action: 'accept_today',
+      reason: 'High-priority decision awaiting you',
+      confidence: 0.9,
+    };
   }
 
   // Low urgency system notifications → suggest archive
   if (item.urgency === 'low' && item.type === 'new_assignment' && !item.dueDate) {
-    return { action: 'schedule', reason: 'Low priority, no due date — consider scheduling', confidence: 0.75 };
+    return {
+      action: 'schedule',
+      reason: 'Low priority, no due date — consider scheduling',
+      confidence: 0.75,
+    };
   }
 
   return {};
@@ -532,7 +560,8 @@ const linkGraphAddEdge = async (params: {
   } catch (e: any) {
     // Best-effort idempotency: unique index may reject duplicates.
     const msg = String(e?.message || '');
-    if (msg.toLowerCase().includes('unique') || msg.toLowerCase().includes('duplicate')) return null;
+    if (msg.toLowerCase().includes('unique') || msg.toLowerCase().includes('duplicate'))
+      return null;
     throw e;
   }
 };
@@ -646,7 +675,7 @@ router.get(
     const taskCols = await getTableColumns('tasks');
     const customFieldsSelect = taskCols.has('custom_fields_json')
       ? 't.custom_fields_json as customFields'
-      : "NULL as customFields";
+      : 'NULL as customFields';
 
     const rows =
       (await queryHelpers.queryAll<any>(
@@ -798,7 +827,8 @@ router.post(
     const sourceIdRaw = req.body?.sourceId ?? req.body?.source_id;
     const sourceType =
       typeof sourceTypeRaw === 'string' && sourceTypeRaw.trim() ? sourceTypeRaw.trim() : null;
-    const sourceId = typeof sourceIdRaw === 'string' && sourceIdRaw.trim() ? sourceIdRaw.trim() : null;
+    const sourceId =
+      typeof sourceIdRaw === 'string' && sourceIdRaw.trim() ? sourceIdRaw.trim() : null;
 
     const id = uuidv4();
     const cols = await getTableColumns('tasks');
@@ -2100,7 +2130,14 @@ router.post(
            triaged_at = excluded.triaged_at,
            from_ai = excluded.from_ai,
            ai_confidence = excluded.ai_confidence`,
-        [userId, itemKey, action, params ? JSON.stringify(params) : null, triagedAt, confidence ?? null]
+        [
+          userId,
+          itemKey,
+          action,
+          params ? JSON.stringify(params) : null,
+          triagedAt,
+          confidence ?? null,
+        ]
       );
     } else {
       await queryHelpers.queryRun(
@@ -2137,13 +2174,12 @@ router.post(
       return res.json({ success: false, message: 'Undo not available (schema not migrated)' });
     }
 
-    const last =
-      await queryHelpers.queryOne<{ item_key: string; triaged_at: string }>(
-        `SELECT item_key, triaged_at FROM my_work_inbox_triage
+    const last = await queryHelpers.queryOne<{ item_key: string; triaged_at: string }>(
+      `SELECT item_key, triaged_at FROM my_work_inbox_triage
          WHERE user_id = ? AND from_ai = 1
          ORDER BY triaged_at DESC LIMIT 1`,
-        [userId]
-      );
+      [userId]
+    );
 
     if (!last) {
       return res.json({ success: false, message: 'No AI triage to undo' });
@@ -2180,7 +2216,9 @@ router.post(
       if (!key) continue;
       aiItems.set(
         key,
-        typeof row?.confidence === 'number' && Number.isFinite(row.confidence) ? row.confidence : null
+        typeof row?.confidence === 'number' && Number.isFinite(row.confidence)
+          ? row.confidence
+          : null
       );
     }
 
@@ -2218,7 +2256,14 @@ router.post(
              triaged_at = excluded.triaged_at,
              from_ai = excluded.from_ai,
              ai_confidence = excluded.ai_confidence`,
-          [userId, itemKey, action, params ? JSON.stringify(params) : null, triagedAt, aiItems.get(itemKey)]
+          [
+            userId,
+            itemKey,
+            action,
+            params ? JSON.stringify(params) : null,
+            triagedAt,
+            aiItems.get(itemKey),
+          ]
         );
       } else {
         await queryHelpers.queryRun(
@@ -2486,10 +2531,9 @@ router.get(
       max_today: number;
       max_week: number;
       capacity_aware: number;
-    }>(
-      `SELECT max_today, max_week, capacity_aware FROM my_work_focus_rules WHERE user_id = ?`,
-      [userId]
-    );
+    }>(`SELECT max_today, max_week, capacity_aware FROM my_work_focus_rules WHERE user_id = ?`, [
+      userId,
+    ]);
     if (!row) {
       return res.json({ maxToday: 5, maxWeek: 15, capacityAware: true });
     }
@@ -2517,9 +2561,13 @@ router.put(
     }
 
     const maxToday =
-      typeof req.body?.maxToday === 'number' ? Math.max(1, Math.min(20, req.body.maxToday)) : undefined;
+      typeof req.body?.maxToday === 'number'
+        ? Math.max(1, Math.min(20, req.body.maxToday))
+        : undefined;
     const maxWeek =
-      typeof req.body?.maxWeek === 'number' ? Math.max(1, Math.min(50, req.body.maxWeek)) : undefined;
+      typeof req.body?.maxWeek === 'number'
+        ? Math.max(1, Math.min(50, req.body.maxWeek))
+        : undefined;
     const capacityAware =
       typeof req.body?.capacityAware === 'boolean' ? req.body.capacityAware : undefined;
 
@@ -2768,7 +2816,7 @@ router.get(
         `SELECT assignee_id, COUNT(*) as cnt
          FROM tasks
          WHERE organization_id = ? AND completed_at IS NOT NULL
-           AND completed_at >= datetime('now', '-7 days')
+          AND completed_at >= ${daysAgoSql(7)}
          GROUP BY assignee_id`,
         [orgId]
       ),
@@ -2851,7 +2899,7 @@ router.get(
         const overdue = await queryHelpers.queryAll<{ id: string; title: string }>(
           `SELECT id, title FROM tasks 
            WHERE assignee_id = ? AND organization_id = ? AND status != 'done' 
-           AND due_date IS NOT NULL AND due_date < datetime('now')
+           AND due_date IS NOT NULL AND due_date < ${nowSql()}
            ORDER BY due_date ASC LIMIT 3`,
           [userId, orgId]
         );
@@ -2860,15 +2908,20 @@ router.get(
       }
 
       const decCols = await getTableColumns('decisions');
+      const decisionDueColumn = decCols.has('due_date')
+        ? 'due_date'
+        : decCols.has('deadline')
+          ? 'deadline'
+          : null;
       if (decCols.has('decision_maker_id')) {
         const pendingDecs = await queryHelpers.queryAll<{
           id: string;
           title: string;
-          due_date: string;
+          due_date: string | null;
         }>(
-          `SELECT id, title, due_date FROM decisions 
+          `SELECT id, title, ${decisionDueColumn ? `${decisionDueColumn} as due_date` : 'NULL as due_date'} FROM decisions 
            WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? AND status = 'pending'
-           ORDER BY due_date ASC NULLS LAST LIMIT 3`,
+           ORDER BY ${decisionDueColumn ? `${decisionDueColumn} ASC NULLS LAST,` : ''} updated_at DESC LIMIT 3`,
           [userId, userId, orgId]
         );
         summary.pendingDecisions = pendingDecs || [];
@@ -2891,8 +2944,8 @@ router.get(
       if (await requireTables(res, ['my_work_focus_state'])) {
         const todayCount = await queryHelpers.queryOne<{ cnt: number }>(
           `SELECT COUNT(*) as cnt FROM my_work_focus_state 
-           WHERE user_id = ? AND organization_id = ? AND focus_column = 'today'`,
-          [userId, orgId]
+           WHERE user_id = ? AND column_name = 'today'`,
+          [userId]
         );
         summary.focusTodayCount = todayCount?.cnt || 0;
       }
@@ -3352,14 +3405,16 @@ router.post(
       [id, userId, orgId]
     );
 
-    req.emitAuditEvent?.({
-      actorType: req.body?.fromAI ? 'AI' : 'USER',
-      action: 'IDEA_CREATE',
-      resourceType: 'idea',
-      resourceId: id,
-      after: { title, body, tags, sourceType },
-      metadata: { fromAI: Boolean(req.body?.fromAI) },
-    }).catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
+    req
+      .emitAuditEvent?.({
+        actorType: req.body?.fromAI ? 'AI' : 'USER',
+        action: 'IDEA_CREATE',
+        resourceType: 'idea',
+        resourceId: id,
+        after: { title, body, tags, sourceType },
+        metadata: { fromAI: Boolean(req.body?.fromAI) },
+      })
+      .catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
 
     res.status(201).json({ ...row, tags: parseTagsArray((row as any)?.tags) });
   })
@@ -3500,15 +3555,30 @@ router.put(
       [id, userId, orgId]
     );
 
-    req.emitAuditEvent?.({
-      actorType: req.body?.fromAI ? 'AI' : 'USER',
-      action: 'IDEA_UPDATE',
-      resourceType: 'idea',
-      resourceId: id,
-      before: { title: existing.title, body: existing.body, tags: existing.tags, stage: existing.stage, branch: existing.branch, area: existing.area, priority: existing.priority },
-      after: { title: (row as any)?.title, body: (row as any)?.body, tags: (row as any)?.tags, stage: (row as any)?.stage },
-      metadata: { fromAI: Boolean(req.body?.fromAI) },
-    }).catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
+    req
+      .emitAuditEvent?.({
+        actorType: req.body?.fromAI ? 'AI' : 'USER',
+        action: 'IDEA_UPDATE',
+        resourceType: 'idea',
+        resourceId: id,
+        before: {
+          title: existing.title,
+          body: existing.body,
+          tags: existing.tags,
+          stage: existing.stage,
+          branch: existing.branch,
+          area: existing.area,
+          priority: existing.priority,
+        },
+        after: {
+          title: (row as any)?.title,
+          body: (row as any)?.body,
+          tags: (row as any)?.tags,
+          stage: (row as any)?.stage,
+        },
+        metadata: { fromAI: Boolean(req.body?.fromAI) },
+      })
+      .catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
 
     res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
   })
@@ -3535,13 +3605,15 @@ router.delete(
     );
 
     if (before) {
-      req.emitAuditEvent?.({
-        actorType: 'USER',
-        action: 'IDEA_DELETE',
-        resourceType: 'idea',
-        resourceId: id,
-        before: { title: before.title, tags: before.tags, stage: before.stage },
-      }).catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
+      req
+        .emitAuditEvent?.({
+          actorType: 'USER',
+          action: 'IDEA_DELETE',
+          resourceType: 'idea',
+          resourceId: id,
+          before: { title: before.title, tags: before.tags, stage: before.stage },
+        })
+        .catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
     }
 
     res.status(204).send();
@@ -3663,13 +3735,15 @@ router.post(
       [userId, orgId, sourceIdeaId, targetIdeaId, kind]
     );
 
-    req.emitAuditEvent?.({
-      actorType: 'USER',
-      action: 'IDEA_EDGE_CREATE',
-      resourceType: 'idea_edge',
-      resourceId: (row as any)?.id || id,
-      after: { sourceIdeaId, targetIdeaId, kind },
-    }).catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
+    req
+      .emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'IDEA_EDGE_CREATE',
+        resourceType: 'idea_edge',
+        resourceId: (row as any)?.id || id,
+        after: { sourceIdeaId, targetIdeaId, kind },
+      })
+      .catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
 
     res.status(201).json({ edge: row });
   })
@@ -3704,13 +3778,19 @@ router.delete(
     );
 
     if (before) {
-      req.emitAuditEvent?.({
-        actorType: 'USER',
-        action: 'IDEA_EDGE_DELETE',
-        resourceType: 'idea_edge',
-        resourceId: edgeId,
-        before: { sourceIdeaId: before.sourceIdeaId, targetIdeaId: before.targetIdeaId, kind: before.kind },
-      }).catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
+      req
+        .emitAuditEvent?.({
+          actorType: 'USER',
+          action: 'IDEA_EDGE_DELETE',
+          resourceType: 'idea_edge',
+          resourceId: edgeId,
+          before: {
+            sourceIdeaId: before.sourceIdeaId,
+            targetIdeaId: before.targetIdeaId,
+            kind: before.kind,
+          },
+        })
+        .catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
     }
 
     res.status(204).send();
@@ -3847,14 +3927,19 @@ router.get(
       extensions = {};
     }
 
+    const rawGraph = {
+      nodes,
+      edges,
+      extensions: extensions && typeof extensions === 'object' ? extensions : {},
+      preferredTool: row?.preferredTool ? String(row.preferredTool) : null,
+      schemaVersion: Number(row.schemaVersion || 1),
+    };
+    const upgraded = ensureLatestSchema(rawGraph as any);
+
     res.json({
       map: {
-        nodes,
-        edges,
+        ...upgraded,
         version: Number(row.version || 1),
-        preferredTool: row?.preferredTool ? String(row.preferredTool) : null,
-        extensions: extensions && typeof extensions === 'object' ? extensions : {},
-        schemaVersion: Number(row.schemaVersion || 1),
       },
       isDefault: false,
       updatedAt: row.updatedAt,
@@ -3963,7 +4048,9 @@ router.put(
 
     const preferredToolRaw = req.body?.preferredTool ?? req.body?.preferred_tool ?? null;
     const preferredTool =
-      typeof preferredToolRaw === 'string' && preferredToolRaw.trim() ? preferredToolRaw.trim() : null;
+      typeof preferredToolRaw === 'string' && preferredToolRaw.trim()
+        ? preferredToolRaw.trim()
+        : null;
     const extensionsRaw = req.body?.extensions ?? req.body?.extensions_json ?? null;
     const extensions =
       extensionsRaw && typeof extensionsRaw === 'object' && !Array.isArray(extensionsRaw)
@@ -4074,20 +4161,33 @@ router.put(
       try {
         const prevNodes = JSON.parse(existing.nodes_json || '[]') as any[];
         const prevEdges = JSON.parse(existing.edges_json || '[]') as any[];
-        beforeSummary = { nodeCount: prevNodes.length, edgeCount: prevEdges.length, version: Number(existing.version) || 1 };
+        beforeSummary = {
+          nodeCount: prevNodes.length,
+          edgeCount: prevEdges.length,
+          version: Number(existing.version) || 1,
+        };
       } catch {
         beforeSummary = undefined;
       }
     }
-    req.emitAuditEvent?.({
-      actorType: appliedFromAI ? 'AI' : 'USER',
-      action: existing ? 'IDEA_MAP_UPDATE' : 'IDEA_MAP_CREATE',
-      resourceType: 'idea_map',
-      resourceId: ideaId,
-      before: beforeSummary,
-      after: { nodeCount: normalizedNodes.length, edgeCount: normalizedEdges.length, version: nextVersion },
-      metadata: { preferredTool: preferredTool || undefined, appliedFromAI: appliedFromAI || undefined },
-    }).catch((err: any) => logger.warn('[IdeaMap] Audit log failed:', err?.message));
+    req
+      .emitAuditEvent?.({
+        actorType: appliedFromAI ? 'AI' : 'USER',
+        action: existing ? 'IDEA_MAP_UPDATE' : 'IDEA_MAP_CREATE',
+        resourceType: 'idea_map',
+        resourceId: ideaId,
+        before: beforeSummary,
+        after: {
+          nodeCount: normalizedNodes.length,
+          edgeCount: normalizedEdges.length,
+          version: nextVersion,
+        },
+        metadata: {
+          preferredTool: preferredTool || undefined,
+          appliedFromAI: appliedFromAI || undefined,
+        },
+      })
+      .catch((err: any) => logger.warn('[IdeaMap] Audit log failed:', err?.message));
 
     res.json({ success: true, version: nextVersion });
   })
@@ -4332,7 +4432,13 @@ router.post(
       .filter(Boolean)
       .slice(0, 100);
 
-    let suggestions: Array<{ id: string; category: string; text: string; detail: string; confidence: number }> = [];
+    let suggestions: Array<{
+      id: string;
+      category: string;
+      text: string;
+      detail: string;
+      confidence: number;
+    }> = [];
 
     try {
       const { llmService } = await import('../services/ai/llmService.js');
@@ -4416,8 +4522,8 @@ router.post(
       .filter(Boolean)
       .slice(0, 100);
 
-    let gapNodes: any[] = [];
-    let gapEdges: any[] = [];
+    const gapNodes: any[] = [];
+    const gapEdges: any[] = [];
     let rationale = '';
 
     try {
@@ -4504,11 +4610,24 @@ Return ONLY JSON: {"rationale":"...","gaps":[{"title":"...","branchKey":"risks|g
 
 const IdeaAIGenerateBodySchema = z.object({
   generatorType: z.enum([
-    'lane_generator', 'flow_generator', 'suggestions', 'bottleneck',
-    'enrichment', 'mindmap_expand', 'table_columns', 'table_views',
-    'node_context', 'auto_cluster', 'whiteboard_brainstorm', 'whiteboard_clusters',
-    'whiteboard_organize', 'sticky_summarize', 'summary',
-    'mm_branch_generator', 'mm_expand', 'mm_what_if',
+    'lane_generator',
+    'flow_generator',
+    'suggestions',
+    'bottleneck',
+    'enrichment',
+    'mindmap_expand',
+    'table_columns',
+    'table_views',
+    'node_context',
+    'auto_cluster',
+    'whiteboard_brainstorm',
+    'whiteboard_clusters',
+    'whiteboard_organize',
+    'sticky_summarize',
+    'summary',
+    'mm_branch_generator',
+    'mm_expand',
+    'mm_what_if',
   ]),
   tool: z.enum(['process_flow', 'mindmap', 'table', 'whiteboard']),
   context: z.object({
@@ -4540,7 +4659,9 @@ router.post(
 
     const parsed = IdeaAIGenerateBodySchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: 'Invalid request body', details: parsed.error.flatten() });
+      return res
+        .status(400)
+        .json({ error: 'Invalid request body', details: parsed.error.flatten() });
     }
 
     const { generatorType, tool, context } = parsed.data;
@@ -4612,9 +4733,17 @@ router.post(
     let existingNodes: any[] = [];
     let existingEdges: any[] = [];
     try {
-      existingNodes = typeof mapRow.nodesJson === 'string' ? JSON.parse(mapRow.nodesJson) : (mapRow.nodesJson || []);
-      existingEdges = typeof mapRow.edgesJson === 'string' ? JSON.parse(mapRow.edgesJson) : (mapRow.edgesJson || []);
-    } catch { /* keep defaults */ }
+      existingNodes =
+        typeof mapRow.nodesJson === 'string'
+          ? JSON.parse(mapRow.nodesJson)
+          : mapRow.nodesJson || [];
+      existingEdges =
+        typeof mapRow.edgesJson === 'string'
+          ? JSON.parse(mapRow.edgesJson)
+          : mapRow.edgesJson || [];
+    } catch {
+      /* keep defaults */
+    }
 
     const assignments = clusters.map((c: any) => ({
       id: String(c.id || ''),
@@ -4639,7 +4768,15 @@ router.post(
 
     await queryHelpers.queryRun(
       `UPDATE my_idea_maps SET nodes_json = ?, edges_json = ?, version = ?, updated_at = ? WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
-      [JSON.stringify(normalized.nodes), JSON.stringify(normalized.edges), nextVersion, now, ideaId, userId, orgId]
+      [
+        JSON.stringify(normalized.nodes),
+        JSON.stringify(normalized.edges),
+        nextVersion,
+        now,
+        ideaId,
+        userId,
+        orgId,
+      ]
     );
 
     req.emitAuditEvent?.({
@@ -4650,7 +4787,11 @@ router.post(
       after: { clusterCount: clusterNodes.length, version: nextVersion },
     });
 
-    res.json({ graph: normalized, clusterIds: clusterNodes.map((n) => n.id), version: nextVersion });
+    res.json({
+      graph: normalized,
+      clusterIds: clusterNodes.map((n) => n.id),
+      version: nextVersion,
+    });
   })
 );
 
@@ -4695,11 +4836,21 @@ router.post(
     let existingNodes: any[] = [];
     let existingEdges: any[] = [];
     try {
-      existingNodes = typeof mapRow.nodesJson === 'string' ? JSON.parse(mapRow.nodesJson) : (mapRow.nodesJson || []);
-      existingEdges = typeof mapRow.edgesJson === 'string' ? JSON.parse(mapRow.edgesJson) : (mapRow.edgesJson || []);
-    } catch { /* keep defaults */ }
+      existingNodes =
+        typeof mapRow.nodesJson === 'string'
+          ? JSON.parse(mapRow.nodesJson)
+          : mapRow.nodesJson || [];
+      existingEdges =
+        typeof mapRow.edgesJson === 'string'
+          ? JSON.parse(mapRow.edgesJson)
+          : mapRow.edgesJson || [];
+    } catch {
+      /* keep defaults */
+    }
 
-    const clusterNode = existingNodes.find((n: any) => n.id === clusterId && (n.kind === 'cluster' || n.type === 'cluster'));
+    const clusterNode = existingNodes.find(
+      (n: any) => n.id === clusterId && (n.kind === 'cluster' || n.type === 'cluster')
+    );
     if (!clusterNode) return res.status(404).json({ error: 'Cluster node not found in graph' });
 
     const outcomeNode = createOutcomeFromCluster(clusterId, outcomeType, label, clusterNode);
@@ -4725,7 +4876,15 @@ router.post(
 
     await queryHelpers.queryRun(
       `UPDATE my_idea_maps SET nodes_json = ?, edges_json = ?, version = ?, updated_at = ? WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
-      [JSON.stringify(normalized.nodes), JSON.stringify(normalized.edges), nextVersion, now, ideaId, userId, orgId]
+      [
+        JSON.stringify(normalized.nodes),
+        JSON.stringify(normalized.edges),
+        nextVersion,
+        now,
+        ideaId,
+        userId,
+        orgId,
+      ]
     );
 
     req.emitAuditEvent?.({
@@ -4761,7 +4920,9 @@ router.post(
 
     const target = String(req.body?.target || '').trim();
     if (!['task', 'decision', 'initiative'].includes(target)) {
-      return res.status(400).json({ error: 'Invalid target — must be task, decision, or initiative' });
+      return res
+        .status(400)
+        .json({ error: 'Invalid target — must be task, decision, or initiative' });
     }
 
     const idea = await queryHelpers.queryOne<any>(
@@ -4779,14 +4940,26 @@ router.post(
     let existingNodes: any[] = [];
     let existingEdges: any[] = [];
     try {
-      existingNodes = typeof mapRow.nodesJson === 'string' ? JSON.parse(mapRow.nodesJson) : (mapRow.nodesJson || []);
-      existingEdges = typeof mapRow.edgesJson === 'string' ? JSON.parse(mapRow.edgesJson) : (mapRow.edgesJson || []);
-    } catch { /* keep defaults */ }
+      existingNodes =
+        typeof mapRow.nodesJson === 'string'
+          ? JSON.parse(mapRow.nodesJson)
+          : mapRow.nodesJson || [];
+      existingEdges =
+        typeof mapRow.edgesJson === 'string'
+          ? JSON.parse(mapRow.edgesJson)
+          : mapRow.edgesJson || [];
+    } catch {
+      /* keep defaults */
+    }
 
-    const outcomeNode = existingNodes.find((n: any) => n.id === outcomeId && (n.kind === 'outcome' || n.type === 'outcome'));
+    const outcomeNode = existingNodes.find(
+      (n: any) => n.id === outcomeId && (n.kind === 'outcome' || n.type === 'outcome')
+    );
     if (!outcomeNode) return res.status(404).json({ error: 'Outcome node not found in graph' });
 
-    const safeTitle = String(outcomeNode.label || idea.title || 'Outcome').trim().slice(0, 255);
+    const safeTitle = String(outcomeNode.label || idea.title || 'Outcome')
+      .trim()
+      .slice(0, 255);
     const safeBody = String(idea.body || '').trim();
     const safeExpansion = String(idea.aiExpansion || '').trim();
 
@@ -4800,7 +4973,7 @@ router.post(
     });
 
     let entityId: string | null = null;
-    let entityType = target;
+    const entityType = target;
 
     if (target === 'initiative') {
       if (!(await requireTables(res, ['initiatives']))) return;
@@ -4809,14 +4982,22 @@ router.post(
       const insertCols: string[] = ['id'];
       const insertVals: string[] = ['?'];
       const insertParams: any[] = [entityId];
-      const add = (col: string, val: any) => { if (!cols.has(col)) return; insertCols.push(col); insertVals.push('?'); insertParams.push(val); };
+      const add = (col: string, val: any) => {
+        if (!cols.has(col)) return;
+        insertCols.push(col);
+        insertVals.push('?');
+        insertParams.push(val);
+      };
       add('organization_id', orgId);
       add('name', safeTitle);
       add('summary', (safeExpansion || safeBody).slice(0, 5000) || null);
       add('owner_execution_id', userId);
       add('source_type', 'tool');
       add('source_id', toolSessionId);
-      await queryHelpers.queryRun(`INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`, insertParams);
+      await queryHelpers.queryRun(
+        `INSERT INTO initiatives (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+        insertParams
+      );
     } else if (target === 'decision') {
       if (!(await requireTables(res, ['decisions']))) return;
       const cols = await getTableColumns('decisions');
@@ -4824,7 +5005,12 @@ router.post(
       const insertCols: string[] = ['id'];
       const insertVals: string[] = ['?'];
       const insertParams: any[] = [entityId];
-      const add = (col: string, val: any) => { if (!cols.has(col)) return; insertCols.push(col); insertVals.push('?'); insertParams.push(val); };
+      const add = (col: string, val: any) => {
+        if (!cols.has(col)) return;
+        insertCols.push(col);
+        insertVals.push('?');
+        insertParams.push(val);
+      };
       add('organization_id', orgId);
       add('title', safeTitle);
       add('description', (safeExpansion || safeBody).slice(0, 12000) || null);
@@ -4834,7 +5020,10 @@ router.post(
       add('status', 'pending');
       add('source_type', 'idea');
       add('source_id', ideaId);
-      await queryHelpers.queryRun(`INSERT INTO decisions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`, insertParams);
+      await queryHelpers.queryRun(
+        `INSERT INTO decisions (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+        insertParams
+      );
     } else if (target === 'task') {
       if (!(await requireTables(res, ['tasks']))) return;
       const cols = await getTableColumns('tasks');
@@ -4842,17 +5031,28 @@ router.post(
       const insertCols: string[] = ['id'];
       const insertVals: string[] = ['?'];
       const insertParams: any[] = [entityId];
-      const add = (col: string, val: any) => { if (!cols.has(col)) return; insertCols.push(col); insertVals.push('?'); insertParams.push(val); };
+      const add = (col: string, val: any) => {
+        if (!cols.has(col)) return;
+        insertCols.push(col);
+        insertVals.push('?');
+        insertParams.push(val);
+      };
       add('organization_id', orgId);
       add('title', safeTitle);
-      add('description', `Origin idea: ${String(idea.title || '')}\n${safeBody}`.slice(0, 9000) || null);
+      add(
+        'description',
+        `Origin idea: ${String(idea.title || '')}\n${safeBody}`.slice(0, 9000) || null
+      );
       add('status', 'todo');
       add('priority', 'medium');
       add('assignee_id', userId);
       add('reporter_id', userId);
       add('source_type', 'idea');
       add('source_id', ideaId);
-      await queryHelpers.queryRun(`INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`, insertParams);
+      await queryHelpers.queryRun(
+        `INSERT INTO tasks (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+        insertParams
+      );
     }
 
     if (entityId) {
@@ -4888,7 +5088,15 @@ router.post(
 
       await queryHelpers.queryRun(
         `UPDATE my_idea_maps SET nodes_json = ?, edges_json = ?, version = ?, updated_at = ? WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
-        [JSON.stringify(normalized.nodes), JSON.stringify(normalized.edges), nextVersion, now, ideaId, userId, orgId]
+        [
+          JSON.stringify(normalized.nodes),
+          JSON.stringify(normalized.edges),
+          nextVersion,
+          now,
+          ideaId,
+          userId,
+          orgId,
+        ]
       );
 
       req.emitAuditEvent?.({
@@ -5920,7 +6128,11 @@ const notebookUpload = multer({
       file.mimetype === 'text/markdown' ||
       file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
       file.mimetype === 'application/vnd.ms-excel';
-    cb(ok ? null : new Error('Only PDF, XLSX, TXT, MD allowed'), ok);
+    if (ok) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error('Only PDF, XLSX, TXT, MD allowed'));
   },
 });
 
@@ -5931,7 +6143,9 @@ async function extractTextFromBuffer(
 ): Promise<string> {
   const ext = path.extname(originalname || '').toLowerCase();
   if (ext === '.pdf' || mimetype === 'application/pdf') {
-    const pdfParse = (await import('pdf-parse')).default as (buf: Buffer) => Promise<{ text: string }>;
+    const pdfParse = (await import('pdf-parse')).default as (
+      buf: Buffer
+    ) => Promise<{ text: string }>;
     const data = await pdfParse(buffer);
     return String(data?.text || '');
   }
@@ -5968,7 +6182,9 @@ router.post(
       return res.status(422).json({ error: 'File extraction failed', detail: e?.message });
     }
     const safeText = (text || '').trim().slice(0, 500000);
-    const title = (path.basename(file.originalname, path.extname(file.originalname)) || 'Untitled').slice(0, 200);
+    const title = (
+      path.basename(file.originalname, path.extname(file.originalname)) || 'Untitled'
+    ).slice(0, 200);
 
     const id = uuidv4();
     const now = new Date().toISOString();
@@ -5990,7 +6206,16 @@ router.post(
        FROM notebook_pages WHERE id = ? LIMIT 1`,
       [id]
     );
-    const parseCT = (r: any) => (r?.convertedToJson ? (() => { try { return JSON.parse(r.convertedToJson); } catch { return null; } })() : null);
+    const parseCT = (r: any) =>
+      r?.convertedToJson
+        ? (() => {
+            try {
+              return JSON.parse(r.convertedToJson);
+            } catch {
+              return null;
+            }
+          })()
+        : null;
     res.status(201).json({
       ...row,
       tags: parseTagsArray((row as any)?.tags),
@@ -6351,14 +6576,16 @@ router.post(
     const target = String(req.body?.target || '')
       .trim()
       .toLowerCase();
-    if (!['task', 'decision', 'initiative', 'report', 'presentation'].includes(target)) {
+    if (
+      !['task', 'decision', 'initiative', 'report', 'presentation', 'assessment'].includes(target)
+    ) {
       return res
         .status(400)
-        .json({ error: 'target must be task|decision|initiative|report|presentation' });
+        .json({ error: 'target must be task|decision|initiative|report|presentation|assessment' });
     }
 
     const page = await queryHelpers.queryOne<any>(
-      `SELECT id, owner_user_id, organization_id, title, content_text, tags_json, converted_to_json
+      `SELECT id, owner_user_id, organization_id, project_id, title, content_text, tags_json, converted_to_json
        FROM notebook_pages WHERE id = ? LIMIT 1`,
       [pageId]
     );
@@ -6531,6 +6758,48 @@ router.post(
         containerType: 'mywork_convert',
         containerId: toolSessionId,
       });
+    } else if (target === 'assessment') {
+      if (!(await requireTables(res, ['assessments']))) return;
+      const cols = await getTableColumns('assessments');
+      const insertCols: string[] = ['id'];
+      const insertVals: string[] = ['?'];
+      const insertParams: any[] = [newId];
+      const add = (col: string, val: any) => {
+        if (!cols.has(col)) return;
+        insertCols.push(col);
+        insertVals.push('?');
+        insertParams.push(val);
+      };
+
+      add('organization_id', orgId);
+      add('project_id', page.project_id || null);
+      add('assessment_type', String(req.body?.assessmentType || 'DRD').toUpperCase());
+      add('name', entityTitle.slice(0, 255));
+      add('description', entityDesc.slice(0, 5000));
+      add('status', 'DRAFT');
+      add('created_by', userId);
+      add('updated_by', userId);
+      add('source_type', 'notebook');
+      add('source_id', pageId);
+
+      await queryHelpers.queryRun(
+        `INSERT INTO assessments (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+        insertParams
+      );
+
+      createdEntity = { id: newId, type: 'assessment', title: entityTitle };
+
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'assessment',
+        sourceId: newId,
+        targetType: 'notebook_page',
+        targetId: pageId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: pageId,
+      });
     } else if (target === 'report') {
       if (!(await requireTables(res, ['tool_sessions']))) return;
       const toolSessionId = await createMyWorkToolSession({
@@ -6552,7 +6821,8 @@ router.post(
       const v3Params: Record<string, any> = {};
       if (req.body.reportTypeV3) v3Params.reportTypeV3 = req.body.reportTypeV3;
       if (req.body.goalV3) v3Params.goalV3 = req.body.goalV3;
-      if (req.body.communicationRegister) v3Params.communicationRegister = req.body.communicationRegister;
+      if (req.body.communicationRegister)
+        v3Params.communicationRegister = req.body.communicationRegister;
       if (req.body.density) v3Params.density = req.body.density;
       if (req.body.periodFrom) v3Params.periodFrom = req.body.periodFrom;
       if (req.body.periodTo) v3Params.periodTo = req.body.periodTo;
@@ -7019,7 +7289,7 @@ router.get(
         const newTasks = await queryHelpers.queryAll<any>(
           `SELECT id, title, priority FROM tasks
            WHERE assignee_id = ? AND organization_id = ?
-           AND created_at > datetime('now', '-1 day') AND status != 'done'
+           AND created_at > ${daysAgoSql(1)} AND status != 'done'
            ORDER BY priority DESC LIMIT 5`,
           [userId, orgId]
         );
@@ -7030,7 +7300,7 @@ router.get(
         const overdue = await queryHelpers.queryAll<any>(
           `SELECT id, title, due_date FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND status != 'done'
-           AND due_date IS NOT NULL AND due_date < datetime('now')
+           AND due_date IS NOT NULL AND due_date < ${nowSql()}
            ORDER BY due_date ASC LIMIT 5`,
           [userId, orgId]
         );
@@ -7042,7 +7312,7 @@ router.get(
           `SELECT id, title, due_date FROM tasks
            WHERE assignee_id = ? AND organization_id = ? AND status != 'done'
            AND due_date IS NOT NULL
-           AND due_date BETWEEN datetime('now') AND datetime('now', '+2 days')
+           AND due_date BETWEEN ${nowSql()} AND ${daysAheadSql(2)}
            ORDER BY due_date ASC LIMIT 5`,
           [userId, orgId]
         );
@@ -7050,11 +7320,16 @@ router.get(
       }
 
       const decCols = await getTableColumns('decisions');
+      const decisionDueColumn = decCols.has('due_date')
+        ? 'due_date'
+        : decCols.has('deadline')
+          ? 'deadline'
+          : null;
       if (decCols.has('decision_maker_id')) {
         const pending = await queryHelpers.queryAll<any>(
-          `SELECT id, title, due_date FROM decisions
+          `SELECT id, title, ${decisionDueColumn ? `${decisionDueColumn} as due_date` : 'NULL as due_date'} FROM decisions
            WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? AND status = 'pending'
-           ORDER BY due_date ASC NULLS LAST LIMIT 5`,
+           ORDER BY ${decisionDueColumn ? `${decisionDueColumn} ASC NULLS LAST,` : ''} updated_at DESC LIMIT 5`,
           [userId, userId, orgId]
         );
         brief.pendingDecisions = pending || [];
@@ -7365,7 +7640,7 @@ router.post(
         const completed = await queryHelpers.queryAll<any>(
           `SELECT id, title, completed_at FROM tasks 
            WHERE assignee_id = ? AND organization_id = ? AND status IN ('done', 'completed')
-           AND updated_at > datetime('now', '-7 days')
+           AND updated_at > ${daysAgoSql(7)}
            ORDER BY updated_at DESC LIMIT 20`,
           [userId, orgId]
         );
@@ -7378,7 +7653,7 @@ router.post(
         const decided = await queryHelpers.queryAll<any>(
           `SELECT id, title, status, updated_at FROM decisions 
            WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? 
-           AND status IN ('approved', 'rejected') AND updated_at > datetime('now', '-7 days')
+           AND status IN ('approved', 'rejected') AND updated_at > ${daysAgoSql(7)}
            ORDER BY updated_at DESC LIMIT 10`,
           [userId, userId, orgId]
         );
@@ -7390,7 +7665,7 @@ router.post(
         const overdue = await queryHelpers.queryAll<any>(
           `SELECT id, title, due_date FROM tasks 
            WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done', 'completed')
-           AND due_date IS NOT NULL AND due_date < datetime('now')
+           AND due_date IS NOT NULL AND due_date < ${nowSql()}
            LIMIT 10`,
           [userId, orgId]
         );
@@ -7401,7 +7676,7 @@ router.post(
       const stuck = await queryHelpers.queryAll<any>(
         `SELECT id, title, updated_at FROM tasks 
          WHERE assignee_id = ? AND organization_id = ? AND status NOT IN ('done', 'completed')
-         AND updated_at < datetime('now', '-5 days')
+         AND updated_at < ${daysAgoSql(5)}
          LIMIT 5`,
         [userId, orgId]
       );
@@ -7448,11 +7723,11 @@ router.get(
       if (taskCols.has('assignee_id')) {
         const weeklyVelocity = await queryHelpers.queryAll<any>(
           `SELECT 
-            strftime('%Y-W%W', updated_at) as week,
+            ${weekBucketSql('updated_at')} as week,
             COUNT(*) as completed
            FROM tasks 
            WHERE assignee_id = ? AND organization_id = ? AND status IN ('done', 'completed')
-           AND updated_at > datetime('now', '-28 days')
+           AND updated_at > ${daysAgoSql(28)}
            GROUP BY week ORDER BY week`,
           [userId, orgId]
         );
@@ -7466,10 +7741,10 @@ router.get(
 
       if (taskCols.has('created_at')) {
         const avgTime = await queryHelpers.queryOne<any>(
-          `SELECT AVG(julianday(updated_at) - julianday(created_at)) as avg_days
+          `SELECT AVG(${dayDiffSql('updated_at', 'created_at')}) as avg_days
            FROM tasks 
            WHERE assignee_id = ? AND organization_id = ? AND status IN ('done', 'completed')
-           AND updated_at > datetime('now', '-30 days')`,
+           AND updated_at > ${daysAgoSql(30)}`,
           [userId, orgId]
         );
         patterns.avgCompletionDays = avgTime?.avg_days
@@ -7480,11 +7755,11 @@ router.get(
       const decCols = await getTableColumns('decisions');
       if (decCols.has('decision_maker_id') && decCols.has('created_at')) {
         const avgDecision = await queryHelpers.queryOne<any>(
-          `SELECT AVG(julianday(updated_at) - julianday(created_at)) as avg_days
+          `SELECT AVG(${dayDiffSql('updated_at', 'created_at')}) as avg_days
            FROM decisions 
            WHERE (decision_maker_id = ? OR created_by = ?) AND organization_id = ? 
            AND status IN ('approved', 'rejected')
-           AND updated_at > datetime('now', '-30 days')`,
+           AND updated_at > ${daysAgoSql(30)}`,
           [userId, userId, orgId]
         );
         patterns.avgDecisionDays = avgDecision?.avg_days
@@ -7496,14 +7771,14 @@ router.get(
         const totalWithDue = await queryHelpers.queryOne<any>(
           `SELECT COUNT(*) as total FROM tasks 
            WHERE assignee_id = ? AND organization_id = ? AND due_date IS NOT NULL
-           AND updated_at > datetime('now', '-30 days')`,
+           AND updated_at > ${daysAgoSql(30)}`,
           [userId, orgId]
         );
         const overdueCompleted = await queryHelpers.queryOne<any>(
           `SELECT COUNT(*) as total FROM tasks 
            WHERE assignee_id = ? AND organization_id = ? AND due_date IS NOT NULL
            AND status IN ('done', 'completed') AND updated_at > due_date
-           AND updated_at > datetime('now', '-30 days')`,
+           AND updated_at > ${daysAgoSql(30)}`,
           [userId, orgId]
         );
         if (totalWithDue?.total > 0) {
@@ -7562,10 +7837,12 @@ router.post(
 
     const suggestions: any[] = [];
     const triagedKeys = new Set(
-      ((await queryHelpers.queryAll<{ item_key: string }>(
-        `SELECT item_key FROM my_work_inbox_triage WHERE user_id = ?`,
-        [userId]
-      )) || []).map((row) => String(row.item_key))
+      (
+        (await queryHelpers.queryAll<{ item_key: string }>(
+          `SELECT item_key FROM my_work_inbox_triage WHERE user_id = ?`,
+          [userId]
+        )) || []
+      ).map((row) => String(row.item_key))
     );
 
     const notifCols = await getTableColumns('notifications');
@@ -7605,7 +7882,11 @@ router.post(
           action = 'archive';
           confidence = 0.82;
           reason = 'Informational notification can be archived';
-        } else if (text.includes('review') || text.includes('feedback') || text.includes('mention')) {
+        } else if (
+          text.includes('review') ||
+          text.includes('feedback') ||
+          text.includes('mention')
+        ) {
           action = 'accept_week';
           confidence = 0.74;
           reason = 'Review-style item fits this-week planning';
@@ -7637,7 +7918,9 @@ router.post(
       const itemKey = `task:${item.id}`;
       if (triagedKeys.has(itemKey)) continue;
       const dueTs = item.due_date ? new Date(item.due_date).getTime() : Number.NaN;
-      const daysToDue = Number.isFinite(dueTs) ? (dueTs - Date.now()) / 86400000 : Number.POSITIVE_INFINITY;
+      const daysToDue = Number.isFinite(dueTs)
+        ? (dueTs - Date.now()) / 86400000
+        : Number.POSITIVE_INFINITY;
       const priority = String(item.priority || '').toLowerCase();
       let action: TriageAction = 'accept_later';
       let confidence = 0.62;
@@ -7718,7 +8001,11 @@ router.post(
     const { orgId } = identity;
 
     const body = req.body || {};
-    const language = String(body.language || 'pl').toLowerCase().startsWith('pl') ? 'pl' : 'en';
+    const language = String(body.language || 'pl')
+      .toLowerCase()
+      .startsWith('pl')
+      ? 'pl'
+      : 'en';
 
     const itemSchema = z.object({
       title: z.string().min(1).max(400),
@@ -8120,27 +8407,28 @@ router.get(
     const { orgId } = identity;
     const projectId = String(req.query.projectId || '');
     if (!projectId) {
-      const [capacityOverview, overloads, initiativeSummary, initiativeBreakdown] = await Promise.all([
-        getCapacityOverview(orgId),
-        getOverloadAlerts(orgId),
-        queryHelpers.queryOne<{ total: number; executing: number; blocked: number }>(
-          `SELECT
+      const [capacityOverview, overloads, initiativeSummary, initiativeBreakdown] =
+        await Promise.all([
+          getCapacityOverview(orgId),
+          getOverloadAlerts(orgId),
+          queryHelpers.queryOne<{ total: number; executing: number; blocked: number }>(
+            `SELECT
              COUNT(*) as total,
              SUM(CASE WHEN UPPER(status) IN ('EXECUTING','ACTIVE','IN_PROGRESS') THEN 1 ELSE 0 END) as executing,
              SUM(CASE WHEN UPPER(status) = 'BLOCKED' THEN 1 ELSE 0 END) as blocked
            FROM initiatives
            WHERE organization_id = ?`,
-          [orgId]
-        ),
-        queryHelpers.queryAll<{
-          id: string;
-          name: string;
-          status: string;
-          total_tasks: number;
-          open_tasks: number;
-          overdue_tasks: number;
-        }>(
-          `SELECT i.id, i.name, i.status,
+            [orgId]
+          ),
+          queryHelpers.queryAll<{
+            id: string;
+            name: string;
+            status: string;
+            total_tasks: number;
+            open_tasks: number;
+            overdue_tasks: number;
+          }>(
+            `SELECT i.id, i.name, i.status,
                   COUNT(t.id) as total_tasks,
                   SUM(CASE WHEN lower(coalesce(t.status,'')) NOT IN ('done','completed','validated','cancelled') THEN 1 ELSE 0 END) as open_tasks,
                   SUM(CASE WHEN t.due_date IS NOT NULL
@@ -8153,9 +8441,9 @@ router.get(
            GROUP BY i.id, i.name, i.status
            ORDER BY overdue_tasks DESC, open_tasks DESC, i.updated_at DESC
            LIMIT 6`,
-          [orgId]
-        ),
-      ]);
+            [orgId]
+          ),
+        ]);
 
       const totalRequired = Number(capacityOverview.summary.totalAllocated || 0);
       const totalCapacity = Number(capacityOverview.summary.totalCapacity || 0);
@@ -8214,7 +8502,12 @@ router.get(
          FROM initiatives WHERE project_id = ? AND organization_id = ?`,
         [projectId, orgId]
       ),
-      queryHelpers.queryAll<{ user_id: string; assigned: number; capacity: number; overload: number }>(
+      queryHelpers.queryAll<{
+        user_id: string;
+        assigned: number;
+        capacity: number;
+        overload: number;
+      }>(
         `SELECT m.user_id,
           COALESCE(SUM(t.estimated_hours), 0) as assigned,
           (COALESCE(m.allocation_percent, 100) / 100.0) * ? as capacity,
@@ -8300,7 +8593,8 @@ router.post(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { orgId, userId } = identity;
-    if (!(await requireTables(res, ['task_automation_rules']))) return res.status(503).json({ error: 'Schema not ready' });
+    if (!(await requireTables(res, ['task_automation_rules'])))
+      return res.status(503).json({ error: 'Schema not ready' });
     const name = String(req.body?.name || 'Rule').trim();
     const triggerType = String(req.body?.triggerType || req.body?.trigger_type || 'manual');
     const conditions = req.body?.conditions;
@@ -8312,7 +8606,15 @@ router.post(
     await queryHelpers.queryRun(
       `INSERT INTO task_automation_rules (id, organization_id, name, trigger_type, trigger_config_json, conditions_json, actions_json, is_active, created_by, updated_at)
        VALUES (?, ?, ?, ?, '{}', ?, ?, 1, ?, datetime('now'))`,
-      [id, orgId, name, triggerType, JSON.stringify(Array.isArray(conditions) ? conditions : []), JSON.stringify(actions), userId]
+      [
+        id,
+        orgId,
+        name,
+        triggerType,
+        JSON.stringify(Array.isArray(conditions) ? conditions : []),
+        JSON.stringify(actions),
+        userId,
+      ]
     );
     res.status(201).json({ success: true, id });
   })
@@ -8324,7 +8626,8 @@ router.put(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { orgId } = identity;
-    if (!(await requireTables(res, ['task_automation_rules']))) return res.status(503).json({ error: 'Schema not ready' });
+    if (!(await requireTables(res, ['task_automation_rules'])))
+      return res.status(503).json({ error: 'Schema not ready' });
 
     const { ruleId } = req.params;
     const { updateRule } = await import('../services/automationRulesService.js');
@@ -8351,7 +8654,8 @@ router.delete(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { orgId } = identity;
-    if (!(await requireTables(res, ['task_automation_rules']))) return res.status(503).json({ error: 'Schema not ready' });
+    if (!(await requireTables(res, ['task_automation_rules'])))
+      return res.status(503).json({ error: 'Schema not ready' });
 
     const { ruleId } = req.params;
     const { deleteRule } = await import('../services/automationRulesService.js');
@@ -8368,7 +8672,8 @@ router.post(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { orgId } = identity;
-    if (!(await requireTables(res, ['task_automation_rules']))) return res.status(503).json({ error: 'Schema not ready' });
+    if (!(await requireTables(res, ['task_automation_rules'])))
+      return res.status(503).json({ error: 'Schema not ready' });
 
     const { ruleId } = req.params;
     const context = req.body?.context;
@@ -8391,7 +8696,8 @@ router.post(
     const identity = requireUser(req, res);
     if (!identity) return;
     const { orgId } = identity;
-    if (!(await requireTables(res, ['task_automation_rules']))) return res.status(503).json({ error: 'Schema not ready' });
+    if (!(await requireTables(res, ['task_automation_rules'])))
+      return res.status(503).json({ error: 'Schema not ready' });
 
     const { ruleId } = req.params;
     const taskId = req.body?.taskId as string;
@@ -8403,7 +8709,7 @@ router.post(
 
     const task = await queryHelpers.queryOne<Record<string, unknown>>(
       `SELECT * FROM tasks WHERE id = ? AND organization_id = ?`,
-      [taskId, orgId],
+      [taskId, orgId]
     );
     if (!task) return res.status(404).json({ error: 'Task not found' });
 
@@ -8432,7 +8738,11 @@ router.post(
     const { orgId } = identity;
 
     const body = req.body || {};
-    const language = String(body.language || 'pl').toLowerCase().startsWith('pl') ? 'pl' : 'en';
+    const language = String(body.language || 'pl')
+      .toLowerCase()
+      .startsWith('pl')
+      ? 'pl'
+      : 'en';
 
     const inputSchema = z.object({
       language: z.string().optional(),
@@ -8760,33 +9070,44 @@ router.post(
     const { userId, orgId } = identity;
 
     const { lastViewedItems, activeTab, chatTopics } = req.body || {};
+    const contextData = JSON.stringify({
+      lastViewedItems: (lastViewedItems || []).slice(0, 10),
+      activeTab,
+      chatTopics: (chatTopics || []).slice(0, 5),
+      savedAt: new Date().toISOString(),
+    });
 
     try {
-      await queryHelpers.queryRun(
-        `CREATE TABLE IF NOT EXISTS my_work_session_context (
-          user_id TEXT NOT NULL,
-          organization_id TEXT NOT NULL,
-          context_data TEXT NOT NULL,
-          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          PRIMARY KEY (user_id, organization_id)
-        )`,
-        []
+      const updateResult = await queryHelpers.queryRun(
+        `UPDATE my_work_session_context
+         SET context_data = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE user_id = ? AND organization_id = ?`,
+        [contextData, userId, orgId]
       );
 
-      const contextData = JSON.stringify({
-        lastViewedItems: (lastViewedItems || []).slice(0, 10),
-        activeTab,
-        chatTopics: (chatTopics || []).slice(0, 5),
-        savedAt: new Date().toISOString(),
-      });
-
-      await queryHelpers.queryRun(
-        `INSERT OR REPLACE INTO my_work_session_context (user_id, organization_id, context_data, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
-        [userId, orgId, contextData]
-      );
+      if ((updateResult?.changes || 0) === 0) {
+        await queryHelpers.queryRun(
+          `INSERT INTO my_work_session_context (user_id, organization_id, context_data, updated_at)
+           VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+          [userId, orgId, contextData]
+        );
+      }
 
       res.json({ saved: true });
-    } catch (err) {
+    } catch (err: any) {
+      if (
+        String(err?.message || '')
+          .toLowerCase()
+          .includes('duplicate key')
+      ) {
+        await queryHelpers.queryRun(
+          `UPDATE my_work_session_context
+           SET context_data = ?, updated_at = CURRENT_TIMESTAMP
+           WHERE user_id = ? AND organization_id = ?`,
+          [contextData, userId, orgId]
+        );
+        return res.json({ saved: true });
+      }
       logger.error('[session-context:save]', err);
       res.json({ saved: false });
     }

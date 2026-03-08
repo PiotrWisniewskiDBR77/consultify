@@ -16,6 +16,11 @@ export type JiraCreateIssueResult = {
   browseUrl: string;
 };
 
+export type JiraUpdateIssueResult = {
+  issueIdOrKey: string;
+  browseUrl?: string;
+};
+
 function normalizeBaseUrl(input: string): string {
   const raw = String(input || '').trim();
   if (!raw) return '';
@@ -111,5 +116,67 @@ export async function createIssueFromTask(input: {
     key,
     self: data?.self,
     browseUrl: `${config.baseUrl}/browse/${key}`,
+  };
+}
+
+export async function updateIssueFromTask(input: {
+  config: JiraIntegrationConfig;
+  issueIdOrKey: string;
+  task: { id: string; title: string; description?: string | null; status?: string | null };
+  deepLinkUrl?: string | null;
+}): Promise<JiraUpdateIssueResult> {
+  const { config, issueIdOrKey, task, deepLinkUrl } = input;
+  const target = String(issueIdOrKey || '').trim();
+  if (!target) throw new Error('Jira update issue requires issueIdOrKey');
+
+  const url = `${config.baseUrl}/rest/api/3/issue/${encodeURIComponent(target)}`;
+  const summary = task.title || `Task ${task.id}`;
+  const descriptionParts: string[] = [];
+  if (task.description) descriptionParts.push(String(task.description));
+  if (deepLinkUrl) descriptionParts.push(`Consultify: ${deepLinkUrl}`);
+  if (descriptionParts.length === 0) descriptionParts.push(`Consultify task: ${task.id}`);
+
+  const adfDescription = {
+    type: 'doc',
+    version: 1,
+    content: descriptionParts.map((p) => ({
+      type: 'paragraph',
+      content: [{ type: 'text', text: p }],
+    })),
+  };
+
+  const labels = [...(config.defaultLabels || []), 'consultify'].slice(0, 10);
+
+  const payload = {
+    fields: {
+      summary,
+      description: adfDescription,
+      labels,
+    },
+  };
+
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      Authorization: basicAuthHeader(config.email, config.apiToken),
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    logger.warn('[JiraOrgClient] updateIssue failed', {
+      issueIdOrKey: target,
+      status: res.status,
+      body: body ? body.slice(0, 500) : '',
+    });
+    throw new Error(`Jira update issue failed (HTTP ${res.status})`);
+  }
+
+  return {
+    issueIdOrKey: target,
+    browseUrl: `${config.baseUrl}/browse/${target}`,
   };
 }

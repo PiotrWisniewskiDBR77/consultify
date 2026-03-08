@@ -389,7 +389,8 @@ export const AssessmentHub: React.FC<AssessmentHubProps> = ({ initialTab = 'list
 
         if (lastErr) throw lastErr;
       } catch (err: any) {
-        const message = err?.message || t('assessment.hub.errors.load', 'Failed to load assessments');
+        const message =
+          err?.message || t('assessment.hub.errors.load', 'Failed to load assessments');
         setError(message);
         console.error('[AssessmentHub] Load error:', err);
         toast.error(message);

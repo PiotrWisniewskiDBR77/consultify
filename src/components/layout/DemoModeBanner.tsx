@@ -21,8 +21,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { useDemo } from '../../hooks/useDemo';
 import { usePolicySnapshot } from '../../contexts/AccessPolicyContext';
+import { useDemo } from '../../hooks/useDemo';
 import { useAppStore } from '../../store/useAppStore';
 
 interface DemoModeBannerProps {
@@ -103,17 +103,20 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                     AI: {snapshot.usageToday.aiCalls ?? 0}/{snapshot.limits.maxAICallsPerDay ?? 10}
                   </span>
                 )}
-                {snapshot?.limits && snapshot?.usageToday && (snapshot.limits.maxTotalTokens ?? 0) > 0 && (
-                  <span
-                    className={`rounded-lg px-3 py-1.5 border ${
-                      approachingTokens
-                        ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                        : 'bg-navy-800/50 text-slate-400 border-white/5'
-                    }`}
-                  >
-                    {(snapshot.usageToday.tokensUsed ?? 0) / 1000}k/{(snapshot.limits.maxTotalTokens ?? 10000) / 1000}k
-                  </span>
-                )}
+                {snapshot?.limits &&
+                  snapshot?.usageToday &&
+                  (snapshot.limits.maxTotalTokens ?? 0) > 0 && (
+                    <span
+                      className={`rounded-lg px-3 py-1.5 border ${
+                        approachingTokens
+                          ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                          : 'bg-navy-800/50 text-slate-400 border-white/5'
+                      }`}
+                    >
+                      {(snapshot.usageToday.tokensUsed ?? 0) / 1000}k/
+                      {(snapshot.limits.maxTotalTokens ?? 10000) / 1000}k
+                    </span>
+                  )}
               </div>
             </div>
 

@@ -5,7 +5,7 @@
 
 import type { Server as HttpServer } from 'http';
 import jwt from 'jsonwebtoken';
-import { WebSocketServer, type WebSocket } from 'ws';
+import { type WebSocket, WebSocketServer } from 'ws';
 
 import { config } from '../config/Config.js';
 import { getDatabase } from '../database/Database.js';
@@ -171,7 +171,12 @@ async function persistLeave(db: IDatabase, sessionId: string, actionsCount: numb
   }
 }
 
-async function persistEvent(db: IDatabase, sessionId: string, eventType: string, payload?: unknown) {
+async function persistEvent(
+  db: IDatabase,
+  sessionId: string,
+  eventType: string,
+  payload?: unknown
+) {
   try {
     await db.run(
       `INSERT INTO collab_session_events (session_id, event_type, payload_json)
@@ -291,6 +296,11 @@ export function attachIdeaCollabWs(server: HttpServer): void {
           case 'join':
             // Auth already set identity; allow name override
             if (msg.userName) user.name = msg.userName;
+            user.lastSeen = Date.now();
+            break;
+
+          case 'heartbeat':
+            user.lastSeen = Date.now();
             break;
 
           case 'cursor':

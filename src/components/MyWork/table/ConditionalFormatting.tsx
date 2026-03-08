@@ -83,7 +83,10 @@ export const ConditionalFormatting: React.FC<ConditionalFormattingProps> = ({
               {isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting'}
             </h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800">
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+          >
             <X size={16} className="text-slate-400" />
           </button>
         </div>
@@ -96,7 +99,10 @@ export const ConditionalFormatting: React.FC<ConditionalFormattingProps> = ({
           )}
 
           {rules.map((rule) => (
-            <div key={rule.id} className="p-3 rounded-xl border border-slate-200/60 dark:border-navy-700/60 space-y-2">
+            <div
+              key={rule.id}
+              className="p-3 rounded-xl border border-slate-200/60 dark:border-navy-700/60 space-y-2"
+            >
               <div className="flex items-center gap-2">
                 <select
                   value={rule.column}
@@ -104,12 +110,16 @@ export const ConditionalFormatting: React.FC<ConditionalFormattingProps> = ({
                   className="flex-1 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] outline-none"
                 >
                   {columns.map((col) => (
-                    <option key={col.key} value={col.key}>{col.header}</option>
+                    <option key={col.key} value={col.key}>
+                      {col.header}
+                    </option>
                   ))}
                 </select>
                 <select
                   value={rule.condition}
-                  onChange={(e) => updateRule(rule.id, { condition: e.target.value as FormatRule['condition'] })}
+                  onChange={(e) =>
+                    updateRule(rule.id, { condition: e.target.value as FormatRule['condition'] })
+                  }
                   className="w-28 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] outline-none"
                 >
                   <option value="equals">{isPl ? 'Równa się' : 'Equals'}</option>
@@ -140,9 +150,15 @@ export const ConditionalFormatting: React.FC<ConditionalFormattingProps> = ({
                 {PRESET_COLORS.map((preset) => (
                   <button
                     key={preset.label}
-                    onClick={() => updateRule(rule.id, { style: { backgroundColor: preset.bg, textColor: preset.text } })}
+                    onClick={() =>
+                      updateRule(rule.id, {
+                        style: { backgroundColor: preset.bg, textColor: preset.text },
+                      })
+                    }
                     className={`w-5 h-5 rounded-md border-2 transition-colors ${
-                      rule.style.backgroundColor === preset.bg ? 'border-slate-800 dark:border-white' : 'border-transparent'
+                      rule.style.backgroundColor === preset.bg
+                        ? 'border-slate-800 dark:border-white'
+                        : 'border-transparent'
                     }`}
                     style={{ backgroundColor: preset.bg }}
                     title={preset.label}
@@ -197,12 +213,24 @@ export function getConditionalStyle(
 
     let match = false;
     switch (rule.condition) {
-      case 'equals': match = strVal === ruleVal; break;
-      case 'contains': match = strVal.includes(ruleVal); break;
-      case 'gt': match = Number(value) > Number(rule.value); break;
-      case 'lt': match = Number(value) < Number(rule.value); break;
-      case 'not_empty': match = strVal.trim().length > 0; break;
-      case 'is_empty': match = strVal.trim().length === 0; break;
+      case 'equals':
+        match = strVal === ruleVal;
+        break;
+      case 'contains':
+        match = strVal.includes(ruleVal);
+        break;
+      case 'gt':
+        match = Number(value) > Number(rule.value);
+        break;
+      case 'lt':
+        match = Number(value) < Number(rule.value);
+        break;
+      case 'not_empty':
+        match = strVal.trim().length > 0;
+        break;
+      case 'is_empty':
+        match = strVal.trim().length === 0;
+        break;
     }
 
     if (match) {

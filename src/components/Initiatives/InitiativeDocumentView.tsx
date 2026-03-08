@@ -6388,6 +6388,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 onDraftPriorityChange={setNCommentPriority}
                 onAIEnhance={() => handleGenerateAI('comments')}
                 isAIEnhancing={isGeneratingAI === 'comments'}
+                locked={!canEditCards}
                 getPriorityDotClass={getPriorityDotClass}
                 getCommentPriority={getCommentPriority}
                 getPriorityButtonClass={getPriorityButtonClass}
@@ -6893,6 +6894,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               }}
               onNavigateLinkedItem={openLinkedItemTarget}
               searchLinkedItems={searchLinkedItems}
+              readOnly={!canEditCards}
             />
           );
           break;

@@ -1,16 +1,21 @@
-import { ExternalLink, Target, Sparkles, Copy, Pencil, Link2, Trash2 } from 'lucide-react';
+import { Copy, ExternalLink, Link2, Pencil, Sparkles, Target, Trash2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 
-import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
-import { FilterableTable, type TableColumn, type TableRow } from '../shared/ModuleHub/FilterableTable';
-import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-import type { KPIStatus, KPITrend, ResultsKPI } from './ResultsHub';
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useConversationStore } from '@/store/useConversationStore';
+
+import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
+import {
+  FilterableTable,
+  type TableColumn,
+  type TableRow,
+} from '../shared/ModuleHub/FilterableTable';
+import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import type { KPIStatus, KPITrend, ResultsKPI } from './ResultsHub';
 
 const STATUS_STYLES: Record<KPIStatus, { bg: string; text: string; dot: string }> = {
   'on-target': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },
@@ -43,9 +48,7 @@ const DeviationPill: React.FC<{ severity: 'AMBER' | 'RED'; label: string }> = ({
     <span
       className={[
         'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full',
-        isRed
-          ? 'bg-red-500/10 text-red-400'
-          : 'bg-amber-500/10 text-amber-400 dark:text-amber-300',
+        isRed ? 'bg-red-500/10 text-red-400' : 'bg-amber-500/10 text-amber-400 dark:text-amber-300',
       ].join(' ')}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${isRed ? 'bg-red-500' : 'bg-amber-500'}`} />
@@ -102,11 +105,13 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
     // Keep it stable and “clean” by default.
     return [...kpis]
       .map((k) => ({ ...k, title: k.name }))
-      .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' }));
+      .sort((a, b) =>
+        String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' })
+      );
   }, [kpis]);
 
   const selectedItem = useMemo(
-    () => (selectedId ? list.find((k) => k.id === selectedId) ?? null : null),
+    () => (selectedId ? (list.find((k) => k.id === selectedId) ?? null) : null),
     [list, selectedId]
   );
 
@@ -137,7 +142,11 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
 
   const statusFilterOptions = useMemo(
     () => [
-      { value: 'on-target', label: t('results.status.onTarget', 'On target'), color: 'bg-emerald-500' },
+      {
+        value: 'on-target',
+        label: t('results.status.onTarget', 'On target'),
+        color: 'bg-emerald-500',
+      },
       { value: 'below', label: t('results.status.below', 'Below target'), color: 'bg-red-500' },
       { value: 'no-data', label: t('results.status.noData', 'No data'), color: 'bg-slate-400' },
     ],
@@ -184,10 +193,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
         filterOptions: [
           ...new Set(
             list
-              .flatMap((k) => [
-                k.initiativeName,
-                ...(k.linkedInitiatives || []).map((i) => i.name),
-              ])
+              .flatMap((k) => [k.initiativeName, ...(k.linkedInitiatives || []).map((i) => i.name)])
               .filter(Boolean) as string[]
           ),
         ].map((n) => ({ value: n, label: n })),
@@ -401,7 +407,9 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
                   [
                     {
                       id: 'toggle',
-                      label: detailsExpanded ? t('common.collapse', 'Collapse') : t('common.expand', 'Expand'),
+                      label: detailsExpanded
+                        ? t('common.collapse', 'Collapse')
+                        : t('common.expand', 'Expand'),
                       onClick: () => setDetailsExpanded((v) => !v),
                     },
                     {
@@ -430,7 +438,9 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
                               '',
                               `${t('results.columns.current', 'Current')}: ${kpi.latestValue ?? '—'}`,
                               `${t('results.columns.target', 'Target')}: ${kpi.targetValue ?? '—'}`,
-                              kpi.description ? `${t('common.details', 'Details')}: ${kpi.description}` : '',
+                              kpi.description
+                                ? `${t('common.details', 'Details')}: ${kpi.description}`
+                                : '',
                             ]
                               .filter(Boolean)
                               .join('\n')
@@ -447,28 +457,36 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
             </div>
 
             <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-              <span className="text-slate-500 dark:text-slate-400">{t('results.columns.current', 'Current')}</span>
+              <span className="text-slate-500 dark:text-slate-400">
+                {t('results.columns.current', 'Current')}
+              </span>
               <span className="text-slate-900 dark:text-white">
                 {kpi.latestValue != null
                   ? `${kpi.latestValue.toLocaleString()}${kpi.unit ? ` ${kpi.unit}` : ''}`
                   : '—'}
               </span>
 
-              <span className="text-slate-500 dark:text-slate-400">{t('results.columns.target', 'Target')}</span>
+              <span className="text-slate-500 dark:text-slate-400">
+                {t('results.columns.target', 'Target')}
+              </span>
               <span className="text-slate-700 dark:text-slate-200">
                 {kpi.targetValue != null
                   ? `${kpi.targetValue.toLocaleString()}${kpi.unit ? ` ${kpi.unit}` : ''}`
                   : '—'}
               </span>
 
-              <span className="text-slate-500 dark:text-slate-400">{t('results.columns.baseline', 'Baseline')}</span>
+              <span className="text-slate-500 dark:text-slate-400">
+                {t('results.columns.baseline', 'Baseline')}
+              </span>
               <span className="text-slate-700 dark:text-slate-200">
                 {kpi.baselineValue != null
                   ? `${kpi.baselineValue.toLocaleString()}${kpi.unit ? ` ${kpi.unit}` : ''}`
                   : '—'}
               </span>
 
-              <span className="text-slate-500 dark:text-slate-400">{t('results.columns.owner', 'Owner')}</span>
+              <span className="text-slate-500 dark:text-slate-400">
+                {t('results.columns.owner', 'Owner')}
+              </span>
               <span className="text-slate-700 dark:text-slate-200">{kpi.ownerName || '—'}</span>
             </div>
 
@@ -580,7 +598,9 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
                 <span className="text-slate-500 dark:text-slate-400">
                   {t('results.columns.initiative', 'Initiative')}
                 </span>
-                <span className="truncate max-w-[220px] text-primary-400">{kpi.initiativeName}</span>
+                <span className="truncate max-w-[220px] text-primary-400">
+                  {kpi.initiativeName}
+                </span>
               </span>
             ) : (
               <span className="text-xs text-slate-400 dark:text-slate-500">
@@ -667,4 +687,3 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
 };
 
 export default ResultsKpisTableV3;
-

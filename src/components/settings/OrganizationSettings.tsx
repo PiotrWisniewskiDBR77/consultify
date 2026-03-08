@@ -55,7 +55,9 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
     try {
       const data = await Api.get('/api/economics/finance-settings');
       if (data) setFinanceSettings((prev) => ({ ...prev, ...data }));
-    } catch { /* not configured yet */ }
+    } catch {
+      /* not configured yet */
+    }
   }, []);
 
   const handleSaveFinanceSettings = useCallback(async () => {
@@ -470,7 +472,10 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
           {t('settings.financeDefaults', 'Finance Defaults')}
         </h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-          {t('settings.financeDefaultsDesc', 'Default values for new valuations, budgets, and financial models across the organization.')}
+          {t(
+            'settings.financeDefaultsDesc',
+            'Default values for new valuations, budgets, and financial models across the organization.'
+          )}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -483,7 +488,9 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               max={100}
               step={0.1}
               value={financeSettings.defaultWacc}
-              onChange={(e) => setFinanceSettings((p) => ({ ...p, defaultWacc: Number(e.target.value) }))}
+              onChange={(e) =>
+                setFinanceSettings((p) => ({ ...p, defaultWacc: Number(e.target.value) }))
+              }
               className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
             />
           </div>
@@ -493,7 +500,9 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
             </label>
             <select
               value={financeSettings.defaultCurrency}
-              onChange={(e) => setFinanceSettings((p) => ({ ...p, defaultCurrency: e.target.value }))}
+              onChange={(e) =>
+                setFinanceSettings((p) => ({ ...p, defaultCurrency: e.target.value }))
+              }
               className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
             >
               <option value="PLN">PLN</option>
@@ -511,7 +520,9 @@ export const OrganizationSettings: React.FC<OrganizationSettingsProps> = ({ curr
               min={1}
               max={20}
               value={financeSettings.defaultHorizonYears}
-              onChange={(e) => setFinanceSettings((p) => ({ ...p, defaultHorizonYears: Number(e.target.value) }))}
+              onChange={(e) =>
+                setFinanceSettings((p) => ({ ...p, defaultHorizonYears: Number(e.target.value) }))
+              }
               className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-950 text-sm"
             />
           </div>

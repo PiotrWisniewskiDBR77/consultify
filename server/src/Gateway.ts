@@ -20,6 +20,7 @@ import aiFeedbackRoutes from './routes/ai/ai-feedback.routes.js';
 import aiInfrastructureRoutes from './routes/ai/ai-infrastructure.routes.js';
 import aiMemoryRoutes from './routes/ai/ai-memory.routes.js';
 import aiOperationsRoutes from './routes/ai/ai-operations.routes.js';
+import aiOperatorRoutes from './routes/ai-operator.routes.js';
 import aiPreferencesExtendedRoutes from './routes/ai/ai-preferences-extended.routes.js';
 import aiSecurityRoutes from './routes/ai/ai-security.routes.js';
 import aiSettingsRoutes from './routes/ai/ai-settings.routes.js';
@@ -105,6 +106,7 @@ import webhookSubRoutes from './routes/integrations/webhookSubscriptions.routes.
 import intelligenceRoutes from './routes/intelligence.routes.js';
 import financeEnterpriseRoutes from './routes/finance-enterprise.routes.js';
 import interviewRoutes from './routes/interview.routes.js';
+import meetingRoutes from './routes/meeting.routes.js';
 import presentationEnterpriseRoutes from './routes/presentation-enterprise.routes.js';
 import reportEnterpriseRoutes from './routes/report-enterprise.routes.js';
 import resultsEnterpriseRoutes from './routes/results-enterprise.routes.js';
@@ -386,6 +388,7 @@ export class ApiGateway {
       app.use('/api/voice', voiceRoutes);
       app.use('/api/documents', documentRoutes);
       app.use('/api/settings', settingsRoutes);
+      app.use('/api/meeting', meetingRoutes);
       mountStub(
         '/api/integrations/calendar',
         calendarIntegrationsRoutes,
@@ -658,6 +661,7 @@ export class ApiGateway {
       app.use('/api/interview', interviewRoutes);
       app.use('/api/interview-v4', interviewEnterpriseRoutes);
       app.use('/api/agents', agentsRoutes);
+      app.use('/api/ai-operator', aiOperatorRoutes);
       mountStub('/api/workqueue', workqueueRoutes, 'workqueueRoutes');
       mountStub('/api/connectors', connectorRoutes, 'connectorRoutes');
       app.use('/api/audit', auditEventsRoutes);

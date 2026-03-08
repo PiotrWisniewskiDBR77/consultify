@@ -73,8 +73,8 @@ export const PartnerPricingView: React.FC = () => {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 dark:text-slate-300">
-              Dołącz do ekosystemu partnerów Consultify i uzyskaj dostęp do co-sell leads,
-              prowizji do 20%, dedykowanego wsparcia i narzędzi zgodnych z PMO standards.
+              Dołącz do ekosystemu partnerów Consultify i uzyskaj dostęp do co-sell leads, prowizji
+              do 20%, dedykowanego wsparcia i narzędzi zgodnych z PMO standards.
             </p>
 
             <div className="mt-8 flex flex-wrap justify-center gap-4">

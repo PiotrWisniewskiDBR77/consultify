@@ -11,6 +11,9 @@
 > - `docs/product/LINK_GRAPH_V3.md` (Context/Links contract)  
 > - `docs/product/REQUIREMENTS_V3_SSOT.md` + `docs/product/PROCESS_MYWORK_TO_DELIVERABLES_V3.md` (traceability / ToolSession)  
 
+> **V5 note:** For all new planning and implementation work, use `docs/product/IDEA_WORKSPACE_V5_SSOT.md` as the canonical product SSOT and `docs/product/IDEA_WORKSPACE_V5_IMPLEMENTATION_PROGRAM.md` as the implementation ledger.  
+> This V3 document remains important for shipped behavior and backward-compatibility context.
+
 ---
 
 ## 1) Cel produktu

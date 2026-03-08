@@ -172,7 +172,7 @@ const SuperAdminView = React.lazy(() =>
 );
 
 // AI Chat (Full Screen Chat View)
-const AIChatView = React.lazy(() => import('@/views/AIChatView'));
+const AIChatWelcomeView = React.lazy(() => import('@/views/AIChatWelcomeView'));
 
 // Discovery Consultant (AI Discovery with Canvas)
 const DiscoveryConsultantView = React.lazy(() =>
@@ -348,6 +348,7 @@ const ResourcesPage = React.lazy(() =>
 const HowItWorksPage = React.lazy(() =>
   import('@/views/HowItWorksPage').then((m) => ({ default: m.HowItWorksPage }))
 );
+const AppIntroView = React.lazy(() => import('@/views/AppIntroView'));
 
 const ForWhomPage = React.lazy(() =>
   import('@/views/ForWhomPage').then((m) => ({ default: m.ForWhomPage }))
@@ -855,6 +856,20 @@ export const AppRoutes: React.FC = () => {
 
         {/* Studio */}
         <Route
+          path={ROUTES.APP_INTRO}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Intro']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <AppIntroView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* Studio */}
+        <Route
           path={ROUTES.STUDIO}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['Studio']}>
@@ -892,7 +907,7 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />
-                  <AIChatView />
+                  <AIChatWelcomeView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -907,7 +922,7 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />
-                  <AIChatView />
+                  <AIChatWelcomeView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>

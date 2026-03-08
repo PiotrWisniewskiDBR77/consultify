@@ -79,9 +79,7 @@ export const AboutView: React.FC = () => {
                 of building internal competencies.
               </p>
               <p className="text-lg text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
-                <strong className="text-navy-900 dark:text-white">
-                  Consultify changes that.
-                </strong>{' '}
+                <strong className="text-navy-900 dark:text-white">Consultify changes that.</strong>{' '}
                 We've built a platform that combines the rigor of top-tier consulting methodologies
                 with the speed and accessibility of AI.
               </p>

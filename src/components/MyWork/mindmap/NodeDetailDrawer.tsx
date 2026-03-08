@@ -35,6 +35,21 @@ import { Api } from '@/services/api';
 
 export type NodeStatus = 'idea' | 'exploring' | 'validated' | 'ready_to_convert' | 'converted';
 
+export interface NodeEvidenceLinkV5 {
+  id: string;
+  type: 'url' | 'artifact' | 'note';
+  title: string;
+  url?: string;
+  artifactId?: string;
+  addedAt?: string;
+}
+
+export interface AIExpansionEntryV5 {
+  timestamp: string;
+  prompt: string;
+  resultSummary: string;
+}
+
 export interface NodeDetailData {
   nodeId: string;
   label: string;
@@ -48,9 +63,25 @@ export interface NodeDetailData {
   assignee?: string;
   attachments?: Array<{ id: string; name: string; url?: string; type?: string }>;
   comments?: Array<{ id: string; author: string; text: string; createdAt: string }>;
-  evidence?: Array<{ id: string; type: string; title: string; detail?: string; source?: string; confidence?: number }>;
+  evidence?: Array<{
+    id: string;
+    type: string;
+    title: string;
+    detail?: string;
+    source?: string;
+    confidence?: number;
+  }>;
   childNodeIds?: string[];
   parentNodeId?: string;
+
+  // V5-IDEA-18: Node depth model
+  context?: string;
+  goal?: string;
+  rationale?: string;
+  riskNote?: string;
+  evidenceLinks?: NodeEvidenceLinkV5[];
+  semanticType?: string;
+  aiExpansionHistory?: AIExpansionEntryV5[];
 }
 
 interface CompanyContextItem {
@@ -78,15 +109,49 @@ interface NodeDetailDrawerProps {
   onDrillDown?: (nodeId: string) => void;
 }
 
-const STATUS_CONFIG: Record<NodeStatus, { labelPl: string; labelEn: string; color: string; icon: React.ComponentType<any> }> = {
-  idea: { labelPl: 'Pomysł', labelEn: 'Idea', color: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300', icon: Lightbulb },
-  exploring: { labelPl: 'Eksploracja', labelEn: 'Exploring', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300', icon: Target },
-  validated: { labelPl: 'Zwalidowany', labelEn: 'Validated', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300', icon: Star },
-  ready_to_convert: { labelPl: 'Gotowy do konwersji', labelEn: 'Ready to Convert', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300', icon: Rocket },
-  converted: { labelPl: 'Skonwertowany', labelEn: 'Converted', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300', icon: ArrowRight },
+const STATUS_CONFIG: Record<
+  NodeStatus,
+  { labelPl: string; labelEn: string; color: string; icon: React.ComponentType<any> }
+> = {
+  idea: {
+    labelPl: 'Pomysł',
+    labelEn: 'Idea',
+    color: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
+    icon: Lightbulb,
+  },
+  exploring: {
+    labelPl: 'Eksploracja',
+    labelEn: 'Exploring',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+    icon: Target,
+  },
+  validated: {
+    labelPl: 'Zwalidowany',
+    labelEn: 'Validated',
+    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+    icon: Star,
+  },
+  ready_to_convert: {
+    labelPl: 'Gotowy do konwersji',
+    labelEn: 'Ready to Convert',
+    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+    icon: Rocket,
+  },
+  converted: {
+    labelPl: 'Skonwertowany',
+    labelEn: 'Converted',
+    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+    icon: ArrowRight,
+  },
 };
 
-const STATUS_ORDER: NodeStatus[] = ['idea', 'exploring', 'validated', 'ready_to_convert', 'converted'];
+const STATUS_ORDER: NodeStatus[] = [
+  'idea',
+  'exploring',
+  'validated',
+  'ready_to_convert',
+  'converted',
+];
 
 export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
   open,
@@ -131,7 +196,11 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
       try {
         const res = await Api.getMyIdeaAISuggestions(ideaId, {
           seedText: `${ideaTitle}: ${nodeData.label}`,
-          mapNodes: allNodes.map((n) => ({ id: n.id, type: 'idea', data: { label: n.data?.label, branchKey: n.data?.branchKey } })),
+          mapNodes: allNodes.map((n) => ({
+            id: n.id,
+            type: 'idea',
+            data: { label: n.data?.label, branchKey: n.data?.branchKey },
+          })),
           activeTool: 'mindmap',
           language: i18n.language,
         });
@@ -139,7 +208,12 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           setCompanyContext(
             res.suggestions.slice(0, 6).map((s: any, idx: number) => ({
               id: s.id || `ctx-${idx}`,
-              type: s.category === 'risk_flags' ? 'assessment' : s.category === 'findings' ? 'interview' : 'similar_idea',
+              type:
+                s.category === 'risk_flags'
+                  ? 'assessment'
+                  : s.category === 'findings'
+                    ? 'interview'
+                    : 'similar_idea',
               title: s.text,
               detail: s.detail,
               source: s.source,
@@ -153,7 +227,9 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         if (!cancelled) setLoadingContext(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [open, nodeData?.nodeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleNotesBlur = useCallback(() => {
@@ -183,7 +259,9 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
       });
       const proposed = res?.proposal?.add?.nodes || res?.proposal?.add || [];
       if (Array.isArray(proposed) && proposed.length > 0) {
-        setAiSuggestions(proposed.map((n: any) => String(n?.data?.label || n?.title || '')).filter(Boolean));
+        setAiSuggestions(
+          proposed.map((n: any) => String(n?.data?.label || n?.title || '')).filter(Boolean)
+        );
       } else {
         toast(isPl ? 'Brak nowych propozycji' : 'No new suggestions');
       }
@@ -226,7 +304,10 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
   if (!open || !nodeData) return null;
 
   const isProtected = nodeData.nodeId === 'root' || nodeData.nodeId.startsWith('branch-');
-  const isAI = nodeData.sourceType === 'ai_chat' || nodeData.sourceType === 'ai_hint' || nodeData.sourceType === 'ai_suggestion';
+  const isAI =
+    nodeData.sourceType === 'ai_chat' ||
+    nodeData.sourceType === 'ai_hint' ||
+    nodeData.sourceType === 'ai_suggestion';
 
   return (
     <div className="fixed top-0 right-0 bottom-0 z-[85] w-[420px] max-w-[90vw] bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-l border-slate-200/60 dark:border-navy-700/60 shadow-2xl flex flex-col overflow-hidden">
@@ -234,8 +315,14 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
       <div className="flex items-start gap-3 px-5 py-4 border-b border-slate-200/40 dark:border-navy-700/40">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            {isAI ? <Bot size={14} className="text-purple-500 shrink-0" /> : <Lightbulb size={14} className="text-amber-500 shrink-0" />}
-            <h3 className="text-sm font-bold text-slate-800 dark:text-white truncate">{nodeData.label || '...'}</h3>
+            {isAI ? (
+              <Bot size={14} className="text-purple-500 shrink-0" />
+            ) : (
+              <Lightbulb size={14} className="text-amber-500 shrink-0" />
+            )}
+            <h3 className="text-sm font-bold text-slate-800 dark:text-white truncate">
+              {nodeData.label || '...'}
+            </h3>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
             <span className="inline-flex items-center gap-1">
@@ -243,7 +330,9 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
               {nodeData.branchKey}
             </span>
             {nodeData.nodeType && (
-              <span className="uppercase tracking-wide">{String(nodeData.nodeType).replace(/_/g, ' ')}</span>
+              <span className="uppercase tracking-wide">
+                {String(nodeData.nodeType).replace(/_/g, ' ')}
+              </span>
             )}
           </div>
         </div>
@@ -270,13 +359,19 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
               return (
                 <React.Fragment key={s}>
                   {idx > 0 && (
-                    <div className={`w-4 h-0.5 rounded-full ${isPast || isActive ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-navy-700'}`} />
+                    <div
+                      className={`w-4 h-0.5 rounded-full ${isPast || isActive ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-navy-700'}`}
+                    />
                   )}
                   <button
                     onClick={() => handleStatusChange(s)}
                     disabled={locked || isProtected}
                     className={`px-2 py-1 rounded-lg text-[9px] font-bold transition-all ${
-                      isActive ? cfg.color + ' ring-1 ring-current/20 shadow-sm' : isPast ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                      isActive
+                        ? cfg.color + ' ring-1 ring-current/20 shadow-sm'
+                        : isPast
+                          ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
+                          : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
                     } disabled:opacity-40`}
                     title={isPl ? cfg.labelPl : cfg.labelEn}
                   >
@@ -299,10 +394,42 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             onBlur={handleNotesBlur}
             disabled={locked || isProtected}
             rows={4}
-            placeholder={isPl ? 'Dodaj notatki, kontekst, szczegóły...' : 'Add notes, context, details...'}
+            placeholder={
+              isPl ? 'Dodaj notatki, kontekst, szczegóły...' : 'Add notes, context, details...'
+            }
             className="w-full px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-amber-500/30 resize-none transition-all disabled:opacity-50"
           />
         </div>
+
+        {/* V5-IDEA-18: Depth model fields */}
+        <DepthField
+          label={isPl ? 'Kontekst' : 'Context'}
+          value={nodeData?.context || ''}
+          placeholder={isPl ? 'Jaki jest kontekst?' : 'What is the context?'}
+          disabled={locked || isProtected}
+          onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { context: val })}
+        />
+        <DepthField
+          label={isPl ? 'Cel' : 'Goal'}
+          value={nodeData?.goal || ''}
+          placeholder={isPl ? 'Jaki jest cel?' : 'What is the goal?'}
+          disabled={locked || isProtected}
+          onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { goal: val })}
+        />
+        <DepthField
+          label={isPl ? 'Uzasadnienie' : 'Rationale'}
+          value={nodeData?.rationale || ''}
+          placeholder={isPl ? 'Dlaczego to ważne?' : 'Why is this important?'}
+          disabled={locked || isProtected}
+          onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { rationale: val })}
+        />
+        <DepthField
+          label={isPl ? 'Ryzyko' : 'Risk'}
+          value={nodeData?.riskNote || ''}
+          placeholder={isPl ? 'Jakie są ryzyka?' : 'What are the risks?'}
+          disabled={locked || isProtected}
+          onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { riskNote: val })}
+        />
 
         {/* AI: Expand this topic */}
         {!isProtected && (
@@ -315,11 +442,19 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
               disabled={locked || aiExpanding}
               className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-violet-500/10 to-indigo-500/8 hover:from-violet-500/15 hover:to-indigo-500/12 transition-all disabled:opacity-40"
             >
-              {aiExpanding ? <Loader2 size={14} className="animate-spin text-violet-500" /> : <Sparkles size={14} className="text-violet-500" />}
+              {aiExpanding ? (
+                <Loader2 size={14} className="animate-spin text-violet-500" />
+              ) : (
+                <Sparkles size={14} className="text-violet-500" />
+              )}
               <span className="text-[11px] font-bold text-violet-700 dark:text-violet-300">
                 {aiExpanding
-                  ? (isPl ? 'Generuję pomysły...' : 'Generating ideas...')
-                  : (isPl ? 'Wygeneruj podpomysły dla tego tematu' : 'Generate sub-ideas for this topic')}
+                  ? isPl
+                    ? 'Generuję pomysły...'
+                    : 'Generating ideas...'
+                  : isPl
+                    ? 'Wygeneruj podpomysły dla tego tematu'
+                    : 'Generate sub-ideas for this topic'}
               </span>
             </button>
 
@@ -331,7 +466,9 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                     className="flex items-center gap-2 p-2 rounded-xl bg-violet-500/5 border border-violet-400/10 hover:bg-violet-500/10 transition-colors"
                   >
                     <Zap size={10} className="text-violet-500 shrink-0" />
-                    <span className="text-[11px] text-slate-700 dark:text-slate-200 flex-1">{s}</span>
+                    <span className="text-[11px] text-slate-700 dark:text-slate-200 flex-1">
+                      {s}
+                    </span>
                     <button
                       onClick={() => handleApplyAISuggestion(s)}
                       className="text-[9px] font-bold text-violet-600 dark:text-violet-400 hover:underline shrink-0"
@@ -361,26 +498,43 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             ) : companyContext.length === 0 ? (
               <EmptyStateInline
                 icon={FileText}
-                message={isPl ? 'Brak powiązań z danymi firmy' : 'No company data connections found'}
+                message={
+                  isPl ? 'Brak powiązań z danymi firmy' : 'No company data connections found'
+                }
                 dashed={false}
                 className="py-4"
               />
             ) : (
               <div className="space-y-1.5 mt-1">
                 {companyContext.map((item) => (
-                  <div key={item.id} className="p-2.5 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30">
+                  <div
+                    key={item.id}
+                    className="p-2.5 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30"
+                  >
                     <div className="flex items-start gap-2">
                       <div className="mt-0.5 shrink-0">
-                        {item.type === 'assessment' && <Target size={11} className="text-red-500" />}
-                        {item.type === 'interview' && <MessageSquare size={11} className="text-blue-500" />}
+                        {item.type === 'assessment' && (
+                          <Target size={11} className="text-red-500" />
+                        )}
+                        {item.type === 'interview' && (
+                          <MessageSquare size={11} className="text-blue-500" />
+                        )}
                         {item.type === 'kpi' && <Zap size={11} className="text-emerald-500" />}
-                        {item.type === 'initiative' && <Rocket size={11} className="text-amber-500" />}
-                        {item.type === 'similar_idea' && <Lightbulb size={11} className="text-violet-500" />}
+                        {item.type === 'initiative' && (
+                          <Rocket size={11} className="text-amber-500" />
+                        )}
+                        {item.type === 'similar_idea' && (
+                          <Lightbulb size={11} className="text-violet-500" />
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 leading-relaxed">{item.title}</div>
+                        <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 leading-relaxed">
+                          {item.title}
+                        </div>
                         {item.detail && (
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{item.detail}</div>
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                            {item.detail}
+                          </div>
                         )}
                         {item.confidence != null && (
                           <div className="flex items-center gap-1 mt-1">
@@ -390,7 +544,9 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                                 style={{ width: `${Math.round(item.confidence * 100)}%` }}
                               />
                             </div>
-                            <span className="text-[8px] text-slate-400">{Math.round(item.confidence * 100)}%</span>
+                            <span className="text-[8px] text-slate-400">
+                              {Math.round(item.confidence * 100)}%
+                            </span>
                           </div>
                         )}
                       </div>
@@ -419,7 +575,9 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
                     className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left hover:bg-slate-100/60 dark:hover:bg-white/[0.03] transition-colors"
                   >
                     <GitBranch size={10} className="text-slate-400 shrink-0" />
-                    <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate flex-1">{rn.label}</span>
+                    <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate flex-1">
+                      {rn.label}
+                    </span>
                     <span className="text-[9px] text-slate-400">{rn.branchKey}</span>
                     <ExternalLink size={10} className="text-slate-300" />
                   </button>
@@ -448,17 +606,38 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
         {!isProtected && (
           <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
             <Callout
-              variant={status === 'validated' || status === 'ready_to_convert' ? 'success' : status === 'exploring' ? 'info' : 'warning'}
+              variant={
+                status === 'validated' || status === 'ready_to_convert'
+                  ? 'success'
+                  : status === 'exploring'
+                    ? 'info'
+                    : 'warning'
+              }
               compact
               className="rounded-xl"
               title={isPl ? 'Dojrzałość pomysłu' : 'Idea Maturity'}
             >
               <div className="text-[10px] leading-relaxed">
-                {status === 'idea' && (isPl ? 'Ten pomysł jest na etapie iskry. Dodaj notatki i rozwiń go z AI.' : 'This idea is at spark stage. Add notes and expand with AI.')}
-                {status === 'exploring' && (isPl ? 'Eksploracja w toku. Szukaj dowodów i powiązań z danymi firmy.' : 'Exploration in progress. Look for evidence and company data connections.')}
-                {status === 'validated' && (isPl ? 'Pomysł zwalidowany. Rozważ konwersję na inicjatywę.' : 'Idea validated. Consider converting to an initiative.')}
-                {status === 'ready_to_convert' && (isPl ? 'Gotowy do konwersji! Kliknij przycisk poniżej.' : 'Ready to convert! Click the button below.')}
-                {status === 'converted' && (isPl ? 'Ten pomysł został już skonwertowany.' : 'This idea has already been converted.')}
+                {status === 'idea' &&
+                  (isPl
+                    ? 'Ten pomysł jest na etapie iskry. Dodaj notatki i rozwiń go z AI.'
+                    : 'This idea is at spark stage. Add notes and expand with AI.')}
+                {status === 'exploring' &&
+                  (isPl
+                    ? 'Eksploracja w toku. Szukaj dowodów i powiązań z danymi firmy.'
+                    : 'Exploration in progress. Look for evidence and company data connections.')}
+                {status === 'validated' &&
+                  (isPl
+                    ? 'Pomysł zwalidowany. Rozważ konwersję na inicjatywę.'
+                    : 'Idea validated. Consider converting to an initiative.')}
+                {status === 'ready_to_convert' &&
+                  (isPl
+                    ? 'Gotowy do konwersji! Kliknij przycisk poniżej.'
+                    : 'Ready to convert! Click the button below.')}
+                {status === 'converted' &&
+                  (isPl
+                    ? 'Ten pomysł został już skonwertowany.'
+                    : 'This idea has already been converted.')}
               </div>
             </Callout>
           </div>
@@ -486,6 +665,54 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           </button>
         </div>
       )}
+    </div>
+  );
+};
+
+// V5-IDEA-18: Depth field inline component
+const DepthField: React.FC<{
+  label: string;
+  value: string;
+  placeholder: string;
+  disabled: boolean;
+  onChange: (val: string) => void;
+}> = ({ label, value, placeholder, disabled, onChange }) => {
+  const [localVal, setLocalVal] = useState(value);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    setLocalVal(value);
+  }, [value]);
+
+  if (!expanded && !localVal) {
+    return (
+      <div className="px-5 py-1.5">
+        <button
+          onClick={() => setExpanded(true)}
+          className="text-[10px] font-semibold text-slate-400 hover:text-primary-500 transition-colors"
+        >
+          + {label}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-5 py-2 border-b border-slate-200/30 dark:border-navy-700/30">
+      <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">
+        {label}
+      </div>
+      <textarea
+        value={localVal}
+        onChange={(e) => setLocalVal(e.target.value)}
+        onBlur={() => {
+          if (localVal !== value) onChange(localVal);
+        }}
+        disabled={disabled}
+        rows={2}
+        placeholder={placeholder}
+        className="w-full px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-amber-500/30 resize-none transition-all disabled:opacity-50"
+      />
     </div>
   );
 };

@@ -16,13 +16,10 @@
 
 import {
   AlertCircle,
-  Check,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
-  Copy,
-  Eye,
   FileText,
-  GripVertical,
   HelpCircle,
   Loader2,
   Plus,
@@ -152,9 +149,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [draggedQuestion, setDraggedQuestion] = useState<string | null>(null);
 
   // Load existing template
   useEffect(() => {
@@ -415,53 +410,29 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-6xl mx-4 max-h-[95vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-[1080px] mx-4 max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
-              <FileText size={20} className="text-amber-400" />
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {templateId
-                  ? isPolish
-                    ? 'Edytuj szablon'
-                    : 'Edit Template'
-                  : isPolish
-                    ? 'Nowy szablon wywiadu'
-                    : 'New Interview Template'}
-              </h2>
-              <p className="text-xs text-slate-500">
+        <div className="flex items-center justify-between px-4 h-10 border-b border-slate-200/60 dark:border-navy-700 shrink-0 bg-[#1b2440] text-white">
+          <div className="flex items-center gap-2 min-w-0">
+            <FileText size={12} className="text-amber-300 shrink-0" />
+            <div className="min-w-0">
+              <div className="text-[11px] font-medium text-slate-200">
                 {template.status === 'draft'
                   ? isPolish
-                    ? 'Wersja robocza'
+                    ? 'Draft'
                     : 'Draft'
                   : isPolish
-                    ? 'Opublikowany'
+                    ? 'Published'
                     : 'Published'}
-              </p>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowPreview(!showPreview)}
-              className={`p-2 rounded-lg border transition-all ${
-                showPreview
-                  ? 'bg-primary-500/15 border-primary-500 text-primary-400'
-                  : 'bg-slate-50 dark:bg-navy-800 border-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-              title={isPolish ? 'Podgląd' : 'Preview'}
-            >
-              <Eye size={18} />
-            </button>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg bg-slate-50 dark:bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              <X size={18} />
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="inline-flex items-center justify-center h-6 w-6 rounded-sm text-slate-300 hover:bg-white/10 transition-colors"
+          >
+            <X size={12} />
+          </button>
         </div>
 
         {isLoading ? (
@@ -469,16 +440,12 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
             <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
           </div>
         ) : (
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex overflow-hidden bg-white dark:bg-navy-900">
             {/* Left Panel - Template Metadata */}
-            <div className="w-80 border-r border-slate-200 dark:border-navy-700 p-4 overflow-auto shrink-0">
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
-                {isPolish ? 'Informacje o szablonie' : 'Template Information'}
-              </h3>
-
+            <div className="w-[300px] border-r border-slate-300/80 dark:border-navy-700 px-4 py-6 overflow-auto shrink-0">
               {/* Name */}
-              <div className="mb-4">
-                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+              <div className="mb-3">
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                   {isPolish ? 'Nazwa szablonu' : 'Template Name'} *
                 </label>
                 <input
@@ -488,18 +455,18 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
                   placeholder={
                     isPolish ? 'np. Transformacja Cyfrowa' : 'e.g. Digital Transformation'
                   }
-                  className={`w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 border text-slate-900 dark:text-white placeholder-slate-500 focus:ring-1 transition-all ${
+                  className={`w-full h-9 px-3 rounded-md bg-[#08122b] dark:bg-navy-950 border text-white placeholder-slate-400 focus:ring-1 transition-all ${
                     errors.name
                       ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50'
-                      : 'border-navy-600 focus:border-primary-500 focus:ring-primary-500/50'
+                      : 'border-navy-700 focus:border-primary-500 focus:ring-primary-500/50'
                   }`}
                 />
                 {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
               </div>
 
               {/* Description */}
-              <div className="mb-4">
-                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+              <div className="mb-3">
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                   {isPolish ? 'Opis' : 'Description'}
                 </label>
                 <textarea
@@ -511,13 +478,13 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
                     isPolish ? 'Krótki opis szablonu...' : 'Brief template description...'
                   }
                   rows={3}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
+                  className="w-full px-3 py-2 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
                 />
               </div>
 
               {/* Category */}
-              <div className="mb-4">
-                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+              <div className="mb-3">
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                   {isPolish ? 'Kategoria' : 'Category'}
                 </label>
                 <select
@@ -528,7 +495,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
                       category: e.target.value as TemplateCategory,
                     }))
                   }
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                  className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
                 >
                   {TEMPLATE_CATEGORIES.map((cat) => (
                     <option key={cat.id} value={cat.id}>
@@ -539,8 +506,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
               </div>
 
               {/* Visibility */}
-              <div className="mb-4">
-                <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+              <div className="mb-3">
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
                   {isPolish ? 'Widoczność' : 'Visibility'}
                 </label>
                 <select
@@ -548,7 +515,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
                   onChange={(e) =>
                     setTemplate((prev) => ({ ...prev, visibility: e.target.value as any }))
                   }
-                  className="w-full px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                  className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
                 >
                   {VISIBILITY_OPTIONS.map((opt) => (
                     <option key={opt.id} value={opt.id}>
@@ -559,26 +526,26 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
               </div>
 
               {/* Question Categories Summary */}
-              <div className="mt-6 pt-4 border-t border-slate-200 dark:border-navy-700">
-                <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3">
+              <div className="mt-5 pt-4 border-t border-slate-200 dark:border-navy-700">
+                <h4 className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-3">
                   {isPolish ? 'Pytania według kategorii' : 'Questions by Category'}
                 </h4>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {categoryCounts.map((cat) => (
                     <button
                       key={cat.id}
                       onClick={() => setActiveCategory(cat.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all ${
+                      className={`w-full flex items-center justify-between px-3 h-8 rounded-md transition-all ${
                         activeCategory === cat.id
-                          ? 'bg-primary-500/15 border border-primary-500 text-white'
-                          : 'bg-slate-50 dark:bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-600'
+                          ? 'bg-primary-500/12 border border-primary-500/25 text-slate-900 dark:text-white'
+                          : 'bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       <div className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${cat.color}`} />
-                        <span className="text-sm">{isPolish ? cat.labelPl : cat.labelEn}</span>
+                        <span className="text-xs">{isPolish ? cat.labelPl : cat.labelEn}</span>
                       </div>
-                      <span className="text-xs bg-navy-700 px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[10px] text-white bg-[#1b2440] rounded-full">
                         {cat.count}
                       </span>
                     </button>
@@ -597,26 +564,19 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
             </div>
 
             {/* Right Panel - Questions Editor */}
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/40 dark:bg-navy-950/30">
               {/* Category Header */}
-              <div className="p-4 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`w-3 h-3 rounded-full ${QUESTION_CATEGORIES.find((c) => c.id === activeCategory)?.color}`}
-                  />
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {isPolish
-                      ? QUESTION_CATEGORIES.find((c) => c.id === activeCategory)?.labelPl
-                      : QUESTION_CATEGORIES.find((c) => c.id === activeCategory)?.labelEn}
-                  </h3>
-                  <span className="text-xs text-slate-500">
+              <div className="relative px-4 h-12 border-b border-slate-300/80 dark:border-navy-700 flex items-center justify-end shrink-0">
+                <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />
+                  <span>
                     ({questionsByCategory[activeCategory]?.length || 0}{' '}
-                    {isPolish ? 'pytań' : 'questions'})
+                    {isPolish ? 'questions' : 'questions'})
                   </span>
                 </div>
                 <button
                   onClick={handleAddQuestion}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-500/15 border border-primary-500 text-primary-400 hover:bg-primary-500/25 transition-colors text-sm"
+                  className="flex items-center gap-1.5 h-8 px-3 rounded-md border border-primary-500/20 bg-white dark:bg-navy-900 text-primary-500 hover:bg-primary-500/5 transition-colors text-xs"
                 >
                   <Plus size={14} />
                   {isPolish ? 'Dodaj pytanie' : 'Add Question'}
@@ -624,7 +584,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
               </div>
 
               {/* Questions List */}
-              <div className="flex-1 overflow-auto p-4 space-y-3">
+              <div className="flex-1 overflow-auto p-3 space-y-2">
                 {(questionsByCategory[activeCategory] || []).length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <HelpCircle size={48} className="text-slate-600 mb-4" />
@@ -734,53 +694,36 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
 
   return (
     <div
-      className={`bg-slate-50 dark:bg-navy-800 border rounded-xl overflow-hidden transition-all ${
-        error ? 'border-red-500/50' : 'border-slate-200 dark:border-navy-700'
+      className={`rounded-lg overflow-hidden transition-all ${
+        error ? 'ring-1 ring-red-500/40' : ''
       }`}
     >
       {/* Header */}
       <div
-        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-700/50 transition-colors"
+        className="flex items-center gap-2.5 px-3 h-8 cursor-pointer bg-[#0b1530] dark:bg-[#0b1324] hover:bg-[#122041] dark:hover:bg-[#111b31] border border-slate-800/70 rounded-md transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex items-center gap-1 text-slate-500">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onMoveUp();
-            }}
-            disabled={index === 0}
-            className="p-1 rounded hover:bg-slate-200 dark:hover:bg-navy-600 disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <ChevronUp size={14} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onMoveDown();
-            }}
-            disabled={index === totalCount - 1}
-            className="p-1 rounded hover:bg-slate-200 dark:hover:bg-navy-600 disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <ChevronDown size={14} />
-          </button>
+        <div className="flex items-center gap-1.5 text-slate-400 shrink-0">
+          <ChevronRight
+            size={12}
+            className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+          />
+          <span className="text-[10px] font-medium w-4 text-center">{index + 1}.</span>
         </div>
 
-        <span className="text-xs text-slate-500 font-mono w-6">{index + 1}.</span>
-
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-slate-900 dark:text-white truncate">
+          <p className="text-[12px] text-slate-100 truncate">
             {question.questionText || (isPolish ? '(Nowe pytanie)' : '(New question)')}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
           {question.isRequired && (
-            <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 text-xs rounded">
+            <span className="px-1.5 py-0.5 bg-red-500/15 text-red-300 text-[10px] rounded border border-red-500/20 leading-none">
               {isPolish ? 'Wymagane' : 'Required'}
             </span>
           )}
-          <span className="px-2 py-0.5 bg-slate-200 dark:bg-navy-700 text-slate-500 dark:text-slate-400 text-xs rounded">
+          <span className="px-1.5 py-0.5 bg-slate-700/70 text-slate-200 text-[10px] rounded border border-slate-600/60 leading-none">
             {
               ANSWER_TYPES.find((t) => t.id === question.answerType)?.[
                 isPolish ? 'labelPl' : 'labelEn'
@@ -792,16 +735,33 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               e.stopPropagation();
               onDelete();
             }}
-            className="p-1.5 rounded hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+            className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-colors"
           >
-            <Trash2 size={14} />
+            <Trash2 size={12} />
           </button>
         </div>
       </div>
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="p-4 pt-0 border-t border-slate-200 dark:border-navy-700 space-y-4">
+        <div className="mt-2 p-4 border border-slate-200 dark:border-navy-700 rounded-lg bg-slate-50 dark:bg-navy-900/70 space-y-4">
+          <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={onMoveUp}
+              disabled={index === 0}
+              className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronUp size={14} />
+            </button>
+            <button
+              onClick={onMoveDown}
+              disabled={index === totalCount - 1}
+              className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronDown size={14} />
+            </button>
+          </div>
+
           {/* Question Text */}
           <div>
             <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">

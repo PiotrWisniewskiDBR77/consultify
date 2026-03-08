@@ -853,6 +853,8 @@ Taski w list view pokazują “Focus lane” badge (Today / This Week / (Later j
 Szczegółowa specyfikacja (4 tryby pracy + generatory + DoD) jest tutaj:
 
 - `docs/product/IDEA_WORKSPACE_V3_SSOT.md`
+- `docs/product/IDEA_WORKSPACE_V5_SSOT.md` — **kanoniczny kierunek dla nowych prac V5**
+- `docs/product/IDEA_WORKSPACE_V5_IMPLEMENTATION_PROGRAM.md` — task ledger, waves, dependencies, QA
 
 ### Nazwa w UI (PL)
 

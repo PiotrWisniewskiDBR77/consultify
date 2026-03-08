@@ -33,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
+
 import type { AIProposalBatch, CanvasToolType } from './ideaSelectionTypes';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -56,6 +57,21 @@ export interface NodeComment {
 
 export type NodeStatus = 'idea' | 'exploring' | 'ready' | 'rejected';
 
+export interface NodeEvidenceLink {
+  id: string;
+  type: 'url' | 'artifact' | 'note';
+  title: string;
+  url?: string;
+  artifactId?: string;
+  addedAt?: string;
+}
+
+export interface AIExpansionEntry {
+  timestamp: string;
+  prompt: string;
+  resultSummary: string;
+}
+
 export interface ExtendedNodeData {
   label: string;
   description?: string;
@@ -71,6 +87,16 @@ export interface ExtendedNodeData {
   colorIndex?: number;
   createdAt?: string;
   updatedAt?: string;
+
+  // V5-IDEA-18: Node depth model
+  notes?: string;
+  context?: string;
+  goal?: string;
+  rationale?: string;
+  riskNote?: string;
+  evidenceLinks?: NodeEvidenceLink[];
+  semanticType?: string;
+  aiExpansionHistory?: AIExpansionEntry[];
 }
 
 interface AIContextResult {
@@ -101,7 +127,9 @@ export interface IdeaNodeDetailDrawerProps {
 
 function simpleMarkdown(text: string): string {
   let html = text
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
     .replace(/^# (.+)$/gm, '<h1>$1</h1>')
@@ -109,21 +137,47 @@ function simpleMarkdown(text: string): string {
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/`(.+?)`/g, '<code>$1</code>')
     .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-    .replace(/^\- (.+)$/gm, '<li>$1</li>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
     .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
     .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
     .replace(/\n/g, '<br/>');
-  html = html.replace(/(<li>.*?<\/li>(?:<br\/>)?)+/g, (m) => `<ul>${m.replace(/<br\/>/g, '')}</ul>`);
+  html = html.replace(
+    /(<li>.*?<\/li>(?:<br\/>)?)+/g,
+    (m) => `<ul>${m.replace(/<br\/>/g, '')}</ul>`
+  );
   return html;
 }
 
 // ── Status config ────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<NodeStatus, { labelPl: string; labelEn: string; color: string; bg: string }> = {
-  idea: { labelPl: 'Pomysł', labelEn: 'Idea', color: 'text-slate-600', bg: 'bg-slate-100 dark:bg-slate-800' },
-  exploring: { labelPl: 'Eksploracja', labelEn: 'Exploring', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-  ready: { labelPl: 'Gotowe', labelEn: 'Ready', color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-  rejected: { labelPl: 'Odrzucone', labelEn: 'Rejected', color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-900/20' },
+const STATUS_CONFIG: Record<
+  NodeStatus,
+  { labelPl: string; labelEn: string; color: string; bg: string }
+> = {
+  idea: {
+    labelPl: 'Pomysł',
+    labelEn: 'Idea',
+    color: 'text-slate-600',
+    bg: 'bg-slate-100 dark:bg-slate-800',
+  },
+  exploring: {
+    labelPl: 'Eksploracja',
+    labelEn: 'Exploring',
+    color: 'text-amber-600',
+    bg: 'bg-amber-50 dark:bg-amber-900/20',
+  },
+  ready: {
+    labelPl: 'Gotowe',
+    labelEn: 'Ready',
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+  },
+  rejected: {
+    labelPl: 'Odrzucone',
+    labelEn: 'Rejected',
+    color: 'text-red-600',
+    bg: 'bg-red-50 dark:bg-red-900/20',
+  },
 };
 
 const TAG_COLORS = [
@@ -207,15 +261,21 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
     }
   }, [descValue, nodeData.description, nodeId, onNodeDataChange]);
 
-  const handleStatusChange = useCallback((status: NodeStatus) => {
-    if (locked) return;
-    onNodeDataChange(nodeId, { status });
-  }, [locked, nodeId, onNodeDataChange]);
+  const handleStatusChange = useCallback(
+    (status: NodeStatus) => {
+      if (locked) return;
+      onNodeDataChange(nodeId, { status });
+    },
+    [locked, nodeId, onNodeDataChange]
+  );
 
-  const handlePriorityChange = useCallback((priority: number) => {
-    if (locked) return;
-    onNodeDataChange(nodeId, { priority });
-  }, [locked, nodeId, onNodeDataChange]);
+  const handlePriorityChange = useCallback(
+    (priority: number) => {
+      if (locked) return;
+      onNodeDataChange(nodeId, { priority });
+    },
+    [locked, nodeId, onNodeDataChange]
+  );
 
   const handleAddTag = useCallback(() => {
     if (locked || !newTag.trim()) return;
@@ -224,11 +284,14 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
     setNewTag('');
   }, [locked, newTag, nodeData.tags, nodeId, onNodeDataChange]);
 
-  const handleRemoveTag = useCallback((tag: string) => {
-    if (locked) return;
-    const tags = (nodeData.tags || []).filter((t) => t !== tag);
-    onNodeDataChange(nodeId, { tags });
-  }, [locked, nodeData.tags, nodeId, onNodeDataChange]);
+  const handleRemoveTag = useCallback(
+    (tag: string) => {
+      if (locked) return;
+      const tags = (nodeData.tags || []).filter((t) => t !== tag);
+      onNodeDataChange(nodeId, { tags });
+    },
+    [locked, nodeData.tags, nodeId, onNodeDataChange]
+  );
 
   const handleAddAttachment = useCallback(() => {
     if (locked || !newAttachmentUrl.trim()) return;
@@ -244,11 +307,14 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
     setNewAttachmentUrl('');
   }, [locked, newAttachmentUrl, nodeData.attachments, nodeId, onNodeDataChange]);
 
-  const handleRemoveAttachment = useCallback((attId: string) => {
-    if (locked) return;
-    const attachments = (nodeData.attachments || []).filter((a) => a.id !== attId);
-    onNodeDataChange(nodeId, { attachments });
-  }, [locked, nodeData.attachments, nodeId, onNodeDataChange]);
+  const handleRemoveAttachment = useCallback(
+    (attId: string) => {
+      if (locked) return;
+      const attachments = (nodeData.attachments || []).filter((a) => a.id !== attId);
+      onNodeDataChange(nodeId, { attachments });
+    },
+    [locked, nodeData.attachments, nodeId, onNodeDataChange]
+  );
 
   const handleAddComment = useCallback(() => {
     if (!newComment.trim()) return;
@@ -268,21 +334,23 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
     setAiLoading(true);
     try {
       const result = await Api.getIdeaAISuggestions(ideaId, {
-          context: {
-            title: nodeData.label,
-            seedText: `${nodeData.label}${nodeData.description ? `\n${nodeData.description}` : ''}. Focus node: ${nodeId}`,
-            currentNodes: allNodes.map((n) => ({ id: n.id, label: n.data?.label })),
-            currentEdges: [],
-            activeTool: activeTool || 'mindmap',
-          },
-          mode: 'passive' as any,
+        context: {
+          title: nodeData.label,
+          seedText: `${nodeData.label}${nodeData.description ? `\n${nodeData.description}` : ''}. Focus node: ${nodeId}`,
+          currentNodes: allNodes.map((n) => ({ id: n.id, label: n.data?.label })),
+          currentEdges: [],
+          activeTool: activeTool || 'mindmap',
+        },
+        mode: 'passive' as any,
         language: i18n.language,
       });
 
       const suggestions = result?.suggestions || [];
       setAiContext({
         relatedInitiatives: suggestions
-          .filter((s: any) => s.category === 'branch_suggestions' || s.source?.includes('initiative'))
+          .filter(
+            (s: any) => s.category === 'branch_suggestions' || s.source?.includes('initiative')
+          )
           .slice(0, 3)
           .map((s: any) => ({ id: s.id, title: s.text, relevance: s.detail || '' })),
         relatedRisks: suggestions
@@ -331,10 +399,21 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
         },
       });
       onGenerateProposal(batch);
-    } catch { /* handled by toast */ } finally {
+    } catch {
+      /* handled by toast */
+    } finally {
       setAiLoading(false);
     }
-  }, [activeTool, allNodes, i18n.language, ideaId, nodeData.branchKey, nodeData.description, nodeData.label, onGenerateProposal]);
+  }, [
+    activeTool,
+    allNodes,
+    i18n.language,
+    ideaId,
+    nodeData.branchKey,
+    nodeData.description,
+    nodeData.label,
+    onGenerateProposal,
+  ]);
 
   const status = nodeData.status || 'idea';
   const statusCfg = STATUS_CONFIG[status];
@@ -367,7 +446,10 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   value={titleValue}
                   onChange={(e) => setTitleValue(e.target.value)}
                   onBlur={commitTitle}
-                  onKeyDown={(e) => { if (e.key === 'Enter') commitTitle(); if (e.key === 'Escape') setEditingTitle(false); }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') commitTitle();
+                    if (e.key === 'Escape') setEditingTitle(false);
+                  }}
                   className="w-full text-base font-bold text-slate-900 dark:text-white bg-transparent border-b-2 border-primary-500 outline-none pb-0.5"
                 />
               ) : (
@@ -379,7 +461,9 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 </h2>
               )}
               <div className="flex items-center gap-2 mt-1.5">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}>
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusCfg.bg} ${statusCfg.color}`}
+                >
                   {isPl ? statusCfg.labelPl : statusCfg.labelEn}
                 </span>
                 {nodeData.branchKey && (
@@ -389,7 +473,10 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 )}
               </div>
             </div>
-            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+            >
               <X size={18} />
             </button>
           </div>
@@ -507,7 +594,11 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 value={descValue}
                 onChange={(e) => setDescValue(e.target.value)}
                 onBlur={commitDescription}
-                placeholder={isPl ? 'Dodaj opis (obsługuje **markdown**)...' : 'Add description (supports **markdown**)...'}
+                placeholder={
+                  isPl
+                    ? 'Dodaj opis (obsługuje **markdown**)...'
+                    : 'Add description (supports **markdown**)...'
+                }
                 className="w-full min-h-[100px] text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-navy-800 rounded-xl p-3 border border-slate-200 dark:border-navy-700 outline-none resize-y placeholder:text-slate-400 font-mono"
                 rows={4}
               />
@@ -532,6 +623,63 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             )}
           </SectionToggle>
 
+          {/* V5-IDEA-18: Node depth model fields */}
+          <DepthFieldSection
+            fieldKey="notes"
+            title={isPl ? 'Notatki' : 'Notes'}
+            icon={FileText}
+            value={nodeData.notes}
+            placeholder={isPl ? 'Dodaj notatki...' : 'Add notes...'}
+            locked={locked}
+            expanded={expandedSections.has('notes')}
+            onToggle={() => toggleSection('notes')}
+            onChange={(val) => onNodeDataChange(nodeId, { notes: val })}
+          />
+          <DepthFieldSection
+            fieldKey="context"
+            title={isPl ? 'Kontekst' : 'Context'}
+            icon={Lightbulb}
+            value={nodeData.context}
+            placeholder={isPl ? 'Jaki jest kontekst tego elementu?' : 'What is the context?'}
+            locked={locked}
+            expanded={expandedSections.has('context')}
+            onToggle={() => toggleSection('context')}
+            onChange={(val) => onNodeDataChange(nodeId, { context: val })}
+          />
+          <DepthFieldSection
+            fieldKey="goal"
+            title={isPl ? 'Cel' : 'Goal'}
+            icon={Target}
+            value={nodeData.goal}
+            placeholder={isPl ? 'Jaki jest cel?' : 'What is the goal?'}
+            locked={locked}
+            expanded={expandedSections.has('goal')}
+            onToggle={() => toggleSection('goal')}
+            onChange={(val) => onNodeDataChange(nodeId, { goal: val })}
+          />
+          <DepthFieldSection
+            fieldKey="rationale"
+            title={isPl ? 'Uzasadnienie' : 'Rationale'}
+            icon={GitBranch}
+            value={nodeData.rationale}
+            placeholder={isPl ? 'Dlaczego to ważne?' : 'Why is this important?'}
+            locked={locked}
+            expanded={expandedSections.has('rationale')}
+            onToggle={() => toggleSection('rationale')}
+            onChange={(val) => onNodeDataChange(nodeId, { rationale: val })}
+          />
+          <DepthFieldSection
+            fieldKey="riskNote"
+            title={isPl ? 'Ryzyko' : 'Risk'}
+            icon={AlertTriangle}
+            value={nodeData.riskNote}
+            placeholder={isPl ? 'Jakie są ryzyka?' : 'What are the risks?'}
+            locked={locked}
+            expanded={expandedSections.has('riskNote')}
+            onToggle={() => toggleSection('riskNote')}
+            onChange={(val) => onNodeDataChange(nodeId, { riskNote: val })}
+          />
+
           {/* Tags */}
           <SectionToggle
             title={isPl ? 'Tagi' : 'Tags'}
@@ -549,7 +697,10 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   <Hash size={9} />
                   {tag}
                   {!locked && (
-                    <button onClick={() => handleRemoveTag(tag)} className="ml-0.5 hover:opacity-70">
+                    <button
+                      onClick={() => handleRemoveTag(tag)}
+                      className="ml-0.5 hover:opacity-70"
+                    >
                       <X size={9} />
                     </button>
                   )}
@@ -560,7 +711,9 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   <input
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddTag(); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddTag();
+                    }}
                     placeholder={isPl ? 'Nowy tag...' : 'New tag...'}
                     className="w-20 text-[10px] bg-transparent border-b border-dashed border-slate-300 dark:border-navy-600 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400"
                   />
@@ -583,7 +736,9 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             {aiLoading ? (
               <div className="flex items-center gap-2 py-4 justify-center text-violet-500">
                 <Loader2 size={14} className="animate-spin" />
-                <span className="text-[11px]">{isPl ? 'Analizuję kontekst...' : 'Analyzing context...'}</span>
+                <span className="text-[11px]">
+                  {isPl ? 'Analizuję kontekst...' : 'Analyzing context...'}
+                </span>
               </div>
             ) : aiContext ? (
               <div className="space-y-3">
@@ -601,8 +756,12 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                       <div key={i} className="flex items-start gap-1.5 py-1">
                         <Target size={10} className="text-emerald-500 mt-0.5 shrink-0" />
                         <div>
-                          <div className="text-[10px] font-medium text-slate-700 dark:text-slate-300">{ini.title}</div>
-                          {ini.relevance && <div className="text-[9px] text-slate-400">{ini.relevance}</div>}
+                          <div className="text-[10px] font-medium text-slate-700 dark:text-slate-300">
+                            {ini.title}
+                          </div>
+                          {ini.relevance && (
+                            <div className="text-[9px] text-slate-400">{ini.relevance}</div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -615,8 +774,13 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                     </div>
                     {aiContext.relatedRisks.map((risk, i) => (
                       <div key={i} className="flex items-start gap-1.5 py-1">
-                        <AlertTriangle size={10} className={`mt-0.5 shrink-0 ${risk.severity === 'high' ? 'text-red-500' : 'text-amber-500'}`} />
-                        <div className="text-[10px] text-slate-700 dark:text-slate-300">{risk.text}</div>
+                        <AlertTriangle
+                          size={10}
+                          className={`mt-0.5 shrink-0 ${risk.severity === 'high' ? 'text-red-500' : 'text-amber-500'}`}
+                        />
+                        <div className="text-[10px] text-slate-700 dark:text-slate-300">
+                          {risk.text}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -629,7 +793,9 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                     {aiContext.suggestions.map((sug, i) => (
                       <div key={i} className="flex items-start gap-1.5 py-1">
                         <Lightbulb size={10} className="text-amber-500 mt-0.5 shrink-0" />
-                        <div className="text-[10px] text-slate-700 dark:text-slate-300">{sug.text}</div>
+                        <div className="text-[10px] text-slate-700 dark:text-slate-300">
+                          {sug.text}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -658,21 +824,38 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
           >
             <div className="space-y-1.5">
               {(nodeData.attachments || []).map((att) => (
-                <div key={att.id} className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-navy-800 group">
+                <div
+                  key={att.id}
+                  className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-navy-800 group"
+                >
                   <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-navy-700 flex items-center justify-center shrink-0">
-                    {att.type === 'image' ? <ImageIcon size={12} className="text-slate-500" /> :
-                     att.type === 'link' ? <Link2 size={12} className="text-slate-500" /> :
-                     <FileText size={12} className="text-slate-500" />}
+                    {att.type === 'image' ? (
+                      <ImageIcon size={12} className="text-slate-500" />
+                    ) : att.type === 'link' ? (
+                      <Link2 size={12} className="text-slate-500" />
+                    ) : (
+                      <FileText size={12} className="text-slate-500" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate">{att.title || att.url}</div>
+                    <div className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate">
+                      {att.title || att.url}
+                    </div>
                     <div className="text-[9px] text-slate-400 truncate">{att.url}</div>
                   </div>
-                  <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-primary-500 shrink-0">
+                  <a
+                    href={att.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-400 hover:text-primary-500 shrink-0"
+                  >
                     <ExternalLink size={12} />
                   </a>
                   {!locked && (
-                    <button onClick={() => handleRemoveAttachment(att.id)} className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 shrink-0">
+                    <button
+                      onClick={() => handleRemoveAttachment(att.id)}
+                      className="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 shrink-0"
+                    >
                       <X size={12} />
                     </button>
                   )}
@@ -683,11 +866,16 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   <input
                     value={newAttachmentUrl}
                     onChange={(e) => setNewAttachmentUrl(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddAttachment(); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddAttachment();
+                    }}
                     placeholder={isPl ? 'Wklej URL...' : 'Paste URL...'}
                     className="flex-1 text-[10px] bg-slate-50 dark:bg-navy-800 rounded-lg px-2.5 py-1.5 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400"
                   />
-                  <button onClick={handleAddAttachment} className="p-1.5 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-slate-100 dark:hover:bg-navy-800">
+                  <button
+                    onClick={handleAddAttachment}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-slate-100 dark:hover:bg-navy-800"
+                  >
                     <Plus size={14} />
                   </button>
                 </div>
@@ -708,21 +896,32 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 <div key={cmt.id} className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800">
                   <div className="flex items-center gap-1.5 mb-1">
                     <div className="w-5 h-5 rounded-full bg-primary-500/20 flex items-center justify-center">
-                      <span className="text-[8px] font-bold text-primary-600">{(cmt.userName || '?')[0].toUpperCase()}</span>
+                      <span className="text-[8px] font-bold text-primary-600">
+                        {(cmt.userName || '?')[0].toUpperCase()}
+                      </span>
                     </div>
-                    <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">{cmt.userName || 'User'}</span>
+                    <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300">
+                      {cmt.userName || 'User'}
+                    </span>
                     <span className="text-[9px] text-slate-400">
                       {new Date(cmt.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">{cmt.text}</div>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                    {cmt.text}
+                  </div>
                 </div>
               ))}
               <div className="flex items-start gap-1.5">
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAddComment(); } }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAddComment();
+                    }
+                  }}
                   placeholder={isPl ? 'Dodaj komentarz...' : 'Add comment...'}
                   className="flex-1 text-[11px] bg-slate-50 dark:bg-navy-800 rounded-lg px-2.5 py-2 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400 resize-none"
                   rows={2}
@@ -749,7 +948,10 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             >
               <div className="space-y-1">
                 {linkedNodeLabels.map((ln) => (
-                  <div key={ln.id} className="flex items-center gap-2 py-1 text-[10px] text-slate-600 dark:text-slate-400">
+                  <div
+                    key={ln.id}
+                    className="flex items-center gap-2 py-1 text-[10px] text-slate-600 dark:text-slate-400"
+                  >
                     <GitBranch size={10} className="text-slate-400 shrink-0" />
                     <span className="truncate">{ln.label}</span>
                   </div>
@@ -794,5 +996,60 @@ const SectionToggle: React.FC<{
     {expanded && <div className="mt-1.5 pl-0.5">{children}</div>}
   </div>
 );
+
+// ── V5-IDEA-18: Depth field section ─────────────────────────────────────────
+
+const DepthFieldSection: React.FC<{
+  fieldKey: string;
+  title: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  value?: string;
+  placeholder: string;
+  locked: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+  onChange: (value: string) => void;
+}> = ({ title, icon: Icon, value, placeholder, locked, expanded, onToggle, onChange }) => {
+  const [editing, setEditing] = useState(false);
+  const [localValue, setLocalValue] = useState(value || '');
+
+  useEffect(() => {
+    setLocalValue(value || '');
+  }, [value]);
+
+  const commit = () => {
+    setEditing(false);
+    if (localValue !== (value || '')) {
+      onChange(localValue);
+    }
+  };
+
+  return (
+    <SectionToggle title={title} icon={Icon} expanded={expanded} onToggle={onToggle}>
+      {editing && !locked ? (
+        <textarea
+          autoFocus
+          value={localValue}
+          onChange={(e) => setLocalValue(e.target.value)}
+          onBlur={commit}
+          placeholder={placeholder}
+          className="w-full min-h-[60px] text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-navy-800 rounded-xl p-3 border border-slate-200 dark:border-navy-700 outline-none resize-y placeholder:text-slate-400"
+          rows={3}
+        />
+      ) : (
+        <div
+          onClick={() => !locked && setEditing(true)}
+          className={`text-xs leading-relaxed rounded-xl p-3 cursor-pointer transition-colors ${
+            localValue
+              ? 'text-slate-700 dark:text-slate-300 bg-slate-50/50 dark:bg-navy-800/50 hover:bg-slate-50 dark:hover:bg-navy-800'
+              : 'text-slate-400 italic bg-slate-50/30 dark:bg-navy-800/30 hover:bg-slate-50 dark:hover:bg-navy-800'
+          }`}
+        >
+          {localValue || placeholder}
+        </div>
+      )}
+    </SectionToggle>
+  );
+};
 
 export default IdeaNodeDetailDrawer;

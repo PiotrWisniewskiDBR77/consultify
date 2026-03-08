@@ -15,10 +15,7 @@ import { ReportEditor } from '../components/ReportBuilder/ReportEditor';
 import { ReportsComposer } from '../components/ReportBuilder/ReportsComposer';
 import SourceSelectStep from '../components/ReportBuilder/steps/SourceSelectStep';
 import { TemplatePickerModal } from '../components/ReportBuilder/TemplatePickerModal';
-import type {
-  ReportSourceType,
-  SourceOption,
-} from '../components/ReportBuilder/useReportBuilder';
+import type { ReportSourceType, SourceOption } from '../components/ReportBuilder/useReportBuilder';
 import { Api } from '../services/api';
 
 // ==========================================

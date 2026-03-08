@@ -21,6 +21,10 @@ interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
 
+function paramStr(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? String(value[0] || '') : String(value || '');
+}
+
 // ─── Initiative-scoped budget (BudgetTrackingView, Execution Center) ───
 
 router.get(
@@ -31,13 +35,13 @@ router.get(
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const { initiativeId } = req.params;
-    const summary = await getInitiativeBudgetSummary(orgId, initiativeId);
+    const summary = await getInitiativeBudgetSummary(orgId, paramStr(initiativeId));
     if (!summary) return res.status(404).json({ error: 'Initiative not found' });
-    const entries = await getBudgetEntries(orgId, initiativeId);
+    const entries = await getBudgetEntries(orgId, paramStr(initiativeId));
     const statusMap = { GREEN: 'ON_TRACK', AMBER: 'WARNING', RED: 'CRITICAL' } as const;
     const budget = {
       id: initiativeId,
-      initiativeId,
+      initiativeId: paramStr(initiativeId),
       initiativeName: summary.initiativeName,
       budgetType: 'COMBINED',
       plannedAmount: summary.planned.total,
@@ -127,7 +131,7 @@ router.post(
     const txDate = transactionDate || new Date().toISOString().split('T')[0];
     const [year, month] = txDate.split('-').map(Number);
     await createBudgetEntry(orgId, {
-      initiativeId,
+      initiativeId: paramStr(initiativeId),
       entryType: 'ACTUAL',
       costType: 'OPEX',
       category: 'General',

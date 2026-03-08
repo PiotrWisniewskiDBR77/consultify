@@ -28,6 +28,7 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { InfoButton } from '../../components/shared/InfoButton';
+import { useHelpSidePanel } from '../../contexts/HelpContext';
 // Enterprise System Components
 import {
   EnterpriseAnalyticsPanel,
@@ -263,8 +264,25 @@ const TAB_TO_HELP_MAP: Record<string, string> = {
 
 export const SystemModule: React.FC<SystemModuleProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || 'health');
+  const { setHelpDocumentIdOverride } = useHelpSidePanel();
 
   const helpContentId = TAB_TO_HELP_MAP[activeTab] || 'superadmin-system';
+
+  useEffect(() => {
+    const mapping: Record<string, string> = {
+      health: 'superadmin_system_health',
+      'audit-log': 'superadmin_system_audit',
+      'feature-flags': 'superadmin_system_flags',
+      integrations: 'superadmin_system_integrations',
+      security: 'superadmin_system_security',
+      configuration: 'superadmin_system_configuration',
+      analytics: 'superadmin_system_analytics',
+      backup: 'superadmin_system_backup',
+      'api-keys': 'superadmin_system_api_keys',
+    };
+    setHelpDocumentIdOverride(mapping[activeTab] || 'superadmin_system');
+    return () => setHelpDocumentIdOverride(null);
+  }, [activeTab, setHelpDocumentIdOverride]);
 
   const tabs: Tab[] = [
     { id: 'health', label: 'Health', icon: <Activity size={16} /> },

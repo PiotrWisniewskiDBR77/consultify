@@ -592,7 +592,9 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                           <div className="flex items-center gap-4">
                             <div
                               className={`p-2 rounded-lg ${
-                                session.is_current ? 'bg-emerald-500/20' : 'bg-slate-100 dark:bg-white/10'
+                                session.is_current
+                                  ? 'bg-emerald-500/20'
+                                  : 'bg-slate-100 dark:bg-white/10'
                               }`}
                             >
                               <DeviceIcon

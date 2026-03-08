@@ -55,23 +55,30 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
 
       const res = await Api.getMyIdeaAISuggestions(ideaId, {
         seedText: `Analyze sentiment of these ideas for "${ideaTitle}" based on company context (assessment findings, interview insights, KPI trends). Ideas: ${labels}. For each, determine if the sentiment from company data is positive, neutral, or negative.`,
-        mapNodes: nodes.map((n) => ({ id: n.id, type: 'idea', data: { label: n.data?.label, branchKey: n.data?.branchKey } })),
+        mapNodes: nodes.map((n) => ({
+          id: n.id,
+          type: 'idea',
+          data: { label: n.data?.label, branchKey: n.data?.branchKey },
+        })),
         activeTool: 'mindmap',
         language: i18n.language,
       });
 
       if (res?.suggestions && Array.isArray(res.suggestions)) {
-        const sentiments: SentimentResult[] = res.suggestions.slice(0, ideaNodes.length).map((s: any, idx: number) => {
-          const node = ideaNodes[idx];
-          const confidence = s.confidence ?? 0.5;
-          const sentiment: SentimentResult['sentiment'] = confidence > 0.6 ? 'positive' : confidence > 0.35 ? 'neutral' : 'negative';
-          return {
-            nodeId: node?.id || `unknown-${idx}`,
-            sentiment,
-            score: confidence > 0.5 ? confidence : -(1 - confidence),
-            reason: s.detail || s.text || '',
-          };
-        });
+        const sentiments: SentimentResult[] = res.suggestions
+          .slice(0, ideaNodes.length)
+          .map((s: any, idx: number) => {
+            const node = ideaNodes[idx];
+            const confidence = s.confidence ?? 0.5;
+            const sentiment: SentimentResult['sentiment'] =
+              confidence > 0.6 ? 'positive' : confidence > 0.35 ? 'neutral' : 'negative';
+            return {
+              nodeId: node?.id || `unknown-${idx}`,
+              sentiment,
+              score: confidence > 0.5 ? confidence : -(1 - confidence),
+              reason: s.detail || s.text || '',
+            };
+          });
         setResults(sentiments);
       }
     } catch (err: any) {
@@ -102,7 +109,10 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
               {isPl ? 'AI: Analiza sentymentu' : 'AI: Sentiment Analysis'}
             </h3>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
@@ -112,7 +122,9 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
             <div className="text-center py-8">
               <SmilePlus size={36} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
-                {isPl ? 'AI oceni sentyment pomysłów na podstawie danych firmy.' : 'AI will assess idea sentiment based on company data.'}
+                {isPl
+                  ? 'AI oceni sentyment pomysłów na podstawie danych firmy.'
+                  : 'AI will assess idea sentiment based on company data.'}
               </p>
               <button
                 onClick={analyzeSentiment}
@@ -128,7 +140,9 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8">
               <Loader2 size={16} className="animate-spin text-emerald-500" />
-              <span className="text-[11px] text-slate-500">{isPl ? 'Analizuję...' : 'Analyzing...'}</span>
+              <span className="text-[11px] text-slate-500">
+                {isPl ? 'Analizuję...' : 'Analyzing...'}
+              </span>
             </div>
           )}
 
@@ -146,9 +160,24 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
                   );
                 })}
                 <div className="flex-1 h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden flex">
-                  {counts.positive > 0 && <div className="h-full bg-emerald-500" style={{ width: `${(counts.positive / results.length) * 100}%` }} />}
-                  {counts.neutral > 0 && <div className="h-full bg-slate-400" style={{ width: `${(counts.neutral / results.length) * 100}%` }} />}
-                  {counts.negative > 0 && <div className="h-full bg-red-500" style={{ width: `${(counts.negative / results.length) * 100}%` }} />}
+                  {counts.positive > 0 && (
+                    <div
+                      className="h-full bg-emerald-500"
+                      style={{ width: `${(counts.positive / results.length) * 100}%` }}
+                    />
+                  )}
+                  {counts.neutral > 0 && (
+                    <div
+                      className="h-full bg-slate-400"
+                      style={{ width: `${(counts.neutral / results.length) * 100}%` }}
+                    />
+                  )}
+                  {counts.negative > 0 && (
+                    <div
+                      className="h-full bg-red-500"
+                      style={{ width: `${(counts.negative / results.length) * 100}%` }}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -158,11 +187,20 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
                   const cfg = SENTIMENT_CONFIG[r.sentiment];
                   const node = nodes.find((n) => n.id === r.nodeId);
                   return (
-                    <div key={r.nodeId} className={`flex items-center gap-2.5 p-2.5 rounded-xl ${cfg.bg} border border-slate-200/20 dark:border-navy-700/20`}>
+                    <div
+                      key={r.nodeId}
+                      className={`flex items-center gap-2.5 p-2.5 rounded-xl ${cfg.bg} border border-slate-200/20 dark:border-navy-700/20`}
+                    >
                       <span className="text-sm shrink-0">{cfg.emoji}</span>
                       <div className="min-w-0 flex-1">
-                        <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">{node?.data?.label || r.nodeId}</div>
-                        {r.reason && <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">{r.reason}</div>}
+                        <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">
+                          {node?.data?.label || r.nodeId}
+                        </div>
+                        {r.reason && (
+                          <div className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                            {r.reason}
+                          </div>
+                        )}
                       </div>
                       <div className={`text-[10px] font-bold ${cfg.text}`}>{r.sentiment}</div>
                     </div>
@@ -175,10 +213,17 @@ export const AISentimentOverlay: React.FC<AISentimentOverlayProps> = ({
 
         {results.length > 0 && (
           <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
-            <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors">
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+            >
               {isPl ? 'Zamknij' : 'Close'}
             </button>
-            <button onClick={handleApply} disabled={locked} className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500/15 to-green-500/10 text-emerald-700 dark:text-emerald-300 hover:from-emerald-500/25 hover:to-green-500/15 border border-emerald-500/10 transition-all disabled:opacity-40">
+            <button
+              onClick={handleApply}
+              disabled={locked}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500/15 to-green-500/10 text-emerald-700 dark:text-emerald-300 hover:from-emerald-500/25 hover:to-green-500/15 border border-emerald-500/10 transition-all disabled:opacity-40"
+            >
               <SmilePlus size={12} />
               {isPl ? 'Zastosuj kolory' : 'Apply colors'}
             </button>

@@ -17,11 +17,7 @@ interface Vec2 {
   y: number;
 }
 
-export function applyForceLayout(
-  nodes: Node[],
-  edges: Edge[],
-  config: ForceConfig = {}
-): Node[] {
+export function applyForceLayout(nodes: Node[], edges: Edge[], config: ForceConfig = {}): Node[] {
   const {
     iterations = 120,
     repulsion = 8000,
@@ -79,8 +75,14 @@ export function applyForceLayout(
 
       const fa = forces.get(e.source);
       const fb = forces.get(e.target);
-      if (fa) { fa.x += fx; fa.y += fy; }
-      if (fb) { fb.x -= fx; fb.y -= fy; }
+      if (fa) {
+        fa.x += fx;
+        fa.y += fy;
+      }
+      if (fb) {
+        fb.x -= fx;
+        fb.y -= fy;
+      }
     }
 
     // Center gravity

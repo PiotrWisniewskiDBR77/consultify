@@ -41,6 +41,7 @@ import React, { useEffect, useState } from 'react';
 
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { ModelRegistryHub } from '../../../components/SuperAdmin/ModelRegistry';
+import { useHelpSidePanel } from '../../../contexts/HelpContext';
 import { CostAnalyticsTab } from './Analytics/CostAnalyticsTab';
 import { CustomReportsTab } from './Analytics/CustomReportsTab';
 import { PerformanceMetricsTab } from './Analytics/PerformanceMetricsTab';
@@ -183,6 +184,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
 }) => {
   const [activeMainTab, setActiveMainTab] = useState(initialTab || 'configuration');
   const [activeSubTab, setActiveSubTab] = useState<string | null>(initialSubTab || null);
+  const { setHelpDocumentIdOverride } = useHelpSidePanel();
 
   // Get current main tab configuration
   const currentMainTab = AI_PLATFORM_TABS.find((tab) => tab.id === activeMainTab);
@@ -195,6 +197,50 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       }
     }
   }, [activeMainTab, currentMainTab, activeSubTab]);
+
+  useEffect(() => {
+    const mapping: Record<string, string> = {
+      'configuration/llm-providers': 'superadmin_ai_configuration_llm_providers',
+      'configuration/model-tiers': 'superadmin_ai_configuration_model_tiers',
+      'configuration/routing-rules': 'superadmin_ai_configuration_routing_rules',
+      'configuration/purposes-assignments': 'superadmin_ai_configuration_purposes_assignments',
+      'configuration/org-ai-policy': 'superadmin_ai_configuration_org_policy',
+      'configuration/ai-governance': 'superadmin_ai_configuration_governance',
+      'configuration/global-settings': 'superadmin_ai_configuration_global_settings',
+      'development/prompts-library': 'superadmin_ai_development_prompts_library',
+      'development/prompt-builder': 'superadmin_ai_development_prompt_builder',
+      'development/experiments': 'superadmin_ai_development_experiments',
+      'development/model-registry': 'superadmin_ai_development_model_registry',
+      'operations/mission-control': 'superadmin_ai_operations_mission_control',
+      'operations/health-monitoring': 'superadmin_ai_operations_health',
+      'operations/performance-dashboard': 'superadmin_ai_operations_performance',
+      'operations/sla-management': 'superadmin_ai_operations_sla',
+      'operations/market-inbox': 'superadmin_ai_operations_market_inbox',
+      'analytics/usage-analytics': 'superadmin_ai_analytics_usage',
+      'analytics/cost-analytics': 'superadmin_ai_analytics_cost',
+      'analytics/pricing-registry': 'superadmin_ai_analytics_pricing_registry',
+      'analytics/performance-metrics': 'superadmin_ai_analytics_performance_metrics',
+      'analytics/custom-reports': 'superadmin_ai_analytics_custom_reports',
+      'security/api-keys': 'superadmin_ai_security_api_keys',
+      'security/access-control': 'superadmin_ai_security_access_control',
+      'security/audit-logs': 'superadmin_ai_security_audit_logs',
+      'security/compliance': 'superadmin_ai_security_compliance',
+      'knowledge/knowledge-base': 'superadmin_ai_knowledge_base',
+      'knowledge/documents-rag': 'superadmin_ai_knowledge_documents_rag',
+      'knowledge/strategic-directions': 'superadmin_ai_knowledge_strategic_directions',
+    };
+    const key = `${activeMainTab}/${activeSubTab ?? ''}`;
+    const mainFallback: Record<string, string> = {
+      configuration: 'superadmin_ai_configuration',
+      development: 'superadmin_ai_development',
+      operations: 'superadmin_ai_operations',
+      analytics: 'superadmin_ai_analytics',
+      security: 'superadmin_ai_security',
+      knowledge: 'superadmin_ai_intelligence',
+    };
+    setHelpDocumentIdOverride(mapping[key] || mainFallback[activeMainTab] || 'superadmin_ai_configuration');
+    return () => setHelpDocumentIdOverride(null);
+  }, [activeMainTab, activeSubTab, setHelpDocumentIdOverride]);
 
   // Handle main tab change
   const handleMainTabChange = (tabId: string) => {

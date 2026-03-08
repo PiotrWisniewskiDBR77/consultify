@@ -17,7 +17,10 @@ export const KPIBadgeNode: React.FC<NodeProps> = ({ data, selected }) => {
   const status: string = data?.status || 'neutral';
   const unit: string = data?.unit || '';
 
-  const statusStyles: Record<string, { bg: string; border: string; icon: React.ReactNode; text: string }> = {
+  const statusStyles: Record<
+    string,
+    { bg: string; border: string; icon: React.ReactNode; text: string }
+  > = {
     on_track: {
       bg: 'bg-emerald-50 dark:bg-emerald-900/20',
       border: 'border-emerald-300 dark:border-emerald-700',
@@ -62,16 +65,22 @@ export const KPIBadgeNode: React.FC<NodeProps> = ({ data, selected }) => {
       </div>
 
       <div className={`text-xl font-black ${s.text} leading-none`}>
-        {value}{unit && <span className="text-[10px] font-semibold ml-0.5 opacity-60">{unit}</span>}
+        {value}
+        {unit && <span className="text-[10px] font-semibold ml-0.5 opacity-60">{unit}</span>}
       </div>
 
       {target && (
         <div className="mt-1 text-[9px] text-slate-400">
-          Target: {target}{unit}
+          Target: {target}
+          {unit}
         </div>
       )}
 
-      <Handle type="source" position={Position.Bottom} className="!w-2 !h-2 !bg-slate-400 !-bottom-1" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!w-2 !h-2 !bg-slate-400 !-bottom-1"
+      />
     </div>
   );
 };
@@ -85,16 +94,22 @@ export const ScoreNode: React.FC<NodeProps> = ({ data, selected }) => {
   const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
 
   const color =
-    percentage >= 75 ? 'from-emerald-400 to-emerald-600' :
-    percentage >= 50 ? 'from-amber-400 to-amber-600' :
-    percentage >= 25 ? 'from-orange-400 to-orange-600' :
-    'from-red-400 to-red-600';
+    percentage >= 75
+      ? 'from-emerald-400 to-emerald-600'
+      : percentage >= 50
+        ? 'from-amber-400 to-amber-600'
+        : percentage >= 25
+          ? 'from-orange-400 to-orange-600'
+          : 'from-red-400 to-red-600';
 
   const textColor =
-    percentage >= 75 ? 'text-emerald-600 dark:text-emerald-400' :
-    percentage >= 50 ? 'text-amber-600 dark:text-amber-400' :
-    percentage >= 25 ? 'text-orange-600 dark:text-orange-400' :
-    'text-red-600 dark:text-red-400';
+    percentage >= 75
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : percentage >= 50
+        ? 'text-amber-600 dark:text-amber-400'
+        : percentage >= 25
+          ? 'text-orange-600 dark:text-orange-400'
+          : 'text-red-600 dark:text-red-400';
 
   return (
     <div
@@ -106,25 +121,50 @@ export const ScoreNode: React.FC<NodeProps> = ({ data, selected }) => {
 
       {/* Circular progress ring */}
       <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 140 140">
-        <circle cx="70" cy="70" r="60" fill="none" stroke="currentColor" strokeWidth="6" className="text-slate-100 dark:text-navy-700" />
         <circle
-          cx="70" cy="70" r="60" fill="none" strokeWidth="6"
+          cx="70"
+          cy="70"
+          r="60"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="6"
+          className="text-slate-100 dark:text-navy-700"
+        />
+        <circle
+          cx="70"
+          cy="70"
+          r="60"
+          fill="none"
+          strokeWidth="6"
           strokeDasharray={`${percentage * 3.77} ${377 - percentage * 3.77}`}
           strokeLinecap="round"
           className={`bg-gradient-to-r ${color}`}
-          style={{ stroke: percentage >= 75 ? '#34d399' : percentage >= 50 ? '#fbbf24' : percentage >= 25 ? '#fb923c' : '#f87171' }}
+          style={{
+            stroke:
+              percentage >= 75
+                ? '#34d399'
+                : percentage >= 50
+                  ? '#fbbf24'
+                  : percentage >= 25
+                    ? '#fb923c'
+                    : '#f87171',
+          }}
         />
       </svg>
 
-      <div className={`text-2xl font-black ${textColor} leading-none z-10`}>
-        {score}
-      </div>
+      <div className={`text-2xl font-black ${textColor} leading-none z-10`}>{score}</div>
       <div className="text-[8px] text-slate-400 mt-0.5 z-10">/ {maxScore}</div>
-      <div className={`text-[9px] font-bold ${textColor} mt-1 z-10 text-center px-2 truncate max-w-[110px]`}>
+      <div
+        className={`text-[9px] font-bold ${textColor} mt-1 z-10 text-center px-2 truncate max-w-[110px]`}
+      >
         {label}
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="!w-2 !h-2 !bg-slate-400 !-bottom-1" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!w-2 !h-2 !bg-slate-400 !-bottom-1"
+      />
     </div>
   );
 };
@@ -137,15 +177,20 @@ export const ProgressNode: React.FC<NodeProps> = ({ data, selected }) => {
   const detail: string = data?.detail || '';
 
   const barColor =
-    progress >= 75 ? 'bg-emerald-400' :
-    progress >= 50 ? 'bg-amber-400' :
-    progress >= 25 ? 'bg-orange-400' :
-    'bg-red-400';
+    progress >= 75
+      ? 'bg-emerald-400'
+      : progress >= 50
+        ? 'bg-amber-400'
+        : progress >= 25
+          ? 'bg-orange-400'
+          : 'bg-red-400';
 
   const textColor =
-    progress >= 75 ? 'text-emerald-600 dark:text-emerald-400' :
-    progress >= 50 ? 'text-amber-600 dark:text-amber-400' :
-    'text-slate-600 dark:text-slate-400';
+    progress >= 75
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : progress >= 50
+        ? 'text-amber-600 dark:text-amber-400'
+        : 'text-slate-600 dark:text-slate-400';
 
   return (
     <div
@@ -161,9 +206,7 @@ export const ProgressNode: React.FC<NodeProps> = ({ data, selected }) => {
         <div className="text-[10px] font-bold text-slate-700 dark:text-slate-300 truncate flex-1">
           {label}
         </div>
-        <div className={`text-[11px] font-black ${textColor}`}>
-          {progress}%
-        </div>
+        <div className={`text-[11px] font-black ${textColor}`}>{progress}%</div>
       </div>
 
       <div className="w-full h-2.5 rounded-full bg-slate-100 dark:bg-navy-700 overflow-hidden">
@@ -173,11 +216,13 @@ export const ProgressNode: React.FC<NodeProps> = ({ data, selected }) => {
         />
       </div>
 
-      {detail && (
-        <div className="mt-1.5 text-[9px] text-slate-400 truncate">{detail}</div>
-      )}
+      {detail && <div className="mt-1.5 text-[9px] text-slate-400 truncate">{detail}</div>}
 
-      <Handle type="source" position={Position.Bottom} className="!w-2 !h-2 !bg-slate-400 !-bottom-1" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!w-2 !h-2 !bg-slate-400 !-bottom-1"
+      />
     </div>
   );
 };

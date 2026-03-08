@@ -14,7 +14,6 @@ import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
-
 import { AgentPanel } from './AgentPanel';
 import { BlockToolbar } from './BlockToolbar';
 import { CardCanvas } from './CardCanvas';
@@ -29,11 +28,11 @@ import { ShareAnalyticsPanel } from './ShareAnalyticsPanel';
 import { ShareModal } from './ShareModal';
 import { SlideSorter } from './SlideSorter';
 import { ThemeSwitcher } from './ThemeSwitcher';
-import { VersionHistoryPanel } from './VersionHistoryPanel';
 import { useCollaboration } from './useCollaboration';
 import { useDataRefresh } from './useDataRefresh';
 import { useDeckState } from './useDeckState';
 import { useVersionHistory } from './useVersionHistory';
+import { VersionHistoryPanel } from './VersionHistoryPanel';
 
 function safeJsonParse<T>(raw: unknown, fallback: T): T {
   if (!raw) return fallback;
@@ -90,7 +89,11 @@ function deckFromUnifiedJson(params: {
     const contentType = String(slide?.content?.type || slide?.intent || '');
 
     const blocks: CardBlock[] = [];
-    const pushBlock = (type: CardBlock['type'], content: Record<string, unknown>, isRefreshable = false) => {
+    const pushBlock = (
+      type: CardBlock['type'],
+      content: Record<string, unknown>,
+      isRefreshable = false
+    ) => {
       blocks.push({
         block_id: `block-${params.deckId}-${idx}-${blocks.length}`,
         card_id: cardId,
@@ -120,7 +123,9 @@ function deckFromUnifiedJson(params: {
       const parts = [subtitle, org, date, conf].filter(Boolean);
       if (parts.length) pushBlock('paragraph', { text: parts.join(' · ') });
     } else if (contentType === 'executive_summary') {
-      const findings = Array.isArray(slide?.content?.key_findings) ? slide.content.key_findings : [];
+      const findings = Array.isArray(slide?.content?.key_findings)
+        ? slide.content.key_findings
+        : [];
       if (findings.length) pushBlock('bullet_list', { items: findings.map((x: any) => String(x)) });
       const kpis = Array.isArray(slide?.content?.kpis) ? slide.content.kpis : [];
       if (kpis.length) {
@@ -136,18 +141,20 @@ function deckFromUnifiedJson(params: {
           true
         );
       }
-      if (slide?.content?.recommendation) pushBlock('callout', { text: String(slide.content.recommendation), kind: 'info' });
+      if (slide?.content?.recommendation)
+        pushBlock('callout', { text: String(slide.content.recommendation), kind: 'info' });
     } else if (contentType === 'key_messages') {
       const msgs = Array.isArray(slide?.content?.messages) ? slide.content.messages : [];
       if (msgs.length) {
-        pushBlock(
-          'bullet_list',
-          {
-            items: msgs.slice(0, 10).map((m: any) =>
-              m?.description ? `${String(m.title || '')}: ${String(m.description)}` : String(m?.title || m)
+        pushBlock('bullet_list', {
+          items: msgs
+            .slice(0, 10)
+            .map((m: any) =>
+              m?.description
+                ? `${String(m.title || '')}: ${String(m.description)}`
+                : String(m?.title || m)
             ),
-          }
-        );
+        });
       }
     } else if (contentType === 'performance_overview') {
       const kpis = Array.isArray(slide?.content?.kpis) ? slide.content.kpis : [];
@@ -169,12 +176,19 @@ function deckFromUnifiedJson(params: {
     } else if (contentType === 'single_insight') {
       const insight = slide?.content?.insight_text ? String(slide.content.insight_text) : '';
       if (insight) pushBlock('callout', { text: insight, kind: 'info' });
-      if (slide?.content?.chart_data) pushBlock('chart', { chartType: slide?.content?.chart_type || 'bar', data: slide.content.chart_data }, true);
+      if (slide?.content?.chart_data)
+        pushBlock(
+          'chart',
+          { chartType: slide?.content?.chart_type || 'bar', data: slide.content.chart_data },
+          true
+        );
     } else {
       // Generic fallback (still editable)
       try {
         const pretty = JSON.stringify(slide?.content ?? slide, null, 2);
-        pushBlock('paragraph', { text: pretty.length > 1200 ? `${pretty.slice(0, 1200)}…` : pretty });
+        pushBlock('paragraph', {
+          text: pretty.length > 1200 ? `${pretty.slice(0, 1200)}…` : pretty,
+        });
       } catch {
         pushBlock('paragraph', { text: String(slide?.key_message || '') });
       }
@@ -187,12 +201,20 @@ function deckFromUnifiedJson(params: {
       deck_id: params.deckId,
       order_index: idx,
       intent,
-      layout_id: intent === 'cover' ? 'cover_centered' : intent === 'performance_overview' ? 'data_grid' : 'content_full',
+      layout_id:
+        intent === 'cover'
+          ? 'cover_centered'
+          : intent === 'performance_overview'
+            ? 'data_grid'
+            : 'content_full',
       title: String(headingText || 'Slide'),
       blocks,
       source_refs: [],
       has_refreshable_data: hasRefreshable,
-      background: { type: intent === 'cover' ? 'gradient' : 'theme', value: intent === 'cover' ? 'linear-gradient(135deg, #0B3D91, #1A8A8A)' : undefined },
+      background: {
+        type: intent === 'cover' ? 'gradient' : 'theme',
+        value: intent === 'cover' ? 'linear-gradient(135deg, #0B3D91, #1A8A8A)' : undefined,
+      },
       animations: { entrance: 'fade', block_stagger: false },
       is_locked: false,
     };
@@ -270,13 +292,8 @@ export const DeckBuilder: React.FC = () => {
   >([]);
   const [deckBacklinksLoading, setDeckBacklinksLoading] = useState(false);
 
-  const {
-    versions,
-    hasUnsavedChanges,
-    lastSavedAt,
-    restoreVersion,
-    saveManualCheckpoint,
-  } = useVersionHistory(deck);
+  const { versions, hasUnsavedChanges, lastSavedAt, restoreVersion, saveManualCheckpoint } =
+    useVersionHistory(deck);
 
   const { isCardOutdated, refreshCard, refreshAllCards } = useDataRefresh(deck, updateCard);
 
@@ -298,7 +315,8 @@ export const DeckBuilder: React.FC = () => {
       try {
         const res = (await Api.get(`/presentations/decks/${deckId}`)) as any;
         const payload = res?.data;
-        const row = (payload && typeof payload === 'object' && 'data' in payload) ? payload.data : payload;
+        const row =
+          payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
 
         const status = (String(row?.status || 'draft').toLowerCase() as Deck['status']) || 'draft';
         const title = row?.title ? String(row.title) : undefined;
@@ -419,7 +437,10 @@ export const DeckBuilder: React.FC = () => {
 
     autosaveTimerRef.current = setTimeout(async () => {
       try {
-        await Api.put(`/presentations/decks/${deckForAutosave.deckId}/autosave`, deckForAutosave.deck);
+        await Api.put(
+          `/presentations/decks/${deckForAutosave.deckId}/autosave`,
+          deckForAutosave.deck
+        );
       } catch {
         // Non-blocking; builder remains usable offline-ish.
       }
@@ -530,15 +551,34 @@ export const DeckBuilder: React.FC = () => {
     async (format: 'pdf' | 'pptx' | 'png') => {
       if (!deck) return;
       try {
-        const response = await fetch(`/api/presentations/decks/${deck.deck_id}/export/${format}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
+        const request =
+          format === 'pptx'
+            ? {
+                url: `/api/presentations/decks/${deck.deck_id}/download`,
+                init: { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
+                extension: 'pptx',
+              }
+            : format === 'png'
+              ? {
+                  url: `/api/presentations/decks/${deck.deck_id}/export/png`,
+                  init: {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+                  },
+                  extension: 'zip',
+                }
+              : {
+                  url: `/api/presentations/decks/${deck.deck_id}/export/pdf`,
+                  init: { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
+                  extension: 'pdf',
+                };
+        const response = await fetch(request.url, request.init);
         if (!response.ok) throw new Error('Export failed');
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${deck.title || 'presentation'}.${format}`;
+        a.download = `${deck.title || 'presentation'}.${request.extension}`;
         a.click();
         window.URL.revokeObjectURL(url);
       } catch {
@@ -557,10 +597,25 @@ export const DeckBuilder: React.FC = () => {
   );
 
   const handleAiPrompt = useCallback(
-    (_prompt: string) => {
-      setAgentOpen(true);
+    async (prompt: string) => {
+      if (!deck) return { reply: 'No deck loaded.' };
+      const res = (await Api.post(`/presentations/decks/${deck.deck_id}/agent-edit`, {
+        prompt,
+      })) as any;
+      const payload = res?.data && typeof res.data === 'object' && 'data' in res.data ? res.data.data : res?.data;
+      const nextDeck = payload?.deck;
+      if (nextDeck) {
+        setDeck(nextDeck);
+      }
+      return {
+        reply:
+          payload?.reply ||
+          (isPolish
+            ? 'Zastosowałem zmiany w decku.'
+            : 'I applied the requested changes to the deck.'),
+      };
     },
-    []
+    [deck, isPolish, setDeck]
   );
 
   if (loadingDeck || !deck) {
@@ -629,10 +684,7 @@ export const DeckBuilder: React.FC = () => {
             onQualityGates={() => setQualityGatesOpen((v) => !v)}
             onAnalytics={() => setAnalyticsOpen((v) => !v)}
           />
-          <ThemeSwitcher
-            isOpen={themeSwitcherOpen}
-            onClose={() => setThemeSwitcherOpen(false)}
-          />
+          <ThemeSwitcher isOpen={themeSwitcherOpen} onClose={() => setThemeSwitcherOpen(false)} />
         </div>
 
         <div className="border-b border-slate-200 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-900/40 px-4 py-2">
@@ -812,7 +864,12 @@ function getDefaultContent(blockType: string): Record<string, unknown> {
     case 'kpi_widget':
       return { label: 'Metric', value: '0', trend: 'stable' };
     case 'metric_strip':
-      return { metrics: [{ label: 'A', value: '0' }, { label: 'B', value: '0' }] };
+      return {
+        metrics: [
+          { label: 'A', value: '0' },
+          { label: 'B', value: '0' },
+        ],
+      };
     case 'callout':
       return { variant: 'info', text: 'Important note' };
     case 'smart_layout':
@@ -823,7 +880,13 @@ function getDefaultContent(blockType: string): Record<string, unknown> {
         items: [{ label: 'Step 1' }, { label: 'Step 2' }, { label: 'Step 3' }],
       };
     case 'timeline_block':
-      return { items: [{ date: 'Q1', title: 'Start' }, { date: 'Q2', title: 'Mid' }, { date: 'Q3', title: 'End' }] };
+      return {
+        items: [
+          { date: 'Q1', title: 'Start' },
+          { date: 'Q2', title: 'Mid' },
+          { date: 'Q3', title: 'End' },
+        ],
+      };
     case 'divider':
       return { style: 'line' };
     case 'image':

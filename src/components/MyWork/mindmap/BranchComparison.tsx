@@ -23,7 +23,12 @@ interface BranchStats {
   nodeLabels: string[];
 }
 
-export const BranchComparison: React.FC<BranchComparisonProps> = ({ open, onClose, nodes, edges }) => {
+export const BranchComparison: React.FC<BranchComparisonProps> = ({
+  open,
+  onClose,
+  nodes,
+  edges,
+}) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
@@ -49,7 +54,10 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({ open, onClos
 
       const childNodes = nodes.filter((n) => childIds.has(n.id));
       const priorities = childNodes.map((n) => n.data?.priority ?? 50);
-      const avgPriority = priorities.length > 0 ? Math.round(priorities.reduce((s, p) => s + p, 0) / priorities.length) : 0;
+      const avgPriority =
+        priorities.length > 0
+          ? Math.round(priorities.reduce((s, p) => s + p, 0) / priorities.length)
+          : 0;
 
       const statusCounts: Record<string, number> = {};
       for (const n of childNodes) {
@@ -84,47 +92,76 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({ open, onClos
   if (!open) return null;
 
   const STATUS_COLORS: Record<string, string> = {
-    idea: 'bg-slate-400', exploring: 'bg-blue-500', validated: 'bg-emerald-500',
-    ready_to_convert: 'bg-amber-500', converted: 'bg-violet-500',
+    idea: 'bg-slate-400',
+    exploring: 'bg-blue-500',
+    validated: 'bg-emerald-500',
+    ready_to_convert: 'bg-amber-500',
+    converted: 'bg-violet-500',
   };
 
   const renderColumn = (stats: BranchStats | null) => {
-    if (!stats) return <div className="flex-1 flex items-center justify-center text-[11px] text-slate-400">{isPl ? 'Wybierz gałąź' : 'Select a branch'}</div>;
+    if (!stats)
+      return (
+        <div className="flex-1 flex items-center justify-center text-[11px] text-slate-400">
+          {isPl ? 'Wybierz gałąź' : 'Select a branch'}
+        </div>
+      );
     return (
       <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-bold text-slate-700 dark:text-slate-200 mb-3 capitalize">{stats.label}</div>
+        <div className="text-[13px] font-bold text-slate-700 dark:text-slate-200 mb-3 capitalize">
+          {stats.label}
+        </div>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <div className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 text-center">
-              <div className="text-[18px] font-bold text-slate-700 dark:text-slate-200">{stats.nodeCount}</div>
+              <div className="text-[18px] font-bold text-slate-700 dark:text-slate-200">
+                {stats.nodeCount}
+              </div>
               <div className="text-[9px] text-slate-400">{isPl ? 'Pomysłów' : 'Ideas'}</div>
             </div>
             <div className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 text-center">
               <div className="text-[18px] font-bold text-amber-600">{stats.avgPriority}</div>
-              <div className="text-[9px] text-slate-400">{isPl ? 'Śr. priorytet' : 'Avg priority'}</div>
+              <div className="text-[9px] text-slate-400">
+                {isPl ? 'Śr. priorytet' : 'Avg priority'}
+              </div>
             </div>
             <div className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 text-center">
               <div className="text-[18px] font-bold text-blue-600">{stats.maxDepth}</div>
               <div className="text-[9px] text-slate-400">{isPl ? 'Głębokość' : 'Depth'}</div>
             </div>
             <div className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 text-center">
-              <div className="text-[18px] font-bold text-emerald-600">{stats.statusCounts.converted || 0}</div>
-              <div className="text-[9px] text-slate-400">{isPl ? 'Skonwertowane' : 'Converted'}</div>
+              <div className="text-[18px] font-bold text-emerald-600">
+                {stats.statusCounts.converted || 0}
+              </div>
+              <div className="text-[9px] text-slate-400">
+                {isPl ? 'Skonwertowane' : 'Converted'}
+              </div>
             </div>
           </div>
           <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status</div>
+            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+              Status
+            </div>
             <div className="flex gap-1 h-3 rounded-full overflow-hidden bg-slate-200 dark:bg-navy-700">
               {Object.entries(stats.statusCounts).map(([st, count]) => (
-                <div key={st} className={`h-full ${STATUS_COLORS[st] || 'bg-slate-400'}`} style={{ width: `${(count / Math.max(stats.nodeCount, 1)) * 100}%` }} title={`${st}: ${count}`} />
+                <div
+                  key={st}
+                  className={`h-full ${STATUS_COLORS[st] || 'bg-slate-400'}`}
+                  style={{ width: `${(count / Math.max(stats.nodeCount, 1)) * 100}%` }}
+                  title={`${st}: ${count}`}
+                />
               ))}
             </div>
           </div>
           <div>
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">{isPl ? 'Pomysły' : 'Ideas'}</div>
+            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+              {isPl ? 'Pomysły' : 'Ideas'}
+            </div>
             <div className="space-y-1 max-h-[200px] overflow-y-auto">
               {stats.nodeLabels.map((label, idx) => (
-                <div key={idx} className="text-[10px] text-slate-600 dark:text-slate-300 truncate">{label}</div>
+                <div key={idx} className="text-[10px] text-slate-600 dark:text-slate-300 truncate">
+                  {label}
+                </div>
               ))}
             </div>
           </div>
@@ -136,24 +173,45 @@ export const BranchComparison: React.FC<BranchComparisonProps> = ({ open, onClos
   return (
     <div className="fixed inset-0 z-[92] bg-white/95 dark:bg-navy-950/95 backdrop-blur-xl flex flex-col">
       <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
-        <button onClick={onClose} className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+        <button
+          onClick={onClose}
+          className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+        >
           <ChevronLeft size={16} />
         </button>
         <ArrowLeftRight size={16} className="text-indigo-500" />
-        <h2 className="text-sm font-bold text-slate-800 dark:text-white">{isPl ? 'Porównanie gałęzi' : 'Branch Comparison'}</h2>
+        <h2 className="text-sm font-bold text-slate-800 dark:text-white">
+          {isPl ? 'Porównanie gałęzi' : 'Branch Comparison'}
+        </h2>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center gap-4 mb-6">
-            <select value={leftBranch} onChange={(e) => setLeftBranch(e.target.value)} className="flex-1 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-[11px] font-bold text-slate-700 dark:text-slate-200">
+            <select
+              value={leftBranch}
+              onChange={(e) => setLeftBranch(e.target.value)}
+              className="flex-1 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-[11px] font-bold text-slate-700 dark:text-slate-200"
+            >
               <option value="">{isPl ? '-- Wybierz --' : '-- Select --'}</option>
-              {branches.map((b) => <option key={b.data?.branchKey} value={b.data?.branchKey}>{b.data?.label}</option>)}
+              {branches.map((b) => (
+                <option key={b.data?.branchKey} value={b.data?.branchKey}>
+                  {b.data?.label}
+                </option>
+              ))}
             </select>
             <ArrowLeftRight size={16} className="text-slate-400 shrink-0" />
-            <select value={rightBranch} onChange={(e) => setRightBranch(e.target.value)} className="flex-1 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-[11px] font-bold text-slate-700 dark:text-slate-200">
+            <select
+              value={rightBranch}
+              onChange={(e) => setRightBranch(e.target.value)}
+              className="flex-1 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-[11px] font-bold text-slate-700 dark:text-slate-200"
+            >
               <option value="">{isPl ? '-- Wybierz --' : '-- Select --'}</option>
-              {branches.map((b) => <option key={b.data?.branchKey} value={b.data?.branchKey}>{b.data?.label}</option>)}
+              {branches.map((b) => (
+                <option key={b.data?.branchKey} value={b.data?.branchKey}>
+                  {b.data?.label}
+                </option>
+              ))}
             </select>
           </div>
 

@@ -36,7 +36,12 @@ export function useMapExport() {
   }, []);
 
   const exportAsJSON = useCallback(
-    (nodes: Node[], edges: Edge[], extensions?: Record<string, unknown>, filename = 'mindmap.json') => {
+    (
+      nodes: Node[],
+      edges: Edge[],
+      extensions?: Record<string, unknown>,
+      filename = 'mindmap.json'
+    ) => {
       const data = JSON.stringify({ nodes, edges, extensions }, null, 2);
       const blob = new Blob([data], { type: 'application/json' });
       const url = URL.createObjectURL(blob);

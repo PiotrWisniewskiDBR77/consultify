@@ -42,7 +42,10 @@ export const SubMapBreadcrumb: React.FC<SubMapBreadcrumbProps> = ({ path, onNavi
               {item.label}
             </button>
           ) : (
-            <span className="px-2 py-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 truncate max-w-[140px]" title={item.label}>
+            <span
+              className="px-2 py-1 text-[11px] font-bold text-amber-600 dark:text-amber-400 truncate max-w-[140px]"
+              title={item.label}
+            >
               {item.label}
             </span>
           )}

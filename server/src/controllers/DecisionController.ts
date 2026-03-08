@@ -13,6 +13,7 @@ import {
   validateRequiredFields,
   type DecisionPlaybook,
 } from '../services/decisionPlaybookService.js';
+import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import {
   validateDecisionWorkflowTransition,
   type DecisionWorkflowStatus,
@@ -895,6 +896,18 @@ export class DecisionController {
           organizationId: orgId,
         })
         .catch((err: any) => logger.error('[DecisionController] Audit log failed:', err?.message));
+
+      await dispatchProjectCommunicationEvent({
+        organizationId: orgId,
+        projectId: projectIdValue,
+        eventType: 'decision_required',
+        title: `Decision required: ${title}`,
+        body: `Decision "${title}" requires review${normalizedDueDate ? ` by ${new Date(normalizedDueDate).toLocaleDateString()}` : ''}.`,
+        deepLink: `/decisions/${id}`,
+        severity: normalizePriority(normalizedPriority) === 'CRITICAL' ? 'critical' : 'normal',
+      }).catch((err: any) =>
+        logger.warn('[DecisionController] Communication sync failed:', err?.message)
+      );
 
       res.status(201).json({ id, projectId: projectIdValue, title, status: 'PENDING' });
     }

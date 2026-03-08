@@ -60,7 +60,9 @@ export const HowItWorksSection: React.FC = () => {
       {/* Subtle top separator */}
       <div
         className="absolute top-0 left-0 right-0 h-px"
-        style={{ background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.25), transparent)' }}
+        style={{
+          background: 'linear-gradient(90deg, transparent, rgba(124,58,237,0.25), transparent)',
+        }}
       />
 
       <div className="max-w-7xl mx-auto">
@@ -86,12 +88,15 @@ export const HowItWorksSection: React.FC = () => {
             className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4"
           >
             {t('landing.howItWorks.heading', 'From idea to measurable results')}
-            <span className="block" style={{
-              background: 'linear-gradient(90deg, #a78bfa, #67e8f9)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>
+            <span
+              className="block"
+              style={{
+                background: 'linear-gradient(90deg, #a78bfa, #67e8f9)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
               {t('landing.howItWorks.headingAccent', 'in five moves.')}
             </span>
           </motion.h2>
@@ -103,7 +108,10 @@ export const HowItWorksSection: React.FC = () => {
             viewport={{ once: true }}
             className="text-base text-white/50 max-w-xl mx-auto"
           >
-            {t('landing.howItWorks.sub', 'No consulting firm. No 6-month project. Just intelligence turning into action.')}
+            {t(
+              'landing.howItWorks.sub',
+              'No consulting firm. No 6-month project. Just intelligence turning into action.'
+            )}
           </motion.p>
         </div>
 
@@ -122,8 +130,16 @@ export const HowItWorksSection: React.FC = () => {
                 onClick={() => setActiveStep(idx)}
                 className="text-left p-5 rounded-2xl transition-all duration-300"
                 style={{
-                  background: isActive ? `rgba(${step.color.replace('#','').match(/.{2}/g)?.map(h=>parseInt(h,16)).join(',')},0.12)` : 'rgba(255,255,255,0.03)',
-                  border: isActive ? `1px solid ${step.color}50` : '1px solid rgba(255,255,255,0.07)',
+                  background: isActive
+                    ? `rgba(${step.color
+                        .replace('#', '')
+                        .match(/.{2}/g)
+                        ?.map((h) => parseInt(h, 16))
+                        .join(',')},0.12)`
+                    : 'rgba(255,255,255,0.03)',
+                  border: isActive
+                    ? `1px solid ${step.color}50`
+                    : '1px solid rgba(255,255,255,0.07)',
                   boxShadow: isActive ? `0 0 30px -10px ${step.glow}` : 'none',
                 }}
               >
@@ -182,7 +198,10 @@ export const HowItWorksSection: React.FC = () => {
                 </span>
               </div>
               <h3 className="text-2xl font-black text-white mb-4 leading-tight">
-                {t('landing.howItWorks.techTitle', 'Powered by every frontier LLM + our proprietary LLMind.')}
+                {t(
+                  'landing.howItWorks.techTitle',
+                  'Powered by every frontier LLM + our proprietary LLMind.'
+                )}
               </h3>
               <p className="text-sm text-white/55 leading-relaxed">
                 {t(
@@ -197,7 +216,11 @@ export const HowItWorksSection: React.FC = () => {
                 { label: 'LLMind™', desc: 'Proprietary consulting AI', color: '#7c3aed' },
                 { label: 'MCP Integration', desc: 'Full end-to-end automation', color: '#06b6d4' },
                 { label: 'All Frontier LLMs', desc: 'GPT-4o, Claude, Gemini+', color: '#a855f7' },
-                { label: '1,000+ Engagements', desc: 'Real consulting training data', color: '#10b981' },
+                {
+                  label: '1,000+ Engagements',
+                  desc: 'Real consulting training data',
+                  color: '#10b981',
+                },
               ].map((item) => (
                 <div
                   key={item.label}

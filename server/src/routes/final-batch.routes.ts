@@ -58,7 +58,7 @@ router.put('/cohort-policy', asyncHandler(async (req: AuthRequest, res: Response
 
 router.post('/cohort-privacy/apply', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ value: z.number(), cohortSize: z.number(), queryType: z.string(), queryParams: z.record(z.unknown()).optional() });
+  const s = z.object({ value: z.number(), cohortSize: z.number(), queryType: z.string(), queryParams: z.record(z.string(), z.unknown()).optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.json(await finalBatchService.applyCohortPrivacy(id.orgId, { value: p.data.value, cohortSize: p.data.cohortSize }, id.userId, p.data.queryType, p.data.queryParams));
 }));
@@ -93,7 +93,7 @@ router.get('/frameworks', asyncHandler(async (req: AuthRequest, res: Response) =
 
 router.post('/gap-analyses', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ frameworkKey: z.string(), assessmentId: z.string().optional(), gaps: z.array(z.record(z.unknown())).optional(), recommendations: z.array(z.record(z.unknown())).optional() });
+  const s = z.object({ frameworkKey: z.string(), assessmentId: z.string().optional(), gaps: z.array(z.record(z.string(), z.unknown())).optional(), recommendations: z.array(z.record(z.string(), z.unknown())).optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.status(201).json(await finalBatchService.createGapAnalysis(id.orgId, { ...p.data, createdBy: id.userId }));
 }));
@@ -127,7 +127,7 @@ router.put('/gap-analyses/:gapId/status', asyncHandler(async (req: AuthRequest, 
 
 router.post('/actions/propose', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ actionType: z.string(), targetEntityType: z.string(), targetEntityId: z.string().optional(), proposedChanges: z.record(z.unknown()), previewDiff: z.string().optional(), rbacRequiredRole: z.string().optional(), idempotencyKey: z.string().optional() });
+  const s = z.object({ actionType: z.string(), targetEntityType: z.string(), targetEntityId: z.string().optional(), proposedChanges: z.record(z.string(), z.unknown()), previewDiff: z.string().optional(), rbacRequiredRole: z.string().optional(), idempotencyKey: z.string().optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.status(201).json(await finalBatchService.proposeAction(id.orgId, { ...p.data, proposedBy: id.userId }));
 }));
@@ -140,32 +140,51 @@ router.get('/actions', asyncHandler(async (req: AuthRequest, res: Response) => {
 
 router.get('/actions/:actionId', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const a = await finalBatchService.getAction(req.params.actionId);
+  const a = await finalBatchService.getAction(id.orgId, req.params.actionId);
   if (!a) { res.status(404).json({ error: 'Action not found' }); return; }
   res.json(a);
 }));
 
 router.post('/actions/:actionId/accept', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  res.json(await finalBatchService.acceptAction(req.params.actionId, id.userId));
+  const result = await finalBatchService.acceptAction(
+    id.orgId,
+    req.params.actionId,
+    id.userId,
+    req.userRole || req.user?.role,
+  );
+  if (!result.ok && result.reason === 'not_found') { res.status(404).json({ error: 'Action not found' }); return; }
+  if (!result.ok && result.reason === 'insufficient_role') {
+    res.status(403).json({ error: 'Insufficient role for action', requiredRole: result.requiredRole });
+    return;
+  }
+  if (!result.ok && result.reason === 'invalid_state') {
+    res.status(409).json({ error: 'Action is no longer pending acceptance' });
+    return;
+  }
+  res.json(result);
 }));
 
 router.post('/actions/:actionId/execute', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
   const result = req.body.result;
-  res.json(await finalBatchService.executeAction(req.params.actionId, result));
+  const execution = await finalBatchService.executeAction(id.orgId, req.params.actionId, result);
+  if (!execution.ok) { res.status(409).json({ error: 'Action must be accepted before execution' }); return; }
+  res.json(execution);
 }));
 
 router.post('/actions/:actionId/reject', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  res.json(await finalBatchService.rejectAction(req.params.actionId));
+  const result = await finalBatchService.rejectAction(id.orgId, req.params.actionId);
+  if (!result.ok) { res.status(404).json({ error: 'Action not found or no longer rejectable' }); return; }
+  res.json(result);
 }));
 
 // ── AI-08: Domain Playbooks ──
 
 router.post('/playbooks', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ domain: z.string(), playbookName: z.string(), description: z.string().optional(), systemPrompt: z.string(), exampleQueries: z.array(z.string()).optional(), requiredContext: z.array(z.string()).optional(), outputSchema: z.record(z.unknown()).optional() });
+  const s = z.object({ domain: z.string(), playbookName: z.string(), description: z.string().optional(), systemPrompt: z.string(), exampleQueries: z.array(z.string()).optional(), requiredContext: z.array(z.string()).optional(), outputSchema: z.record(z.string(), z.unknown()).optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.status(201).json(await finalBatchService.createPlaybook(id.orgId, { ...p.data, createdBy: id.userId }));
 }));
@@ -190,7 +209,7 @@ router.put('/playbooks/:playbookId', asyncHandler(async (req: AuthRequest, res: 
 
 router.post('/playbooks/:playbookId/execute', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ inputContext: z.record(z.unknown()).optional(), outputResult: z.record(z.unknown()).optional(), citations: z.array(z.string()).optional(), confidence: z.number().optional(), durationMs: z.number().optional() });
+  const s = z.object({ inputContext: z.record(z.string(), z.unknown()).optional(), outputResult: z.record(z.string(), z.unknown()).optional(), citations: z.array(z.string()).optional(), confidence: z.number().optional(), durationMs: z.number().optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.status(201).json(await finalBatchService.executePlaybook(id.orgId, { ...p.data, playbookId: req.params.playbookId, userId: id.userId }));
 }));

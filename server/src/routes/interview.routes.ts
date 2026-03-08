@@ -315,6 +315,15 @@ router.post('/sessions/:sessionId/evidence', InterviewController.createEvidence)
 /** DELETE /interview/evidence/:evidenceId - Delete evidence */
 router.delete('/evidence/:evidenceId', InterviewController.deleteEvidence);
 
+/** GET /interview/sessions/:sessionId/linked-items - Get persisted object links */
+router.get('/sessions/:sessionId/linked-items', InterviewController.getLinkedItems);
+
+/** POST /interview/sessions/:sessionId/linked-items - Add persisted object link */
+router.post('/sessions/:sessionId/linked-items', InterviewController.addLinkedItem);
+
+/** DELETE /interview/sessions/:sessionId/linked-items/:edgeId - Delete persisted object link */
+router.delete('/sessions/:sessionId/linked-items/:edgeId', InterviewController.deleteLinkedItem);
+
 // ==========================================
 // ORGANIZATION CONTEXT ROUTES (Company Facts)
 // ==========================================

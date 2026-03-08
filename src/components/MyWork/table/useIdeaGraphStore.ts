@@ -11,10 +11,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Api } from '@/services/api';
+
 import {
+  type CanvasToolType,
   IDEA_GRAPH_SAVE_EVENT,
   IDEA_GRAPH_UPDATE_EVENT,
-  type CanvasToolType,
 } from '../ideaSelectionTypes';
 
 interface GraphState {
@@ -36,54 +37,67 @@ export function useIdeaGraphStore(ideaId: string, toolName: string) {
   const toolNameRef = useRef(toolName);
   toolNameRef.current = toolName;
 
-  const load = useCallback(async (language: string) => {
-    if (sharedCache[ideaId]) {
-      setState(sharedCache[ideaId]);
-      return sharedCache[ideaId];
-    }
+  const load = useCallback(
+    async (language: string) => {
+      if (sharedCache[ideaId]) {
+        setState(sharedCache[ideaId]);
+        return sharedCache[ideaId];
+      }
 
-    setLoading(true);
-    try {
-      const res = await Api.getMyIdeaMap(ideaId, { language });
-      const map = res?.map || {};
-      const graphState: GraphState = {
-        nodes: Array.isArray(map.nodes) ? map.nodes : [],
-        edges: Array.isArray(map.edges) ? map.edges : [],
-        extensions: map?.extensions && typeof map.extensions === 'object' ? map.extensions as Record<string, unknown> : {},
-        preferredTool: map?.preferredTool as CanvasToolType | undefined,
+      setLoading(true);
+      try {
+        const res = await Api.getMyIdeaMap(ideaId, { language });
+        const map = res?.map || {};
+        const graphState: GraphState = {
+          nodes: Array.isArray(map.nodes) ? map.nodes : [],
+          edges: Array.isArray(map.edges) ? map.edges : [],
+          extensions:
+            map?.extensions && typeof map.extensions === 'object'
+              ? (map.extensions as Record<string, unknown>)
+              : {},
+          preferredTool: map?.preferredTool as CanvasToolType | undefined,
+          lastUpdatedAt: Date.now(),
+        };
+        sharedCache[ideaId] = graphState;
+        setState(graphState);
+
+        window.dispatchEvent(
+          new CustomEvent(IDEA_GRAPH_UPDATE_EVENT, {
+            detail: { ideaId, state: graphState, source: toolNameRef.current },
+          })
+        );
+
+        return graphState;
+      } catch (err) {
+        console.error('[useIdeaGraphStore] load failed:', err);
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [ideaId]
+  );
+
+  const update = useCallback(
+    (partial: Partial<GraphState>) => {
+      const current = sharedCache[ideaId] || { nodes: [], edges: [], extensions: {} };
+      const next: GraphState = {
+        ...current,
+        ...partial,
+        lastUpdatedBy: toolNameRef.current,
         lastUpdatedAt: Date.now(),
       };
-      sharedCache[ideaId] = graphState;
-      setState(graphState);
+      sharedCache[ideaId] = next;
+      setState(next);
 
-      window.dispatchEvent(new CustomEvent(IDEA_GRAPH_UPDATE_EVENT, {
-        detail: { ideaId, state: graphState, source: toolNameRef.current },
-      }));
-
-      return graphState;
-    } catch (err) {
-      console.error('[useIdeaGraphStore] load failed:', err);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [ideaId]);
-
-  const update = useCallback((partial: Partial<GraphState>) => {
-    const current = sharedCache[ideaId] || { nodes: [], edges: [], extensions: {} };
-    const next: GraphState = {
-      ...current,
-      ...partial,
-      lastUpdatedBy: toolNameRef.current,
-      lastUpdatedAt: Date.now(),
-    };
-    sharedCache[ideaId] = next;
-    setState(next);
-
-    window.dispatchEvent(new CustomEvent(IDEA_GRAPH_UPDATE_EVENT, {
-      detail: { ideaId, state: next, source: toolNameRef.current },
-    }));
-  }, [ideaId]);
+      window.dispatchEvent(
+        new CustomEvent(IDEA_GRAPH_UPDATE_EVENT, {
+          detail: { ideaId, state: next, source: toolNameRef.current },
+        })
+      );
+    },
+    [ideaId]
+  );
 
   const save = useCallback(async () => {
     const current = sharedCache[ideaId];
@@ -97,9 +111,11 @@ export function useIdeaGraphStore(ideaId: string, toolName: string) {
         preferredTool: current.preferredTool,
       });
 
-      window.dispatchEvent(new CustomEvent(IDEA_GRAPH_SAVE_EVENT, {
-        detail: { ideaId, source: toolNameRef.current },
-      }));
+      window.dispatchEvent(
+        new CustomEvent(IDEA_GRAPH_SAVE_EVENT, {
+          detail: { ideaId, source: toolNameRef.current },
+        })
+      );
     } catch (err) {
       console.error('[useIdeaGraphStore] save failed:', err);
       throw err;

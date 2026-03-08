@@ -12,37 +12,58 @@ export { MyWorkHub } from './MyWorkHub';
 
 // Content components (used by MyWorkHub)
 export { DecisionsPanelContent } from './DecisionsPanelContent';
-export { type CanvasToolType } from './ideaSelectionTypes';
+export { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
+export { IdeaCanvasContextMenu } from './IdeaCanvasContextMenu';
 export {
   IdeaCanvasToolSelector,
   type IdeaEdge,
   type IdeaNode,
   type IdeaWorkspaceGraph,
 } from './IdeaCanvasToolSelector';
-export { IdeaAINudgeStrip } from './IdeaAINudgeStrip';
-export { IdeaCanvasContextMenu } from './IdeaCanvasContextMenu';
+export { type DrawingPath, IdeaDrawingLayer } from './IdeaDrawingLayer';
 export { IdeaExportMenu } from './IdeaExportMenu';
-export { IdeaMapWorkspace } from './IdeaMapWorkspace';
-export { IdeaDrawingLayer, type DrawingPath } from './IdeaDrawingLayer';
 export { IdeaGhostCards } from './IdeaGhostCards';
-export { KPIBadgeNode, ScoreNode, ProgressNode } from './IdeaMetricNodes';
-export { IdeaNodeDetailDrawer, type ExtendedNodeData } from './IdeaNodeDetailDrawer';
-export type { NodeAttachment as IdeaNodeAttachment, NodeComment as IdeaNodeComment, NodeStatus as IdeaNodeStatus } from './IdeaNodeDetailDrawer';
+export { IdeaMapWorkspace } from './IdeaMapWorkspace';
+export { KPIBadgeNode, ProgressNode, ScoreNode } from './IdeaMetricNodes';
+export type {
+  NodeAttachment as IdeaNodeAttachment,
+  NodeComment as IdeaNodeComment,
+  NodeStatus as IdeaNodeStatus,
+} from './IdeaNodeDetailDrawer';
+export { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDrawer';
 export { IdeaScenesManager, type Scene } from './IdeaScenesManager';
-export { SummaryCardNode } from './IdeaSummaryCardNode';
-export { IdeaVotingMode, EmojiReactions } from './IdeaVotingMode';
-export { applySmartLayout, equalizeSpacing, snapNodesToGrid, type LayoutAlgorithm } from './layout/IdeaSmartLayout';
+export { type CanvasToolType } from './ideaSelectionTypes';
 export { IdeaSlashCommandMenu } from './IdeaSlashCommandMenu';
+export { SummaryCardNode } from './IdeaSummaryCardNode';
+export { IdeaUnifiedSearch, type IdeaUnifiedSearchProps } from './IdeaUnifiedSearch';
+export { EmojiReactions, IdeaVotingMode } from './IdeaVotingMode';
 export { IdeaWorkspaceToolbar, type IdeaWorkspaceToolbarProps } from './IdeaWorkspaceToolbar';
 export { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
+export {
+  applySmartLayout,
+  equalizeSpacing,
+  type LayoutAlgorithm,
+  snapNodesToGrid,
+} from './layout/IdeaSmartLayout';
 export { MyIdeasListContent } from './MyIdeasListContent';
-export { ProcessKPIDashboard } from './ProcessKPIDashboard';
-export { VSMNodeComponent, VSMProcessNode, VSMInventoryNode, VSMSupplierNode, VSMCustomerNode, VSMPushArrowNode, VSMPullArrowNode, VSMSupermarketNode, VSMFifoNode, VSMKaizenNode, vsmNodeTypes } from './VSMNodeComponent';
-export type { VSMShape, VSMDataFields, VSMFieldKey } from './VSMNodeComponent';
-export { VSMTimelineBar } from './VSMTimelineBar';
-export { IdeaUnifiedSearch, type IdeaUnifiedSearchProps } from './IdeaUnifiedSearch';
 export { MyTasksListContent } from './MyTasksListContent';
 export { NotificationsContent } from './NotificationsContent';
+export { ProcessKPIDashboard } from './ProcessKPIDashboard';
+export type { VSMDataFields, VSMFieldKey, VSMShape } from './VSMNodeComponent';
+export {
+  VSMCustomerNode,
+  VSMFifoNode,
+  VSMInventoryNode,
+  VSMKaizenNode,
+  VSMNodeComponent,
+  vsmNodeTypes,
+  VSMProcessNode,
+  VSMPullArrowNode,
+  VSMPushArrowNode,
+  VSMSupermarketNode,
+  VSMSupplierNode,
+} from './VSMNodeComponent';
+export { VSMTimelineBar } from './VSMTimelineBar';
 
 // Detail view components (for dynamic tabs)
 export { DecisionDetailView } from './DecisionDetailView';
@@ -93,48 +114,85 @@ export { TaskDetailModal } from './TaskDetailModal';
 // TABLE SUBSYSTEM (V3 Pro)
 // ============================================================================
 export { AddColumnDialog } from './table/AddColumnDialog';
+export { AICategorizeTool } from './table/AICategorizeTool';
+export { AICopilotMode } from './table/AICopilotMode';
 export { AITableAssistant } from './table/AITableAssistant';
 export { CellExpandPopover } from './table/CellExpandPopover';
 export { CellRenderer } from './table/CellRenderer';
-export { ColorPalette, autoAssignColors } from './table/ColorPalette';
-export { ConditionalFormatting, getConditionalStyle } from './table/ConditionalFormatting';
+export type { PresenceUser } from './table/CollaborationPresence';
+export { CellCursor, CollaborationPresence } from './table/CollaborationPresence';
+export { autoAssignColors, ColorPalette } from './table/ColorPalette';
 export type { FormatRule } from './table/ConditionalFormatting';
+export { ConditionalFormatting, getConditionalStyle } from './table/ConditionalFormatting';
 export { ConnectionLines } from './table/ConnectionLines';
-export { copyTableToClipboard, csvToNodes, downloadCSV, exportToCSV, parseCSV } from './table/csvUtils';
+export { CrossTableRelations } from './table/CrossTableRelations';
+export {
+  copyTableToClipboard,
+  csvToNodes,
+  downloadCSV,
+  exportToCSV,
+  parseCSV,
+} from './table/csvUtils';
+export {
+  AnalyticsSummaryStrip,
+  computeHeatmapStyles,
+  HeatmapControls,
+  Sparkline,
+  TrendIndicator,
+} from './table/EmbeddedAnalytics';
+export { ExportToPresentation } from './table/ExportToPresentation';
 export { FilterPanel } from './table/FilterPanel';
+export { batchEvaluateFormulas, evaluateFormulaV2 } from './table/FormulaEngineV2';
 export { FrameworkGenerator } from './table/FrameworkGenerator';
 export { IdeaCompletenessWidget } from './table/IdeaCompletenessWidget';
-export { InlineAIFill, BatchAIFillButton } from './table/InlineAIFill';
-export { KeyboardShortcutsPanel } from './table/KeyboardShortcutsPanel';
-export { RowTemplatePicker, createNodeFromTemplate, ROW_TEMPLATES } from './table/RowTemplatePicker';
-export type { RowTemplate } from './table/RowTemplatePicker';
+export type { PipelineStage } from './table/IdeaPipeline';
+export { IdeaPipeline } from './table/IdeaPipeline';
+export { IdeaScoringModel } from './table/IdeaScoringModel';
 export { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
+export { BatchAIFillButton, InlineAIFill } from './table/InlineAIFill';
 export { KanbanView } from './table/KanbanView';
+export { KeyboardShortcutsPanel } from './table/KeyboardShortcutsPanel';
 export { MatrixView } from './table/MatrixView';
 export { MiniCanvas } from './table/MiniCanvas';
-export { FileCell, RelationCell, RollupCell, EmojiCell, ColorCell, CurrencyCell, PhoneCell, EmailCell } from './table/NewColumnRenderers';
+export {
+  ColorCell,
+  CurrencyCell,
+  EmailCell,
+  EmojiCell,
+  FileCell,
+  PhoneCell,
+  RelationCell,
+  RollupCell,
+} from './table/NewColumnRenderers';
 export { RowDetailPanel } from './table/RowDetailPanel';
-export { SmartSuggestionsBar } from './table/SmartSuggestionsBar';
+export type { RowTemplate } from './table/RowTemplatePicker';
+export {
+  createNodeFromTemplate,
+  ROW_TEMPLATES,
+  RowTemplatePicker,
+} from './table/RowTemplatePicker';
 export type { SmartSuggestion } from './table/SmartSuggestionsBar';
+export { SmartSuggestionsBar } from './table/SmartSuggestionsBar';
 export { StickyNoteView } from './table/StickyNoteView';
 export { TableSummaryDashboard } from './table/TableSummaryDashboard';
-export type { ColumnDef, ColumnType, FilterGroup, FilterRule, NodeAttachment, NodeComment, NodeActivity, SavedView, SortConfig, TableEdge, TableNode } from './table/tableTypes';
-export { useIdeaGraphStore, clearIdeaGraphCache } from './table/useIdeaGraphStore';
+export type {
+  ColumnDef,
+  ColumnType,
+  FilterGroup,
+  FilterRule,
+  NodeActivity,
+  NodeAttachment,
+  NodeComment,
+  SavedView,
+  SortConfig,
+  TableEdge,
+  TableNode,
+} from './table/tableTypes';
 export { TimelineView } from './table/TimelineView';
-export { AICategorizeTool } from './table/AICategorizeTool';
-export { IdeaScoringModel } from './table/IdeaScoringModel';
-export { ExportToPresentation } from './table/ExportToPresentation';
-export { evaluateFormulaV2, batchEvaluateFormulas } from './table/FormulaEngineV2';
-export { CollaborationPresence, CellCursor } from './table/CollaborationPresence';
-export type { PresenceUser } from './table/CollaborationPresence';
-export { IdeaPipeline } from './table/IdeaPipeline';
-export type { PipelineStage } from './table/IdeaPipeline';
-export { AICopilotMode } from './table/AICopilotMode';
-export { VoiceImageInput } from './table/VoiceImageInput';
-export { CrossTableRelations } from './table/CrossTableRelations';
-export { Sparkline, TrendIndicator, AnalyticsSummaryStrip, HeatmapControls, computeHeatmapStyles } from './table/EmbeddedAnalytics';
+export { clearIdeaGraphCache, useIdeaGraphStore } from './table/useIdeaGraphStore';
 export { useTableKeyboard } from './table/useTableKeyboard';
 export { useUndoRedo } from './table/useUndoRedo';
+export { VoiceImageInput } from './table/VoiceImageInput';
 
 // ============================================================================
 // SHARED COMPONENTS

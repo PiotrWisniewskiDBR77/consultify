@@ -233,7 +233,11 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
               {(() => {
                 const q = initiativeSearch.trim().toLowerCase();
                 const list = q
-                  ? initiatives.filter((i) => String(i.name || '').toLowerCase().includes(q))
+                  ? initiatives.filter((i) =>
+                      String(i.name || '')
+                        .toLowerCase()
+                        .includes(q)
+                    )
                   : initiatives;
                 if (list.length === 0) {
                   return (
@@ -277,8 +281,8 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
               })()}
             </div>
             <div className="mt-1 text-xs text-slate-500">
-              {t('results.createModal.globalKpi', 'Global KPI if nothing selected.')} ({initiativeIds.length}/
-              {initiatives.length})
+              {t('results.createModal.globalKpi', 'Global KPI if nothing selected.')} (
+              {initiativeIds.length}/{initiatives.length})
             </div>
           </div>
 

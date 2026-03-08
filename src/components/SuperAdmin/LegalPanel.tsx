@@ -9,7 +9,14 @@ import { toast } from 'react-hot-toast';
 import { Api } from '../../services/api';
 import { InfoButton } from '../shared/InfoButton';
 
-const DOC_TYPES = ['TERMS_OF_SERVICE', 'PRIVACY_POLICY', 'DPA', 'ACCEPTABLE_USE', 'SLA', 'COOKIE_POLICY'];
+const DOC_TYPES = [
+  'TERMS_OF_SERVICE',
+  'PRIVACY_POLICY',
+  'DPA',
+  'ACCEPTABLE_USE',
+  'SLA',
+  'COOKIE_POLICY',
+];
 
 export const LegalPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -53,7 +60,8 @@ export const LegalPanel: React.FC = () => {
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [docs]);
 
-  const isActive = (d: any) => d?.is_active === true || d?.is_active === 1 || d?.status === 'active';
+  const isActive = (d: any) =>
+    d?.is_active === true || d?.is_active === 1 || d?.status === 'active';
 
   const handlePublish = async () => {
     if (!newDoc.title.trim()) {
@@ -72,7 +80,15 @@ export const LegalPanel: React.FC = () => {
       });
       toast.success('Document published');
       setShowPublishModal(false);
-      setNewDoc({ doc_type: 'TERMS_OF_SERVICE', title: '', version: '1.0', content_url: '', content_md: '', effective_from: '', change_summary: '' });
+      setNewDoc({
+        doc_type: 'TERMS_OF_SERVICE',
+        title: '',
+        version: '1.0',
+        content_url: '',
+        content_md: '',
+        effective_from: '',
+        change_summary: '',
+      });
       fetchDocs();
     } catch (e: any) {
       toast.error(e?.message || 'Failed to publish document');
@@ -218,26 +234,37 @@ export const LegalPanel: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-lg w-full">
             <div className="p-6 border-b border-slate-200 dark:border-navy-700 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Publish Legal Document</h3>
-              <button onClick={() => setShowPublishModal(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                Publish Legal Document
+              </h3>
+              <button
+                onClick={() => setShowPublishModal(false)}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg"
+              >
                 <X className="w-5 h-5 text-slate-400" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Document Type</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Document Type
+                </label>
                 <select
                   value={newDoc.doc_type}
                   onChange={(e) => setNewDoc({ ...newDoc, doc_type: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
                 >
                   {DOC_TYPES.map((t) => (
-                    <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
+                    <option key={t} value={t}>
+                      {t.replace(/_/g, ' ')}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Title
+                </label>
                 <input
                   type="text"
                   value={newDoc.title}
@@ -248,7 +275,9 @@ export const LegalPanel: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Version</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Version
+                  </label>
                   <input
                     type="text"
                     value={newDoc.version}
@@ -258,7 +287,9 @@ export const LegalPanel: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Effective From</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Effective From
+                  </label>
                   <input
                     type="date"
                     value={newDoc.effective_from}
@@ -268,7 +299,9 @@ export const LegalPanel: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Content (Markdown)</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Content (Markdown)
+                </label>
                 <textarea
                   value={newDoc.content_md}
                   onChange={(e) => setNewDoc({ ...newDoc, content_md: e.target.value })}
@@ -278,7 +311,9 @@ export const LegalPanel: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Change Summary</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Change Summary
+                </label>
                 <textarea
                   value={newDoc.change_summary}
                   onChange={(e) => setNewDoc({ ...newDoc, change_summary: e.target.value })}

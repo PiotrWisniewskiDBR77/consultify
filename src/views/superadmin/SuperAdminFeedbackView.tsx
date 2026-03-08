@@ -318,7 +318,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
               {selectedItem.route_path && (
                 <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                   <Globe size={12} />{' '}
-                  <span className="text-slate-800 dark:text-slate-300">{selectedItem.route_path}</span>
+                  <span className="text-slate-800 dark:text-slate-300">
+                    {selectedItem.route_path}
+                  </span>
                 </div>
               )}
               {selectedItem.device_type && (
@@ -333,13 +335,17 @@ export const SuperAdminFeedbackView: React.FC = () => {
               {selectedItem.ui_language && (
                 <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                   <Globe size={12} />{' '}
-                  <span className="text-slate-800 dark:text-slate-300">{selectedItem.ui_language}</span>
+                  <span className="text-slate-800 dark:text-slate-300">
+                    {selectedItem.ui_language}
+                  </span>
                 </div>
               )}
               {selectedItem.ui_theme && (
                 <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                   <Palette size={12} />{' '}
-                  <span className="text-slate-800 dark:text-slate-300">{selectedItem.ui_theme}</span>
+                  <span className="text-slate-800 dark:text-slate-300">
+                    {selectedItem.ui_theme}
+                  </span>
                 </div>
               )}
               {Object.entries(meta)
@@ -443,10 +449,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
         </div>
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 w-full md:w-auto">
           <div className="relative w-full sm:w-auto min-w-0">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
-              size={16}
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
             <input
               type="text"
               placeholder={t('feedback.search', 'Search...')}

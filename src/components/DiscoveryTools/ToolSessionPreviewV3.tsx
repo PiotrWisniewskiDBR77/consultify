@@ -131,7 +131,16 @@ export const ToolSessionPreviewV3Body: React.FC<{
   createdAt?: Date;
   details: ToolSessionPreviewDetails | null;
   detailsLoading?: boolean;
-}> = ({ itemName, itemToolType, status, progress, updatedAt, createdAt, details, detailsLoading }) => {
+}> = ({
+  itemName,
+  itemToolType,
+  status,
+  progress,
+  updatedAt,
+  createdAt,
+  details,
+  detailsLoading,
+}) => {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
@@ -181,11 +190,15 @@ export const ToolSessionPreviewV3Body: React.FC<{
               {toolLabel}
             </span>
             <span className={statusPill}>{statusUpper}</span>
-            <span className={`${metaPillBase} bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300`}>
+            <span
+              className={`${metaPillBase} bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300`}
+            >
               {t('preview.progress', 'Progress')}: {progress ?? details?.progress ?? 0}%
             </span>
             {details?.confidenceAvg != null ? (
-              <span className={`${metaPillBase} bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300`}>
+              <span
+                className={`${metaPillBase} bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300`}
+              >
                 {isPolish ? 'Pewność' : 'Confidence'}: {details.confidenceAvg}
               </span>
             ) : null}
@@ -200,7 +213,9 @@ export const ToolSessionPreviewV3Body: React.FC<{
         </div>
 
         <div className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-          <span className="text-slate-500 dark:text-slate-400">{t('preview.created', 'Created')}</span>
+          <span className="text-slate-500 dark:text-slate-400">
+            {t('preview.created', 'Created')}
+          </span>
           <span className="text-slate-900 dark:text-white">
             {createdAt
               ? formatDate(createdAt.toISOString())
@@ -208,7 +223,9 @@ export const ToolSessionPreviewV3Body: React.FC<{
                 ? formatDate(details.createdAt)
                 : '—'}
           </span>
-          <span className="text-slate-500 dark:text-slate-400">{t('preview.lastModified', 'Last modified')}</span>
+          <span className="text-slate-500 dark:text-slate-400">
+            {t('preview.lastModified', 'Last modified')}
+          </span>
           <span className="text-slate-900 dark:text-white">
             {updatedAt
               ? formatDate(updatedAt.toISOString())
@@ -417,13 +434,25 @@ export const ToolSessionPreviewV3Footer: React.FC<{
         </div>
 
         <div className="mt-2 flex flex-wrap gap-2">
-          <button className={hintChip} onClick={() => void runAi('exec_brief')} disabled={aiLoading || !details}>
+          <button
+            className={hintChip}
+            onClick={() => void runAi('exec_brief')}
+            disabled={aiLoading || !details}
+          >
             {isPolish ? 'Executive brief' : 'Executive brief'}
           </button>
-          <button className={hintChip} onClick={() => void runAi('key_risks')} disabled={aiLoading || !details}>
+          <button
+            className={hintChip}
+            onClick={() => void runAi('key_risks')}
+            disabled={aiLoading || !details}
+          >
             {isPolish ? 'Kluczowe ryzyka' : 'Key risks'}
           </button>
-          <button className={hintChip} onClick={() => void runAi('initiative_angles')} disabled={aiLoading || !details}>
+          <button
+            className={hintChip}
+            onClick={() => void runAi('initiative_angles')}
+            disabled={aiLoading || !details}
+          >
             {isPolish ? 'Kąty inicjatyw' : 'Initiative angles'}
           </button>
         </div>
@@ -435,7 +464,9 @@ export const ToolSessionPreviewV3Footer: React.FC<{
         ) : aiError ? (
           <div className="mt-2 text-xs text-red-600 dark:text-red-400">{aiError}</div>
         ) : aiText ? (
-          <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{aiText}</div>
+          <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
+            {aiText}
+          </div>
         ) : null}
       </div>
 
@@ -560,4 +591,3 @@ export const ToolSessionPreviewV3Footer: React.FC<{
     </div>
   );
 };
-

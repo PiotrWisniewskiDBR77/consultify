@@ -11,11 +11,7 @@ interface RadialConfig {
   minAngle?: number;
 }
 
-export function applyRadialLayout(
-  nodes: Node[],
-  edges: Edge[],
-  config: RadialConfig = {}
-): Node[] {
+export function applyRadialLayout(nodes: Node[], edges: Edge[], config: RadialConfig = {}): Node[] {
   const { centerX = 0, centerY = 0, levelSpacing = 220, minAngle = 0.15 } = config;
 
   const root = nodes.find((n) => n.id === 'root');
@@ -30,12 +26,7 @@ export function applyRadialLayout(
   const positions = new Map<string, { x: number; y: number }>();
   positions.set('root', { x: centerX, y: centerY });
 
-  function layoutSubtree(
-    nodeId: string,
-    startAngle: number,
-    endAngle: number,
-    level: number
-  ) {
+  function layoutSubtree(nodeId: string, startAngle: number, endAngle: number, level: number) {
     const children = childrenMap.get(nodeId) || [];
     if (children.length === 0) return;
 

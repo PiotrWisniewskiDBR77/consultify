@@ -81,9 +81,7 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
             </span>
           )}
           {lastSavedAt && (
-            <span className="text-slate-400 ml-auto">
-              {formatTimeAgo(lastSavedAt)}
-            </span>
+            <span className="text-slate-400 ml-auto">{formatTimeAgo(lastSavedAt)}</span>
           )}
         </div>
       </div>
@@ -130,8 +128,8 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                         version.type === 'manual'
                           ? 'bg-purple-500'
                           : version.type === 'checkpoint'
-                          ? 'bg-blue-500'
-                          : 'bg-slate-300'
+                            ? 'bg-blue-500'
+                            : 'bg-slate-300'
                       }`}
                     />
                     <div className="w-px h-full bg-slate-200 dark:bg-navy-700 mt-1" />
@@ -147,8 +145,8 @@ export const VersionHistoryPanel: React.FC<VersionHistoryPanelProps> = ({
                           version.type === 'manual'
                             ? 'bg-purple-100 text-purple-600'
                             : version.type === 'checkpoint'
-                            ? 'bg-blue-100 text-blue-600'
-                            : 'bg-slate-100 text-slate-500'
+                              ? 'bg-blue-100 text-blue-600'
+                              : 'bg-slate-100 text-slate-500'
                         }`}
                       >
                         {version.type}

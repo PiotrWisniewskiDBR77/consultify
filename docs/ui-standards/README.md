@@ -51,6 +51,9 @@ docs/ui-standards/
 | **Współdzielone sekcje** | [02-components/shared-sections.md](02-components/shared-sections.md)             | CommentsCanvas, ActivityLog, Risk, Governance                          |
 | **Building blocks**      | [02-components/building-blocks.md](02-components/building-blocks.md)             | Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView |
 | **AI suggestions modal** | [02-components/ai-suggestions-modal.md](02-components/ai-suggestions-modal.md)   | Standard modala do przeglądu i zastosowania sugestii AI                |
+| **Help + Intro**         | [02-components/help-intro-standard.md](02-components/help-intro-standard.md)      | Delikatny standard intro, contextual help i wejść do AI                |
+| **Help Panel + Intro Spec** | [02-components/help-sidepanel-intro-spec.md](02-components/help-sidepanel-intro-spec.md) | Spec ekranów, sekcji, stanów i zachowań dla helpa i intro          |
+| **Help + Intro Implementation Plan** | [02-components/help-intro-implementation-plan.md](02-components/help-intro-implementation-plan.md) | Kolejność wdrożenia 1:1 dla frontendu, pliki i fazy prac        |
 | **Workspace 3-tools strip** | [02-components/workspace-3-tools-strip.md](02-components/workspace-3-tools-strip.md) | Kanon: Tools / Context / AI Suggestions (prawy panel)              |
 | **Team table**           | [02-components/team-management-table.md](02-components/team-management-table.md) | Standard tabeli zespołu (N‑mode)                                       |
 | **Task Panel**           | [02-components/task-panel.md](02-components/task-panel.md)                       | TaskDetailView — layout, sekcje                                        |

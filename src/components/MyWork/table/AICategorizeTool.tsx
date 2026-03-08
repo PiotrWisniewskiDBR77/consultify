@@ -4,16 +4,7 @@
  * Analyzes all rows and proposes: category tags, thematic clusters,
  * potential duplicates, and merge suggestions.
  */
-import {
-  Check,
-  GitMerge,
-  Layers,
-  Loader2,
-  Sparkles,
-  Tag,
-  X,
-  Zap,
-} from 'lucide-react';
+import { Check, GitMerge, Layers, Loader2, Sparkles, Tag, X, Zap } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -72,7 +63,12 @@ export const AICategorizeTool: React.FC<AICategorizeToolProps> = ({
       const result = await Api.getIdeaAISuggestions(ideaId, {
         context: {
           title: 'Categorize & Cluster',
-          seedText: nodes.map((n) => `[${n.id}] ${n.data?.label || ''}: ${n.data?.description || n.data?.bodyMarkdown || ''}`).join('\n'),
+          seedText: nodes
+            .map(
+              (n) =>
+                `[${n.id}] ${n.data?.label || ''}: ${n.data?.description || n.data?.bodyMarkdown || ''}`
+            )
+            .join('\n'),
           currentNodes: nodes.map((n) => ({ id: n.id, type: n.type, label: n.data?.label })),
           currentEdges: [],
           activeTool: 'table',
@@ -109,7 +105,13 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
         for (const [cluster, ids] of clusterMap) {
           const color = ROW_ACCENT_COLORS[colorIdx % ROW_ACCENT_COLORS.length];
           for (const id of ids) {
-            localCats.push({ nodeId: id, suggestedTags: [cluster], cluster, clusterColor: color, confidence: 0.5 });
+            localCats.push({
+              nodeId: id,
+              suggestedTags: [cluster],
+              cluster,
+              clusterColor: color,
+              confidence: 0.5,
+            });
           }
           colorIdx++;
         }
@@ -122,11 +124,14 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
     }
   }, [i18n.language, ideaId, nodes]);
 
-  const handleApplyCategory = useCallback((cat: CategoryResult) => {
-    onApplyTags(cat.nodeId, cat.suggestedTags);
-    onApplyCluster(cat.nodeId, cat.cluster, cat.clusterColor);
-    setAppliedIds((prev) => new Set([...prev, cat.nodeId]));
-  }, [onApplyCluster, onApplyTags]);
+  const handleApplyCategory = useCallback(
+    (cat: CategoryResult) => {
+      onApplyTags(cat.nodeId, cat.suggestedTags);
+      onApplyCluster(cat.nodeId, cat.cluster, cat.clusterColor);
+      setAppliedIds((prev) => new Set([...prev, cat.nodeId]));
+    },
+    [onApplyCluster, onApplyTags]
+  );
 
   const handleApplyAll = useCallback(() => {
     for (const cat of categories) {
@@ -150,8 +155,14 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20 backdrop-blur-[2px]" onClick={onClose}>
-      <div className="w-[520px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
+      onClick={onClose}
+    >
+      <div
+        className="w-[520px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
           <Sparkles size={16} className="text-violet-500" />
@@ -159,7 +170,10 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
             {isPl ? 'AI Kategoryzacja & Klastry' : 'AI Categorize & Cluster'}
           </span>
           <div className="flex-1" />
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={14} className="text-slate-400" />
           </button>
         </div>
@@ -172,7 +186,13 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-violet-500/10 to-indigo-500/10 text-violet-600 dark:text-violet-400 hover:from-violet-500/20 hover:to-indigo-500/20 transition-colors disabled:opacity-50"
           >
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
-            {loading ? (isPl ? 'Analizuję...' : 'Analyzing...') : (isPl ? `Analizuj ${nodes.length} pomysłów` : `Analyze ${nodes.length} ideas`)}
+            {loading
+              ? isPl
+                ? 'Analizuję...'
+                : 'Analyzing...'
+              : isPl
+                ? `Analizuj ${nodes.length} pomysłów`
+                : `Analyze ${nodes.length} ideas`}
           </button>
           {categories.length > 0 && (
             <button
@@ -210,32 +230,58 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
           {categories.length === 0 && duplicates.length === 0 && !loading && (
             <div className="text-center py-8">
               <Sparkles size={24} className="text-slate-300 mx-auto mb-2" />
-              <p className="text-xs text-slate-400">{isPl ? 'Kliknij "Analizuj" aby AI pogrupowało pomysły' : 'Click "Analyze" to let AI group your ideas'}</p>
+              <p className="text-xs text-slate-400">
+                {isPl
+                  ? 'Kliknij "Analizuj" aby AI pogrupowało pomysły'
+                  : 'Click "Analyze" to let AI group your ideas'}
+              </p>
             </div>
           )}
 
           {activeTab === 'clusters' && clusters.length > 0 && (
             <div className="space-y-4">
               {clusters.map(([clusterName, { color, nodes: clusterNodes }]) => (
-                <div key={clusterName} className="rounded-xl border border-slate-200/40 dark:border-navy-700/40 overflow-hidden">
+                <div
+                  key={clusterName}
+                  className="rounded-xl border border-slate-200/40 dark:border-navy-700/40 overflow-hidden"
+                >
                   <div className="flex items-center gap-2 px-3 py-2 bg-slate-50/80 dark:bg-navy-900/50">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{clusterName}</span>
-                    <span className="text-[9px] text-slate-400 ml-auto">{clusterNodes.length} {isPl ? 'elementów' : 'items'}</span>
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: color }}
+                    />
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                      {clusterName}
+                    </span>
+                    <span className="text-[9px] text-slate-400 ml-auto">
+                      {clusterNodes.length} {isPl ? 'elementów' : 'items'}
+                    </span>
                   </div>
                   <div className="p-2 space-y-1">
                     {clusterNodes.map((cat) => (
-                      <div key={cat.nodeId} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800/50">
-                        <span className="text-[11px] text-slate-700 dark:text-slate-300 flex-1 truncate">{getNodeLabel(cat.nodeId)}</span>
+                      <div
+                        key={cat.nodeId}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800/50"
+                      >
+                        <span className="text-[11px] text-slate-700 dark:text-slate-300 flex-1 truncate">
+                          {getNodeLabel(cat.nodeId)}
+                        </span>
                         <div className="flex items-center gap-1">
                           {cat.suggestedTags.map((tag) => (
-                            <span key={tag} className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                              <Tag size={7} className="inline mr-0.5" />{tag}
+                            <span
+                              key={tag}
+                              className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400"
+                            >
+                              <Tag size={7} className="inline mr-0.5" />
+                              {tag}
                             </span>
                           ))}
                         </div>
                         {!appliedIds.has(cat.nodeId) ? (
-                          <button onClick={() => handleApplyCategory(cat)} className="p-1 rounded text-emerald-500 hover:bg-emerald-500/10 transition-colors">
+                          <button
+                            onClick={() => handleApplyCategory(cat)}
+                            className="p-1 rounded text-emerald-500 hover:bg-emerald-500/10 transition-colors"
+                          >
                             <Check size={11} />
                           </button>
                         ) : (
@@ -252,7 +298,9 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
           {activeTab === 'duplicates' && (
             <div className="space-y-2">
               {duplicates.length === 0 && (
-                <p className="text-xs text-slate-400 text-center py-4">{isPl ? 'Nie znaleziono duplikatów' : 'No duplicates found'}</p>
+                <p className="text-xs text-slate-400 text-center py-4">
+                  {isPl ? 'Nie znaleziono duplikatów' : 'No duplicates found'}
+                </p>
               )}
               {duplicates.map((dup, idx) => (
                 <div key={idx} className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
@@ -263,11 +311,17 @@ Format: { "categories": [{ "nodeId": "...", "suggestedTags": [...], "cluster": "
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex-1 truncate">{getNodeLabel(dup.nodeA)}</span>
+                    <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex-1 truncate">
+                      {getNodeLabel(dup.nodeA)}
+                    </span>
                     <span className="text-[9px] text-slate-400">↔</span>
-                    <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex-1 truncate text-right">{getNodeLabel(dup.nodeB)}</span>
+                    <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex-1 truncate text-right">
+                      {getNodeLabel(dup.nodeB)}
+                    </span>
                   </div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2">{dup.reason}</p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2">
+                    {dup.reason}
+                  </p>
                   {onMergeNodes && (
                     <button
                       onClick={() => onMergeNodes(dup.nodeA, dup.nodeB)}

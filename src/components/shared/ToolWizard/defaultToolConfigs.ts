@@ -158,8 +158,14 @@ const FIELD_DIGITAL_MATURITY: WizardInputField = {
   type: 'select',
   options: [
     { value: 'low', label: { en: 'Low — mostly manual', pl: 'Niska — głównie manualne' } },
-    { value: 'medium', label: { en: 'Medium — partial automation', pl: 'Średnia — częściowa automatyzacja' } },
-    { value: 'high', label: { en: 'High — advanced digital', pl: 'Wysoka — zaawansowane cyfrowo' } },
+    {
+      value: 'medium',
+      label: { en: 'Medium — partial automation', pl: 'Średnia — częściowa automatyzacja' },
+    },
+    {
+      value: 'high',
+      label: { en: 'High — advanced digital', pl: 'Wysoka — zaawansowane cyfrowo' },
+    },
   ],
 };
 
@@ -178,12 +184,7 @@ export const DYNAMIC_SWOT_CONFIG: WizardToolConfig = {
   category: 'strategic',
   surfaceType: 'workspace',
   steps: DEFAULT_WIZARD_STEPS,
-  inputFields: [
-    FIELD_COMPANY_NAME,
-    FIELD_INDUSTRY,
-    FIELD_STRATEGIC_CONTEXT,
-    FIELD_TIME_HORIZON,
-  ],
+  inputFields: [FIELD_COMPANY_NAME, FIELD_INDUSTRY, FIELD_STRATEGIC_CONTEXT, FIELD_TIME_HORIZON],
   outputCapabilities: ['initiative', 'report', 'presentation'],
 };
 
@@ -670,7 +671,10 @@ export const SMED_PLANNER_CONFIG: WizardToolConfig = {
       label: { en: 'Equipment / Line', pl: 'Urządzenie / Linia' },
       type: 'text',
       required: true,
-      placeholder: { en: 'e.g. CNC Mill #3, Packaging Line A', pl: 'np. Frezarka CNC #3, Linia pakowania A' },
+      placeholder: {
+        en: 'e.g. CNC Mill #3, Packaging Line A',
+        pl: 'np. Frezarka CNC #3, Linia pakowania A',
+      },
     },
     {
       id: 'currentChangeoverTime',
@@ -870,7 +874,7 @@ export const AUTOMATION_PIPELINE_CONFIG: WizardToolConfig = {
   toolName: { en: 'Automation Pipeline', pl: 'Pipeline automatyzacji' },
   toolDescription: {
     en: 'Build and prioritize a pipeline of automation opportunities across operations',
-    pl: 'Budowa i priorytetyzacja pipeline\'u możliwości automatyzacji w operacjach',
+    pl: "Budowa i priorytetyzacja pipeline'u możliwości automatyzacji w operacjach",
   },
   category: 'operational',
   surfaceType: 'table',
@@ -939,7 +943,10 @@ export const INVENTORY_AUTOPILOT_CONFIG: WizardToolConfig = {
       options: [
         { value: 'stable', label: { en: 'Stable / Predictable', pl: 'Stabilny / Przewidywalny' } },
         { value: 'seasonal', label: { en: 'Seasonal', pl: 'Sezonowy' } },
-        { value: 'volatile', label: { en: 'Volatile / Unpredictable', pl: 'Zmienny / Nieprzewidywalny' } },
+        {
+          value: 'volatile',
+          label: { en: 'Volatile / Unpredictable', pl: 'Zmienny / Nieprzewidywalny' },
+        },
         { value: 'mixed', label: { en: 'Mixed', pl: 'Mieszany' } },
       ],
     },
@@ -1338,7 +1345,10 @@ export const DATA_INVENTORY_CONFIG: WizardToolConfig = {
       options: [
         { value: 'none', label: { en: 'No formal governance', pl: 'Brak formalnego governance' } },
         { value: 'basic', label: { en: 'Basic policies in place', pl: 'Podstawowe polityki' } },
-        { value: 'mature', label: { en: 'Mature governance framework', pl: 'Dojrzały framework governance' } },
+        {
+          value: 'mature',
+          label: { en: 'Mature governance framework', pl: 'Dojrzały framework governance' },
+        },
       ],
     },
     FIELD_TECHNOLOGY_LANDSCAPE,

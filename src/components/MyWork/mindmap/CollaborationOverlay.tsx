@@ -15,7 +15,7 @@ interface CollaborationUser {
   lastSeen: number;
 }
 
-interface SessionState {
+export interface CollaborationSessionState {
   lockedNodes: Record<string, string>; // nodeId -> userId
   selections: Record<string, string[]>; // userId -> nodeIds
   viewportSync: boolean;
@@ -26,26 +26,89 @@ interface CollaborationOverlayProps {
   ideaId: string;
   currentUserId: string;
   currentUserName: string;
+  selectedNodeIds?: string[];
+  onSessionStateChange?: (state: CollaborationSessionState | null) => void;
 }
 
 const CURSOR_COLORS = ['#f43f5e', '#8b5cf6', '#06b6d4', '#22c55e', '#f59e0b', '#ec4899'];
+const STALE_THRESHOLD_MS = 30_000;
+const HEARTBEAT_INTERVAL_MS = 10_000;
+const CURSOR_THROTTLE_MS = 80;
+const OVERLAY_SYNC_INTERVAL_MS = 250;
+
+interface NodeOverlayRect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
 
 function getAuthToken(): string | null {
   return localStorage.getItem('token');
 }
 
-function useCollaboration(ideaId: string, userId: string, userName: string) {
+function escapeDomSelector(value: string): string {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+    return CSS.escape(value);
+  }
+
+  return value.replace(/["\\]/g, '\\$&');
+}
+
+function areNodeRectsEqual(
+  left: Record<string, NodeOverlayRect>,
+  right: Record<string, NodeOverlayRect>
+): boolean {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  if (leftKeys.length !== rightKeys.length) return false;
+
+  return leftKeys.every((key) => {
+    const leftRect = left[key];
+    const rightRect = right[key];
+
+    return (
+      rightRect &&
+      leftRect.left === rightRect.left &&
+      leftRect.top === rightRect.top &&
+      leftRect.width === rightRect.width &&
+      leftRect.height === rightRect.height
+    );
+  });
+}
+
+function useCollaboration(
+  ideaId: string,
+  userId: string,
+  userName: string,
+  selectedNodeIds: string[] = []
+) {
   const [connected, setConnected] = useState(false);
   const [users, setUsers] = useState<CollaborationUser[]>([]);
-  const [sessionState, setSessionState] = useState<SessionState | null>(null);
+  const [sessionState, setSessionState] = useState<CollaborationSessionState | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const heartbeatTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const reconnectAttempt = useRef(0);
+  const lockedNodeIdsRef = useRef<string[]>([]);
+  const shouldReconnectRef = useRef(true);
+
+  const normalizedSelection = useMemo(
+    () => Array.from(new Set(selectedNodeIds.filter(Boolean))),
+    [selectedNodeIds]
+  );
+
+  const sendMessage = useCallback((payload: Record<string, unknown>) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(payload));
+    }
+  }, []);
 
   const connect = useCallback(() => {
     try {
+      if (!shouldReconnectRef.current) return;
       const token = getAuthToken();
-      if (!token) return;
+      if (!token || !ideaId || !userId) return;
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const ws = new WebSocket(
@@ -55,7 +118,7 @@ function useCollaboration(ideaId: string, userId: string, userName: string) {
       ws.onopen = () => {
         setConnected(true);
         reconnectAttempt.current = 0;
-        ws.send(JSON.stringify({ type: 'join', userId, userName }));
+        sendMessage({ type: 'join', userId, userName });
       };
 
       ws.onmessage = (event) => {
@@ -78,12 +141,21 @@ function useCollaboration(ideaId: string, userId: string, userName: string) {
             default:
               break;
           }
-        } catch { /* ignore malformed */ }
+        } catch {
+          /* ignore malformed */
+        }
       };
 
       ws.onclose = () => {
         setConnected(false);
         wsRef.current = null;
+        if (heartbeatTimer.current) {
+          clearInterval(heartbeatTimer.current);
+          heartbeatTimer.current = null;
+        }
+        if (!shouldReconnectRef.current) {
+          return;
+        }
         const delay = Math.min(1000 * 2 ** reconnectAttempt.current, 30_000);
         reconnectAttempt.current += 1;
         reconnectTimer.current = setTimeout(connect, delay);
@@ -97,38 +169,93 @@ function useCollaboration(ideaId: string, userId: string, userName: string) {
     } catch {
       setConnected(false);
     }
-  }, [ideaId, userId, userName]);
+  }, [ideaId, sendMessage, userId, userName]);
 
   useEffect(() => {
+    shouldReconnectRef.current = true;
     connect();
     return () => {
+      shouldReconnectRef.current = false;
       if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      if (heartbeatTimer.current) clearInterval(heartbeatTimer.current);
       wsRef.current?.close();
     };
   }, [connect]);
 
-  const sendCursor = useCallback((x: number, y: number, activeNodeId?: string) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'cursor', userId, x, y, activeNodeId }));
-    }
-  }, [userId]);
+  useEffect(() => {
+    if (!connected) return;
 
-  const lockNode = useCallback((nodeId: string) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'lock_node', nodeId }));
-    }
-  }, []);
+    heartbeatTimer.current = setInterval(() => {
+      sendMessage({ type: 'heartbeat' });
+    }, HEARTBEAT_INTERVAL_MS);
 
-  const unlockNode = useCallback((nodeId: string) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'unlock_node', nodeId }));
-    }
-  }, []);
+    return () => {
+      if (heartbeatTimer.current) {
+        clearInterval(heartbeatTimer.current);
+        heartbeatTimer.current = null;
+      }
+    };
+  }, [connected, sendMessage]);
 
-  const selectNodes = useCallback((nodeIds: string[]) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'select_nodes', nodeIds }));
-    }
+  const sendCursor = useCallback(
+    (x: number, y: number, activeNodeId?: string) => {
+      sendMessage({ type: 'cursor', userId, x, y, activeNodeId });
+    },
+    [sendMessage, userId]
+  );
+
+  const lockNode = useCallback(
+    (nodeId: string) => {
+      sendMessage({ type: 'lock_node', nodeId });
+    },
+    [sendMessage]
+  );
+
+  const unlockNode = useCallback(
+    (nodeId: string) => {
+      sendMessage({ type: 'unlock_node', nodeId });
+    },
+    [sendMessage]
+  );
+
+  const selectNodes = useCallback(
+    (nodeIds: string[]) => {
+      sendMessage({ type: 'select_nodes', nodeIds });
+    },
+    [sendMessage]
+  );
+
+  useEffect(() => {
+    if (!connected) return;
+
+    selectNodes(normalizedSelection);
+
+    const previousLocks = new Set(lockedNodeIdsRef.current);
+    const nextLocks = new Set(normalizedSelection);
+
+    previousLocks.forEach((nodeId) => {
+      if (!nextLocks.has(nodeId)) {
+        unlockNode(nodeId);
+      }
+    });
+
+    nextLocks.forEach((nodeId) => {
+      if (!previousLocks.has(nodeId)) {
+        lockNode(nodeId);
+      }
+    });
+
+    lockedNodeIdsRef.current = normalizedSelection;
+  }, [connected, lockNode, normalizedSelection, selectNodes, unlockNode]);
+
+  useEffect(() => {
+    return () => {
+      lockedNodeIdsRef.current.forEach((nodeId) => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'unlock_node', nodeId }));
+        }
+      });
+    };
   }, []);
 
   return { connected, users, sessionState, sendCursor, lockNode, unlockNode, selectNodes };
@@ -138,17 +265,30 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
   ideaId,
   currentUserId,
   currentUserName,
+  selectedNodeIds = [],
+  onSessionStateChange,
 }) => {
-  const { connected, users, sessionState } = useCollaboration(ideaId, currentUserId, currentUserName);
+  const { connected, users, sessionState, sendCursor } = useCollaboration(
+    ideaId,
+    currentUserId,
+    currentUserName,
+    selectedNodeIds
+  );
+  const overlayRootRef = useRef<HTMLDivElement | null>(null);
+  const [nodeRects, setNodeRects] = useState<Record<string, NodeOverlayRect>>({});
+  const lastCursorSentAtRef = useRef(0);
 
   const otherUsers = useMemo(
-    () => users.filter((u) => u.id !== currentUserId && Date.now() - u.lastSeen < 30000),
+    () =>
+      users.filter((u) => u.id !== currentUserId && Date.now() - u.lastSeen < STALE_THRESHOLD_MS),
     [currentUserId, users]
   );
 
   const userColorMap = useMemo(() => {
     const map: Record<string, string> = {};
-    users.forEach((u) => { map[u.id] = u.color; });
+    users.forEach((u) => {
+      map[u.id] = u.color;
+    });
     return map;
   }, [users]);
 
@@ -164,21 +304,116 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
       .flatMap(([uid, nodeIds]) => nodeIds.map((nid) => ({ userId: uid, nodeId: nid })));
   }, [sessionState, currentUserId]);
 
+  useEffect(() => {
+    onSessionStateChange?.(sessionState);
+  }, [onSessionStateChange, sessionState]);
+
+  const trackedNodeIds = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...lockedNodeEntries.map(([nodeId]) => nodeId),
+          ...otherSelections.map(({ nodeId }) => nodeId),
+        ])
+      ),
+    [lockedNodeEntries, otherSelections]
+  );
+
+  useEffect(() => {
+    if (!connected) return;
+
+    const syncCursorToWorkspace = (event: PointerEvent) => {
+      const container = overlayRootRef.current?.parentElement;
+      if (!container) return;
+
+      const bounds = container.getBoundingClientRect();
+      if (
+        event.clientX < bounds.left ||
+        event.clientX > bounds.right ||
+        event.clientY < bounds.top ||
+        event.clientY > bounds.bottom
+      ) {
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastCursorSentAtRef.current < CURSOR_THROTTLE_MS) {
+        return;
+      }
+      lastCursorSentAtRef.current = now;
+
+      sendCursor(event.clientX - bounds.left, event.clientY - bounds.top, selectedNodeIds[0]);
+    };
+
+    window.addEventListener('pointermove', syncCursorToWorkspace, { passive: true });
+    return () => {
+      window.removeEventListener('pointermove', syncCursorToWorkspace);
+    };
+  }, [connected, selectedNodeIds, sendCursor]);
+
+  useEffect(() => {
+    const container = overlayRootRef.current?.parentElement;
+    if (!container || trackedNodeIds.length === 0) {
+      setNodeRects((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+      return;
+    }
+
+    let rafId = 0;
+    const syncRects = () => {
+      const containerRect = container.getBoundingClientRect();
+      const next: Record<string, NodeOverlayRect> = {};
+
+      trackedNodeIds.forEach((nodeId) => {
+        const nodeEl = container.querySelector(
+          `.react-flow__node[data-id="${escapeDomSelector(nodeId)}"]`
+        ) as HTMLElement | null;
+        if (!nodeEl) return;
+
+        const rect = nodeEl.getBoundingClientRect();
+        next[nodeId] = {
+          left: rect.left - containerRect.left,
+          top: rect.top - containerRect.top,
+          width: rect.width,
+          height: rect.height,
+        };
+      });
+
+      setNodeRects((prev) => (areNodeRectsEqual(prev, next) ? prev : next));
+    };
+
+    const scheduleSync = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(syncRects);
+    };
+
+    scheduleSync();
+    const intervalId = window.setInterval(scheduleSync, OVERLAY_SYNC_INTERVAL_MS);
+    window.addEventListener('resize', scheduleSync);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.clearInterval(intervalId);
+      window.removeEventListener('resize', scheduleSync);
+    };
+  }, [trackedNodeIds, sessionState?.lastActivity]);
+
   if (!connected && otherUsers.length === 0) return null;
 
   return (
-    <>
+    <div ref={overlayRootRef} className="absolute inset-0 z-30 pointer-events-none">
       {/* Presence badge */}
       {connected && otherUsers.length > 0 && (
         <div className="absolute top-3 right-3 z-50 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm shadow-lg border border-slate-200/30 dark:border-navy-700/30">
           <Users size={12} className="text-emerald-500" />
-          <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">{otherUsers.length + 1}</span>
+          <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
+            {otherUsers.length + 1}
+          </span>
           <div className="flex -space-x-1.5">
             {otherUsers.slice(0, 4).map((u, idx) => (
               <div
                 key={u.id}
                 className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white border-2 border-white dark:border-navy-900"
-                style={{ backgroundColor: CURSOR_COLORS[idx % CURSOR_COLORS.length] }}
+                style={{ backgroundColor: u.color || CURSOR_COLORS[idx % CURSOR_COLORS.length] }}
                 title={u.name}
               >
                 {u.name.charAt(0).toUpperCase()}
@@ -193,7 +428,12 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
         <div
           key={`lock-${nodeId}`}
           className="absolute z-40 pointer-events-none"
-          data-locked-node={nodeId}
+          style={{
+            left: (nodeRects[nodeId]?.left ?? 0) + (nodeRects[nodeId]?.width ?? 0) / 2,
+            top: (nodeRects[nodeId]?.top ?? 0) - 14,
+            transform: 'translateX(-50%)',
+            opacity: nodeRects[nodeId] ? 1 : 0,
+          }}
         >
           <div
             className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold text-white whitespace-nowrap"
@@ -211,11 +451,14 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
           key={`sel-${uid}-${nodeId}`}
           className="absolute z-30 pointer-events-none rounded ring-2"
           style={{
+            left: nodeRects[nodeId]?.left ?? 0,
+            top: nodeRects[nodeId]?.top ?? 0,
+            width: nodeRects[nodeId]?.width ?? 0,
+            height: nodeRects[nodeId]?.height ?? 0,
             borderColor: userColorMap[uid] || '#94a3b8',
             boxShadow: `0 0 0 2px ${userColorMap[uid] || '#94a3b8'}`,
+            opacity: nodeRects[nodeId] ? 1 : 0,
           }}
-          data-selected-node={nodeId}
-          data-selected-by={uid}
         />
       ))}
 
@@ -227,17 +470,20 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
           style={{ left: u.cursorX, top: u.cursorY }}
         >
           <svg width="16" height="20" viewBox="0 0 16 20" fill="none">
-            <path d="M0 0L16 12L8 12L4 20L0 0Z" fill={CURSOR_COLORS[idx % CURSOR_COLORS.length]} />
+            <path
+              d="M0 0L16 12L8 12L4 20L0 0Z"
+              fill={u.color || CURSOR_COLORS[idx % CURSOR_COLORS.length]}
+            />
           </svg>
           <div
             className="ml-4 -mt-1 px-1.5 py-0.5 rounded text-[8px] font-bold text-white whitespace-nowrap"
-            style={{ backgroundColor: CURSOR_COLORS[idx % CURSOR_COLORS.length] }}
+            style={{ backgroundColor: u.color || CURSOR_COLORS[idx % CURSOR_COLORS.length] }}
           >
             {u.name}
           </div>
         </div>
       ))}
-    </>
+    </div>
   );
 };
 

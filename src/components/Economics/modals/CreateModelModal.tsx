@@ -27,14 +27,21 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({ onCreated, o
     setCreating(true);
     try {
       const created = await Api.post('/api/financial-modeling/models', {
-        name: form.name, startDate: form.startDate, horizonMonths: form.horizonMonths,
-        granularity: form.granularity, currency: form.currency,
+        name: form.name,
+        startDate: form.startDate,
+        horizonMonths: form.horizonMonths,
+        granularity: form.granularity,
+        currency: form.currency,
         assumptions: { initialCash: 0, initialEquity: 0, initialDebt: 0, initialPPE: 0 },
       });
       const createdId = String((created as any)?.id || '');
       let model = created as any;
       if (createdId) {
-        try { model = await Api.get(`/api/financial-modeling/models/${createdId}`); } catch { /* use created */ }
+        try {
+          model = await Api.get(`/api/financial-modeling/models/${createdId}`);
+        } catch {
+          /* use created */
+        }
       }
       toast.success(t('finance.toast.modelCreated', 'Model utworzony'));
       onCreated({
@@ -50,7 +57,9 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({ onCreated, o
         updatedAt: String(model?.updated_at || new Date().toISOString()),
       });
     } catch (e: any) {
-      toast.error(e?.response?.data?.error || t('finance.toast.createFailed', 'Nie udało się utworzyć modelu'));
+      toast.error(
+        e?.response?.data?.error || t('finance.toast.createFailed', 'Nie udało się utworzyć modelu')
+      );
     } finally {
       setCreating(false);
     }
@@ -64,46 +73,90 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({ onCreated, o
         </h3>
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-slate-500">{t('finance.model.modelName', 'Model Name')}</label>
-            <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-              placeholder={t('finance.model.modelNamePlaceholder', 'e.g. Initiative Alpha — 5yr projection') as string}
-              className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800" />
+            <label className="text-xs text-slate-500">
+              {t('finance.model.modelName', 'Model Name')}
+            </label>
+            <input
+              value={form.name}
+              onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+              placeholder={
+                t(
+                  'finance.model.modelNamePlaceholder',
+                  'e.g. Initiative Alpha — 5yr projection'
+                ) as string
+              }
+              className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-slate-500">{t('finance.model.startDate', 'Start Date')}</label>
-              <input type="date" value={form.startDate} onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))}
-                className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800" />
+              <label className="text-xs text-slate-500">
+                {t('finance.model.startDate', 'Start Date')}
+              </label>
+              <input
+                type="date"
+                value={form.startDate}
+                onChange={(e) => setForm((p) => ({ ...p, startDate: e.target.value }))}
+                className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
+              />
             </div>
             <div>
-              <label className="text-xs text-slate-500">{t('finance.model.horizon', 'Horizon (months)')}</label>
-              <input type="number" value={form.horizonMonths} onChange={(e) => setForm((p) => ({ ...p, horizonMonths: parseInt(e.target.value, 10) || 60 }))}
-                className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800" />
+              <label className="text-xs text-slate-500">
+                {t('finance.model.horizon', 'Horizon (months)')}
+              </label>
+              <input
+                type="number"
+                value={form.horizonMonths}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, horizonMonths: parseInt(e.target.value, 10) || 60 }))
+                }
+                className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
+              />
             </div>
             <div>
-              <label className="text-xs text-slate-500">{t('finance.model.granularity', 'Granularity')}</label>
-              <select value={form.granularity} onChange={(e) => setForm((p) => ({ ...p, granularity: e.target.value }))}
-                className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800">
+              <label className="text-xs text-slate-500">
+                {t('finance.model.granularity', 'Granularity')}
+              </label>
+              <select
+                value={form.granularity}
+                onChange={(e) => setForm((p) => ({ ...p, granularity: e.target.value }))}
+                className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
+              >
                 <option value="monthly">{t('finance.model.monthly', 'Monthly')}</option>
                 <option value="quarterly">{t('finance.model.quarterly', 'Quarterly')}</option>
                 <option value="annual">{t('finance.model.annual', 'Annual')}</option>
               </select>
             </div>
             <div>
-              <label className="text-xs text-slate-500">{t('finance.model.currency', 'Currency')}</label>
-              <select value={form.currency} onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
-                className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800">
-                {['PLN', 'EUR', 'USD', 'GBP', 'CZK', 'CHF'].map((c) => <option key={c} value={c}>{c}</option>)}
+              <label className="text-xs text-slate-500">
+                {t('finance.model.currency', 'Currency')}
+              </label>
+              <select
+                value={form.currency}
+                onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
+                className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
+              >
+                {['PLN', 'EUR', 'USD', 'GBP', 'CZK', 'CHF'].map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
         </div>
         <div className="flex justify-end gap-2 pt-2">
-          <button onClick={onClose} className="px-4 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm"
+          >
             {t('common.cancel', 'Cancel')}
           </button>
-          <button onClick={handleCreate} disabled={!form.name || creating}
-            className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-500 disabled:opacity-50">
+          <button
+            onClick={handleCreate}
+            disabled={!form.name || creating}
+            className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-500 disabled:opacity-50"
+          >
             {t('common.create', 'Create')}
           </button>
         </div>

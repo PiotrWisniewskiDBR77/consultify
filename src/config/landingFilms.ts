@@ -66,4 +66,3 @@ export const LANDING_FILMS: Record<LandingFilmId, LandingFilm> = {
     durationLabel: '20s',
   },
 };
-

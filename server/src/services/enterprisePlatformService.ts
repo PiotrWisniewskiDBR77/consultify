@@ -72,12 +72,14 @@ class EnterprisePlatformService {
     return { deleted: true };
   }
 
-  async healthCheckConnector(connectorId: string, healthStatus: string) {
-    await queryHelpers.queryRun(
-      `UPDATE integration_connectors SET health_status=$1, last_health_check_at=CURRENT_TIMESTAMP WHERE id=$2`,
-      [healthStatus, connectorId],
+  async healthCheckConnector(orgId: string, connectorId: string, healthStatus: string) {
+    const result = await queryHelpers.queryRun(
+      `UPDATE integration_connectors
+       SET health_status=$1, last_health_check_at=CURRENT_TIMESTAMP
+       WHERE id=$2 AND organization_id=$3`,
+      [healthStatus, connectorId, orgId],
     );
-    return { ok: true };
+    return { ok: result.changes > 0 };
   }
 
   async enqueueMessage(orgId: string, data: {
@@ -101,30 +103,36 @@ class EnterprisePlatformService {
     return queryHelpers.queryAll(sql, status ? [orgId, status] : [orgId]);
   }
 
-  async processQueueItem(itemId: string, success: boolean, errorMessage?: string) {
+  async processQueueItem(orgId: string, itemId: string, success: boolean, errorMessage?: string) {
     if (success) {
-      await queryHelpers.queryRun(
-        `UPDATE integration_queue SET status='completed', completed_at=CURRENT_TIMESTAMP WHERE id=$1`,
-        [itemId],
+      const result = await queryHelpers.queryRun(
+        `UPDATE integration_queue
+         SET status='completed', completed_at=CURRENT_TIMESTAMP
+         WHERE id=$1 AND organization_id=$2`,
+        [itemId, orgId],
       );
+      return { ok: result.changes > 0 };
     } else {
       const item = await queryHelpers.queryFirst<{ retry_count: number; max_retries: number }>(
-        `SELECT retry_count, max_retries FROM integration_queue WHERE id=$1`, [itemId],
+        `SELECT retry_count, max_retries FROM integration_queue WHERE id=$1 AND organization_id=$2`,
+        [itemId, orgId],
       );
+      if (!item) return { ok: false };
       if (item && item.retry_count < item.max_retries) {
-        await queryHelpers.queryRun(
+        const result = await queryHelpers.queryRun(
           `UPDATE integration_queue SET status='retry', retry_count=retry_count+1, error_message=$1,
-           next_retry_at=datetime('now', '+' || (retry_count+1)*5 || ' minutes') WHERE id=$2`,
-          [errorMessage ?? null, itemId],
+           next_retry_at=datetime('now', '+' || (retry_count+1)*5 || ' minutes') WHERE id=$2 AND organization_id=$3`,
+          [errorMessage ?? null, itemId, orgId],
         );
+        return { ok: result.changes > 0 };
       } else {
-        await queryHelpers.queryRun(
-          `UPDATE integration_queue SET status='failed', error_message=$1 WHERE id=$2`,
-          [errorMessage ?? null, itemId],
+        const result = await queryHelpers.queryRun(
+          `UPDATE integration_queue SET status='failed', error_message=$1 WHERE id=$2 AND organization_id=$3`,
+          [errorMessage ?? null, itemId, orgId],
         );
+        return { ok: result.changes > 0 };
       }
     }
-    return { ok: true };
   }
 
   async storeSecret(orgId: string, data: {
@@ -173,11 +181,11 @@ class EnterprisePlatformService {
     return { id };
   }
 
-  async getMetrics(metricName: string, since?: string) {
+  async getMetrics(orgId: string, metricName: string, since?: string) {
     const sql = since
-      ? `SELECT * FROM observability_metrics WHERE metric_name=$1 AND recorded_at>=$2 ORDER BY recorded_at DESC LIMIT 1000`
-      : `SELECT * FROM observability_metrics WHERE metric_name=$1 ORDER BY recorded_at DESC LIMIT 100`;
-    return queryHelpers.queryAll(sql, since ? [metricName, since] : [metricName]);
+      ? `SELECT * FROM observability_metrics WHERE organization_id=$1 AND metric_name=$2 AND recorded_at>=$3 ORDER BY recorded_at DESC LIMIT 1000`
+      : `SELECT * FROM observability_metrics WHERE organization_id=$1 AND metric_name=$2 ORDER BY recorded_at DESC LIMIT 100`;
+    return queryHelpers.queryAll(sql, since ? [orgId, metricName, since] : [orgId, metricName]);
   }
 
   async createSlo(data: {
@@ -201,15 +209,18 @@ class EnterprisePlatformService {
     return queryHelpers.queryAll(sql, orgId ? [orgId] : []);
   }
 
-  async updateSloStatus(sloId: string, currentPercentage: number, budgetRemaining: number) {
-    await queryHelpers.queryRun(
-      `UPDATE observability_slos SET current_percentage=$1, budget_remaining=$2, last_calculated_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP WHERE id=$3`,
-      [currentPercentage, budgetRemaining, sloId],
+  async updateSloStatus(orgId: string, sloId: string, currentPercentage: number, budgetRemaining: number) {
+    const result = await queryHelpers.queryRun(
+      `UPDATE observability_slos
+       SET current_percentage=$1, budget_remaining=$2, last_calculated_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP
+       WHERE id=$3 AND organization_id=$4`,
+      [currentPercentage, budgetRemaining, sloId, orgId],
     );
-    return { ok: true };
+    return { ok: result.changes > 0 };
   }
 
   async recordTrace(data: {
+    organizationId?: string;
     traceId: string; spanId: string; parentSpanId?: string;
     operationName: string; serviceName?: string; durationMs?: number;
     statusCode?: string; attributes?: object;
@@ -217,9 +228,9 @@ class EnterprisePlatformService {
   }) {
     const id = uuidv4();
     await queryHelpers.queryRun(
-      `INSERT INTO observability_traces (id, trace_id, span_id, parent_span_id, operation_name, service_name, duration_ms, status_code, attributes_json, started_at, ended_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-      [id, data.traceId, data.spanId, data.parentSpanId ?? null,
+      `INSERT INTO observability_traces (id, organization_id, trace_id, span_id, parent_span_id, operation_name, service_name, duration_ms, status_code, attributes_json, started_at, ended_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+      [id, data.organizationId ?? null, data.traceId, data.spanId, data.parentSpanId ?? null,
        data.operationName, data.serviceName ?? 'consultify-api',
        data.durationMs ?? null, data.statusCode ?? null,
        data.attributes ? JSON.stringify(data.attributes) : '{}',
@@ -228,10 +239,10 @@ class EnterprisePlatformService {
     return { id };
   }
 
-  async getTrace(traceId: string) {
+  async getTrace(orgId: string, traceId: string) {
     return queryHelpers.queryAll(
-      `SELECT * FROM observability_traces WHERE trace_id=$1 ORDER BY started_at`,
-      [traceId],
+      `SELECT * FROM observability_traces WHERE organization_id=$1 AND trace_id=$2 ORDER BY started_at`,
+      [orgId, traceId],
     );
   }
 
@@ -249,7 +260,7 @@ class EnterprisePlatformService {
     return { id };
   }
 
-  async updateDrDrill(drillId: string, data: {
+  async updateDrDrill(orgId: string, drillId: string, data: {
     status: string; resultsJson?: object;
   }) {
     const sets = [`status=$1`];
@@ -257,12 +268,12 @@ class EnterprisePlatformService {
     if (data.status === 'in_progress') sets.push(`started_at=CURRENT_TIMESTAMP`);
     if (data.status === 'completed') sets.push(`completed_at=CURRENT_TIMESTAMP`);
     if (data.resultsJson) { sets.push(`results_json=$2`); params.push(JSON.stringify(data.resultsJson)); }
-    params.push(drillId);
-    await queryHelpers.queryRun(
-      `UPDATE observability_dr_drills SET ${sets.join(', ')} WHERE id=$${params.length}`,
+    params.push(drillId, orgId);
+    const result = await queryHelpers.queryRun(
+      `UPDATE observability_dr_drills SET ${sets.join(', ')} WHERE id=$${params.length - 1} AND organization_id=$${params.length}`,
       params,
     );
-    return { ok: true };
+    return { ok: result.changes > 0 };
   }
 
   async getDrDrills(orgId?: string) {

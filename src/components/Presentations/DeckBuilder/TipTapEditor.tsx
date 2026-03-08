@@ -4,12 +4,12 @@
  * Custom floating toolbar on text selection (no BubbleMenu dependency).
  */
 
-import { EditorContent, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import TextAlign from '@tiptap/extension-text-align';
 import Highlight from '@tiptap/extension-highlight';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
+import TextAlign from '@tiptap/extension-text-align';
+import { EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
 import {
   AlignCenter,
   AlignLeft,
@@ -54,7 +54,10 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
       }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Highlight.configure({ multicolor: false }),
-      Link.configure({ openOnClick: false, HTMLAttributes: { class: 'text-purple-500 underline' } }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: { class: 'text-purple-500 underline' },
+      }),
       Placeholder.configure({ placeholder }),
     ],
     content: formatInitialContent(content, isHeading, headingLevel),
@@ -220,11 +223,7 @@ const ToolbarBtn: React.FC<{
   </button>
 );
 
-function formatInitialContent(
-  content: string,
-  isHeading: boolean,
-  headingLevel?: number
-): string {
+function formatInitialContent(content: string, isHeading: boolean, headingLevel?: number): string {
   if (!content) return '';
   if (content.startsWith('<')) return content;
   if (isHeading && headingLevel) {

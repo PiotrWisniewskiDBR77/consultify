@@ -638,7 +638,9 @@ export const PartnerSettlementsView: React.FC = () => {
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-slate-900 dark:text-white">{payout.partnerName}</p>
+                    <p className="font-medium text-slate-900 dark:text-white">
+                      {payout.partnerName}
+                    </p>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
                       {payout.transactionCount} transactions • {payout.periodStart} to{' '}
                       {payout.periodEnd}
@@ -928,7 +930,9 @@ export const PartnerSettlementsView: React.FC = () => {
                         )}
                       </td>
                       <td className="px-3 py-3">
-                        <span className="text-slate-700 dark:text-slate-300">{attr.partnerName}</span>
+                        <span className="text-slate-700 dark:text-slate-300">
+                          {attr.partnerName}
+                        </span>
                       </td>
                       <td className="px-3 py-3 text-center">
                         {attr.discountPercent ? (
@@ -1043,7 +1047,9 @@ export const PartnerSettlementsView: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-3 py-3">
-                        <span className="text-slate-700 dark:text-slate-300">{code.partnerName}</span>
+                        <span className="text-slate-700 dark:text-slate-300">
+                          {code.partnerName}
+                        </span>
                       </td>
                       <td className="px-3 py-3 text-center">
                         <span className="text-slate-900 dark:text-white">

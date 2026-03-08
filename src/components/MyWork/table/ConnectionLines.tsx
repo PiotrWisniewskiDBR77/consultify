@@ -49,8 +49,9 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
     const containerRect = container.getBoundingClientRect();
 
     const getRowCenter = (nodeId: string): { x: number; y: number } | null => {
-      const row = container.querySelector(`tr[data-node-id="${nodeId}"]`) ||
-                  container.querySelector(`[data-node-id="${nodeId}"]`);
+      const row =
+        container.querySelector(`tr[data-node-id="${nodeId}"]`) ||
+        container.querySelector(`[data-node-id="${nodeId}"]`);
       if (!row) return null;
       const rect = row.getBoundingClientRect();
       return {
@@ -94,7 +95,14 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
     >
       <defs>
         {lines.map((line) => (
-          <linearGradient key={`grad-${line.id}`} id={`grad-${line.id}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient
+            key={`grad-${line.id}`}
+            id={`grad-${line.id}`}
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="0%"
+          >
             <stop offset="0%" stopColor={line.color1} stopOpacity={0.6} />
             <stop offset="100%" stopColor={line.color2} stopOpacity={0.6} />
           </linearGradient>
@@ -119,7 +127,13 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
             <circle cx={line.x1} cy={line.y1} r={4} fill={line.color1} opacity={0.8} />
             <circle cx={line.x2} cy={line.y2} r={4} fill={line.color2} opacity={0.8} />
             {line.label && (
-              <text x={midX} y={(line.y1 + line.y2) / 2 - 8} textAnchor="middle" className="text-[8px] fill-slate-400" fontWeight="600">
+              <text
+                x={midX}
+                y={(line.y1 + line.y2) / 2 - 8}
+                textAnchor="middle"
+                className="text-[8px] fill-slate-400"
+                fontWeight="600"
+              >
                 {line.label}
               </text>
             )}

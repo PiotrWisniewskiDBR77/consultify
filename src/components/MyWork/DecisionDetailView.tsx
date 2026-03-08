@@ -1921,7 +1921,10 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   const handleEscalate = async () => {
     if (!decisionId) return;
     try {
-      await Api.escalateDecision(decisionId, isPolish ? 'Eskalacja z widoku decyzji' : 'Escalated from decision detail');
+      await Api.escalateDecision(
+        decisionId,
+        isPolish ? 'Eskalacja z widoku decyzji' : 'Escalated from decision detail'
+      );
       setStatus('escalated');
       addActivityLogEntry(
         'escalated',
@@ -4568,7 +4571,9 @@ Context: ${JSON.stringify(projectContext)}`;
                     <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                       {isPolish ? 'Workflow' : 'Workflow'}
                     </span>
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${workflowMeta.badgeClass}`}>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${workflowMeta.badgeClass}`}
+                    >
                       {isPolish ? workflowMeta.label.pl : workflowMeta.label.en}
                     </span>
                     {workflowActions.map((action) => (

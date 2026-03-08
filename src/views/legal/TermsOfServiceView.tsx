@@ -25,8 +25,8 @@ export const TermsOfServiceView: React.FC = () => {
       <section>
         <h2>1. Introduction and Acceptance</h2>
         <p>
-          Welcome to Consultify ("Service", "Platform"), an AI-powered strategic consulting
-          platform operated by <strong>{COMPANY.name}</strong> ("Company", "we", "us", "our").
+          Welcome to Consultify ("Service", "Platform"), an AI-powered strategic consulting platform
+          operated by <strong>{COMPANY.name}</strong> ("Company", "we", "us", "our").
         </p>
         <p>
           By accessing or using our Service, you ("User", "you", "your") agree to be bound by these
@@ -112,8 +112,8 @@ export const TermsOfServiceView: React.FC = () => {
 
         <h3>5.1 Plans and Pricing</h3>
         <p>
-          Consultify offers various subscription plans. Current pricing is available on our
-          website. We reserve the right to modify pricing with 30 days' notice.
+          Consultify offers various subscription plans. Current pricing is available on our website.
+          We reserve the right to modify pricing with 30 days' notice.
         </p>
 
         <h3>5.2 Trial Period</h3>

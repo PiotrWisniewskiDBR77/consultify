@@ -249,10 +249,7 @@ export const ResultsKPITable: React.FC<ResultsKPITableProps> = ({
         filterOptions: [
           ...new Set(
             kpis
-              .flatMap((k) => [
-                k.initiativeName,
-                ...(k.linkedInitiatives || []).map((i) => i.name),
-              ])
+              .flatMap((k) => [k.initiativeName, ...(k.linkedInitiatives || []).map((i) => i.name)])
               .filter(Boolean) as string[]
           ),
         ].map((n) => ({ value: n, label: n })),

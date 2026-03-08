@@ -94,31 +94,40 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
         if (w.invert) normalized = 1 - normalized;
         const weighted = normalized * (w.weight / Math.max(totalWeight, 1));
         totalScore += weighted;
-        breakdown.push({ colKey: w.colKey, rawValue: raw, normalizedValue: normalized, weightedValue: weighted });
+        breakdown.push({
+          colKey: w.colKey,
+          rawValue: raw,
+          normalizedValue: normalized,
+          weightedValue: weighted,
+        });
       }
 
       return { node, score: Math.round(totalScore * 100), rank: 0, breakdown };
     });
 
     scored.sort((a, b) => b.score - a.score);
-    scored.forEach((s, i) => { s.rank = i + 1; });
+    scored.forEach((s, i) => {
+      s.rank = i + 1;
+    });
     return scored;
   }, [nodes, scorableColumns, totalWeight, weights]);
 
   const handleWeightChange = useCallback((colKey: string, value: number) => {
-    setWeights((prev) => prev.map((w) => w.colKey === colKey ? { ...w, weight: value } : w));
+    setWeights((prev) => prev.map((w) => (w.colKey === colKey ? { ...w, weight: value } : w)));
   }, []);
 
   const handleToggleInvert = useCallback((colKey: string) => {
-    setWeights((prev) => prev.map((w) => w.colKey === colKey ? { ...w, invert: !w.invert } : w));
+    setWeights((prev) => prev.map((w) => (w.colKey === colKey ? { ...w, invert: !w.invert } : w)));
   }, []);
 
   const handleReset = useCallback(() => {
-    setWeights(scorableColumns.map((c) => ({
-      colKey: c.key,
-      weight: Math.round(100 / scorableColumns.length),
-      invert: false,
-    })));
+    setWeights(
+      scorableColumns.map((c) => ({
+        colKey: c.key,
+        weight: Math.round(100 / scorableColumns.length),
+        invert: false,
+      }))
+    );
   }, [scorableColumns]);
 
   const handleAICalibrate = useCallback(async () => {
@@ -129,7 +138,9 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
         context: {
           title: 'Scoring Calibration',
           seedText: `Columns: ${scorableColumns.map((c) => c.header).join(', ')}. Current weights: ${weights.map((w) => `${w.colKey}=${w.weight}%`).join(', ')}`,
-          currentNodes: nodes.slice(0, 10).map((n) => ({ id: n.id, type: n.type, label: n.data?.label })),
+          currentNodes: nodes
+            .slice(0, 10)
+            .map((n) => ({ id: n.id, type: n.type, label: n.data?.label })),
           currentEdges: [],
           activeTool: 'table',
         },
@@ -162,8 +173,14 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20 backdrop-blur-[2px]" onClick={onClose}>
-      <div className="w-[560px] max-w-[90vw] max-h-[85vh] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
+      onClick={onClose}
+    >
+      <div
+        className="w-[560px] max-w-[90vw] max-h-[85vh] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
           <Trophy size={16} className="text-amber-500" />
@@ -171,7 +188,10 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
             {isPl ? 'Model scoringowy pomysłów' : 'Idea Scoring Model'}
           </span>
           <div className="flex-1" />
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={14} className="text-slate-400" />
           </button>
         </div>
@@ -184,7 +204,11 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
               {isPl ? 'Wagi kryteriów' : 'Criteria Weights'}
             </span>
             <div className="flex-1" />
-            <button onClick={handleReset} className="p-1 rounded text-slate-400 hover:text-slate-600 transition-colors" title="Reset">
+            <button
+              onClick={handleReset}
+              className="p-1 rounded text-slate-400 hover:text-slate-600 transition-colors"
+              title="Reset"
+            >
               <RotateCcw size={11} />
             </button>
             <button
@@ -198,12 +222,16 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
           </div>
 
           {scorableColumns.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-3">{isPl ? 'Brak kolumn numerycznych do scoringu' : 'No numeric columns for scoring'}</p>
+            <p className="text-xs text-slate-400 text-center py-3">
+              {isPl ? 'Brak kolumn numerycznych do scoringu' : 'No numeric columns for scoring'}
+            </p>
           ) : (
             <div className="space-y-2.5">
               {weights.map((w) => (
                 <div key={w.colKey} className="flex items-center gap-3">
-                  <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 w-24 truncate">{getColHeader(w.colKey)}</span>
+                  <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 w-24 truncate">
+                    {getColHeader(w.colKey)}
+                  </span>
                   <input
                     type="range"
                     min={0}
@@ -212,7 +240,9 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
                     onChange={(e) => handleWeightChange(w.colKey, Number(e.target.value))}
                     className="flex-1 accent-violet-500 h-1.5"
                   />
-                  <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 w-8 text-right">{w.weight}%</span>
+                  <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 w-8 text-right">
+                    {w.weight}%
+                  </span>
                   <button
                     onClick={() => handleToggleInvert(w.colKey)}
                     className={`text-[8px] font-bold px-1.5 py-0.5 rounded transition-colors ${w.invert ? 'bg-amber-500/10 text-amber-600' : 'bg-slate-100 dark:bg-navy-800 text-slate-400'}`}
@@ -224,9 +254,16 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
               ))}
               <div className="flex items-center gap-2 pt-1">
                 <div className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                  <div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${Math.min(totalWeight, 100)}%` }} />
+                  <div
+                    className="h-full rounded-full bg-violet-500 transition-all"
+                    style={{ width: `${Math.min(totalWeight, 100)}%` }}
+                  />
                 </div>
-                <span className={`text-[10px] font-bold ${totalWeight === 100 ? 'text-emerald-500' : 'text-amber-500'}`}>{totalWeight}%</span>
+                <span
+                  className={`text-[10px] font-bold ${totalWeight === 100 ? 'text-emerald-500' : 'text-amber-500'}`}
+                >
+                  {totalWeight}%
+                </span>
               </div>
             </div>
           )}
@@ -242,23 +279,46 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
           </div>
 
           {scoredNodes.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-4">{isPl ? 'Brak danych do scoringu' : 'No data to score'}</p>
+            <p className="text-xs text-slate-400 text-center py-4">
+              {isPl ? 'Brak danych do scoringu' : 'No data to score'}
+            </p>
           ) : (
             <div className="space-y-1.5">
               {scoredNodes.map((scored) => {
-                const color = scored.node.data?.color || ROW_ACCENT_COLORS[scored.rank % ROW_ACCENT_COLORS.length];
+                const color =
+                  scored.node.data?.color ||
+                  ROW_ACCENT_COLORS[scored.rank % ROW_ACCENT_COLORS.length];
                 return (
-                  <div key={scored.node.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50/80 dark:bg-navy-900/50 hover:bg-slate-100 dark:hover:bg-navy-800/50 transition-colors">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black flex-shrink-0 ${scored.rank <= 3 ? 'bg-amber-500/10 text-amber-600' : 'bg-slate-200/60 dark:bg-navy-700 text-slate-500'}`}>
-                      {scored.rank <= 3 ? <Crown size={12} className="text-amber-500" /> : `#${scored.rank}`}
+                  <div
+                    key={scored.node.id}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50/80 dark:bg-navy-900/50 hover:bg-slate-100 dark:hover:bg-navy-800/50 transition-colors"
+                  >
+                    <div
+                      className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black flex-shrink-0 ${scored.rank <= 3 ? 'bg-amber-500/10 text-amber-600' : 'bg-slate-200/60 dark:bg-navy-700 text-slate-500'}`}
+                    >
+                      {scored.rank <= 3 ? (
+                        <Crown size={12} className="text-amber-500" />
+                      ) : (
+                        `#${scored.rank}`
+                      )}
                     </div>
-                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                    <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex-1 truncate">{scored.node.data?.label || scored.node.id}</span>
+                    <div
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: color }}
+                    />
+                    <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex-1 truncate">
+                      {scored.node.data?.label || scored.node.id}
+                    </span>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <div className="w-16 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${scored.score}%`, backgroundColor: color }} />
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${scored.score}%`, backgroundColor: color }}
+                        />
                       </div>
-                      <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 w-8 text-right">{scored.score}</span>
+                      <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 w-8 text-right">
+                        {scored.score}
+                      </span>
                     </div>
                   </div>
                 );
@@ -269,7 +329,10 @@ export const IdeaScoringModel: React.FC<IdeaScoringModelProps> = ({
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
-          <button onClick={onClose} className="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <div className="flex-1" />

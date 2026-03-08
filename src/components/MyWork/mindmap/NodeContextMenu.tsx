@@ -4,14 +4,17 @@ import {
   Diamond,
   Edit3,
   ExternalLink,
+  FileText,
   GitBranch,
   Globe,
   Image,
   Link2,
+  ListChecks,
   MessageSquare,
   Network,
   Plus,
   Rocket,
+  Scissors,
   Sparkles,
   Star,
   Target,
@@ -79,27 +82,187 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   const isProtected = nodeId === 'root' || nodeId.startsWith('branch-');
 
   const items: MenuItem[] = [
-    { id: 'ctx_open_detail', labelPl: 'Otwórz szczegóły', labelEn: 'Open details', icon: ExternalLink, disabled: isProtected },
-    { id: 'ctx_edit', labelPl: 'Edytuj (F2)', labelEn: 'Edit (F2)', icon: Edit3, disabled: isProtected },
-    { id: 'ctx_add_child', labelPl: 'Dodaj gałąź (Tab)', labelEn: 'Add child (Tab)', icon: Plus, disabled: isLocked, dividerAfter: true },
-    { id: 'ctx_add_sibling', labelPl: 'Dodaj sąsiada (Enter)', labelEn: 'Add sibling (Enter)', icon: GitBranch, disabled: isLocked || isProtected },
-    { id: 'ctx_drill_down', labelPl: 'Drill down (sub-mapa)', labelEn: 'Drill down (sub-map)', icon: ChevronRight, disabled: isProtected, dividerAfter: true },
-    { id: 'ctx_ai_expand', labelPl: 'AI: Rozbuduj temat', labelEn: 'AI: Expand topic', icon: Sparkles, disabled: isLocked, dividerAfter: true },
-    { id: 'ctx_ai_deepen', labelPl: 'AI: Pogłęb', labelEn: 'AI: Deepen', icon: Sparkles, disabled: isLocked },
-    { id: 'ctx_what_if', labelPl: 'AI: Co jeśli...?', labelEn: 'AI: What if...?', icon: GitBranch, disabled: isLocked },
-    { id: 'ctx_convert_initiative', labelPl: 'Konwertuj → Inicjatywa', labelEn: 'Convert → Initiative', icon: Rocket, disabled: isLocked },
-    { id: 'ctx_convert_decision', labelPl: 'Konwertuj → Decyzja', labelEn: 'Convert → Decision', icon: Star, disabled: isLocked, dividerAfter: true },
-    { id: 'ctx_vote_up', labelPl: 'Głosuj ↑', labelEn: 'Vote up', icon: Star, disabled: isLocked || isProtected },
-    { id: 'ctx_assign', labelPl: 'Przypisz osobę', labelEn: 'Assign person', icon: UserPlus, disabled: isLocked || isProtected },
-    { id: 'ctx_comments', labelPl: 'Komentarze', labelEn: 'Comments', icon: MessageSquare, disabled: isProtected },
-    { id: 'ctx_dependencies', labelPl: 'Wykryj zależności', labelEn: 'Detect dependencies', icon: Network, disabled: isLocked },
-    { id: 'ctx_priority', labelPl: 'AI: Priorytetyzacja', labelEn: 'AI: Prioritize', icon: Target, disabled: isLocked },
-    { id: 'ctx_competitive', labelPl: 'AI: Konkurencja', labelEn: 'AI: Competitors', icon: Globe, disabled: isLocked },
-    { id: 'ctx_change_shape', labelPl: 'Zmień kształt', labelEn: 'Change shape', icon: Diamond, disabled: isLocked || isProtected },
-    { id: 'ctx_add_image', labelPl: 'Dodaj obraz', labelEn: 'Add image', icon: Image, disabled: isLocked || isProtected },
-    { id: 'ctx_share_branch', labelPl: 'Udostępnij gałąź', labelEn: 'Share branch', icon: Link2, disabled: isProtected, dividerAfter: true },
-    { id: 'ctx_duplicate', labelPl: 'Duplikuj', labelEn: 'Duplicate', icon: Copy, disabled: isLocked || isProtected },
-    { id: 'ctx_delete', labelPl: 'Usuń (Del)', labelEn: 'Delete (Del)', icon: Trash2, danger: true, disabled: isLocked || isProtected },
+    {
+      id: 'ctx_open_detail',
+      labelPl: 'Otwórz szczegóły',
+      labelEn: 'Open details',
+      icon: ExternalLink,
+      disabled: isProtected,
+    },
+    {
+      id: 'ctx_edit',
+      labelPl: 'Edytuj (F2)',
+      labelEn: 'Edit (F2)',
+      icon: Edit3,
+      disabled: isProtected,
+    },
+    {
+      id: 'ctx_add_child',
+      labelPl: 'Dodaj gałąź (Tab)',
+      labelEn: 'Add child (Tab)',
+      icon: Plus,
+      disabled: isLocked,
+      dividerAfter: true,
+    },
+    {
+      id: 'ctx_add_sibling',
+      labelPl: 'Dodaj sąsiada (Enter)',
+      labelEn: 'Add sibling (Enter)',
+      icon: GitBranch,
+      disabled: isLocked || isProtected,
+    },
+    {
+      id: 'ctx_drill_down',
+      labelPl: 'Drill down (sub-mapa)',
+      labelEn: 'Drill down (sub-map)',
+      icon: ChevronRight,
+      disabled: isProtected,
+    },
+    {
+      id: 'ctx_detach_branch',
+      labelPl: 'Odłącz gałąź',
+      labelEn: 'Detach branch',
+      icon: Scissors,
+      disabled: isLocked || isProtected,
+    },
+    {
+      id: 'ctx_duplicate_branch',
+      labelPl: 'Duplikuj gałąź',
+      labelEn: 'Duplicate branch',
+      icon: Copy,
+      disabled: isLocked || isProtected,
+    },
+    {
+      id: 'ctx_summarize_branch',
+      labelPl: 'Podsumuj gałąź',
+      labelEn: 'Summarize branch',
+      icon: FileText,
+      disabled: isLocked,
+    },
+    {
+      id: 'ctx_convert_tasks',
+      labelPl: 'Gałąź → Zadania',
+      labelEn: 'Branch → Tasks',
+      icon: ListChecks,
+      disabled: isLocked,
+      dividerAfter: true,
+    },
+    {
+      id: 'ctx_ai_expand',
+      labelPl: 'AI: Rozbuduj temat',
+      labelEn: 'AI: Expand topic',
+      icon: Sparkles,
+      disabled: isLocked,
+      dividerAfter: true,
+    },
+    {
+      id: 'ctx_ai_deepen',
+      labelPl: 'AI: Pogłęb',
+      labelEn: 'AI: Deepen',
+      icon: Sparkles,
+      disabled: isLocked,
+    },
+    {
+      id: 'ctx_what_if',
+      labelPl: 'AI: Co jeśli...?',
+      labelEn: 'AI: What if...?',
+      icon: GitBranch,
+      disabled: isLocked,
+    },
+    {
+      id: 'ctx_convert_initiative',
+      labelPl: 'Konwertuj → Inicjatywa',
+      labelEn: 'Convert → Initiative',
+      icon: Rocket,
+      disabled: isLocked,
+    },
+    {
+      id: 'ctx_convert_decision',
+      labelPl: 'Konwertuj → Decyzja',
+      labelEn: 'Convert → Decision',
+      icon: Star,
+      disabled: isLocked,
+      dividerAfter: true,
+    },
+    {
+      id: 'ctx_vote_up',
+      labelPl: 'Głosuj ↑',
+      labelEn: 'Vote up',
+      icon: Star,
+      disabled: isLocked || isProtected,
+    },
+    {
+      id: 'ctx_assign',
+      labelPl: 'Przypisz osobę',
+      labelEn: 'Assign person',
+      icon: UserPlus,
+      disabled: isLocked || isProtected,
+    },
+    {
+      id: 'ctx_comments',
+      labelPl: 'Komentarze',
+      labelEn: 'Comments',
+      icon: MessageSquare,
+      disabled: isProtected,
+    },
+    {
+      id: 'ctx_dependencies',
+      labelPl: 'Wykryj zależności',
+      labelEn: 'Detect dependencies',
+      icon: Network,
+      disabled: isLocked,
+    },
+    {
+      id: 'ctx_priority',
+      labelPl: 'AI: Priorytetyzacja',
+      labelEn: 'AI: Prioritize',
+      icon: Target,
+      disabled: isLocked,
+    },
+    {
+      id: 'ctx_competitive',
+      labelPl: 'AI: Konkurencja',
+      labelEn: 'AI: Competitors',
+      icon: Globe,
+      disabled: isLocked,
+    },
+    {
+      id: 'ctx_change_shape',
+      labelPl: 'Zmień kształt',
+      labelEn: 'Change shape',
+      icon: Diamond,
+      disabled: isLocked || isProtected,
+    },
+    {
+      id: 'ctx_add_image',
+      labelPl: 'Dodaj obraz',
+      labelEn: 'Add image',
+      icon: Image,
+      disabled: isLocked || isProtected,
+    },
+    {
+      id: 'ctx_share_branch',
+      labelPl: 'Udostępnij gałąź',
+      labelEn: 'Share branch',
+      icon: Link2,
+      disabled: isProtected,
+      dividerAfter: true,
+    },
+    {
+      id: 'ctx_duplicate',
+      labelPl: 'Duplikuj',
+      labelEn: 'Duplicate',
+      icon: Copy,
+      disabled: isLocked || isProtected,
+    },
+    {
+      id: 'ctx_delete',
+      labelPl: 'Usuń (Del)',
+      labelEn: 'Delete (Del)',
+      icon: Trash2,
+      danger: true,
+      disabled: isLocked || isProtected,
+    },
   ];
 
   return (
@@ -120,11 +283,14 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
                 item.disabled
                   ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
                   : item.danger
-                  ? 'text-red-600 dark:text-red-400 hover:bg-red-500/10'
-                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04]'
+                    ? 'text-red-600 dark:text-red-400 hover:bg-red-500/10'
+                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04]'
               }`}
             >
-              <Icon size={13} className={item.danger ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'} />
+              <Icon
+                size={13}
+                className={item.danger ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}
+              />
               <span className="flex-1">{isPl ? item.labelPl : item.labelEn}</span>
               {(item.id === 'ctx_ai_expand' || item.id === 'ctx_ai_deepen') && (
                 <ChevronRight size={10} className="text-slate-300" />

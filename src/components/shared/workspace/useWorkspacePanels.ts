@@ -18,4 +18,3 @@ export function useWorkspacePanels(initial: WorkspacePanelKey = null) {
     closePanels,
   };
 }
-

@@ -32,7 +32,9 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
-  const displayCols = columns.filter((c) => c.visible && c.key !== 'type' && c.key !== 'label').slice(0, 4);
+  const displayCols = columns
+    .filter((c) => c.visible && c.key !== 'type' && c.key !== 'label')
+    .slice(0, 4);
 
   const getColor = (node: TableNode, idx: number): string =>
     node.data?.color || ROW_ACCENT_COLORS[idx % ROW_ACCENT_COLORS.length];
@@ -42,12 +44,18 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
     e.preventDefault();
     setDragOverIdx(idx);
   }, []);
-  const handleDrop = useCallback((targetIdx: number) => {
-    if (dragId && onReorder) onReorder(dragId, targetIdx);
+  const handleDrop = useCallback(
+    (targetIdx: number) => {
+      if (dragId && onReorder) onReorder(dragId, targetIdx);
+      setDragId(null);
+      setDragOverIdx(null);
+    },
+    [dragId, onReorder]
+  );
+  const handleDragEnd = useCallback(() => {
     setDragId(null);
     setDragOverIdx(null);
-  }, [dragId, onReorder]);
-  const handleDragEnd = useCallback(() => { setDragId(null); setDragOverIdx(null); }, []);
+  }, []);
 
   const grouped = React.useMemo(() => {
     if (!groupBy) return null;
@@ -78,9 +86,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
         style={{ backgroundColor: `${color}15`, borderLeftColor: color, borderLeftWidth: 4 }}
       >
         {/* Icon/emoji */}
-        {node.data?.icon && (
-          <span className="text-lg mb-1 block">{node.data.icon}</span>
-        )}
+        {node.data?.icon && <span className="text-lg mb-1 block">{node.data.icon}</span>}
 
         {/* Title */}
         <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5 leading-snug line-clamp-2">
@@ -101,26 +107,42 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
             if (!val) return null;
             return (
               <div key={col.key} className="flex items-center gap-1.5">
-                <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 w-14 truncate">{col.header}</span>
+                <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 w-14 truncate">
+                  {col.header}
+                </span>
                 {col.type === 'rating' ? (
                   <span className="flex items-center gap-0.5">
                     {[1, 2, 3, 4, 5].map((s) => (
-                      <Star key={s} size={8} className={s <= Number(val) ? 'text-amber-400 fill-amber-400' : 'text-slate-300'} />
+                      <Star
+                        key={s}
+                        size={8}
+                        className={
+                          s <= Number(val) ? 'text-amber-400 fill-amber-400' : 'text-slate-300'
+                        }
+                      />
                     ))}
                   </span>
                 ) : col.type === 'progress' ? (
                   <div className="flex items-center gap-1 flex-1">
                     <div className="flex-1 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${Number(val)}%`, backgroundColor: color }} />
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${Number(val)}%`, backgroundColor: color }}
+                      />
                     </div>
                     <span className="text-[8px] text-slate-400">{val}%</span>
                   </div>
                 ) : col.type === 'select' ? (
-                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md" style={{ backgroundColor: `${color}20`, color }}>
+                  <span
+                    className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md"
+                    style={{ backgroundColor: `${color}20`, color }}
+                  >
                     {String(val)}
                   </span>
                 ) : (
-                  <span className="text-[9px] text-slate-600 dark:text-slate-300 truncate">{String(val)}</span>
+                  <span className="text-[9px] text-slate-600 dark:text-slate-300 truncate">
+                    {String(val)}
+                  </span>
                 )}
               </div>
             );
@@ -129,7 +151,9 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
 
         {/* Bottom indicators */}
         <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/30 dark:border-white/[0.04]">
-          <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">{node.type || 'idea'}</span>
+          <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">
+            {node.type || 'idea'}
+          </span>
           <div className="flex-1" />
           {commentCount > 0 && (
             <span className="flex items-center gap-0.5 text-[9px] text-slate-400">
@@ -141,9 +165,7 @@ export const StickyNoteView: React.FC<StickyNoteViewProps> = ({
               <Paperclip size={8} /> {attachCount}
             </span>
           )}
-          {node.data?.aiInsights && (
-            <Sparkles size={8} className="text-violet-400" />
-          )}
+          {node.data?.aiInsights && <Sparkles size={8} className="text-violet-400" />}
         </div>
       </button>
     );

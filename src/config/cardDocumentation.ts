@@ -1,3 +1,9 @@
+import {
+  getHelpDocument,
+  getLocalizedText,
+  type SupportedHelpLanguage,
+} from './helpExperience';
+
 export interface CardDocumentation {
   title: string;
   titleKey?: string;
@@ -8,7 +14,7 @@ export interface CardDocumentation {
   howToUse?: string[];
   tips?: string[];
   steps?: string[];
-  relatedDocs?: string[];
+  relatedDocs?: Array<string | { title: string; url: string }>;
 }
 
 export const CARD_DOCS: Record<string, CardDocumentation> = {
@@ -125,8 +131,7 @@ export const CARD_DOCS: Record<string, CardDocumentation> = {
 
   'superadmin-lifecycle': {
     title: 'Customer Lifecycle',
-    description:
-      'Define lifecycle stages and track customer transitions across the journey.',
+    description: 'Define lifecycle stages and track customer transitions across the journey.',
     moduleId: 'SUPERADMIN_CUSTOMERS',
     features: [
       'Lifecycle stages management',
@@ -342,7 +347,11 @@ export const CARD_DOCS: Record<string, CardDocumentation> = {
       'Keep catalog clean: deactivate unused providers instead of leaving stale keys',
       'Ensure each critical purpose has at least 2 providers assigned for resilience',
     ],
-    relatedDocs: ['superadmin-llm-management', 'superadmin-ai-purposes-assignments', 'superadmin-ai-global-settings'],
+    relatedDocs: [
+      'superadmin-llm-management',
+      'superadmin-ai-purposes-assignments',
+      'superadmin-ai-global-settings',
+    ],
   },
 
   'superadmin-ai-operations': {
@@ -544,7 +553,11 @@ export const CARD_DOCS: Record<string, CardDocumentation> = {
       'Keep Budget and Standard populated with low-latency models',
       'Use Premium/Reasoning for quality-critical flows, but always keep fallbacks configured',
     ],
-    relatedDocs: ['superadmin-ai-model-tiers', 'superadmin-llm-management', 'superadmin-ai-infrastructure'],
+    relatedDocs: [
+      'superadmin-ai-model-tiers',
+      'superadmin-llm-management',
+      'superadmin-ai-infrastructure',
+    ],
   },
 
   'superadmin-ai-purposes-assignments': {
@@ -3128,3 +3141,125 @@ export const CARD_DOCS: Record<string, CardDocumentation> = {
     relatedDocs: ['settings-profile'],
   },
 };
+
+const CARD_TO_HELP_DOCUMENT_ALIASES: Record<string, string> = {
+  'superadmin-overview': 'superadmin_overview',
+  'superadmin-dashboard': 'superadmin_overview_dashboard',
+  'superadmin-metrics': 'superadmin_overview_metrics',
+  'superadmin-signals': 'superadmin_overview_signals',
+  'superadmin-customers': 'superadmin_customers',
+  'superadmin-organizations': 'superadmin_customers_organizations',
+  'superadmin-users': 'superadmin_customers_users',
+  'superadmin-lifecycle': 'superadmin_customers_lifecycle',
+  'superadmin-playbooks': 'superadmin_customers_playbooks',
+  'superadmin-contracts': 'superadmin_customers_contracts',
+  'superadmin-analytics-customers': 'superadmin_customers_analytics',
+  'superadmin-compliance-customers': 'superadmin_customers_compliance',
+  'superadmin-automation': 'superadmin_customers_automation',
+  'superadmin-communication': 'superadmin_customers_communication',
+  'superadmin-feedback': 'superadmin_customers_feedback',
+  'superadmin-bulk-ops': 'superadmin_customers_bulk_ops',
+  'superadmin-ai-infrastructure': 'superadmin_ai_configuration',
+  'superadmin-ai-development': 'superadmin_ai_development',
+  'superadmin-ai-prompts-library': 'superadmin_ai_development_prompts_library',
+  'superadmin-ai-ab-testing': 'superadmin_ai_development_experiments',
+  'superadmin-ai-model-registry': 'superadmin_ai_development_model_registry',
+  'superadmin-ai-operations': 'superadmin_ai_operations',
+  'superadmin-ai-knowledge': 'superadmin_ai_knowledge',
+  'superadmin-ai-intelligence': 'superadmin_ai_knowledge',
+  'superadmin-ai-config': 'superadmin_ai_configuration',
+  'superadmin-llm-management': 'superadmin_ai_configuration',
+  'superadmin-ai-global-settings': 'superadmin_ai_configuration_global_settings',
+  'superadmin-ai-model-tiers': 'superadmin_ai_configuration_model_tiers',
+  'superadmin-ai-routing-rules': 'superadmin_ai_configuration_routing_rules',
+  'superadmin-ai-purposes-assignments': 'superadmin_ai_configuration_purposes_assignments',
+  'superadmin-ai-org-ai-policy': 'superadmin_ai_configuration_org_policy',
+  'superadmin-ai-governance': 'superadmin_ai_configuration_governance',
+  'superadmin-ai-health-monitoring': 'superadmin_ai_operations_health',
+  'superadmin-billing': 'superadmin_billing',
+  'superadmin-invoices': 'superadmin_invoices',
+  'superadmin-revenue': 'superadmin_revenue',
+  'superadmin-revenue-pricing': 'superadmin_revenue_pricing',
+  'superadmin-revenue-subscriptions': 'superadmin_revenue_subscriptions',
+  'superadmin-revenue-recognition': 'superadmin_revenue_recognition',
+  'superadmin-revenue-forecast': 'superadmin_revenue_forecasts',
+  'superadmin-revenue-payments': 'superadmin_revenue_payments',
+  'superadmin-security': 'superadmin_security',
+  'superadmin-security-sso': 'superadmin_sso',
+  'superadmin-security-scim': 'superadmin_security_scim',
+  'superadmin-security-roles': 'superadmin_security_roles',
+  'superadmin-security-permissions': 'superadmin_security_permissions',
+  'superadmin-security-policies': 'superadmin_security_policies',
+  'superadmin-security-sessions': 'superadmin_security_sessions',
+  'superadmin-security-audit': 'superadmin_security_audit',
+  'superadmin-security-workflows': 'superadmin_security_workflows',
+  'superadmin-security-incidents': 'superadmin_security_incidents',
+  'superadmin-security-threats': 'superadmin_security_threats',
+  'superadmin-security-dlp': 'superadmin_security_dlp',
+  'superadmin-security-budgets': 'superadmin_security_ai_budgets',
+  'superadmin-security-compliance': 'superadmin_compliance',
+  'superadmin-support': 'superadmin_support',
+  'superadmin-support-tickets': 'superadmin_support_tickets',
+  'superadmin-support-cs-notes': 'superadmin_support_cs_notes',
+  'superadmin-support-health': 'superadmin_support_health',
+  'superadmin-system': 'superadmin_system',
+  'superadmin-system-health': 'superadmin_system_health',
+  'superadmin-system-audit': 'superadmin_system_audit',
+  'superadmin-system-flags': 'superadmin_system_flags',
+  'superadmin-system-integrations': 'superadmin_system_integrations',
+  'superadmin-system-security': 'superadmin_system_security',
+  'superadmin-system-configuration': 'superadmin_system_configuration',
+  'superadmin-system-analytics': 'superadmin_system_analytics',
+  'superadmin-system-backup': 'superadmin_system_backup',
+  'superadmin-system-api-keys': 'superadmin_system_api_keys',
+  'superadmin-content-playbooks': 'superadmin_playbook_templates',
+  'superadmin-content-email-templates': 'superadmin_content_email_templates',
+  'superadmin-content-partner-outreach': 'superadmin_content_partner_outreach',
+  'superadmin-analytics': 'superadmin_analytics',
+  'superadmin-analytics-dashboards': 'superadmin_analytics_dashboards',
+  'superadmin-analytics-reports': 'superadmin_analytics_reports',
+  'superadmin-analytics-metrics': 'superadmin_analytics_metrics',
+  'superadmin-analytics-predictive': 'superadmin_analytics_predictive',
+  'superadmin-settings': 'superadmin_configuration_settings',
+  'superadmin-whitelabel': 'superadmin_whitelabel',
+  'superadmin-legal': 'superadmin_configuration_legal',
+};
+
+const getHelpDocumentIdForCard = (cardId: string): string => {
+  return CARD_TO_HELP_DOCUMENT_ALIASES[cardId] ?? cardId.replace(/-/g, '_');
+};
+
+const toCanonicalCardDocumentation = (
+  cardId: string,
+  language: SupportedHelpLanguage
+): CardDocumentation | null => {
+  const document = getHelpDocument(getHelpDocumentIdForCard(cardId));
+  if (!document) return null;
+
+  const quickGuideSteps =
+    document.quickGuides.length > 0
+      ? document.quickGuides.map(
+          (guide) =>
+            `${getLocalizedText(guide.title, language)}: ${getLocalizedText(guide.description, language)}`
+        )
+      : undefined;
+
+  return {
+    title: getLocalizedText(document.title, language),
+    description: `${getLocalizedText(document.whatThisIs, language)} ${getLocalizedText(document.whyItMatters, language)}`,
+    moduleId: document.moduleId,
+    features: document.whatYouDoHere.map((item) => getLocalizedText(item, language)),
+    howToUse: quickGuideSteps,
+    tips: [
+      ...document.howAiHelpsHere.map((item) => getLocalizedText(item, language)),
+      getLocalizedText(document.whatComesNext, language),
+    ],
+  };
+};
+
+export function getCardDocumentation(
+  cardId: string,
+  language: SupportedHelpLanguage = 'en'
+): CardDocumentation | null {
+  return toCanonicalCardDocumentation(cardId, language) ?? CARD_DOCS[cardId] ?? null;
+}

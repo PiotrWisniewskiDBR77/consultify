@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { generateAIProposal, type GeneratorType } from '@/services/ideaAIGenerator';
+
 import type { AIProposalBatch, CanvasToolType } from './ideaSelectionTypes';
 
 interface ContextMenuPosition {
@@ -151,7 +152,9 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as HTMLElement)) onClose();
     };
-    const keyHandler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     document.addEventListener('mousedown', handler);
     document.addEventListener('keydown', keyHandler);
     return () => {
@@ -160,44 +163,64 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
     };
   }, [onClose, position]);
 
-  const handleAction = useCallback(async (item: MenuItem) => {
-    if (!isAccepted) return;
+  const handleAction = useCallback(
+    async (item: MenuItem) => {
+      if (!isAccepted) return;
 
-    if (item.chatPrompt && onSendToChat) {
-      onSendToChat(item.chatPrompt(target.nodeLabel || '', isPl));
-      onClose();
-      return;
-    }
-
-    if (item.generatorType) {
-      setLoadingId(item.id);
-      try {
-        const batch = await generateAIProposal({
-          ideaId,
-          generatorType: item.generatorType,
-          tool: activeTool,
-          context: {
-            seedText: target.nodeLabel
-              ? `${seedText}\n\nFocus on: ${target.nodeLabel}`
-              : seedText,
-            title,
-            branch,
-            area,
-            existingNodes: graphNodes,
-            existingEdges: graphEdges,
-            existingLanes: graphLanes,
-            language: i18n.language || 'en',
-          },
-        });
-        onGenerateProposal(batch);
+      if (item.chatPrompt && onSendToChat) {
+        onSendToChat(item.chatPrompt(target.nodeLabel || '', isPl));
         onClose();
-      } catch {
-        // handled by toast in parent
-      } finally {
-        setLoadingId(null);
+        return;
       }
-    }
-  }, [activeTool, area, branch, graphEdges, graphLanes, graphNodes, i18n.language, ideaId, isAccepted, isPl, onClose, onGenerateProposal, onSendToChat, seedText, target.nodeLabel, title]);
+
+      if (item.generatorType) {
+        setLoadingId(item.id);
+        try {
+          const batch = await generateAIProposal({
+            ideaId,
+            generatorType: item.generatorType,
+            tool: activeTool,
+            context: {
+              seedText: target.nodeLabel
+                ? `${seedText}\n\nFocus on: ${target.nodeLabel}`
+                : seedText,
+              title,
+              branch,
+              area,
+              existingNodes: graphNodes,
+              existingEdges: graphEdges,
+              existingLanes: graphLanes,
+              language: i18n.language || 'en',
+            },
+          });
+          onGenerateProposal(batch);
+          onClose();
+        } catch {
+          // handled by toast in parent
+        } finally {
+          setLoadingId(null);
+        }
+      }
+    },
+    [
+      activeTool,
+      area,
+      branch,
+      graphEdges,
+      graphLanes,
+      graphNodes,
+      i18n.language,
+      ideaId,
+      isAccepted,
+      isPl,
+      onClose,
+      onGenerateProposal,
+      onSendToChat,
+      seedText,
+      target.nodeLabel,
+      title,
+    ]
+  );
 
   if (!position) return null;
 

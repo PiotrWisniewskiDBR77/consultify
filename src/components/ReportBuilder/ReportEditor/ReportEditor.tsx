@@ -43,6 +43,7 @@ import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
+
 import { Api } from '../../../services/api';
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { ExportSharePanel } from '../ExportSharePanel';
@@ -1582,9 +1583,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
     async (blockId: string) => {
       if (!report?.id || blockId.startsWith('tmp_')) return;
 
-      setBlocks((prev) =>
-        prev.map((b) => (b.id === blockId ? { ...b, isRefreshing: true } : b))
-      );
+      setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, isRefreshing: true } : b)));
 
       try {
         const response = await Api.post(
@@ -1600,10 +1599,9 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
           );
 
           if (accept) {
-            await Api.post(
-              `/report-builder/${report.id}/sections/${blockId}/accept-refresh`,
-              { newContent: response.newContent }
-            );
+            await Api.post(`/report-builder/${report.id}/sections/${blockId}/accept-refresh`, {
+              newContent: response.newContent,
+            });
 
             setBlocks((prev) =>
               prev.map((b) =>

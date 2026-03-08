@@ -112,6 +112,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
   ];
 
   const scrollToInput = () => {
+    if (locked) return;
     commentInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     setTimeout(() => commentInputRef.current?.focus(), 400);
   };
@@ -128,10 +129,11 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
         </h2>
         <button
           onClick={scrollToInput}
+          disabled={locked}
           className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
         >
           <Plus size={13} />
-          {isPolish ? 'Dodaj komentarze' : 'Add comments'}
+          {isPolish ? 'Dodaj komentarz' : 'Add comment'}
         </button>
       </div>
 
@@ -204,6 +206,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                   </div>
                   <button
                     onClick={() => onDeleteComment(c.id)}
+                    disabled={locked}
                     className="p-0.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                   >
                     <X size={12} />
@@ -221,7 +224,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
               onClick={() => setShowMoreComments((prev) => !prev)}
               className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
             >
-              {isExpandedComments ? 'Less' : 'More'}
+              {isExpandedComments ? (isPolish ? 'Mniej' : 'Less') : isPolish ? 'Więcej' : 'More'}
             </button>
           </div>
         )}
@@ -235,6 +238,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
                 key={prio.id}
                 type="button"
                 onClick={() => onDraftPriorityChange(prio.id)}
+                disabled={locked}
                 onMouseEnter={() => setHoveredPriority(prio.id)}
                 onMouseLeave={() => setHoveredPriority(null)}
                 onFocus={() => setHoveredPriority(prio.id)}
@@ -267,10 +271,11 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
             type="text"
             value={commentDraft}
             onChange={(e) => onCommentDraftChange(e.target.value)}
+            disabled={locked}
             placeholder={isPolish ? 'Napisz komentarz...' : 'Write a comment...'}
             className="flex-1 text-sm bg-transparent text-slate-700 dark:text-slate-300 focus:outline-none placeholder-slate-400 dark:placeholder-slate-600"
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && commentDraft.trim()) {
+              if (!locked && e.key === 'Enter' && commentDraft.trim()) {
                 onSubmitComment();
               }
             }}
@@ -279,7 +284,7 @@ export const CommentsCanvas: React.FC<CommentsCanvasProps> = ({
           {/* Send */}
           <button
             onClick={onSubmitComment}
-            disabled={!commentDraft.trim()}
+            disabled={locked || !commentDraft.trim()}
             className="text-xs font-medium text-slate-700 dark:text-white hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-40 disabled:text-slate-400 dark:disabled:text-slate-500"
             title={isPolish ? 'Wyślij komentarz' : 'Send comment'}
           >

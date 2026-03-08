@@ -51,10 +51,14 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
-import { PortfolioAnalysisView } from './Analysis';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-import { InitiativePreviewV3Body, InitiativePreviewV3Footer, type InitiativePreviewV3Model } from './InitiativePreviewV3';
+import { PortfolioAnalysisView } from './Analysis';
 import { InitiativeDocumentView } from './InitiativeDocumentView';
+import {
+  InitiativePreviewV3Body,
+  InitiativePreviewV3Footer,
+  type InitiativePreviewV3Model,
+} from './InitiativePreviewV3';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
@@ -826,7 +830,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               contextData: initiative as unknown as Record<string, unknown>,
               pmoContext: { initiativeIds: [initiative.id] },
             });
-            await addChatMessage({ conversationId: convId, role: 'user', content: promptText } as any);
+            await addChatMessage({
+              conversationId: convId,
+              role: 'user',
+              content: promptText,
+            } as any);
             toast.success(t('initiatives.toast.chatOpened', 'Chat opened'), { duration: 1500 });
           } catch {
             toast.error(t('initiatives.toast.chatOpenError', 'Failed to open chat'));
@@ -870,7 +878,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               renderPreviewFooter={(item) => (
                 <InitiativePreviewV3Footer
                   initiative={mapToPreviewModel(item)}
-                  tasksCount={Array.isArray((item as any).tasks) ? (item as any).tasks.length : undefined}
+                  tasksCount={
+                    Array.isArray((item as any).tasks) ? (item as any).tasks.length : undefined
+                  }
                   onOpenFull={() => handleOpenFullScreen(item)}
                   onOpenChat={(prompt) => openAiChat(item, prompt)}
                   onCopyLink={() => copyInitiativeLink(item.id)}
@@ -1016,8 +1026,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     <button
       type="button"
       onClick={() => {
-        const selected =
-          previewInitiativeId ? initiatives.find((i) => i.id === previewInitiativeId) : null;
+        const selected = previewInitiativeId
+          ? initiatives.find((i) => i.id === previewInitiativeId)
+          : null;
         const prompt = i18n.language?.startsWith('pl')
           ? 'Pomóż mi w tym widoku: pokaż krytyczne inicjatywy, luki w danych i następne kroki. Jeśli jest zaznaczona inicjatywa, skup się na niej.'
           : 'Help me in this view: highlight critical initiatives, missing data, and next steps. If an initiative is selected, focus on it.';
@@ -1032,7 +1043,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 contextData: selected as unknown as Record<string, unknown>,
                 pmoContext: { initiativeIds: [selected.id] },
               });
-              await addChatMessage({ conversationId: convId, role: 'user', content: prompt } as any);
+              await addChatMessage({
+                conversationId: convId,
+                role: 'user',
+                content: prompt,
+              } as any);
             } else {
               const convId = await openChatWithContext({
                 entityType: 'initiative',
@@ -1045,7 +1060,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                 },
                 pmoContext: {},
               });
-              await addChatMessage({ conversationId: convId, role: 'user', content: prompt } as any);
+              await addChatMessage({
+                conversationId: convId,
+                role: 'user',
+                content: prompt,
+              } as any);
             }
             toast.success(t('initiatives.toast.chatOpened', 'Chat opened'), { duration: 1500 });
           } catch {

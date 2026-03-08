@@ -3,7 +3,6 @@ import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { DeckCard } from '../wizard/types';
-
 import { CardRenderer } from './CardRenderer';
 
 interface CardCanvasProps {
@@ -42,10 +41,7 @@ export const CardCanvas: React.FC<CardCanvasProps> = ({
 
   return (
     <div className="flex-1 overflow-hidden flex flex-col bg-slate-100 dark:bg-navy-950">
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto px-8 py-6 space-y-4"
-      >
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-8 py-6 space-y-4">
         {cards.map((card, index) => (
           <React.Fragment key={card.card_id}>
             {/* Gap action buttons */}

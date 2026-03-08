@@ -9,6 +9,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+
 import type { AIProposal, AIProposalBatch } from './ideaSelectionTypes';
 
 interface IdeaProposalReviewProps {
@@ -39,7 +40,10 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
 
   const handleAccept = useCallback(
     (id: string) => {
-      trackFunnelEvent('ideas_proposal_accepted', { tool: batch?.tool, generatorType: batch?.generatorType });
+      trackFunnelEvent('ideas_proposal_accepted', {
+        tool: batch?.tool,
+        generatorType: batch?.generatorType,
+      });
       onAccept(id);
     },
     [batch, onAccept]
@@ -47,7 +51,10 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
 
   const handleReject = useCallback(
     (id: string) => {
-      trackFunnelEvent('ideas_proposal_rejected', { tool: batch?.tool, generatorType: batch?.generatorType });
+      trackFunnelEvent('ideas_proposal_rejected', {
+        tool: batch?.tool,
+        generatorType: batch?.generatorType,
+      });
       onReject(id);
     },
     [batch, onReject]
@@ -76,7 +83,11 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
           <button
             onClick={() => {
               onAcceptAll();
-              trackFunnelEvent('ideas_proposal_accepted', { tool: batch.tool, generatorType: batch.generatorType, batch: true });
+              trackFunnelEvent('ideas_proposal_accepted', {
+                tool: batch.tool,
+                generatorType: batch.generatorType,
+                batch: true,
+              });
             }}
             className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
           >
@@ -86,7 +97,11 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
           <button
             onClick={() => {
               onRejectAll();
-              trackFunnelEvent('ideas_proposal_rejected', { tool: batch.tool, generatorType: batch.generatorType, batch: true });
+              trackFunnelEvent('ideas_proposal_rejected', {
+                tool: batch.tool,
+                generatorType: batch.generatorType,
+                batch: true,
+              });
             }}
             className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors"
           >
@@ -136,16 +151,18 @@ const ProposalItem: React.FC<{
     proposal.confidence >= 0.7
       ? 'bg-emerald-500'
       : proposal.confidence >= 0.4
-      ? 'bg-amber-500'
-      : 'bg-red-500';
+        ? 'bg-amber-500'
+        : 'bg-red-500';
 
   const patchSummary = useMemo(() => {
     const p = proposal.patch;
     const parts: string[] = [];
     if (p.addNodes?.length) parts.push(`+${p.addNodes.length} ${isPl ? 'węzłów' : 'nodes'}`);
     if (p.addEdges?.length) parts.push(`+${p.addEdges.length} ${isPl ? 'połączeń' : 'edges'}`);
-    if (p.removeNodeIds?.length) parts.push(`-${p.removeNodeIds.length} ${isPl ? 'węzłów' : 'nodes'}`);
-    if (p.removeEdgeIds?.length) parts.push(`-${p.removeEdgeIds.length} ${isPl ? 'połączeń' : 'edges'}`);
+    if (p.removeNodeIds?.length)
+      parts.push(`-${p.removeNodeIds.length} ${isPl ? 'węzłów' : 'nodes'}`);
+    if (p.removeEdgeIds?.length)
+      parts.push(`-${p.removeEdgeIds.length} ${isPl ? 'połączeń' : 'edges'}`);
     if (p.updateNodes?.length) parts.push(`~${p.updateNodes.length} ${isPl ? 'zmian' : 'updates'}`);
     return parts.join(', ') || (isPl ? 'Zmiana konfiguracji' : 'Config change');
   }, [isPl, proposal.patch]);
@@ -163,14 +180,21 @@ const ProposalItem: React.FC<{
           <div className="flex items-center gap-2 mt-0.5">
             <div className="flex items-center gap-1">
               <div className="w-12 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                <div className={`h-full rounded-full ${confidenceColor}`} style={{ width: `${confidencePercent}%` }} />
+                <div
+                  className={`h-full rounded-full ${confidenceColor}`}
+                  style={{ width: `${confidencePercent}%` }}
+                />
               </div>
               <span className="text-[9px] text-slate-400">{confidencePercent}%</span>
             </div>
             <span className="text-[9px] text-slate-400">{patchSummary}</span>
           </div>
         </div>
-        {expanded ? <ChevronUp size={12} className="text-slate-400" /> : <ChevronDown size={12} className="text-slate-400" />}
+        {expanded ? (
+          <ChevronUp size={12} className="text-slate-400" />
+        ) : (
+          <ChevronDown size={12} className="text-slate-400" />
+        )}
       </button>
 
       {expanded && (
@@ -178,16 +202,24 @@ const ProposalItem: React.FC<{
           {/* Patch details */}
           <div className="rounded-lg bg-slate-50/80 dark:bg-navy-900/50 p-2 mb-2 text-[10px] text-slate-600 dark:text-slate-400 font-mono space-y-0.5">
             {proposal.patch.addNodes?.map((n) => (
-              <div key={n.id} className="text-emerald-600 dark:text-emerald-400">+ {n.label || n.id}</div>
+              <div key={n.id} className="text-emerald-600 dark:text-emerald-400">
+                + {n.label || n.id}
+              </div>
             ))}
             {proposal.patch.addEdges?.map((e) => (
-              <div key={e.id} className="text-emerald-600 dark:text-emerald-400">+ {e.source} → {e.target}</div>
+              <div key={e.id} className="text-emerald-600 dark:text-emerald-400">
+                + {e.source} → {e.target}
+              </div>
             ))}
             {proposal.patch.removeNodeIds?.map((id) => (
-              <div key={id} className="text-red-600 dark:text-red-400">- {id}</div>
+              <div key={id} className="text-red-600 dark:text-red-400">
+                - {id}
+              </div>
             ))}
             {proposal.patch.updateNodes?.map((u) => (
-              <div key={u.id} className="text-amber-600 dark:text-amber-400">~ {u.id}</div>
+              <div key={u.id} className="text-amber-600 dark:text-amber-400">
+                ~ {u.id}
+              </div>
             ))}
           </div>
 

@@ -28,15 +28,28 @@ interface CollaborationPresenceProps {
 }
 
 const PRESENCE_COLORS = [
-  '#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444', '#10b981',
-  '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#84cc16',
+  '#8b5cf6',
+  '#06b6d4',
+  '#f59e0b',
+  '#ef4444',
+  '#10b981',
+  '#ec4899',
+  '#6366f1',
+  '#14b8a6',
+  '#f97316',
+  '#84cc16',
 ];
 
 const STALE_THRESHOLD_MS = 30000;
 const POLL_INTERVAL_MS = 5000;
 
 function getInitials(name: string): string {
-  return name.split(/\s+/).map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+  return name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
@@ -51,25 +64,32 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
   const [remoteUsers, setRemoteUsers] = useState<PresenceUser[]>([]);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const myColor = useMemo(
-    () => PRESENCE_COLORS[Math.abs(currentUserId.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % PRESENCE_COLORS.length],
+    () =>
+      PRESENCE_COLORS[
+        Math.abs(currentUserId.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) %
+          PRESENCE_COLORS.length
+      ],
     [currentUserId]
   );
 
-  const broadcastPresence = useCallback(async (activeCell?: { nodeId: string; colKey: string }) => {
-    if (!enabled) return;
-    try {
-      const { Api } = await import('@/services/api');
-      await (Api as any).broadcastIdeaPresence?.(ideaId, {
-        userId: currentUserId,
-        userName: currentUserName,
-        color: myColor,
-        activeCell,
-        timestamp: Date.now(),
-      });
-    } catch {
-      // silent — presence is best-effort
-    }
-  }, [currentUserId, currentUserName, enabled, ideaId, myColor]);
+  const broadcastPresence = useCallback(
+    async (activeCell?: { nodeId: string; colKey: string }) => {
+      if (!enabled) return;
+      try {
+        const { Api } = await import('@/services/api');
+        await (Api as any).broadcastIdeaPresence?.(ideaId, {
+          userId: currentUserId,
+          userName: currentUserName,
+          color: myColor,
+          activeCell,
+          timestamp: Date.now(),
+        });
+      } catch {
+        // silent — presence is best-effort
+      }
+    },
+    [currentUserId, currentUserName, enabled, ideaId, myColor]
+  );
 
   const fetchPresence = useCallback(async () => {
     if (!enabled) return;
@@ -78,8 +98,9 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
       const result = await (Api as any).getIdeaPresence?.(ideaId);
       if (Array.isArray(result?.users)) {
         const now = Date.now();
-        const active = (result.users as PresenceUser[])
-          .filter((u) => u.id !== currentUserId && now - u.lastSeen < STALE_THRESHOLD_MS);
+        const active = (result.users as PresenceUser[]).filter(
+          (u) => u.id !== currentUserId && now - u.lastSeen < STALE_THRESHOLD_MS
+        );
         setRemoteUsers(active);
         onPresenceUpdate?.(active);
       }
@@ -162,7 +183,10 @@ export const CellCursor: React.FC<{
   if (!editing) return null;
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-20 rounded" style={{ boxShadow: `inset 0 0 0 2px ${editing.color}` }}>
+    <div
+      className="absolute inset-0 pointer-events-none z-20 rounded"
+      style={{ boxShadow: `inset 0 0 0 2px ${editing.color}` }}
+    >
       <div
         className="absolute -top-4 left-0 px-1 py-0.5 rounded text-[7px] font-bold text-white whitespace-nowrap"
         style={{ backgroundColor: editing.color }}

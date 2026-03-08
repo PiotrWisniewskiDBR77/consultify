@@ -33,6 +33,7 @@ export interface IdeaWorkspaceToolbarProps {
   onToggleContext?: () => void;
   onExport?: () => void;
   votingActive?: boolean;
+  familyCounts?: Record<string, number>;
 }
 
 const TOOL_CONFIG: Array<{
@@ -56,6 +57,7 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
   onToggleContext,
   onExport,
   votingActive,
+  familyCounts,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -67,11 +69,12 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
         {TOOL_CONFIG.map((tool) => {
           const Icon = tool.icon;
           const isActive = activeTool === tool.id;
+          const hasContent = (familyCounts?.[tool.id] ?? 0) > 0;
           return (
             <button
               key={tool.id}
               onClick={() => onToolChange(tool.id)}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-semibold transition-all ${
+              className={`relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-semibold transition-all ${
                 isActive
                   ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
@@ -80,6 +83,9 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
             >
               <Icon size={14} />
               <span className="hidden sm:inline">{isPl ? tool.labelPl : tool.labelEn}</span>
+              {hasContent && !isActive && (
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-primary-500/60" />
+              )}
             </button>
           );
         })}
@@ -97,13 +103,7 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
                 active={votingActive}
               />
             )}
-            {onToggleAI && (
-              <ToolbarAction
-                icon={Sparkles}
-                label="AI"
-                onClick={onToggleAI}
-              />
-            )}
+            {onToggleAI && <ToolbarAction icon={Sparkles} label="AI" onClick={onToggleAI} />}
             {onToggleContext && (
               <ToolbarAction
                 icon={Brain}

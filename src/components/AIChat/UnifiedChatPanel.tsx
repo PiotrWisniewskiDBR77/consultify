@@ -33,6 +33,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import type {
+  IdeaWorkspaceCreationPayload,
+  IdeaWorkspaceSeedIntent,
+} from '@/components/MyWork/ideaEntryTypes';
 import { useFeatureFlagsContext } from '@/contexts/FeatureFlagsContext';
 import { isValidLanguage, normalizeLanguageCode, type SupportedLanguage } from '@/i18n';
 
@@ -59,6 +63,10 @@ import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { cleanTextForSpeech } from '../../utils/textCleaning';
 import { isRtlLanguage } from '../../utils/textDirection';
 import { ChatSmartSuggestions, type ChatSuggestion } from '../Chat/ChatSmartSuggestions';
+import {
+  isSupportedChatAttachment,
+  SUPPORTED_CHAT_ATTACHMENT_LABEL,
+} from './chatAttachmentSupport';
 import { ChatSignalsPanel } from './ChatSignalsPanel';
 import { ChatSlidingPanel } from './ChatSlidingPanel';
 import { ContextBadge } from './ContextBadge';
@@ -66,10 +74,6 @@ import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
-import {
-  SUPPORTED_CHAT_ATTACHMENT_LABEL,
-  isSupportedChatAttachment,
-} from './chatAttachmentSupport';
 
 // ============================================================================
 // Types
@@ -512,6 +516,61 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       const autoTriggered = options?.autoTriggered === true;
 
       try {
+        if (navigateToMyWork) {
+          const creationPayload: IdeaWorkspaceCreationPayload = {
+            title,
+            body: trimmed,
+            tags: [],
+            sourceType: 'chat',
+            sourceConversationId: activeConversationId,
+            sourceMessageId: messageId,
+          };
+          const seedIntent: IdeaWorkspaceSeedIntent = {
+            startMode: 'describe_with_ai',
+            seedText: trimmed,
+            preferredSystem: 'mindmap',
+            templateId: null,
+            popularStartId: null,
+            popularStartLabel: null,
+            structuredBrief: null,
+            source: 'chat_handoff',
+          };
+          const draftId = `new-idea-${Date.now()}`;
+
+          trackFunnelEvent('my_idea_saved', {
+            source: autoTriggered ? 'chat_auto' : 'chat',
+            ideaId: draftId,
+            messageId,
+            handoff: true,
+          });
+          toast.success(
+            autoTriggered
+              ? t('myWork.ideas.savedFromChatToast', 'Saved from chat to My Ideas')
+              : t('myWork.ideas.sentToWorkspaceToast', 'Opened in Ideas workspace')
+          );
+
+          try {
+            const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
+            setMyWorkIntent?.({
+              tab: 'ideas',
+              open: {
+                type: 'idea',
+                id: draftId,
+                name: title,
+                data: {
+                  isNew: true,
+                  creationPayload,
+                  seedIntent,
+                },
+              },
+            });
+            setCurrentView?.(AppView.MY_WORK);
+          } catch {
+            // ignore
+          }
+          return;
+        }
+
         const created = await Api.createMyIdea({
           title,
           body: trimmed,

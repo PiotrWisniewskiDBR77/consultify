@@ -49,16 +49,27 @@ const GROUPS: ShortcutGroup[] = [
       { keys: ['/'], labelEn: 'Open AI Assistant', labelPl: 'Otwórz Asystenta AI' },
       { keys: ['?'], labelEn: 'Show keyboard shortcuts', labelPl: 'Pokaż skróty klawiszowe' },
       { keys: ['Ctrl', 'Shift', 'K'], labelEn: 'Switch to Kanban', labelPl: 'Przełącz na Kanban' },
-      { keys: ['Ctrl', 'Shift', 'S'], labelEn: 'Switch to Sticky Notes', labelPl: 'Przełącz na Karteczki' },
+      {
+        keys: ['Ctrl', 'Shift', 'S'],
+        labelEn: 'Switch to Sticky Notes',
+        labelPl: 'Przełącz na Karteczki',
+      },
       { keys: ['Ctrl', 'Shift', 'M'], labelEn: 'Switch to Matrix', labelPl: 'Przełącz na Matrix' },
       { keys: ['Ctrl', 'Shift', 'T'], labelEn: 'Switch to Table', labelPl: 'Przełącz na Tabelę' },
       { keys: ['Ctrl', 'Shift', 'F'], labelEn: 'Toggle filters', labelPl: 'Przełącz filtry' },
-      { keys: ['Ctrl', 'Shift', 'D'], labelEn: 'Toggle summary dashboard', labelPl: 'Przełącz podsumowanie' },
+      {
+        keys: ['Ctrl', 'Shift', 'D'],
+        labelEn: 'Toggle summary dashboard',
+        labelPl: 'Przełącz podsumowanie',
+      },
     ],
   },
 ];
 
-export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({ open, onClose }) => {
+export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({
+  open,
+  onClose,
+}) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
@@ -74,7 +85,10 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({ 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20 backdrop-blur-[2px]" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
+      onClick={onClose}
+    >
       <div
         className="w-[480px] max-w-[90vw] max-h-[80vh] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -86,7 +100,10 @@ export const KeyboardShortcutsPanel: React.FC<KeyboardShortcutsPanelProps> = ({ 
             {isPl ? 'Skróty klawiszowe' : 'Keyboard Shortcuts'}
           </span>
           <div className="flex-1" />
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={14} className="text-slate-400" />
           </button>
         </div>

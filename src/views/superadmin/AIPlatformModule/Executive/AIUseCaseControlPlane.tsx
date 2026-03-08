@@ -16,12 +16,21 @@ import { Api } from '@/services/api';
 
 type UseCasePurpose = {
   purpose: string;
+  entrypoint?: string;
   assignmentCount: number;
   eligibleAssignmentCount?: number;
   status: 'healthy' | 'degraded' | 'critical' | 'missing' | 'unknown';
   policyAllowed?: boolean;
   enabledForOrg?: boolean;
   residencyStatus?: 'allowed' | 'review' | 'restricted' | string;
+  releaseBundleId?: string | null;
+  releaseStatus?: 'published' | 'ready' | 'blocked' | 'draft' | 'missing' | string;
+  promptKey?: string | null;
+  promptVersion?: string | null;
+  policyVersion?: string | null;
+  completenessStatus?: 'ready' | 'partial' | 'blocked' | string;
+  completenessScore?: number;
+  blockers?: string[];
   primary: null | {
     provider: string;
     name: string;
@@ -46,7 +55,12 @@ type UseCaseCard = {
   label: string;
   description: string;
   businessOwner: string;
+  entrypoint?: string;
+  uxStatus?: 'ready' | 'partial' | 'blocked' | string;
   status: 'healthy' | 'degraded' | 'critical' | 'unknown';
+  completenessStatus?: 'ready' | 'partial' | 'blocked' | string;
+  completenessScore?: number;
+  releaseCoveragePct?: number;
   coveragePct: number;
   healthyPurposes: number;
   degradedPurposes: number;
@@ -91,12 +105,17 @@ export const AIUseCaseControlPlane: React.FC = () => {
       sharePct: number;
     }>;
   } | null>(null);
+  const [operatorOps, setOperatorOps] = useState<any>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await Api.getLLMUseCaseOverview();
+      const [result, operator] = await Promise.all([
+        Api.getLLMUseCaseOverview(),
+        Api.getAIOperatorOps().catch(() => null),
+      ]);
       setOverview(result);
+      setOperatorOps(operator);
     } finally {
       setLoading(false);
     }
@@ -174,6 +193,86 @@ export const AIUseCaseControlPlane: React.FC = () => {
           icon={Users}
         />
       </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <MetricCard
+          label={t('aiPlatform.controlPlane.kpi.ready', 'Ready')}
+          value={String(summary.readinessReady || 0)}
+          icon={CheckCircle2}
+        />
+        <MetricCard
+          label={t('aiPlatform.controlPlane.kpi.partial', 'Partial')}
+          value={String(summary.readinessPartial || 0)}
+          icon={AlertTriangle}
+        />
+        <MetricCard
+          label={t('aiPlatform.controlPlane.kpi.blocked', 'Blocked')}
+          value={String(summary.readinessBlocked || 0)}
+          icon={ShieldAlert}
+        />
+      </div>
+
+      {operatorOps ? (
+        <Card className="p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                {t('aiPlatform.controlPlane.operator.title', 'AI Operator readiness')}
+              </h3>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                {t(
+                  'aiPlatform.controlPlane.operator.subtitle',
+                  'Cross-workstream readiness for relationship, execution, communication, and value.'
+                )}
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-semibold text-slate-900 dark:text-white">
+                {operatorOps.readinessScore || 0}%
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('aiPlatform.controlPlane.operator.autonomy', 'Autonomy')} {operatorOps.autonomyScore || 0}%
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <MetricCard
+              label={t('aiPlatform.controlPlane.operator.release', 'Release trace')}
+              value={`${operatorOps.guardrails?.releaseCoveragePct || 0}%`}
+              icon={CheckCircle2}
+            />
+            <MetricCard
+              label={t('aiPlatform.controlPlane.operator.prompt', 'Prompt trace')}
+              value={`${operatorOps.guardrails?.promptTracePct || 0}%`}
+              icon={AlertTriangle}
+            />
+            <MetricCard
+              label={t('aiPlatform.controlPlane.operator.policy', 'Policy trace')}
+              value={`${operatorOps.guardrails?.policyTracePct || 0}%`}
+              icon={ShieldAlert}
+            />
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(operatorOps.workstreams || []).map((item: any) => (
+              <span
+                key={item.key}
+                className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${
+                  item.status === 'ready'
+                    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                    : item.status === 'partial'
+                      ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                      : 'bg-rose-500/10 text-rose-700 dark:text-rose-300'
+                }`}
+              >
+                <span>{item.label}</span>
+                <span>{item.coveragePct}%</span>
+              </span>
+            ))}
+          </div>
+        </Card>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Card className="p-5">
@@ -269,10 +368,20 @@ export const AIUseCaseControlPlane: React.FC = () => {
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   {t('aiPlatform.controlPlane.owner', 'Owner')}: {useCase.businessOwner}
                 </p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {t('aiPlatform.controlPlane.entrypoint', 'Entrypoint')}: {useCase.entrypoint || 'n/a'}
+                </p>
               </div>
               <div className="text-right text-xs text-slate-500 dark:text-slate-400">
                 <div>
                   {t('aiPlatform.controlPlane.coverage', 'Coverage')}: {useCase.coveragePct}%
+                </div>
+                <div>
+                  {t('aiPlatform.controlPlane.releaseCoverage', 'Release')}: {useCase.releaseCoveragePct || 0}%
+                </div>
+                <div>
+                  {t('aiPlatform.controlPlane.completeness', 'Completeness')}:{' '}
+                  {useCase.completenessScore || 0}%
                 </div>
                 <div>
                   {t('aiPlatform.controlPlane.requests30d', 'Requests 30d')}: {useCase.requests30d}
@@ -309,6 +418,19 @@ export const AIUseCaseControlPlane: React.FC = () => {
                   {useCase.criticalPurposes}
                 </div>
               </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span
+                className={`rounded-full px-2 py-1 text-[10px] font-medium ${STATUS_STYLES[useCase.completenessStatus || 'unknown'] || STATUS_STYLES.unknown}`}
+              >
+                {t('aiPlatform.controlPlane.readiness', 'Readiness')}: {useCase.completenessStatus || 'unknown'}
+              </span>
+              <span
+                className={`rounded-full px-2 py-1 text-[10px] font-medium ${STATUS_STYLES[useCase.uxStatus || 'unknown'] || STATUS_STYLES.unknown}`}
+              >
+                {t('aiPlatform.controlPlane.uxStatus', 'UX')}: {useCase.uxStatus || 'unknown'}
+              </span>
             </div>
 
             <div className="mt-4 space-y-3">
@@ -356,6 +478,14 @@ export const AIUseCaseControlPlane: React.FC = () => {
                       {t('aiPlatform.controlPlane.cost', 'Cost')}:{' '}
                       {formatUsd(purpose.usage.costUsd30d || 0)}
                     </span>
+                    <span>
+                      {t('aiPlatform.controlPlane.release', 'Release')}:{' '}
+                      {purpose.releaseStatus || 'missing'}
+                    </span>
+                    <span>
+                      {t('aiPlatform.controlPlane.trace', 'Trace')}:{' '}
+                      {purpose.promptKey ? `${purpose.promptKey}@${purpose.promptVersion || 'latest'}` : 'missing'}
+                    </span>
                   </div>
 
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -385,12 +515,23 @@ export const AIUseCaseControlPlane: React.FC = () => {
                       {t('aiPlatform.controlPlane.residency', 'Residency')}:{' '}
                       {purpose.residencyStatus || 'allowed'}
                     </span>
+                    <span
+                      className={`rounded-full px-2 py-1 text-[10px] font-medium ${STATUS_STYLES[purpose.completenessStatus || 'unknown'] || STATUS_STYLES.unknown}`}
+                    >
+                      {t('aiPlatform.controlPlane.readiness', 'Readiness')}:{' '}
+                      {purpose.completenessStatus || 'unknown'}
+                    </span>
                   </div>
 
                   {purpose.fallbacks.length > 0 ? (
                     <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
                       {t('aiPlatform.controlPlane.fallbacks', 'Fallbacks')}:{' '}
                       {purpose.fallbacks.map((fallback) => fallback.modelId).join(' -> ')}
+                    </div>
+                  ) : null}
+                  {purpose.blockers && purpose.blockers.length > 0 ? (
+                    <div className="mt-2 text-[11px] text-amber-700 dark:text-amber-300">
+                      {t('aiPlatform.controlPlane.blockers', 'Blockers')}: {purpose.blockers.join(', ')}
                     </div>
                   ) : null}
                 </div>

@@ -61,6 +61,7 @@ import { AITopicsPanel } from './notebook/AITopicsPanel';
 import { ConvertChecklistModal } from './notebook/ConvertChecklistModal';
 import {
   CalloutNode,
+  EmbeddedRefNode,
   DetailsContentNode,
   DetailsNode,
   DetailsSummaryNode,
@@ -90,6 +91,38 @@ interface NotebookContentProps {
   refreshTrigger?: number;
   openPageId?: string | null;
 }
+
+type NotebookAIProposal = {
+  id: string;
+  pageId: string;
+  proposalType: 'insert' | 'replace' | 'append';
+  blockContent: Record<string, any>;
+  rationale?: string;
+  status: 'proposed' | 'accepted' | 'rejected';
+  createdAt?: string;
+};
+
+type NotebookHeading = {
+  level: number;
+  text: string;
+  pos: number;
+};
+
+type EmbeddedRefPreview = {
+  artifactType: string;
+  artifactId: string;
+  title: string;
+  status?: string;
+  snippet?: string;
+  updatedAt?: string;
+};
+
+type OutlineDraft = {
+  target: 'report' | 'presentation' | 'assessment';
+  title: string;
+  outline: string;
+  assessmentType: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
+};
 
 const MATURITY_CONFIG: Record<
   NotebookMaturity,
@@ -180,6 +213,80 @@ const extractText = (json: any): string => {
   } catch {
     return '';
   }
+};
+
+const extractHeadings = (json: any): NotebookHeading[] => {
+  const headings: NotebookHeading[] = [];
+  let cursor = 1;
+  try {
+    const walk = (node: any) => {
+      if (!node || typeof node !== 'object') return;
+      const nodeSize = typeof node.nodeSize === 'number' ? node.nodeSize : 1;
+      if (node.type === 'heading') {
+        const text = extractText(node);
+        if (text.trim()) {
+          headings.push({
+            level: Number(node.attrs?.level || 1),
+            text: text.trim(),
+            pos: cursor,
+          });
+        }
+      }
+      if (Array.isArray(node.content)) {
+        const start = cursor;
+        cursor += 1;
+        for (const child of node.content) {
+          walk(child);
+        }
+        cursor = Math.max(cursor, start + nodeSize);
+      } else {
+        cursor += nodeSize;
+      }
+    };
+    walk(json);
+  } catch {
+    return [];
+  }
+  return headings.slice(0, 24);
+};
+
+const buildOutlineDraft = (
+  page: NotebookPage,
+  target: OutlineDraft['target'],
+  isPolish: boolean
+): string => {
+  const headings = extractHeadings(page.contentJson);
+  if (headings.length > 0) {
+    return headings
+      .map((heading) => `${'  '.repeat(Math.max(0, heading.level - 1))}- ${heading.text}`)
+      .join('\n');
+  }
+
+  const lines = (page.contentText || '')
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+
+  if (lines.length > 0) {
+    return lines.map((line) => `- ${line}`).join('\n');
+  }
+
+  if (target === 'presentation') {
+    return isPolish
+      ? ['- Kontekst i cel', '- Najważniejsze obserwacje', '- Implikacje biznesowe', '- Następne kroki'].join('\n')
+      : ['- Context and goal', '- Key observations', '- Business implications', '- Next steps'].join('\n');
+  }
+
+  if (target === 'assessment') {
+    return isPolish
+      ? ['- Zakres oceny', '- Główne pytania', '- Evidence do zebrania', '- Obszary ryzyka'].join('\n')
+      : ['- Assessment scope', '- Core questions', '- Evidence to collect', '- Risk areas'].join('\n');
+  }
+
+  return isPolish
+    ? ['- Executive summary', '- Analiza problemu', '- Opcje działania', '- Rekomendacje'].join('\n')
+    : ['- Executive summary', '- Problem analysis', '- Options', '- Recommendations'].join('\n');
 };
 
 /* ------------------------------------------------------------------ */
@@ -513,10 +620,17 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
 
   // AI inline response
   const [aiCommand, setAiCommand] = useState<AICommandType | null>(null);
+  const [pendingAIProposals, setPendingAIProposals] = useState<NotebookAIProposal[]>([]);
+  const [selectedEmbedPreview, setSelectedEmbedPreview] = useState<EmbeddedRefPreview | null>(null);
+  const [outlineDraft, setOutlineDraft] = useState<OutlineDraft | null>(null);
 
   // Auto-summary
   const summaryTimer = useRef<number | null>(null);
   const summaryAbortRef = useRef<AbortController | null>(null);
+  const headingOutline = useMemo(
+    () => (activePage?.contentJson ? extractHeadings(activePage.contentJson) : []),
+    [activePage?.contentJson, activePage?.id]
+  );
 
   const editor = useEditor({
     extensions: [
@@ -532,6 +646,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       UnderlineExt,
       Highlight.configure({ multicolor: false }),
       Link.configure({ openOnClick: false, HTMLAttributes: { class: 'nb-link' } }),
+      EmbeddedRefNode,
       CalloutNode,
       DetailsNode,
       DetailsSummaryNode,
@@ -546,6 +661,20 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
       attributes: {
         class:
           'prose prose-sm max-w-none dark:prose-invert focus:outline-none min-h-[360px] px-3 py-3',
+      },
+      handleClick: (_view, _pos, event) => {
+        const target = event.target as HTMLElement | null;
+        const chip = target?.closest?.('[data-embedded-ref]') as HTMLElement | null;
+        if (!chip) return false;
+        setSelectedEmbedPreview({
+          artifactType: chip.getAttribute('data-artifact-type') || 'unknown',
+          artifactId: chip.getAttribute('data-artifact-id') || '',
+          title: chip.getAttribute('data-title') || chip.textContent || '',
+          status: chip.getAttribute('data-status') || undefined,
+          snippet: chip.getAttribute('data-snippet') || undefined,
+          updatedAt: chip.getAttribute('data-updated-at') || undefined,
+        });
+        return true;
       },
     },
     onTransaction({ editor: ed }) {
@@ -1115,6 +1244,80 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     }
   };
 
+  const refreshAIProposals = useCallback(async (pageId: string) => {
+    try {
+      const result = await Api.notebookGetAIProposals(pageId, { status: 'proposed', limit: 20 });
+      const proposals = Array.isArray((result as any)?.proposals)
+        ? ((result as any).proposals as NotebookAIProposal[])
+        : Array.isArray(result)
+          ? (result as NotebookAIProposal[])
+          : [];
+      setPendingAIProposals(proposals);
+    } catch {
+      setPendingAIProposals([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!activePage?.id) {
+      setPendingAIProposals([]);
+      return;
+    }
+    setSelectedEmbedPreview(null);
+    void refreshAIProposals(activePage.id);
+  }, [activePage?.id, refreshAIProposals]);
+
+  const submitNotebookAIProposal = useCallback(
+    async (text: string, rationale: string, label?: string) => {
+      if (!activePage) return;
+      const titleLabel = label || (isPolish ? 'Komentarz AI' : 'AI comment');
+      const paragraphs = text
+        .split(/\n\n+/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+      if (paragraphs.length === 0) return;
+      await Api.notebookCreateAIProposal(activePage.id, {
+        proposalType: 'append',
+        rationale,
+        blockContent: {
+          type: 'callout',
+          attrs: { variant: 'purple' },
+          content: [
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: `✨ ${titleLabel}` }],
+            },
+            ...paragraphs.map((paragraph) => ({
+              type: 'paragraph',
+              content: [{ type: 'text', text: paragraph }],
+            })),
+          ],
+        },
+      });
+      await refreshAIProposals(activePage.id);
+      toast.success(isPolish ? 'Propozycja AI gotowa do review' : 'AI proposal ready for review');
+    },
+    [activePage, isPolish, refreshAIProposals]
+  );
+
+  const resolveNotebookAIProposal = useCallback(
+    async (proposalId: string, action: 'accepted' | 'rejected') => {
+      if (!activePage) return;
+      await Api.notebookResolveAIProposal(proposalId, action);
+      await Promise.all([refreshAIProposals(activePage.id), fetchPages()]);
+      toast.success(
+        action === 'accepted'
+          ? isPolish
+            ? 'Propozycja została zaakceptowana'
+            : 'Proposal accepted'
+          : isPolish
+            ? 'Propozycja została odrzucona'
+            : 'Proposal rejected'
+      );
+    },
+    [activePage, fetchPages, isPolish, refreshAIProposals]
+  );
+
   const handleConvertFromPanel = useCallback(
     async (target: ConvertTarget) => {
       if (!activePage) return;
@@ -1128,7 +1331,15 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
         return;
       }
 
-      if (target === 'assessment') return;
+      if (target === 'assessment' || target === 'report' || target === 'presentation') {
+        setOutlineDraft({
+          target,
+          title: activePage.title || (isPolish ? 'Nowy artefakt' : 'New deliverable'),
+          outline: buildOutlineDraft(activePage, target, isPolish),
+          assessmentType: 'DRD',
+        });
+        return;
+      }
 
       const apiTarget = target as 'initiative' | 'task' | 'decision' | 'report' | 'presentation';
       try {
@@ -1192,6 +1403,53 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
     },
     [activePage, isPolish, emitMyWorkEvent]
   );
+
+  const handleConfirmOutlineDraft = useCallback(async () => {
+    if (!activePage || !outlineDraft) return;
+    const target = outlineDraft.target;
+    try {
+      const result = await Api.convertNotebookPage(activePage.id, target, {
+        title: outlineDraft.title,
+        description: outlineDraft.outline,
+        assessmentType: outlineDraft.assessmentType,
+      });
+      const label =
+        target === 'report'
+          ? isPolish
+            ? 'raport'
+            : 'report'
+          : target === 'presentation'
+            ? isPolish
+              ? 'prezentację'
+              : 'presentation'
+            : isPolish
+              ? 'ocenę'
+              : 'assessment';
+      toast.success(
+        isPolish ? `Utworzono ${label}: ${result.title}` : `Created ${target}: ${result.title}`
+      );
+      emitMyWorkEvent({
+        type: 'item:converted',
+        entityType: 'notebook',
+        entityId: activePage.id,
+        meta: { target },
+      });
+      setPages((prev) =>
+        prev.map((page) =>
+          page.id === activePage.id
+            ? {
+                ...page,
+                status: 'converted' as const,
+                convertedTo: [...(page.convertedTo || []), { type: target, id: result.id }],
+              }
+            : page
+        )
+      );
+      setOutlineDraft(null);
+    } catch (err: any) {
+      toast.error(err?.message || (isPolish ? 'Konwersja nie powiodła się' : 'Conversion failed'));
+    }
+  }, [activePage, emitMyWorkEvent, isPolish, outlineDraft]);
 
   // Persist editor changes
   useEffect(() => {
@@ -1668,9 +1926,11 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 <div className="sr-only" aria-hidden="true">
                   <AICommandPrompt
                     editor={editor}
+                    pageId={activePage.id}
                     noteTitle={title}
                     noteContent={activePage.contentText || extractText(activePage.contentJson)}
                     noteTags={pageTags}
+                    onProposalCreated={() => void refreshAIProposals(activePage.id)}
                     inputRef={aiCommandPromptInputRef}
                     className="max-w-2xl"
                   />
@@ -1884,8 +2144,129 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                       >
                         {isPolish ? 'Do prezentacji' : 'To presentation'}
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleConvertFromPanel('assessment')}
+                        className="rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-200 dark:hover:bg-indigo-900/30"
+                      >
+                        {isPolish ? 'Do oceny' : 'To assessment'}
+                      </button>
                     </div>
                   </div>
+
+                  {headingOutline.length > 0 && (
+                    <div className="mb-4 rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
+                      <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Mini outline' : 'Mini outline'}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {headingOutline.map((heading, index) => (
+                          <button
+                            key={`${heading.level}-${heading.text}-${index}`}
+                            type="button"
+                            onClick={() => {
+                              if (!editor) return;
+                              let selectionPos = 1;
+                              editor.state.doc.descendants((node, pos) => {
+                                if (
+                                  node.type.name === 'heading' &&
+                                  Number(node.attrs?.level || 1) === heading.level &&
+                                  extractText(node.toJSON()) === heading.text
+                                ) {
+                                  selectionPos = pos + 1;
+                                  return false;
+                                }
+                                return true;
+                              });
+                              editor.chain().focus().setTextSelection(selectionPos).run();
+                              editor.view.dispatch(editor.state.tr.scrollIntoView());
+                            }}
+                            className="rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-100 dark:bg-white/[0.06] dark:text-slate-300 dark:hover:bg-white/[0.1]"
+                          >
+                            {`H${heading.level} ${heading.text}`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {pendingAIProposals.length > 0 && (
+                    <div className="mb-4 rounded-xl border border-violet-200/70 bg-violet-50/80 px-3 py-3 dark:border-violet-500/20 dark:bg-violet-500/10">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-xs font-semibold text-violet-700 dark:text-violet-300">
+                            {isPolish ? 'AI propose -> accept' : 'AI propose -> accept'}
+                          </div>
+                          <div className="text-[11px] text-violet-600 dark:text-violet-200/80">
+                            {isPolish
+                              ? `${pendingAIProposals.length} propozycje czekają na review`
+                              : `${pendingAIProposals.length} proposals waiting for review`}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {pendingAIProposals.slice(0, 3).map((proposal) => (
+                          <div
+                            key={proposal.id}
+                            className="rounded-lg border border-violet-200/80 bg-white/80 px-3 py-2 dark:border-violet-400/20 dark:bg-navy-950/40"
+                          >
+                            <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                              {proposal.rationale || (isPolish ? 'Propozycja AI' : 'AI proposal')}
+                            </div>
+                            <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">
+                              {extractText(proposal.blockContent)}
+                            </div>
+                            <div className="mt-2 flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => void resolveNotebookAIProposal(proposal.id, 'accepted')}
+                                className="rounded-md bg-violet-600 px-2.5 py-1 text-[11px] font-medium text-white transition-colors hover:bg-violet-500"
+                              >
+                                {isPolish ? 'Akceptuj' : 'Accept'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void resolveNotebookAIProposal(proposal.id, 'rejected')}
+                                className="rounded-md bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:bg-white/[0.06] dark:text-slate-200 dark:hover:bg-white/[0.1]"
+                              >
+                                {isPolish ? 'Odrzuć' : 'Reject'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedEmbedPreview && (
+                    <div className="mb-4 rounded-xl border border-amber-200/70 bg-amber-50/80 px-3 py-3 dark:border-amber-500/20 dark:bg-amber-500/10">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                            {selectedEmbedPreview.title}
+                          </div>
+                          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                            {selectedEmbedPreview.artifactType}
+                            {selectedEmbedPreview.status
+                              ? ` · ${selectedEmbedPreview.status}`
+                              : ''}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedEmbedPreview(null)}
+                          className="rounded-md p-1 text-slate-400 transition-colors hover:bg-white/70 hover:text-slate-600 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                      {selectedEmbedPreview.snippet ? (
+                        <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">
+                          {selectedEmbedPreview.snippet}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
 
                   {/* Rich editor */}
                   <EditorContent editor={editor} />
@@ -1894,20 +2275,38 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                 {/* AI inline response */}
                 {aiCommand && activePage && (
                   <AIInlineResponse
+                    pageId={activePage.id}
                     commandType={aiCommand}
                     noteContent={activePage.contentText || extractText(activePage.contentJson)}
                     noteTitle={title}
                     onInsert={(text) => {
-                      if (editor) {
-                        editor
-                          .chain()
-                          .focus()
-                          .insertContent({
-                            type: 'paragraph',
-                            content: [{ type: 'text', text }],
-                          })
-                          .run();
-                      }
+                      void submitNotebookAIProposal(
+                        text,
+                        aiCommand === 'ask'
+                          ? isPolish
+                            ? 'Odpowiedź AI do notatki'
+                            : 'AI answer for note'
+                          : aiCommand === 'expand'
+                            ? isPolish
+                              ? 'Rozwinięcie AI'
+                              : 'AI expansion'
+                            : aiCommand === 'challenge'
+                              ? isPolish
+                                ? 'Pytania krytyczne AI'
+                                : 'AI challenge questions'
+                              : isPolish
+                                ? 'Plan działań AI'
+                                : 'AI action plan',
+                        aiCommand === 'ask'
+                          ? (isPolish ? 'Odpowiedź AI' : 'AI answer')
+                          : aiCommand === 'expand'
+                            ? (isPolish ? 'Rozwinięcie AI' : 'AI expansion')
+                            : aiCommand === 'challenge'
+                              ? (isPolish ? 'Pytania krytyczne AI' : 'AI challenge')
+                              : isPolish
+                                ? 'Plan działań AI'
+                                : 'AI action plan'
+                      );
                       setAiCommand(null);
                     }}
                     onDismiss={() => setAiCommand(null)}
@@ -2033,6 +2432,107 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           noteTitle={activePage.title}
           onConverted={() => fetchPages()}
         />
+      )}
+
+      {outlineDraft && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/40 px-4">
+          <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-white/[0.08] dark:bg-navy-950">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {isPolish ? 'Outline first' : 'Outline first'}
+                </div>
+                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Przejrzyj i popraw outline przed utworzeniem artefaktu.'
+                    : 'Review and edit the outline before creating the deliverable.'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOutlineDraft(null)}
+                className="rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
+                  {isPolish ? 'Tytuł' : 'Title'}
+                </label>
+                <input
+                  value={outlineDraft.title}
+                  onChange={(e) =>
+                    setOutlineDraft((prev) => (prev ? { ...prev, title: e.target.value } : prev))
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-400 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-white"
+                />
+              </div>
+
+              {outlineDraft.target === 'assessment' && (
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
+                    {isPolish ? 'Typ oceny' : 'Assessment type'}
+                  </label>
+                  <select
+                    value={outlineDraft.assessmentType}
+                    onChange={(e) =>
+                      setOutlineDraft((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              assessmentType: e.target.value as OutlineDraft['assessmentType'],
+                            }
+                          : prev
+                      )
+                    }
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-400 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-white"
+                  >
+                    {['DRD', 'SIRI', 'ADMA', 'CMMI', 'LEAN'].map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300">
+                  {isPolish ? 'Outline' : 'Outline'}
+                </label>
+                <textarea
+                  value={outlineDraft.outline}
+                  onChange={(e) =>
+                    setOutlineDraft((prev) => (prev ? { ...prev, outline: e.target.value } : prev))
+                  }
+                  rows={12}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-indigo-400 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setOutlineDraft(null)}
+                className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
+              >
+                {isPolish ? 'Anuluj' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleConfirmOutlineDraft()}
+                disabled={!outlineDraft.title.trim() || !outlineDraft.outline.trim()}
+                className="rounded-xl bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isPolish ? 'Utwórz artefakt' : 'Create deliverable'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

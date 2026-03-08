@@ -15,7 +15,12 @@
 import logger from '../utils/Logger.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
-export type NotificationPriority = 'low' | 'normal' | 'high' | 'critical';
+function orgScopeClause(organizationId?: string): { clause: string; params: string[] } {
+  if (!organizationId) return { clause: '', params: [] };
+  return { clause: ' AND organization_id = ?', params: [organizationId] };
+}
+
+export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent' | 'critical';
 
 export interface SendNotificationInput {
   userId: string;
@@ -23,11 +28,19 @@ export interface SendNotificationInput {
   type: string;
   title: string;
   body: string;
+  message?: string;
   entityType?: string;
   entityId?: string;
+  relatedObjectType?: string;
+  relatedObjectId?: string;
   actorName?: string;
+  actorId?: string;
   actionUrl?: string;
   priority?: NotificationPriority;
+  severity?: string;
+  isActionable?: boolean;
+  metadata?: Record<string, unknown>;
+  data?: Record<string, unknown>;
 }
 
 export interface Notification {
@@ -62,10 +75,26 @@ export const NotificationPreferences = undefined;
 const makeId = (prefix: string) =>
   `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 
+const normalizePriority = (
+  priority?: NotificationPriority | string,
+  severity?: string
+): NotificationPriority => {
+  const raw = String(priority || severity || 'normal').trim().toLowerCase();
+  if (raw === 'urgent') return 'urgent';
+  if (raw === 'critical') return 'critical';
+  if (raw === 'high') return 'high';
+  if (raw === 'low') return 'low';
+  return 'normal';
+};
+
 export async function send(input: SendNotificationInput): Promise<string> {
   const id = makeId('notif');
   const now = new Date().toISOString();
-  const priority: NotificationPriority = input.priority || 'normal';
+  const priority = normalizePriority(input.priority, input.severity);
+  const body = input.body || input.message || input.title;
+  const actorName = input.actorName || input.actorId || null;
+  const entityType = input.entityType || input.relatedObjectType || null;
+  const entityId = input.entityId || input.relatedObjectId || null;
 
   try {
     await DbPromise.run(
@@ -82,10 +111,10 @@ export async function send(input: SendNotificationInput): Promise<string> {
         input.organizationId,
         input.type,
         input.title,
-        input.body,
-        input.entityType || null,
-        input.entityId || null,
-        input.actorName || null,
+        body,
+        entityType,
+        entityId,
+        actorName,
         input.actionUrl || null,
         priority,
         now,
@@ -98,16 +127,32 @@ export async function send(input: SendNotificationInput): Promise<string> {
   return id;
 }
 
-export async function getNotifications(params: {
-  userId: string;
-  organizationId: string;
-  limit?: number;
-  offset?: number;
-  unreadOnly?: boolean;
-}): Promise<Notification[]> {
-  const limit = Math.min(params.limit ?? 50, 200);
-  const offset = Math.max(params.offset ?? 0, 0);
+export async function getNotifications(
+  params:
+    | {
+        userId: string;
+        organizationId?: string;
+        limit?: number;
+        offset?: number;
+        unreadOnly?: boolean;
+      }
+    | string,
+  options?: {
+    organizationId?: string;
+    limit?: number;
+    offset?: number;
+    unreadOnly?: boolean;
+    projectId?: string;
+  }
+): Promise<Notification[]> {
+  const normalized =
+    typeof params === 'string'
+      ? { userId: params, organizationId: options?.organizationId, ...options }
+      : params;
+  const limit = Math.min(normalized.limit ?? 50, 200);
+  const offset = Math.max(normalized.offset ?? 0, 0);
   const readTruthy = "('1','true','t','TRUE','T')";
+  const orgScope = orgScopeClause(normalized.organizationId);
 
   try {
     const rows = await DbPromise.all<any>(
@@ -132,12 +177,12 @@ export async function getNotifications(params: {
           read_at as readAt,
           dismissed_at as dismissedAt
         FROM notifications
-        WHERE user_id = ? AND organization_id = ?
-          ${params.unreadOnly ? `AND COALESCE(is_read::text, '0') NOT IN ${readTruthy}` : ''}
+        WHERE user_id = ?${orgScope.clause}
+          ${normalized.unreadOnly ? `AND COALESCE(is_read::text, '0') NOT IN ${readTruthy}` : ''}
         ORDER BY created_at DESC
         LIMIT ? OFFSET ?
       `,
-      [params.userId, params.organizationId, limit, offset]
+      [normalized.userId, ...orgScope.params, limit, offset]
     );
     return rows || [];
   } catch (err) {
@@ -168,24 +213,35 @@ export async function getUnreadCount(params: {
   }
 }
 
-export async function markAsRead(params: {
-  id: string;
-  userId: string;
-  organizationId: string;
-}): Promise<boolean> {
+export async function markAsRead(
+  params:
+    | {
+        id: string;
+        userId: string;
+        organizationId?: string;
+      }
+    | string,
+  userIdArg?: string,
+  organizationIdArg?: string
+): Promise<boolean> {
+  const normalized =
+    typeof params === 'string'
+      ? { id: params, userId: userIdArg || '', organizationId: organizationIdArg }
+      : params;
   try {
     const now = new Date().toISOString();
+    const orgScope = orgScopeClause(normalized.organizationId);
     try {
       // Preferred: boolean schema
       await DbPromise.run(
-        `UPDATE notifications SET is_read = true, read_at = ? WHERE id = ? AND user_id = ? AND organization_id = ?`,
-        [now, params.id, params.userId, params.organizationId]
+        `UPDATE notifications SET is_read = true, read_at = ? WHERE id = ? AND user_id = ?${orgScope.clause}`,
+        [now, normalized.id, normalized.userId, ...orgScope.params]
       );
     } catch {
       // Back-compat: integer schema (0/1)
       await DbPromise.run(
-        `UPDATE notifications SET is_read = 1, read_at = ? WHERE id = ? AND user_id = ? AND organization_id = ?`,
-        [now, params.id, params.userId, params.organizationId]
+        `UPDATE notifications SET is_read = 1, read_at = ? WHERE id = ? AND user_id = ?${orgScope.clause}`,
+        [now, normalized.id, normalized.userId, ...orgScope.params]
       );
     }
     return true;
@@ -195,21 +251,31 @@ export async function markAsRead(params: {
   }
 }
 
-export async function markAllAsRead(params: {
-  userId: string;
-  organizationId: string;
-}): Promise<boolean> {
+export async function markAllAsRead(
+  params:
+    | {
+        userId: string;
+        organizationId?: string;
+      }
+    | string,
+  organizationIdArg?: string
+): Promise<boolean | number> {
+  const normalized =
+    typeof params === 'string'
+      ? { userId: params, organizationId: organizationIdArg }
+      : params;
   try {
     const now = new Date().toISOString();
+    const orgScope = orgScopeClause(normalized.organizationId);
     try {
       await DbPromise.run(
-        `UPDATE notifications SET is_read = true, read_at = ? WHERE user_id = ? AND organization_id = ?`,
-        [now, params.userId, params.organizationId]
+        `UPDATE notifications SET is_read = true, read_at = ? WHERE user_id = ?${orgScope.clause}`,
+        [now, normalized.userId, ...orgScope.params]
       );
     } catch {
       await DbPromise.run(
-        `UPDATE notifications SET is_read = 1, read_at = ? WHERE user_id = ? AND organization_id = ?`,
-        [now, params.userId, params.organizationId]
+        `UPDATE notifications SET is_read = 1, read_at = ? WHERE user_id = ?${orgScope.clause}`,
+        [now, normalized.userId, ...orgScope.params]
       );
     }
     return true;
@@ -219,15 +285,26 @@ export async function markAllAsRead(params: {
   }
 }
 
-export async function dismiss(params: {
-  id: string;
-  userId: string;
-  organizationId: string;
-}): Promise<boolean> {
+export async function dismiss(
+  params:
+    | {
+        id: string;
+        userId: string;
+        organizationId?: string;
+      }
+    | string,
+  userIdArg?: string,
+  organizationIdArg?: string
+): Promise<boolean> {
+  const normalized =
+    typeof params === 'string'
+      ? { id: params, userId: userIdArg || '', organizationId: organizationIdArg }
+      : params;
   try {
+    const orgScope = orgScopeClause(normalized.organizationId);
     await DbPromise.run(
-      `UPDATE notifications SET dismissed_at = ? WHERE id = ? AND user_id = ? AND organization_id = ?`,
-      [new Date().toISOString(), params.id, params.userId, params.organizationId]
+      `UPDATE notifications SET dismissed_at = ? WHERE id = ? AND user_id = ?${orgScope.clause}`,
+      [new Date().toISOString(), normalized.id, normalized.userId, ...orgScope.params]
     );
     return true;
   } catch (err) {
@@ -253,16 +330,31 @@ export async function deleteNotification(params: {
   }
 }
 
-export async function getCounts(params: {
-  userId: string;
-  organizationId: string;
-}): Promise<{ total: number; unread: number }> {
+export async function getCounts(
+  params:
+    | {
+        userId: string;
+        organizationId?: string;
+      }
+    | string,
+  organizationIdArg?: string
+): Promise<{ total: number; unread: number }> {
+  const normalized =
+    typeof params === 'string'
+      ? { userId: params, organizationId: organizationIdArg }
+      : params;
   try {
+    const orgScope = orgScopeClause(normalized.organizationId);
     const totalRow = await DbPromise.get<{ count: number }>(
-      `SELECT COUNT(*)::int as count FROM notifications WHERE user_id = ? AND organization_id = ?`,
-      [params.userId, params.organizationId]
+      `SELECT COUNT(*)::int as count FROM notifications WHERE user_id = ?${orgScope.clause}`,
+      [normalized.userId, ...orgScope.params]
     );
-    const unread = await getUnreadCount(params);
+    const unread = normalized.organizationId
+      ? await getUnreadCount({
+          userId: normalized.userId,
+          organizationId: normalized.organizationId,
+        })
+      : 0;
     return { total: Number((totalRow as any)?.count || 0), unread };
   } catch (err) {
     logger.error('[notificationService] Failed to getCounts', err);
@@ -270,19 +362,47 @@ export async function getCounts(params: {
   }
 }
 
-export async function getPreferences(params: {
-  userId: string;
-  organizationId: string;
-}): Promise<NotificationPreferences> {
-  return { userId: params.userId, organizationId: params.organizationId, preferences: {} };
+export async function getPreferences(
+  params:
+    | {
+        userId: string;
+        organizationId?: string;
+      }
+    | string,
+  organizationIdArg?: string
+): Promise<NotificationPreferences> {
+  const normalized =
+    typeof params === 'string'
+      ? { userId: params, organizationId: organizationIdArg || 'default-org' }
+      : { ...params, organizationId: params.organizationId || 'default-org' };
+  return {
+    userId: normalized.userId,
+    organizationId: normalized.organizationId,
+    preferences: {},
+  };
 }
 
 export async function updatePreferences(params: {
   userId: string;
   organizationId: string;
   preferences: Record<string, unknown>;
-}): Promise<NotificationPreferences> {
-  return { userId: params.userId, organizationId: params.organizationId, preferences: params.preferences };
+} | string,
+preferencesArg?: Record<string, unknown>,
+organizationIdArg?: string
+): Promise<NotificationPreferences> {
+  const normalized =
+    typeof params === 'string'
+      ? {
+          userId: params,
+          organizationId: organizationIdArg || 'default-org',
+          preferences: preferencesArg || {},
+        }
+      : params;
+  return {
+    userId: normalized.userId,
+    organizationId: normalized.organizationId,
+    preferences: normalized.preferences,
+  };
 }
 
 // Back-compat: some modules import default or `{ notificationService }`
@@ -297,7 +417,108 @@ export const notificationService = {
   getCounts,
   getPreferences,
   updatePreferences,
+  delete: deleteFn,
+  getById,
+  getComments,
+  addComment,
+  deleteComment,
+  getActivityLog,
+  snoozeNotification,
+  updateChecklist,
+  getSourceEntity,
 };
+
+export async function getById(
+  id: string,
+  userId: string,
+  organizationId?: string
+): Promise<Notification | null> {
+  const rows = await getNotifications({
+    userId,
+    organizationId: organizationId || '',
+    limit: 200,
+    offset: 0,
+  }).catch(() => []);
+  return rows.find((row) => row.id === id) || null;
+}
+
+export async function getComments(_notificationId: string, _userId: string): Promise<unknown[]> {
+  return [];
+}
+
+export async function addComment(
+  notificationId: string,
+  userId: string,
+  content: string,
+  priority?: string
+): Promise<Record<string, unknown>> {
+  return {
+    id: makeId('notif_comment'),
+    notificationId,
+    userId,
+    content,
+    priority: priority || 'normal',
+    createdAt: new Date().toISOString(),
+  };
+}
+
+export async function deleteComment(_commentId: string, _userId: string): Promise<boolean> {
+  return true;
+}
+
+export async function getActivityLog(
+  notificationId: string,
+  userId: string
+): Promise<Record<string, unknown>[]> {
+  return [
+    {
+      id: makeId('notif_activity'),
+      notificationId,
+      userId,
+      action: 'viewed',
+      createdAt: new Date().toISOString(),
+    },
+  ];
+}
+
+export async function snoozeNotification(
+  _notificationId: string,
+  _userId: string,
+  _snoozeUntil: string
+): Promise<boolean> {
+  return true;
+}
+
+export async function updateChecklist(
+  _notificationId: string,
+  _userId: string,
+  _checklist: unknown[]
+): Promise<boolean> {
+  return true;
+}
+
+export async function getSourceEntity(
+  notificationId: string,
+  userId: string,
+  organizationId?: string
+): Promise<Record<string, unknown> | null> {
+  const notification = await getById(notificationId, userId, organizationId);
+  if (!notification) return null;
+  return {
+    type: notification.entityType || null,
+    id: notification.entityId || null,
+    title: notification.title,
+  };
+}
+
+export async function deleteFn(
+  id: string,
+  userId: string,
+  organizationId?: string
+): Promise<boolean> {
+  return deleteNotification({ id, userId, organizationId: organizationId || '' });
+}
+
 
 export default notificationService;
 

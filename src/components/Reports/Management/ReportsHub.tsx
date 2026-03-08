@@ -42,7 +42,6 @@ import {
   ManagementReportStatus,
   ManagementReportType,
 } from '../../../types';
-import { type RowAction, RowActionsMenu } from '../../shared/RowActionsMenu';
 import {
   FilterableTable,
   FilterChip,
@@ -53,6 +52,7 @@ import {
   ViewMode,
 } from '../../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../../shared/ModuleHub/useModuleOpenDocuments';
+import { type RowAction, RowActionsMenu } from '../../shared/RowActionsMenu';
 import { PortfolioHealthReport } from './PortfolioHealthReport';
 import { RaidReport } from './RaidReport';
 import { ReportGeneratorDrawer } from './ReportGeneratorDrawer';

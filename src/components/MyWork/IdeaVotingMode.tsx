@@ -61,10 +61,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
     return () => clearInterval(interval);
   }, [timerActive, timeLeft]);
 
-  const myVoteCount = useMemo(
-    () => votes.filter((v) => v.userId === userId).length,
-    [votes]
-  );
+  const myVoteCount = useMemo(() => votes.filter((v) => v.userId === userId).length, [votes]);
 
   const voteCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -78,11 +75,14 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
     onVotesChange?.(voteCounts);
   }, [onVotesChange, voteCounts]);
 
-  const handleVote = useCallback((nodeId: string) => {
-    if (myVoteCount >= maxVotes) return;
-    if (timerSeconds && timeLeft <= 0) return;
-    setVotes((prev) => [...prev, { nodeId, userId, timestamp: Date.now() }]);
-  }, [maxVotes, myVoteCount, timeLeft, timerSeconds]);
+  const handleVote = useCallback(
+    (nodeId: string) => {
+      if (myVoteCount >= maxVotes) return;
+      if (timerSeconds && timeLeft <= 0) return;
+      setVotes((prev) => [...prev, { nodeId, userId, timestamp: Date.now() }]);
+    },
+    [maxVotes, myVoteCount, timeLeft, timerSeconds]
+  );
 
   const handleUnvote = useCallback((nodeId: string) => {
     setVotes((prev) => {
@@ -132,7 +132,10 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
                 {isPl ? 'Tryb głosowania' : 'Voting Mode'}
               </span>
             </div>
-            <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800">
+            <button
+              onClick={onClose}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800"
+            >
               <X size={14} />
             </button>
           </div>
@@ -146,7 +149,9 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
             {timerSeconds != null && timerSeconds > 0 && (
               <div className="flex items-center gap-1">
                 <Clock size={10} className={timeLeft > 10 ? 'text-slate-400' : 'text-red-500'} />
-                <span className={`text-[10px] font-semibold ${timeLeft > 10 ? 'text-slate-600 dark:text-slate-400' : 'text-red-500'}`}>
+                <span
+                  className={`text-[10px] font-semibold ${timeLeft > 10 ? 'text-slate-600 dark:text-slate-400' : 'text-red-500'}`}
+                >
                   {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
                 </span>
               </div>
@@ -160,7 +165,10 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
             const count = voteCounts[node.id] || 0;
             const myVotes = votes.filter((v) => v.nodeId === node.id && v.userId === userId).length;
             return (
-              <div key={node.id} className="px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group">
+              <div
+                key={node.id}
+                className="px-2 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors group"
+              >
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-bold text-slate-400 w-4">{rank + 1}</span>
                   <div className="flex-1 min-w-0">
@@ -207,7 +215,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
             <div className="flex items-center gap-1.5">
               <Award size={12} className="text-amber-500" />
               <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
-                {isPl ? 'Czas minął! Wyniki powyżej.' : 'Time\'s up! Results above.'}
+                {isPl ? 'Czas minął! Wyniki powyżej.' : "Time's up! Results above."}
               </span>
             </div>
           </div>
@@ -255,7 +263,9 @@ export const EmojiReactions: React.FC<EmojiReactionsProps> = ({
           className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors text-[10px]"
         >
           <span>{r.emoji}</span>
-          <span className="font-semibold text-slate-600 dark:text-slate-400">{reactions[r.key]}</span>
+          <span className="font-semibold text-slate-600 dark:text-slate-400">
+            {reactions[r.key]}
+          </span>
         </button>
       ))}
       <div className="relative">
@@ -270,7 +280,10 @@ export const EmojiReactions: React.FC<EmojiReactionsProps> = ({
             {EMOJI_REACTIONS.map((r) => (
               <button
                 key={r.key}
-                onClick={() => { onReact(r.key); setShowPicker(false); }}
+                onClick={() => {
+                  onReact(r.key);
+                  setShowPicker(false);
+                }}
                 className="w-6 h-6 rounded hover:bg-slate-100 dark:hover:bg-navy-800 flex items-center justify-center text-sm transition-colors"
               >
                 {r.emoji}

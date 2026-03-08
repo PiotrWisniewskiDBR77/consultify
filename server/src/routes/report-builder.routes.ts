@@ -118,6 +118,21 @@ async function notifyOnStatusChange(
   }
 }
 
+async function enforceQualityGatesForExport(
+  organizationId: string,
+  reportId: string,
+  res: Response
+): Promise<boolean> {
+  const qualityReport = await checkQualityGates(organizationId, reportId);
+  if (qualityReport.canExport) return true;
+  res.status(409).json({
+    error: 'REPORT_NOT_READY_FOR_EXPORT',
+    message: 'Report failed quality gates required for export.',
+    qualityReport,
+  });
+  return false;
+}
+
 const router = Router();
 
 // Apply middleware (use default API limiter – 1000 req/15min in dev, not the restrictive auth limiter)
@@ -3161,6 +3176,8 @@ router.get('/:id/export/pdf', async (req: Request, res: Response, next: NextFunc
     const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
 
+    if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
+
     const reportData = await ReportBuilderService.getReport(id, organizationId);
     if (!reportData) {
       return res.status(404).json({ error: 'Report not found' });
@@ -3208,6 +3225,8 @@ const exportDocx = async (req: Request, res: Response) => {
   try {
     const id = paramStr(req.params.id);
     const { userId, organizationId } = getAuthContext(req);
+
+    if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
 
     const reportData = await ReportBuilderService.getReport(id, organizationId);
     if (!reportData) {
@@ -3270,6 +3289,8 @@ router.get('/:id/export/pptx', async (req: Request, res: Response, next: NextFun
     const { userId, organizationId } = getAuthContext(req);
     const { template, language, version, confidentiality } = req.query;
     const useV2 = version === '2' || version === 'v2';
+
+    if (!(await enforceQualityGatesForExport(organizationId, id, res))) return;
 
     const reportData = await ReportBuilderService.getReport(id, organizationId);
     if (!reportData) {
@@ -4376,7 +4397,7 @@ router.post(
       const { organizationId } = getAuthContext(req);
 
       const variants = await proposeOutline(String(id), organizationId);
-      res.json({ variants });
+      res.json({ variants, sections: variants[0]?.sections || [] });
     } catch (err: any) {
       if (err.message?.includes('not found')) {
         return res.status(404).json({ error: err.message });

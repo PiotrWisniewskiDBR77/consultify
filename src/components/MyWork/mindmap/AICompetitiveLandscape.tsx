@@ -55,7 +55,11 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
 
       const res = await Api.getMyIdeaAISuggestions(ideaId, {
         seedText: `Analyze the competitive landscape for "${ideaTitle}". Context ideas: ${ideaLabels}. Identify 4-6 key competitors/alternatives. For each, provide name, market positioning, key strengths, weaknesses, and our differentiator against them.`,
-        mapNodes: nodes.map((n) => ({ id: n.id, type: 'idea', data: { label: n.data?.label, branchKey: n.data?.branchKey } })),
+        mapNodes: nodes.map((n) => ({
+          id: n.id,
+          type: 'idea',
+          data: { label: n.data?.label, branchKey: n.data?.branchKey },
+        })),
         activeTool: 'mindmap',
         language: i18n.language,
       });
@@ -78,14 +82,17 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
     }
   }, [i18n.language, ideaId, ideaTitle, nodes]);
 
-  const handleAdd = useCallback((comp: Competitor) => {
-    onAddToMap([
-      { text: `${comp.name}: ${comp.positioning}`, type: 'topics' },
-      ...comp.strengths.map((s) => ({ text: `${comp.name} — ${s}`, type: 'findings' })),
-    ]);
-    setAdded((prev) => new Set([...prev, comp.id]));
-    toast.success(isPl ? 'Dodano do mapy' : 'Added to map', { duration: 800 });
-  }, [isPl, onAddToMap]);
+  const handleAdd = useCallback(
+    (comp: Competitor) => {
+      onAddToMap([
+        { text: `${comp.name}: ${comp.positioning}`, type: 'topics' },
+        ...comp.strengths.map((s) => ({ text: `${comp.name} — ${s}`, type: 'findings' })),
+      ]);
+      setAdded((prev) => new Set([...prev, comp.id]));
+      toast.success(isPl ? 'Dodano do mapy' : 'Added to map', { duration: 800 });
+    },
+    [isPl, onAddToMap]
+  );
 
   if (!open) return null;
 
@@ -101,10 +108,15 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
               </h3>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              {isPl ? 'AI identyfikuje konkurentów i pozycjonowanie rynkowe.' : 'AI identifies competitors and market positioning.'}
+              {isPl
+                ? 'AI identyfikuje konkurentów i pozycjonowanie rynkowe.'
+                : 'AI identifies competitors and market positioning.'}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
@@ -114,7 +126,9 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
             <div className="text-center py-8">
               <Trophy size={36} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
-                {isPl ? 'AI przeanalizuje krajobraz konkurencyjny dla Twojego pomysłu.' : 'AI will analyze the competitive landscape for your idea.'}
+                {isPl
+                  ? 'AI przeanalizuje krajobraz konkurencyjny dla Twojego pomysłu.'
+                  : 'AI will analyze the competitive landscape for your idea.'}
               </p>
               <button
                 onClick={analyze}
@@ -130,7 +144,9 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8">
               <Loader2 size={16} className="animate-spin text-blue-500" />
-              <span className="text-[11px] text-slate-500">{isPl ? 'Analizuję rynek...' : 'Analyzing market...'}</span>
+              <span className="text-[11px] text-slate-500">
+                {isPl ? 'Analizuję rynek...' : 'Analyzing market...'}
+              </span>
             </div>
           )}
 
@@ -139,11 +155,16 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
               {competitors.map((comp) => {
                 const isAdded = added.has(comp.id);
                 return (
-                  <div key={comp.id} className={`p-3 rounded-xl border transition-all ${isAdded ? 'border-emerald-400/30 bg-emerald-500/5' : 'border-slate-200/30 dark:border-navy-700/30 bg-slate-50/30 dark:bg-navy-950/10'}`}>
+                  <div
+                    key={comp.id}
+                    className={`p-3 rounded-xl border transition-all ${isAdded ? 'border-emerald-400/30 bg-emerald-500/5' : 'border-slate-200/30 dark:border-navy-700/30 bg-slate-50/30 dark:bg-navy-950/10'}`}
+                  >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Globe size={12} className="text-blue-500" />
-                        <span className="text-[12px] font-bold text-slate-700 dark:text-slate-200">{comp.name}</span>
+                        <span className="text-[12px] font-bold text-slate-700 dark:text-slate-200">
+                          {comp.name}
+                        </span>
                       </div>
                       {isAdded ? (
                         <span className="text-[9px] text-emerald-500 font-bold">ADDED</span>
@@ -159,30 +180,44 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
                       )}
                     </div>
                     {comp.positioning && (
-                      <div className="text-[10px] text-slate-600 dark:text-slate-300 mb-2">{comp.positioning}</div>
+                      <div className="text-[10px] text-slate-600 dark:text-slate-300 mb-2">
+                        {comp.positioning}
+                      </div>
                     )}
                     <div className="flex gap-3">
                       {comp.strengths.length > 0 && (
                         <div className="flex-1">
-                          <div className="text-[8px] font-bold text-emerald-600 uppercase tracking-wider mb-1">{isPl ? 'Mocne' : 'Strengths'}</div>
+                          <div className="text-[8px] font-bold text-emerald-600 uppercase tracking-wider mb-1">
+                            {isPl ? 'Mocne' : 'Strengths'}
+                          </div>
                           {comp.strengths.map((s, i) => (
-                            <div key={i} className="text-[9px] text-slate-500 dark:text-slate-400">+ {s}</div>
+                            <div key={i} className="text-[9px] text-slate-500 dark:text-slate-400">
+                              + {s}
+                            </div>
                           ))}
                         </div>
                       )}
                       {comp.weaknesses.length > 0 && (
                         <div className="flex-1">
-                          <div className="text-[8px] font-bold text-red-600 uppercase tracking-wider mb-1">{isPl ? 'Slabe' : 'Weaknesses'}</div>
+                          <div className="text-[8px] font-bold text-red-600 uppercase tracking-wider mb-1">
+                            {isPl ? 'Slabe' : 'Weaknesses'}
+                          </div>
                           {comp.weaknesses.map((w, i) => (
-                            <div key={i} className="text-[9px] text-slate-500 dark:text-slate-400">- {w}</div>
+                            <div key={i} className="text-[9px] text-slate-500 dark:text-slate-400">
+                              - {w}
+                            </div>
                           ))}
                         </div>
                       )}
                     </div>
                     {comp.differentiator && (
                       <div className="mt-2 pt-2 border-t border-slate-200/20 dark:border-navy-700/20">
-                        <span className="text-[8px] font-bold text-violet-600 uppercase tracking-wider">{isPl ? 'Nasz wyróżnik' : 'Our edge'}: </span>
-                        <span className="text-[9px] text-slate-600 dark:text-slate-400">{comp.differentiator}</span>
+                        <span className="text-[8px] font-bold text-violet-600 uppercase tracking-wider">
+                          {isPl ? 'Nasz wyróżnik' : 'Our edge'}:{' '}
+                        </span>
+                        <span className="text-[9px] text-slate-600 dark:text-slate-400">
+                          {comp.differentiator}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -190,7 +225,11 @@ export const AICompetitiveLandscape: React.FC<AICompetitiveLandscapeProps> = ({
               })}
 
               <div className="flex items-center gap-2 pt-2 border-t border-slate-200/30 dark:border-navy-700/30">
-                <button onClick={analyze} disabled={loading} className="text-[10px] text-slate-500 hover:text-slate-700 transition-colors">
+                <button
+                  onClick={analyze}
+                  disabled={loading}
+                  className="text-[10px] text-slate-500 hover:text-slate-700 transition-colors"
+                >
                   {isPl ? 'Ponowna analiza' : 'Re-analyze'}
                 </button>
               </div>

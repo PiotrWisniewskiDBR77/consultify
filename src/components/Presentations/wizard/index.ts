@@ -6,5 +6,5 @@ export { PresentationModeSelector } from './PresentationModeSelector';
 export { ResultStep } from './ResultStep';
 export { SetupStep } from './SetupStep';
 export { SourceStep } from './SourceStep';
-export { WizardShell } from './WizardShell';
 export * from './types';
+export { WizardShell } from './WizardShell';

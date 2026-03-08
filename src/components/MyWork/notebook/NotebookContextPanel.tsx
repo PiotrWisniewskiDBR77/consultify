@@ -318,24 +318,43 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
   const take = (key: SectionKey, arr: any[]) =>
     expanded[key] ? arr.slice(0, 12) : arr.slice(0, 4);
 
-  const insertCallout = (title: string, body?: string) => {
+  const insertEmbeddedRef = (payload: {
+    artifactType: string;
+    artifactId: string;
+    title: string;
+    label: string;
+    status?: string;
+    snippet?: string;
+    updatedAt?: string;
+  }) => {
     if (!editor) return;
     editor
       .chain()
       .focus()
       .insertContent({
-        type: 'callout',
-        attrs: { variant: 'info' },
-        content: [
-          { type: 'paragraph', content: [{ type: 'text', text: title }] },
-          ...(body ? [{ type: 'paragraph', content: [{ type: 'text', text: body }] }] : []),
-        ],
+        type: 'embeddedRef',
+        attrs: {
+          artifactType: payload.artifactType,
+          artifactId: payload.artifactId,
+          title: payload.title,
+          label: payload.label,
+          status: payload.status || '',
+          snippet: payload.snippet || '',
+          updatedAt: payload.updatedAt || '',
+        },
       })
+      .insertContent({ type: 'text', text: ' ' })
       .run();
   };
 
   const handleInsertIdea = (idea: SuggestedIdea) => {
-    insertCallout(`💡 ${idea.title}`, idea.body || undefined);
+    insertEmbeddedRef({
+      artifactType: 'idea',
+      artifactId: idea.id,
+      title: idea.title,
+      label: `💡 ${idea.title}`,
+      snippet: idea.body || undefined,
+    });
     Api.createLinkGraphEdge({
       source: { type: 'notebook', id: noteId },
       target: { type: 'idea', id: idea.id },
@@ -348,7 +367,13 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
 
   const handleInsertPulseRef = (item: PulseItem) => {
     const typeLabel = item.type === 'initiative' ? '🎯' : item.type === 'task' ? '✅' : '⚖️';
-    insertCallout(`${typeLabel} ${item.title} [${item.type}]`);
+    insertEmbeddedRef({
+      artifactType: item.type,
+      artifactId: item.id,
+      title: item.title,
+      label: `${typeLabel} ${item.title}`,
+      status: item.status,
+    });
     Api.createLinkGraphEdge({
       source: { type: 'notebook', id: noteId },
       target: { type: item.type, id: item.id },
@@ -359,10 +384,18 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
   };
 
   const handleInsertNoteRef = (n: NotebookPage) => {
-    insertCallout(`📄 ${n.title || (pl ? 'Bez tytułu' : 'Untitled')}`, n.summary || undefined);
+    insertEmbeddedRef({
+      artifactType: 'notebook_page',
+      artifactId: n.id,
+      title: n.title || (pl ? 'Bez tytułu' : 'Untitled'),
+      label: `📄 ${n.title || (pl ? 'Bez tytułu' : 'Untitled')}`,
+      snippet: n.summary || undefined,
+      status: n.status,
+      updatedAt: n.updatedAt || undefined,
+    });
     Api.createLinkGraphEdge({
       source: { type: 'notebook', id: noteId },
-      target: { type: 'notebook', id: n.id },
+      target: { type: 'notebook_page', id: n.id },
       relation: 'ref',
       context: { containerType: 'notebook_embed', containerId: noteId },
     }).catch(() => undefined);

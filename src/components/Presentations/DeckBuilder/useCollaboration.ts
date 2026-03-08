@@ -27,9 +27,18 @@ interface CollaborationState {
 }
 
 const PRESENCE_COLORS = [
-  '#EF4444', '#F59E0B', '#10B981', '#3B82F6',
-  '#8B5CF6', '#EC4899', '#F97316', '#06B6D4',
-  '#84CC16', '#A855F7', '#14B8A6', '#FB923C',
+  '#EF4444',
+  '#F59E0B',
+  '#10B981',
+  '#3B82F6',
+  '#8B5CF6',
+  '#EC4899',
+  '#F97316',
+  '#06B6D4',
+  '#84CC16',
+  '#A855F7',
+  '#14B8A6',
+  '#FB923C',
 ];
 
 function getColorForUser(userId: string): string {
@@ -84,10 +93,12 @@ export function useCollaboration(
           connectionStatus: 'connected',
         }));
 
-        ws.send(JSON.stringify({
-          type: 'presence:join',
-          user: localUser,
-        }));
+        ws.send(
+          JSON.stringify({
+            type: 'presence:join',
+            user: localUser,
+          })
+        );
 
         heartbeatRef.current = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
@@ -100,7 +111,9 @@ export function useCollaboration(
         try {
           const msg = JSON.parse(event.data);
           handleMessage(msg, setState);
-        } catch { /* ignore malformed messages */ }
+        } catch {
+          /* ignore malformed messages */
+        }
       };
 
       ws.onclose = () => {
@@ -123,10 +136,12 @@ export function useCollaboration(
   const disconnect = useCallback(() => {
     if (wsRef.current) {
       if (currentUser) {
-        wsRef.current.send(JSON.stringify({
-          type: 'presence:leave',
-          userId: currentUser.userId,
-        }));
+        wsRef.current.send(
+          JSON.stringify({
+            type: 'presence:leave',
+            userId: currentUser.userId,
+          })
+        );
       }
       wsRef.current.close();
       wsRef.current = null;
@@ -143,11 +158,13 @@ export function useCollaboration(
   const updatePresence = useCallback(
     (updates: Partial<Pick<CollabUser, 'activeCardIndex' | 'cursor'>>) => {
       if (wsRef.current?.readyState === WebSocket.OPEN && currentUser) {
-        wsRef.current.send(JSON.stringify({
-          type: 'presence:update',
-          userId: currentUser.userId,
-          ...updates,
-        }));
+        wsRef.current.send(
+          JSON.stringify({
+            type: 'presence:update',
+            userId: currentUser.userId,
+            ...updates,
+          })
+        );
       }
     },
     [currentUser]
@@ -156,11 +173,13 @@ export function useCollaboration(
   const broadcastChange = useCallback(
     (change: { type: string; payload: unknown }) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          type: 'deck:change',
-          userId: currentUser?.userId,
-          change,
-        }));
+        wsRef.current.send(
+          JSON.stringify({
+            type: 'deck:change',
+            userId: currentUser?.userId,
+            change,
+          })
+        );
       }
     },
     [currentUser]

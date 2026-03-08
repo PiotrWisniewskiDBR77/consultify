@@ -238,7 +238,9 @@ const ApprovalWorkflowsView: React.FC = () => {
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
           <div className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>{typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}</span>
+            <span>
+              {typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}
+            </span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>

@@ -31,7 +31,14 @@ export interface IdeaWorkspaceSelection {
     status?: string;
     tags?: string[];
     artifactRef?: string;
-    attachments?: Array<{ id: string; name: string; type: string; url?: string; size?: number; createdAt?: number }>;
+    attachments?: Array<{
+      id: string;
+      name: string;
+      type: string;
+      url?: string;
+      size?: number;
+      createdAt?: number;
+    }>;
   };
 }
 
@@ -69,8 +76,20 @@ export interface AIProposal {
   rationale: string;
   confidence: number;
   patch: {
-    addNodes?: Array<{ id: string; label: string; type?: string; position?: { x: number; y: number }; data?: Record<string, unknown> }>;
-    addEdges?: Array<{ id: string; source: string; target: string; label?: string; data?: Record<string, unknown> }>;
+    addNodes?: Array<{
+      id: string;
+      label: string;
+      type?: string;
+      position?: { x: number; y: number };
+      data?: Record<string, unknown>;
+    }>;
+    addEdges?: Array<{
+      id: string;
+      source: string;
+      target: string;
+      label?: string;
+      data?: Record<string, unknown>;
+    }>;
     removeNodeIds?: string[];
     removeEdgeIds?: string[];
     updateNodes?: Array<{ id: string; data: Record<string, unknown> }>;

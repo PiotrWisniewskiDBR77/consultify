@@ -16,12 +16,16 @@
  *
  * Data lives in the shared IdeaWorkspaceGraph (nodes/edges/extensions.processFlow).
  */
+import 'reactflow/dist/style.css';
+
+// @ts-ignore — getSmoothStepPath is exported at runtime but types re-export may not resolve
+import { getSmoothStepPath } from '@reactflow/core';
 import * as dagre from 'dagre';
 import {
   AlertTriangle,
   ArrowDownUp,
-  ArrowRightFromLine,
   ArrowLeftFromLine,
+  ArrowRightFromLine,
   BarChart3,
   Bot,
   Box,
@@ -29,6 +33,7 @@ import {
   CircleDot,
   Copy,
   Diamond,
+  GitMerge,
   LayoutGrid,
   Lightbulb,
   ListOrdered,
@@ -49,6 +54,8 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import ReactFlow, {
   addEdge,
   applyEdgeChanges,
@@ -67,18 +74,18 @@ import ReactFlow, {
   Position,
   ReactFlowProvider,
 } from 'reactflow';
-// @ts-ignore — getSmoothStepPath is exported at runtime but types re-export may not resolve
-import { getSmoothStepPath } from '@reactflow/core';
-import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
-import { runProcessCoach, generateProcessSummary } from '@/services/ideaAIGenerator';
-import { EMPTY_SELECTION, type CanvasToolType, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
-import { VSMTimelineBar } from './VSMTimelineBar';
-import { ProcessKPIDashboard } from './ProcessKPIDashboard';
+import { generateProcessSummary, runProcessCoach } from '@/services/ideaAIGenerator';
 
-import 'reactflow/dist/style.css';
+import {
+  type CanvasToolType,
+  EMPTY_SELECTION,
+  type IdeaWorkspaceSelection,
+} from './ideaSelectionTypes';
+import { ProcessKPIDashboard } from './ProcessKPIDashboard';
+import { vsmNodeTypes } from './VSMNodeComponent';
+import { VSMTimelineBar } from './VSMTimelineBar';
 
 // ── Lane helpers ─────────────────────────────────────────────────────────────
 
@@ -89,21 +96,52 @@ type Lane = {
 };
 
 const LANE_COLORS = [
-  '#e0e7ff', '#dbeafe', '#d1fae5', '#fef3c7', '#fce7f3', '#ede9fe',
-  '#ccfbf1', '#fecaca', '#e2e8f0', '#c7d2fe',
+  '#e0e7ff',
+  '#dbeafe',
+  '#d1fae5',
+  '#fef3c7',
+  '#fce7f3',
+  '#ede9fe',
+  '#ccfbf1',
+  '#fecaca',
+  '#e2e8f0',
+  '#c7d2fe',
 ];
 
 const LANE_HEIGHT = 140;
 
-const DEFAULT_LANES: Lane[] = [
-  { id: 'lane-1', label: 'Lane 1', color: LANE_COLORS[0] },
-];
+const DEFAULT_LANES: Lane[] = [{ id: 'lane-1', label: 'Lane 1', color: LANE_COLORS[0] }];
+
+// ── V5-IDEA-21: Process Flow modes ──────────────────────────────────────────
+export type ProcessFlowMode = 'classic' | 'automation' | 'vsm';
+
+export const FLOW_MODE_LABELS: Record<ProcessFlowMode, { en: string; pl: string }> = {
+  classic: { en: 'Classic Flow', pl: 'Klasyczny przepływ' },
+  automation: { en: 'Automation', pl: 'Automatyzacja' },
+  vsm: { en: 'Value Stream', pl: 'Strumień wartości' },
+};
 
 // ── Shape types ──────────────────────────────────────────────────────────────
 
-type FlowShape = 'start' | 'end' | 'action' | 'decision' | 'vsm_process' | 'vsm_inventory' | 'vsm_supplier' | 'vsm_customer' | 'vsm_kaizen' | 'vsm_push_arrow' | 'vsm_pull_arrow' | 'vsm_supermarket' | 'vsm_fifo';
+type FlowShape =
+  | 'start'
+  | 'end'
+  | 'action'
+  | 'decision'
+  | 'vsm_process'
+  | 'vsm_inventory'
+  | 'vsm_supplier'
+  | 'vsm_customer'
+  | 'vsm_kaizen'
+  | 'vsm_push_arrow'
+  | 'vsm_pull_arrow'
+  | 'vsm_supermarket'
+  | 'vsm_fifo';
 
-const SHAPE_CONFIG: Record<FlowShape, { icon: React.ComponentType<{ size?: number }>; label: string; labelPl: string }> = {
+const SHAPE_CONFIG: Record<
+  FlowShape,
+  { icon: React.ComponentType<{ size?: number }>; label: string; labelPl: string }
+> = {
   start: { icon: CircleDot, label: 'Start', labelPl: 'Start' },
   end: { icon: StopCircle, label: 'End', labelPl: 'Koniec' },
   action: { icon: Square, label: 'Action', labelPl: 'Akcja' },
@@ -117,6 +155,26 @@ const SHAPE_CONFIG: Record<FlowShape, { icon: React.ComponentType<{ size?: numbe
   vsm_pull_arrow: { icon: ArrowLeftFromLine, label: 'Pull Arrow', labelPl: 'Strzałka Pull' },
   vsm_supermarket: { icon: ShoppingCart, label: 'Supermarket', labelPl: 'Supermarket' },
   vsm_fifo: { icon: ListOrdered, label: 'FIFO Lane', labelPl: 'Kolejka FIFO' },
+};
+
+const CLASSIC_SHAPES: FlowShape[] = ['start', 'end', 'action', 'decision'];
+const AUTOMATION_SHAPES: FlowShape[] = ['start', 'end', 'action', 'decision'];
+const VSM_SHAPES: FlowShape[] = [
+  'vsm_process',
+  'vsm_inventory',
+  'vsm_supplier',
+  'vsm_customer',
+  'vsm_kaizen',
+  'vsm_push_arrow',
+  'vsm_pull_arrow',
+  'vsm_supermarket',
+  'vsm_fifo',
+];
+
+const SHAPES_BY_MODE: Record<ProcessFlowMode, FlowShape[]> = {
+  classic: CLASSIC_SHAPES,
+  automation: AUTOMATION_SHAPES,
+  vsm: VSM_SHAPES,
 };
 
 // ── Custom node component ────────────────────────────────────────────────────
@@ -149,23 +207,35 @@ const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
     }
   };
 
-  const hasMetrics = data?.duration || data?.cost || data?.fteCount || (data?.status && data.status !== 'todo');
+  const hasMetrics =
+    data?.duration || data?.cost || data?.fteCount || (data?.status && data.status !== 'todo');
   const hasAttachments = data?.attachments?.length > 0;
 
   const shapeStyles: Record<FlowShape, string> = {
-    start: 'rounded-full border-2 border-green-500 bg-green-50 dark:bg-green-900/30 dark:border-green-400',
+    start:
+      'rounded-full border-2 border-green-500 bg-green-50 dark:bg-green-900/30 dark:border-green-400',
     end: 'rounded-full border-2 border-red-500 bg-red-50 dark:bg-red-900/30 dark:border-red-400',
     action: 'rounded-xl border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800',
-    decision: 'rotate-45 border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
-    vsm_process: 'rounded-lg border-2 border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
-    vsm_inventory: 'border-2 border-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
-    vsm_supplier: 'rounded-xl border-2 border-slate-600 bg-slate-50 dark:bg-slate-800 dark:border-slate-400',
-    vsm_customer: 'rounded-xl border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:border-emerald-400',
-    vsm_kaizen: 'rounded-full border-2 border-red-500 bg-red-50 dark:bg-red-900/30 dark:border-red-400',
-    vsm_push_arrow: 'rounded-lg border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/30 dark:border-orange-400',
-    vsm_pull_arrow: 'rounded-lg border-2 border-teal-500 bg-teal-50 dark:bg-teal-900/30 dark:border-teal-400',
-    vsm_supermarket: 'rounded-lg border-2 border-cyan-600 bg-cyan-50 dark:bg-cyan-900/30 dark:border-cyan-400',
-    vsm_fifo: 'rounded-lg border-2 border-violet-500 bg-violet-50 dark:bg-violet-900/30 dark:border-violet-400',
+    decision:
+      'rotate-45 border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
+    vsm_process:
+      'rounded-lg border-2 border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
+    vsm_inventory:
+      'border-2 border-amber-600 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
+    vsm_supplier:
+      'rounded-xl border-2 border-slate-600 bg-slate-50 dark:bg-slate-800 dark:border-slate-400',
+    vsm_customer:
+      'rounded-xl border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:border-emerald-400',
+    vsm_kaizen:
+      'rounded-full border-2 border-red-500 bg-red-50 dark:bg-red-900/30 dark:border-red-400',
+    vsm_push_arrow:
+      'rounded-lg border-2 border-orange-500 bg-orange-50 dark:bg-orange-900/30 dark:border-orange-400',
+    vsm_pull_arrow:
+      'rounded-lg border-2 border-teal-500 bg-teal-50 dark:bg-teal-900/30 dark:border-teal-400',
+    vsm_supermarket:
+      'rounded-lg border-2 border-cyan-600 bg-cyan-50 dark:bg-cyan-900/30 dark:border-cyan-400',
+    vsm_fifo:
+      'rounded-lg border-2 border-violet-500 bg-violet-50 dark:bg-violet-900/30 dark:border-violet-400',
   };
 
   const innerRotate = shape === 'decision' ? '-rotate-45' : '';
@@ -173,7 +243,11 @@ const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
   return (
     <div
       className={`relative flex flex-col items-center justify-center min-w-[80px] min-h-[48px] px-3 py-2 shadow-sm transition-shadow ${shapeStyles[shape]} ${selected ? 'ring-2 ring-primary-500/60' : ''}`}
-      style={{ borderLeftColor: laneColor, borderLeftWidth: shape === 'action' ? 4 : undefined, backgroundColor: shape === 'action' ? `${laneColor}08` : undefined }}
+      style={{
+        borderLeftColor: laneColor,
+        borderLeftWidth: shape === 'action' ? 4 : undefined,
+        backgroundColor: shape === 'action' ? `${laneColor}08` : undefined,
+      }}
       onDoubleClick={() => {
         if (isGhost) return;
         if (!data?.locked && data?.onNodeDetail) {
@@ -195,7 +269,9 @@ const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
 
       {/* Status dot */}
       {data?.status && data.status !== 'todo' && !isGhost && (
-        <div className={`absolute top-1 right-1 w-2 h-2 rounded-full ${STATUS_COLORS[data.status] || STATUS_COLORS.todo}`} />
+        <div
+          className={`absolute top-1 right-1 w-2 h-2 rounded-full ${STATUS_COLORS[data.status] || STATUS_COLORS.todo}`}
+        />
       )}
 
       {/* Attachment badge */}
@@ -233,7 +309,9 @@ const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
           className={`bg-transparent text-xs font-medium text-slate-800 dark:text-slate-200 text-center outline-none border-b border-primary-400 w-full ${innerRotate}`}
         />
       ) : (
-        <div className={`text-xs font-medium text-slate-800 dark:text-slate-200 text-center ${innerRotate}`}>
+        <div
+          className={`text-xs font-medium text-slate-800 dark:text-slate-200 text-center ${innerRotate}`}
+        >
           {data?.label || shape}
         </div>
       )}
@@ -243,7 +321,8 @@ const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
         <div className={`flex items-center gap-1 mt-1 ${innerRotate}`}>
           {data?.duration && (
             <span className="px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-[8px] font-bold text-blue-700 dark:text-blue-300">
-              {data.duration}{data.durationUnit || 'h'}
+              {data.duration}
+              {data.durationUnit || 'h'}
             </span>
           )}
           {data?.cost && (
@@ -259,17 +338,45 @@ const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
         </div>
       )}
 
-      {/* VSM-specific data fields */}
-      {shape === 'vsm_process' && (data?.cycleTime || data?.changeoverTime || data?.uptimePercent) && (
-        <div className={`text-[8px] text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 ${innerRotate}`}>
-          {data.cycleTime && <div>C/T: {data.cycleTime}</div>}
-          {data.changeoverTime && <div>C/O: {data.changeoverTime}</div>}
-          {data.uptimePercent != null && <div>Up: {data.uptimePercent}%</div>}
-          {data.operators != null && <div>Ops: {data.operators}</div>}
+      {/* V5-IDEA-22: Automation mode indicators */}
+      {data?.automationCandidate && !isGhost && (
+        <div
+          className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-black ${
+            data.automationPotential === 'high'
+              ? 'bg-emerald-500 text-white'
+              : data.automationPotential === 'medium'
+                ? 'bg-amber-500 text-white'
+                : 'bg-slate-400 text-white'
+          }`}
+          title={`Automation: ${data.automationPotential || 'low'}`}
+        >
+          A
         </div>
       )}
+      {data?.savingsEstimate && !isGhost && (
+        <div
+          className={`px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-[7px] font-bold text-emerald-700 dark:text-emerald-300 mt-0.5 ${innerRotate}`}
+        >
+          {data.savingsEstimate}
+        </div>
+      )}
+
+      {/* VSM-specific data fields */}
+      {shape === 'vsm_process' &&
+        (data?.cycleTime || data?.changeoverTime || data?.uptimePercent) && (
+          <div
+            className={`text-[8px] text-slate-500 dark:text-slate-400 mt-1 space-y-0.5 ${innerRotate}`}
+          >
+            {data.cycleTime && <div>C/T: {data.cycleTime}</div>}
+            {data.changeoverTime && <div>C/O: {data.changeoverTime}</div>}
+            {data.uptimePercent != null && <div>Up: {data.uptimePercent}%</div>}
+            {data.operators != null && <div>Ops: {data.operators}</div>}
+          </div>
+        )}
       {shape === 'vsm_inventory' && data?.inventory != null && (
-        <div className={`text-[8px] font-bold text-amber-600 dark:text-amber-400 mt-0.5 ${innerRotate}`}>
+        <div
+          className={`text-[8px] font-bold text-amber-600 dark:text-amber-400 mt-0.5 ${innerRotate}`}
+        >
           {data.inventory} pcs
         </div>
       )}
@@ -280,12 +387,33 @@ const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
       {showTooltip && !editing && !isGhost && (data?.owner || data?.description || hasMetrics) && (
         <div className="absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full z-50 pointer-events-none">
           <div className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-lg px-2.5 py-1.5 shadow-lg text-[9px] max-w-[200px] whitespace-normal">
-            {data?.owner && <div><span className="font-bold">Owner:</span> {data.owner}</div>}
-            {data?.duration && <div><span className="font-bold">Duration:</span> {data.duration}{data.durationUnit || 'h'}</div>}
-            {data?.cost && <div><span className="font-bold">Cost:</span> ${data.cost}</div>}
-            {data?.status && data.status !== 'todo' && <div><span className="font-bold">Status:</span> {data.status.replace('_', ' ')}</div>}
-            {data?.description && <div className="mt-0.5 opacity-80 line-clamp-2">{data.description}</div>}
-            {hasAttachments && <div className="mt-0.5 opacity-60">{data.attachments.length} attachment(s)</div>}
+            {data?.owner && (
+              <div>
+                <span className="font-bold">Owner:</span> {data.owner}
+              </div>
+            )}
+            {data?.duration && (
+              <div>
+                <span className="font-bold">Duration:</span> {data.duration}
+                {data.durationUnit || 'h'}
+              </div>
+            )}
+            {data?.cost && (
+              <div>
+                <span className="font-bold">Cost:</span> ${data.cost}
+              </div>
+            )}
+            {data?.status && data.status !== 'todo' && (
+              <div>
+                <span className="font-bold">Status:</span> {data.status.replace('_', ' ')}
+              </div>
+            )}
+            {data?.description && (
+              <div className="mt-0.5 opacity-80 line-clamp-2">{data.description}</div>
+            )}
+            {hasAttachments && (
+              <div className="mt-0.5 opacity-60">{data.attachments.length} attachment(s)</div>
+            )}
           </div>
         </div>
       )}
@@ -298,8 +426,17 @@ const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
 const CONDITION_TYPES = ['', 'yes', 'no', 'default', 'exception'] as const;
 
 const FlowEdgeComponent: React.FC<EdgeProps> = ({
-  id, sourceX, sourceY, targetX, targetY,
-  sourcePosition, targetPosition, data, label, selected, style,
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  data,
+  label,
+  selected,
+  style,
 }) => {
   const [editing, setEditing] = React.useState(false);
   const [editValue, setEditValue] = React.useState(String(label || data?.label || ''));
@@ -310,8 +447,12 @@ const FlowEdgeComponent: React.FC<EdgeProps> = ({
   }, [editing]);
 
   const [edgePath, labelX, labelY] = getSmoothStepPath({
-    sourceX, sourceY, sourcePosition,
-    targetX, targetY, targetPosition,
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
   });
 
   const commitEdit = () => {
@@ -320,27 +461,57 @@ const FlowEdgeComponent: React.FC<EdgeProps> = ({
   };
 
   const conditionType = data?.conditionType || '';
-  const conditionColor = conditionType === 'yes' ? '#22c55e' : conditionType === 'no' ? '#ef4444' : conditionType === 'exception' ? '#f59e0b' : undefined;
+  const conditionColor =
+    conditionType === 'yes'
+      ? '#22c55e'
+      : conditionType === 'no'
+        ? '#ef4444'
+        : conditionType === 'exception'
+          ? '#f59e0b'
+          : undefined;
   const edgeStroke = conditionColor || data?.sourceLaneColor || style?.stroke;
 
+  // V5-IDEA-44: Living edge behavior
+  const baseW = selected ? 2.5 : 1.5;
+
   return (
-    <>
+    <g className="group/flowedge">
       <style>{`@keyframes flowEdgeDash { to { stroke-dashoffset: -12; } }`}</style>
+      {/* Invisible wide hit area */}
+      <path d={edgePath} fill="none" stroke="transparent" strokeWidth={14} />
+      {/* Selection pulse */}
+      {selected && (
+        <path
+          d={edgePath}
+          fill="none"
+          stroke={edgeStroke || '#94a3b8'}
+          strokeWidth={baseW + 4}
+          strokeOpacity={0.12}
+          strokeLinecap="round"
+          className="animate-pulse"
+        />
+      )}
       <path
         id={id}
-        className="react-flow__edge-path"
+        className="react-flow__edge-path transition-all duration-200"
         d={edgePath}
-        style={{ ...style, stroke: edgeStroke, strokeWidth: selected ? 2.5 : 1.5 }}
+        style={{ ...style, stroke: edgeStroke, strokeWidth: baseW }}
       />
       <path
         d={edgePath}
         fill="none"
         strokeDasharray="8 4"
         stroke={edgeStroke || '#94a3b8'}
-        strokeWidth={selected ? 2.5 : 1.5}
-        strokeOpacity={0.45}
+        strokeWidth={baseW}
+        strokeOpacity={selected ? 0.55 : 0.45}
         style={{ animation: 'flowEdgeDash 0.6s linear infinite' }}
       />
+      {/* Directional particle on selected edge */}
+      {selected && (
+        <circle r="3" fill={edgeStroke || '#94a3b8'} opacity={0.7}>
+          <animateMotion dur="2s" repeatCount="indefinite" path={edgePath} />
+        </circle>
+      )}
       <foreignObject
         x={labelX - 50}
         y={labelY - 12}
@@ -369,7 +540,9 @@ const FlowEdgeComponent: React.FC<EdgeProps> = ({
               className="text-[8px] bg-white dark:bg-navy-800 border border-slate-300 rounded"
             >
               {CONDITION_TYPES.map((ct) => (
-                <option key={ct} value={ct}>{ct || '—'}</option>
+                <option key={ct} value={ct}>
+                  {ct || '—'}
+                </option>
               ))}
             </select>
           </div>
@@ -386,14 +559,14 @@ const FlowEdgeComponent: React.FC<EdgeProps> = ({
           </div>
         )}
       </foreignObject>
-    </>
+    </g>
   );
 };
 
 type RFNodeTypes = Record<string, React.ComponentType<NodeProps<any>>>;
 type RFEdgeTypes = Record<string, React.ComponentType<EdgeProps<any>>>;
 
-const nodeTypes: RFNodeTypes = {
+const baseNodeTypes: RFNodeTypes = {
   flowNode: FlowNodeComponent,
 };
 
@@ -448,6 +621,57 @@ function validateFlow(nodes: Node[], edges: Edge[]): ValidationWarning[] {
     }
   }
 
+  // V5-IDEA-23: VSM-specific validation
+  const vsmNodes = nodes.filter(
+    (n: Node) => n.data?.shape?.startsWith('vsm_') || n.type?.startsWith('vsm_')
+  );
+  if (vsmNodes.length > 0) {
+    const hasSupplier = vsmNodes.some(
+      (n) => n.data?.shape === 'vsm_supplier' || n.type === 'vsm_supplier'
+    );
+    const hasCustomer = vsmNodes.some(
+      (n) => n.data?.shape === 'vsm_customer' || n.type === 'vsm_customer'
+    );
+    const hasProcess = vsmNodes.some(
+      (n) => n.data?.shape === 'vsm_process' || n.type === 'vsm_process'
+    );
+
+    if (!hasSupplier) {
+      warnings.push({
+        id: 'vsm-no-supplier',
+        message: 'VSM: Missing Supplier node',
+        messagePl: 'VSM: Brak węzła Dostawca',
+      });
+    }
+    if (!hasCustomer) {
+      warnings.push({
+        id: 'vsm-no-customer',
+        message: 'VSM: Missing Customer node',
+        messagePl: 'VSM: Brak węzła Klient',
+      });
+    }
+    if (!hasProcess) {
+      warnings.push({
+        id: 'vsm-no-process',
+        message: 'VSM: Missing Process node',
+        messagePl: 'VSM: Brak węzła Proces',
+      });
+    }
+
+    const processNodes = vsmNodes.filter(
+      (n) => n.data?.shape === 'vsm_process' || n.type === 'vsm_process'
+    );
+    for (const pn of processNodes) {
+      if (!pn.data?.cycleTime) {
+        warnings.push({
+          id: `vsm-no-ct-${pn.id}`,
+          message: `VSM: "${pn.data?.label || pn.id}" missing Cycle Time`,
+          messagePl: `VSM: "${pn.data?.label || pn.id}" brak Czasu Cyklu`,
+        });
+      }
+    }
+  }
+
   return warnings;
 }
 
@@ -465,7 +689,19 @@ const LaneBackground: React.FC<{
   isFirst?: boolean;
   isLast?: boolean;
   laneCount: number;
-}> = ({ lane, idx, locked, onRename, onDelete, onColorChange, onMoveUp, onMoveDown, isFirst, isLast, laneCount }) => {
+}> = ({
+  lane,
+  idx,
+  locked,
+  onRename,
+  onDelete,
+  onColorChange,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
+  laneCount,
+}) => {
   const [editing, setEditing] = React.useState(false);
   const [value, setValue] = React.useState(lane.label);
   const [showColorPicker, setShowColorPicker] = React.useState(false);
@@ -513,18 +749,31 @@ const LaneBackground: React.FC<{
         )}
 
         {!locked && (
-          <div className="flex items-center gap-0.5 opacity-0 hover:opacity-100 transition-opacity group-hover:opacity-100"
+          <div
+            className="flex items-center gap-0.5 opacity-0 hover:opacity-100 transition-opacity group-hover:opacity-100"
             style={{ opacity: undefined }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0'; }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.opacity = '1';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.opacity = '0';
+            }}
           >
             {!isFirst && (
-              <button onClick={() => onMoveUp?.(lane.id)} className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60" title="Move up">
+              <button
+                onClick={() => onMoveUp?.(lane.id)}
+                className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
+                title="Move up"
+              >
                 <ArrowDownUp size={9} className="text-slate-400 rotate-180" />
               </button>
             )}
             {!isLast && (
-              <button onClick={() => onMoveDown?.(lane.id)} className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60" title="Move down">
+              <button
+                onClick={() => onMoveDown?.(lane.id)}
+                className="p-0.5 rounded hover:bg-white/60 dark:hover:bg-navy-700/60"
+                title="Move down"
+              >
                 <ArrowDownUp size={9} className="text-slate-400" />
               </button>
             )}
@@ -536,7 +785,11 @@ const LaneBackground: React.FC<{
               <Palette size={9} className="text-slate-400" />
             </button>
             {laneCount > 1 && (
-              <button onClick={() => onDelete?.(lane.id)} className="p-0.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title="Delete lane">
+              <button
+                onClick={() => onDelete?.(lane.id)}
+                className="p-0.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                title="Delete lane"
+              >
                 <X size={9} className="text-red-400" />
               </button>
             )}
@@ -550,7 +803,10 @@ const LaneBackground: React.FC<{
           {LANE_COLORS.map((c) => (
             <button
               key={c}
-              onClick={() => { onColorChange?.(lane.id, c); setShowColorPicker(false); }}
+              onClick={() => {
+                onColorChange?.(lane.id, c);
+                setShowColorPicker(false);
+              }}
               className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${c === lane.color ? 'border-primary-500 scale-110' : 'border-transparent'}`}
               style={{ backgroundColor: c }}
             />
@@ -643,6 +899,16 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [showKPIDashboard, setShowKPIDashboard] = useState(false);
   const [dragOverLaneId, setDragOverLaneId] = useState<string | null>(null);
 
+  // V5-IDEA-21: Flow mode
+  const [flowMode, setFlowMode] = useState<ProcessFlowMode>('classic');
+  const availableShapes = SHAPES_BY_MODE[flowMode];
+
+  // V5-IDEA-23: Dynamic node types — use rich VSM nodes in VSM mode
+  const nodeTypes = useMemo<RFNodeTypes>(
+    () => (flowMode === 'vsm' ? { ...baseNodeTypes, ...vsmNodeTypes } : baseNodeTypes),
+    [flowMode]
+  );
+
   const didPersistRef = useRef(false);
   const quickActionRef = useRef<(action: string) => void>(() => {});
 
@@ -731,79 +997,104 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   );
 
   // ── Edge label/condition change handlers ───────────────────────────────
-  const handleEdgeLabelChange = useCallback((edgeId: string, newLabel: string) => {
-    pushUndo();
-    setEdges((eds) =>
-      eds.map((e) => e.id === edgeId ? { ...e, label: newLabel, data: { ...e.data, label: newLabel } } : e)
-    );
-  }, [pushUndo]);
+  const handleEdgeLabelChange = useCallback(
+    (edgeId: string, newLabel: string) => {
+      pushUndo();
+      setEdges((eds) =>
+        eds.map((e) =>
+          e.id === edgeId ? { ...e, label: newLabel, data: { ...e.data, label: newLabel } } : e
+        )
+      );
+    },
+    [pushUndo]
+  );
 
-  const handleEdgeConditionChange = useCallback((edgeId: string, conditionType: string) => {
-    pushUndo();
-    setEdges((eds) =>
-      eds.map((e) => e.id === edgeId ? { ...e, data: { ...e.data, conditionType } } : e)
-    );
-  }, [pushUndo]);
+  const handleEdgeConditionChange = useCallback(
+    (edgeId: string, conditionType: string) => {
+      pushUndo();
+      setEdges((eds) =>
+        eds.map((e) => (e.id === edgeId ? { ...e, data: { ...e.data, conditionType } } : e))
+      );
+    },
+    [pushUndo]
+  );
 
   // ── Inject edge handlers into edge data ────────────────────────────────
   const nodeMap = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
 
-  const edgesWithHandlers = useMemo(() =>
-    edges.map((e) => {
-      const sourceNode = nodeMap.get(e.source);
-      return {
-        ...e,
-        type: 'flowEdge',
-        data: {
-          ...e.data,
-          sourceLaneColor: sourceNode?.data?.laneColor,
-          onLabelChange: handleEdgeLabelChange,
-          onConditionChange: handleEdgeConditionChange,
-        },
-      };
-    }),
+  const edgesWithHandlers = useMemo(
+    () =>
+      edges.map((e) => {
+        const sourceNode = nodeMap.get(e.source);
+        return {
+          ...e,
+          type: 'flowEdge',
+          data: {
+            ...e.data,
+            sourceLaneColor: sourceNode?.data?.laneColor,
+            onLabelChange: handleEdgeLabelChange,
+            onConditionChange: handleEdgeConditionChange,
+          },
+        };
+      }),
     [edges, nodeMap, handleEdgeLabelChange, handleEdgeConditionChange]
   );
 
   // ── Node/Edge change handlers ──────────────────────────────────────────
-  const onNodesChange = useCallback((changes: NodeChange[]) => {
-    setNodes((nds) => {
-      const next = applyNodeChanges(changes, nds);
-      const hasSelectionChange = changes.some((c: NodeChange) => c.type === 'select');
-      if (hasSelectionChange) handleSelectionUpdate(next);
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      setNodes((nds) => {
+        const next = applyNodeChanges(changes, nds);
+        const hasSelectionChange = changes.some((c: NodeChange) => c.type === 'select');
+        if (hasSelectionChange) handleSelectionUpdate(next);
 
-      // Drag between lanes: update laneId based on Y position
-      const posChanges = changes.filter((c: NodeChange) => c.type === 'position' && (c as any).dragging === false);
-      if (posChanges.length > 0) {
-        const updated = next.map((n: Node) => {
-          const posChange = posChanges.find((c: NodeChange) => (c as any).id === n.id);
-          if (!posChange) return n;
-          const laneIdx = Math.max(0, Math.min(lanes.length - 1, Math.floor(n.position.y / LANE_HEIGHT)));
-          const targetLane = lanes[laneIdx];
-          if (targetLane && n.data?.laneId !== targetLane.id) {
-            return { ...n, data: { ...n.data, laneId: targetLane.id, laneColor: targetLane.color } };
-          }
-          return n;
-        });
-        return updated;
-      }
-
-      // Live drag: show target lane highlight
-      const dragging = changes.filter((c: NodeChange) => c.type === 'position' && (c as any).dragging === true);
-      if (dragging.length > 0) {
-        const dragNode = next.find((n: Node) => n.id === (dragging[0] as any).id);
-        if (dragNode) {
-          const laneIdx = Math.max(0, Math.min(lanes.length - 1, Math.floor(dragNode.position.y / LANE_HEIGHT)));
-          const targetLane = lanes[laneIdx];
-          setDragOverLaneId(targetLane?.id || null);
+        // Drag between lanes: update laneId based on Y position
+        const posChanges = changes.filter(
+          (c: NodeChange) => c.type === 'position' && (c as any).dragging === false
+        );
+        if (posChanges.length > 0) {
+          const updated = next.map((n: Node) => {
+            const posChange = posChanges.find((c: NodeChange) => (c as any).id === n.id);
+            if (!posChange) return n;
+            const laneIdx = Math.max(
+              0,
+              Math.min(lanes.length - 1, Math.floor(n.position.y / LANE_HEIGHT))
+            );
+            const targetLane = lanes[laneIdx];
+            if (targetLane && n.data?.laneId !== targetLane.id) {
+              return {
+                ...n,
+                data: { ...n.data, laneId: targetLane.id, laneColor: targetLane.color },
+              };
+            }
+            return n;
+          });
+          return updated;
         }
-      } else {
-        setDragOverLaneId(null);
-      }
 
-      return next;
-    });
-  }, [handleSelectionUpdate, lanes]);
+        // Live drag: show target lane highlight
+        const dragging = changes.filter(
+          (c: NodeChange) => c.type === 'position' && (c as any).dragging === true
+        );
+        if (dragging.length > 0) {
+          const dragNode = next.find((n: Node) => n.id === (dragging[0] as any).id);
+          if (dragNode) {
+            const laneIdx = Math.max(
+              0,
+              Math.min(lanes.length - 1, Math.floor(dragNode.position.y / LANE_HEIGHT))
+            );
+            const targetLane = lanes[laneIdx];
+            setDragOverLaneId(targetLane?.id || null);
+          }
+        } else {
+          setDragOverLaneId(null);
+        }
+
+        return next;
+      });
+    },
+    [handleSelectionUpdate, lanes]
+  );
 
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
     setEdges((eds) => applyEdgeChanges(changes, eds));
@@ -819,11 +1110,20 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       const map = res?.map || {};
       const rawNodes = Array.isArray(map.nodes) ? (map.nodes as any[]) : [];
       const rawEdges = Array.isArray(map.edges) ? (map.edges as any[]) : [];
-      const rawExt = map?.extensions && typeof map.extensions === 'object' ? (map.extensions as Record<string, unknown>) : {};
+      const rawExt =
+        map?.extensions && typeof map.extensions === 'object'
+          ? (map.extensions as Record<string, unknown>)
+          : {};
 
       const pfExt = (rawExt?.processFlow || {}) as Record<string, unknown>;
       const savedLanes = Array.isArray(pfExt?.lanes) ? (pfExt.lanes as Lane[]) : DEFAULT_LANES;
       setLanes(savedLanes);
+
+      // V5-IDEA-21: Restore flow mode
+      const savedMode = pfExt?.flowMode;
+      if (savedMode === 'classic' || savedMode === 'automation' || savedMode === 'vsm') {
+        setFlowMode(savedMode);
+      }
 
       const hydratedNodes = rawNodes
         .filter((n: any) => n?.id)
@@ -838,7 +1138,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               locked,
               onLabelChange: (next: string) => {
                 setNodes((nds: Node[]) =>
-                  nds.map((nd: Node) => (nd.id === nid ? { ...nd, data: { ...nd.data, label: next } } : nd))
+                  nds.map((nd: Node) =>
+                    nd.id === nid ? { ...nd, data: { ...nd.data, label: next } } : nd
+                  )
                 );
               },
               onNodeDetail: onNodeDetail || undefined,
@@ -926,9 +1228,13 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       const yBase = 60 + lanes.indexOf(lane) * LANE_HEIGHT;
       const xBase = 100 + nodes.filter((n: Node) => n.data?.laneId === lane.id).length * 200;
 
+      // V5-IDEA-23: Use rich VSM node type when in VSM mode
+      const isVsmShape = shape.startsWith('vsm_');
+      const resolvedType = flowMode === 'vsm' && isVsmShape ? shape : 'flowNode';
+
       const newNode: Node = {
         id,
-        type: 'flowNode',
+        type: resolvedType,
         position: { x: xBase, y: yBase },
         data: {
           label: isPl ? SHAPE_CONFIG[shape].labelPl : SHAPE_CONFIG[shape].label,
@@ -958,7 +1264,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               context: {
                 seedText: `Added step: ${isPl ? SHAPE_CONFIG[shape].labelPl : SHAPE_CONFIG[shape].label}`,
                 title: '',
-                existingNodes: [...nodes, newNode].map((n: Node) => ({ id: n.id, data: { label: n.data?.label, shape: n.data?.shape } })),
+                existingNodes: [...nodes, newNode].map((n: Node) => ({
+                  id: n.id,
+                  data: { label: n.data?.label, shape: n.data?.shape },
+                })),
                 existingEdges: edges as any[],
                 language: i18n.language || 'en',
               },
@@ -981,12 +1290,118 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               setGhostNodes(ghosts);
               setTimeout(() => setGhostNodes([]), 15000);
             }
-          } catch { /* silent */ }
+          } catch {
+            /* silent */
+          }
         })();
       }
     },
     [edges, i18n.language, ideaId, isPl, lanes, locked, nodes, pushUndo, setNodes]
   );
+
+  // ── V5-IDEA-21: Insert step between two connected nodes ─────────────────
+  const insertBetween = useCallback(() => {
+    if (locked) return;
+    const selectedEdge = (edges as Edge[]).find((e) => e.selected);
+    if (!selectedEdge) {
+      toast.error(isPl ? 'Zaznacz krawędź' : 'Select an edge first');
+      return;
+    }
+    pushUndo();
+    const sourceNode = (nodes as Node[]).find((n) => n.id === selectedEdge.source);
+    const targetNode = (nodes as Node[]).find((n) => n.id === selectedEdge.target);
+    if (!sourceNode || !targetNode) return;
+
+    const midX = (sourceNode.position.x + targetNode.position.x) / 2;
+    const midY = (sourceNode.position.y + targetNode.position.y) / 2;
+    const newId = `pf-ins-${Date.now()}`;
+    const lane =
+      lanes.find((l) => l.id === sourceNode.data?.laneId) || lanes[0] || DEFAULT_LANES[0];
+
+    const newNode: Node = {
+      id: newId,
+      type: 'flowNode',
+      position: { x: midX, y: midY },
+      data: {
+        label: isPl ? 'Nowy krok' : 'New step',
+        shape: 'action' as FlowShape,
+        laneId: lane.id,
+        laneColor: lane.color,
+        locked,
+        onLabelChange: (next: string) => {
+          setNodes((nds: Node[]) =>
+            nds.map((n: Node) => (n.id === newId ? { ...n, data: { ...n.data, label: next } } : n))
+          );
+        },
+        onNodeDetail: onNodeDetail || undefined,
+      },
+    };
+
+    setNodes((prev: Node[]) => [...prev, newNode]);
+    setEdges((prev: Edge[]) => {
+      const filtered = prev.filter((e) => e.id !== selectedEdge.id);
+      return [
+        ...filtered,
+        { ...selectedEdge, id: `e-${selectedEdge.source}-${newId}`, target: newId },
+        {
+          id: `e-${newId}-${selectedEdge.target}`,
+          source: newId,
+          target: selectedEdge.target,
+          type: 'flowEdge',
+          data: {},
+        },
+      ];
+    });
+    toast.success(isPl ? 'Wstawiono krok' : 'Step inserted', { duration: 800 });
+  }, [edges, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
+
+  // ── V5-IDEA-21: Split path (add parallel decision branch) ─────────────
+  const splitPath = useCallback(() => {
+    if (locked) return;
+    const selected = (nodes as Node[]).find(
+      (n: Node) => n.selected && n.data?.shape === 'decision'
+    );
+    if (!selected) {
+      toast.error(isPl ? 'Zaznacz decyzję' : 'Select a decision node');
+      return;
+    }
+    pushUndo();
+    const newId = `pf-split-${Date.now()}`;
+    const lane = lanes.find((l) => l.id === selected.data?.laneId) || lanes[0] || DEFAULT_LANES[0];
+
+    const newNode: Node = {
+      id: newId,
+      type: 'flowNode',
+      position: { x: selected.position.x + 250, y: selected.position.y + 80 },
+      data: {
+        label: isPl ? 'Alternatywna ścieżka' : 'Alternative path',
+        shape: 'action' as FlowShape,
+        laneId: lane.id,
+        laneColor: lane.color,
+        locked,
+        onLabelChange: (next: string) => {
+          setNodes((nds: Node[]) =>
+            nds.map((n: Node) => (n.id === newId ? { ...n, data: { ...n.data, label: next } } : n))
+          );
+        },
+        onNodeDetail: onNodeDetail || undefined,
+      },
+    };
+
+    setNodes((prev: Node[]) => [...prev, newNode]);
+    setEdges((prev: Edge[]) => [
+      ...prev,
+      {
+        id: `e-${selected.id}-${newId}`,
+        source: selected.id,
+        target: newId,
+        type: 'flowEdge',
+        data: { conditionType: 'no' },
+        label: 'No',
+      },
+    ]);
+    toast.success(isPl ? 'Ścieżka rozdzielona' : 'Path split', { duration: 800 });
+  }, [isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
 
   // ── Add lane ───────────────────────────────────────────────────────────
 
@@ -1009,6 +1424,61 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     if (action === 'pf_add_start') addNode('start');
     if (action === 'pf_add_end') addNode('end');
     if (action === 'pf_add_lane') addLane();
+    if (action === 'pf_insert_between') insertBetween();
+    if (action === 'pf_split_path') splitPath();
+    if (action === 'pf_mode_classic') setFlowMode('classic');
+    if (action === 'pf_mode_automation') setFlowMode('automation');
+    if (action === 'pf_mode_vsm') setFlowMode('vsm');
+
+    // V5-IDEA-23: VSM quick actions
+    if (action === 'pf_add_vsm_process') addNode('vsm_process');
+    if (action === 'pf_add_vsm_inventory') addNode('vsm_inventory');
+    if (action === 'pf_add_vsm_supplier') addNode('vsm_supplier');
+    if (action === 'pf_add_vsm_customer') addNode('vsm_customer');
+    if (action === 'pf_add_vsm_kaizen') addNode('vsm_kaizen');
+
+    // V5-IDEA-22: Automation mode actions
+    if (action === 'pf_mark_automation') {
+      setNodes((nds: Node[]) =>
+        nds.map((n: Node) =>
+          n.selected
+            ? {
+                ...n,
+                data: {
+                  ...n.data,
+                  automationCandidate: !n.data?.automationCandidate,
+                  automationPotential: n.data?.automationCandidate ? undefined : 'medium',
+                },
+              }
+            : n
+        )
+      );
+    }
+    if (action === 'pf_add_metrics') {
+      const selected = nodes.find((n: Node) => n.selected);
+      if (selected) {
+        const duration = window.prompt(isPl ? 'Czas trwania (np. 2h):' : 'Duration (e.g. 2h):');
+        if (duration) {
+          setNodes((nds: Node[]) =>
+            nds.map((n: Node) =>
+              n.id === selected.id ? { ...n, data: { ...n.data, duration } } : n
+            )
+          );
+        }
+      }
+    }
+    if (action === 'pf_savings_analysis') {
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-chat-prompt', {
+          detail: {
+            prompt: isPl
+              ? 'Przeanalizuj przepływ procesu i zidentyfikuj potencjał automatyzacji. Dla każdego kroku oceń: czas, koszt, potencjał automatyzacji (wysoki/średni/niski), szacowane oszczędności.'
+              : 'Analyze the process flow and identify automation potential. For each step evaluate: time, cost, automation potential (high/medium/low), estimated savings.',
+            ideaId,
+          },
+        })
+      );
+    }
   };
 
   useEffect(() => {
@@ -1032,7 +1502,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       return prev.filter((n: Node) => !n.selected);
     });
     setEdges((prev: Edge[]) =>
-      prev.filter((e: Edge) => !e.selected && !removedNodeIds!.has(e.source) && !removedNodeIds!.has(e.target))
+      prev.filter(
+        (e: Edge) => !e.selected && !removedNodeIds!.has(e.source) && !removedNodeIds!.has(e.target)
+      )
     );
   }, [locked, pushUndo, setEdges, setNodes]);
 
@@ -1055,7 +1527,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           ...n.data,
           onLabelChange: (next: string) => {
             setNodes((nds: Node[]) =>
-              nds.map((nd: Node) => (nd.id === newId ? { ...nd, data: { ...nd.data, label: next } } : nd))
+              nds.map((nd: Node) =>
+                nd.id === newId ? { ...nd, data: { ...nd.data, label: next } } : nd
+              )
             );
           },
           onNodeDetail: onNodeDetail || undefined,
@@ -1101,7 +1575,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       pushUndo();
       setLanes((prev) => prev.map((l) => (l.id === laneId ? { ...l, color } : l)));
       setNodes((prev) =>
-        prev.map((n) => (n.data?.laneId === laneId ? { ...n, data: { ...n.data, laneColor: color } } : n))
+        prev.map((n) =>
+          n.data?.laneId === laneId ? { ...n, data: { ...n.data, laneColor: color } } : n
+        )
       );
     },
     [locked, pushUndo]
@@ -1152,7 +1628,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     pushUndo();
     const layouted = autoLayout(nodes, edges, lanes);
     setNodes(layouted);
-    toast.success(isPl ? 'Układ automatyczny zastosowany' : 'Auto-layout applied', { duration: 900 });
+    toast.success(isPl ? 'Układ automatyczny zastosowany' : 'Auto-layout applied', {
+      duration: 900,
+    });
   }, [edges, isPl, lanes, locked, nodes, pushUndo]);
 
   // ── AI Coach ──────────────────────────────────────────────────────────
@@ -1166,13 +1644,29 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         context: {
           seedText: '',
           title: '',
-          existingNodes: nodes.map((n: Node) => ({ id: n.id, data: { label: n.data?.label, shape: n.data?.shape, laneId: n.data?.laneId } })),
-          existingEdges: edges.map((e: Edge) => ({ id: e.id, source: e.source, target: e.target, label: e.label })),
+          existingNodes: nodes.map((n: Node) => ({
+            id: n.id,
+            data: { label: n.data?.label, shape: n.data?.shape, laneId: n.data?.laneId },
+          })),
+          existingEdges: edges.map((e: Edge) => ({
+            id: e.id,
+            source: e.source,
+            target: e.target,
+            label: e.label,
+          })),
           existingLanes: lanes,
           language: i18n.language || 'en',
         },
       });
-      const insights = result?.insights || result?.proposals?.map((p: any) => ({ type: p.patch?.type || 'bottleneck', message: p.rationale, suggestion: p.patch?.suggestion || p.patch?.recommendation || '', confidence: p.confidence })) || [];
+      const insights =
+        result?.insights ||
+        result?.proposals?.map((p: any) => ({
+          type: p.patch?.type || 'bottleneck',
+          message: p.rationale,
+          suggestion: p.patch?.suggestion || p.patch?.recommendation || '',
+          confidence: p.confidence,
+        })) ||
+        [];
       setCoachInsights(insights);
       setShowCoach(true);
     } catch (err: any) {
@@ -1193,7 +1687,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         context: {
           seedText: '',
           title: '',
-          existingNodes: nodes.map((n: Node) => ({ id: n.id, data: { label: n.data?.label, shape: n.data?.shape } })),
+          existingNodes: nodes.map((n: Node) => ({
+            id: n.id,
+            data: { label: n.data?.label, shape: n.data?.shape },
+          })),
           existingEdges: edges.map((e: Edge) => ({ id: e.id, source: e.source, target: e.target })),
           existingLanes: lanes,
           language: i18n.language || 'en',
@@ -1225,7 +1722,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           locked,
           onLabelChange: (next: string) => {
             setNodes((nds: Node[]) =>
-              nds.map((nd: Node) => (nd.id === realId ? { ...nd, data: { ...nd.data, label: next } } : nd))
+              nds.map((nd: Node) =>
+                nd.id === realId ? { ...nd, data: { ...nd.data, label: next } } : nd
+              )
             );
           },
           onNodeDetail: onNodeDetail || undefined,
@@ -1248,8 +1747,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       const nextExt = {
         ...extensions,
         processFlow: {
-          ...(extensions?.processFlow && typeof extensions.processFlow === 'object' ? extensions.processFlow : {}),
+          ...(extensions?.processFlow && typeof extensions.processFlow === 'object'
+            ? extensions.processFlow
+            : {}),
           lanes,
+          flowMode,
           viewState: { layoutMode: 'horizontal', showGrid: true, snap: true },
         },
       };
@@ -1288,7 +1790,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           laneCount={lanes.length}
         />
       )),
-    [handleLaneColorChange, handleLaneDelete, handleLaneMoveDown, handleLaneMoveUp, handleLaneRename, lanes, locked]
+    [
+      handleLaneColorChange,
+      handleLaneDelete,
+      handleLaneMoveDown,
+      handleLaneMoveUp,
+      handleLaneRename,
+      lanes,
+      locked,
+    ]
   );
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
@@ -1296,7 +1806,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      const isInput = (e.target as HTMLElement)?.tagName === 'INPUT' || (e.target as HTMLElement)?.tagName === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
+      const isInput =
+        (e.target as HTMLElement)?.tagName === 'INPUT' ||
+        (e.target as HTMLElement)?.tagName === 'TEXTAREA' ||
+        (e.target as HTMLElement)?.isContentEditable;
 
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
@@ -1367,11 +1880,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       const detail = (e as CustomEvent).detail;
       if (!detail?.nodeId || !detail?.data) return;
       setNodes((nds) =>
-        nds.map((n) =>
-          n.id === detail.nodeId
-            ? { ...n, data: { ...n.data, ...detail.data } }
-            : n
-        )
+        nds.map((n) => (n.id === detail.nodeId ? { ...n, data: { ...n.data, ...detail.data } } : n))
       );
     };
     window.addEventListener('idea-workspace-node-update', handler);
@@ -1387,13 +1896,27 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       aria-label={isPl ? 'Edytor przepływu procesu' : 'Process flow editor'}
     >
       {/* Toolbar */}
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
-        <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mr-2">
-          {isPl ? 'Przepływ procesu' : 'Process Flow'}
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0 overflow-x-auto">
+        {/* V5-IDEA-21: Mode selector */}
+        <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-navy-800 rounded-lg p-0.5 mr-1 shrink-0">
+          {(['classic', 'automation', 'vsm'] as ProcessFlowMode[]).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setFlowMode(mode)}
+              className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all ${
+                flowMode === mode
+                  ? 'bg-white dark:bg-navy-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
+            >
+              {isPl ? FLOW_MODE_LABELS[mode].pl : FLOW_MODE_LABELS[mode].en}
+            </button>
+          ))}
         </div>
 
         <div className="flex items-center gap-1">
-          {(Object.keys(SHAPE_CONFIG) as FlowShape[]).map((shape) => {
+          {availableShapes.map((shape) => {
             const cfg = SHAPE_CONFIG[shape];
             const Icon = cfg.icon;
             return (
@@ -1424,6 +1947,30 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           <Plus size={14} />
           Lane
         </button>
+
+        {/* V5-IDEA-21: Insert between & Split path */}
+        <button
+          type="button"
+          onClick={insertBetween}
+          disabled={locked}
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
+          title={isPl ? 'Wstaw krok między' : 'Insert between'}
+        >
+          <Plus size={14} />
+          {isPl ? 'Wstaw' : 'Insert'}
+        </button>
+        <button
+          type="button"
+          onClick={splitPath}
+          disabled={locked}
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
+          title={isPl ? 'Rozdziel ścieżkę' : 'Split path'}
+        >
+          <GitMerge size={14} />
+          {isPl ? 'Rozdziel' : 'Split'}
+        </button>
+
+        <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-1" />
 
         <button
           type="button"
@@ -1523,7 +2070,11 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-40"
           title={isPl ? 'Podsumowanie' : 'Summary'}
         >
-          {summaryLoading ? <Loader2 size={14} className="animate-spin" /> : <BarChart3 size={14} />}
+          {summaryLoading ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <BarChart3 size={14} />
+          )}
           {isPl ? 'Podsumuj' : 'Summary'}
         </button>
 
@@ -1558,7 +2109,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           </div>
           <ul className="space-y-0.5">
             {warnings.map((w) => (
-              <li key={w.id} className="text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-1">
+              <li
+                key={w.id}
+                className="text-[11px] text-amber-700 dark:text-amber-300 flex items-start gap-1"
+              >
                 <AlertTriangle size={12} className="mt-0.5 flex-shrink-0" />
                 {isPl ? w.messagePl : w.message}
               </li>
@@ -1575,20 +2129,34 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               <Bot size={14} />
               {isPl ? 'AI Coach — Analiza procesu' : 'AI Coach — Process Analysis'}
             </div>
-            <button type="button" onClick={() => setShowCoach(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+            <button
+              type="button"
+              onClick={() => setShowCoach(false)}
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            >
               <X size={14} />
             </button>
           </div>
           <ul className="space-y-1.5">
             {coachInsights.map((insight: any, idx: number) => (
               <li key={idx} className="flex items-start gap-2 text-[11px]">
-                <span className={`mt-0.5 flex-shrink-0 ${insight.type === 'bottleneck' ? 'text-red-500' : insight.type === 'improvement' ? 'text-emerald-500' : 'text-indigo-500'}`}>
-                  {insight.type === 'bottleneck' ? <AlertTriangle size={12} /> : <Lightbulb size={12} />}
+                <span
+                  className={`mt-0.5 flex-shrink-0 ${insight.type === 'bottleneck' ? 'text-red-500' : insight.type === 'improvement' ? 'text-emerald-500' : 'text-indigo-500'}`}
+                >
+                  {insight.type === 'bottleneck' ? (
+                    <AlertTriangle size={12} />
+                  ) : (
+                    <Lightbulb size={12} />
+                  )}
                 </span>
                 <div>
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">{insight.message}</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">
+                    {insight.message}
+                  </span>
                   {insight.suggestion && (
-                    <span className="block text-slate-500 dark:text-slate-400 mt-0.5">{insight.suggestion}</span>
+                    <span className="block text-slate-500 dark:text-slate-400 mt-0.5">
+                      {insight.suggestion}
+                    </span>
                   )}
                   {insight.confidence != null && (
                     <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-[8px] font-bold text-indigo-600 dark:text-indigo-300">
@@ -1610,47 +2178,67 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               <CheckCircle size={14} />
               {isPl ? 'Podsumowanie procesu' : 'Process Summary'}
             </div>
-            <button type="button" onClick={() => setShowSummary(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+            <button
+              type="button"
+              onClick={() => setShowSummary(false)}
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+            >
               <X size={14} />
             </button>
           </div>
           <div className="grid grid-cols-3 gap-2 mb-2">
             {summaryData.totalSteps != null && (
               <div className="text-center p-1.5 rounded-lg bg-white/60 dark:bg-navy-800/40">
-                <div className="text-sm font-bold text-slate-800 dark:text-slate-200">{summaryData.totalSteps}</div>
+                <div className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  {summaryData.totalSteps}
+                </div>
                 <div className="text-[8px] text-slate-500">{isPl ? 'Kroków' : 'Steps'}</div>
               </div>
             )}
             {(summaryData.decisions ?? summaryData.totalDecisions) != null && (
               <div className="text-center p-1.5 rounded-lg bg-white/60 dark:bg-navy-800/40">
-                <div className="text-sm font-bold text-amber-600 dark:text-amber-400">{summaryData.decisions ?? summaryData.totalDecisions}</div>
+                <div className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                  {summaryData.decisions ?? summaryData.totalDecisions}
+                </div>
                 <div className="text-[8px] text-slate-500">{isPl ? 'Decyzji' : 'Decisions'}</div>
               </div>
             )}
             {(summaryData.lanes ?? summaryData.totalLanes) != null && (
               <div className="text-center p-1.5 rounded-lg bg-white/60 dark:bg-navy-800/40">
-                <div className="text-sm font-bold text-blue-600 dark:text-blue-400">{summaryData.lanes ?? summaryData.totalLanes}</div>
+                <div className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                  {summaryData.lanes ?? summaryData.totalLanes}
+                </div>
                 <div className="text-[8px] text-slate-500">{isPl ? 'Ścieżek' : 'Lanes'}</div>
               </div>
             )}
           </div>
           {summaryData.estimatedDuration && (
             <div className="text-[10px] text-slate-600 dark:text-slate-400 mb-1">
-              <span className="font-semibold">{isPl ? 'Szacowany czas:' : 'Est. duration:'}</span> {summaryData.estimatedDuration}
+              <span className="font-semibold">{isPl ? 'Szacowany czas:' : 'Est. duration:'}</span>{' '}
+              {summaryData.estimatedDuration}
             </div>
           )}
           {summaryData.criticalPath && (
             <div className="text-[10px] text-slate-600 dark:text-slate-400 mb-1">
-              <span className="font-semibold">{isPl ? 'Ścieżka krytyczna:' : 'Critical path:'}</span>{' '}
-              {Array.isArray(summaryData.criticalPath) ? summaryData.criticalPath.join(' → ') : summaryData.criticalPath}
+              <span className="font-semibold">
+                {isPl ? 'Ścieżka krytyczna:' : 'Critical path:'}
+              </span>{' '}
+              {Array.isArray(summaryData.criticalPath)
+                ? summaryData.criticalPath.join(' → ')
+                : summaryData.criticalPath}
             </div>
           )}
           {summaryData.risks?.length > 0 && (
             <div className="mt-1.5">
-              <div className="text-[9px] font-bold text-red-600 dark:text-red-400 mb-0.5">{isPl ? 'Ryzyka:' : 'Risks:'}</div>
+              <div className="text-[9px] font-bold text-red-600 dark:text-red-400 mb-0.5">
+                {isPl ? 'Ryzyka:' : 'Risks:'}
+              </div>
               <ul className="space-y-0.5">
                 {summaryData.risks.map((r: string, i: number) => (
-                  <li key={i} className="text-[9px] text-red-600/80 dark:text-red-400/80 flex items-start gap-1">
+                  <li
+                    key={i}
+                    className="text-[9px] text-red-600/80 dark:text-red-400/80 flex items-start gap-1"
+                  >
                     <AlertTriangle size={10} className="mt-0.5 flex-shrink-0" /> {r}
                   </li>
                 ))}
@@ -1659,10 +2247,15 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           )}
           {summaryData.recommendations?.length > 0 && (
             <div className="mt-1.5">
-              <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 mb-0.5">{isPl ? 'Rekomendacje:' : 'Recommendations:'}</div>
+              <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 mb-0.5">
+                {isPl ? 'Rekomendacje:' : 'Recommendations:'}
+              </div>
               <ul className="space-y-0.5">
                 {summaryData.recommendations.map((r: string, i: number) => (
-                  <li key={i} className="text-[9px] text-emerald-600/80 dark:text-emerald-400/80 flex items-start gap-1">
+                  <li
+                    key={i}
+                    className="text-[9px] text-emerald-600/80 dark:text-emerald-400/80 flex items-start gap-1"
+                  >
                     <Lightbulb size={10} className="mt-0.5 flex-shrink-0" /> {r}
                   </li>
                 ))}
@@ -1695,7 +2288,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           </div>
           <ReactFlowProvider>
             <ReactFlow
-              nodes={[...nodes, ...ghostNodes.map(g => ({ ...g, style: { opacity: 0.4 }, data: { ...g.data, onAcceptGhost: acceptGhostNode } }))]}
+              nodes={[
+                ...nodes,
+                ...ghostNodes.map((g) => ({
+                  ...g,
+                  style: { opacity: 0.4 },
+                  data: { ...g.data, onAcceptGhost: acceptGhostNode },
+                })),
+              ]}
               edges={edgesWithHandlers}
               onNodesChange={locked ? undefined : onNodesChange}
               onEdgesChange={locked ? undefined : onEdgesChange}

@@ -54,7 +54,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     try {
       const res = await Api.post(`/presentations/decks/${deckId}/share`, { expiresInDays: 7 });
       const payload = res?.data;
-      const data = (payload && typeof payload === 'object' && 'data' in payload) ? payload.data : payload;
+      const data =
+        payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
       if (data?.shareToken) {
         setShareToken(data.shareToken);
         setPublicLink(true);
@@ -70,9 +71,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 
   if (!isOpen) return null;
 
-  const shareUrl = shareToken
-    ? `${window.location.origin}/presentations/shared/${shareToken}`
-    : '';
+  const shareUrl = shareToken ? `${window.location.origin}/presentations/shared/${shareToken}` : '';
 
   const handleCopyLink = () => {
     if (!shareUrl) return;
@@ -161,7 +160,9 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   >
                     <perm.icon size={16} className="text-slate-400" />
                     <div>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{perm.label}</p>
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {perm.label}
+                      </p>
                       <p className="text-[10px] text-slate-400">{perm.desc}</p>
                     </div>
                   </button>
@@ -188,7 +189,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                       : 'bg-slate-200 dark:bg-navy-700 text-slate-500'
                   }`}
                 >
-                  {generatingLink ? <Loader2 size={12} className="animate-spin" /> : publicLink ? 'ON' : 'OFF'}
+                  {generatingLink ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : publicLink ? (
+                    'ON'
+                  ) : (
+                    'OFF'
+                  )}
                 </button>
               </div>
 
@@ -204,11 +211,18 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                       onClick={handleCopyLink}
                       className="px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 text-sm hover:bg-slate-50 dark:hover:bg-navy-800 flex items-center gap-1"
                     >
-                      {linkCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} className="text-slate-500" />}
+                      {linkCopied ? (
+                        <Check size={14} className="text-green-500" />
+                      ) : (
+                        <Copy size={14} className="text-slate-500" />
+                      )}
                     </button>
                   </div>
                   <p className="text-xs text-slate-400">
-                    {t('presentations.builder.share.anyoneCanView', 'Anyone with the link can view')}
+                    {t(
+                      'presentations.builder.share.anyoneCanView',
+                      'Anyone with the link can view'
+                    )}
                   </p>
                 </>
               )}
@@ -218,9 +232,24 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           {activeTab === 'export' && (
             <div className="space-y-3">
               {[
-                { format: 'pdf' as const, label: t('presentations.builder.export.pdf', 'PDF'), icon: FileText, desc: 'Consulting-grade, fonts embedded' },
-                { format: 'pptx' as const, label: t('presentations.builder.export.pptx', 'PowerPoint (PPTX)'), icon: FileText, desc: 'Native formatting, editable charts' },
-                { format: 'png' as const, label: t('presentations.builder.export.png', 'PNGs (per slide)'), icon: Image, desc: 'High-res per card (2x retina)' },
+                {
+                  format: 'pdf' as const,
+                  label: t('presentations.builder.export.pdf', 'PDF'),
+                  icon: FileText,
+                  desc: 'Consulting-grade, fonts embedded',
+                },
+                {
+                  format: 'pptx' as const,
+                  label: t('presentations.builder.export.pptx', 'PowerPoint (PPTX)'),
+                  icon: FileText,
+                  desc: 'Native formatting, editable charts',
+                },
+                {
+                  format: 'png' as const,
+                  label: t('presentations.builder.export.png', 'PNGs (per slide)'),
+                  icon: Image,
+                  desc: 'High-res per card (2x retina)',
+                },
               ].map((exp) => (
                 <button
                   key={exp.format}
@@ -253,14 +282,19 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               {!shareToken ? (
                 <div className="text-center py-6">
                   <p className="text-sm text-slate-500 mb-3">
-                    {t('presentations.builder.share.enablePublicFirst', 'Enable public link sharing first to get an embed code.')}
+                    {t(
+                      'presentations.builder.share.enablePublicFirst',
+                      'Enable public link sharing first to get an embed code.'
+                    )}
                   </p>
                   <button
                     onClick={generateShareLink}
                     disabled={generatingLink}
                     className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm hover:bg-purple-500 disabled:opacity-50"
                   >
-                    {generatingLink ? <Loader2 size={14} className="animate-spin inline mr-1" /> : null}
+                    {generatingLink ? (
+                      <Loader2 size={14} className="animate-spin inline mr-1" />
+                    ) : null}
                     {t('presentations.builder.share.generateLink', 'Generate share link')}
                   </button>
                 </div>

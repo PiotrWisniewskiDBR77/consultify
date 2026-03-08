@@ -16,8 +16,8 @@ import {
   Plus,
   Rocket,
   Sparkles,
-  Square,
   Sprout,
+  Square,
   Star,
   Table2,
   Tag,
@@ -150,11 +150,49 @@ const STAGE_CONFIG: Record<
   },
 };
 
-const TOOL_CONFIG: Record<string, { icon: React.ElementType; color: string; bgColor: string; borderColor: string; label: string; labelPl: string }> = {
-  mindmap: { icon: Network, color: 'text-violet-500', bgColor: 'bg-violet-500/10 dark:bg-violet-500/15', borderColor: 'border-violet-400/30', label: 'Mind Map', labelPl: 'Mind Map' },
-  table: { icon: Table2, color: 'text-sky-500', bgColor: 'bg-sky-500/10 dark:bg-sky-500/15', borderColor: 'border-sky-400/30', label: 'Table', labelPl: 'Tabela' },
-  process_flow: { icon: Workflow, color: 'text-emerald-500', bgColor: 'bg-emerald-500/10 dark:bg-emerald-500/15', borderColor: 'border-emerald-400/30', label: 'Process Flow', labelPl: 'Proces' },
-  whiteboard: { icon: PenTool, color: 'text-amber-500', bgColor: 'bg-amber-500/10 dark:bg-amber-500/15', borderColor: 'border-amber-400/30', label: 'Whiteboard', labelPl: 'Whiteboard' },
+const TOOL_CONFIG: Record<
+  string,
+  {
+    icon: React.ElementType;
+    color: string;
+    bgColor: string;
+    borderColor: string;
+    label: string;
+    labelPl: string;
+  }
+> = {
+  mindmap: {
+    icon: Network,
+    color: 'text-violet-500',
+    bgColor: 'bg-violet-500/10 dark:bg-violet-500/15',
+    borderColor: 'border-violet-400/30',
+    label: 'Mind Map',
+    labelPl: 'Mind Map',
+  },
+  table: {
+    icon: Table2,
+    color: 'text-sky-500',
+    bgColor: 'bg-sky-500/10 dark:bg-sky-500/15',
+    borderColor: 'border-sky-400/30',
+    label: 'Table',
+    labelPl: 'Tabela',
+  },
+  process_flow: {
+    icon: Workflow,
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500/10 dark:bg-emerald-500/15',
+    borderColor: 'border-emerald-400/30',
+    label: 'Process Flow',
+    labelPl: 'Proces',
+  },
+  whiteboard: {
+    icon: PenTool,
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-500/10 dark:bg-amber-500/15',
+    borderColor: 'border-amber-400/30',
+    label: 'Whiteboard',
+    labelPl: 'Whiteboard',
+  },
 };
 
 function getToolConfig(tool?: string | null) {
@@ -245,7 +283,14 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   }, [fetchIdeas, refreshTrigger]);
 
   useEffect(() => {
-    const counts = { total: ideas.length, spark: 0, incubating: 0, shaping: 0, ready: 0, promoted: 0 };
+    const counts = {
+      total: ideas.length,
+      spark: 0,
+      incubating: 0,
+      shaping: 0,
+      ready: 0,
+      promoted: 0,
+    };
     for (const idea of ideas) {
       const s = (idea.stage || 'spark') as IdeaStage;
       if (s in counts) counts[s]++;
@@ -275,7 +320,13 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           cmp = (a.title || '').localeCompare(b.title || '');
           break;
         case 'stage': {
-          const order: Record<string, number> = { spark: 0, incubating: 1, shaping: 2, ready: 3, promoted: 4 };
+          const order: Record<string, number> = {
+            spark: 0,
+            incubating: 1,
+            shaping: 2,
+            ready: 3,
+            promoted: 4,
+          };
           cmp = (order[a.stage || 'spark'] || 0) - (order[b.stage || 'spark'] || 0);
           break;
         }
@@ -435,7 +486,16 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       tag: () => setTagModalOpen(true),
       deleteSelected: bulkDelete,
     });
-  }, [selectedIds.size, allSelected, someSelected, onBulkBarChange, selectAllVisible, clearSelection, openConvertForSelection, bulkDelete]);
+  }, [
+    selectedIds.size,
+    allSelected,
+    someSelected,
+    onBulkBarChange,
+    selectAllVisible,
+    clearSelection,
+    openConvertForSelection,
+    bulkDelete,
+  ]);
 
   const { showHelp, setShowHelp } = useKeyboardShortcuts({
     enabled: true,
@@ -455,9 +515,18 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       window.dispatchEvent(new CustomEvent('mywork-focus-search'));
     },
     onCancel: () => {
-      if (selectedIds.size > 0) { clearSelection(); return; }
-      if (convertIdea) { setConvertIdea(null); return; }
-      if (tagModalOpen) { setTagModalOpen(false); return; }
+      if (selectedIds.size > 0) {
+        clearSelection();
+        return;
+      }
+      if (convertIdea) {
+        setConvertIdea(null);
+        return;
+      }
+      if (tagModalOpen) {
+        setTagModalOpen(false);
+        return;
+      }
     },
   });
 
@@ -468,9 +537,18 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       const isEditable = target?.isContentEditable;
       if (isInput || isEditable) return;
 
-      if (e.key === 'c' && !e.metaKey && !e.ctrlKey) { e.preventDefault(); onCreateIdea(); }
-      if (e.key === 'e' && !e.metaKey && !e.ctrlKey) { e.preventDefault(); openFocusedIdea(); }
-      if (e.key === 'p' && !e.metaKey && !e.ctrlKey) { e.preventDefault(); openConvertForSelection(); }
+      if (e.key === 'c' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        onCreateIdea();
+      }
+      if (e.key === 'e' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        openFocusedIdea();
+      }
+      if (e.key === 'p' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        openConvertForSelection();
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -548,7 +626,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       promoted: { en: 'Promoted', pl: 'Promowany' },
     };
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}>
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.badgeBg} ${cfg.badgeText}`}
+      >
         <Icon size={10} />
         {isPolish ? labels[stage].pl : labels[stage].en}
       </span>
@@ -559,7 +639,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     const tc = getToolConfig(tool);
     const Icon = tc.icon;
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${tc.bgColor} ${tc.color}`}>
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${tc.bgColor} ${tc.color}`}
+      >
         <Icon size={10} />
         {isPolish ? tc.labelPl : tc.label}
       </span>
@@ -584,6 +666,29 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       </div>
     );
   };
+
+  const tagGroups = useMemo(() => {
+    const groups: Record<string, MyIdea[]> = {};
+    const untagged: MyIdea[] = [];
+
+    for (const idea of sortedIdeas) {
+      const ideaTags = (idea.tags || []).map((t) => String(t).toLowerCase());
+      if (ideaTags.length === 0) {
+        untagged.push(idea);
+      } else {
+        for (const tag of ideaTags) {
+          if (!groups[tag]) groups[tag] = [];
+          groups[tag].push(idea);
+        }
+      }
+    }
+
+    const sorted = Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
+    if (untagged.length > 0) {
+      sorted.push([isPolish ? 'Bez tagów' : 'Untagged', untagged]);
+    }
+    return sorted;
+  }, [sortedIdeas, isPolish]);
 
   // ── Loading ──
 
@@ -624,12 +729,36 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         <div className="px-5 py-4 space-y-3">
           <div className="text-xs text-slate-500 dark:text-slate-400">{convertIdea.title}</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {([
-              { target: 'initiative' as const, icon: Rocket, color: 'text-amber-500', label: isPolish ? 'Inicjatywa' : 'Initiative', desc: isPolish ? 'Utwórz inicjatywę w PMO' : 'Create a PMO initiative' },
-              { target: 'task_set' as const, icon: CheckCircle2, color: 'text-emerald-500', label: isPolish ? 'Taski' : 'Tasks', desc: isPolish ? 'Z next steps (jeśli są)' : 'From next steps (if available)' },
-              { target: 'decision' as const, icon: Star, color: 'text-blue-500', label: isPolish ? 'Decyzja' : 'Decision', desc: isPolish ? 'Artefakt decyzyjny' : 'Decision artifact' },
-              { target: 'team_chat' as const, icon: MessageSquarePlus, color: 'text-purple-500', label: isPolish ? 'Team Chat' : 'Team Chat', desc: isPolish ? 'Wątek do omówienia' : 'Discussion thread' },
-            ]).map(({ target, icon: Icon, color, label, desc }) => (
+            {[
+              {
+                target: 'initiative' as const,
+                icon: Rocket,
+                color: 'text-amber-500',
+                label: isPolish ? 'Inicjatywa' : 'Initiative',
+                desc: isPolish ? 'Utwórz inicjatywę w PMO' : 'Create a PMO initiative',
+              },
+              {
+                target: 'task_set' as const,
+                icon: CheckCircle2,
+                color: 'text-emerald-500',
+                label: isPolish ? 'Taski' : 'Tasks',
+                desc: isPolish ? 'Z next steps (jeśli są)' : 'From next steps (if available)',
+              },
+              {
+                target: 'decision' as const,
+                icon: Star,
+                color: 'text-blue-500',
+                label: isPolish ? 'Decyzja' : 'Decision',
+                desc: isPolish ? 'Artefakt decyzyjny' : 'Decision artifact',
+              },
+              {
+                target: 'team_chat' as const,
+                icon: MessageSquarePlus,
+                color: 'text-purple-500',
+                label: isPolish ? 'Team Chat' : 'Team Chat',
+                desc: isPolish ? 'Wątek do omówienia' : 'Discussion thread',
+              },
+            ].map(({ target, icon: Icon, color, label, desc }) => (
               <button
                 key={target}
                 onClick={() => handleConvert(target)}
@@ -771,7 +900,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     if (sortedIdeas.length === 0) {
       return (
         <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950 p-4">
-          {convertModal}{tagModal}{confirmDialog}
+          {convertModal}
+          {tagModal}
+          {confirmDialog}
           <div className="mt-4">{renderEmpty()}</div>
         </div>
       );
@@ -779,7 +910,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
     return (
       <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
-        {convertModal}{tagModal}{confirmDialog}
+        {convertModal}
+        {tagModal}
+        {confirmDialog}
 
         <div className="overflow-x-auto">
           <table className="w-full table-fixed" style={{ minWidth: 800 }}>
@@ -799,7 +932,13 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                           : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
                     }`}
                   >
-                    {allSelected ? <CheckSquare size={14} /> : someSelected ? <Minus size={14} /> : <Square size={14} />}
+                    {allSelected ? (
+                      <CheckSquare size={14} />
+                    ) : someSelected ? (
+                      <Minus size={14} />
+                    ) : (
+                      <Square size={14} />
+                    )}
                   </button>
                 </th>
                 <th
@@ -867,7 +1006,10 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        onChange={(e) => { e.stopPropagation(); toggleSelect(idea.id); }}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          toggleSelect(idea.id);
+                        }}
                         onClick={(e) => e.stopPropagation()}
                         className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-primary-500 focus:ring-primary-500/30"
                       />
@@ -882,15 +1024,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         </div>
                       )}
                     </td>
-                    <td className="px-3 py-2.5">
-                      {renderStageBadge(stage)}
-                    </td>
-                    <td className="px-3 py-2.5">
-                      {renderTagBadges(idea.tags)}
-                    </td>
-                    <td className="px-3 py-2.5">
-                      {renderToolBadge(idea.preferredTool)}
-                    </td>
+                    <td className="px-3 py-2.5">{renderStageBadge(stage)}</td>
+                    <td className="px-3 py-2.5">{renderTagBadges(idea.tags)}</td>
+                    <td className="px-3 py-2.5">{renderToolBadge(idea.preferredTool)}</td>
                     <td className="px-3 py-2.5 text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
                       {idea.updatedAt
                         ? new Date(idea.updatedAt).toLocaleDateString()
@@ -938,7 +1074,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     if (sortedIdeas.length === 0) {
       return (
         <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950 p-4">
-          {convertModal}{tagModal}
+          {convertModal}
+          {tagModal}
           <div className="mt-4">{renderEmpty()}</div>
         </div>
       );
@@ -946,7 +1083,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
     return (
       <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
-        {convertModal}{tagModal}
+        {convertModal}
+        {tagModal}
         <div className="p-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {sortedIdeas.map((idea) => {
@@ -962,7 +1100,10 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                   tabIndex={0}
                   onClick={() => onIdeaClick(idea.id, idea)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onIdeaClick(idea.id, idea); }
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onIdeaClick(idea.id, idea);
+                    }
                   }}
                   className={[
                     'group relative text-left overflow-hidden',
@@ -977,14 +1118,19 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                     <input
                       type="checkbox"
                       checked={isSelected}
-                      onChange={(e) => { e.stopPropagation(); toggleSelect(idea.id); }}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(idea.id);
+                      }}
                       onClick={(e) => e.stopPropagation()}
                       className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-primary-500 focus:ring-primary-500/30"
                     />
                   </div>
 
                   <div className="flex items-start gap-3 mb-3">
-                    <div className={`flex-shrink-0 p-2 rounded-xl ${tc.bgColor} group-hover:scale-110 transition-transform`}>
+                    <div
+                      className={`flex-shrink-0 p-2 rounded-xl ${tc.bgColor} group-hover:scale-110 transition-transform`}
+                    >
                       <ToolIcon size={20} className={tc.color} />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -1022,7 +1168,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         </span>
                       ))}
                       {(idea.tags || []).length > 4 && (
-                        <span className="text-[10px] text-slate-500">+{(idea.tags || []).length - 4}</span>
+                        <span className="text-[10px] text-slate-500">
+                          +{(idea.tags || []).length - 4}
+                        </span>
                       )}
                     </div>
                   )}
@@ -1057,33 +1205,11 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   // ── TAGS VIEW (grouped by AI tags, collapsible sections) ──
   // ════════════════════════════════════════════════════════════════════════════
 
-  const tagGroups = useMemo(() => {
-    const groups: Record<string, MyIdea[]> = {};
-    const untagged: MyIdea[] = [];
-
-    for (const idea of sortedIdeas) {
-      const ideaTags = (idea.tags || []).map((t) => String(t).toLowerCase());
-      if (ideaTags.length === 0) {
-        untagged.push(idea);
-      } else {
-        for (const tag of ideaTags) {
-          if (!groups[tag]) groups[tag] = [];
-          groups[tag].push(idea);
-        }
-      }
-    }
-
-    const sorted = Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
-    if (untagged.length > 0) {
-      sorted.push([isPolish ? 'Bez tagów' : 'Untagged', untagged]);
-    }
-    return sorted;
-  }, [sortedIdeas, isPolish]);
-
   if (sortedIdeas.length === 0) {
     return (
       <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950 p-4">
-        {convertModal}{tagModal}
+        {convertModal}
+        {tagModal}
         {renderEmpty()}
       </div>
     );
@@ -1091,7 +1217,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   return (
     <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950">
-      {convertModal}{tagModal}{confirmDialog}
+      {convertModal}
+      {tagModal}
+      {confirmDialog}
       <div className="p-4 space-y-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-gradient-to-br from-amber-400/20 to-violet-400/20 dark:from-amber-500/15 dark:to-violet-500/15">
@@ -1112,7 +1240,10 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {tagGroups.map(([tag, groupIdeas]) => {
           const isCollapsed = collapsedTags.has(tag);
           return (
-            <div key={tag} className="rounded-xl border border-slate-200/60 dark:border-navy-700/50 overflow-hidden">
+            <div
+              key={tag}
+              className="rounded-xl border border-slate-200/60 dark:border-navy-700/50 overflow-hidden"
+            >
               <button
                 onClick={() => toggleTagCollapse(tag)}
                 className="w-full flex items-center gap-2.5 px-4 py-3 bg-slate-50/80 dark:bg-navy-900/50 hover:bg-slate-100/80 dark:hover:bg-navy-800/50 transition-colors text-left"
@@ -1145,7 +1276,10 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         tabIndex={0}
                         onClick={() => onIdeaClick(idea.id, idea)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onIdeaClick(idea.id, idea); }
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onIdeaClick(idea.id, idea);
+                          }
                         }}
                         className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/60 dark:hover:bg-navy-800/30 cursor-pointer transition-colors"
                       >

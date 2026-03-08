@@ -45,11 +45,10 @@ import { Api } from '@/services/api';
 import { getStatusActions, getStatusMeta, StatusAction } from '@/services/initiativeLifecycle';
 import { getHealthInfo, getNextStep, type NextStepInfo } from '@/utils/initiativeHelpers';
 
+import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 import { BudgetControlPanel } from '../Execution/BudgetControlPanel';
 import { MitigationPanel } from '../Execution/MitigationPanel';
 import { WhyRedChain } from '../Execution/WhyRedChain';
-
-import { InitiativeStatus, PortfolioInitiative, User } from '../../types';
 
 // ==========================================
 // TYPES
@@ -1114,7 +1113,11 @@ const RaidTab: React.FC<{ items: RaidItem[] }> = ({ items }) => {
       {items.map((item) => {
         const cfg = RAID_TYPE_CONFIG[item.type] || RAID_TYPE_CONFIG.risk;
         const Icon = cfg.icon;
-        const isExpandable = item.type === 'risk' || item.type === 'RISK' || item.type === 'issue' || item.type === 'ISSUE';
+        const isExpandable =
+          item.type === 'risk' ||
+          item.type === 'RISK' ||
+          item.type === 'issue' ||
+          item.type === 'ISSUE';
         const isExpanded = expandedMitigationId === item.id;
         return (
           <div key={item.id} className="space-y-2">

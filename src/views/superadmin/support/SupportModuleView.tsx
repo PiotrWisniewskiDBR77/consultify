@@ -8,12 +8,33 @@ import React, { useState } from 'react';
 
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { Tab, TabLayout } from '../../../components/SuperAdmin/TabLayout';
+import { useHelpSidePanel } from '../../../contexts/HelpContext';
 import { CustomerHealthView } from './CustomerHealthView';
 import { CustomerSuccessNotesView } from './CustomerSuccessNotesView';
 import { SupportTicketsView } from './SupportTicketsView';
 
 export const SupportModuleView: React.FC = () => {
   const [activeTab, setActiveTab] = useState('tickets');
+  const { setHelpDocumentIdOverride } = useHelpSidePanel();
+
+  React.useEffect(() => {
+    const mapping: Record<string, string> = {
+      tickets: 'superadmin_support_tickets',
+      'cs-notes': 'superadmin_support_cs_notes',
+      health: 'superadmin_support_health',
+    };
+    setHelpDocumentIdOverride(mapping[activeTab] || 'superadmin_support');
+    return () => setHelpDocumentIdOverride(null);
+  }, [activeTab, setHelpDocumentIdOverride]);
+
+  const infoCardId =
+    activeTab === 'tickets'
+      ? 'superadmin-support-tickets'
+      : activeTab === 'cs-notes'
+        ? 'superadmin-support-cs-notes'
+        : activeTab === 'health'
+          ? 'superadmin-support-health'
+          : 'superadmin-support';
 
   const tabs: Tab[] = [
     { id: 'tickets', label: 'Support Tickets', icon: <HeadphonesIcon size={16} /> },
@@ -36,7 +57,7 @@ export const SupportModuleView: React.FC = () => {
 
   return (
     <div className="h-full relative">
-      <InfoButton cardId="superadmin-support" position="top-right" />
+      <InfoButton cardId={infoCardId} position="top-right" />
       <TabLayout
         tabs={tabs}
         activeTab={activeTab}

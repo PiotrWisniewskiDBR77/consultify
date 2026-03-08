@@ -28,8 +28,8 @@ export const TrialExpiredGate: React.FC<{ children: React.ReactNode }> = ({ chil
             Trial Period Expired
           </h2>
           <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 max-w-lg mx-auto">
-            Your 7-day trial has ended. Your data is safe, but your organization is now in
-            read-only mode. Upgrade to continue using Consultify.
+            Your 7-day trial has ended. Your data is safe, but your organization is now in read-only
+            mode. Upgrade to continue using Consultify.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto">

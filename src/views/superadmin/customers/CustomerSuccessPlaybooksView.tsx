@@ -48,20 +48,52 @@ interface PlaybookStats {
 const CustomerSuccessPlaybooksView: React.FC = () => {
   const { t } = useTranslation();
   const actionTypes = [
-    { id: 'send_email', label: t('superadmin.customers.playbooks.actionTypes.sendEmail'), icon: '📧' },
-    { id: 'create_task', label: t('superadmin.customers.playbooks.actionTypes.createTask'), icon: '✅' },
-    { id: 'notify_csm', label: t('superadmin.customers.playbooks.actionTypes.notifyCsm'), icon: '👤' },
-    { id: 'schedule_call', label: t('superadmin.customers.playbooks.actionTypes.scheduleCall'), icon: '📞' },
-    { id: 'update_health', label: t('superadmin.customers.playbooks.actionTypes.updateHealth'), icon: '📊' },
+    {
+      id: 'send_email',
+      label: t('superadmin.customers.playbooks.actionTypes.sendEmail'),
+      icon: '📧',
+    },
+    {
+      id: 'create_task',
+      label: t('superadmin.customers.playbooks.actionTypes.createTask'),
+      icon: '✅',
+    },
+    {
+      id: 'notify_csm',
+      label: t('superadmin.customers.playbooks.actionTypes.notifyCsm'),
+      icon: '👤',
+    },
+    {
+      id: 'schedule_call',
+      label: t('superadmin.customers.playbooks.actionTypes.scheduleCall'),
+      icon: '📞',
+    },
+    {
+      id: 'update_health',
+      label: t('superadmin.customers.playbooks.actionTypes.updateHealth'),
+      icon: '📊',
+    },
     { id: 'custom', label: t('superadmin.customers.playbooks.actionTypes.custom'), icon: '⚙️' },
   ];
   const triggerTypes = [
-    { id: 'onboarding_complete', label: t('superadmin.customers.playbooks.triggerTypes.onboardingComplete') },
+    {
+      id: 'onboarding_complete',
+      label: t('superadmin.customers.playbooks.triggerTypes.onboardingComplete'),
+    },
     { id: 'trial_ending', label: t('superadmin.customers.playbooks.triggerTypes.trialEnding') },
     { id: 'low_engagement', label: t('superadmin.customers.playbooks.triggerTypes.lowEngagement') },
-    { id: 'health_score_drop', label: t('superadmin.customers.playbooks.triggerTypes.healthScoreDrop') },
-    { id: 'subscription_change', label: t('superadmin.customers.playbooks.triggerTypes.subscriptionChange') },
-    { id: 'milestone_reached', label: t('superadmin.customers.playbooks.triggerTypes.milestoneReached') },
+    {
+      id: 'health_score_drop',
+      label: t('superadmin.customers.playbooks.triggerTypes.healthScoreDrop'),
+    },
+    {
+      id: 'subscription_change',
+      label: t('superadmin.customers.playbooks.triggerTypes.subscriptionChange'),
+    },
+    {
+      id: 'milestone_reached',
+      label: t('superadmin.customers.playbooks.triggerTypes.milestoneReached'),
+    },
   ];
   const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
   const [actions, setActions] = useState<PlaybookAction[]>([]);

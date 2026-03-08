@@ -81,17 +81,26 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
 
   if (!open) return null;
 
-  const weekDays = isPl ? ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'] : ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+  const weekDays = isPl
+    ? ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd']
+    : ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
   return (
     <div className="fixed inset-0 z-[92] bg-white/95 dark:bg-navy-950/95 backdrop-blur-xl flex flex-col">
       <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
-        <button onClick={onClose} className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+        <button
+          onClick={onClose}
+          className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+        >
           <ChevronLeft size={16} />
         </button>
         <Calendar size={16} className="text-emerald-500" />
-        <h2 className="text-sm font-bold text-slate-800 dark:text-white">{isPl ? 'Mapa ciepła aktywności' : 'Activity Heatmap'}</h2>
-        <span className="text-[10px] text-slate-400 ml-auto">{totalActivity} {isPl ? 'akcji w 30 dni' : 'actions in 30 days'}</span>
+        <h2 className="text-sm font-bold text-slate-800 dark:text-white">
+          {isPl ? 'Mapa ciepła aktywności' : 'Activity Heatmap'}
+        </h2>
+        <span className="text-[10px] text-slate-400 ml-auto">
+          {totalActivity} {isPl ? 'akcji w 30 dni' : 'actions in 30 days'}
+        </span>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-8">
@@ -100,7 +109,9 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
           <div className="mb-6">
             <div className="flex gap-1 mb-2">
               {weekDays.map((d) => (
-                <div key={d} className="w-8 text-center text-[8px] text-slate-400 font-bold">{d}</div>
+                <div key={d} className="w-8 text-center text-[8px] text-slate-400 font-bold">
+                  {d}
+                </div>
               ))}
             </div>
             <div className="flex flex-wrap gap-1">
@@ -132,12 +143,21 @@ export const TimeHeatmap: React.FC<TimeHeatmapProps> = ({ open, onClose, ideaId 
                 {isPl ? 'Podział wg typu' : 'Breakdown by type'}
               </h3>
               <div className="grid grid-cols-3 gap-2">
-                {Object.entries(typeCounts).sort((a, b) => b[1] - a[1]).map(([type, count]) => (
-                  <div key={type} className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30">
-                    <div className="text-[10px] font-medium text-slate-600 dark:text-slate-300 capitalize">{type.replace(/_/g, ' ')}</div>
-                    <div className="text-[14px] font-bold text-slate-700 dark:text-slate-200">{count}</div>
-                  </div>
-                ))}
+                {Object.entries(typeCounts)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([type, count]) => (
+                    <div
+                      key={type}
+                      className="p-2 rounded-lg bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30"
+                    >
+                      <div className="text-[10px] font-medium text-slate-600 dark:text-slate-300 capitalize">
+                        {type.replace(/_/g, ' ')}
+                      </div>
+                      <div className="text-[14px] font-bold text-slate-700 dark:text-slate-200">
+                        {count}
+                      </div>
+                    </div>
+                  ))}
               </div>
             </div>
           )}

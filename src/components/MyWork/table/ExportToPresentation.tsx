@@ -52,18 +52,48 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
   const isPl = i18n.language?.startsWith('pl');
 
   const [slides, setSlides] = useState<SlideConfig[]>([
-    { type: 'title', label: isPl ? 'Slajd tytułowy' : 'Title slide', icon: <Layout size={14} />, enabled: true },
-    { type: 'table', label: isPl ? 'Tabela pomysłów' : 'Ideas table', icon: <Table2 size={14} />, enabled: true },
-    { type: 'kanban', label: isPl ? 'Widok Kanban' : 'Kanban view', icon: <Layers size={14} />, enabled: viewLayout === 'kanban' },
-    { type: 'matrix', label: isPl ? 'Macierz 2×2' : '2×2 Matrix', icon: <FileImage size={14} />, enabled: viewLayout === 'matrix' },
-    { type: 'summary', label: isPl ? 'Podsumowanie AI' : 'AI Summary', icon: <Sparkles size={14} />, enabled: true },
-    { type: 'ranking', label: isPl ? 'Ranking pomysłów' : 'Idea ranking', icon: <Presentation size={14} />, enabled: nodes.some((n) => n.data?.score != null) },
+    {
+      type: 'title',
+      label: isPl ? 'Slajd tytułowy' : 'Title slide',
+      icon: <Layout size={14} />,
+      enabled: true,
+    },
+    {
+      type: 'table',
+      label: isPl ? 'Tabela pomysłów' : 'Ideas table',
+      icon: <Table2 size={14} />,
+      enabled: true,
+    },
+    {
+      type: 'kanban',
+      label: isPl ? 'Widok Kanban' : 'Kanban view',
+      icon: <Layers size={14} />,
+      enabled: viewLayout === 'kanban',
+    },
+    {
+      type: 'matrix',
+      label: isPl ? 'Macierz 2×2' : '2×2 Matrix',
+      icon: <FileImage size={14} />,
+      enabled: viewLayout === 'matrix',
+    },
+    {
+      type: 'summary',
+      label: isPl ? 'Podsumowanie AI' : 'AI Summary',
+      icon: <Sparkles size={14} />,
+      enabled: true,
+    },
+    {
+      type: 'ranking',
+      label: isPl ? 'Ranking pomysłów' : 'Idea ranking',
+      icon: <Presentation size={14} />,
+      enabled: nodes.some((n) => n.data?.score != null),
+    },
   ]);
   const [exporting, setExporting] = useState(false);
   const [exportDone, setExportDone] = useState(false);
 
   const toggleSlide = useCallback((type: SlideType) => {
-    setSlides((prev) => prev.map((s) => s.type === type ? { ...s, enabled: !s.enabled } : s));
+    setSlides((prev) => prev.map((s) => (s.type === type ? { ...s, enabled: !s.enabled } : s)));
   }, []);
 
   const buildDeckJson = useCallback(() => {
@@ -79,7 +109,10 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
             layout: 'title',
             blocks: [
               { type: 'heading', content: ideaTitle || (isPl ? 'Pomysły' : 'Ideas') },
-              { type: 'text', content: `${nodes.length} ${isPl ? 'pomysłów' : 'ideas'} • ${new Date().toLocaleDateString(isPl ? 'pl' : 'en')}` },
+              {
+                type: 'text',
+                content: `${nodes.length} ${isPl ? 'pomysłów' : 'ideas'} • ${new Date().toLocaleDateString(isPl ? 'pl' : 'en')}`,
+              },
             ],
           });
           break;
@@ -93,9 +126,9 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
               {
                 type: 'table',
                 headers: visibleCols.slice(0, 5).map((c) => c.header),
-                rows: nodes.slice(0, 10).map((n) =>
-                  visibleCols.slice(0, 5).map((c) => String(n.data?.[c.key] ?? ''))
-                ),
+                rows: nodes
+                  .slice(0, 10)
+                  .map((n) => visibleCols.slice(0, 5).map((c) => String(n.data?.[c.key] ?? ''))),
               },
             ],
           });
@@ -115,11 +148,13 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
               layout: 'content',
               blocks: [
                 { type: 'heading', content: `Kanban: ${groupCol.header}` },
-                ...Array.from(groups.entries()).slice(0, 4).map(([group, items]) => ({
-                  type: 'list',
-                  title: group,
-                  items: items.slice(0, 5).map((n) => n.data?.label || n.id),
-                })),
+                ...Array.from(groups.entries())
+                  .slice(0, 4)
+                  .map(([group, items]) => ({
+                    type: 'list',
+                    title: group,
+                    items: items.slice(0, 5).map((n) => n.data?.label || n.id),
+                  })),
               ],
             });
           }
@@ -134,9 +169,10 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
               { type: 'heading', content: isPl ? 'Macierz priorytetów' : 'Priority Matrix' },
               {
                 type: 'text',
-                content: nodes.slice(0, 8).map((n) =>
-                  `• ${n.data?.label || n.id}`
-                ).join('\n'),
+                content: nodes
+                  .slice(0, 8)
+                  .map((n) => `• ${n.data?.label || n.id}`)
+                  .join('\n'),
               },
             ],
           });
@@ -152,7 +188,12 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
                 type: 'stats',
                 items: [
                   { label: isPl ? 'Pomysłów' : 'Ideas', value: String(nodes.length) },
-                  { label: isPl ? 'Kategorii' : 'Categories', value: String(new Set(nodes.map((n) => n.data?.category || n.data?.status || '')).size) },
+                  {
+                    label: isPl ? 'Kategorii' : 'Categories',
+                    value: String(
+                      new Set(nodes.map((n) => n.data?.category || n.data?.status || '')).size
+                    ),
+                  },
                 ],
               },
             ],
@@ -160,7 +201,9 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
           break;
 
         case 'ranking': {
-          const ranked = [...nodes].filter((n) => n.data?.score != null).sort((a, b) => (b.data?.score || 0) - (a.data?.score || 0));
+          const ranked = [...nodes]
+            .filter((n) => n.data?.score != null)
+            .sort((a, b) => (b.data?.score || 0) - (a.data?.score || 0));
           slideBlocks.push({
             id: `slide-ranking-${Date.now()}`,
             layout: 'content',
@@ -168,7 +211,9 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
               { type: 'heading', content: isPl ? 'Top pomysły' : 'Top Ideas' },
               {
                 type: 'list',
-                items: ranked.slice(0, 5).map((n, i) => `#${i + 1} ${n.data?.label || n.id} — Score: ${n.data?.score}`),
+                items: ranked
+                  .slice(0, 5)
+                  .map((n, i) => `#${i + 1} ${n.data?.label || n.id} — Score: ${n.data?.score}`),
               },
             ],
           });
@@ -209,8 +254,14 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20 backdrop-blur-[2px]" onClick={onClose}>
-      <div className="w-[440px] max-w-[90vw] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
+      onClick={onClose}
+    >
+      <div
+        className="w-[440px] max-w-[90vw] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
           <Presentation size={16} className="text-violet-500" />
@@ -218,7 +269,10 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
             {isPl ? 'Eksport do prezentacji' : 'Export to Presentation'}
           </span>
           <div className="flex-1" />
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={14} className="text-slate-400" />
           </button>
         </div>
@@ -230,7 +284,10 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
           </p>
           <div className="space-y-2">
             {slides.map((slide) => (
-              <label key={slide.type} className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors">
+              <label
+                key={slide.type}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
+              >
                 <input
                   type="checkbox"
                   checked={slide.enabled}
@@ -238,7 +295,9 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
                   className="w-4 h-4 rounded border-slate-300 text-violet-500 focus:ring-violet-500"
                 />
                 <span className="text-slate-500">{slide.icon}</span>
-                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300">{slide.label}</span>
+                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                  {slide.label}
+                </span>
               </label>
             ))}
           </div>
@@ -249,26 +308,36 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
           <div className="flex items-center gap-2">
             <FileImage size={12} className="text-slate-400" />
             <span className="text-[10px] text-slate-500">
-              {slides.filter((s) => s.enabled).length} {isPl ? 'slajdów' : 'slides'} • {nodes.length} {isPl ? 'pomysłów' : 'ideas'}
+              {slides.filter((s) => s.enabled).length} {isPl ? 'slajdów' : 'slides'} •{' '}
+              {nodes.length} {isPl ? 'pomysłów' : 'ideas'}
             </span>
           </div>
         </div>
 
         {/* Footer */}
         <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
-          <button onClick={onClose} className="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <div className="flex-1" />
           {exportDone ? (
-            <span className="text-xs font-bold text-emerald-500">{isPl ? 'Wyeksportowano!' : 'Exported!'}</span>
+            <span className="text-xs font-bold text-emerald-500">
+              {isPl ? 'Wyeksportowano!' : 'Exported!'}
+            </span>
           ) : (
             <button
               onClick={handleExport}
               disabled={exporting || slides.filter((s) => s.enabled).length === 0}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-violet-500/10 to-indigo-500/10 text-violet-600 dark:text-violet-400 hover:from-violet-500/20 hover:to-indigo-500/20 transition-colors disabled:opacity-50"
             >
-              {exporting ? <Loader2 size={12} className="animate-spin" /> : <Presentation size={12} />}
+              {exporting ? (
+                <Loader2 size={12} className="animate-spin" />
+              ) : (
+                <Presentation size={12} />
+              )}
               {isPl ? 'Eksportuj' : 'Export'}
             </button>
           )}

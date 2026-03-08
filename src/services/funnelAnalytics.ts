@@ -456,7 +456,33 @@ export type FunnelEventName =
   | 'ideas_table_categorize_applied'
   | 'ideas_table_scoring_applied'
   | 'ideas_table_export_presentation'
-  | 'ideas_table_timeline_opened';
+  | 'ideas_table_timeline_opened'
+  // V5-IDEA-48: Ideas V5 telemetry model
+  | 'ideas_v5_seed_surface_opened'
+  | 'ideas_v5_seed_start_mode'
+  | 'ideas_v5_seed_template_selected'
+  | 'ideas_v5_seed_popular_start_used'
+  | 'ideas_v5_seed_brief_submitted'
+  | 'ideas_v5_workspace_opened'
+  | 'ideas_v5_system_switched'
+  | 'ideas_v5_focus_mode_changed'
+  | 'ideas_v5_node_depth_expanded'
+  | 'ideas_v5_cross_system_transform'
+  | 'ideas_v5_knowledge_card_created'
+  | 'ideas_v5_evidence_captured'
+  | 'ideas_v5_knowledge_search_used'
+  | 'ideas_v5_artifact_attached'
+  | 'ideas_v5_artifact_opened'
+  | 'ideas_v5_artifact_removed'
+  | 'ideas_v5_ai_retrieve_artifacts'
+  | 'ideas_v5_ai_propose_attachments'
+  | 'ideas_v5_convert_whole_idea'
+  | 'ideas_v5_convert_selection'
+  | 'ideas_v5_export_report'
+  | 'ideas_v5_export_presentation'
+  | 'ideas_v5_linkgraph_edge_created'
+  | 'ideas_v5_viewport_restored'
+  | 'ideas_v5_zoom_fit_used';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

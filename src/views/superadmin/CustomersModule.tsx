@@ -23,6 +23,7 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { Api } from '../../services/api';
 import { BulkOperationsView } from '../admin/BulkOperationsView';
 import {
@@ -36,8 +37,8 @@ import {
 } from './customers';
 import { OrganizationsView } from './OrganizationsView';
 import { SecurityModuleView } from './security/SecurityModuleView';
-import { SuperAdminFeedbackView } from './SuperAdminFeedbackView';
 import { SuperAdminFeedbackBacklogView } from './SuperAdminFeedbackBacklogView';
+import { SuperAdminFeedbackView } from './SuperAdminFeedbackView';
 import { SuperAdminUserManagement } from './SuperAdminUserManagement';
 import { SupportModuleView } from './support/SupportModuleView';
 
@@ -47,6 +48,7 @@ interface CustomersModuleProps {
 
 export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || 'organizations');
+  const { setHelpDocumentIdOverride } = useHelpSidePanel();
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0);
 
@@ -76,6 +78,27 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({ initialTab }) 
     fetchOrganizations();
     fetchFeedbackCount();
   }, []);
+
+  useEffect(() => {
+    const mapping: Record<string, string> = {
+      organizations: 'superadmin_customers_organizations',
+      users: 'superadmin_customers_users',
+      lifecycle: 'superadmin_customers_lifecycle',
+      playbooks: 'superadmin_customers_playbooks',
+      contracts: 'superadmin_customers_contracts',
+      security: 'superadmin_customers_security',
+      support: 'superadmin_customers_support',
+      feedback: 'superadmin_customers_feedback',
+      'feedback-backlog': 'superadmin_customers_feedback_backlog',
+      analytics: 'superadmin_customers_analytics',
+      compliance: 'superadmin_customers_compliance',
+      automation: 'superadmin_customers_automation',
+      communication: 'superadmin_customers_communication',
+      'bulk-ops': 'superadmin_customers_bulk_ops',
+    };
+    setHelpDocumentIdOverride(mapping[activeTab] || 'superadmin_customers');
+    return () => setHelpDocumentIdOverride(null);
+  }, [activeTab, setHelpDocumentIdOverride]);
 
   const tabs: Tab[] = [
     { id: 'organizations', label: 'Organizations', icon: <Building2 size={16} /> },

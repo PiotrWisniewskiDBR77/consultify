@@ -2,20 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
-import { ROUTES } from '../routes/routeConfig';
 
 import { DemoModeModal } from '../components/Landing/DemoModeModal';
 import { DocumentationSection } from '../components/Landing/DocumentationSection';
-import { EpicHeroSection } from '../components/Landing/EpicHeroSection';
 import { EntryFooter } from '../components/Landing/EntryFooter';
+import { EntryTopBar } from '../components/Landing/EntryTopBar';
+import { EpicHeroSection } from '../components/Landing/EpicHeroSection';
 import { ForWhomSection } from '../components/Landing/ForWhomSection';
 import { HowItWorksSection } from '../components/Landing/HowItWorksSection';
-import { LandingFilmModal } from '../components/Landing/LandingFilmModal';
-import { EntryTopBar } from '../components/Landing/EntryTopBar';
 import { InfoSections } from '../components/Landing/InfoSections';
+import { LandingFilmModal } from '../components/Landing/LandingFilmModal';
 import { TrustStrip } from '../components/Landing/TrustStrip';
 import { WhereItHappensSection } from '../components/Landing/WhereItHappensSection';
 import { LANDING_FILMS } from '../config/landingFilms';
+import { ROUTES } from '../routes/routeConfig';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
 import { useAppStore } from '../store/useAppStore';
 import { AppView, SessionMode } from '../types';
@@ -31,7 +31,8 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
   onRegisterClick,
 }) => {
   const navigate = useNavigate();
-  const { currentUser, setCurrentView, setSessionMode, setCurrentUser, setDemoMode } = useAppStore();
+  const { currentUser, setCurrentView, setSessionMode, setCurrentUser, setDemoMode } =
+    useAppStore();
   const landingVariant = 'epicHeroV1';
 
   // Demo Modal State (only for Trial now)

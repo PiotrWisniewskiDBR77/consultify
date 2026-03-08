@@ -253,16 +253,12 @@ export const DemoWelcomeTour: React.FC<DemoWelcomeTourProps> = ({
                         <>
                           <div
                             className={`w-16 h-16 mx-auto rounded-xl flex items-center justify-center mb-6 ${
-                              isComplete
-                                ? 'bg-success/10'
-                                : 'bg-slate-100 dark:bg-white/[0.05]'
+                              isComplete ? 'bg-success/10' : 'bg-slate-100 dark:bg-white/[0.05]'
                             }`}
                           >
                             <Icon
                               size={32}
-                              className={
-                                isComplete ? 'text-success-500' : 'text-slate-400'
-                              }
+                              className={isComplete ? 'text-success-500' : 'text-slate-400'}
                             />
                           </div>
                           <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-3">

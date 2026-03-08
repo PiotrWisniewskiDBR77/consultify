@@ -15,6 +15,20 @@ import {
   type PredictionType,
 } from '../financeTypes';
 
+function isInvestmentAnalysisType(value: unknown): boolean {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+  return (
+    normalized === 'financial' ||
+    normalized === 'investment_case' ||
+    normalized === 'investment' ||
+    normalized === 'capex' ||
+    normalized.includes('investment') ||
+    normalized.includes('capex')
+  );
+}
+
 export function useFinanceData(
   activeTab: ModuleTab,
   searchQuery: string,
@@ -52,8 +66,10 @@ export function useFinanceData(
     const kind: FinanceKind =
       activeTab === 'models'
         ? 'models'
-        : activeTab === 'analysis' || activeTab === 'investment'
+        : activeTab === 'analysis'
           ? 'analysis'
+          : activeTab === 'investment'
+            ? 'investment'
           : activeTab === 'prediction'
             ? 'prediction'
             : 'valuation';
@@ -64,7 +80,7 @@ export function useFinanceData(
       try {
         if (kind === 'models') await loadModels();
         else if (kind === 'prediction') await Promise.all([loadModels(), loadBudgets()]);
-        else if (kind === 'analysis') await loadAnalyses();
+        else if (kind === 'analysis' || kind === 'investment') await loadAnalyses();
         else if (kind === 'valuation') await loadValuations();
       } catch (e) {
         console.error('[FinanceHub] Failed to load:', e);
@@ -127,10 +143,16 @@ export function useFinanceData(
       return [...modelRows, ...budgetRows];
     }
     if (activeTab === 'analysis' || activeTab === 'investment') {
-      return (analyses || []).map((a: any) => ({
+      const scopedAnalyses =
+        activeTab === 'investment'
+          ? (analyses || []).filter((a: any) =>
+              isInvestmentAnalysisType(a.analysisType || a.analysis_type)
+            )
+          : analyses || [];
+      return scopedAnalyses.map((a: any) => ({
         id: String(a.id),
         title: String(a.title || t('common.untitled', 'Untitled')),
-        kind: 'analysis' as const,
+        kind: activeTab === 'investment' ? 'investment' : 'analysis',
         status: normalizeStatus(a.status),
         analysisType: String(a.analysisType || a.analysis_type || 'comprehensive'),
         currency: String(a.currency || 'PLN'),

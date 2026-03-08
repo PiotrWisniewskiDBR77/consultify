@@ -73,7 +73,7 @@ router.delete('/goals/:goalId/initiatives/:initiativeId', asyncHandler(async (re
 
 router.post('/blueprints', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ initiativeId: z.string().optional(), promptText: z.string().optional(), generatedWbs: z.array(z.record(z.unknown())).optional(), generatedMilestones: z.array(z.record(z.unknown())).optional(), generatedDeps: z.array(z.record(z.unknown())).optional(), generatedResources: z.array(z.record(z.unknown())).optional(), citations: z.array(z.string()).optional(), aiModelUsed: z.string().optional(), confidence: z.number().optional() });
+  const s = z.object({ initiativeId: z.string().optional(), promptText: z.string().optional(), generatedWbs: z.array(z.record(z.string(), z.unknown())).optional(), generatedMilestones: z.array(z.record(z.string(), z.unknown())).optional(), generatedDeps: z.array(z.record(z.string(), z.unknown())).optional(), generatedResources: z.array(z.record(z.string(), z.unknown())).optional(), citations: z.array(z.string()).optional(), aiModelUsed: z.string().optional(), confidence: z.number().optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.status(201).json(await initiativeGovernanceService.createBlueprint(id.orgId, { ...p.data, createdBy: id.userId }));
 }));
@@ -86,19 +86,24 @@ router.get('/blueprints', asyncHandler(async (req: AuthRequest, res: Response) =
 
 router.post('/blueprints/:blueprintId/apply', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  res.json(await initiativeGovernanceService.applyBlueprint(req.params.blueprintId));
+  const result = await initiativeGovernanceService.applyBlueprint(id.orgId, req.params.blueprintId, id.userId);
+  if (!result.ok && result.reason === 'not_found') { res.status(404).json({ error: 'Blueprint not found' }); return; }
+  if (!result.ok && result.reason === 'initiative_missing') { res.status(409).json({ error: 'Blueprint is missing initiative context' }); return; }
+  res.json(result);
 }));
 
 router.post('/blueprints/:blueprintId/reject', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  res.json(await initiativeGovernanceService.rejectBlueprint(req.params.blueprintId));
+  const result = await initiativeGovernanceService.rejectBlueprint(id.orgId, req.params.blueprintId);
+  if (!result.ok) { res.status(404).json({ error: 'Blueprint not found' }); return; }
+  res.json(result);
 }));
 
 // ── INIT-07: Governance Gates ──
 
 router.post('/initiatives/:initiativeId/gates', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ gateType: z.string().optional(), gateName: z.string(), requiredDecisions: z.array(z.string()).optional(), requiredRaidStatus: z.record(z.unknown()).optional(), requiredApprovers: z.array(z.string()).optional() });
+  const s = z.object({ gateType: z.string().optional(), gateName: z.string(), requiredDecisions: z.array(z.string()).optional(), requiredRaidStatus: z.record(z.string(), z.unknown()).optional(), requiredApprovers: z.array(z.string()).optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.status(201).json(await initiativeGovernanceService.createGovernanceGate(id.orgId, { ...p.data, initiativeId: req.params.initiativeId }));
 }));

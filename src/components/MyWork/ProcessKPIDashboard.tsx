@@ -107,7 +107,13 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
     for (const e of edges) {
       const src = nodeMap.get(e.source);
       const tgt = nodeMap.get(e.target);
-      if (src && tgt && src.data?.laneId && tgt.data?.laneId && src.data.laneId !== tgt.data.laneId) {
+      if (
+        src &&
+        tgt &&
+        src.data?.laneId &&
+        tgt.data?.laneId &&
+        src.data.laneId !== tgt.data.laneId
+      ) {
         handoffs++;
       }
     }
@@ -124,7 +130,9 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
         bottleneckId = nodeId;
       }
     }
-    const bottleneckLabel = bottleneckId ? nodeMap.get(bottleneckId)?.data?.label || bottleneckId : null;
+    const bottleneckLabel = bottleneckId
+      ? nodeMap.get(bottleneckId)?.data?.label || bottleneckId
+      : null;
 
     return {
       steps,
@@ -191,7 +199,9 @@ export const ProcessKPIDashboard: React.FC<ProcessKPIDashboardProps> = ({
           label={isPl ? 'Przekazania' : 'Handoffs'}
           value={kpis.handoffs}
           color="bg-orange-100 dark:bg-orange-900/40"
-          subtitle={kpis.handoffs > 3 ? (isPl ? '⚠ Dużo przekazań' : '⚠ High handoff count') : undefined}
+          subtitle={
+            kpis.handoffs > 3 ? (isPl ? '⚠ Dużo przekazań' : '⚠ High handoff count') : undefined
+          }
         />
 
         {kpis.bottleneckLabel && (

@@ -24,7 +24,7 @@ const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: 
 
 router.post('/templates', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ templateKey: z.string(), templateName: z.string(), category: z.string(), description: z.string().optional(), schemaJson: z.record(z.unknown()), defaultConfig: z.record(z.unknown()).optional(), isOrgCurated: z.boolean().optional() });
+  const s = z.object({ templateKey: z.string(), templateName: z.string(), category: z.string(), description: z.string().optional(), schemaJson: z.record(z.string(), z.unknown()), defaultConfig: z.record(z.string(), z.unknown()).optional(), isOrgCurated: z.boolean().optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.status(201).json(await toolEnterpriseService.createTemplate(id.orgId, { ...p.data, createdBy: id.userId }));
 }));
@@ -37,26 +37,39 @@ router.get('/templates', asyncHandler(async (req: AuthRequest, res: Response) =>
 
 router.get('/templates/:templateId', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const t = await toolEnterpriseService.getTemplate(req.params.templateId);
+  const t = await toolEnterpriseService.getTemplate(id.orgId, req.params.templateId);
   if (!t) { res.status(404).json({ error: 'Template not found' }); return; }
   res.json(t);
 }));
 
 router.put('/templates/:templateId', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  res.json(await toolEnterpriseService.updateTemplate(req.params.templateId, req.body));
+  const s = z.object({
+    templateName: z.string().optional(),
+    description: z.string().optional(),
+    schemaJson: z.record(z.string(), z.unknown()).optional(),
+    defaultConfig: z.record(z.string(), z.unknown()).optional(),
+    isOrgCurated: z.boolean().optional(),
+  });
+  const p = s.safeParse(req.body);
+  if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
+  const result = await toolEnterpriseService.updateTemplate(id.orgId, req.params.templateId, p.data);
+  if (!result.ok) { res.status(404).json({ error: 'Template not found or not editable' }); return; }
+  res.json(result);
 }));
 
 router.delete('/templates/:templateId', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  res.json(await toolEnterpriseService.deleteTemplate(req.params.templateId));
+  const result = await toolEnterpriseService.deleteTemplate(id.orgId, req.params.templateId);
+  if (!result.deleted) { res.status(404).json({ error: 'Template not found or not deletable' }); return; }
+  res.json(result);
 }));
 
 // ── TOOL-06: Knowledge Bank + RAG ──
 
 router.post('/knowledge', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ toolSessionId: z.string().optional(), sourceType: z.string(), sourceId: z.string(), contentText: z.string().optional(), embeddingVector: z.string().optional(), metadata: z.record(z.unknown()).optional(), scope: z.string().optional() });
+  const s = z.object({ toolSessionId: z.string().optional(), sourceType: z.string(), sourceId: z.string(), contentText: z.string().optional(), embeddingVector: z.string().optional(), metadata: z.record(z.string(), z.unknown()).optional(), scope: z.string().optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.status(201).json(await toolEnterpriseService.addKnowledgeEntry(id.orgId, p.data));
 }));
@@ -78,12 +91,14 @@ router.get('/knowledge', asyncHandler(async (req: AuthRequest, res: Response) =>
 
 router.delete('/knowledge/:entryId', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  res.json(await toolEnterpriseService.deleteKnowledgeEntry(req.params.entryId));
+  const result = await toolEnterpriseService.deleteKnowledgeEntry(id.orgId, req.params.entryId);
+  if (!result.deleted) { res.status(404).json({ error: 'Knowledge entry not found' }); return; }
+  res.json(result);
 }));
 
 router.post('/rag/query', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ toolSessionId: z.string().optional(), queryText: z.string(), results: z.array(z.record(z.unknown())).optional(), citations: z.array(z.record(z.unknown())).optional() });
+  const s = z.object({ toolSessionId: z.string().optional(), queryText: z.string(), results: z.array(z.record(z.string(), z.unknown())).optional(), citations: z.array(z.record(z.string(), z.unknown())).optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   res.status(201).json(await toolEnterpriseService.createRagQuery(id.orgId, p.data));
 }));

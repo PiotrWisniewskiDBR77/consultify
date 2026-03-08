@@ -22,10 +22,11 @@ import {
   Filter,
   Flame,
   GanttChart,
+  Grid3X3,
   GripVertical,
   Group,
-  Keyboard,
   KanbanSquare,
+  Keyboard,
   Layers,
   LayoutGrid,
   Link2,
@@ -58,39 +59,61 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
-import { EMPTY_SELECTION, type CanvasToolType, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
+import {
+  type CanvasToolType,
+  EMPTY_SELECTION,
+  type IdeaWorkspaceSelection,
+} from './ideaSelectionTypes';
 import { AddColumnDialog } from './table/AddColumnDialog';
+import { AICategorizeTool } from './table/AICategorizeTool';
+import { AICopilotMode } from './table/AICopilotMode';
 import { AITableAssistant } from './table/AITableAssistant';
 import { CellExpandPopover } from './table/CellExpandPopover';
 import { CellRenderer } from './table/CellRenderer';
-import { ColorPalette, autoAssignColors } from './table/ColorPalette';
-import { ConditionalFormatting, getConditionalStyle, type FormatRule } from './table/ConditionalFormatting';
+import {
+  CellCursor,
+  CollaborationPresence,
+  type PresenceUser,
+} from './table/CollaborationPresence';
+import { autoAssignColors, ColorPalette } from './table/ColorPalette';
+import {
+  ConditionalFormatting,
+  type FormatRule,
+  getConditionalStyle,
+} from './table/ConditionalFormatting';
 import { ConnectionLines } from './table/ConnectionLines';
-import { copyTableToClipboard, csvToNodes, downloadCSV, exportToCSV, parseCSV } from './table/csvUtils';
+import { CrossTableRelations } from './table/CrossTableRelations';
+import {
+  copyTableToClipboard,
+  csvToNodes,
+  downloadCSV,
+  exportToCSV,
+  parseCSV,
+} from './table/csvUtils';
+import {
+  AnalyticsSummaryStrip,
+  computeHeatmapStyles,
+  HeatmapControls,
+} from './table/EmbeddedAnalytics';
+import { ExportToPresentation } from './table/ExportToPresentation';
 import { FilterPanel } from './table/FilterPanel';
+import { batchEvaluateFormulas } from './table/FormulaEngineV2';
 import { FrameworkGenerator } from './table/FrameworkGenerator';
+import { IdeaPipeline } from './table/IdeaPipeline';
+import { IdeaScoringModel } from './table/IdeaScoringModel';
+import { BatchAIFillButton, InlineAIFill } from './table/InlineAIFill';
 import { KanbanView } from './table/KanbanView';
+import { KeyboardShortcutsPanel } from './table/KeyboardShortcutsPanel';
 import { MatrixView } from './table/MatrixView';
 import { RowDetailPanel } from './table/RowDetailPanel';
-import { InlineAIFill, BatchAIFillButton } from './table/InlineAIFill';
-import { KeyboardShortcutsPanel } from './table/KeyboardShortcutsPanel';
-import { RowTemplatePicker, createNodeFromTemplate, type RowTemplate } from './table/RowTemplatePicker';
-import { SmartSuggestionsBar, type SmartSuggestion } from './table/SmartSuggestionsBar';
+import {
+  createNodeFromTemplate,
+  type RowTemplate,
+  RowTemplatePicker,
+} from './table/RowTemplatePicker';
+import { type SmartSuggestion, SmartSuggestionsBar } from './table/SmartSuggestionsBar';
 import { StickyNoteView } from './table/StickyNoteView';
 import { TableSummaryDashboard } from './table/TableSummaryDashboard';
-import { TimelineView } from './table/TimelineView';
-import { AICategorizeTool } from './table/AICategorizeTool';
-import { IdeaScoringModel } from './table/IdeaScoringModel';
-import { ExportToPresentation } from './table/ExportToPresentation';
-import { batchEvaluateFormulas } from './table/FormulaEngineV2';
-import { CollaborationPresence, CellCursor, type PresenceUser } from './table/CollaborationPresence';
-import { IdeaPipeline } from './table/IdeaPipeline';
-import { AICopilotMode } from './table/AICopilotMode';
-import { VoiceImageInput } from './table/VoiceImageInput';
-import { CrossTableRelations } from './table/CrossTableRelations';
-import { AnalyticsSummaryStrip, HeatmapControls, computeHeatmapStyles } from './table/EmbeddedAnalytics';
-import { useTableKeyboard } from './table/useTableKeyboard';
-import { useUndoRedo } from './table/useUndoRedo';
 import type {
   ColumnDef,
   FilterGroup,
@@ -105,6 +128,10 @@ import {
   MAX_COLUMN_WIDTH,
   MIN_COLUMN_WIDTH,
 } from './table/tableTypes';
+import { TimelineView } from './table/TimelineView';
+import { useTableKeyboard } from './table/useTableKeyboard';
+import { useUndoRedo } from './table/useUndoRedo';
+import { VoiceImageInput } from './table/VoiceImageInput';
 
 interface IdeaTableToolProps {
   open: boolean;
@@ -119,8 +146,29 @@ interface IdeaTableToolProps {
 const DEFAULT_COLUMNS: ColumnDef[] = [
   { key: 'type', header: 'Type', type: 'text', visible: true, width: 100 },
   { key: 'label', header: 'Label', type: 'text', visible: true, width: 240 },
-  { key: 'status', header: 'Status', type: 'select', visible: true, width: 120, options: ['To Do', 'In Progress', 'Done', 'Blocked'], optionColors: { 'To Do': '#e0e7ff', 'In Progress': '#fef3c7', Done: '#d1fae5', Blocked: '#fee2e2' } },
-  { key: 'priority', header: 'Priority', type: 'select', visible: true, width: 110, options: ['Low', 'Medium', 'High', 'Critical'], optionColors: { Low: '#d1fae5', Medium: '#fef3c7', High: '#fce7f3', Critical: '#fee2e2' } },
+  {
+    key: 'status',
+    header: 'Status',
+    type: 'select',
+    visible: true,
+    width: 120,
+    options: ['To Do', 'In Progress', 'Done', 'Blocked'],
+    optionColors: {
+      'To Do': '#e0e7ff',
+      'In Progress': '#fef3c7',
+      Done: '#d1fae5',
+      Blocked: '#fee2e2',
+    },
+  },
+  {
+    key: 'priority',
+    header: 'Priority',
+    type: 'select',
+    visible: true,
+    width: 110,
+    options: ['Low', 'Medium', 'High', 'Critical'],
+    optionColors: { Low: '#d1fae5', Medium: '#fef3c7', High: '#fce7f3', Critical: '#fee2e2' },
+  },
   { key: 'owner', header: 'Owner', type: 'person', visible: false, width: 140 },
   { key: 'impact', header: 'Impact', type: 'rating', visible: false, width: 120 },
   { key: 'effort', header: 'Effort', type: 'rating', visible: false, width: 120 },
@@ -157,14 +205,20 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [showFrameworkGen, setShowFrameworkGen] = useState(false);
   const [showConditionalFmt, setShowConditionalFmt] = useState(false);
   const [formatRules, setFormatRules] = useState<FormatRule[]>([]);
-  const [viewLayout, setViewLayout] = useState<'table' | 'kanban' | 'matrix' | 'sticky' | 'timeline'>('table');
+  const [viewLayout, setViewLayout] = useState<
+    'table' | 'kanban' | 'timeline' | 'calendar' | 'matrix' | 'grid' | 'sticky'
+  >('table');
   const [filterInput, setFilterInput] = useState('');
   const [detailNodeId, setDetailNodeId] = useState<string | null>(null);
   const [showColorPalette, setShowColorPalette] = useState(false);
   const [activePalette, setActivePalette] = useState('vibrant');
   const [showSmartSuggestions, setShowSmartSuggestions] = useState(true);
   const [showSummaryDashboard, setShowSummaryDashboard] = useState(false);
-  const [cellExpandState, setCellExpandState] = useState<{ nodeId: string; colKey: string; rect: DOMRect } | null>(null);
+  const [cellExpandState, setCellExpandState] = useState<{
+    nodeId: string;
+    colKey: string;
+    rect: DOMRect;
+  } | null>(null);
   const [selectedNodeForLines, setSelectedNodeForLines] = useState<string | null>(null);
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showRowTemplatePicker, setShowRowTemplatePicker] = useState(false);
@@ -186,12 +240,38 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [columns, setColumns] = useState<ColumnDef[]>(
     DEFAULT_COLUMNS.map((c) => ({
       ...c,
-      header: isPl && c.key === 'type' ? 'Typ' : isPl && c.key === 'label' ? 'Etykieta' : isPl && c.key === 'priority' ? 'Priorytet' : isPl && c.key === 'owner' ? 'Właściciel' : isPl && c.key === 'impact' ? 'Wpływ' : isPl && c.key === 'effort' ? 'Wysiłek' : c.header,
+      header:
+        isPl && c.key === 'type'
+          ? 'Typ'
+          : isPl && c.key === 'label'
+            ? 'Etykieta'
+            : isPl && c.key === 'priority'
+              ? 'Priorytet'
+              : isPl && c.key === 'owner'
+                ? 'Właściciel'
+                : isPl && c.key === 'impact'
+                  ? 'Wpływ'
+                  : isPl && c.key === 'effort'
+                    ? 'Wysiłek'
+                    : c.header,
     }))
   );
 
+  // V5-IDEA-24: Starter views
   const [savedViews, setSavedViews] = useState<SavedView[]>([
     { id: 'default', name: isPl ? 'Domyślny' : 'Default' },
+    { id: 'triage', name: isPl ? 'Triażowanie' : 'Triage', groupBy: 'status' },
+    {
+      id: 'scoring',
+      name: isPl ? 'Scoring' : 'Scoring',
+      sort: [{ key: 'score', direction: 'desc' as const }],
+    },
+    { id: 'decision_log', name: isPl ? 'Log decyzji' : 'Decision Log', groupBy: 'decision' },
+    {
+      id: 'timeline_view',
+      name: 'Timeline',
+      layout: 'timeline' as const,
+    },
   ]);
   const [activeViewId, setActiveViewId] = useState('default');
 
@@ -203,21 +283,29 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const resizeStartXRef = useRef(0);
   const resizeStartWidthRef = useRef(0);
 
-  const handleResizeStart = useCallback((colKey: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setResizingCol(colKey);
-    resizeStartXRef.current = e.clientX;
-    const col = columns.find((c) => c.key === colKey);
-    resizeStartWidthRef.current = col?.width || DEFAULT_COLUMN_WIDTH;
-  }, [columns]);
+  const handleResizeStart = useCallback(
+    (colKey: string, e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setResizingCol(colKey);
+      resizeStartXRef.current = e.clientX;
+      const col = columns.find((c) => c.key === colKey);
+      resizeStartWidthRef.current = col?.width || DEFAULT_COLUMN_WIDTH;
+    },
+    [columns]
+  );
 
   useEffect(() => {
     if (!resizingCol) return;
     const handleMove = (e: MouseEvent) => {
       const delta = e.clientX - resizeStartXRef.current;
-      const newWidth = Math.max(MIN_COLUMN_WIDTH, Math.min(MAX_COLUMN_WIDTH, resizeStartWidthRef.current + delta));
-      setColumns((prev) => prev.map((c) => (c.key === resizingCol ? { ...c, width: newWidth } : c)));
+      const newWidth = Math.max(
+        MIN_COLUMN_WIDTH,
+        Math.min(MAX_COLUMN_WIDTH, resizeStartWidthRef.current + delta)
+      );
+      setColumns((prev) =>
+        prev.map((c) => (c.key === resizingCol ? { ...c, width: newWidth } : c))
+      );
     };
     const handleUp = () => setResizingCol(null);
     document.addEventListener('mousemove', handleMove);
@@ -232,19 +320,22 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [dragColKey, setDragColKey] = useState<string | null>(null);
 
   const handleColDragStart = useCallback((key: string) => setDragColKey(key), []);
-  const handleColDragOver = useCallback((e: React.DragEvent, targetKey: string) => {
-    e.preventDefault();
-    if (!dragColKey || dragColKey === targetKey) return;
-    setColumns((prev) => {
-      const fromIdx = prev.findIndex((c) => c.key === dragColKey);
-      const toIdx = prev.findIndex((c) => c.key === targetKey);
-      if (fromIdx < 0 || toIdx < 0) return prev;
-      const next = [...prev];
-      const [moved] = next.splice(fromIdx, 1);
-      next.splice(toIdx, 0, moved);
-      return next;
-    });
-  }, [dragColKey]);
+  const handleColDragOver = useCallback(
+    (e: React.DragEvent, targetKey: string) => {
+      e.preventDefault();
+      if (!dragColKey || dragColKey === targetKey) return;
+      setColumns((prev) => {
+        const fromIdx = prev.findIndex((c) => c.key === dragColKey);
+        const toIdx = prev.findIndex((c) => c.key === targetKey);
+        if (fromIdx < 0 || toIdx < 0) return prev;
+        const next = [...prev];
+        const [moved] = next.splice(fromIdx, 1);
+        next.splice(toIdx, 0, moved);
+        return next;
+      });
+    },
+    [dragColKey]
+  );
   const handleColDragEnd = useCallback(() => setDragColKey(null), []);
 
   // ── Quick action listener ──────────────────────────────────────────────────
@@ -253,7 +344,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       const detail = (e as CustomEvent).detail;
       if (detail?.action === 'tbl_add_column') setShowAddColumn(true);
       if (detail?.action === 'tbl_sort') {
-        setSort((prev) => prev ? { ...prev, direction: prev.direction === 'asc' ? 'desc' : 'asc' } : { key: 'label', direction: 'asc' });
+        setSort((prev) =>
+          prev
+            ? { ...prev, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
+            : { key: 'label', direction: 'asc' }
+        );
         trackFunnelEvent('ideas_table_sort_applied', { ideaId });
       }
       if (detail?.action === 'tbl_filter') {
@@ -270,6 +365,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       }
       if (detail?.action === 'tbl_sticky') setViewLayout('sticky');
       if (detail?.action === 'tbl_timeline') setViewLayout('timeline');
+      if (detail?.action === 'tbl_calendar') setViewLayout('calendar');
+      if (detail?.action === 'tbl_grid') setViewLayout('grid');
       if (detail?.action === 'tbl_summary') setShowSummaryDashboard(true);
       if (detail?.action === 'tbl_color_palette') setShowColorPalette(true);
       if (detail?.action === 'tbl_categorize') setShowAICategorize(true);
@@ -280,6 +377,55 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       if (detail?.action === 'tbl_voice') setShowVoiceInput(true);
       if (detail?.action === 'tbl_cross_relations') setShowCrossRelations(true);
       if (detail?.action === 'tbl_heatmap') setShowHeatmap(true);
+      // V5-IDEA-35: Table row artifact autofill and refresh
+      if (detail?.action === 'tbl_autofill_from_artifact') {
+        const selectedRows = nodes.filter((n) => n.data?._selected);
+        if (selectedRows.length === 0) {
+          toast?.(isPl ? 'Zaznacz wiersze do autofill' : 'Select rows to autofill', {
+            icon: '⚠️',
+          });
+          return;
+        }
+        trackFunnelEvent('ideas_table_autofill_triggered', {
+          ideaId,
+          rowCount: selectedRows.length,
+        });
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-chat-prompt', {
+            detail: {
+              prompt: isPl
+                ? `Autofill zaznaczonych ${selectedRows.length} wierszy z powiązanych artefaktów. Wypełnij pola: title, owner, status, stage, spend, budget, ROI. Pokaż preview zmian przed zastosowaniem.`
+                : `Autofill ${selectedRows.length} selected rows from linked artifacts. Fill fields: title, owner, status, stage, spend, budget, ROI. Show preview of changes before applying.`,
+              ideaId,
+            },
+          })
+        );
+      }
+      if (detail?.action === 'tbl_refresh_artifact_data') {
+        trackFunnelEvent('ideas_table_refresh_triggered', { ideaId });
+        toast?.(isPl ? 'Odświeżanie danych z artefaktów...' : 'Refreshing data from artifacts...', {
+          icon: '🔄',
+          duration: 1500,
+        });
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-chat-prompt', {
+            detail: {
+              prompt: isPl
+                ? 'Odśwież dane w tabeli z powiązanych artefaktów. Pokaż co się zmieniło.'
+                : 'Refresh table data from linked artifacts. Show what changed.',
+              ideaId,
+            },
+          })
+        );
+      }
+      if (detail?.action === 'tbl_link_artifact_to_row') {
+        toast?.(
+          isPl
+            ? 'Zaznacz wiersz i użyj panelu kontekstu, aby dołączyć artefakt'
+            : 'Select a row and use context panel to attach an artifact',
+          { icon: '🔗', duration: 2500 }
+        );
+      }
     };
     window.addEventListener('idea-workspace-quick-action', handler);
     return () => window.removeEventListener('idea-workspace-quick-action', handler);
@@ -326,8 +472,22 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       if (Array.isArray(tblExt?.views)) setSavedViews(tblExt.views as SavedView[]);
       if (tblExt?.activeViewId) setActiveViewId(String(tblExt.activeViewId));
       if (Array.isArray(tblExt?.formatting)) setFormatRules(tblExt.formatting as FormatRule[]);
-      if (tblExt?.viewLayout && ['table', 'kanban', 'matrix', 'sticky', 'timeline'].includes(String(tblExt.viewLayout))) {
-        setViewLayout(tblExt.viewLayout as 'table' | 'kanban' | 'matrix' | 'sticky' | 'timeline');
+      if (
+        tblExt?.viewLayout &&
+        ['table', 'kanban', 'timeline', 'calendar', 'matrix', 'grid', 'sticky'].includes(
+          String(tblExt.viewLayout)
+        )
+      ) {
+        setViewLayout(
+          tblExt.viewLayout as
+            | 'table'
+            | 'kanban'
+            | 'timeline'
+            | 'calendar'
+            | 'matrix'
+            | 'grid'
+            | 'sticky'
+        );
       }
       if (Array.isArray(tblExt?.columns)) {
         const saved = tblExt.columns as ColumnDef[];
@@ -362,7 +522,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i18n.language, ideaId, isPl, open]);
 
   useEffect(() => {
@@ -382,13 +542,20 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           const val = String(r?.data?.[rule.column] || r?.data?.label || '').toLowerCase();
           const ruleVal = String(rule.value || '').toLowerCase();
           switch (rule.operator) {
-            case 'contains': return val.includes(ruleVal);
-            case 'equals': return val === ruleVal;
-            case 'not_empty': return val.trim().length > 0;
-            case 'is_empty': return val.trim().length === 0;
-            case 'gt': return Number(r?.data?.[rule.column]) > Number(rule.value);
-            case 'lt': return Number(r?.data?.[rule.column]) < Number(rule.value);
-            default: return true;
+            case 'contains':
+              return val.includes(ruleVal);
+            case 'equals':
+              return val === ruleVal;
+            case 'not_empty':
+              return val.trim().length > 0;
+            case 'is_empty':
+              return val.trim().length === 0;
+            case 'gt':
+              return Number(r?.data?.[rule.column]) > Number(rule.value);
+            case 'lt':
+              return Number(r?.data?.[rule.column]) < Number(rule.value);
+            default:
+              return true;
           }
         });
         return filters.logic === 'and' ? results.every(Boolean) : results.some(Boolean);
@@ -446,9 +613,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         const next = new Set(prev);
         if (next.has(id)) next.delete(id);
         else next.add(id);
-        const sel: IdeaWorkspaceSelection = next.size > 0
-          ? { type: 'row', count: next.size, ids: Array.from(next), primaryId: id }
-          : EMPTY_SELECTION;
+        const sel: IdeaWorkspaceSelection =
+          next.size > 0
+            ? { type: 'row', count: next.size, ids: Array.from(next), primaryId: id }
+            : EMPTY_SELECTION;
         onSelectionChange?.(sel);
         return next;
       });
@@ -457,13 +625,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   );
 
   // ── Edit ───────────────────────────────────────────────────────────────────
-  const handleFieldChange = useCallback((id: string, field: string, value: any) => {
-    const next = nodes.map((n) => {
-      if (n.id !== id) return n;
-      return { ...n, data: { ...(n.data || {}), [field]: value } };
-    });
-    nodesUndo.push(next);
-  }, [nodes, nodesUndo]);
+  const handleFieldChange = useCallback(
+    (id: string, field: string, value: any) => {
+      const next = nodes.map((n) => {
+        if (n.id !== id) return n;
+        return { ...n, data: { ...(n.data || {}), [field]: value } };
+      });
+      nodesUndo.push(next);
+    },
+    [nodes, nodesUndo]
+  );
 
   // ── Add row (with optional template picker) ────────────────────────────────
   const handleAddRow = useCallback(() => {
@@ -479,18 +650,24 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     trackFunnelEvent('ideas_table_row_added', { ideaId });
   }, [ideaId, locked, nodes, nodesUndo]);
 
-  const handleAddRowWithTemplate = useCallback((e: React.MouseEvent) => {
-    if (locked) return;
-    setAddRowBtnRect((e.currentTarget as HTMLElement).getBoundingClientRect());
-    setShowRowTemplatePicker(true);
-  }, [locked]);
+  const handleAddRowWithTemplate = useCallback(
+    (e: React.MouseEvent) => {
+      if (locked) return;
+      setAddRowBtnRect((e.currentTarget as HTMLElement).getBoundingClientRect());
+      setShowRowTemplatePicker(true);
+    },
+    [locked]
+  );
 
-  const handleTemplateSelect = useCallback((template: RowTemplate) => {
-    if (locked) return;
-    const newNode = createNodeFromTemplate(template);
-    nodesUndo.push([...nodes, newNode]);
-    trackFunnelEvent('ideas_table_row_added', { ideaId, template: template.id });
-  }, [ideaId, locked, nodes, nodesUndo]);
+  const handleTemplateSelect = useCallback(
+    (template: RowTemplate) => {
+      if (locked) return;
+      const newNode = createNodeFromTemplate(template);
+      nodesUndo.push([...nodes, newNode]);
+      trackFunnelEvent('ideas_table_row_added', { ideaId, template: template.id });
+    },
+    [ideaId, locked, nodes, nodesUndo]
+  );
 
   // ── Bulk delete ────────────────────────────────────────────────────────────
   const handleBulkDelete = useCallback(() => {
@@ -502,26 +679,35 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   }, [locked, nodes, nodesUndo, onSelectionChange, selectedRowIds]);
 
   // ── Add column ─────────────────────────────────────────────────────────────
-  const handleAddColumn = useCallback((col: ColumnDef) => {
-    setColumns((prev) => [...prev, col]);
-    trackFunnelEvent('ideas_table_column_added', { key: col.key, type: col.type, ideaId });
-  }, [ideaId]);
+  const handleAddColumn = useCallback(
+    (col: ColumnDef) => {
+      setColumns((prev) => [...prev, col]);
+      trackFunnelEvent('ideas_table_column_added', { key: col.key, type: col.type, ideaId });
+    },
+    [ideaId]
+  );
 
   // ── Framework apply ────────────────────────────────────────────────────────
-  const handleFrameworkApply = useCallback((fwColumns: ColumnDef[], fwRows: TableNode[]) => {
-    setColumns((prev) => {
-      const existingKeys = new Set(prev.map((c) => c.key));
-      const newCols = fwColumns.filter((c) => !existingKeys.has(c.key));
-      return [...prev, ...newCols];
-    });
-    nodesUndo.push([...nodes, ...fwRows]);
-    trackFunnelEvent('ideas_table_framework_applied', { ideaId, rowCount: fwRows.length });
-  }, [ideaId, nodes, nodesUndo]);
+  const handleFrameworkApply = useCallback(
+    (fwColumns: ColumnDef[], fwRows: TableNode[]) => {
+      setColumns((prev) => {
+        const existingKeys = new Set(prev.map((c) => c.key));
+        const newCols = fwColumns.filter((c) => !existingKeys.has(c.key));
+        return [...prev, ...newCols];
+      });
+      nodesUndo.push([...nodes, ...fwRows]);
+      trackFunnelEvent('ideas_table_framework_applied', { ideaId, rowCount: fwRows.length });
+    },
+    [ideaId, nodes, nodesUndo]
+  );
 
   // ── AI add rows ────────────────────────────────────────────────────────────
-  const handleAIAddRows = useCallback((newRows: TableNode[]) => {
-    nodesUndo.push([...nodes, ...newRows]);
-  }, [nodes, nodesUndo]);
+  const handleAIAddRows = useCallback(
+    (newRows: TableNode[]) => {
+      nodesUndo.push([...nodes, ...newRows]);
+    },
+    [nodes, nodesUndo]
+  );
 
   // ── Color palette auto-assign ─────────────────────────────────────────────
   const handleAutoAssignColors = useCallback(() => {
@@ -534,67 +720,92 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   }, [activePalette, groupBy, nodes, nodesUndo]);
 
   // ── Smart suggestion apply ────────────────────────────────────────────────
-  const handleApplySuggestion = useCallback((suggestion: SmartSuggestion) => {
-    const payload = suggestion.action?.payload;
-    if (!payload) return;
-    if (payload.type === 'switch_view') setViewLayout(payload.view);
-    if (payload.type === 'add_column' && payload.columnType) {
-      const col: ColumnDef = {
-        key: `col_${Date.now()}`,
-        header: payload.columnType === 'rating' ? (isPl ? 'Ocena' : 'Rating') : payload.columnType,
-        type: payload.columnType,
-        visible: true,
-        width: 120,
-      };
-      setColumns((prev) => [...prev, col]);
-    }
-    trackFunnelEvent('ideas_table_suggestion_applied', { type: suggestion.type, ideaId });
-  }, [ideaId, isPl]);
+  const handleApplySuggestion = useCallback(
+    (suggestion: SmartSuggestion) => {
+      const payload = suggestion.action?.payload;
+      if (!payload) return;
+      if (payload.type === 'switch_view') setViewLayout(payload.view);
+      if (payload.type === 'add_column' && payload.columnType) {
+        const col: ColumnDef = {
+          key: `col_${Date.now()}`,
+          header:
+            payload.columnType === 'rating' ? (isPl ? 'Ocena' : 'Rating') : payload.columnType,
+          type: payload.columnType,
+          visible: true,
+          width: 120,
+        };
+        setColumns((prev) => [...prev, col]);
+      }
+      trackFunnelEvent('ideas_table_suggestion_applied', { type: suggestion.type, ideaId });
+    },
+    [ideaId, isPl]
+  );
 
   // ── AI Categorize handlers ─────────────────────────────────────────────────
-  const handleApplyTags = useCallback((nodeId: string, tags: string[]) => {
-    const next = nodes.map((n) => {
-      if (n.id !== nodeId) return n;
-      const existing = Array.isArray(n.data?.tags) ? n.data.tags : [];
-      const merged = [...new Set([...existing, ...tags])];
-      return { ...n, data: { ...(n.data || {}), tags: merged } };
-    });
-    nodesUndo.push(next);
-  }, [nodes, nodesUndo]);
+  const handleApplyTags = useCallback(
+    (nodeId: string, tags: string[]) => {
+      const next = nodes.map((n) => {
+        if (n.id !== nodeId) return n;
+        const existing = Array.isArray(n.data?.tags) ? n.data.tags : [];
+        const merged = [...new Set([...existing, ...tags])];
+        return { ...n, data: { ...(n.data || {}), tags: merged } };
+      });
+      nodesUndo.push(next);
+    },
+    [nodes, nodesUndo]
+  );
 
-  const handleApplyCluster = useCallback((nodeId: string, cluster: string, color: string) => {
-    const next = nodes.map((n) => {
-      if (n.id !== nodeId) return n;
-      return { ...n, data: { ...(n.data || {}), cluster, color } };
-    });
-    nodesUndo.push(next);
-  }, [nodes, nodesUndo]);
+  const handleApplyCluster = useCallback(
+    (nodeId: string, cluster: string, color: string) => {
+      const next = nodes.map((n) => {
+        if (n.id !== nodeId) return n;
+        return { ...n, data: { ...(n.data || {}), cluster, color } };
+      });
+      nodesUndo.push(next);
+    },
+    [nodes, nodesUndo]
+  );
 
-  const handleMergeNodes = useCallback((keepId: string, removeId: string) => {
-    const keepNode = nodes.find((n) => n.id === keepId);
-    const removeNode = nodes.find((n) => n.id === removeId);
-    if (!keepNode || !removeNode) return;
-    const mergedData = { ...removeNode.data, ...keepNode.data, label: `${keepNode.data?.label || ''} + ${removeNode.data?.label || ''}` };
-    const next = nodes.filter((n) => n.id !== removeId).map((n) => n.id === keepId ? { ...n, data: mergedData } : n);
-    nodesUndo.push(next);
-    toast.success(isPl ? 'Pomysły scalone' : 'Ideas merged');
-  }, [isPl, nodes, nodesUndo]);
+  const handleMergeNodes = useCallback(
+    (keepId: string, removeId: string) => {
+      const keepNode = nodes.find((n) => n.id === keepId);
+      const removeNode = nodes.find((n) => n.id === removeId);
+      if (!keepNode || !removeNode) return;
+      const mergedData = {
+        ...removeNode.data,
+        ...keepNode.data,
+        label: `${keepNode.data?.label || ''} + ${removeNode.data?.label || ''}`,
+      };
+      const next = nodes
+        .filter((n) => n.id !== removeId)
+        .map((n) => (n.id === keepId ? { ...n, data: mergedData } : n));
+      nodesUndo.push(next);
+      toast.success(isPl ? 'Pomysły scalone' : 'Ideas merged');
+    },
+    [isPl, nodes, nodesUndo]
+  );
 
   // ── Scoring model handler ──────────────────────────────────────────────────
-  const handleApplyScores = useCallback((scores: { nodeId: string; score: number; rank: number }[]) => {
-    const scoreMap = new Map(scores.map((s) => [s.nodeId, s]));
-    const next = nodes.map((n) => {
-      const s = scoreMap.get(n.id);
-      if (!s) return n;
-      return { ...n, data: { ...(n.data || {}), score: s.score, rank: s.rank } };
-    });
-    nodesUndo.push(next);
-    toast.success(isPl ? 'Ranking zastosowany' : 'Ranking applied');
-  }, [isPl, nodes, nodesUndo]);
+  const handleApplyScores = useCallback(
+    (scores: { nodeId: string; score: number; rank: number }[]) => {
+      const scoreMap = new Map(scores.map((s) => [s.nodeId, s]));
+      const next = nodes.map((n) => {
+        const s = scoreMap.get(n.id);
+        if (!s) return n;
+        return { ...n, data: { ...(n.data || {}), score: s.score, rank: s.rank } };
+      });
+      nodesUndo.push(next);
+      toast.success(isPl ? 'Ranking zastosowany' : 'Ranking applied');
+    },
+    [isPl, nodes, nodesUndo]
+  );
 
   // ── Formula V2 evaluation ──────────────────────────────────────────────────
   const formulaColumns = useMemo(
-    () => columns.filter((c) => c.type === 'formula' && c.formula).map((c) => ({ key: c.key, formula: c.formula! })),
+    () =>
+      columns
+        .filter((c) => c.type === 'formula' && c.formula)
+        .map((c) => ({ key: c.key, formula: c.formula! })),
     [columns]
   );
 
@@ -604,10 +815,15 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   }, [edges, formulaColumns, nodes]);
 
   // ── Pipeline stage change ────────────────────────────────────────────────
-  const handlePipelineStageChange = useCallback((nodeId: string, stage: string) => {
-    const next = nodes.map((n) => n.id === nodeId ? { ...n, data: { ...(n.data || {}), pipelineStage: stage } } : n);
-    nodesUndo.push(next);
-  }, [nodes, nodesUndo]);
+  const handlePipelineStageChange = useCallback(
+    (nodeId: string, stage: string) => {
+      const next = nodes.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...(n.data || {}), pipelineStage: stage } } : n
+      );
+      nodesUndo.push(next);
+    },
+    [nodes, nodesUndo]
+  );
 
   // ── Cross-table edge add ───────────────────────────────────────────────
   const handleAddCrossEdge = useCallback((edge: TableEdge) => {
@@ -618,7 +834,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const toggleHeatmapColumn = useCallback((key: string) => {
     setHeatmapColumns((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   }, []);
@@ -633,60 +850,88 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     setCellExpandState({ nodeId, colKey, rect });
   }, []);
 
-  const cellExpandNode = cellExpandState ? nodes.find((n) => n.id === cellExpandState.nodeId) : null;
-  const cellExpandCol = cellExpandState ? columns.find((c) => c.key === cellExpandState.colKey) : null;
+  const cellExpandNode = cellExpandState
+    ? nodes.find((n) => n.id === cellExpandState.nodeId)
+    : null;
+  const cellExpandCol = cellExpandState
+    ? columns.find((c) => c.key === cellExpandState.colKey)
+    : null;
 
   // ── Add sub-item ──────────────────────────────────────────────────────────
   // ── Reorder nodes (DnD) ────────────────────────────────────────────────────
-  const handleReorderNode = useCallback((nodeId: string, targetIdx: number) => {
-    const fromIdx = nodes.findIndex((n) => n.id === nodeId);
-    if (fromIdx < 0 || fromIdx === targetIdx) return;
-    const next = [...nodes];
-    const [moved] = next.splice(fromIdx, 1);
-    next.splice(targetIdx, 0, moved);
-    nodesUndo.push(next);
-  }, [nodes, nodesUndo]);
+  const handleReorderNode = useCallback(
+    (nodeId: string, targetIdx: number) => {
+      const fromIdx = nodes.findIndex((n) => n.id === nodeId);
+      if (fromIdx < 0 || fromIdx === targetIdx) return;
+      const next = [...nodes];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(targetIdx, 0, moved);
+      nodesUndo.push(next);
+    },
+    [nodes, nodesUndo]
+  );
 
-  const handleAddSubItem = useCallback((parentId: string) => {
-    if (locked) return;
-    const childId = `node-${Date.now()}`;
-    const childNode: TableNode = { id: childId, type: 'idea', data: { label: '' }, position: { x: 0, y: 0 } };
-    const parent = nodes.find((n) => n.id === parentId);
-    const updatedNodes = nodes.map((n) => {
-      if (n.id !== parentId) return n;
-      return { ...n, data: { ...(n.data || {}), children: [...(n.data?.children || []), childId] } };
-    });
-    nodesUndo.push([...updatedNodes, childNode]);
-  }, [locked, nodes, nodesUndo]);
+  const handleAddSubItem = useCallback(
+    (parentId: string) => {
+      if (locked) return;
+      const childId = `node-${Date.now()}`;
+      const childNode: TableNode = {
+        id: childId,
+        type: 'idea',
+        data: { label: '' },
+        position: { x: 0, y: 0 },
+      };
+      const parent = nodes.find((n) => n.id === parentId);
+      const updatedNodes = nodes.map((n) => {
+        if (n.id !== parentId) return n;
+        return {
+          ...n,
+          data: { ...(n.data || {}), children: [...(n.data?.children || []), childId] },
+        };
+      });
+      nodesUndo.push([...updatedNodes, childNode]);
+    },
+    [locked, nodes, nodesUndo]
+  );
 
   // ── CSV import ─────────────────────────────────────────────────────────────
-  const handleCSVImport = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = String(ev.target?.result || '');
-      const { headers, rows } = parseCSV(text);
-      if (headers.length === 0) {
-        toast.error(isPl ? 'Pusty plik CSV' : 'Empty CSV file');
-        return;
-      }
-      const { nodes: newNodes, newColumns } = csvToNodes(headers, rows, columns);
-      if (newColumns.length > 0) {
-        setColumns((prev) => [...prev, ...newColumns]);
-      }
-      nodesUndo.push([...nodes, ...newNodes]);
-      toast.success(isPl ? `Zaimportowano ${newNodes.length} wierszy` : `Imported ${newNodes.length} rows`);
-      trackFunnelEvent('ideas_table_csv_imported', { ideaId, rowCount: newNodes.length });
-    };
-    reader.readAsText(file);
-    if (csvInputRef.current) csvInputRef.current.value = '';
-  }, [columns, ideaId, isPl, nodes, nodesUndo]);
+  const handleCSVImport = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const text = String(ev.target?.result || '');
+        const { headers, rows } = parseCSV(text);
+        if (headers.length === 0) {
+          toast.error(isPl ? 'Pusty plik CSV' : 'Empty CSV file');
+          return;
+        }
+        const { nodes: newNodes, newColumns } = csvToNodes(headers, rows, columns);
+        if (newColumns.length > 0) {
+          setColumns((prev) => [...prev, ...newColumns]);
+        }
+        nodesUndo.push([...nodes, ...newNodes]);
+        toast.success(
+          isPl ? `Zaimportowano ${newNodes.length} wierszy` : `Imported ${newNodes.length} rows`
+        );
+        trackFunnelEvent('ideas_table_csv_imported', { ideaId, rowCount: newNodes.length });
+      };
+      reader.readAsText(file);
+      if (csvInputRef.current) csvInputRef.current.value = '';
+    },
+    [columns, ideaId, isPl, nodes, nodesUndo]
+  );
 
   // ── "/" key for AI assistant ───────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === '/' && !showAIAssistant && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+      if (
+        e.key === '/' &&
+        !showAIAssistant &&
+        document.activeElement?.tagName !== 'INPUT' &&
+        document.activeElement?.tagName !== 'TEXTAREA'
+      ) {
         e.preventDefault();
         setShowAIAssistant(true);
       }
@@ -703,7 +948,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       const nextExt = {
         ...extensions,
         table: {
-          columns: columns.map((c) => ({ key: c.key, header: c.header, type: c.type, visible: c.visible, width: c.width, options: c.options, optionColors: c.optionColors, formula: c.formula, aiPrompt: c.aiPrompt, aggregation: c.aggregation })),
+          columns: columns.map((c) => ({
+            key: c.key,
+            header: c.header,
+            type: c.type,
+            visible: c.visible,
+            width: c.width,
+            options: c.options,
+            optionColors: c.optionColors,
+            formula: c.formula,
+            aiPrompt: c.aiPrompt,
+            aggregation: c.aggregation,
+          })),
           views: savedViews,
           activeViewId,
           viewState: { sort, filters, groupBy },
@@ -724,7 +980,21 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     } finally {
       setSaving(false);
     }
-  }, [activeViewId, columns, edges, extensions, filters, groupBy, ideaId, isPl, locked, nodes, onSaved, savedViews, sort]);
+  }, [
+    activeViewId,
+    columns,
+    edges,
+    extensions,
+    filters,
+    groupBy,
+    ideaId,
+    isPl,
+    locked,
+    nodes,
+    onSaved,
+    savedViews,
+    sort,
+  ]);
 
   // ── Toggle column ──────────────────────────────────────────────────────────
   const toggleColumn = (key: string) => {
@@ -759,7 +1029,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     onUndo: nodesUndo.undo,
     onRedo: nodesUndo.redo,
     onDelete: handleBulkDelete,
-    onEscape: () => { setDetailNodeId(null); setSelectedRowIds(new Set()); onSelectionChange?.(EMPTY_SELECTION); setShowKeyboardShortcuts(false); },
+    onEscape: () => {
+      setDetailNodeId(null);
+      setSelectedRowIds(new Set());
+      onSelectionChange?.(EMPTY_SELECTION);
+      setShowKeyboardShortcuts(false);
+    },
     onSave: handleSave,
     onAddRow: handleAddRow,
     onOpenAI: () => setShowAIAssistant(true),
@@ -770,7 +1045,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     containerRef: tableRef,
   });
 
-  const detailNode = useMemo(() => detailNodeId ? nodes.find((n) => n.id === detailNodeId) || null : null, [detailNodeId, nodes]);
+  const detailNode = useMemo(
+    () => (detailNodeId ? nodes.find((n) => n.id === detailNodeId) || null : null),
+    [detailNodeId, nodes]
+  );
 
   if (!open) return null;
 
@@ -783,7 +1061,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         key={row.id}
         data-node-id={row.id}
         className={`border-b border-slate-200/30 dark:border-white/[0.04] cursor-pointer transition-colors group/row ${
-          isSelected ? 'bg-primary-500/5' : detailNodeId === row.id ? 'bg-violet-500/5' : selectedNodeForLines === row.id ? 'bg-indigo-500/5' : 'hover:bg-slate-50/50 dark:hover:bg-white/[0.02]'
+          isSelected
+            ? 'bg-primary-500/5'
+            : detailNodeId === row.id
+              ? 'bg-violet-500/5'
+              : selectedNodeForLines === row.id
+                ? 'bg-indigo-500/5'
+                : 'hover:bg-slate-50/50 dark:hover:bg-white/[0.02]'
         }`}
         style={rowColor ? { borderLeftWidth: 3, borderLeftColor: rowColor } : undefined}
         onClick={() => setSelectedNodeForLines(selectedNodeForLines === row.id ? null : row.id)}
@@ -798,24 +1082,39 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           />
         </td>
         {visibleColumns.map((col, colIdx) => {
-          const condStyle = formatRules.length > 0 ? getConditionalStyle(formatRules, col.key, row?.data?.[col.key]) : undefined;
+          const condStyle =
+            formatRules.length > 0
+              ? getConditionalStyle(formatRules, col.key, row?.data?.[col.key])
+              : undefined;
           return (
             <td
               key={col.key}
               data-row={rowIdx}
               data-col={colIdx}
-              style={{ width: col.width, minWidth: col.width, maxWidth: col.width, ...condStyle, ...(heatmapStyles?.get(row.id)?.get(col.key) || {}) }}
+              style={{
+                width: col.width,
+                minWidth: col.width,
+                maxWidth: col.width,
+                ...condStyle,
+                ...(heatmapStyles?.get(row.id)?.get(col.key) || {}),
+              }}
               className="px-2 py-1.5 relative group/cell"
             >
               <CellCursor remoteUsers={remotePresenceUsers} nodeId={row.id} colKey={col.key} />
               <div className="flex items-center gap-0.5">
                 <div className="flex-1 min-w-0" onClick={() => setDetailNodeId(row.id)}>
                   {col.key === 'type' ? (
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400">{row.type || 'node'}</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {row.type || 'node'}
+                    </span>
                   ) : (
                     <CellRenderer
                       column={col}
-                      value={col.type === 'formula' && formulaResults ? (formulaResults.get(row.id)?.[col.key] ?? row?.data?.[col.key]) : row?.data?.[col.key]}
+                      value={
+                        col.type === 'formula' && formulaResults
+                          ? (formulaResults.get(row.id)?.[col.key] ?? row?.data?.[col.key])
+                          : row?.data?.[col.key]
+                      }
                       rowData={row.data || {}}
                       onChange={(val) => handleFieldChange(row.id, col.key, val)}
                       locked={locked}
@@ -823,14 +1122,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     />
                   )}
                 </div>
-                {col.key !== 'type' && !locked && (row?.data?.[col.key] == null || row.data[col.key] === '') && (
-                  <InlineAIFill
-                    node={row}
-                    column={col}
-                    ideaId={ideaId}
-                    onFill={handleFieldChange}
-                  />
-                )}
+                {col.key !== 'type' &&
+                  !locked &&
+                  (row?.data?.[col.key] == null || row.data[col.key] === '') && (
+                    <InlineAIFill
+                      node={row}
+                      column={col}
+                      ideaId={ideaId}
+                      onFill={handleFieldChange}
+                    />
+                  )}
                 {col.key !== 'type' && (
                   <button
                     onClick={(e) => {
@@ -857,7 +1158,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       className="w-full h-full flex overflow-hidden"
       ref={tableRef}
       role="region"
-      aria-label={isPl ? 'Tabela pomysłów z operacjami zbiorczymi' : 'Ideas table with bulk operations'}
+      aria-label={
+        isPl ? 'Tabela pomysłów z operacjami zbiorczymi' : 'Ideas table with bulk operations'
+      }
     >
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Toolbar */}
@@ -904,7 +1207,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-white dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.08] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
             />
             {filterInput && (
-              <button onClick={() => setFilterInput('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => setFilterInput('')}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
                 <X size={10} />
               </button>
             )}
@@ -915,11 +1221,15 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             <button
               onClick={() => setShowFilterPanel(!showFilterPanel)}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                filters.rules.length > 0 ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                filters.rules.length > 0
+                  ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
               }`}
             >
               <Filter size={12} />
-              {filters.rules.length > 0 && <span className="text-[9px]">({filters.rules.length})</span>}
+              {filters.rules.length > 0 && (
+                <span className="text-[9px]">({filters.rules.length})</span>
+              )}
             </button>
             <FilterPanel
               open={showFilterPanel}
@@ -934,7 +1244,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           <button
             onClick={() => setGroupBy(groupBy ? null : 'status')}
             className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-              groupBy ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+              groupBy
+                ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
             }`}
             title={isPl ? 'Grupuj' : 'Group'}
           >
@@ -942,43 +1254,27 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             {isPl ? 'Grupuj' : 'Group'}
           </button>
 
-          {/* View layout switcher */}
+          {/* V5-IDEA-24: View layout switcher — FROZEN order: table → kanban → timeline → calendar → matrix → grid */}
           <div className="flex items-center rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
-            <button
-              onClick={() => setViewLayout('table')}
-              className={`p-1.5 transition-colors ${viewLayout === 'table' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title={isPl ? 'Tabela' : 'Table'}
-            >
-              <Table2 size={12} />
-            </button>
-            <button
-              onClick={() => setViewLayout('kanban')}
-              className={`p-1.5 transition-colors ${viewLayout === 'kanban' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title="Kanban"
-            >
-              <KanbanSquare size={12} />
-            </button>
-            <button
-              onClick={() => setViewLayout('matrix')}
-              className={`p-1.5 transition-colors ${viewLayout === 'matrix' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title="Matrix"
-            >
-              <LayoutGrid size={12} />
-            </button>
-            <button
-              onClick={() => setViewLayout('sticky')}
-              className={`p-1.5 transition-colors ${viewLayout === 'sticky' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title={isPl ? 'Karteczki' : 'Sticky Notes'}
-            >
-              <StickyNote size={12} />
-            </button>
-            <button
-              onClick={() => setViewLayout('timeline')}
-              className={`p-1.5 transition-colors ${viewLayout === 'timeline' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title="Timeline / Gantt"
-            >
-              <GanttChart size={12} />
-            </button>
+            {(
+              [
+                { id: 'table', icon: Table2, label: isPl ? 'Tabela' : 'Table' },
+                { id: 'kanban', icon: KanbanSquare, label: 'Kanban' },
+                { id: 'timeline', icon: GanttChart, label: 'Timeline / Gantt' },
+                { id: 'calendar', icon: Calendar, label: isPl ? 'Kalendarz' : 'Calendar' },
+                { id: 'matrix', icon: LayoutGrid, label: 'Matrix' },
+                { id: 'grid', icon: Grid3X3, label: 'Grid' },
+              ] as const
+            ).map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setViewLayout(v.id)}
+                className={`p-1.5 transition-colors ${viewLayout === v.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                title={v.label}
+              >
+                <v.icon size={12} />
+              </button>
+            ))}
           </div>
 
           {/* AI Assistant */}
@@ -1129,7 +1425,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               open={showColorPalette}
               onClose={() => setShowColorPalette(false)}
               activePalette={activePalette}
-              onPaletteChange={(id) => { setActivePalette(id); setShowColorPalette(false); }}
+              onPaletteChange={(id) => {
+                setActivePalette(id);
+                setShowColorPalette(false);
+              }}
               onAutoAssign={handleAutoAssignColors}
             />
           </div>
@@ -1145,7 +1444,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
           {/* CSV import/export */}
           <div className="flex items-center gap-0.5">
-            <input ref={csvInputRef} type="file" accept=".csv,.tsv,.txt" className="hidden" onChange={handleCSVImport} />
+            <input
+              ref={csvInputRef}
+              type="file"
+              accept=".csv,.tsv,.txt"
+              className="hidden"
+              onChange={handleCSVImport}
+            />
             {!locked && (
               <button
                 onClick={() => csvInputRef.current?.click()}
@@ -1156,14 +1461,20 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               </button>
             )}
             <button
-              onClick={() => { const csv = exportToCSV(columns, nodes); downloadCSV(csv, `idea-${ideaId}.csv`); }}
+              onClick={() => {
+                const csv = exportToCSV(columns, nodes);
+                downloadCSV(csv, `idea-${ideaId}.csv`);
+              }}
               className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
               title={isPl ? 'Eksportuj CSV' : 'Export CSV'}
             >
               <Download size={12} />
             </button>
             <button
-              onClick={() => { copyTableToClipboard(columns, nodes); toast.success(isPl ? 'Skopiowano' : 'Copied'); }}
+              onClick={() => {
+                copyTableToClipboard(columns, nodes);
+                toast.success(isPl ? 'Skopiowano' : 'Copied');
+              }}
               className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
               title={isPl ? 'Kopiuj do schowka' : 'Copy to clipboard'}
             >
@@ -1188,14 +1499,21 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     onClick={() => toggleColumn(col.key)}
                     className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                   >
-                    {col.visible ? <Eye size={12} className="text-primary-500" /> : <EyeOff size={12} className="text-slate-400" />}
+                    {col.visible ? (
+                      <Eye size={12} className="text-primary-500" />
+                    ) : (
+                      <EyeOff size={12} className="text-slate-400" />
+                    )}
                     {col.header}
                     <span className="ml-auto text-[9px] text-slate-400">{col.type}</span>
                   </button>
                 ))}
                 <div className="border-t border-slate-200/60 dark:border-navy-700/60 mt-1 pt-1">
                   <button
-                    onClick={() => { setShowColumnConfig(false); setShowAddColumn(true); }}
+                    onClick={() => {
+                      setShowColumnConfig(false);
+                      setShowAddColumn(true);
+                    }}
                     className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
                   >
                     <Plus size={12} />
@@ -1321,18 +1639,129 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         ) : viewLayout === 'kanban' ? (
           <KanbanView
             nodes={processedRows}
-            groupByColumn={columns.find((c) => c.key === (groupBy || 'status') && (c.type === 'select' || c.type === 'multiselect')) || columns.find((c) => c.type === 'select') || columns[0]}
+            groupByColumn={
+              columns.find(
+                (c) =>
+                  c.key === (groupBy || 'status') &&
+                  (c.type === 'select' || c.type === 'multiselect')
+              ) ||
+              columns.find((c) => c.type === 'select') ||
+              columns[0]
+            }
             columns={columns}
             locked={locked}
             onFieldChange={handleFieldChange}
             onAddRow={handleAddRow}
             onNodeClick={(id) => setDetailNodeId(id)}
           />
+        ) : viewLayout === 'calendar' ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-2 p-8">
+            <Calendar size={32} />
+            <span className="text-sm font-medium">
+              {isPl ? 'Widok kalendarza' : 'Calendar View'}
+            </span>
+            <span className="text-xs text-slate-400/70">
+              {isPl
+                ? 'Przypisz kolumnę daty, aby zobaczyć elementy na kalendarzu'
+                : 'Assign a date column to see items on the calendar'}
+            </span>
+            <div className="grid grid-cols-7 gap-1 mt-4 w-full max-w-lg">
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+                <div
+                  key={d}
+                  className="text-[9px] font-bold text-center text-slate-400 dark:text-slate-500"
+                >
+                  {d}
+                </div>
+              ))}
+              {Array.from({ length: 35 }).map((_, i) => {
+                const day = i - 2;
+                const inMonth = day >= 1 && day <= 31;
+                const dateCol = columns.find((c) => c.type === 'date');
+                const dayRows = inMonth
+                  ? processedRows.filter((r) => {
+                      const val = r.data?.[dateCol?.key || ''];
+                      if (!val) return false;
+                      const d = new Date(String(val));
+                      return d.getDate() === day;
+                    })
+                  : [];
+                return (
+                  <div
+                    key={i}
+                    className={`min-h-[40px] rounded border text-[8px] p-0.5 ${inMonth ? 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900' : 'border-transparent'}`}
+                  >
+                    {inMonth && (
+                      <div className="text-[9px] font-bold text-slate-400 mb-0.5">{day}</div>
+                    )}
+                    {dayRows.slice(0, 2).map((r) => (
+                      <div
+                        key={r.id}
+                        className="truncate text-[7px] text-primary-600 dark:text-primary-400 cursor-pointer hover:underline"
+                        onClick={() => setDetailNodeId(r.id)}
+                      >
+                        {r.data?.label || r.id}
+                      </div>
+                    ))}
+                    {dayRows.length > 2 && (
+                      <div className="text-[7px] text-slate-400">+{dayRows.length - 2}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : viewLayout === 'grid' ? (
+          <div className="flex-1 overflow-auto p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {processedRows.map((row) => (
+                <div
+                  key={row.id}
+                  className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-800 p-3 cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => setDetailNodeId(row.id)}
+                >
+                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate mb-1">
+                    {row.data?.label || row.id}
+                  </div>
+                  {columns.slice(0, 3).map((col) => {
+                    const val = row.data?.[col.key];
+                    if (val == null || val === '') return null;
+                    return (
+                      <div
+                        key={col.key}
+                        className="text-[9px] text-slate-500 dark:text-slate-400 truncate"
+                      >
+                        <span className="font-medium">{col.header}:</span> {String(val)}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+              {processedRows.length === 0 && (
+                <div className="col-span-full text-center text-slate-400 text-sm py-8">
+                  {isPl ? 'Brak wierszy' : 'No rows'}
+                </div>
+              )}
+            </div>
+          </div>
         ) : viewLayout === 'matrix' ? (
           <MatrixView
             nodes={processedRows}
-            xAxis={columns.find((c) => c.key === 'impact' && (c.type === 'number' || c.type === 'rating')) || columns.find((c) => c.type === 'rating') || columns[0]}
-            yAxis={columns.find((c) => c.key === 'effort' && (c.type === 'number' || c.type === 'rating')) || columns.filter((c) => c.type === 'rating')[1] || columns[1] || columns[0]}
+            xAxis={
+              columns.find(
+                (c) => c.key === 'impact' && (c.type === 'number' || c.type === 'rating')
+              ) ||
+              columns.find((c) => c.type === 'rating') ||
+              columns[0]
+            }
+            yAxis={
+              columns.find(
+                (c) => c.key === 'effort' && (c.type === 'number' || c.type === 'rating')
+              ) ||
+              columns.filter((c) => c.type === 'rating')[1] ||
+              columns[1] ||
+              columns[0]
+            }
             onNodeClick={(id) => setDetailNodeId(id)}
           />
         ) : (
@@ -1343,13 +1772,18 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               allNodes={nodes}
               containerRef={tableContainerRef}
             />
-            <table className="w-full text-left" style={{ minWidth: visibleColumns.reduce((s, c) => s + c.width, 40) }}>
+            <table
+              className="w-full text-left"
+              style={{ minWidth: visibleColumns.reduce((s, c) => s + c.width, 40) }}
+            >
               <thead className="sticky top-0 bg-slate-50/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/60 z-10">
                 <tr>
                   <th className="w-8 px-2 py-2">
                     <input
                       type="checkbox"
-                      checked={selectedRowIds.size === processedRows.length && processedRows.length > 0}
+                      checked={
+                        selectedRowIds.size === processedRows.length && processedRows.length > 0
+                      }
                       onChange={() => {
                         if (selectedRowIds.size === processedRows.length) {
                           setSelectedRowIds(new Set());
@@ -1357,7 +1791,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         } else {
                           const all = new Set(processedRows.map((r) => r.id));
                           setSelectedRowIds(all);
-                          onSelectionChange?.({ type: 'row', count: all.size, ids: Array.from(all) });
+                          onSelectionChange?.({
+                            type: 'row',
+                            count: all.size,
+                            ids: Array.from(all),
+                          });
                         }
                       }}
                       className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
@@ -1377,10 +1815,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         className="flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200"
                         onClick={() => cycleSort(col.key)}
                       >
-                        <GripVertical size={10} className="opacity-0 group-hover:opacity-40 cursor-grab" />
+                        <GripVertical
+                          size={10}
+                          className="opacity-0 group-hover:opacity-40 cursor-grab"
+                        />
                         {col.header}
                         {sort?.key === col.key ? (
-                          sort.direction === 'asc' ? <ArrowUp size={10} /> : <ArrowDown size={10} />
+                          sort.direction === 'asc' ? (
+                            <ArrowUp size={10} />
+                          ) : (
+                            <ArrowDown size={10} />
+                          )
                         ) : (
                           <ArrowUpDown size={10} className="opacity-30" />
                         )}
@@ -1399,7 +1844,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   Object.entries(groupedRows).map(([groupKey, rows]) => (
                     <React.Fragment key={groupKey}>
                       <tr className="bg-slate-100/50 dark:bg-navy-800/50">
-                        <td colSpan={visibleColumns.length + 1} className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                        <td
+                          colSpan={visibleColumns.length + 1}
+                          className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                        >
                           {groupKey} ({rows.length})
                         </td>
                       </tr>
@@ -1410,8 +1858,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <tr>
                     <td colSpan={visibleColumns.length + 1} className="px-4 py-12 text-center">
                       <div className="text-slate-400 dark:text-slate-500">
-                        <div className="text-sm font-semibold mb-1">{isPl ? 'Brak wierszy' : 'No rows yet'}</div>
-                        <div className="text-[11px]">{isPl ? 'Dodaj pierwszy wiersz lub użyj AI' : 'Add a row or use AI to generate content'}</div>
+                        <div className="text-sm font-semibold mb-1">
+                          {isPl ? 'Brak wierszy' : 'No rows yet'}
+                        </div>
+                        <div className="text-[11px]">
+                          {isPl
+                            ? 'Dodaj pierwszy wiersz lub użyj AI'
+                            : 'Add a row or use AI to generate content'}
+                        </div>
                         {!locked && (
                           <button
                             onClick={handleAddRow}
@@ -1429,24 +1883,29 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 )}
               </tbody>
               {/* Footer aggregations */}
-              {processedRows.length > 0 && visibleColumns.some((c) => c.aggregation && c.aggregation !== 'none') && (
-                <tfoot className="border-t-2 border-slate-200/60 dark:border-navy-700/60">
-                  <tr className="bg-slate-50/50 dark:bg-navy-900/50">
-                    <td className="px-2 py-1.5" />
-                    {visibleColumns.map((col) => {
-                      const agg = col.aggregation;
-                      if (!agg || agg === 'none') return <td key={col.key} className="px-2 py-1.5" />;
-                      const values = processedRows.map((r) => r.data?.[col.key]);
-                      return (
-                        <td key={col.key} className="px-2 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 tabular-nums">
-                          <span className="text-[8px] text-slate-400 uppercase mr-1">{agg}</span>
-                          {computeAggregation(agg, values)}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                </tfoot>
-              )}
+              {processedRows.length > 0 &&
+                visibleColumns.some((c) => c.aggregation && c.aggregation !== 'none') && (
+                  <tfoot className="border-t-2 border-slate-200/60 dark:border-navy-700/60">
+                    <tr className="bg-slate-50/50 dark:bg-navy-900/50">
+                      <td className="px-2 py-1.5" />
+                      {visibleColumns.map((col) => {
+                        const agg = col.aggregation;
+                        if (!agg || agg === 'none')
+                          return <td key={col.key} className="px-2 py-1.5" />;
+                        const values = processedRows.map((r) => r.data?.[col.key]);
+                        return (
+                          <td
+                            key={col.key}
+                            className="px-2 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 tabular-nums"
+                          >
+                            <span className="text-[8px] text-slate-400 uppercase mr-1">{agg}</span>
+                            {computeAggregation(agg, values)}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  </tfoot>
+                )}
             </table>
 
             {/* Edges table */}
@@ -1458,17 +1917,32 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-200/40 dark:border-navy-700/40">
-                      <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">{isPl ? 'Źródło' : 'Source'}</th>
-                      <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">{isPl ? 'Cel' : 'Target'}</th>
-                      <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 w-28">Kind</th>
+                      <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                        {isPl ? 'Źródło' : 'Source'}
+                      </th>
+                      <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                        {isPl ? 'Cel' : 'Target'}
+                      </th>
+                      <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 w-28">
+                        Kind
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {edges.map((e) => (
-                      <tr key={e.id} className="border-b border-slate-200/20 dark:border-white/[0.02]">
-                        <td className="px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-300">{e.source}</td>
-                        <td className="px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-300">{e.target}</td>
-                        <td className="px-3 py-1.5 text-[11px] text-slate-500 dark:text-slate-400">{e?.data?.kind ? String(e.data.kind) : e.type || 'edge'}</td>
+                      <tr
+                        key={e.id}
+                        className="border-b border-slate-200/20 dark:border-white/[0.02]"
+                      >
+                        <td className="px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+                          {e.source}
+                        </td>
+                        <td className="px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+                          {e.target}
+                        </td>
+                        <td className="px-3 py-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                          {e?.data?.kind ? String(e.data.kind) : e.type || 'edge'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1564,7 +2038,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             if (val && typeof val === 'object' && val._noteUpdate) {
               handleFieldChange(cellExpandNode.id, val._noteUpdate.key, val._noteUpdate.value);
             } else if (val && typeof val === 'object' && val._optionsUpdate) {
-              setColumns((prev) => prev.map((c) => c.key === cellExpandCol.key ? { ...c, options: val._optionsUpdate } : c));
+              setColumns((prev) =>
+                prev.map((c) =>
+                  c.key === cellExpandCol.key ? { ...c, options: val._optionsUpdate } : c
+                )
+              );
             } else {
               handleFieldChange(cellExpandNode.id, cellExpandCol.key, val);
             }
@@ -1579,7 +2057,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 language: i18n.language,
               });
               return result?.[0]?.value || '';
-            } catch { return ''; }
+            } catch {
+              return '';
+            }
           }}
         />
       )}
@@ -1625,7 +2105,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         onClose={() => setShowExportPresentation(false)}
         nodes={processedRows}
         columns={columns}
-        ideaTitle={extensions?.title ? String(extensions.title) : (isPl ? 'Pomysły' : 'Ideas')}
+        ideaTitle={extensions?.title ? String(extensions.title) : isPl ? 'Pomysły' : 'Ideas'}
         viewLayout={viewLayout}
       />
 
@@ -1638,7 +2118,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         onStageChange={handlePipelineStageChange}
         onConvertToInitiative={(nodeId) => {
           if (onConvertProp) onConvertProp('initiative');
-          else toast.success(isPl ? `Konwersja pomysłu do inicjatywy` : `Converting idea to initiative`);
+          else
+            toast.success(
+              isPl ? `Konwersja pomysłu do inicjatywy` : `Converting idea to initiative`
+            );
         }}
       />
 
@@ -1650,7 +2133,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         ideaId={ideaId}
         onAddRows={handleAIAddRows}
         onUpdateNode={(nodeId, data) => {
-          const next = nodes.map((n) => n.id === nodeId ? { ...n, data: { ...(n.data || {}), ...data } } : n);
+          const next = nodes.map((n) =>
+            n.id === nodeId ? { ...n, data: { ...(n.data || {}), ...data } } : n
+          );
           nodesUndo.push(next);
         }}
       />

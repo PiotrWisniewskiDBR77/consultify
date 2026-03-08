@@ -85,7 +85,9 @@ export function useInterviewContext(): UseInterviewContextResult {
         const insightsResponse = await Api.get(`/interview/insights?limit=100&offset=0`).catch(
           () => []
         );
-        const list = Array.isArray(insightsResponse) ? (insightsResponse as InterviewInsight[]) : [];
+        const list = Array.isArray(insightsResponse)
+          ? (insightsResponse as InterviewInsight[])
+          : [];
         const filtered = list.filter((i) => {
           const sessionId = String((i as any).sessionId || '');
           if (sessionId && sessionId === lastId) return true;

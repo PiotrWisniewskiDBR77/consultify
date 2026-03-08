@@ -47,12 +47,17 @@ interface MaturityRingProps {
   strokeWidth?: number;
 }
 
-export const MaturityRing: React.FC<MaturityRingProps> = ({ score, size = 20, strokeWidth = 2.5 }) => {
+export const MaturityRing: React.FC<MaturityRingProps> = ({
+  score,
+  size = 20,
+  strokeWidth = 2.5,
+}) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
 
-  const color = score >= 75 ? '#34d399' : score >= 50 ? '#fbbf24' : score >= 25 ? '#fb923c' : '#94a3b8';
+  const color =
+    score >= 75 ? '#34d399' : score >= 50 ? '#fbbf24' : score >= 25 ? '#fb923c' : '#94a3b8';
 
   return (
     <svg width={size} height={size} className="transform -rotate-90">
@@ -115,7 +120,12 @@ interface GlowWrapperProps {
   className?: string;
 }
 
-export const GlowWrapper: React.FC<GlowWrapperProps> = ({ children, isNew, isAI, className = '' }) => {
+export const GlowWrapper: React.FC<GlowWrapperProps> = ({
+  children,
+  isNew,
+  isAI,
+  className = '',
+}) => {
   if (!isNew && !isAI) return <>{children}</>;
 
   const glowColor = isAI
@@ -123,9 +133,7 @@ export const GlowWrapper: React.FC<GlowWrapperProps> = ({ children, isNew, isAI,
     : 'shadow-[0_0_12px_rgba(251,191,36,0.3)] dark:shadow-[0_0_16px_rgba(251,191,36,0.4)]';
 
   return (
-    <div className={`rounded-xl ${glowColor} animate-pulse-slow ${className}`}>
-      {children}
-    </div>
+    <div className={`rounded-xl ${glowColor} animate-pulse-slow ${className}`}>{children}</div>
   );
 };
 
@@ -139,7 +147,13 @@ interface VoteStarsProps {
   disabled?: boolean;
 }
 
-export const VoteStars: React.FC<VoteStarsProps> = ({ votes, maxVotes = 5, onVote, compact, disabled }) => {
+export const VoteStars: React.FC<VoteStarsProps> = ({
+  votes,
+  maxVotes = 5,
+  onVote,
+  compact,
+  disabled,
+}) => {
   return (
     <div className="flex items-center gap-0.5">
       {Array.from({ length: maxVotes }, (_, i) => (
@@ -148,9 +162,7 @@ export const VoteStars: React.FC<VoteStarsProps> = ({ votes, maxVotes = 5, onVot
           onClick={() => onVote?.(i + 1 === votes ? 0 : i + 1)}
           disabled={disabled || !onVote}
           className={`transition-colors ${
-            i < votes
-              ? 'text-amber-400'
-              : 'text-slate-300 dark:text-navy-600 hover:text-amber-300'
+            i < votes ? 'text-amber-400' : 'text-slate-300 dark:text-navy-600 hover:text-amber-300'
           } disabled:cursor-default`}
         >
           <svg

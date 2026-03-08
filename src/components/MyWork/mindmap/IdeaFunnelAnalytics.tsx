@@ -13,14 +13,48 @@ interface IdeaFunnelAnalyticsProps {
 }
 
 const FUNNEL_STAGES = [
-  { key: 'idea', labelPl: 'Pomysł', labelEn: 'Idea', color: '#94a3b8', bg: 'bg-slate-100 dark:bg-slate-800/30' },
-  { key: 'exploring', labelPl: 'Eksploracja', labelEn: 'Exploring', color: '#3b82f6', bg: 'bg-blue-100 dark:bg-blue-900/30' },
-  { key: 'validated', labelPl: 'Zwalidowany', labelEn: 'Validated', color: '#22c55e', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
-  { key: 'ready_to_convert', labelPl: 'Gotowy', labelEn: 'Ready', color: '#f59e0b', bg: 'bg-amber-100 dark:bg-amber-900/30' },
-  { key: 'converted', labelPl: 'Skonwertowany', labelEn: 'Converted', color: '#8b5cf6', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+  {
+    key: 'idea',
+    labelPl: 'Pomysł',
+    labelEn: 'Idea',
+    color: '#94a3b8',
+    bg: 'bg-slate-100 dark:bg-slate-800/30',
+  },
+  {
+    key: 'exploring',
+    labelPl: 'Eksploracja',
+    labelEn: 'Exploring',
+    color: '#3b82f6',
+    bg: 'bg-blue-100 dark:bg-blue-900/30',
+  },
+  {
+    key: 'validated',
+    labelPl: 'Zwalidowany',
+    labelEn: 'Validated',
+    color: '#22c55e',
+    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+  },
+  {
+    key: 'ready_to_convert',
+    labelPl: 'Gotowy',
+    labelEn: 'Ready',
+    color: '#f59e0b',
+    bg: 'bg-amber-100 dark:bg-amber-900/30',
+  },
+  {
+    key: 'converted',
+    labelPl: 'Skonwertowany',
+    labelEn: 'Converted',
+    color: '#8b5cf6',
+    bg: 'bg-purple-100 dark:bg-purple-900/30',
+  },
 ];
 
-export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({ open, onClose, nodes }) => {
+export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({
+  open,
+  onClose,
+  nodes,
+}) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
@@ -73,7 +107,10 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({ open, 
     <div className="fixed inset-0 z-[92] bg-white/95 dark:bg-navy-950/95 backdrop-blur-xl flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
-        <button onClick={onClose} className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+        <button
+          onClick={onClose}
+          className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+        >
           <ChevronLeft size={16} />
         </button>
         <BarChart3 size={16} className="text-amber-500" />
@@ -81,7 +118,8 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({ open, 
           {isPl ? 'Lejek pomysłów' : 'Idea Funnel'}
         </h2>
         <span className="text-[10px] text-slate-400 ml-auto">
-          {total} {isPl ? 'pomysłów' : 'ideas'} · {overallConversion}% {isPl ? 'konwersja' : 'conversion'}
+          {total} {isPl ? 'pomysłów' : 'ideas'} · {overallConversion}%{' '}
+          {isPl ? 'konwersja' : 'conversion'}
         </span>
       </div>
 
@@ -96,7 +134,10 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({ open, 
 
               return (
                 <React.Fragment key={stage.key}>
-                  <div className="flex items-center gap-4" style={{ paddingLeft: `${idx * 3}%`, paddingRight: `${idx * 3}%` }}>
+                  <div
+                    className="flex items-center gap-4"
+                    style={{ paddingLeft: `${idx * 3}%`, paddingRight: `${idx * 3}%` }}
+                  >
                     <div
                       className={`flex-1 py-4 px-5 rounded-xl ${stage.bg} border border-slate-200/30 dark:border-navy-700/30 transition-all`}
                       style={{ borderLeftColor: stage.color, borderLeftWidth: 4 }}
@@ -111,12 +152,17 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({ open, 
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-[20px] font-bold" style={{ color: stage.color }}>{count}</div>
+                          <div className="text-[20px] font-bold" style={{ color: stage.color }}>
+                            {count}
+                          </div>
                         </div>
                       </div>
                       {/* Progress bar */}
                       <div className="mt-2 h-2 rounded-full bg-slate-200/50 dark:bg-navy-700/50 overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: stage.color }} />
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{ width: `${pct}%`, backgroundColor: stage.color }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -139,17 +185,29 @@ export const IdeaFunnelAnalytics: React.FC<IdeaFunnelAnalyticsProps> = ({ open, 
             </h3>
             <div className="grid grid-cols-2 gap-3">
               {branchStats.map(([bk, stats]) => (
-                <div key={bk} className="p-3 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30">
-                  <div className="text-[11px] font-bold text-slate-700 dark:text-slate-200 capitalize">{bk}</div>
+                <div
+                  key={bk}
+                  className="p-3 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30"
+                >
+                  <div className="text-[11px] font-bold text-slate-700 dark:text-slate-200 capitalize">
+                    {bk}
+                  </div>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[10px] text-slate-500">{stats.total} total</span>
-                    <span className="text-[10px] text-emerald-600 font-bold">{stats.converted} converted</span>
+                    <span className="text-[10px] text-emerald-600 font-bold">
+                      {stats.converted} converted
+                    </span>
                     <span className="text-[9px] text-slate-400">
                       ({stats.total > 0 ? Math.round((stats.converted / stats.total) * 100) : 0}%)
                     </span>
                   </div>
                   <div className="mt-1.5 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                    <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${stats.total > 0 ? (stats.converted / stats.total) * 100 : 0}%` }} />
+                    <div
+                      className="h-full rounded-full bg-emerald-500 transition-all"
+                      style={{
+                        width: `${stats.total > 0 ? (stats.converted / stats.total) * 100 : 0}%`,
+                      }}
+                    />
                   </div>
                 </div>
               ))}

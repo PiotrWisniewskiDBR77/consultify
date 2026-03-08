@@ -17,8 +17,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { AppView, PlaybookTemplateVersion, TemplateStatus } from '../../types';
 import { Api } from '../../services/api';
+import { AppView, PlaybookTemplateVersion, TemplateStatus } from '../../types';
 import { PlaybookEditorView } from './PlaybookEditorView';
 
 /**
@@ -37,7 +37,12 @@ export const PlaybookTemplatesListView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [newTemplate, setNewTemplate] = useState({ title: '', key: '', triggerSignal: '', description: '' });
+  const [newTemplate, setNewTemplate] = useState({
+    title: '',
+    key: '',
+    triggerSignal: '',
+    description: '',
+  });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [editorTemplateId, setEditorTemplateId] = useState<string | null>(null);
 
@@ -48,7 +53,9 @@ export const PlaybookTemplatesListView: React.FC = () => {
   const loadTemplates = async () => {
     try {
       setLoading(true);
-      const url = statusFilter ? `/ai/playbooks/templates?status=${statusFilter}` : '/ai/playbooks/templates';
+      const url = statusFilter
+        ? `/ai/playbooks/templates?status=${statusFilter}`
+        : '/ai/playbooks/templates';
       const data = await Api.get(url);
       setTemplates(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -68,7 +75,9 @@ export const PlaybookTemplatesListView: React.FC = () => {
       if (data.ok) {
         toast.success(t('superadmin.playbookTemplates.toast.valid'));
       } else {
-        toast.error(`${t('superadmin.playbookTemplates.toast.validationFailed')}: ${data.errors.length} error(s)`);
+        toast.error(
+          `${t('superadmin.playbookTemplates.toast.validationFailed')}: ${data.errors.length} error(s)`
+        );
       }
     } catch (err) {
       toast.error(t('superadmin.playbookTemplates.toast.validationFailed'));
@@ -236,7 +245,9 @@ export const PlaybookTemplatesListView: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('superadmin.playbookTemplates.title')}</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            {t('superadmin.playbookTemplates.title')}
+          </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
             {t('superadmin.playbookTemplates.subtitle')}
           </p>
@@ -311,7 +322,9 @@ export const PlaybookTemplatesListView: React.FC = () => {
       ) : filteredTemplates.length === 0 ? (
         <div className="bg-white dark:bg-navy-900/20 rounded-lg border border-slate-200 dark:border-white/10 p-12 text-center">
           <FileText className="mx-auto h-12 w-12 text-slate-400 dark:text-slate-400 mb-4" />
-          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">{t('superadmin.playbookTemplates.empty.title')}</h3>
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+            {t('superadmin.playbookTemplates.empty.title')}
+          </h3>
           <p className="text-slate-600 dark:text-slate-400 mb-4">
             {t('superadmin.playbookTemplates.empty.description')}
           </p>
@@ -457,14 +470,21 @@ export const PlaybookTemplatesListView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-lg">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('superadmin.playbookTemplates.modal.title')}</h3>
-              <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                {t('superadmin.playbookTemplates.modal.title')}
+              </h3>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white"
+              >
                 <X size={20} />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('superadmin.playbookTemplates.modal.titleField')} *</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t('superadmin.playbookTemplates.modal.titleField')} *
+                </label>
                 <input
                   type="text"
                   value={newTemplate.title}
@@ -474,27 +494,40 @@ export const PlaybookTemplatesListView: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('superadmin.playbookTemplates.modal.keyField')} *</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t('superadmin.playbookTemplates.modal.keyField')} *
+                </label>
                 <input
                   type="text"
                   value={newTemplate.key}
-                  onChange={(e) => setNewTemplate({ ...newTemplate, key: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '_') })}
+                  onChange={(e) =>
+                    setNewTemplate({
+                      ...newTemplate,
+                      key: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '_'),
+                    })
+                  }
                   placeholder="e.g. weekly_summary"
                   className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 font-mono"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('superadmin.playbookTemplates.modal.triggerField')} *</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t('superadmin.playbookTemplates.modal.triggerField')} *
+                </label>
                 <input
                   type="text"
                   value={newTemplate.triggerSignal}
-                  onChange={(e) => setNewTemplate({ ...newTemplate, triggerSignal: e.target.value })}
+                  onChange={(e) =>
+                    setNewTemplate({ ...newTemplate, triggerSignal: e.target.value })
+                  }
                   placeholder="e.g. deadline_approaching"
                   className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white placeholder:text-slate-400 font-mono"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('superadmin.playbookTemplates.modal.descriptionField')}</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  {t('superadmin.playbookTemplates.modal.descriptionField')}
+                </label>
                 <textarea
                   value={newTemplate.description}
                   onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
@@ -513,10 +546,17 @@ export const PlaybookTemplatesListView: React.FC = () => {
               </button>
               <button
                 onClick={handleCreateTemplate}
-                disabled={creating || !newTemplate.title.trim() || !newTemplate.key.trim() || !newTemplate.triggerSignal.trim()}
+                disabled={
+                  creating ||
+                  !newTemplate.title.trim() ||
+                  !newTemplate.key.trim() ||
+                  !newTemplate.triggerSignal.trim()
+                }
                 className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
-                {creating ? t('superadmin.playbookTemplates.modal.creating') : t('superadmin.playbookTemplates.modal.create')}
+                {creating
+                  ? t('superadmin.playbookTemplates.modal.creating')
+                  : t('superadmin.playbookTemplates.modal.create')}
               </button>
             </div>
           </div>

@@ -1,4 +1,16 @@
-import { CheckCircle2, ExternalLink, FileUp, Loader2, Lock, Play, Plus, TrendingUp, Unlock, Upload, X } from 'lucide-react';
+import {
+  CheckCircle2,
+  ExternalLink,
+  FileUp,
+  Loader2,
+  Lock,
+  Play,
+  Plus,
+  TrendingUp,
+  Unlock,
+  Upload,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -72,7 +84,9 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [activeTab, setActiveTab] = useState<'inputs' | 'projections' | 'scenarios' | 'initiatives'>('inputs');
+  const [activeTab, setActiveTab] = useState<
+    'inputs' | 'projections' | 'scenarios' | 'initiatives'
+  >('inputs');
   const [showCreate, setShowCreate] = useState(false);
   const [linkedInitiatives, setLinkedInitiatives] = useState<LinkedInitiative[]>([]);
   const [linkingInitiative, setLinkingInitiative] = useState(false);
@@ -104,28 +118,35 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
 
   const fetchLinkedInitiatives = useCallback(async (budgetId: string) => {
     try {
-      const res = await fetch(`${API_URL}/economics/budgets/${budgetId}/initiatives`, { headers: getHeaders() });
+      const res = await fetch(`${API_URL}/economics/budgets/${budgetId}/initiatives`, {
+        headers: getHeaders(),
+      });
       if (res.ok) {
         const d = await res.json();
         setLinkedInitiatives(d.initiatives || []);
       }
-    } catch { setLinkedInitiatives([]); }
+    } catch {
+      setLinkedInitiatives([]);
+    }
   }, []);
 
-  const selectBudget = useCallback(async (b: BudgetSummary) => {
-    setSelected(b);
-    try {
-      const res = await fetch(`${API_URL}/economics/budgets/${b.id}`, { headers: getHeaders() });
-      if (res.ok) {
-        const d = await res.json();
-        setLines(d.lines || []);
-        setScenarios(d.scenarios || []);
+  const selectBudget = useCallback(
+    async (b: BudgetSummary) => {
+      setSelected(b);
+      try {
+        const res = await fetch(`${API_URL}/economics/budgets/${b.id}`, { headers: getHeaders() });
+        if (res.ok) {
+          const d = await res.json();
+          setLines(d.lines || []);
+          setScenarios(d.scenarios || []);
+        }
+      } catch {
+        /* ignore */
       }
-    } catch {
-      /* ignore */
-    }
-    fetchLinkedInitiatives(b.id);
-  }, [fetchLinkedInitiatives]);
+      fetchLinkedInitiatives(b.id);
+    },
+    [fetchLinkedInitiatives]
+  );
 
   useEffect(() => {
     if (initialBudgetId && budgets.length > 0 && !selected) {
@@ -152,7 +173,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
         onBudgetChanged?.();
       }
     } catch {
-      toast.error('Failed to create budget');
+      toast.error(t('finance.budget.createFailed', 'Failed to create budget'));
     }
   }, [newTitle, startPeriod, endPeriod, fetchBudgets, selectBudget, onBudgetChanged]);
 
@@ -170,7 +191,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
       await selectBudget(selected);
       onBudgetChanged?.();
     } catch {
-      toast.error('Generation failed');
+      toast.error(t('finance.budget.projectFailed', 'Generation failed'));
     } finally {
       setGenerating(false);
     }
@@ -190,7 +211,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
         onBudgetChanged?.();
       }
     } catch {
-      toast.error('Approve failed');
+      toast.error(t('finance.budget.approveFailed', 'Approve failed'));
     }
   }, [selected, t, fetchBudgets, onBudgetChanged]);
 
@@ -228,44 +249,61 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
     [selected]
   );
 
-  const handleLinkInitiative = useCallback(async (initiativeId: string) => {
-    if (!selected) return;
-    setLinkingInitiative(true);
-    try {
-      const res = await fetch(`${API_URL}/economics/budgets/${selected.id}/initiatives`, {
-        method: 'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initiativeId }),
-      });
-      if (res.ok) {
-        toast.success(t('finance.budget.initiativeLinked', 'Initiative linked'));
-        await fetchLinkedInitiatives(selected.id);
-        setShowLinkPicker(false);
+  const handleLinkInitiative = useCallback(
+    async (initiativeId: string) => {
+      if (!selected) return;
+      setLinkingInitiative(true);
+      try {
+        const res = await fetch(`${API_URL}/economics/budgets/${selected.id}/initiatives`, {
+          method: 'POST',
+          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ initiativeId }),
+        });
+        if (res.ok) {
+          toast.success(t('finance.budget.initiativeLinked', 'Initiative linked'));
+          await fetchLinkedInitiatives(selected.id);
+          setShowLinkPicker(false);
+        }
+      } catch {
+        toast.error(t('finance.budget.linkFailed', 'Failed to link initiative'));
+      } finally {
+        setLinkingInitiative(false);
       }
-    } catch { toast.error('Failed to link initiative'); }
-    finally { setLinkingInitiative(false); }
-  }, [selected, t, fetchLinkedInitiatives]);
+    },
+    [selected, t, fetchLinkedInitiatives]
+  );
 
-  const handleUnlinkInitiative = useCallback(async (initiativeId: string) => {
-    if (!selected) return;
-    try {
-      await fetch(`${API_URL}/economics/budgets/${selected.id}/initiatives/${initiativeId}`, {
-        method: 'DELETE',
-        headers: getHeaders(),
-      });
-      toast.success(t('finance.budget.initiativeUnlinked', 'Initiative unlinked'));
-      await fetchLinkedInitiatives(selected.id);
-    } catch { toast.error('Failed to unlink'); }
-  }, [selected, t, fetchLinkedInitiatives]);
+  const handleUnlinkInitiative = useCallback(
+    async (initiativeId: string) => {
+      if (!selected) return;
+      try {
+        await fetch(`${API_URL}/economics/budgets/${selected.id}/initiatives/${initiativeId}`, {
+          method: 'DELETE',
+          headers: getHeaders(),
+        });
+        toast.success(t('finance.budget.initiativeUnlinked', 'Initiative unlinked'));
+        await fetchLinkedInitiatives(selected.id);
+      } catch {
+        toast.error(t('finance.budget.unlinkFailed', 'Failed to unlink initiative'));
+      }
+    },
+    [selected, t, fetchLinkedInitiatives]
+  );
 
   const handleOpenLinkPicker = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/initiatives`, { headers: getHeaders() });
       if (res.ok) {
         const d = await res.json();
-        setAvailableInitiatives((d.initiatives || d || []).filter((i: any) => !linkedInitiatives.some((li) => li.id === i.id)));
+        setAvailableInitiatives(
+          (d.initiatives || d || []).filter(
+            (i: any) => !linkedInitiatives.some((li) => li.id === i.id)
+          )
+        );
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     setShowLinkPicker(true);
   }, [linkedInitiatives]);
 
@@ -273,34 +311,46 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
     if (!docImportFile || !selected) return;
     setDocImporting(true);
     try {
-      const formData = new FormData();
-      formData.append('file', docImportFile);
-      formData.append('budgetId', selected.id);
+      const documentText = await docImportFile.text();
       const res = await fetch(`${API_URL}/economics/budgets/${selected.id}/import-document`, {
         method: 'POST',
-        headers: { Authorization: getHeaders()['Authorization'] || '' },
-        body: formData,
+        headers: {
+          Authorization: getHeaders()['Authorization'] || '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filename: docImportFile.name,
+          documentText,
+        }),
       });
       if (res.ok) {
         const d = await res.json();
-        toast.success(t('finance.budget.docImported', `Imported ${d.linesImported || 0} budget lines`));
+        toast.success(
+          t('finance.budget.docImported', `Imported ${d.linesImported || 0} budget lines`)
+        );
         setShowDocImport(false);
         setDocImportFile(null);
         await selectBudget(selected);
         onBudgetChanged?.();
       } else {
         const err = await res.json().catch(() => ({}));
-        toast.error(err.error || 'Import failed');
+        toast.error(err.error || t('finance.budget.importFailed', 'Import failed'));
       }
-    } catch { toast.error('Document import failed'); }
-    finally { setDocImporting(false); }
+    } catch {
+      toast.error(t('finance.budget.documentImportFailed', 'Document import failed'));
+    } finally {
+      setDocImporting(false);
+    }
   }, [docImportFile, selected, t, selectBudget, onBudgetChanged]);
 
-  const initiativeImpactTotal = useMemo(() => ({
-    revenueUplift: linkedInitiatives.reduce((s, i) => s + (i.revenueUplift || 0), 0),
-    costSavings: linkedInitiatives.reduce((s, i) => s + (i.costSavings || 0), 0),
-    capexRequired: linkedInitiatives.reduce((s, i) => s + (i.capexRequired || 0), 0),
-  }), [linkedInitiatives]);
+  const initiativeImpactTotal = useMemo(
+    () => ({
+      revenueUplift: linkedInitiatives.reduce((s, i) => s + (i.revenueUplift || 0), 0),
+      costSavings: linkedInitiatives.reduce((s, i) => s + (i.costSavings || 0), 0),
+      capexRequired: linkedInitiatives.reduce((s, i) => s + (i.capexRequired || 0), 0),
+    }),
+    [linkedInitiatives]
+  );
 
   const plLines = useMemo(() => lines.filter((l) => l.statementType === 'P&L'), [lines]);
   const cfLines = useMemo(() => lines.filter((l) => l.statementType === 'CF'), [lines]);
@@ -314,7 +364,10 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
     { id: 'inputs' as const, label: t('finance.budget.tabs.inputs', 'Inputs') },
     { id: 'projections' as const, label: t('finance.budget.tabs.projections', 'Projections') },
     { id: 'scenarios' as const, label: t('finance.budget.tabs.scenarios', 'Scenario Comparison') },
-    { id: 'initiatives' as const, label: `${t('finance.budget.tabs.initiatives', 'Initiatives')} (${linkedInitiatives.length})` },
+    {
+      id: 'initiatives' as const,
+      label: `${t('finance.budget.tabs.initiatives', 'Initiatives')} (${linkedInitiatives.length})`,
+    },
   ];
 
   if (loading)
@@ -347,7 +400,12 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                     {line.lineName}
                     {line.source === 'manual' && (
                       <span
-                        title={t('finance.budget.driverHint', 'Consider linking to a KPI driver for automatic projections') as string}
+                        title={
+                          t(
+                            'finance.budget.driverHint',
+                            'Consider linking to a KPI driver for automatic projections'
+                          ) as string
+                        }
                         className="text-[9px] px-1 py-0.5 rounded bg-amber-500/10 text-amber-500 font-semibold uppercase cursor-help"
                       >
                         {t('finance.budget.manual', 'manual')}
@@ -468,7 +526,12 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                 </button>
                 <button
                   onClick={() => {
-                    const linesSummary = lines.map((l) => `${l.lineName} (${l.statementType}): ${l.baselineValue.toLocaleString()} ${selected?.currency}`).join('\n');
+                    const linesSummary = lines
+                      .map(
+                        (l) =>
+                          `${l.lineName} (${l.statementType}): ${l.baselineValue.toLocaleString()} ${selected?.currency}`
+                      )
+                      .join('\n');
                     const prompt = encodeURIComponent(
                       `Review and validate the following budget assumptions for "${selected?.title}":\n\nPeriod: ${selected?.periodStart} → ${selected?.periodEnd}\nGranularity: ${selected?.granularity}\n\nBudget lines:\n${linesSummary}\n\nPlease:\n1. Validate reasonableness of each line\n2. Flag potential risks or missing items\n3. Suggest improvements to assumptions\n4. Confirm if ready for projection generation`
                     );
@@ -480,7 +543,9 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   {t('finance.budget.confirmWithAI', 'Confirm with AI')}
                 </button>
                 <button
-                  onClick={() => navigate(`/economics?tab=valuation&createFrom=budget&sourceId=${selected.id}`)}
+                  onClick={() =>
+                    navigate(`/economics?tab=valuation&createFrom=budget&sourceId=${selected.id}`)
+                  }
                   className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors"
                 >
                   <TrendingUp size={14} />
@@ -660,41 +725,74 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   {linkedInitiatives.length > 0 && (
                     <div className="grid grid-cols-3 gap-4">
                       <div className="rounded-xl p-4 border border-emerald-500/30 bg-emerald-500/5">
-                        <div className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">{t('finance.budget.totalRevenueUplift', 'Revenue Uplift')}</div>
-                        <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300 font-mono">+{initiativeImpactTotal.revenueUplift.toLocaleString()}</div>
+                        <div className="text-xs text-emerald-600 dark:text-emerald-400 mb-1">
+                          {t('finance.budget.totalRevenueUplift', 'Revenue Uplift')}
+                        </div>
+                        <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300 font-mono">
+                          +{initiativeImpactTotal.revenueUplift.toLocaleString()}
+                        </div>
                       </div>
                       <div className="rounded-xl p-4 border border-blue-500/30 bg-blue-500/5">
-                        <div className="text-xs text-blue-600 dark:text-blue-400 mb-1">{t('finance.budget.totalCostSavings', 'Cost Savings')}</div>
-                        <div className="text-xl font-bold text-blue-700 dark:text-blue-300 font-mono">+{initiativeImpactTotal.costSavings.toLocaleString()}</div>
+                        <div className="text-xs text-blue-600 dark:text-blue-400 mb-1">
+                          {t('finance.budget.totalCostSavings', 'Cost Savings')}
+                        </div>
+                        <div className="text-xl font-bold text-blue-700 dark:text-blue-300 font-mono">
+                          +{initiativeImpactTotal.costSavings.toLocaleString()}
+                        </div>
                       </div>
                       <div className="rounded-xl p-4 border border-amber-500/30 bg-amber-500/5">
-                        <div className="text-xs text-amber-600 dark:text-amber-400 mb-1">{t('finance.budget.totalCapex', 'CAPEX Required')}</div>
-                        <div className="text-xl font-bold text-amber-700 dark:text-amber-300 font-mono">{initiativeImpactTotal.capexRequired.toLocaleString()}</div>
+                        <div className="text-xs text-amber-600 dark:text-amber-400 mb-1">
+                          {t('finance.budget.totalCapex', 'CAPEX Required')}
+                        </div>
+                        <div className="text-xl font-bold text-amber-700 dark:text-amber-300 font-mono">
+                          {initiativeImpactTotal.capexRequired.toLocaleString()}
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {linkedInitiatives.length === 0 ? (
                     <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                      <p className="text-sm">{t('finance.budget.noLinkedInitiatives', 'No initiatives linked to this budget yet.')}</p>
-                      <p className="text-xs mt-1">{t('finance.budget.linkInitiativeHint', 'Link initiatives to see their revenue uplift and cost savings impact on budget projections.')}</p>
+                      <p className="text-sm">
+                        {t(
+                          'finance.budget.noLinkedInitiatives',
+                          'No initiatives linked to this budget yet.'
+                        )}
+                      </p>
+                      <p className="text-xs mt-1">
+                        {t(
+                          'finance.budget.linkInitiativeHint',
+                          'Link initiatives to see their revenue uplift and cost savings impact on budget projections.'
+                        )}
+                      </p>
                     </div>
                   ) : (
                     <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="text-left text-xs text-slate-500 border-b border-slate-200 dark:border-navy-700">
-                            <th className="px-4 py-2">{t('finance.budget.initiative', 'Initiative')}</th>
+                            <th className="px-4 py-2">
+                              {t('finance.budget.initiative', 'Initiative')}
+                            </th>
                             <th className="px-4 py-2">{t('common.status', 'Status')}</th>
-                            <th className="px-4 py-2 text-right">{t('finance.budget.revenueUplift', 'Revenue Uplift')}</th>
-                            <th className="px-4 py-2 text-right">{t('finance.budget.costSavings', 'Cost Savings')}</th>
-                            <th className="px-4 py-2 text-right">{t('finance.budget.capex', 'CAPEX')}</th>
+                            <th className="px-4 py-2 text-right">
+                              {t('finance.budget.revenueUplift', 'Revenue Uplift')}
+                            </th>
+                            <th className="px-4 py-2 text-right">
+                              {t('finance.budget.costSavings', 'Cost Savings')}
+                            </th>
+                            <th className="px-4 py-2 text-right">
+                              {t('finance.budget.capex', 'CAPEX')}
+                            </th>
                             <th className="px-4 py-2 w-16"></th>
                           </tr>
                         </thead>
                         <tbody>
                           {linkedInitiatives.map((ini) => (
-                            <tr key={ini.id} className="border-b border-slate-200 dark:border-navy-700 last:border-0">
+                            <tr
+                              key={ini.id}
+                              className="border-b border-slate-200 dark:border-navy-700 last:border-0"
+                            >
                               <td className="px-4 py-2">
                                 <button
                                   onClick={() => navigate(`/initiatives?id=${ini.id}`)}
@@ -704,7 +802,9 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                 </button>
                               </td>
                               <td className="px-4 py-2">
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-300">{ini.status}</span>
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-300">
+                                  {ini.status}
+                                </span>
                               </td>
                               <td className="px-4 py-2 text-right font-mono text-emerald-600 dark:text-emerald-400">
                                 {ini.revenueUplift ? `+${ini.revenueUplift.toLocaleString()}` : '—'}
@@ -738,13 +838,21 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                             {t('finance.budget.selectInitiative', 'Select Initiative to Link')}
                           </h2>
-                          <button onClick={() => setShowLinkPicker(false)} className="text-slate-400 hover:text-slate-600">
+                          <button
+                            onClick={() => setShowLinkPicker(false)}
+                            className="text-slate-400 hover:text-slate-600"
+                          >
                             <X size={18} />
                           </button>
                         </div>
                         <div className="flex-1 overflow-y-auto space-y-1">
                           {availableInitiatives.length === 0 ? (
-                            <p className="text-sm text-slate-500 text-center py-4">{t('finance.budget.noAvailableInitiatives', 'No available initiatives to link')}</p>
+                            <p className="text-sm text-slate-500 text-center py-4">
+                              {t(
+                                'finance.budget.noAvailableInitiatives',
+                                'No available initiatives to link'
+                              )}
+                            </p>
                           ) : (
                             availableInitiatives.map((ini: any) => (
                               <button
@@ -753,8 +861,12 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                 disabled={linkingInitiative}
                                 className="w-full text-left p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 border border-slate-200 dark:border-navy-700 disabled:opacity-50"
                               >
-                                <div className="font-medium text-sm text-slate-900 dark:text-white">{ini.title}</div>
-                                <div className="text-xs text-slate-500 mt-0.5">{ini.status} · {ini.priority}</div>
+                                <div className="font-medium text-sm text-slate-900 dark:text-white">
+                                  {ini.title}
+                                </div>
+                                <div className="text-xs text-slate-500 mt-0.5">
+                                  {ini.status} · {ini.priority}
+                                </div>
                               </button>
                             ))
                           )}
@@ -819,13 +931,13 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                 onClick={() => setShowCreate(false)}
                 className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700"
               >
-                Cancel
+                {t('common.cancel', 'Cancel')}
               </button>
               <button
                 onClick={handleCreate}
                 className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-500"
               >
-                Create
+                {t('common.create', 'Create')}
               </button>
             </div>
           </div>
@@ -838,12 +950,21 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {t('finance.budget.importFromDocument', 'Import Budget from Document')}
               </h2>
-              <button onClick={() => { setShowDocImport(false); setDocImportFile(null); }} className="text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => {
+                  setShowDocImport(false);
+                  setDocImportFile(null);
+                }}
+                className="text-slate-400 hover:text-slate-600"
+              >
                 <X size={18} />
               </button>
             </div>
             <p className="text-xs text-slate-500 mb-3">
-              {t('finance.budget.importDocDesc', 'Upload a PDF or Excel file containing budget data. Lines will be extracted and added to the current budget.')}
+              {t(
+                'finance.budget.importDocDesc',
+                'Upload a PDF or Excel file containing budget data. Lines will be extracted and added to the current budget.'
+              )}
             </p>
             <div
               onClick={() => document.getElementById('doc-import-input')?.click()}
@@ -851,7 +972,9 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
             >
               <Upload size={32} className="mx-auto text-slate-400 mb-2" />
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                {docImportFile ? docImportFile.name : t('finance.budget.dropOrBrowse', 'Click to browse or drop file')}
+                {docImportFile
+                  ? docImportFile.name
+                  : t('finance.budget.dropOrBrowse', 'Click to browse or drop file')}
               </p>
               <p className="text-xs text-slate-400 mt-1">PDF, XLSX, XLS, CSV</p>
               <input
@@ -863,7 +986,13 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
               />
             </div>
             <div className="flex justify-end gap-2 mt-4">
-              <button onClick={() => { setShowDocImport(false); setDocImportFile(null); }} className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700">
+              <button
+                onClick={() => {
+                  setShowDocImport(false);
+                  setDocImportFile(null);
+                }}
+                className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700"
+              >
                 {t('common.cancel', 'Cancel')}
               </button>
               <button
@@ -871,7 +1000,11 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                 disabled={!docImportFile || docImporting}
                 className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-500 disabled:opacity-50"
               >
-                {docImporting ? <Loader2 size={14} className="animate-spin" /> : <FileUp size={14} />}
+                {docImporting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <FileUp size={14} />
+                )}
                 {t('finance.budget.importLines', 'Import Lines')}
               </button>
             </div>

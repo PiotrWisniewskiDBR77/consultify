@@ -22,9 +22,9 @@ import {
   Minus,
   MoreVertical,
   Scale,
+  Send,
   Settings2,
   Sparkles,
-  Send,
   Square,
   TrendingUp,
   User,
@@ -35,6 +35,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { Modal } from '@/components/ui/primitives/Modal';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -47,15 +50,11 @@ import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
-import { RowActionsMenu, type RowAction } from '@/components/shared/RowActionsMenu';
-import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import { Modal } from '@/components/ui/primitives/Modal';
-
 import {
-  DecisionPreviewBody,
-  DecisionPreviewFooter,
   type DecisionBrief,
+  DecisionPreviewBody,
   type DecisionPreviewData,
+  DecisionPreviewFooter,
   type DecisionPreviewMode,
   type DecisionSnoozePreset,
 } from './DecisionPreviewPanel';
@@ -104,23 +103,21 @@ interface DecisionCounts {
   awaiting: number;
 }
 
-export type DecisionsBulkBarPayload =
-  | {
-      selectedCount: number;
-      allSelected: boolean;
-      someSelected: boolean;
-      selectAllVisible: () => void;
-      clearSelection: () => void;
-      // Context actions (rendered in Command Row)
-      approve?: () => void;
-      reject?: () => void;
-      deleteSelected?: () => void;
-      changePriority?: () => void;
-      remind?: () => void;
-      escalate?: () => void;
-      snoozeTomorrow?: () => void;
-    }
-  | null;
+export type DecisionsBulkBarPayload = {
+  selectedCount: number;
+  allSelected: boolean;
+  someSelected: boolean;
+  selectAllVisible: () => void;
+  clearSelection: () => void;
+  // Context actions (rendered in Command Row)
+  approve?: () => void;
+  reject?: () => void;
+  deleteSelected?: () => void;
+  changePriority?: () => void;
+  remind?: () => void;
+  escalate?: () => void;
+  snoozeTomorrow?: () => void;
+} | null;
 
 interface DecisionsPanelContentProps {
   viewMode: ViewMode;
@@ -513,7 +510,9 @@ const DecisionTableRow: React.FC<{
               <span className="truncate max-w-[100px]">{decision.projectName}</span>
             </div>
           ) : (
-            <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-600">-</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 dark:text-slate-600">
+              -
+            </span>
           )}
         </td>
       )}
@@ -630,11 +629,26 @@ const AwaitingDecisionTableRow: React.FC<{
   const responseConfig = (() => {
     const answer = String(decision.answer || decision.status || '').toUpperCase();
     if (answer === 'APPROVED')
-      return { label: 'Approved', color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-100 dark:bg-emerald-500/20', icon: Check };
+      return {
+        label: 'Approved',
+        color: 'text-emerald-700 dark:text-emerald-400',
+        bg: 'bg-emerald-100 dark:bg-emerald-500/20',
+        icon: Check,
+      };
     if (answer === 'REJECTED')
-      return { label: 'Rejected', color: 'text-red-700 dark:text-red-400', bg: 'bg-red-100 dark:bg-red-500/20', icon: X };
+      return {
+        label: 'Rejected',
+        color: 'text-red-700 dark:text-red-400',
+        bg: 'bg-red-100 dark:bg-red-500/20',
+        icon: X,
+      };
     if (answer === 'DEFERRED')
-      return { label: 'Deferred', color: 'text-amber-700 dark:text-amber-400', bg: 'bg-amber-100 dark:bg-amber-500/20', icon: Clock };
+      return {
+        label: 'Deferred',
+        color: 'text-amber-700 dark:text-amber-400',
+        bg: 'bg-amber-100 dark:bg-amber-500/20',
+        icon: Clock,
+      };
     return null;
   })();
 
@@ -722,7 +736,9 @@ const AwaitingDecisionTableRow: React.FC<{
 
       <td className="px-3 py-2.5 w-full" style={{ minWidth: 300 }}>
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-slate-900 dark:text-white">{decision.title}</span>
+          <span className="text-sm font-medium text-slate-900 dark:text-white">
+            {decision.title}
+          </span>
           {decision.description && (
             <span className="text-xs text-slate-500 mt-0.5 truncate block max-w-[480px]">
               {decision.description}
@@ -764,7 +780,9 @@ const AwaitingDecisionTableRow: React.FC<{
 
       {!hiddenColumns?.has('priority') && (
         <td className="px-3 py-2.5" style={{ width: columnWidths.priority }}>
-          <span className={`inline-flex items-center gap-1 text-xs font-medium ${priorityConfig.color}`}>
+          <span
+            className={`inline-flex items-center gap-1 text-xs font-medium ${priorityConfig.color}`}
+          >
             <PriorityIcon size={12} />
             {priorityConfig.label}
           </span>
@@ -781,7 +799,9 @@ const AwaitingDecisionTableRow: React.FC<{
                   : 'text-slate-500 dark:text-slate-400'
               }`}
             >
-              {overdue ? <AlertTriangle size={12} className="animate-pulse text-red-600 dark:text-red-400" /> : null}
+              {overdue ? (
+                <AlertTriangle size={12} className="animate-pulse text-red-600 dark:text-red-400" />
+              ) : null}
               <Calendar size={12} />
               <span>{formatDate(dueDate)}</span>
             </div>
@@ -1377,7 +1397,9 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
 
   const handleBulkSnoozeTomorrow = async () => {
     try {
-      await Promise.all(Array.from(selectedIds).map((id) => Api.snoozeDecision(id, { preset: 'tomorrow' })));
+      await Promise.all(
+        Array.from(selectedIds).map((id) => Api.snoozeDecision(id, { preset: 'tomorrow' }))
+      );
       toast.success(`${selectedIds.size} decisions snoozed`);
       setSelectedIds(new Set());
       fetchDecisions();
@@ -1428,7 +1450,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
     return result;
   }, [filteredDecisions, tableFilters]);
 
-  const orderedDecisionIds = useMemo(() => displayedDecisions.map((d) => d.id), [displayedDecisions]);
+  const orderedDecisionIds = useMemo(
+    () => displayedDecisions.map((d) => d.id),
+    [displayedDecisions]
+  );
 
   const allVisibleDecisionIds = useMemo(() => new Set(orderedDecisionIds), [orderedDecisionIds]);
   const allSelected = selectedIds.size > 0 && selectedIds.size === allVisibleDecisionIds.size;
@@ -1556,8 +1581,11 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
             const mode: DecisionPreviewMode =
               viewMode === 'awaiting' ? 'requests_pending' : viewMode === 'my' ? 'my' : 'all';
             const meId = currentUser?.id ? String(currentUser.id) : null;
-            const ownerId = decisionData?.decisionOwnerId ? String(decisionData.decisionOwnerId) : null;
-            const canAct = mode !== 'requests_pending' && Boolean(meId && ownerId && meId === ownerId);
+            const ownerId = decisionData?.decisionOwnerId
+              ? String(decisionData.decisionOwnerId)
+              : null;
+            const canAct =
+              mode !== 'requests_pending' && Boolean(meId && ownerId && meId === ownerId);
             return (
               <DecisionPreviewFooter
                 decision={decisionData}
@@ -1590,7 +1618,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                 }}
                 onMoreInfo={() => {
                   if (!previewDecisionId) return;
-                  onDecisionClick?.(previewDecisionId, decisions.find((d) => d.id === previewDecisionId));
+                  onDecisionClick?.(
+                    previewDecisionId,
+                    decisions.find((d) => d.id === previewDecisionId)
+                  );
                   setPreviewDecisionId(null);
                 }}
                 onRemind={async () => {
@@ -1670,7 +1701,15 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                         className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                         style={{ width: columnWidths.project }}
                       >
-                        <span>{viewMode === 'awaiting' ? (isPolish ? 'Właściciel' : 'Owner') : isPolish ? 'Projekt' : 'Project'}</span>
+                        <span>
+                          {viewMode === 'awaiting'
+                            ? isPolish
+                              ? 'Właściciel'
+                              : 'Owner'
+                            : isPolish
+                              ? 'Projekt'
+                              : 'Project'}
+                        </span>
                         <ColumnResizer
                           columnId="project"
                           currentWidth={columnWidths.project}
@@ -1688,7 +1727,9 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       >
                         <div className="flex items-center gap-1">
                           <span
-                            className={(tableFilters.status as string[])?.length ? 'text-primary-500' : ''}
+                            className={
+                              (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
+                            }
                           >
                             {isPolish ? 'Status' : 'Status'}
                           </span>
@@ -1697,7 +1738,9 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                             value={tableFilters.status as string[]}
                             onChange={(val) => handleFilterChange('status', val as string[])}
                             isOpen={openFilterId === 'status'}
-                            onToggle={() => setOpenFilterId(openFilterId === 'status' ? null : 'status')}
+                            onToggle={() =>
+                              setOpenFilterId(openFilterId === 'status' ? null : 'status')
+                            }
                             onClose={() => setOpenFilterId(null)}
                           />
                         </div>
@@ -1718,7 +1761,9 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       >
                         <div className="flex items-center gap-1">
                           <span
-                            className={(tableFilters.priority as string[])?.length ? 'text-primary-500' : ''}
+                            className={
+                              (tableFilters.priority as string[])?.length ? 'text-primary-500' : ''
+                            }
                           >
                             {isPolish ? 'Priorytet' : 'Priority'}
                           </span>
@@ -1727,7 +1772,9 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                             value={tableFilters.priority as string[]}
                             onChange={(val) => handleFilterChange('priority', val as string[])}
                             isOpen={openFilterId === 'priority'}
-                            onToggle={() => setOpenFilterId(openFilterId === 'priority' ? null : 'priority')}
+                            onToggle={() =>
+                              setOpenFilterId(openFilterId === 'priority' ? null : 'priority')
+                            }
                             onClose={() => setOpenFilterId(null)}
                           />
                         </div>
@@ -1907,7 +1954,10 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
                       else set.add(col.id);
                       const next = Array.from(set);
                       try {
-                        localStorage.setItem(DECISIONS_TABLE_VIEW_STORAGE_KEY, JSON.stringify(next));
+                        localStorage.setItem(
+                          DECISIONS_TABLE_VIEW_STORAGE_KEY,
+                          JSON.stringify(next)
+                        );
                       } catch {
                         /* ignore */
                       }
@@ -1936,7 +1986,9 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
           decisionId={previewDecisionId}
           decisionTitle={String(previewDecision?.title || '')}
           availableUsers={availableUsers}
-          currentDeciderId={String((previewDecision as any)?.deciderId || previewDecision.decisionOwnerId || '')}
+          currentDeciderId={String(
+            (previewDecision as any)?.deciderId || previewDecision.decisionOwnerId || ''
+          )}
           onDelegated={() => {
             fetchDecisions();
             void fetchPreview(previewDecisionId);

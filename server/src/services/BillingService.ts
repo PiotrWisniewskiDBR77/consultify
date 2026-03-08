@@ -5,7 +5,7 @@
  * Delegates to granulated billing modules for queries, commands, and events.
  */
 
-import type Stripe from 'stripe';
+import type { Stripe as StripeTypes } from 'stripe';
 
 import { BillingCommandService } from './billing/BillingCommandService.js';
 import { BillingDependencyLoader } from './billing/billingDependencyLoader.js';
@@ -129,7 +129,7 @@ class BillingServiceClass {
     return this.#queryService.getInvoices(orgId);
   }
 
-  async recordInvoice(orgId: string, stripeInvoice: Stripe.Invoice) {
+  async recordInvoice(orgId: string, stripeInvoice: StripeTypes.Invoice) {
     await this.#ensureInitialized();
     return this.#commandService.recordInvoice(orgId, stripeInvoice);
   }
@@ -254,7 +254,7 @@ export const cancelSubscription = (orgId: string) =>
 export const changePlan = (orgId: string, newPlanId: string) =>
   billingServiceInstance.changePlan(orgId, newPlanId);
 export const getInvoices = (orgId: string) => billingServiceInstance.getInvoices(orgId);
-export const recordInvoice = (orgId: string, stripeInvoice: Stripe.Invoice) =>
+export const recordInvoice = (orgId: string, stripeInvoice: StripeTypes.Invoice) =>
   billingServiceInstance.recordInvoice(orgId, stripeInvoice);
 export const getRevenueStats = () => billingServiceInstance.getRevenueStats();
 export const getPaymentMethods = (orgId: string) => billingServiceInstance.getPaymentMethods(orgId);

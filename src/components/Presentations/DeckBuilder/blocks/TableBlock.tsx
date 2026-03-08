@@ -15,7 +15,10 @@ export const TableBlock: React.FC<Props> = ({ block, theme }) => {
   ];
 
   return (
-    <div className="overflow-x-auto rounded-lg border" style={{ borderColor: theme.colors.primary + '20' }}>
+    <div
+      className="overflow-x-auto rounded-lg border"
+      style={{ borderColor: theme.colors.primary + '20' }}
+    >
       <table className="w-full text-sm">
         <thead>
           <tr style={{ backgroundColor: theme.colors.primary + '10' }}>
@@ -32,17 +35,9 @@ export const TableBlock: React.FC<Props> = ({ block, theme }) => {
         </thead>
         <tbody>
           {rows.map((row, ri) => (
-            <tr
-              key={ri}
-              className="border-t"
-              style={{ borderColor: theme.colors.primary + '10' }}
-            >
+            <tr key={ri} className="border-t" style={{ borderColor: theme.colors.primary + '10' }}>
               {row.map((cell, ci) => (
-                <td
-                  key={ci}
-                  className="px-3 py-2"
-                  style={{ color: theme.colors.textPrimary }}
-                >
+                <td key={ci} className="px-3 py-2" style={{ color: theme.colors.textPrimary }}>
                   {cell}
                 </td>
               ))}

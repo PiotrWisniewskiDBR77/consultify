@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { ToolsPanelShell } from '@/components/shared/WorkspaceTools';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+
 import type { CanvasToolType } from './ideaSelectionTypes';
 
 type SuggestionCategory =
@@ -69,20 +70,63 @@ interface IdeaAISuggestionsPanelProps {
   graphEdges?: any[];
 }
 
-const CATEGORY_CONFIG: Record<SuggestionCategory, {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  labelPl: string;
-  labelEn: string;
-  color: string;
-}> = {
-  branch_suggestions: { icon: GitBranch, labelPl: 'Sugestie gałęzi', labelEn: 'Branch suggestions', color: 'text-violet-600 dark:text-violet-400' },
-  row_suggestions: { icon: Target, labelPl: 'Sugestie wierszy', labelEn: 'Row suggestions', color: 'text-blue-600 dark:text-blue-400' },
-  connection_suggestions: { icon: GitBranch, labelPl: 'Połączenia', labelEn: 'Connections', color: 'text-cyan-600 dark:text-cyan-400' },
-  risk_flags: { icon: AlertTriangle, labelPl: 'Flagi ryzyka', labelEn: 'Risk flags', color: 'text-red-600 dark:text-red-400' },
-  framework_recommendations: { icon: Wrench, labelPl: 'Rekomendacje narzędzi', labelEn: 'Framework recommendations', color: 'text-indigo-600 dark:text-indigo-400' },
-  topics: { icon: Search, labelPl: 'Tematy do analizy', labelEn: 'Topics to analyze', color: 'text-blue-600 dark:text-blue-400' },
-  findings: { icon: Lightbulb, labelPl: 'Wnioski / insights', labelEn: 'Findings / insights', color: 'text-amber-600 dark:text-amber-400' },
-  next_steps: { icon: ListChecks, labelPl: 'Następne kroki', labelEn: 'Next steps', color: 'text-emerald-600 dark:text-emerald-400' },
+const CATEGORY_CONFIG: Record<
+  SuggestionCategory,
+  {
+    icon: React.ComponentType<{ size?: number; className?: string }>;
+    labelPl: string;
+    labelEn: string;
+    color: string;
+  }
+> = {
+  branch_suggestions: {
+    icon: GitBranch,
+    labelPl: 'Sugestie gałęzi',
+    labelEn: 'Branch suggestions',
+    color: 'text-violet-600 dark:text-violet-400',
+  },
+  row_suggestions: {
+    icon: Target,
+    labelPl: 'Sugestie wierszy',
+    labelEn: 'Row suggestions',
+    color: 'text-blue-600 dark:text-blue-400',
+  },
+  connection_suggestions: {
+    icon: GitBranch,
+    labelPl: 'Połączenia',
+    labelEn: 'Connections',
+    color: 'text-cyan-600 dark:text-cyan-400',
+  },
+  risk_flags: {
+    icon: AlertTriangle,
+    labelPl: 'Flagi ryzyka',
+    labelEn: 'Risk flags',
+    color: 'text-red-600 dark:text-red-400',
+  },
+  framework_recommendations: {
+    icon: Wrench,
+    labelPl: 'Rekomendacje narzędzi',
+    labelEn: 'Framework recommendations',
+    color: 'text-indigo-600 dark:text-indigo-400',
+  },
+  topics: {
+    icon: Search,
+    labelPl: 'Tematy do analizy',
+    labelEn: 'Topics to analyze',
+    color: 'text-blue-600 dark:text-blue-400',
+  },
+  findings: {
+    icon: Lightbulb,
+    labelPl: 'Wnioski / insights',
+    labelEn: 'Findings / insights',
+    color: 'text-amber-600 dark:text-amber-400',
+  },
+  next_steps: {
+    icon: ListChecks,
+    labelPl: 'Następne kroki',
+    labelEn: 'Next steps',
+    color: 'text-emerald-600 dark:text-emerald-400',
+  },
 };
 
 const CATEGORY_ORDER: SuggestionCategory[] = [
@@ -126,82 +170,121 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
     try {
       const stored = localStorage.getItem(`ai-sug-dismissed-${ideaId}`);
       return stored ? new Set(JSON.parse(stored)) : new Set();
-    } catch { return new Set(); }
+    } catch {
+      return new Set();
+    }
   });
   const [snoozedUntil, setSnoozedUntil] = useState<number>(() => {
     try {
       return Number(localStorage.getItem(`ai-sug-snoozed-${ideaId}`)) || 0;
-    } catch { return 0; }
+    } catch {
+      return 0;
+    }
   });
 
-  const dismissSuggestion = useCallback((id: string) => {
-    setDismissedIds((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      try { localStorage.setItem(`ai-sug-dismissed-${ideaId}`, JSON.stringify([...next])); } catch { /* ignore */ }
-      return next;
-    });
-  }, [ideaId]);
+  const dismissSuggestion = useCallback(
+    (id: string) => {
+      setDismissedIds((prev) => {
+        const next = new Set(prev);
+        next.add(id);
+        try {
+          localStorage.setItem(`ai-sug-dismissed-${ideaId}`, JSON.stringify([...next]));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
+    },
+    [ideaId]
+  );
 
   const snooze = useCallback(() => {
     const until = Date.now() + SNOOZE_MS;
     setSnoozedUntil(until);
-    try { localStorage.setItem(`ai-sug-snoozed-${ideaId}`, String(until)); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(`ai-sug-snoozed-${ideaId}`, String(until));
+    } catch {
+      /* ignore */
+    }
   }, [ideaId]);
 
   const isSnoozed = snoozedUntil > Date.now();
 
-  const fetchSuggestions = useCallback(async (mode: 'passive' | 'on_demand' = 'passive', prompt?: string) => {
-    if (!open || !ideaId) return;
+  const fetchSuggestions = useCallback(
+    async (mode: 'passive' | 'on_demand' = 'passive', prompt?: string) => {
+      if (!open || !ideaId) return;
 
-    if (mode === 'passive') {
-      const now = Date.now();
-      if (now - lastFetchRef.current < COOLDOWN_MS) return;
-      if (isSnoozed) return;
-      lastFetchRef.current = now;
-    }
-
-    const isOnDemand = mode === 'on_demand';
-    if (isOnDemand) setNlLoading(true); else setLoading(true);
-
-    try {
-      const result = await Api.getIdeaAISuggestions(ideaId, {
-        context: {
-          title,
-          seedText,
-          currentNodes: currentNodes.map((n) => ({ id: n.id, type: n.type, label: n.data?.label })),
-          currentEdges,
-          activeTool: activeTool || 'mindmap',
-        },
-        mode,
-        prompt,
-        language: i18n.language,
-      });
-
-      if (isOnDemand && result?.suggestions) {
-        setSuggestions((prev) => [...result.suggestions, ...prev]);
-      } else if (result?.suggestions) {
-        setSuggestions(result.suggestions);
+      if (mode === 'passive') {
+        const now = Date.now();
+        if (now - lastFetchRef.current < COOLDOWN_MS) return;
+        if (isSnoozed) return;
+        lastFetchRef.current = now;
       }
-      if (result?.companyContextUsed != null) setCompanyContextUsed(result.companyContextUsed);
-    } catch {
-      // Fallback handled by backend
-    } finally {
-      setLoading(false);
-      setNlLoading(false);
-    }
-  }, [activeTool, currentEdges, currentNodes, i18n.language, ideaId, isSnoozed, open, seedText, title]);
+
+      const isOnDemand = mode === 'on_demand';
+      if (isOnDemand) setNlLoading(true);
+      else setLoading(true);
+
+      try {
+        const result = await Api.getIdeaAISuggestions(ideaId, {
+          context: {
+            title,
+            seedText,
+            currentNodes: currentNodes.map((n) => ({
+              id: n.id,
+              type: n.type,
+              label: n.data?.label,
+            })),
+            currentEdges,
+            activeTool: activeTool || 'mindmap',
+          },
+          mode,
+          prompt,
+          language: i18n.language,
+        });
+
+        if (isOnDemand && result?.suggestions) {
+          setSuggestions((prev) => [...result.suggestions, ...prev]);
+        } else if (result?.suggestions) {
+          setSuggestions(result.suggestions);
+        }
+        if (result?.companyContextUsed != null) setCompanyContextUsed(result.companyContextUsed);
+      } catch {
+        // Fallback handled by backend
+      } finally {
+        setLoading(false);
+        setNlLoading(false);
+      }
+    },
+    [
+      activeTool,
+      currentEdges,
+      currentNodes,
+      i18n.language,
+      ideaId,
+      isSnoozed,
+      open,
+      seedText,
+      title,
+    ]
+  );
 
   useEffect(() => {
     if (!open) return;
     fetchSuggestions('passive');
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, ideaId]);
 
   const grouped = useMemo(() => {
     const map: Record<SuggestionCategory, AISuggestion[]> = {
-      branch_suggestions: [], row_suggestions: [], connection_suggestions: [],
-      risk_flags: [], framework_recommendations: [], topics: [], findings: [], next_steps: [],
+      branch_suggestions: [],
+      row_suggestions: [],
+      connection_suggestions: [],
+      risk_flags: [],
+      framework_recommendations: [],
+      topics: [],
+      findings: [],
+      next_steps: [],
     };
     for (const s of suggestions) {
       if (dismissedIds.has(s.id)) continue;
@@ -211,7 +294,9 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
   }, [dismissedIds, suggestions]);
 
   const handleSendToChat = useCallback(
-    (text: string) => { onSendToChat?.(text); },
+    (text: string) => {
+      onSendToChat?.(text);
+    },
     [onSendToChat]
   );
 
@@ -258,7 +343,9 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
         )}
         {isAccepted === false && (
           <div className="mt-1.5 text-[10px] text-amber-700 dark:text-amber-300 bg-amber-500/10 rounded-lg px-2 py-1">
-            {isPl ? 'Zaakceptuj wyzwanie, aby odblokować pełne sugestie' : 'Accept challenge to unlock full suggestions'}
+            {isPl
+              ? 'Zaakceptuj wyzwanie, aby odblokować pełne sugestie'
+              : 'Accept challenge to unlock full suggestions'}
           </div>
         )}
         {isSnoozed && (
@@ -282,7 +369,9 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
         {loading ? (
           <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 px-1 py-8 justify-center">
             <Loader2 size={14} className="animate-spin text-violet-400" />
-            {isPl ? 'Generuję sugestie z kontekstu firmy…' : 'Generating suggestions from company context…'}
+            {isPl
+              ? 'Generuję sugestie z kontekstu firmy…'
+              : 'Generating suggestions from company context…'}
           </div>
         ) : (
           <div className="space-y-1">
@@ -304,7 +393,11 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                       {isPl ? config.labelPl : config.labelEn}
                     </span>
                     <span className="text-[9px] text-slate-400 mr-1">{items.length}</span>
-                    {isExpanded ? <ChevronUp size={12} className="text-slate-400" /> : <ChevronDown size={12} className="text-slate-400" />}
+                    {isExpanded ? (
+                      <ChevronUp size={12} className="text-slate-400" />
+                    ) : (
+                      <ChevronDown size={12} className="text-slate-400" />
+                    )}
                   </button>
 
                   {isExpanded && items.length > 0 && (
@@ -331,7 +424,9 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                                     style={{ width: `${Math.round(sug.confidence * 100)}%` }}
                                   />
                                 </div>
-                                <span className="text-[8px] text-slate-400">{Math.round(sug.confidence * 100)}%</span>
+                                <span className="text-[8px] text-slate-400">
+                                  {Math.round(sug.confidence * 100)}%
+                                </span>
                               </div>
                             )}
                             {sug.source && (
@@ -376,7 +471,9 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
 
             {suggestions.length === 0 && !loading && (
               <div className="text-center py-8 text-[11px] text-slate-400">
-                {isPl ? 'Brak sugestii. Opisz wyzwanie i zaakceptuj.' : 'No suggestions. Describe and accept the challenge.'}
+                {isPl
+                  ? 'Brak sugestii. Opisz wyzwanie i zaakceptuj.'
+                  : 'No suggestions. Describe and accept the challenge.'}
               </div>
             )}
           </div>

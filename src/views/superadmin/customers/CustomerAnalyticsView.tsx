@@ -128,10 +128,10 @@ const CustomerAnalyticsView: React.FC = () => {
               <Building2 className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{summary.totalOrgs}</p>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
-                Organizations
-              </span>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                {summary.totalOrgs}
+              </p>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Organizations</span>
             </div>
           </div>
         </Card>
@@ -141,10 +141,10 @@ const CustomerAnalyticsView: React.FC = () => {
               <Users className="w-5 h-5 text-green-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{summary.totalUsers}</p>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
-                Total Users
-              </span>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                {summary.totalUsers}
+              </p>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Total Users</span>
             </div>
           </div>
         </Card>
@@ -154,10 +154,10 @@ const CustomerAnalyticsView: React.FC = () => {
               <BarChart3 className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">{summary.avgHealthScore}%</p>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
-                Avg Health Score
-              </span>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                {summary.avgHealthScore}%
+              </p>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Avg Health Score</span>
             </div>
           </div>
         </Card>
@@ -170,9 +170,7 @@ const CustomerAnalyticsView: React.FC = () => {
               <p className="text-2xl font-bold text-slate-900 dark:text-white">
                 {summary.totalAICalls.toLocaleString()}
               </p>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
-                AI Calls (30d)
-              </span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">AI Calls (30d)</span>
             </div>
           </div>
         </Card>
@@ -188,63 +186,65 @@ const CustomerAnalyticsView: React.FC = () => {
             No analytics data available yet.
           </div>
         ) : (
-        <table className="w-full">
-          <thead>
-            <tr className="text-left text-slate-500 dark:text-slate-400 text-sm border-b border-slate-200 dark:border-white/10">
-              <th className="pb-3">Organization</th>
-              <th className="pb-3">Users</th>
-              <th className="pb-3">AI Calls (30d)</th>
-              <th className="pb-3">Health Score</th>
-              <th className="pb-3">Trend</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedMetrics.map((org) => (
-              <tr
-                key={org.org_id}
-                className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5"
-              >
-                <td className="py-3 text-slate-900 dark:text-white font-medium">{org.org_name}</td>
-                <td className="py-3 text-slate-700 dark:text-slate-300">{org.user_count}</td>
-                <td className="py-3 text-slate-700 dark:text-slate-300">
-                  {org.ai_calls_30d.toLocaleString()}
-                </td>
-                <td className="py-3">
-                  {typeof org.health_score === 'number' ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 h-2 bg-slate-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            org.health_score >= 80
-                              ? 'bg-green-500'
-                              : org.health_score >= 60
-                                ? 'bg-yellow-500'
-                                : 'bg-red-500'
-                          }`}
-                          style={{ width: `${org.health_score}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
-                        {org.health_score}%
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="text-sm text-slate-600 dark:text-slate-400">—</span>
-                  )}
-                </td>
-                <td className="py-3">
-                  {typeof org.health_score === 'number' && org.health_score >= 70 ? (
-                    <TrendingUp className="w-4 h-4 text-green-400" />
-                  ) : typeof org.health_score === 'number' ? (
-                    <TrendingDown className="w-4 h-4 text-red-400" />
-                  ) : (
-                    <span className="text-slate-400">—</span>
-                  )}
-                </td>
+          <table className="w-full">
+            <thead>
+              <tr className="text-left text-slate-500 dark:text-slate-400 text-sm border-b border-slate-200 dark:border-white/10">
+                <th className="pb-3">Organization</th>
+                <th className="pb-3">Users</th>
+                <th className="pb-3">AI Calls (30d)</th>
+                <th className="pb-3">Health Score</th>
+                <th className="pb-3">Trend</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {sortedMetrics.map((org) => (
+                <tr
+                  key={org.org_id}
+                  className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5"
+                >
+                  <td className="py-3 text-slate-900 dark:text-white font-medium">
+                    {org.org_name}
+                  </td>
+                  <td className="py-3 text-slate-700 dark:text-slate-300">{org.user_count}</td>
+                  <td className="py-3 text-slate-700 dark:text-slate-300">
+                    {org.ai_calls_30d.toLocaleString()}
+                  </td>
+                  <td className="py-3">
+                    {typeof org.health_score === 'number' ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 h-2 bg-slate-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              org.health_score >= 80
+                                ? 'bg-green-500'
+                                : org.health_score >= 60
+                                  ? 'bg-yellow-500'
+                                  : 'bg-red-500'
+                            }`}
+                            style={{ width: `${org.health_score}%` }}
+                          />
+                        </div>
+                        <span className="text-sm text-slate-700 dark:text-slate-300">
+                          {org.health_score}%
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-slate-600 dark:text-slate-400">—</span>
+                    )}
+                  </td>
+                  <td className="py-3">
+                    {typeof org.health_score === 'number' && org.health_score >= 70 ? (
+                      <TrendingUp className="w-4 h-4 text-green-400" />
+                    ) : typeof org.health_score === 'number' ? (
+                      <TrendingDown className="w-4 h-4 text-red-400" />
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </Card>
     </div>

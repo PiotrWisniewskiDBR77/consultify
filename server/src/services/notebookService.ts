@@ -405,15 +405,55 @@ class NotebookService {
     artifactType: string,
     artifactId: string
   ): Promise<EmbedChipInfo | null> {
-    const tableMap: Record<string, { table: string; titleCol: string; statusCol?: string }> = {
-      notebook_page: { table: 'notebook_pages', titleCol: 'title', statusCol: 'status' },
-      initiative: { table: 'initiatives', titleCol: 'name', statusCol: 'status' },
-      task: { table: 'tasks', titleCol: 'title', statusCol: 'status' },
-      decision: { table: 'decisions', titleCol: 'title', statusCol: 'status' },
-      tool_session: { table: 'tool_sessions', titleCol: 'name', statusCol: 'status' },
-      report: { table: 'report_builder_reports', titleCol: 'title', statusCol: 'status' },
+    const tableMap: Record<
+      string,
+      { table: string; titleCol: string; statusCol?: string; snippetCols?: string[] }
+    > = {
+      notebook_page: {
+        table: 'notebook_pages',
+        titleCol: 'title',
+        statusCol: 'status',
+        snippetCols: ['summary', 'content_text'],
+      },
+      notebook: {
+        table: 'notebook_pages',
+        titleCol: 'title',
+        statusCol: 'status',
+        snippetCols: ['summary', 'content_text'],
+      },
+      initiative: {
+        table: 'initiatives',
+        titleCol: 'name',
+        statusCol: 'status',
+        snippetCols: ['summary', 'description'],
+      },
+      task: { table: 'tasks', titleCol: 'title', statusCol: 'status', snippetCols: ['description'] },
+      decision: {
+        table: 'decisions',
+        titleCol: 'title',
+        statusCol: 'status',
+        snippetCols: ['description'],
+      },
+      tool_session: {
+        table: 'tool_sessions',
+        titleCol: 'name',
+        statusCol: 'status',
+        snippetCols: ['summary'],
+      },
+      report: {
+        table: 'report_builder_reports',
+        titleCol: 'title',
+        statusCol: 'status',
+        snippetCols: ['description'],
+      },
+      assessment: {
+        table: 'assessments',
+        titleCol: 'name',
+        statusCol: 'status',
+        snippetCols: ['description'],
+      },
       presentation: { table: 'presentations', titleCol: 'title', statusCol: 'status' },
-      idea: { table: 'my_work_idea_maps', titleCol: 'name' },
+      idea: { table: 'my_work_idea_maps', titleCol: 'name', snippetCols: ['description', 'body'] },
     };
 
     const config = tableMap[artifactType];
@@ -429,8 +469,12 @@ class NotebookService {
 
     try {
       const statusSelect = config.statusCol ? `, ${config.statusCol} as status` : '';
+      const snippetSelect = (config.snippetCols || [])
+        .map((col) => `COALESCE(${col}, '')`)
+        .join(`, ' ', `);
+      const snippetExpr = snippetSelect ? `, TRIM(${snippetSelect}) as snippet` : `, '' as snippet`;
       const row = await queryHelpers.queryOne<any>(
-        `SELECT id, ${config.titleCol} as title${statusSelect}, updated_at as "updatedAt"
+        `SELECT id, ${config.titleCol} as title${statusSelect}${snippetExpr}, updated_at as "updatedAt"
          FROM ${config.table}
          WHERE id = ? AND organization_id = ?
          LIMIT 1`,
@@ -451,7 +495,7 @@ class NotebookService {
         artifactType,
         artifactId,
         title: row.title || artifactId,
-        snippet: '',
+        snippet: String(row.snippet || '').replace(/\s+/g, ' ').trim().slice(0, 220),
         status: row.status,
         updatedAt: row.updatedAt,
         permissionOk: true,

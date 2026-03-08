@@ -65,33 +65,167 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const commands = useMemo<Command[]>(
     () => [
       // Insert
-      { id: 'add_heading', label: 'Add heading', category: 'insert', icon: <Type size={14} />, action: () => onInsertBlock('heading') },
-      { id: 'add_text', label: 'Add text', category: 'insert', icon: <Type size={14} />, action: () => onInsertBlock('paragraph') },
-      { id: 'add_bullets', label: 'Add bullet list', category: 'insert', icon: <List size={14} />, action: () => onInsertBlock('bullet_list') },
-      { id: 'add_table', label: 'Add table', category: 'insert', icon: <Table size={14} />, action: () => onInsertBlock('table') },
-      { id: 'add_chart', label: 'Add chart', category: 'insert', icon: <BarChart3 size={14} />, action: () => onInsertBlock('chart') },
-      { id: 'add_image', label: 'Add image', category: 'insert', icon: <Image size={14} />, action: () => onInsertBlock('image') },
-      { id: 'add_kpi', label: 'Add KPI widget', category: 'insert', icon: <BarChart3 size={14} />, action: () => onInsertBlock('kpi_widget') },
-      { id: 'add_diagram', label: 'Add smart diagram', category: 'insert', icon: <LayoutGrid size={14} />, action: () => onInsertBlock('smart_diagram') },
-      { id: 'add_card', label: 'Add new slide', category: 'insert', icon: <Plus size={14} />, shortcut: '⌘N', action: onAddCard },
+      {
+        id: 'add_heading',
+        label: 'Add heading',
+        category: 'insert',
+        icon: <Type size={14} />,
+        action: () => onInsertBlock('heading'),
+      },
+      {
+        id: 'add_text',
+        label: 'Add text',
+        category: 'insert',
+        icon: <Type size={14} />,
+        action: () => onInsertBlock('paragraph'),
+      },
+      {
+        id: 'add_bullets',
+        label: 'Add bullet list',
+        category: 'insert',
+        icon: <List size={14} />,
+        action: () => onInsertBlock('bullet_list'),
+      },
+      {
+        id: 'add_table',
+        label: 'Add table',
+        category: 'insert',
+        icon: <Table size={14} />,
+        action: () => onInsertBlock('table'),
+      },
+      {
+        id: 'add_chart',
+        label: 'Add chart',
+        category: 'insert',
+        icon: <BarChart3 size={14} />,
+        action: () => onInsertBlock('chart'),
+      },
+      {
+        id: 'add_image',
+        label: 'Add image',
+        category: 'insert',
+        icon: <Image size={14} />,
+        action: () => onInsertBlock('image'),
+      },
+      {
+        id: 'add_kpi',
+        label: 'Add KPI widget',
+        category: 'insert',
+        icon: <BarChart3 size={14} />,
+        action: () => onInsertBlock('kpi_widget'),
+      },
+      {
+        id: 'add_diagram',
+        label: 'Add smart diagram',
+        category: 'insert',
+        icon: <LayoutGrid size={14} />,
+        action: () => onInsertBlock('smart_diagram'),
+      },
+      {
+        id: 'add_card',
+        label: 'Add new slide',
+        category: 'insert',
+        icon: <Plus size={14} />,
+        shortcut: '⌘N',
+        action: onAddCard,
+      },
 
       // Theme
-      { id: 'change_theme', label: 'Change theme', description: 'Switch color palette', category: 'theme', icon: <Palette size={14} />, action: onOpenTheme },
+      {
+        id: 'change_theme',
+        label: 'Change theme',
+        description: 'Switch color palette',
+        category: 'theme',
+        icon: <Palette size={14} />,
+        action: onOpenTheme,
+      },
 
       // Export
-      { id: 'present', label: 'Present', description: 'Start fullscreen presentation', category: 'export', icon: <Play size={14} />, shortcut: '⌘P', action: onPresent },
-      { id: 'export_pdf', label: 'Export as PDF', category: 'export', icon: <Download size={14} />, action: () => onExport('pdf') },
-      { id: 'export_pptx', label: 'Export as PPTX', category: 'export', icon: <Download size={14} />, action: () => onExport('pptx') },
-      { id: 'export_png', label: 'Export as PNG', category: 'export', icon: <Download size={14} />, action: () => onExport('png') },
-      { id: 'share', label: 'Share', description: 'Share & collaboration settings', category: 'export', icon: <Share2 size={14} />, action: onPresent },
+      {
+        id: 'present',
+        label: 'Present',
+        description: 'Start fullscreen presentation',
+        category: 'export',
+        icon: <Play size={14} />,
+        shortcut: '⌘P',
+        action: onPresent,
+      },
+      {
+        id: 'export_pdf',
+        label: 'Export as PDF',
+        category: 'export',
+        icon: <Download size={14} />,
+        action: () => onExport('pdf'),
+      },
+      {
+        id: 'export_pptx',
+        label: 'Export as PPTX',
+        category: 'export',
+        icon: <Download size={14} />,
+        action: () => onExport('pptx'),
+      },
+      {
+        id: 'export_png',
+        label: 'Export as PNG',
+        category: 'export',
+        icon: <Download size={14} />,
+        action: () => onExport('png'),
+      },
+      {
+        id: 'share',
+        label: 'Share',
+        description: 'Share & collaboration settings',
+        category: 'export',
+        icon: <Share2 size={14} />,
+        action: onPresent,
+      },
 
       // AI
-      { id: 'ai_agent', label: 'Open AI Agent', description: 'Ask AI for help', category: 'ai', icon: <Sparkles size={14} />, shortcut: '⌘J', action: onToggleAgent },
-      { id: 'ai_improve', label: 'AI: Improve this slide', category: 'ai', icon: <Sparkles size={14} />, action: () => onAiPrompt('Improve the current slide content and visual layout') },
-      { id: 'ai_translate_pl', label: 'AI: Translate to Polish', category: 'ai', icon: <BookOpen size={14} />, action: () => onAiPrompt('Translate all content on this slide to Polish') },
-      { id: 'ai_translate_en', label: 'AI: Translate to English', category: 'ai', icon: <BookOpen size={14} />, action: () => onAiPrompt('Translate all content on this slide to English') },
-      { id: 'ai_summarize', label: 'AI: Summarize slide', category: 'ai', icon: <MessageSquare size={14} />, action: () => onAiPrompt('Create a concise summary of this slide') },
-      { id: 'ai_add_data', label: 'AI: Add supporting data', category: 'ai', icon: <BarChart3 size={14} />, action: () => onAiPrompt('Add relevant data, metrics, or charts to support the key message') },
+      {
+        id: 'ai_agent',
+        label: 'Open AI Agent',
+        description: 'Ask AI for help',
+        category: 'ai',
+        icon: <Sparkles size={14} />,
+        shortcut: '⌘J',
+        action: onToggleAgent,
+      },
+      {
+        id: 'ai_improve',
+        label: 'AI: Improve this slide',
+        category: 'ai',
+        icon: <Sparkles size={14} />,
+        action: () => onAiPrompt('Improve the current slide content and visual layout'),
+      },
+      {
+        id: 'ai_translate_pl',
+        label: 'AI: Translate to Polish',
+        category: 'ai',
+        icon: <BookOpen size={14} />,
+        action: () => onAiPrompt('Translate all content on this slide to Polish'),
+      },
+      {
+        id: 'ai_translate_en',
+        label: 'AI: Translate to English',
+        category: 'ai',
+        icon: <BookOpen size={14} />,
+        action: () => onAiPrompt('Translate all content on this slide to English'),
+      },
+      {
+        id: 'ai_summarize',
+        label: 'AI: Summarize slide',
+        category: 'ai',
+        icon: <MessageSquare size={14} />,
+        action: () => onAiPrompt('Create a concise summary of this slide'),
+      },
+      {
+        id: 'ai_add_data',
+        label: 'AI: Add supporting data',
+        category: 'ai',
+        icon: <BarChart3 size={14} />,
+        action: () =>
+          onAiPrompt('Add relevant data, metrics, or charts to support the key message'),
+      },
     ],
     [onInsertBlock, onPresent, onExport, onToggleAgent, onOpenTheme, onAddCard, onAiPrompt]
   );
@@ -157,7 +291,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const grouped = groupByCategory(filtered);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]"
+      onClick={onClose}
+    >
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
       <div
         className="relative w-[520px] max-h-[420px] bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden flex flex-col"
@@ -171,7 +308,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={t('presentations.builder.commandPalette.placeholder', 'Type a command or ask AI...')}
+            placeholder={t(
+              'presentations.builder.commandPalette.placeholder',
+              'Type a command or ask AI...'
+            )}
             className="flex-1 bg-transparent text-sm outline-none text-slate-700 dark:text-white placeholder-slate-400"
           />
           <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-400 border border-slate-200 dark:border-navy-700">
@@ -184,9 +324,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           {filtered.length === 0 ? (
             <div className="px-4 py-6 text-center">
               <Sparkles size={16} className="mx-auto text-purple-400 mb-2" />
-              <p className="text-xs text-slate-500">
-                Press Enter to ask AI: &quot;{query}&quot;
-              </p>
+              <p className="text-xs text-slate-500">Press Enter to ask AI: &quot;{query}&quot;</p>
             </div>
           ) : (
             Object.entries(grouped).map(([cat, cmds]) => (
@@ -199,7 +337,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   return (
                     <button
                       key={cmd.id}
-                      onClick={() => { cmd.action(); onClose(); }}
+                      onClick={() => {
+                        cmd.action();
+                        onClose();
+                      }}
                       onMouseEnter={() => setSelectedIndex(globalIdx)}
                       className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
                         globalIdx === selectedIndex
@@ -207,7 +348,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                           : 'hover:bg-slate-50 dark:hover:bg-navy-800/50'
                       }`}
                     >
-                      <span className={`flex-shrink-0 ${globalIdx === selectedIndex ? 'text-purple-500' : 'text-slate-400'}`}>
+                      <span
+                        className={`flex-shrink-0 ${globalIdx === selectedIndex ? 'text-purple-500' : 'text-slate-400'}`}
+                      >
                         {cmd.icon}
                       </span>
                       <div className="flex-1 min-w-0">
@@ -290,9 +433,7 @@ function groupByCategory(commands: Command[]): Record<string, Command[]> {
 /**
  * Hook to register Cmd+K shortcut globally in the Deck Builder.
  */
-export function useCommandPaletteShortcut(
-  onOpen: () => void
-) {
+export function useCommandPaletteShortcut(onOpen: () => void) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {

@@ -15,11 +15,21 @@ interface MindMap3DViewProps {
 }
 
 const BRANCH_COLORS: Record<string, string> = {
-  problem: '#fb7185', goal: '#34d399', options: '#fbbf24',
-  evidence: '#38bdf8', risks: '#a78bfa', experiments: '#22d3ee',
+  problem: '#fb7185',
+  goal: '#34d399',
+  options: '#fbbf24',
+  evidence: '#38bdf8',
+  risks: '#a78bfa',
+  experiments: '#22d3ee',
 };
 
-export const MindMap3DView: React.FC<MindMap3DViewProps> = ({ open, onClose, ideaTitle, nodes, edges }) => {
+export const MindMap3DView: React.FC<MindMap3DViewProps> = ({
+  open,
+  onClose,
+  ideaTitle,
+  nodes,
+  edges,
+}) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -35,10 +45,26 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({ open, onClose, ide
     const ideaNodes = nodes.filter((n) => n.id !== 'root' && !n.id.startsWith('branch-'));
     const root = nodes.find((n) => n.id === 'root');
 
-    const items: Array<{ id: string; label: string; color: string; x: number; y: number; z: number; size: number }> = [];
+    const items: Array<{
+      id: string;
+      label: string;
+      color: string;
+      x: number;
+      y: number;
+      z: number;
+      size: number;
+    }> = [];
 
     if (root) {
-      items.push({ id: root.id, label: root.data?.label || ideaTitle, color: '#f59e0b', x: 0, y: 0, z: 0, size: 28 });
+      items.push({
+        id: root.id,
+        label: root.data?.label || ideaTitle,
+        color: '#f59e0b',
+        x: 0,
+        y: 0,
+        z: 0,
+        size: 28,
+      });
     }
 
     branchNodes.forEach((bn, idx) => {
@@ -55,9 +81,12 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({ open, onClose, ide
         size: 20,
       });
 
-      const children = edges.filter((e) => e.source === bn.id).map((e) => ideaNodes.find((n) => n.id === e.target)).filter(Boolean);
+      const children = edges
+        .filter((e) => e.source === bn.id)
+        .map((e) => ideaNodes.find((n) => n.id === e.target))
+        .filter(Boolean);
       children.forEach((child, ci) => {
-        const childAngle = angle + ((ci - (children.length - 1) / 2) * 0.3);
+        const childAngle = angle + (ci - (children.length - 1) / 2) * 0.3;
         const childRadius = radius + 140;
         items.push({
           id: child!.id,
@@ -75,12 +104,17 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({ open, onClose, ide
   }, [edges, ideaTitle, nodes]);
 
   const edgeLines = useMemo(() => {
-    return edges.map((e) => {
-      const src = positioned3D.find((n) => n.id === e.source);
-      const tgt = positioned3D.find((n) => n.id === e.target);
-      if (!src || !tgt) return null;
-      return { source: src, target: tgt };
-    }).filter(Boolean) as Array<{ source: typeof positioned3D[0]; target: typeof positioned3D[0] }>;
+    return edges
+      .map((e) => {
+        const src = positioned3D.find((n) => n.id === e.source);
+        const tgt = positioned3D.find((n) => n.id === e.target);
+        if (!src || !tgt) return null;
+        return { source: src, target: tgt };
+      })
+      .filter(Boolean) as Array<{
+      source: (typeof positioned3D)[0];
+      target: (typeof positioned3D)[0];
+    }>;
   }, [edges, positioned3D]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -88,14 +122,17 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({ open, onClose, ide
     lastPos.current = { x: e.clientX, y: e.clientY };
   }, []);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragging) return;
-    const dx = e.clientX - lastPos.current.x;
-    const dy = e.clientY - lastPos.current.y;
-    setRotateY((prev) => prev + dx * 0.3);
-    setRotateX((prev) => Math.max(-80, Math.min(80, prev - dy * 0.3)));
-    lastPos.current = { x: e.clientX, y: e.clientY };
-  }, [dragging]);
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!dragging) return;
+      const dx = e.clientX - lastPos.current.x;
+      const dy = e.clientY - lastPos.current.y;
+      setRotateY((prev) => prev + dx * 0.3);
+      setRotateX((prev) => Math.max(-80, Math.min(80, prev - dy * 0.3)));
+      lastPos.current = { x: e.clientX, y: e.clientY };
+    },
+    [dragging]
+  );
 
   const handleMouseUp = useCallback(() => setDragging(false), []);
 
@@ -112,7 +149,9 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({ open, onClose, ide
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [onClose, open]);
@@ -122,14 +161,23 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({ open, onClose, ide
   return (
     <div className="fixed inset-0 z-[93] bg-slate-950 flex flex-col overflow-hidden">
       <div className="flex items-center gap-3 px-6 py-3 bg-slate-900/80 border-b border-white/5">
-        <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors">
+        <button
+          onClick={onClose}
+          className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+        >
           <ChevronLeft size={16} />
         </button>
         <Box size={16} className="text-violet-400" />
         <h2 className="text-sm font-bold text-white">{isPl ? 'Widok 3D' : '3D View'}</h2>
-        <span className="text-[10px] text-slate-500 ml-2">{isPl ? 'Przeciągnij, aby obrócić' : 'Drag to rotate'}</span>
+        <span className="text-[10px] text-slate-500 ml-2">
+          {isPl ? 'Przeciągnij, aby obrócić' : 'Drag to rotate'}
+        </span>
         <div className="flex-1" />
-        <button onClick={resetView} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors" title="Reset view">
+        <button
+          onClick={resetView}
+          className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+          title="Reset view"
+        >
           <RotateCcw size={14} />
         </button>
       </div>
@@ -153,7 +201,10 @@ export const MindMap3DView: React.FC<MindMap3DViewProps> = ({ open, onClose, ide
           }}
         >
           {/* Edge lines as pseudo-3D connections */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
+          <svg
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{ transformStyle: 'preserve-3d' }}
+          >
             {edgeLines.map((line, idx) => {
               const cx = (typeof window !== 'undefined' ? window.innerWidth : 1000) / 2;
               const cy = (typeof window !== 'undefined' ? window.innerHeight : 600) / 2;

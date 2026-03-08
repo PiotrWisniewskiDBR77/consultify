@@ -92,7 +92,9 @@ async function runAssessmentAi(params: {
     `Status: ${String(details.status || '')}`,
     `Completion: ${String(details.completionPercent ?? '')}`,
     details.scoreSummary ? `Score summary JSON:\n${safeJsonString(details.scoreSummary)}` : '',
-    details.contextSnapshot ? `Context snapshot JSON:\n${safeJsonString(details.contextSnapshot)}` : '',
+    details.contextSnapshot
+      ? `Context snapshot JSON:\n${safeJsonString(details.contextSnapshot)}`
+      : '',
   ]
     .filter(Boolean)
     .join('\n');
@@ -137,8 +139,14 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
       { label: isPolish ? 'Framework' : 'Framework', value: framework || '—' },
       { label: isPolish ? 'Status' : 'Status', value: status || '—' },
       { label: isPolish ? 'Postęp' : 'Progress', value: `${Math.round(progress || 0)}%` },
-      { label: isPolish ? 'Utworzono' : 'Created', value: createdAt ? createdAt.toLocaleDateString() : '—' },
-      { label: isPolish ? 'Aktualizacja' : 'Updated', value: updatedAt ? updatedAt.toLocaleDateString() : '—' },
+      {
+        label: isPolish ? 'Utworzono' : 'Created',
+        value: createdAt ? createdAt.toLocaleDateString() : '—',
+      },
+      {
+        label: isPolish ? 'Aktualizacja' : 'Updated',
+        value: updatedAt ? updatedAt.toLocaleDateString() : '—',
+      },
     ],
     [createdAt, framework, isPolish, progress, status, updatedAt]
   );
@@ -179,7 +187,10 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
             <div className="text-xs font-semibold uppercase tracking-wide text-rose-400">
               {isPolish ? 'Assessment session' : 'Assessment session'}
             </div>
-            <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-white truncate" title={itemName}>
+            <div
+              className="mt-1 text-lg font-semibold text-slate-900 dark:text-white truncate"
+              title={itemName}
+            >
               {itemName}
             </div>
           </div>
@@ -263,7 +274,9 @@ export const AssessmentSessionPreviewV3Body: React.FC<{
               {isPolish ? 'Ładowanie…' : 'Loading…'}
             </div>
           ) : aiText ? (
-            <pre className="mt-4 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">{aiText}</pre>
+            <pre className="mt-4 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">
+              {aiText}
+            </pre>
           ) : (
             <div className="mt-4 text-sm text-slate-500 dark:text-slate-400">
               {bestDetails
@@ -289,7 +302,9 @@ export const AssessmentSessionPreviewV3Footer: React.FC<{
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="text-xs text-slate-500 dark:text-slate-400">
-        {isPolish ? 'Otwórz sesję assessment aby kontynuować.' : 'Open assessment session to continue.'}
+        {isPolish
+          ? 'Otwórz sesję assessment aby kontynuować.'
+          : 'Open assessment session to continue.'}
       </div>
       <button
         type="button"
@@ -302,4 +317,3 @@ export const AssessmentSessionPreviewV3Footer: React.FC<{
     </div>
   );
 };
-

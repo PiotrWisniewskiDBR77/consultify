@@ -59,10 +59,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
-import {
-  type LinkedItem,
-  LinkedItemsSection,
-} from '../MyWork/shared';
+import { type LinkedItem, LinkedItemsSection } from '../MyWork/shared';
 import {
   CATEGORY_CONFIG,
   CATEGORY_ORDER,
@@ -74,6 +71,8 @@ import { EvidencePanel, InterviewEvidence } from './EvidencePanel';
 import { InterviewNote, NotesPanel } from './NotesPanel';
 import { InterviewQuestion, QuestionsList } from './QuestionsList';
 import { RuntimeMode, RuntimeModeSelector } from './RuntimeModeSelector';
+
+type PersistedLinkedItem = LinkedItem & { edgeId?: string };
 
 // ==========================================
 // TYPES
@@ -147,7 +146,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     constraints: [],
     painPoints: [],
   });
-  const [linkedItems, setLinkedItems] = useState<LinkedItem[]>([]);
+  const [linkedItems, setLinkedItems] = useState<PersistedLinkedItem[]>([]);
   const [assignmentStatus, setAssignmentStatus] = useState<string | null>(null);
   const [assignmentInfo, setAssignmentInfo] = useState<any>(null);
 
@@ -179,20 +178,22 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const questionsTopRef = useRef<HTMLDivElement | null>(null);
 
   // N-mode: active section in the left nav
-  const [activeSection, setActiveSection] = useState<string>('overview');
+  const [activeSection, setActiveSection] = useState<string>('questions');
 
-  // Nie auto-wybieraj kategorii - użytkownik sam zdecyduje, co otworzyć
-  // useEffect(() => {
-  //   if (questions.length > 0) {
-  //     const firstCategoryWithUnanswered = CATEGORY_ORDER.find((cat) => {
-  //       const catQuestions = questions.filter((q) => q.category === cat);
-  //       return catQuestions.some((q) => q.status !== 'answered');
-  //     });
-  //     if (firstCategoryWithUnanswered) {
-  //       setActiveCategory(firstCategoryWithUnanswered);
-  //     }
-  //   }
-  // }, [questions]);
+  useEffect(() => {
+    if (activeCategory || questions.length === 0) return;
+
+    const firstCategoryWithUnanswered = CATEGORY_ORDER.find((cat) => {
+      const catQuestions = questions.filter((q) => q.category === cat);
+      return catQuestions.some((q) => q.status !== 'answered');
+    });
+
+    const fallbackCategory = CATEGORY_ORDER.find((cat) =>
+      questions.some((q) => q.category === cat)
+    );
+
+    setActiveCategory(firstCategoryWithUnanswered || fallbackCategory);
+  }, [activeCategory, questions]);
 
   // ==========================================
   // COMPUTED VALUES
@@ -364,6 +365,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             contextRes,
             summaryRes,
             myAssignmentsRes,
+            linkedItemsRes,
           ] = await Promise.all([
             Api.get(`/interview/sessions/${currentSession.id}/questions`),
             Api.get(`/interview/sessions/${currentSession.id}/notes`),
@@ -373,11 +375,15 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             currentSession.assignmentId
               ? Api.get(`/interview/assignments/my?includeCompleted=true`).catch(() => [])
               : Promise.resolve([]),
+            Api.get(`/interview/sessions/${currentSession.id}/linked-items`).catch(() => []),
           ]);
 
           setQuestions(Array.isArray(questionsRes) ? questionsRes : []);
           setNotes(Array.isArray(notesRes) ? notesRes : []);
           setEvidence(Array.isArray(evidenceRes) ? evidenceRes : []);
+          setLinkedItems(
+            Array.isArray(linkedItemsRes) ? (linkedItemsRes as PersistedLinkedItem[]) : []
+          );
 
           if (currentSession.assignmentId) {
             const list = Array.isArray(myAssignmentsRes) ? myAssignmentsRes : [];
@@ -588,6 +594,29 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     [session, isPolish]
   );
 
+  const handleAddEvidenceComment = useCallback(
+    async (text: string, category?: InterviewCategory) => {
+      if (!session) return;
+      setIsSaving(true);
+      try {
+        const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
+          evidenceType: 'comment',
+          title: isPolish ? 'Komentarz kontekstowy' : 'Context comment',
+          description: text,
+          category,
+        });
+        setEvidence((prev) => [...prev, created as InterviewEvidence]);
+        toast.success(isPolish ? 'Komentarz dodany' : 'Comment added');
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to add comment evidence:', error);
+        toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
+
   // Delete evidence
   const handleDeleteEvidence = useCallback(
     async (evidenceId: string) => {
@@ -703,19 +732,33 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // Linked items handlers
   const handleAddLinkedItem = async (item: LinkedItem) => {
-    setLinkedItems([...linkedItems, item]);
+    if (!session) return;
+    const created = (await Api.post(`/interview/sessions/${session.id}/linked-items`, {
+      id: item.id,
+      type: item.type,
+    })) as PersistedLinkedItem;
+    setLinkedItems((prev) => [...prev, created]);
   };
 
   const handleRemoveLinkedItem = async (id: string) => {
-    setLinkedItems(linkedItems.filter((i) => i.id !== id));
+    if (!session) return;
+    const existing = linkedItems.find((item) => item.id === id || item.edgeId === id);
+    if (!existing?.edgeId) {
+      setLinkedItems((prev) => prev.filter((i) => i.id !== id));
+      return;
+    }
+    await Api.delete(`/interview/sessions/${session.id}/linked-items/${existing.edgeId}`);
+    setLinkedItems((prev) => prev.filter((i) => i.edgeId !== existing.edgeId));
   };
 
   const searchLinkedItems = async (query: string) => {
     if (!query || query.length < 2) return [];
     try {
-      const [tasks, initiatives] = await Promise.all([
+      const [tasks, initiatives, decisions, assessments] = await Promise.all([
         Api.get(`/tasks?search=${encodeURIComponent(query)}&limit=5`).catch(() => []),
         Api.get(`/initiatives?search=${encodeURIComponent(query)}&limit=5`).catch(() => []),
+        Api.get(`/decisions?q=${encodeURIComponent(query)}&limit=5`).catch(() => []),
+        Api.get(`/assessments?search=${encodeURIComponent(query)}&limit=5`).catch(() => []),
       ]);
       const results: LinkedItem[] = [];
       if (Array.isArray(tasks)) {
@@ -735,6 +778,27 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             title: i.name || i.title || 'Initiative',
           });
         });
+      }
+      if (Array.isArray(decisions)) {
+        decisions.slice(0, 3).forEach((d: { id: string; title?: string; name?: string }) => {
+          results.push({
+            id: d.id,
+            type: 'decision',
+            title: d.title || d.name || 'Decision',
+          });
+        });
+      }
+      if (Array.isArray(assessments)) {
+        assessments
+          .slice(0, 3)
+          .forEach((a: { id: string; name?: string; title?: string; status?: string }) => {
+            results.push({
+              id: a.id,
+              type: 'assessment',
+              title: a.name || a.title || 'Assessment',
+              status: a.status,
+            });
+          });
       }
       return results;
     } catch {
@@ -1123,6 +1187,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           activeCategory={activeCategory}
           onUploadFile={handleUploadFile}
           onAddLink={handleAddLink}
+          onAddComment={handleAddEvidenceComment}
           onDeleteEvidence={handleDeleteEvidence}
           readOnly={isLocked}
         />
@@ -1771,6 +1836,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   activeCategory={activeCategory}
                   onUploadFile={handleUploadFile}
                   onAddLink={handleAddLink}
+                  onAddComment={handleAddEvidenceComment}
                   onDeleteEvidence={handleDeleteEvidence}
                   readOnly={isLocked}
                 />
@@ -2301,7 +2367,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               onAdd={handleAddLinkedItem}
               onRemove={handleRemoveLinkedItem}
               searchItems={searchLinkedItems}
-              allowedTypes={['task', 'initiative', 'decision', 'risk', 'project', 'external']}
+              readOnly={isLocked}
+              allowedTypes={['task', 'initiative', 'decision', 'project', 'assessment', 'report']}
               expanded={expandedSections.has('linkedItems')}
               onToggleExpand={() => toggleSection('linkedItems')}
             />

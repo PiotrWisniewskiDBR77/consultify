@@ -5,10 +5,9 @@
 
 import { Response, Router } from 'express';
 
-import { verifyToken } from '../middleware/auth.middleware.js';
+import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import auditEventsService from '../services/AuditEventsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import type { AuthRequest } from './auth.middleware.js';
 
 const router = Router();
 

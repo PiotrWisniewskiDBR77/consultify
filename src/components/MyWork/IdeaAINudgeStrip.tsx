@@ -7,19 +7,12 @@
  * - Empty branches → suggest filling from company data
  * - Map looks complete → suggest converting
  */
-import {
-  ArrowRight,
-  GitBranch,
-  Link2,
-  Loader2,
-  Rocket,
-  Sparkles,
-  X,
-} from 'lucide-react';
+import { ArrowRight, GitBranch, Link2, Loader2, Rocket, Sparkles, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+
 import type { CanvasToolType } from './ideaSelectionTypes';
 
 interface Nudge {
@@ -159,7 +152,9 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
       }
     };
     fetchNudges();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [activeTool, graphEdges, graphNodes, i18n.language, ideaId, isAccepted, seedText, title]);
 
   const allNudges = useMemo(() => {
@@ -169,19 +164,26 @@ export const IdeaAINudgeStrip: React.FC<IdeaAINudgeStripProps> = ({
     return combined.slice(0, 2);
   }, [dismissed, localNudges, serverNudges]);
 
-  const handleAction = useCallback((nudge: Nudge) => {
-    switch (nudge.action) {
-      case 'expand': onActionExpand(); break;
-      case 'convert': onActionConvert(); break;
-      case 'connect':
-      case 'fill':
-      case 'custom':
-        if (onSendToChat && nudge.customPrompt) onSendToChat(nudge.customPrompt);
-        else onActionExpand();
-        break;
-    }
-    setDismissed((prev) => new Set(prev).add(nudge.id));
-  }, [onActionConvert, onActionExpand, onSendToChat]);
+  const handleAction = useCallback(
+    (nudge: Nudge) => {
+      switch (nudge.action) {
+        case 'expand':
+          onActionExpand();
+          break;
+        case 'convert':
+          onActionConvert();
+          break;
+        case 'connect':
+        case 'fill':
+        case 'custom':
+          if (onSendToChat && nudge.customPrompt) onSendToChat(nudge.customPrompt);
+          else onActionExpand();
+          break;
+      }
+      setDismissed((prev) => new Set(prev).add(nudge.id));
+    },
+    [onActionConvert, onActionExpand, onSendToChat]
+  );
 
   if (!isAccepted || allNudges.length === 0) return null;
 

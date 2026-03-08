@@ -100,7 +100,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               {isPl ? 'Wyczyść' : 'Clear'}
             </button>
           )}
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800">
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+          >
             <X size={14} className="text-slate-400" />
           </button>
         </div>
@@ -116,7 +119,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           <div key={rule.id} className="flex items-center gap-1.5">
             {idx > 0 && (
               <span className="text-[9px] font-bold text-slate-400 w-6 text-center flex-shrink-0">
-                {filters.logic === 'and' ? (isPl ? 'I' : 'AND') : (isPl ? 'LUB' : 'OR')}
+                {filters.logic === 'and' ? (isPl ? 'I' : 'AND') : isPl ? 'LUB' : 'OR'}
               </span>
             )}
             {idx === 0 && <span className="w-6 flex-shrink-0" />}

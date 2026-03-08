@@ -58,10 +58,12 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
 
     Api.post(`/report-builder/${reportId}/propose-outline`, { intent })
       .then((res: any) => {
-        setSections(res?.sections ?? res?.outline ?? []);
+        setSections(res?.sections ?? res?.variants?.[0]?.sections ?? res?.outline ?? []);
       })
       .catch(() => {
-        setError(isPl ? 'Nie udało się pobrać propozycji struktury.' : 'Failed to fetch outline proposal.');
+        setError(
+          isPl ? 'Nie udało się pobrać propozycji struktury.' : 'Failed to fetch outline proposal.'
+        );
       })
       .finally(() => setFetching(false));
   }, [reportId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -118,9 +120,15 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
             setFetching(true);
             setError(null);
             Api.post(`/report-builder/${reportId}/propose-outline`, { intent })
-              .then((res: any) => setSections(res?.sections ?? res?.outline ?? []))
+              .then((res: any) =>
+                setSections(res?.sections ?? res?.variants?.[0]?.sections ?? res?.outline ?? [])
+              )
               .catch(() =>
-                setError(isPl ? 'Nie udało się pobrać propozycji struktury.' : 'Failed to fetch outline proposal.')
+                setError(
+                  isPl
+                    ? 'Nie udało się pobrać propozycji struktury.'
+                    : 'Failed to fetch outline proposal.'
+                )
               )
               .finally(() => setFetching(false));
           }}
@@ -202,7 +210,15 @@ export const OutlineProposalStep: React.FC<OutlineProposalStepProps> = ({
                   ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
                   : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
               }`}
-              title={section.required ? (isPl ? 'Sekcja wymagana' : 'Required section') : (isPl ? 'Usuń sekcję' : 'Remove section')}
+              title={
+                section.required
+                  ? isPl
+                    ? 'Sekcja wymagana'
+                    : 'Required section'
+                  : isPl
+                    ? 'Usuń sekcję'
+                    : 'Remove section'
+              }
             >
               <X className="w-4 h-4" />
             </button>

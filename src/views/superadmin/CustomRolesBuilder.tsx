@@ -369,9 +369,7 @@ const CustomRolesBuilder: React.FC = () => {
             {selectedRole.isSystem || selectedRole.roleType === 'system' ? (
               <div className="text-center py-8">
                 <Lock className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
-                <p className="text-slate-700 dark:text-gray-300">
-                  System roles cannot be modified
-                </p>
+                <p className="text-slate-700 dark:text-gray-300">System roles cannot be modified</p>
                 <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
                   Create a custom role to customize permissions
                 </p>
@@ -509,7 +507,9 @@ const CustomRolesBuilder: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Permission Definitions</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            Permission Definitions
+          </h3>
           <p className="text-sm text-slate-600 dark:text-gray-400">
             All available permissions in the system
           </p>
@@ -536,12 +536,17 @@ const CustomRolesBuilder: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {categories.map((category) => (
-          <div key={category} className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-4">
+          <div
+            key={category}
+            className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-4"
+          >
             <h4 className="font-medium text-slate-900 dark:text-white mb-3">{category}</h4>
             <div className="space-y-2">
               {permissionsByCategory[category].map((perm) => (
                 <div key={perm.id} className="flex items-center justify-between py-1">
-                  <span className="text-sm text-slate-700 dark:text-gray-200">{perm.displayName}</span>
+                  <span className="text-sm text-slate-700 dark:text-gray-200">
+                    {perm.displayName}
+                  </span>
                   <span
                     className={`w-2 h-2 rounded-full ${
                       perm.riskLevel === 'critical'
@@ -573,7 +578,10 @@ const CustomRolesBuilder: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {templates.map((template) => (
-          <div key={template.name} className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-4">
+          <div
+            key={template.name}
+            className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-4"
+          >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div
@@ -583,7 +591,9 @@ const CustomRolesBuilder: React.FC = () => {
                   <Shield style={{ color: template.color }} size={20} />
                 </div>
                 <div>
-                  <h4 className="font-medium text-slate-900 dark:text-white">{template.displayName}</h4>
+                  <h4 className="font-medium text-slate-900 dark:text-white">
+                    {template.displayName}
+                  </h4>
                   <p className="text-sm text-slate-600 dark:text-gray-400">
                     {template.description}
                   </p>
@@ -592,7 +602,10 @@ const CustomRolesBuilder: React.FC = () => {
             </div>
             <div className="flex flex-wrap gap-1 mb-4">
               {template.permissions.slice(0, 6).map((perm) => (
-                <span key={perm} className="px-2 py-0.5 bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-200 text-xs rounded border border-slate-200 dark:border-transparent">
+                <span
+                  key={perm}
+                  className="px-2 py-0.5 bg-slate-100 dark:bg-gray-700 text-slate-700 dark:text-gray-200 text-xs rounded border border-slate-200 dark:border-transparent"
+                >
                   {perm}
                 </span>
               ))}

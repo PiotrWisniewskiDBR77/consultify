@@ -4,14 +4,7 @@
  * Citation UI on hover/click.
  */
 
-import {
-  Database,
-  ExternalLink,
-  FileText,
-  Target,
-  TrendingUp,
-  Zap,
-} from 'lucide-react';
+import { Database, ExternalLink, FileText, Target, TrendingUp, Zap } from 'lucide-react';
 import React from 'react';
 
 interface SourceRef {
@@ -79,10 +72,7 @@ interface BlockSourceBadgeProps {
   isRefreshable: boolean;
 }
 
-export const BlockSourceBadge: React.FC<BlockSourceBadgeProps> = ({
-  sourceRef,
-  isRefreshable,
-}) => {
+export const BlockSourceBadge: React.FC<BlockSourceBadgeProps> = ({ sourceRef, isRefreshable }) => {
   if (!sourceRef) return null;
 
   return (

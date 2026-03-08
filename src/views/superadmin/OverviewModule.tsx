@@ -4,13 +4,15 @@
  * Tabs: Dashboard | Metrics | Signals
  */
 
-import { BarChart3, LayoutDashboard, Radio } from 'lucide-react';
+import { BarChart3, Bell, LayoutDashboard, Radio } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { Api } from '../../services/api';
+import { FeatureUpdatesAdminView } from './FeatureUpdatesAdminView';
 import { SuperAdminDashboard } from './SuperAdminDashboard';
 import { SuperAdminMetricsView } from './SuperAdminMetricsView';
 import { SuperAdminSignalsView } from './SuperAdminSignalsView';
@@ -21,6 +23,7 @@ interface OverviewModuleProps {
 
 export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSection }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const { setHelpDocumentIdOverride } = useHelpSidePanel();
   const [stats, setStats] = useState({
     totalOrgs: 0,
     totalUsers: 0,
@@ -74,10 +77,22 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    const mapping: Record<string, string> = {
+      dashboard: 'superadmin_overview_dashboard',
+      metrics: 'superadmin_overview_metrics',
+      signals: 'superadmin_overview_signals',
+      updates: 'superadmin_overview',
+    };
+    setHelpDocumentIdOverride(mapping[activeTab] || 'superadmin_overview');
+    return () => setHelpDocumentIdOverride(null);
+  }, [activeTab, setHelpDocumentIdOverride]);
+
   const tabs: Tab[] = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
     { id: 'metrics', label: 'Metrics', icon: <BarChart3 size={16} /> },
     { id: 'signals', label: 'Signals', icon: <Radio size={16} /> },
+    { id: 'updates', label: 'Updates', icon: <Bell size={16} /> },
   ];
 
   const handleNavigateToOrganizations = () => onNavigateToSection?.('customers');
@@ -102,6 +117,8 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
         return <SuperAdminMetricsView />;
       case 'signals':
         return <SuperAdminSignalsView />;
+      case 'updates':
+        return <FeatureUpdatesAdminView />;
       default:
         return null;
     }
@@ -116,6 +133,8 @@ export const OverviewModule: React.FC<OverviewModuleProps> = ({ onNavigateToSect
         return 'superadmin-metrics';
       case 'signals':
         return 'superadmin-signals';
+      case 'updates':
+        return 'superadmin-dashboard';
       default:
         return 'superadmin-dashboard';
     }

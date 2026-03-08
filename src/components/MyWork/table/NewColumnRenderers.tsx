@@ -2,17 +2,7 @@
  * NewColumnRenderers — Cell renderers for the extended column types:
  * file, relation, rollup, emoji, color, currency, phone, email.
  */
-import {
-  DollarSign,
-  File,
-  Globe,
-  Link2,
-  Mail,
-  Palette,
-  Phone,
-  Sigma,
-  Smile,
-} from 'lucide-react';
+import { DollarSign, File, Globe, Link2, Mail, Palette, Phone, Sigma, Smile } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -24,20 +14,65 @@ interface CellProps {
   locked?: boolean;
 }
 
-const EMOJI_QUICK = ['💡', '🔥', '⭐', '🚀', '✅', '⚠️', '❌', '💎', '🎯', '📌', '🧩', '💬', '📊', '🔗', '🏆'];
-const COLOR_QUICK = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
+const EMOJI_QUICK = [
+  '💡',
+  '🔥',
+  '⭐',
+  '🚀',
+  '✅',
+  '⚠️',
+  '❌',
+  '💎',
+  '🎯',
+  '📌',
+  '🧩',
+  '💬',
+  '📊',
+  '🔗',
+  '🏆',
+];
+const COLOR_QUICK = [
+  '#ef4444',
+  '#f59e0b',
+  '#10b981',
+  '#3b82f6',
+  '#8b5cf6',
+  '#ec4899',
+  '#06b6d4',
+  '#84cc16',
+  '#f97316',
+  '#6366f1',
+];
 
 export const FileCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
-  const files: { name: string; url?: string }[] = Array.isArray(value) ? value : value ? [{ name: String(value) }] : [];
+  const files: { name: string; url?: string }[] = Array.isArray(value)
+    ? value
+    : value
+      ? [{ name: String(value) }]
+      : [];
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   return (
     <div className="flex flex-wrap items-center gap-1">
       {files.map((f, i) => (
-        <span key={i} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-300 max-w-[120px] truncate">
+        <span
+          key={i}
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-navy-800 text-[10px] text-slate-600 dark:text-slate-300 max-w-[120px] truncate"
+        >
           <File size={9} className="flex-shrink-0" />
-          {f.url ? <a href={f.url} target="_blank" rel="noopener noreferrer" className="hover:underline truncate">{f.name}</a> : <span className="truncate">{f.name}</span>}
+          {f.url ? (
+            <a
+              href={f.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline truncate"
+            >
+              {f.name}
+            </a>
+          ) : (
+            <span className="truncate">{f.name}</span>
+          )}
         </span>
       ))}
       {!locked && (
@@ -57,7 +92,12 @@ export const FileCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
   );
 };
 
-export const RelationCell: React.FC<CellProps & { allNodes?: { id: string; label: string }[] }> = ({ value, onChange, locked, allNodes = [] }) => {
+export const RelationCell: React.FC<CellProps & { allNodes?: { id: string; label: string }[] }> = ({
+  value,
+  onChange,
+  locked,
+  allNodes = [],
+}) => {
   const relations: string[] = Array.isArray(value) ? value : value ? [String(value)] : [];
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -67,7 +107,10 @@ export const RelationCell: React.FC<CellProps & { allNodes?: { id: string; label
       {relations.map((relId, i) => {
         const node = allNodes.find((n) => n.id === relId);
         return (
-          <span key={i} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/20 text-[10px] text-indigo-600 dark:text-indigo-400">
+          <span
+            key={i}
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/20 text-[10px] text-indigo-600 dark:text-indigo-400"
+          >
             <Link2 size={9} />
             <span className="truncate max-w-[80px]">{node?.label || relId}</span>
           </span>
@@ -111,7 +154,14 @@ export const EmojiCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
       {showPicker && !locked && (
         <div className="absolute left-0 top-full mt-1 z-50 p-2 rounded-xl bg-white dark:bg-navy-900 shadow-xl border border-slate-200 dark:border-navy-700 flex flex-wrap gap-1 w-[180px]">
           {EMOJI_QUICK.map((e) => (
-            <button key={e} onClick={() => { onChange(e); setShowPicker(false); }} className="text-lg hover:scale-125 transition-transform p-0.5">
+            <button
+              key={e}
+              onClick={() => {
+                onChange(e);
+                setShowPicker(false);
+              }}
+              className="text-lg hover:scale-125 transition-transform p-0.5"
+            >
               {e}
             </button>
           ))}
@@ -135,7 +185,15 @@ export const ColorCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
       {showPicker && !locked && (
         <div className="absolute left-0 top-full mt-1 z-50 p-2 rounded-xl bg-white dark:bg-navy-900 shadow-xl border border-slate-200 dark:border-navy-700 flex flex-wrap gap-1 w-[140px]">
           {COLOR_QUICK.map((c) => (
-            <button key={c} onClick={() => { onChange(c); setShowPicker(false); }} className="w-5 h-5 rounded-md border-2 border-white dark:border-navy-800 hover:scale-110 transition-transform" style={{ backgroundColor: c }} />
+            <button
+              key={c}
+              onClick={() => {
+                onChange(c);
+                setShowPicker(false);
+              }}
+              className="w-5 h-5 rounded-md border-2 border-white dark:border-navy-800 hover:scale-110 transition-transform"
+              style={{ backgroundColor: c }}
+            />
           ))}
         </div>
       )}

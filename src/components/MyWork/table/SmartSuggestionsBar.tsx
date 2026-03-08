@@ -86,7 +86,10 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
           : `${emptyCount} row${emptyCount === 1 ? ' has' : 's have'} less than 30% filled fields. Consider filling them or use AI auto-fill.`,
         confidence: 0.9,
         icon: 'checklist',
-        action: { label: isPl ? 'AI Auto-fill' : 'AI Auto-fill', payload: { type: 'auto_fill_empty' } },
+        action: {
+          label: isPl ? 'AI Auto-fill' : 'AI Auto-fill',
+          payload: { type: 'auto_fill_empty' },
+        },
       });
     }
 
@@ -104,8 +107,8 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
           type: 'pattern',
           title: isPl ? `Dominujący wzorzec: ${col.header}` : `Dominant pattern: ${col.header}`,
           detail: isPl
-            ? `${Math.round(dominant[1] / nodes.length * 100)}% wierszy ma wartość "${dominant[0]}". Rozważ dodanie większej różnorodności.`
-            : `${Math.round(dominant[1] / nodes.length * 100)}% of rows have value "${dominant[0]}". Consider adding more diversity.`,
+            ? `${Math.round((dominant[1] / nodes.length) * 100)}% wierszy ma wartość "${dominant[0]}". Rozważ dodanie większej różnorodności.`
+            : `${Math.round((dominant[1] / nodes.length) * 100)}% of rows have value "${dominant[0]}". Consider adding more diversity.`,
           confidence: 0.75,
           icon: 'trending',
         });
@@ -122,7 +125,10 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
           : 'You have many ideas — adding a rating column will help prioritize the best ones.',
         confidence: 0.7,
         icon: 'lightbulb',
-        action: { label: isPl ? 'Dodaj kolumnę' : 'Add column', payload: { type: 'add_column', columnType: 'rating' } },
+        action: {
+          label: isPl ? 'Dodaj kolumnę' : 'Add column',
+          payload: { type: 'add_column', columnType: 'rating' },
+        },
       });
     }
 
@@ -132,8 +138,8 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
         type: 'summary',
         title: isPl ? 'Podsumowanie' : 'Summary',
         detail: isPl
-          ? `${nodes.length} pomysłów w ${new Set(nodes.map((n) => n.data?.type || 'idea')).size} kategoriach. Średnia kompletność: ${Math.round(nodes.reduce((acc, n) => acc + columns.filter((c) => c.visible && n.data?.[c.key]).length, 0) / nodes.length / Math.max(columns.filter((c) => c.visible).length, 1) * 100)}%.`
-          : `${nodes.length} ideas across ${new Set(nodes.map((n) => n.data?.type || 'idea')).size} categories. Average completeness: ${Math.round(nodes.reduce((acc, n) => acc + columns.filter((c) => c.visible && n.data?.[c.key]).length, 0) / nodes.length / Math.max(columns.filter((c) => c.visible).length, 1) * 100)}%.`,
+          ? `${nodes.length} pomysłów w ${new Set(nodes.map((n) => n.data?.type || 'idea')).size} kategoriach. Średnia kompletność: ${Math.round((nodes.reduce((acc, n) => acc + columns.filter((c) => c.visible && n.data?.[c.key]).length, 0) / nodes.length / Math.max(columns.filter((c) => c.visible).length, 1)) * 100)}%.`
+          : `${nodes.length} ideas across ${new Set(nodes.map((n) => n.data?.type || 'idea')).size} categories. Average completeness: ${Math.round((nodes.reduce((acc, n) => acc + columns.filter((c) => c.visible && n.data?.[c.key]).length, 0) / nodes.length / Math.max(columns.filter((c) => c.visible).length, 1)) * 100)}%.`,
         confidence: 1,
         icon: 'chart',
       });
@@ -164,7 +170,9 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
         context: {
           title: 'Smart Suggestions',
           seedText: `Table with ${nodes.length} rows. Columns: ${columns.map((c) => c.header).join(', ')}`,
-          currentNodes: nodes.slice(0, 20).map((n) => ({ id: n.id, type: n.type, label: n.data?.label })),
+          currentNodes: nodes
+            .slice(0, 20)
+            .map((n) => ({ id: n.id, type: n.type, label: n.data?.label })),
           currentEdges: [],
           activeTool: 'table',
         },
@@ -178,7 +186,9 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
         detail: s.text || s.detail || '',
         confidence: s.confidence || 0.7,
         icon: 'zap' as const,
-        action: s.action ? { label: s.action.label || 'Apply', payload: s.action.payload || {} } : undefined,
+        action: s.action
+          ? { label: s.action.label || 'Apply', payload: s.action.payload || {} }
+          : undefined,
       }));
     } catch {
       return [];
@@ -200,7 +210,10 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
       }
       if (!cancelled) setLoading(false);
     }, 2000);
-    return () => { cancelled = true; clearTimeout(timer); };
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [dismissed, fetchAISuggestions, generateLocalSuggestions, nodes, visible]);
 
   const activeSuggestions = useMemo(
@@ -208,10 +221,13 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
     [dismissed, suggestions]
   );
 
-  const handleDismissSuggestion = useCallback((id: string) => {
-    setDismissed((prev) => new Set([...prev, id]));
-    if (currentIdx >= activeSuggestions.length - 1) setCurrentIdx(Math.max(0, currentIdx - 1));
-  }, [activeSuggestions.length, currentIdx]);
+  const handleDismissSuggestion = useCallback(
+    (id: string) => {
+      setDismissed((prev) => new Set([...prev, id]));
+      if (currentIdx >= activeSuggestions.length - 1) setCurrentIdx(Math.max(0, currentIdx - 1));
+    },
+    [activeSuggestions.length, currentIdx]
+  );
 
   if (!visible || activeSuggestions.length === 0) return null;
 
@@ -223,22 +239,43 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
     <div className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-violet-500/5 via-indigo-500/5 to-purple-500/5 border-t border-violet-500/10 dark:border-violet-500/20">
       {/* Sparkle icon */}
       <div className="flex items-center justify-center w-7 h-7 rounded-xl bg-violet-500/10 flex-shrink-0">
-        {loading ? <Loader2 size={13} className="text-violet-500 animate-spin" /> : <Sparkles size={13} className="text-violet-500" />}
+        {loading ? (
+          <Loader2 size={13} className="text-violet-500 animate-spin" />
+        ) : (
+          <Sparkles size={13} className="text-violet-500" />
+        )}
       </div>
 
       {/* Suggestion content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-0.5">
           <IconComp size={10} className="text-violet-500" />
-          <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">{current.title}</span>
-          <span className="text-[8px] font-bold uppercase tracking-wider px-1 py-0 rounded" style={{
-            backgroundColor: current.confidence > 0.8 ? '#10b98120' : current.confidence > 0.6 ? '#f59e0b20' : '#6366f120',
-            color: current.confidence > 0.8 ? '#10b981' : current.confidence > 0.6 ? '#f59e0b' : '#6366f1',
-          }}>
+          <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+            {current.title}
+          </span>
+          <span
+            className="text-[8px] font-bold uppercase tracking-wider px-1 py-0 rounded"
+            style={{
+              backgroundColor:
+                current.confidence > 0.8
+                  ? '#10b98120'
+                  : current.confidence > 0.6
+                    ? '#f59e0b20'
+                    : '#6366f120',
+              color:
+                current.confidence > 0.8
+                  ? '#10b981'
+                  : current.confidence > 0.6
+                    ? '#f59e0b'
+                    : '#6366f1',
+            }}
+          >
             {Math.round(current.confidence * 100)}%
           </span>
         </div>
-        <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed truncate">{current.detail}</p>
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed truncate">
+          {current.detail}
+        </p>
       </div>
 
       {/* Action button */}
@@ -255,23 +292,40 @@ export const SmartSuggestionsBar: React.FC<SmartSuggestionsBarProps> = ({
       {/* Navigation */}
       {activeSuggestions.length > 1 && (
         <div className="flex items-center gap-0.5 flex-shrink-0">
-          <button onClick={() => setCurrentIdx((currentIdx - 1 + activeSuggestions.length) % activeSuggestions.length)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={() =>
+              setCurrentIdx((currentIdx - 1 + activeSuggestions.length) % activeSuggestions.length)
+            }
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <ChevronLeft size={12} className="text-slate-400" />
           </button>
-          <span className="text-[8px] text-slate-400 w-8 text-center">{currentIdx + 1}/{activeSuggestions.length}</span>
-          <button onClick={() => setCurrentIdx((currentIdx + 1) % activeSuggestions.length)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <span className="text-[8px] text-slate-400 w-8 text-center">
+            {currentIdx + 1}/{activeSuggestions.length}
+          </span>
+          <button
+            onClick={() => setCurrentIdx((currentIdx + 1) % activeSuggestions.length)}
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <ChevronRight size={12} className="text-slate-400" />
           </button>
         </div>
       )}
 
       {/* Dismiss current */}
-      <button onClick={() => handleDismissSuggestion(current.id)} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors flex-shrink-0">
+      <button
+        onClick={() => handleDismissSuggestion(current.id)}
+        className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors flex-shrink-0"
+      >
         <X size={11} className="text-slate-400" />
       </button>
 
       {/* Dismiss all */}
-      <button onClick={onDismiss} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors flex-shrink-0" title={isPl ? 'Zamknij pasek' : 'Close bar'}>
+      <button
+        onClick={onDismiss}
+        className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors flex-shrink-0"
+        title={isPl ? 'Zamknij pasek' : 'Close bar'}
+      >
         <CheckCircle2 size={11} className="text-slate-400" />
       </button>
     </div>

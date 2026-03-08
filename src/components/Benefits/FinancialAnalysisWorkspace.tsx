@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import {
   AlertTriangle,
   BarChart3,
@@ -14,7 +15,6 @@ import {
   TrendingUp,
   X,
 } from 'lucide-react';
-import type { TFunction } from 'i18next';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -141,7 +141,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
         onAnalysisChanged?.();
       }
     } catch {
-      toast.error('Failed to create analysis');
+      toast.error(t('finance.analysis.createFailed', 'Failed to create analysis'));
     }
   }, [newTitle, fetchAnalyses, selectAnalysis, onAnalysisChanged]);
 
@@ -161,7 +161,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
         onAnalysisChanged?.();
       }
     } catch {
-      toast.error('Run failed');
+      toast.error(t('finance.analysis.runFailed', 'Run failed'));
     } finally {
       setRunning(false);
     }
@@ -181,7 +181,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
         onAnalysisChanged?.();
       }
     } catch {
-      toast.error('Approve failed');
+      toast.error(t('finance.analysis.approveFailed', 'Approve failed'));
     }
   }, [selected, t, fetchAnalyses, onAnalysisChanged]);
 
@@ -200,28 +200,36 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
         setLiveRatios(d.ratios || []);
         setActiveTab('ratios');
       }
-    } catch { toast.error('Live preview failed'); }
-    finally { setLiveLoading(false); }
+    } catch {
+      toast.error(t('finance.analysis.livePreviewFailed', 'Live preview failed'));
+    } finally {
+      setLiveLoading(false);
+    }
   }, []);
 
-  const handleSaveLiveAsAnalysis = useCallback(async (title: string) => {
-    try {
-      const res = await fetch(`${API_URL}/economics/financial-analyses`, {
-        method: 'POST',
-        headers: { ...getHeaders(), 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, liveRatios }),
-      });
-      if (res.ok) {
-        const d = await res.json();
-        toast.success(t('finance.analysis.savedFromLive', 'Analysis saved from live preview'));
-        setLiveMode(false);
-        setLiveRatios([]);
-        await fetchAnalyses();
-        if (d.analysis) selectAnalysis(d.analysis);
-        onAnalysisChanged?.();
+  const handleSaveLiveAsAnalysis = useCallback(
+    async (title: string) => {
+      try {
+        const res = await fetch(`${API_URL}/economics/financial-analyses`, {
+          method: 'POST',
+          headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, liveRatios }),
+        });
+        if (res.ok) {
+          const d = await res.json();
+          toast.success(t('finance.analysis.savedFromLive', 'Analysis saved from live preview'));
+          setLiveMode(false);
+          setLiveRatios([]);
+          await fetchAnalyses();
+          if (d.analysis) selectAnalysis(d.analysis);
+          onAnalysisChanged?.();
+        }
+      } catch {
+        toast.error(t('finance.analysis.saveFailed', 'Save failed'));
       }
-    } catch { toast.error('Save failed'); }
-  }, [liveRatios, t, fetchAnalyses, selectAnalysis, onAnalysisChanged]);
+    },
+    [liveRatios, t, fetchAnalyses, selectAnalysis, onAnalysisChanged]
+  );
 
   const activeRatios = liveMode ? liveRatios : ratios;
 
@@ -324,7 +332,10 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
             ratios={liveRatios}
             groupedRatios={groupedRatios}
             onSave={handleSaveLiveAsAnalysis}
-            onClose={() => { setLiveMode(false); setLiveRatios([]); }}
+            onClose={() => {
+              setLiveMode(false);
+              setLiveRatios([]);
+            }}
             t={t}
           />
         ) : !selected ? (
@@ -382,7 +393,10 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                   </div>
                   <ul className="space-y-0.5">
                     {(insightsByType['quality_note'] || []).slice(0, 3).map((q) => (
-                      <li key={q.id} className="text-xs text-amber-700 dark:text-amber-300 flex items-start gap-1.5">
+                      <li
+                        key={q.id}
+                        className="text-xs text-amber-700 dark:text-amber-300 flex items-start gap-1.5"
+                      >
                         <span className="mt-1 w-1 h-1 bg-amber-500 rounded-full shrink-0" />
                         {q.description}
                       </li>
@@ -452,8 +466,12 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                     <div className="flex justify-end pt-2">
                       <button
                         onClick={() => {
-                          const summary = insights.map((i) => `[${i.insight_type}] ${i.title}: ${i.description}`).join('\n');
-                          const prompt = encodeURIComponent(`Refine and deepen the following financial analysis insights for ${selected?.title || 'this analysis'}:\n\n${summary}\n\nProvide additional context, actionable recommendations, and risk mitigations.`);
+                          const summary = insights
+                            .map((i) => `[${i.insight_type}] ${i.title}: ${i.description}`)
+                            .join('\n');
+                          const prompt = encodeURIComponent(
+                            `Refine and deepen the following financial analysis insights for ${selected?.title || 'this analysis'}:\n\n${summary}\n\nProvide additional context, actionable recommendations, and risk mitigations.`
+                          );
                           navigate(`/chat?prompt=${prompt}`);
                         }}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-500/20 transition-colors"
@@ -599,58 +617,84 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                   )}
                 </div>
               )}
-              {activeTab === 'horizontal' && (() => {
-                const periods = [...new Set(ratios.map((r) => r.period))].sort();
-                const ratiosByCode = new Map<string, { name: string; values: Map<string, number> }>();
-                for (const r of ratios) {
-                  if (!ratiosByCode.has(r.ratio_code)) {
-                    ratiosByCode.set(r.ratio_code, { name: r.ratio_name, values: new Map() });
+              {activeTab === 'horizontal' &&
+                (() => {
+                  const periods = [...new Set(ratios.map((r) => r.period))].sort();
+                  const ratiosByCode = new Map<
+                    string,
+                    { name: string; values: Map<string, number> }
+                  >();
+                  for (const r of ratios) {
+                    if (!ratiosByCode.has(r.ratio_code)) {
+                      ratiosByCode.set(r.ratio_code, { name: r.ratio_name, values: new Map() });
+                    }
+                    ratiosByCode.get(r.ratio_code)!.values.set(r.period, r.value);
                   }
-                  ratiosByCode.get(r.ratio_code)!.values.set(r.period, r.value);
-                }
-                if (periods.length < 2 || ratiosByCode.size === 0) {
+                  if (periods.length < 2 || ratiosByCode.size === 0) {
+                    return (
+                      <p className="text-sm text-slate-500">
+                        {t(
+                          'finance.analysis.noHorizontal',
+                          'Run the analysis to see period comparisons'
+                        )}
+                      </p>
+                    );
+                  }
                   return (
-                    <p className="text-sm text-slate-500">
-                      {t('finance.analysis.noHorizontal', 'Run the analysis to see period comparisons')}
-                    </p>
-                  );
-                }
-                return (
-                  <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left text-xs text-slate-500 border-b border-slate-200 dark:border-navy-700">
-                          <th className="px-4 py-2 sticky left-0 bg-slate-50 dark:bg-navy-800">Ratio</th>
-                          {periods.map((p) => (
-                            <th key={p} className="px-3 py-2 text-right">{p}</th>
-                          ))}
-                          <th className="px-3 py-2 text-right">Δ %</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...ratiosByCode.entries()].map(([code, { name, values }]) => {
-                          const first = values.get(periods[0]);
-                          const last = values.get(periods[periods.length - 1]);
-                          const pctChange = first && first !== 0 && last != null ? ((last - first) / Math.abs(first)) * 100 : null;
-                          return (
-                            <tr key={code} className="border-t border-slate-200 dark:border-navy-700">
-                              <td className="px-4 py-2 text-slate-700 dark:text-slate-300 whitespace-nowrap sticky left-0 bg-slate-50 dark:bg-navy-800">{name}</td>
-                              {periods.map((p) => (
-                                <td key={p} className="px-3 py-2 text-right font-mono text-slate-900 dark:text-white">
-                                  {values.get(p)?.toFixed(2) ?? '—'}
+                    <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-xs text-slate-500 border-b border-slate-200 dark:border-navy-700">
+                            <th className="px-4 py-2 sticky left-0 bg-slate-50 dark:bg-navy-800">
+                              Ratio
+                            </th>
+                            {periods.map((p) => (
+                              <th key={p} className="px-3 py-2 text-right">
+                                {p}
+                              </th>
+                            ))}
+                            <th className="px-3 py-2 text-right">Δ %</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...ratiosByCode.entries()].map(([code, { name, values }]) => {
+                            const first = values.get(periods[0]);
+                            const last = values.get(periods[periods.length - 1]);
+                            const pctChange =
+                              first && first !== 0 && last != null
+                                ? ((last - first) / Math.abs(first)) * 100
+                                : null;
+                            return (
+                              <tr
+                                key={code}
+                                className="border-t border-slate-200 dark:border-navy-700"
+                              >
+                                <td className="px-4 py-2 text-slate-700 dark:text-slate-300 whitespace-nowrap sticky left-0 bg-slate-50 dark:bg-navy-800">
+                                  {name}
                                 </td>
-                              ))}
-                              <td className={`px-3 py-2 text-right font-mono font-semibold ${pctChange != null && pctChange > 0 ? 'text-emerald-500' : pctChange != null && pctChange < 0 ? 'text-red-500' : 'text-slate-400'}`}>
-                                {pctChange != null ? `${pctChange > 0 ? '+' : ''}${pctChange.toFixed(1)}%` : '—'}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                );
-              })()}
+                                {periods.map((p) => (
+                                  <td
+                                    key={p}
+                                    className="px-3 py-2 text-right font-mono text-slate-900 dark:text-white"
+                                  >
+                                    {values.get(p)?.toFixed(2) ?? '—'}
+                                  </td>
+                                ))}
+                                <td
+                                  className={`px-3 py-2 text-right font-mono font-semibold ${pctChange != null && pctChange > 0 ? 'text-emerald-500' : pctChange != null && pctChange < 0 ? 'text-red-500' : 'text-slate-400'}`}
+                                >
+                                  {pctChange != null
+                                    ? `${pctChange > 0 ? '+' : ''}${pctChange.toFixed(1)}%`
+                                    : '—'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
             </div>
           </>
         )}
@@ -680,13 +724,13 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                 onClick={() => setShowCreate(false)}
                 className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700"
               >
-                Cancel
+                {t('common.cancel', 'Cancel')}
               </button>
               <button
                 onClick={handleCreate}
                 className="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-500"
               >
-                Create
+                {t('common.create', 'Create')}
               </button>
             </div>
           </div>
@@ -741,10 +785,7 @@ const LivePreviewPanel: React.FC<{
             {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
             {t('finance.analysis.saveAsAnalysis', 'Save as Analysis')}
           </button>
-          <button
-            onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-600"
-          >
+          <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
             <X size={16} />
           </button>
         </div>
@@ -752,28 +793,39 @@ const LivePreviewPanel: React.FC<{
       <div className="flex-1 overflow-y-auto p-4">
         {Object.keys(groupedRatios).length === 0 ? (
           <div className="text-sm text-slate-500 text-center py-8">
-            {t('finance.analysis.noLiveData', 'No data available. Ensure financial models exist to analyze.')}
+            {t(
+              'finance.analysis.noLiveData',
+              'No data available. Ensure financial models exist to analyze.'
+            )}
           </div>
         ) : (
           <div className="space-y-4">
             {Object.entries(groupedRatios).map(([cat, items]) => (
               <div key={cat}>
-                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{cat}</h4>
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  {cat}
+                </h4>
                 <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left text-xs text-slate-500 border-b border-slate-200 dark:border-navy-700">
                         <th className="px-4 py-2">{t('finance.analysis.ratioName', 'Ratio')}</th>
                         <th className="px-4 py-2">{t('finance.analysis.period', 'Period')}</th>
-                        <th className="px-4 py-2 text-right">{t('finance.analysis.value', 'Value')}</th>
+                        <th className="px-4 py-2 text-right">
+                          {t('finance.analysis.value', 'Value')}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {items.map((r) => (
                         <tr key={r.id} className="border-t border-slate-200 dark:border-navy-700">
-                          <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{r.ratio_name}</td>
+                          <td className="px-4 py-2 text-slate-700 dark:text-slate-300">
+                            {r.ratio_name}
+                          </td>
                           <td className="px-4 py-2 text-slate-500">{r.period}</td>
-                          <td className="px-4 py-2 text-right font-mono text-slate-900 dark:text-white">{r.value?.toFixed(2)}</td>
+                          <td className="px-4 py-2 text-right font-mono text-slate-900 dark:text-white">
+                            {r.value?.toFixed(2)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

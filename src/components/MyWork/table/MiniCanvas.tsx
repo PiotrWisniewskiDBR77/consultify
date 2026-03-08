@@ -44,7 +44,16 @@ interface MiniCanvasProps {
 
 type ToolType = 'pen' | 'rect' | 'circle' | 'arrow' | 'eraser';
 
-const STROKE_COLORS = ['#1e293b', '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+const STROKE_COLORS = [
+  '#1e293b',
+  '#ef4444',
+  '#3b82f6',
+  '#10b981',
+  '#f59e0b',
+  '#8b5cf6',
+  '#ec4899',
+  '#06b6d4',
+];
 
 export const MiniCanvas: React.FC<MiniCanvasProps> = ({
   value = [],
@@ -72,33 +81,39 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }, []);
 
-  const handlePointerDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    if (locked) return;
-    const pt = getPoint(e);
+  const handlePointerDown = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      if (locked) return;
+      const pt = getPoint(e);
 
-    if (tool === 'eraser') {
-      const hitIdx = value.findIndex((el) => {
-        return el.points.some((p) => Math.abs(p.x - pt.x) < 10 && Math.abs(p.y - pt.y) < 10);
-      });
-      if (hitIdx >= 0) {
-        setUndoStack([...undoStack, value]);
-        setRedoStack([]);
-        const next = [...value];
-        next.splice(hitIdx, 1);
-        onChange(next);
+      if (tool === 'eraser') {
+        const hitIdx = value.findIndex((el) => {
+          return el.points.some((p) => Math.abs(p.x - pt.x) < 10 && Math.abs(p.y - pt.y) < 10);
+        });
+        if (hitIdx >= 0) {
+          setUndoStack([...undoStack, value]);
+          setRedoStack([]);
+          const next = [...value];
+          next.splice(hitIdx, 1);
+          onChange(next);
+        }
+        return;
       }
-      return;
-    }
 
-    setDrawing(true);
-    setCurrentPoints([pt]);
-  }, [getPoint, locked, onChange, tool, undoStack, value]);
+      setDrawing(true);
+      setCurrentPoints([pt]);
+    },
+    [getPoint, locked, onChange, tool, undoStack, value]
+  );
 
-  const handlePointerMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
-    if (!drawing || locked) return;
-    const pt = getPoint(e);
-    setCurrentPoints((prev) => [...prev, pt]);
-  }, [drawing, getPoint, locked]);
+  const handlePointerMove = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      if (!drawing || locked) return;
+      const pt = getPoint(e);
+      setCurrentPoints((prev) => [...prev, pt]);
+    },
+    [drawing, getPoint, locked]
+  );
 
   const handlePointerUp = useCallback(() => {
     if (!drawing || locked || currentPoints.length === 0) return;
@@ -108,7 +123,10 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
     const element: DrawElement = {
       id: `draw-${Date.now()}`,
       type: drawType as DrawElement['type'],
-      points: tool === 'pen' ? currentPoints : [currentPoints[0], currentPoints[currentPoints.length - 1]],
+      points:
+        tool === 'pen'
+          ? currentPoints
+          : [currentPoints[0], currentPoints[currentPoints.length - 1]],
       color,
       strokeWidth,
     };
@@ -144,17 +162,52 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
 
   const renderElement = (el: DrawElement) => {
     if (el.type === 'path' && el.points.length > 1) {
-      const d = el.points.reduce((acc, pt, i) => acc + (i === 0 ? `M ${pt.x} ${pt.y}` : ` L ${pt.x} ${pt.y}`), '');
-      return <path key={el.id} d={d} fill="none" stroke={el.color} strokeWidth={el.strokeWidth} strokeLinecap="round" strokeLinejoin="round" />;
+      const d = el.points.reduce(
+        (acc, pt, i) => acc + (i === 0 ? `M ${pt.x} ${pt.y}` : ` L ${pt.x} ${pt.y}`),
+        ''
+      );
+      return (
+        <path
+          key={el.id}
+          d={d}
+          fill="none"
+          stroke={el.color}
+          strokeWidth={el.strokeWidth}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      );
     }
     if (el.type === 'rect' && el.points.length >= 2) {
       const [p1, p2] = el.points;
-      return <rect key={el.id} x={Math.min(p1.x, p2.x)} y={Math.min(p1.y, p2.y)} width={Math.abs(p2.x - p1.x)} height={Math.abs(p2.y - p1.y)} fill="none" stroke={el.color} strokeWidth={el.strokeWidth} rx={4} />;
+      return (
+        <rect
+          key={el.id}
+          x={Math.min(p1.x, p2.x)}
+          y={Math.min(p1.y, p2.y)}
+          width={Math.abs(p2.x - p1.x)}
+          height={Math.abs(p2.y - p1.y)}
+          fill="none"
+          stroke={el.color}
+          strokeWidth={el.strokeWidth}
+          rx={4}
+        />
+      );
     }
     if (el.type === 'circle' && el.points.length >= 2) {
       const [p1, p2] = el.points;
       const r = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
-      return <circle key={el.id} cx={p1.x} cy={p1.y} r={r} fill="none" stroke={el.color} strokeWidth={el.strokeWidth} />;
+      return (
+        <circle
+          key={el.id}
+          cx={p1.x}
+          cy={p1.y}
+          r={r}
+          fill="none"
+          stroke={el.color}
+          strokeWidth={el.strokeWidth}
+        />
+      );
     }
     if (el.type === 'arrow' && el.points.length >= 2) {
       const [p1, p2] = el.points;
@@ -162,9 +215,30 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
       const headLen = 10;
       return (
         <g key={el.id}>
-          <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={el.color} strokeWidth={el.strokeWidth} />
-          <line x1={p2.x} y1={p2.y} x2={p2.x - headLen * Math.cos(angle - Math.PI / 6)} y2={p2.y - headLen * Math.sin(angle - Math.PI / 6)} stroke={el.color} strokeWidth={el.strokeWidth} />
-          <line x1={p2.x} y1={p2.y} x2={p2.x - headLen * Math.cos(angle + Math.PI / 6)} y2={p2.y - headLen * Math.sin(angle + Math.PI / 6)} stroke={el.color} strokeWidth={el.strokeWidth} />
+          <line
+            x1={p1.x}
+            y1={p1.y}
+            x2={p2.x}
+            y2={p2.y}
+            stroke={el.color}
+            strokeWidth={el.strokeWidth}
+          />
+          <line
+            x1={p2.x}
+            y1={p2.y}
+            x2={p2.x - headLen * Math.cos(angle - Math.PI / 6)}
+            y2={p2.y - headLen * Math.sin(angle - Math.PI / 6)}
+            stroke={el.color}
+            strokeWidth={el.strokeWidth}
+          />
+          <line
+            x1={p2.x}
+            y1={p2.y}
+            x2={p2.x - headLen * Math.cos(angle + Math.PI / 6)}
+            y2={p2.y - headLen * Math.sin(angle + Math.PI / 6)}
+            stroke={el.color}
+            strokeWidth={el.strokeWidth}
+          />
         </g>
       );
     }
@@ -174,21 +248,72 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
   const renderCurrentStroke = () => {
     if (!drawing || currentPoints.length < 2) return null;
     if (tool === 'pen') {
-      const d = currentPoints.reduce((acc, pt, i) => acc + (i === 0 ? `M ${pt.x} ${pt.y}` : ` L ${pt.x} ${pt.y}`), '');
-      return <path d={d} fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" opacity={0.6} />;
+      const d = currentPoints.reduce(
+        (acc, pt, i) => acc + (i === 0 ? `M ${pt.x} ${pt.y}` : ` L ${pt.x} ${pt.y}`),
+        ''
+      );
+      return (
+        <path
+          d={d}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity={0.6}
+        />
+      );
     }
     const [p1] = currentPoints;
     const p2 = currentPoints[currentPoints.length - 1];
-    if (tool === 'rect') return <rect x={Math.min(p1.x, p2.x)} y={Math.min(p1.y, p2.y)} width={Math.abs(p2.x - p1.x)} height={Math.abs(p2.y - p1.y)} fill="none" stroke={color} strokeWidth={strokeWidth} rx={4} opacity={0.6} />;
+    if (tool === 'rect')
+      return (
+        <rect
+          x={Math.min(p1.x, p2.x)}
+          y={Math.min(p1.y, p2.y)}
+          width={Math.abs(p2.x - p1.x)}
+          height={Math.abs(p2.y - p1.y)}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          rx={4}
+          opacity={0.6}
+        />
+      );
     if (tool === 'circle') {
       const r = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
-      return <circle cx={p1.x} cy={p1.y} r={r} fill="none" stroke={color} strokeWidth={strokeWidth} opacity={0.6} />;
+      return (
+        <circle
+          cx={p1.x}
+          cy={p1.y}
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          opacity={0.6}
+        />
+      );
     }
-    if (tool === 'arrow') return <line x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} stroke={color} strokeWidth={strokeWidth} opacity={0.6} />;
+    if (tool === 'arrow')
+      return (
+        <line
+          x1={p1.x}
+          y1={p1.y}
+          x2={p2.x}
+          y2={p2.y}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          opacity={0.6}
+        />
+      );
     return null;
   };
 
-  const TOOLS: { id: ToolType; icon: React.ComponentType<{ size?: number; className?: string }>; label: string }[] = [
+  const TOOLS: {
+    id: ToolType;
+    icon: React.ComponentType<{ size?: number; className?: string }>;
+    label: string;
+  }[] = [
     { id: 'pen', icon: Pencil, label: isPl ? 'Ołówek' : 'Pen' },
     { id: 'rect', icon: Square, label: isPl ? 'Prostokąt' : 'Rectangle' },
     { id: 'circle', icon: Circle, label: isPl ? 'Okrąg' : 'Circle' },
@@ -232,15 +357,43 @@ export const MiniCanvas: React.FC<MiniCanvasProps> = ({
           <div className="w-px h-4 bg-slate-200 dark:bg-navy-700 mx-1" />
 
           {/* Stroke width */}
-          <button onClick={() => setStrokeWidth(Math.max(1, strokeWidth - 1))} className="p-1 rounded text-slate-400 hover:text-slate-600"><Minus size={11} /></button>
+          <button
+            onClick={() => setStrokeWidth(Math.max(1, strokeWidth - 1))}
+            className="p-1 rounded text-slate-400 hover:text-slate-600"
+          >
+            <Minus size={11} />
+          </button>
           <span className="text-[9px] text-slate-500 w-4 text-center">{strokeWidth}</span>
-          <button onClick={() => setStrokeWidth(Math.min(8, strokeWidth + 1))} className="p-1 rounded text-slate-400 hover:text-slate-600"><Plus size={11} /></button>
+          <button
+            onClick={() => setStrokeWidth(Math.min(8, strokeWidth + 1))}
+            className="p-1 rounded text-slate-400 hover:text-slate-600"
+          >
+            <Plus size={11} />
+          </button>
 
           <div className="flex-1" />
 
-          <button onClick={handleUndo} disabled={undoStack.length === 0} className="p-1 rounded text-slate-400 hover:text-slate-600 disabled:opacity-30"><Undo2 size={12} /></button>
-          <button onClick={handleRedo} disabled={redoStack.length === 0} className="p-1 rounded text-slate-400 hover:text-slate-600 disabled:opacity-30"><Redo2 size={12} /></button>
-          <button onClick={handleClear} disabled={value.length === 0} className="p-1 rounded text-slate-400 hover:text-red-500 disabled:opacity-30"><Trash2 size={12} /></button>
+          <button
+            onClick={handleUndo}
+            disabled={undoStack.length === 0}
+            className="p-1 rounded text-slate-400 hover:text-slate-600 disabled:opacity-30"
+          >
+            <Undo2 size={12} />
+          </button>
+          <button
+            onClick={handleRedo}
+            disabled={redoStack.length === 0}
+            className="p-1 rounded text-slate-400 hover:text-slate-600 disabled:opacity-30"
+          >
+            <Redo2 size={12} />
+          </button>
+          <button
+            onClick={handleClear}
+            disabled={value.length === 0}
+            className="p-1 rounded text-slate-400 hover:text-red-500 disabled:opacity-30"
+          >
+            <Trash2 size={12} />
+          </button>
         </div>
       )}
 

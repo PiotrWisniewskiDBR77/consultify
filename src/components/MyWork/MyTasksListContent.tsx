@@ -74,15 +74,17 @@ interface MyTasksListContentProps {
   onCountsChange: (counts: TaskCounts) => void;
   refreshTrigger?: number;
   /** V3-A03: command row override mode (bulk selection) */
-  onBulkBarChange?: (payload: {
-    selectedCount: number;
-    selectAllVisible: () => void;
-    clearSelection: () => void;
-    complete: () => void;
-    changePriority: () => void;
-    changeDueDate: () => void;
-    deleteSelected: () => void;
-  } | null) => void;
+  onBulkBarChange?: (
+    payload: {
+      selectedCount: number;
+      selectAllVisible: () => void;
+      clearSelection: () => void;
+      complete: () => void;
+      changePriority: () => void;
+      changeDueDate: () => void;
+      deleteSelected: () => void;
+    } | null
+  ) => void;
 }
 
 const TASK_TABLE_VIEW_STORAGE_KEY = 'consultify-tasks-table-view';
@@ -1536,12 +1538,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   const runTaskAi = useCallback(
     async (
-      intent:
-        | 'why_urgent'
-        | 'plan'
-        | 'who_can_help'
-        | 'expand_details'
-        | 'summarize_details',
+      intent: 'why_urgent' | 'plan' | 'who_can_help' | 'expand_details' | 'summarize_details',
       task: Task
     ) => {
       try {
@@ -1648,7 +1645,9 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                         <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
                         {statusCfg.label}
                       </span>
-                      <span className={`${metaPillBase} bg-slate-500/10 text-slate-600 dark:text-slate-300`}>
+                      <span
+                        className={`${metaPillBase} bg-slate-500/10 text-slate-600 dark:text-slate-300`}
+                      >
                         <span className={`w-1.5 h-1.5 rounded-full ${priCfg.dot}`} />
                         {priCfg.label}
                       </span>
@@ -1745,8 +1744,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                       </span>
                     ) : detailsText ? (
                       detailsText
+                    ) : isPolish ? (
+                      'Brak opisu.'
                     ) : (
-                      isPolish ? 'Brak opisu.' : 'No description.'
+                      'No description.'
                     )}
                   </div>
                 </div>
@@ -1763,15 +1764,23 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer active:scale-[0.98]';
 
             const relations: Array<{ label: string; tone: string }> = [];
-            if (task.initiativeName) relations.push({ label: task.initiativeName, tone: 'text-blue-600 dark:text-blue-300' });
+            if (task.initiativeName)
+              relations.push({
+                label: task.initiativeName,
+                tone: 'text-blue-600 dark:text-blue-300',
+              });
             if (Array.isArray(task.dependencies) && task.dependencies.length > 0)
               relations.push({
-                label: isPolish ? `Zależności: ${task.dependencies.length}` : `Dependencies: ${task.dependencies.length}`,
+                label: isPolish
+                  ? `Zależności: ${task.dependencies.length}`
+                  : `Dependencies: ${task.dependencies.length}`,
                 tone: 'text-amber-700 dark:text-amber-300',
               });
             if (Array.isArray(task.attachments) && task.attachments.length > 0)
               relations.push({
-                label: isPolish ? `Załączniki: ${task.attachments.length}` : `Attachments: ${task.attachments.length}`,
+                label: isPolish
+                  ? `Załączniki: ${task.attachments.length}`
+                  : `Attachments: ${task.attachments.length}`,
                 tone: 'text-slate-700 dark:text-slate-200',
               });
 
@@ -1794,7 +1803,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                       </button>
                       {aiMenuOpen && (
                         <>
-                          <div className="fixed inset-0 z-40" onClick={() => setAiMenuOpen(false)} />
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setAiMenuOpen(false)}
+                          />
                           <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
                             <button
                               onClick={async () => {
@@ -1911,13 +1923,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                       className={`${footerPillBase} flex-1 border-green-300/40 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-200 hover:bg-green-100/70 dark:hover:bg-green-500/15`}
                     >
                       <CheckCircle2 size={14} />
-                      {isCompleted
-                        ? isPolish
-                          ? 'Wznów'
-                          : 'Reopen'
-                        : isPolish
-                          ? 'Gotowe'
-                          : 'Done'}
+                      {isCompleted ? (isPolish ? 'Wznów' : 'Reopen') : isPolish ? 'Gotowe' : 'Done'}
                     </button>
                     <button
                       onClick={() => onTaskClick(task.id, task)}
@@ -1987,160 +1993,164 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                         {isPolish ? 'Zadanie' : 'Task'}
                       </th>
 
-                  {!hiddenSet.has('status') && (
-                    <th
-                      className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
-                      style={{ width: columnWidths.status }}
-                    >
-                      <div className="flex items-center gap-1">
-                        <span
-                          className={
-                            (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
-                          }
+                      {!hiddenSet.has('status') && (
+                        <th
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          style={{ width: columnWidths.status }}
                         >
-                          Status
-                        </span>
-                        <FilterDropdown
-                          column={TASK_COLUMNS.find((c) => c.id === 'status')!}
-                          value={tableFilters.status as string[]}
-                          onChange={(val) => handleFilterChange('status', val as string[])}
-                          isOpen={openFilterId === 'status'}
-                          onToggle={() =>
-                            setOpenFilterId(openFilterId === 'status' ? null : 'status')
-                          }
-                          onClose={() => setOpenFilterId(null)}
-                        />
-                      </div>
-                      <ColumnResizer
-                        columnId="status"
-                        currentWidth={columnWidths.status}
-                        minWidth={100}
-                        maxWidth={160}
-                        onResize={handleColumnResize}
-                      />
-                    </th>
-                  )}
+                          <div className="flex items-center gap-1">
+                            <span
+                              className={
+                                (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
+                              }
+                            >
+                              Status
+                            </span>
+                            <FilterDropdown
+                              column={TASK_COLUMNS.find((c) => c.id === 'status')!}
+                              value={tableFilters.status as string[]}
+                              onChange={(val) => handleFilterChange('status', val as string[])}
+                              isOpen={openFilterId === 'status'}
+                              onToggle={() =>
+                                setOpenFilterId(openFilterId === 'status' ? null : 'status')
+                              }
+                              onClose={() => setOpenFilterId(null)}
+                            />
+                          </div>
+                          <ColumnResizer
+                            columnId="status"
+                            currentWidth={columnWidths.status}
+                            minWidth={100}
+                            maxWidth={160}
+                            onResize={handleColumnResize}
+                          />
+                        </th>
+                      )}
 
-                  {!hiddenSet.has('priority') && (
-                    <th
-                      className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
-                      style={{ width: columnWidths.priority }}
-                    >
-                      <div className="flex items-center gap-1">
-                        <span
-                          className={
-                            (tableFilters.priority as string[])?.length ? 'text-primary-500' : ''
-                          }
+                      {!hiddenSet.has('priority') && (
+                        <th
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          style={{ width: columnWidths.priority }}
                         >
-                          Priority
-                        </span>
-                        <FilterDropdown
-                          column={TASK_COLUMNS.find((c) => c.id === 'priority')!}
-                          value={tableFilters.priority as string[]}
-                          onChange={(val) => handleFilterChange('priority', val as string[])}
-                          isOpen={openFilterId === 'priority'}
-                          onToggle={() =>
-                            setOpenFilterId(openFilterId === 'priority' ? null : 'priority')
-                          }
-                          onClose={() => setOpenFilterId(null)}
-                        />
-                      </div>
-                      <ColumnResizer
-                        columnId="priority"
-                        currentWidth={columnWidths.priority}
-                        minWidth={80}
-                        maxWidth={130}
-                        onResize={handleColumnResize}
-                      />
-                    </th>
-                  )}
+                          <div className="flex items-center gap-1">
+                            <span
+                              className={
+                                (tableFilters.priority as string[])?.length
+                                  ? 'text-primary-500'
+                                  : ''
+                              }
+                            >
+                              Priority
+                            </span>
+                            <FilterDropdown
+                              column={TASK_COLUMNS.find((c) => c.id === 'priority')!}
+                              value={tableFilters.priority as string[]}
+                              onChange={(val) => handleFilterChange('priority', val as string[])}
+                              isOpen={openFilterId === 'priority'}
+                              onToggle={() =>
+                                setOpenFilterId(openFilterId === 'priority' ? null : 'priority')
+                              }
+                              onClose={() => setOpenFilterId(null)}
+                            />
+                          </div>
+                          <ColumnResizer
+                            columnId="priority"
+                            currentWidth={columnWidths.priority}
+                            minWidth={80}
+                            maxWidth={130}
+                            onResize={handleColumnResize}
+                          />
+                        </th>
+                      )}
 
-                  {!hiddenSet.has('date') && (
-                    <th
-                      className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
-                      style={{ width: columnWidths.date }}
-                    >
-                      <span>Due Date</span>
-                      <ColumnResizer
-                        columnId="date"
-                        currentWidth={columnWidths.date}
-                        minWidth={90}
-                        maxWidth={140}
-                        onResize={handleColumnResize}
-                      />
-                    </th>
-                  )}
-                  {!hiddenSet.has('assignee') && (
-                    <th
-                      className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
-                      style={{ width: columnWidths.assignee }}
-                    >
-                      <span>Assignee</span>
-                      <ColumnResizer
-                        columnId="assignee"
-                        currentWidth={columnWidths.assignee}
-                        minWidth={100}
-                        maxWidth={180}
-                        onResize={handleColumnResize}
-                      />
-                    </th>
-                  )}
-                  {!hiddenSet.has('actions') && (
-                    <th
-                      className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
-                      style={{ width: columnWidths.actions }}
-                    >
-                      <button
-                        onClick={() => setIsViewSettingsOpen(true)}
-                        className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                        aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-                        title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-                      >
-                        <Settings2 size={14} />
-                      </button>
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                <AnimatePresence>
-                  {allFilteredTasks.map((task) => (
-                    <TaskTableRow
-                      key={task.id}
-                      task={task}
-                      isSelected={selectedIds.has(task.id)}
-                      isFocused={focusedTask?.id === task.id}
-                      isPreviewed={previewTaskId === task.id}
-                      isNew={isNewTask(task)}
-                      onSelect={handleSelectTask}
-                      onToggleComplete={handleToggleComplete}
-                      onSetStatus={handleSetStatus}
-                      onDelete={async (taskId: string) => {
-                        const confirmed = await showConfirm({
-                          title: t('myWork.personalTasks.deleteTitle', 'Delete task?'),
-                          description: t(
-                            'myWork.personalTasks.deleteDesc',
-                            'This task will be permanently deleted.'
-                          ),
-                          confirmLabel: t('common.delete', 'Delete'),
-                          variant: 'danger',
-                        });
-                        if (confirmed) handleDelete(taskId);
-                      }}
-                      onPreview={(id, data) => setPreviewTaskId(id)}
-                      onOpenFull={(id, data) => onTaskClick(id, data)}
-                      onInlineEdit={handleInlineEdit}
-                      onTriageAccept={handleTriageAcceptToday}
-                      onTriageSnooze={handleTriageSnooze}
-                      onTriageArchive={handleTriageArchive}
-                      columnWidths={columnWidths}
-                      hiddenColumns={hiddenSet}
-                      focusState={focusState}
-                    />
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+                      {!hiddenSet.has('date') && (
+                        <th
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          style={{ width: columnWidths.date }}
+                        >
+                          <span>Due Date</span>
+                          <ColumnResizer
+                            columnId="date"
+                            currentWidth={columnWidths.date}
+                            minWidth={90}
+                            maxWidth={140}
+                            onResize={handleColumnResize}
+                          />
+                        </th>
+                      )}
+                      {!hiddenSet.has('assignee') && (
+                        <th
+                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          style={{ width: columnWidths.assignee }}
+                        >
+                          <span>Assignee</span>
+                          <ColumnResizer
+                            columnId="assignee"
+                            currentWidth={columnWidths.assignee}
+                            minWidth={100}
+                            maxWidth={180}
+                            onResize={handleColumnResize}
+                          />
+                        </th>
+                      )}
+                      {!hiddenSet.has('actions') && (
+                        <th
+                          className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                          style={{ width: columnWidths.actions }}
+                        >
+                          <button
+                            onClick={() => setIsViewSettingsOpen(true)}
+                            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                            aria-label={
+                              isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'
+                            }
+                            title={isPolish ? 'Ustawienia widoku' : 'View settings'}
+                          >
+                            <Settings2 size={14} />
+                          </button>
+                        </th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <AnimatePresence>
+                      {allFilteredTasks.map((task) => (
+                        <TaskTableRow
+                          key={task.id}
+                          task={task}
+                          isSelected={selectedIds.has(task.id)}
+                          isFocused={focusedTask?.id === task.id}
+                          isPreviewed={previewTaskId === task.id}
+                          isNew={isNewTask(task)}
+                          onSelect={handleSelectTask}
+                          onToggleComplete={handleToggleComplete}
+                          onSetStatus={handleSetStatus}
+                          onDelete={async (taskId: string) => {
+                            const confirmed = await showConfirm({
+                              title: t('myWork.personalTasks.deleteTitle', 'Delete task?'),
+                              description: t(
+                                'myWork.personalTasks.deleteDesc',
+                                'This task will be permanently deleted.'
+                              ),
+                              confirmLabel: t('common.delete', 'Delete'),
+                              variant: 'danger',
+                            });
+                            if (confirmed) handleDelete(taskId);
+                          }}
+                          onPreview={(id, data) => setPreviewTaskId(id)}
+                          onOpenFull={(id, data) => onTaskClick(id, data)}
+                          onInlineEdit={handleInlineEdit}
+                          onTriageAccept={handleTriageAcceptToday}
+                          onTriageSnooze={handleTriageSnooze}
+                          onTriageArchive={handleTriageArchive}
+                          columnWidths={columnWidths}
+                          hiddenColumns={hiddenSet}
+                          focusState={focusState}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

@@ -53,6 +53,10 @@ type ProviderRow = {
 
 export type ProviderConfig = ProviderRow & {
   id: string;
+  rowId?: string;
+  modelId?: string;
+  apiKey?: string | null;
+  isDefault?: boolean;
   supportsStreaming: boolean;
   supportsVision: boolean;
   supportsTools: boolean;
@@ -979,6 +983,9 @@ export class LLMConfigService {
       ...dbRow,
       rowId: dbRow.id,
       id: dbRow.model_id || dbRow.id || dbRow.provider,
+      modelId: dbRow.model_id || dbRow.id || dbRow.provider,
+      apiKey: dbRow.api_key,
+      isDefault: Boolean(dbRow.is_default),
       supportsStreaming: definition.supportsStreaming ?? true,
       supportsVision: definition.supportsVision ?? false,
       supportsTools: definition.supportsTools ?? false,

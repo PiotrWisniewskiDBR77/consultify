@@ -73,7 +73,13 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   const [zoom, setZoom] = useState<ZoomLevel>('week');
   const [scrollOffset, setScrollOffset] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState<{ nodeId: string; mode: 'move' | 'resize-end'; startX: number; origStart: Date; origEnd: Date } | null>(null);
+  const [dragging, setDragging] = useState<{
+    nodeId: string;
+    mode: 'move' | 'resize-end';
+    startX: number;
+    origStart: Date;
+    origEnd: Date;
+  } | null>(null);
 
   const dateCols = useMemo(() => columns.filter((c) => c.type === 'date' && c.visible), [columns]);
   const startCol = dateCols[0]?.key || 'start_date';
@@ -137,36 +143,49 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
     return cells;
   }, [cellWidth, cellsPerUnit, isPl, rangeEnd, rangeStart, zoom]);
 
-  const getBarStyle = useCallback((start: Date, end: Date) => {
-    const left = diffDays(rangeStart, start) * (cellWidth / cellsPerUnit);
-    const width = Math.max(diffDays(start, end) * (cellWidth / cellsPerUnit), 16);
-    return { left, width };
-  }, [cellWidth, cellsPerUnit, rangeStart]);
+  const getBarStyle = useCallback(
+    (start: Date, end: Date) => {
+      const left = diffDays(rangeStart, start) * (cellWidth / cellsPerUnit);
+      const width = Math.max(diffDays(start, end) * (cellWidth / cellsPerUnit), 16);
+      return { left, width };
+    },
+    [cellWidth, cellsPerUnit, rangeStart]
+  );
 
-  const handleMouseDown = useCallback((nodeId: string, mode: 'move' | 'resize-end', e: React.MouseEvent, start: Date, end: Date) => {
-    if (locked) return;
-    e.stopPropagation();
-    setDragging({ nodeId, mode, startX: e.clientX, origStart: start, origEnd: end });
-  }, [locked]);
+  const handleMouseDown = useCallback(
+    (nodeId: string, mode: 'move' | 'resize-end', e: React.MouseEvent, start: Date, end: Date) => {
+      if (locked) return;
+      e.stopPropagation();
+      setDragging({ nodeId, mode, startX: e.clientX, origStart: start, origEnd: end });
+    },
+    [locked]
+  );
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragging || !onFieldChange) return;
-    const dx = e.clientX - dragging.startX;
-    const daysDelta = Math.round(dx / (cellWidth / cellsPerUnit));
-    if (daysDelta === 0) return;
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!dragging || !onFieldChange) return;
+      const dx = e.clientX - dragging.startX;
+      const daysDelta = Math.round(dx / (cellWidth / cellsPerUnit));
+      if (daysDelta === 0) return;
 
-    if (dragging.mode === 'move') {
-      onFieldChange(dragging.nodeId, startCol, formatDate(addDays(dragging.origStart, daysDelta)));
-      if (startCol !== endCol) {
-        onFieldChange(dragging.nodeId, endCol, formatDate(addDays(dragging.origEnd, daysDelta)));
+      if (dragging.mode === 'move') {
+        onFieldChange(
+          dragging.nodeId,
+          startCol,
+          formatDate(addDays(dragging.origStart, daysDelta))
+        );
+        if (startCol !== endCol) {
+          onFieldChange(dragging.nodeId, endCol, formatDate(addDays(dragging.origEnd, daysDelta)));
+        }
+      } else {
+        const newEnd = addDays(dragging.origEnd, daysDelta);
+        if (newEnd > dragging.origStart) {
+          onFieldChange(dragging.nodeId, endCol, formatDate(newEnd));
+        }
       }
-    } else {
-      const newEnd = addDays(dragging.origEnd, daysDelta);
-      if (newEnd > dragging.origStart) {
-        onFieldChange(dragging.nodeId, endCol, formatDate(newEnd));
-      }
-    }
-  }, [cellWidth, cellsPerUnit, dragging, endCol, onFieldChange, startCol]);
+    },
+    [cellWidth, cellsPerUnit, dragging, endCol, onFieldChange, startCol]
+  );
 
   const handleMouseUp = useCallback(() => setDragging(null), []);
 
@@ -178,18 +197,31 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
-          <p className="text-sm text-slate-400 mb-1">{isPl ? 'Brak dat do wyświetlenia' : 'No dates to display'}</p>
-          <p className="text-[10px] text-slate-400">{isPl ? 'Dodaj kolumny typu "date" aby zobaczyć timeline' : 'Add "date" type columns to see the timeline'}</p>
+          <p className="text-sm text-slate-400 mb-1">
+            {isPl ? 'Brak dat do wyświetlenia' : 'No dates to display'}
+          </p>
+          <p className="text-[10px] text-slate-400">
+            {isPl
+              ? 'Dodaj kolumny typu "date" aby zobaczyć timeline'
+              : 'Add "date" type columns to see the timeline'}
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden" onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
+    <div
+      className="w-full h-full flex flex-col overflow-hidden"
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+    >
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Timeline</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          Timeline
+        </span>
         <div className="flex-1" />
         <div className="flex items-center gap-1 rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
           {(['day', 'week', 'month'] as ZoomLevel[]).map((z) => (
@@ -198,19 +230,42 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
               onClick={() => setZoom(z)}
               className={`px-2 py-1 text-[10px] font-bold transition-colors ${zoom === z ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              {z === 'day' ? (isPl ? 'Dzień' : 'Day') : z === 'week' ? (isPl ? 'Tydzień' : 'Week') : (isPl ? 'Miesiąc' : 'Month')}
+              {z === 'day'
+                ? isPl
+                  ? 'Dzień'
+                  : 'Day'
+                : z === 'week'
+                  ? isPl
+                    ? 'Tydzień'
+                    : 'Week'
+                  : isPl
+                    ? 'Miesiąc'
+                    : 'Month'}
             </button>
           ))}
         </div>
-        <button onClick={() => setZoom(zoom === 'day' ? 'week' : zoom === 'week' ? 'month' : 'month')} className="p-1 rounded text-slate-400 hover:text-slate-600"><ZoomOut size={12} /></button>
-        <button onClick={() => setZoom(zoom === 'month' ? 'week' : zoom === 'week' ? 'day' : 'day')} className="p-1 rounded text-slate-400 hover:text-slate-600"><ZoomIn size={12} /></button>
+        <button
+          onClick={() => setZoom(zoom === 'day' ? 'week' : zoom === 'week' ? 'month' : 'month')}
+          className="p-1 rounded text-slate-400 hover:text-slate-600"
+        >
+          <ZoomOut size={12} />
+        </button>
+        <button
+          onClick={() => setZoom(zoom === 'month' ? 'week' : zoom === 'week' ? 'day' : 'day')}
+          className="p-1 rounded text-slate-400 hover:text-slate-600"
+        >
+          <ZoomIn size={12} />
+        </button>
       </div>
 
       {/* Timeline content */}
       <div className="flex-1 overflow-auto" ref={containerRef}>
         <div className="flex" style={{ minWidth: LABEL_WIDTH + totalWidth }}>
           {/* Labels column */}
-          <div className="flex-shrink-0 border-r border-slate-200/60 dark:border-navy-700/60" style={{ width: LABEL_WIDTH }}>
+          <div
+            className="flex-shrink-0 border-r border-slate-200/60 dark:border-navy-700/60"
+            style={{ width: LABEL_WIDTH }}
+          >
             <div className="h-8 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50 dark:bg-navy-900" />
             {timelineData.map(({ node, color }) => (
               <div
@@ -219,8 +274,13 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                 style={{ height: ROW_HEIGHT }}
                 onClick={() => onNodeClick?.(node.id)}
               >
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate">{node.data?.label || node.id}</span>
+                <div
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: color }}
+                />
+                <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate">
+                  {node.data?.label || node.id}
+                </span>
               </div>
             ))}
           </div>
@@ -252,7 +312,11 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                   {/* Grid lines */}
                   <div className="absolute inset-0 flex">
                     {headerCells.map((cell, i) => (
-                      <div key={i} className="border-r border-slate-200/10 dark:border-navy-700/10 flex-shrink-0" style={{ width: cell.width }} />
+                      <div
+                        key={i}
+                        className="border-r border-slate-200/10 dark:border-navy-700/10 flex-shrink-0"
+                        style={{ width: cell.width }}
+                      />
                     ))}
                   </div>
 
@@ -285,7 +349,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
             })}
 
             {/* Dependency arrows (simplified) */}
-            <svg className="absolute inset-0 pointer-events-none" style={{ width: totalWidth, height: timelineData.length * ROW_HEIGHT + 32 }}>
+            <svg
+              className="absolute inset-0 pointer-events-none"
+              style={{ width: totalWidth, height: timelineData.length * ROW_HEIGHT + 32 }}
+            >
               {edges.map((edge) => {
                 const srcIdx = timelineData.findIndex((d) => d.node.id === edge.source);
                 const tgtIdx = timelineData.findIndex((d) => d.node.id === edge.target);

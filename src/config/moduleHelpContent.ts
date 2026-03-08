@@ -691,8 +691,7 @@ Where you provide services:
     id: 'onboarding',
     title: 'Onboarding',
     description: 'Guided introduction to the platform.',
-    content:
-      'Step-by-step tutorials and setup assistance to help you get started with Consultify.',
+    content: 'Step-by-step tutorials and setup assistance to help you get started with Consultify.',
     icon: 'GraduationCap',
     translationKey: 'help.sidePanel.modules.onboarding',
     relatedModules: ['dashboard', 'assessment'],

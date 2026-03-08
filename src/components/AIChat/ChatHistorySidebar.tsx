@@ -607,211 +607,211 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                 ${className}
             `}
         >
-        {/* Header */}
-        <div className="px-3 pt-3 pb-2">
-          <div className="flex items-center gap-2 mb-2">
-            <button
-              onClick={toggleSidebar}
-              data-testid="chat-history-close"
-              className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-md transition-colors"
-              title={t('aiChat.closeSidebar', 'Close sidebar')}
-            >
-              <X size={16} />
-            </button>
-            <div className="flex-1" />
-          </div>
-          <button
-            onClick={handleNewChat}
-            data-testid="chat-history-new-chat"
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium text-sm transition-colors shadow-sm hover:shadow-md"
-          >
-            <Plus size={18} />
-            {t('aiChat.newChat', 'Nowy czat')}
-          </button>
-        </div>
-
-        {/* Search — compact */}
-        <div className="px-3 py-2">
-          <ConversationSearch
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder={t('aiChat.searchPlaceholder', 'Search conversations...')}
-          />
-        </div>
-
-        {/* Folder breadcrumb */}
-        {activeFolderId && activeFolder && (
-          <div className="px-3 py-1.5 border-b border-slate-200/60 dark:border-navy-700/60 flex items-center gap-1.5">
-            <button
-              onClick={() => setActiveFolderId(null)}
-              className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-            >
-              {t('aiChat.allConversations', 'All')}
-            </button>
-            <ChevronRight size={10} className="text-slate-300 dark:text-slate-600" />
-            <div className="flex items-center gap-1 text-[11px] font-medium text-slate-700 dark:text-slate-300">
-              <Folder size={11} style={{ color: activeFolder.color }} />
-              <span className="truncate">{activeFolder.name}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Main scrollable area: Folders + Conversations — bounded scroll container (C3.1) */}
-        <div className="flex-1 overflow-y-auto overscroll-contain">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : activeFolderId && folderGroups ? (
-            /* C3.3: Folder-scoped view — show only this folder's conversations */
-            folderConversations.length === 0 ? (
-              <div className="text-center py-12 px-4">
-                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-                  <Folder size={20} className="text-slate-400 dark:text-slate-500" />
-                </div>
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                  {t('aiChat.noFolderConversations', 'No conversations in this folder')}
-                </p>
-              </div>
-            ) : (
-              <div className="px-3">
-                <ConversationList
-                  groups={folderGroups}
-                  activeId={activeConversationId}
-                  onSelect={handleSelectConversation}
-                />
-              </div>
-            )
-          ) : searchQuery ? (
-            /* Search mode: show flat grouped results */
-            visibleGroups.length === 0 ? (
-              <div className="text-center py-12 px-4">
-                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-                  <Search size={20} className="text-slate-400 dark:text-slate-500" />
-                </div>
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                  {t('aiChat.noResults', 'No conversations found')}
-                </p>
-              </div>
-            ) : (
-              <div className="px-3">
-                <ConversationList
-                  groups={displayGroups}
-                  activeId={activeConversationId}
-                  onSelect={handleSelectConversation}
-                />
-              </div>
-            )
-          ) : (
-            /* Default mode: Project folders first, then unassigned conversations */
-            <>
-              {/* Chat Folders (Primary Navigation) */}
-              <div className="pb-1">
-                {/* My Folders (Personal) */}
-                <FolderSection
-                  title={t('aiChat.myFolders', 'My Folders')}
-                  icon={<Folder size={11} />}
-                  projects={personalProjects}
-                  expandedProjectIds={expandedProjectIds}
-                  activeConversationId={activeConversationId}
-                  getConversationsByProjectId={getConversationsByProjectId}
-                  onToggleExpanded={toggleProjectExpanded}
-                  onSelectConversation={handleSelectConversation}
-                  onDeleteProject={handleDeleteProject}
-                  onCreateProject={handleCreatePersonalProject}
-                  createButtonLabel={t('aiChat.newPersonalFolder', 'New personal folder')}
-                  emptyLabel={t('aiChat.createFolder', 'Create folder')}
-                  t={t}
-                  onFolderClick={setActiveFolderId}
-                  sectionCollapsed={myFoldersCollapsed}
-                  onToggleSectionCollapsed={() => setMyFoldersCollapsed((v) => !v)}
-                  onDropConversation={handleDropToFolder}
-                />
-
-                {/* Team Folders (Shared) */}
-                <FolderSection
-                  title={t('aiChat.teamFolders', 'Team Folders')}
-                  icon={<Users size={11} />}
-                  projects={teamProjects}
-                  expandedProjectIds={expandedProjectIds}
-                  activeConversationId={activeConversationId}
-                  getConversationsByProjectId={getConversationsByProjectId}
-                  onToggleExpanded={toggleProjectExpanded}
-                  onSelectConversation={handleSelectConversation}
-                  onDeleteProject={handleDeleteProject}
-                  onCreateProject={handleCreateTeamProject}
-                  createButtonLabel={t('aiChat.newTeamFolder', 'New team folder')}
-                  emptyLabel={t('aiChat.createTeamFolder', 'Create team folder')}
-                  t={t}
-                  onFolderClick={setActiveFolderId}
-                  sectionCollapsed={teamFoldersCollapsed}
-                  onToggleSectionCollapsed={() => setTeamFoldersCollapsed((v) => !v)}
-                  onDropConversation={handleDropToFolder}
-                />
-              </div>
-
-              {/* Separator between folders and unassigned conversations */}
-              {(personalProjects.length > 0 || teamProjects.length > 0) &&
-                unassignedConversations.length > 0 && (
-                  <div className="border-t border-slate-200 dark:border-navy-700 mx-3" />
-                )}
-
-              {/* Unassigned Conversations — also a drop zone to remove from folder */}
-              <div
-                className={`px-3 min-h-[40px] transition-colors ${
-                  isUnassignedDropTarget
-                    ? 'bg-slate-100/80 dark:bg-navy-800/60 ring-1 ring-inset ring-slate-300/50 dark:ring-navy-600/50 rounded-lg mx-1'
-                    : ''
-                }`}
-                onDragOver={handleUnassignedDragOver}
-                onDragLeave={handleUnassignedDragLeave}
-                onDrop={handleUnassignedDrop}
+          {/* Header */}
+          <div className="px-3 pt-3 pb-2">
+            <div className="flex items-center gap-2 mb-2">
+              <button
+                onClick={toggleSidebar}
+                data-testid="chat-history-close"
+                className="p-1 text-slate-400 hover:text-slate-600 dark:text-slate-400 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-md transition-colors"
+                title={t('aiChat.closeSidebar', 'Close sidebar')}
               >
-                {unassignedConversations.length === 0 &&
-                personalProjects.length === 0 &&
-                teamProjects.length === 0 ? (
-                  <div className="text-center py-12 px-4">
-                    <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
-                      <Search size={20} className="text-slate-400 dark:text-slate-500" />
-                    </div>
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                      {t('aiChat.noConversations', 'No conversations yet')}
-                    </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-                      {t('aiChat.startNewChat', 'Start a new chat to begin')}
-                    </p>
+                <X size={16} />
+              </button>
+              <div className="flex-1" />
+            </div>
+            <button
+              onClick={handleNewChat}
+              data-testid="chat-history-new-chat"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium text-sm transition-colors shadow-sm hover:shadow-md"
+            >
+              <Plus size={18} />
+              {t('aiChat.newChat', 'Nowy czat')}
+            </button>
+          </div>
+
+          {/* Search — compact */}
+          <div className="px-3 py-2">
+            <ConversationSearch
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={t('aiChat.searchPlaceholder', 'Search conversations...')}
+            />
+          </div>
+
+          {/* Folder breadcrumb */}
+          {activeFolderId && activeFolder && (
+            <div className="px-3 py-1.5 border-b border-slate-200/60 dark:border-navy-700/60 flex items-center gap-1.5">
+              <button
+                onClick={() => setActiveFolderId(null)}
+                className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              >
+                {t('aiChat.allConversations', 'All')}
+              </button>
+              <ChevronRight size={10} className="text-slate-300 dark:text-slate-600" />
+              <div className="flex items-center gap-1 text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                <Folder size={11} style={{ color: activeFolder.color }} />
+                <span className="truncate">{activeFolder.name}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Main scrollable area: Folders + Conversations — bounded scroll container (C3.1) */}
+          <div className="flex-1 overflow-y-auto overscroll-contain">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : activeFolderId && folderGroups ? (
+              /* C3.3: Folder-scoped view — show only this folder's conversations */
+              folderConversations.length === 0 ? (
+                <div className="text-center py-12 px-4">
+                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
+                    <Folder size={20} className="text-slate-400 dark:text-slate-500" />
                   </div>
-                ) : (
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                    {t('aiChat.noFolderConversations', 'No conversations in this folder')}
+                  </p>
+                </div>
+              ) : (
+                <div className="px-3">
                   <ConversationList
-                    groups={unassignedGroups}
+                    groups={folderGroups}
                     activeId={activeConversationId}
                     onSelect={handleSelectConversation}
                   />
-                )}
-              </div>
-            </>
-          )}
-        </div>
+                </div>
+              )
+            ) : searchQuery ? (
+              /* Search mode: show flat grouped results */
+              visibleGroups.length === 0 ? (
+                <div className="text-center py-12 px-4">
+                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
+                    <Search size={20} className="text-slate-400 dark:text-slate-500" />
+                  </div>
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                    {t('aiChat.noResults', 'No conversations found')}
+                  </p>
+                </div>
+              ) : (
+                <div className="px-3">
+                  <ConversationList
+                    groups={displayGroups}
+                    activeId={activeConversationId}
+                    onSelect={handleSelectConversation}
+                  />
+                </div>
+              )
+            ) : (
+              /* Default mode: Project folders first, then unassigned conversations */
+              <>
+                {/* Chat Folders (Primary Navigation) */}
+                <div className="pb-1">
+                  {/* My Folders (Personal) */}
+                  <FolderSection
+                    title={t('aiChat.myFolders', 'My Folders')}
+                    icon={<Folder size={11} />}
+                    projects={personalProjects}
+                    expandedProjectIds={expandedProjectIds}
+                    activeConversationId={activeConversationId}
+                    getConversationsByProjectId={getConversationsByProjectId}
+                    onToggleExpanded={toggleProjectExpanded}
+                    onSelectConversation={handleSelectConversation}
+                    onDeleteProject={handleDeleteProject}
+                    onCreateProject={handleCreatePersonalProject}
+                    createButtonLabel={t('aiChat.newPersonalFolder', 'New personal folder')}
+                    emptyLabel={t('aiChat.createFolder', 'Create folder')}
+                    t={t}
+                    onFolderClick={setActiveFolderId}
+                    sectionCollapsed={myFoldersCollapsed}
+                    onToggleSectionCollapsed={() => setMyFoldersCollapsed((v) => !v)}
+                    onDropConversation={handleDropToFolder}
+                  />
 
-        {/* Footer - Archive toggle */}
-        <div className="px-3 py-2 border-t border-slate-200/60 dark:border-navy-700/60">
-          <button
-            onClick={toggleShowArchived}
-            className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-lg transition-colors ${
-              showArchived
-                ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800'
-            }`}
-          >
-            <Archive size={14} />
-            {t('aiChat.sections.archived', 'Archived')}
-            {displayGroups.archived.length > 0 && (
-              <span className="ml-auto text-[10px] tabular-nums bg-slate-200 dark:bg-navy-700 px-1.5 py-0.5 rounded-full">
-                {displayGroups.archived.length}
-              </span>
+                  {/* Team Folders (Shared) */}
+                  <FolderSection
+                    title={t('aiChat.teamFolders', 'Team Folders')}
+                    icon={<Users size={11} />}
+                    projects={teamProjects}
+                    expandedProjectIds={expandedProjectIds}
+                    activeConversationId={activeConversationId}
+                    getConversationsByProjectId={getConversationsByProjectId}
+                    onToggleExpanded={toggleProjectExpanded}
+                    onSelectConversation={handleSelectConversation}
+                    onDeleteProject={handleDeleteProject}
+                    onCreateProject={handleCreateTeamProject}
+                    createButtonLabel={t('aiChat.newTeamFolder', 'New team folder')}
+                    emptyLabel={t('aiChat.createTeamFolder', 'Create team folder')}
+                    t={t}
+                    onFolderClick={setActiveFolderId}
+                    sectionCollapsed={teamFoldersCollapsed}
+                    onToggleSectionCollapsed={() => setTeamFoldersCollapsed((v) => !v)}
+                    onDropConversation={handleDropToFolder}
+                  />
+                </div>
+
+                {/* Separator between folders and unassigned conversations */}
+                {(personalProjects.length > 0 || teamProjects.length > 0) &&
+                  unassignedConversations.length > 0 && (
+                    <div className="border-t border-slate-200 dark:border-navy-700 mx-3" />
+                  )}
+
+                {/* Unassigned Conversations — also a drop zone to remove from folder */}
+                <div
+                  className={`px-3 min-h-[40px] transition-colors ${
+                    isUnassignedDropTarget
+                      ? 'bg-slate-100/80 dark:bg-navy-800/60 ring-1 ring-inset ring-slate-300/50 dark:ring-navy-600/50 rounded-lg mx-1'
+                      : ''
+                  }`}
+                  onDragOver={handleUnassignedDragOver}
+                  onDragLeave={handleUnassignedDragLeave}
+                  onDrop={handleUnassignedDrop}
+                >
+                  {unassignedConversations.length === 0 &&
+                  personalProjects.length === 0 &&
+                  teamProjects.length === 0 ? (
+                    <div className="text-center py-12 px-4">
+                      <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center">
+                        <Search size={20} className="text-slate-400 dark:text-slate-500" />
+                      </div>
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                        {t('aiChat.noConversations', 'No conversations yet')}
+                      </p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                        {t('aiChat.startNewChat', 'Start a new chat to begin')}
+                      </p>
+                    </div>
+                  ) : (
+                    <ConversationList
+                      groups={unassignedGroups}
+                      activeId={activeConversationId}
+                      onSelect={handleSelectConversation}
+                    />
+                  )}
+                </div>
+              </>
             )}
-          </button>
-        </div>
+          </div>
+
+          {/* Footer - Archive toggle */}
+          <div className="px-3 py-2 border-t border-slate-200/60 dark:border-navy-700/60">
+            <button
+              onClick={toggleShowArchived}
+              className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-[13px] rounded-lg transition-colors ${
+                showArchived
+                  ? 'bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800'
+              }`}
+            >
+              <Archive size={14} />
+              {t('aiChat.sections.archived', 'Archived')}
+              {displayGroups.archived.length > 0 && (
+                <span className="ml-auto text-[10px] tabular-nums bg-slate-200 dark:bg-navy-700 px-1.5 py-0.5 rounded-full">
+                  {displayGroups.archived.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       )}
     </>

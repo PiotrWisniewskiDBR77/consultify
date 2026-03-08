@@ -73,4 +73,3 @@ export const FullVideoModal: React.FC<FullVideoModalProps> = ({
 };
 
 export default FullVideoModal;
-

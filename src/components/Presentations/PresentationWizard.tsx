@@ -13,18 +13,18 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import {
+  type DeckTemplate,
   DEFAULT_WIZARD_SETTINGS,
   GeneratingStep,
+  type IntentInfo,
+  type OutlineItem,
   OutlineStep,
   ResultStep,
   SetupStep,
-  SourceStep,
-  WizardShell,
-  type DeckTemplate,
-  type IntentInfo,
-  type OutlineItem,
   type SourceArtifact,
+  SourceStep,
   type WizardSettings,
+  WizardShell,
   type WizardStep,
 } from './wizard';
 

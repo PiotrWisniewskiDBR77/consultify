@@ -75,8 +75,8 @@ export const CookiePolicyView: React.FC = () => {
       <section>
         <h2>2. Cookies We Use</h2>
         <p>
-          Consultify uses only essential and functional cookies. We do not use third-party
-          tracking or advertising cookies.
+          Consultify uses only essential and functional cookies. We do not use third-party tracking
+          or advertising cookies.
         </p>
 
         <h3>Essential Cookies</h3>

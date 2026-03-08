@@ -14,23 +14,33 @@ interface CreateValuationModalProps {
 }
 
 export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
-  initialSourceType, initialSourceId, onCreated, onClose,
+  initialSourceType,
+  initialSourceId,
+  onCreated,
+  onClose,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const [title, setTitle] = useState('');
-  const [sourceType, setSourceType] = useState<'financial_model' | 'budget' | 'manual'>(initialSourceType || 'manual');
+  const [sourceType, setSourceType] = useState<'financial_model' | 'budget' | 'manual'>(
+    initialSourceType || 'manual'
+  );
   const [sourceId, setSourceId] = useState(initialSourceId || '');
   const [horizonYears, setHorizonYears] = useState(5);
   const [creating, setCreating] = useState(false);
-  const [sources, setSources] = useState<{ budgets: any[]; financialModels: any[] }>({ budgets: [], financialModels: [] });
+  const [sources, setSources] = useState<{ budgets: any[]; financialModels: any[] }>({
+    budgets: [],
+    financialModels: [],
+  });
 
   useEffect(() => {
-    Api.get('/api/economics/valuations/sources').then((data) => {
-      const s = (data as any)?.sources;
-      setSources({ budgets: s?.budgets || [], financialModels: s?.financialModels || [] });
-    }).catch(() => setSources({ budgets: [], financialModels: [] }));
+    Api.get('/api/economics/valuations/sources')
+      .then((data) => {
+        const s = (data as any)?.sources;
+        setSources({ budgets: s?.budgets || [], financialModels: s?.financialModels || [] });
+      })
+      .catch(() => setSources({ budgets: [], financialModels: [] }));
   }, []);
 
   const handleCreate = useCallback(async () => {
@@ -42,9 +52,11 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
     setCreating(true);
     try {
       const result = await Api.post('/api/economics/valuations', {
-        title: title.trim(), sourceType,
+        title: title.trim(),
+        sourceType,
         sourceId: sourceType === 'manual' ? null : sourceId,
-        horizonYears, currency: 'PLN',
+        horizonYears,
+        currency: 'PLN',
       });
       const created = result as any;
       toast.success(t('finance.toast.valuationCreated', 'Wycena utworzona'));
@@ -60,7 +72,9 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
         updatedAt: String(created.updated_at || new Date().toISOString()),
       });
     } catch (e: any) {
-      toast.error(e?.response?.data?.error || t('finance.toast.createFailed', 'Nie udało się utworzyć'));
+      toast.error(
+        e?.response?.data?.error || t('finance.toast.createFailed', 'Nie udało się utworzyć')
+      );
     } finally {
       setCreating(false);
     }
@@ -73,15 +87,28 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
           {t('finance.valuation.createTitle', 'Nowa wycena przedsiębiorstwa')}
         </h3>
         <div>
-          <label className="text-xs text-slate-500">{t('finance.valuation.name', 'Nazwa wyceny')}</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)}
+          <label className="text-xs text-slate-500">
+            {t('finance.valuation.name', 'Nazwa wyceny')}
+          </label>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             placeholder={t('finance.valuation.namePlaceholder', 'np. Wycena DCF Q1 2026') as string}
-            className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800" />
+            className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
+          />
         </div>
         <div>
-          <label className="text-xs text-slate-500">{t('finance.valuation.sourceType', 'Źródło danych')}</label>
-          <select value={sourceType} onChange={(e) => { setSourceType(e.target.value as any); setSourceId(''); }}
-            className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800">
+          <label className="text-xs text-slate-500">
+            {t('finance.valuation.sourceType', 'Źródło danych')}
+          </label>
+          <select
+            value={sourceType}
+            onChange={(e) => {
+              setSourceType(e.target.value as any);
+              setSourceId('');
+            }}
+            className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
+          >
             <option value="manual">{isPl ? 'Ręczne dane' : 'Manual data'}</option>
             <option value="financial_model">{isPl ? 'Model finansowy' : 'Financial model'}</option>
             <option value="budget">{isPl ? 'Budżet' : 'Budget'}</option>
@@ -90,29 +117,59 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
         {sourceType !== 'manual' && (
           <div>
             <label className="text-xs text-slate-500">
-              {sourceType === 'financial_model' ? (isPl ? 'Wybierz model' : 'Select model') : (isPl ? 'Wybierz budżet' : 'Select budget')}
+              {sourceType === 'financial_model'
+                ? isPl
+                  ? 'Wybierz model'
+                  : 'Select model'
+                : isPl
+                  ? 'Wybierz budżet'
+                  : 'Select budget'}
             </label>
-            <select value={sourceId} onChange={(e) => setSourceId(e.target.value)}
-              className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800">
+            <select
+              value={sourceId}
+              onChange={(e) => setSourceId(e.target.value)}
+              className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
+            >
               <option value="">{isPl ? '— wybierz —' : '— select —'}</option>
               {sourceType === 'financial_model'
-                ? sources.financialModels.map((m: any) => <option key={m.id} value={m.id}>{m.name || m.title || m.id}</option>)
-                : sources.budgets.map((b: any) => <option key={b.id} value={b.id}>{b.title || b.name || b.id}</option>)}
+                ? sources.financialModels.map((m: any) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name || m.title || m.id}
+                    </option>
+                  ))
+                : sources.budgets.map((b: any) => (
+                    <option key={b.id} value={b.id}>
+                      {b.title || b.name || b.id}
+                    </option>
+                  ))}
             </select>
           </div>
         )}
         <div>
-          <label className="text-xs text-slate-500">{t('finance.valuation.horizonYears', 'Horyzont (lata)')}</label>
-          <input type="number" min={1} max={20} value={horizonYears} onChange={(e) => setHorizonYears(Number(e.target.value) || 5)}
-            className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800" />
+          <label className="text-xs text-slate-500">
+            {t('finance.valuation.horizonYears', 'Horyzont (lata)')}
+          </label>
+          <input
+            type="number"
+            min={1}
+            max={20}
+            value={horizonYears}
+            onChange={(e) => setHorizonYears(Number(e.target.value) || 5)}
+            className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
+          />
         </div>
         <div className="flex justify-end gap-2 pt-2">
-          <button onClick={onClose} className="px-4 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm"
+          >
             {t('common.cancel', 'Cancel')}
           </button>
-          <button onClick={handleCreate}
+          <button
+            onClick={handleCreate}
             disabled={!title.trim() || creating || (sourceType !== 'manual' && !sourceId)}
-            className="px-4 py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-500 disabled:opacity-50">
+            className="px-4 py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-500 disabled:opacity-50"
+          >
             {t('common.create', 'Create')}
           </button>
         </div>

@@ -304,9 +304,7 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 min-w-0 overflow-hidden relative z-0 pr-16">
-          {renderContent()}
-        </main>
+        <main className="flex-1 min-w-0 overflow-hidden relative z-0 pr-16">{renderContent()}</main>
       </div>
 
       {/* Floating Action Buttons - Order: Help, Feedback, Docs */}

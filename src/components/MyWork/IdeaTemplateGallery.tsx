@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+
 import type { CanvasToolType } from './ideaSelectionTypes';
 
 // ── Template types ───────────────────────────────────────────────────────────
@@ -62,20 +63,61 @@ const PROCESS_FLOW_TEMPLATES: TemplateDefinition[] = [
     icon: Workflow,
     tool: 'process_flow',
     nodes: [
-      { id: 'pf-t-s', type: 'flowNode', position: { x: 50, y: 60 }, data: { label: 'Start', shape: 'start', laneId: 'lane-1', laneColor: '#e0e7ff' } },
-      { id: 'pf-t-a1', type: 'flowNode', position: { x: 250, y: 60 }, data: { label: 'Analysis', shape: 'action', laneId: 'lane-1', laneColor: '#e0e7ff' } },
-      { id: 'pf-t-d1', type: 'flowNode', position: { x: 450, y: 60 }, data: { label: 'Decision', shape: 'decision', laneId: 'lane-1', laneColor: '#e0e7ff' } },
-      { id: 'pf-t-a2', type: 'flowNode', position: { x: 650, y: 20 }, data: { label: 'Action', shape: 'action', laneId: 'lane-1', laneColor: '#e0e7ff' } },
-      { id: 'pf-t-e', type: 'flowNode', position: { x: 850, y: 60 }, data: { label: 'End', shape: 'end', laneId: 'lane-1', laneColor: '#e0e7ff' } },
+      {
+        id: 'pf-t-s',
+        type: 'flowNode',
+        position: { x: 50, y: 60 },
+        data: { label: 'Start', shape: 'start', laneId: 'lane-1', laneColor: '#e0e7ff' },
+      },
+      {
+        id: 'pf-t-a1',
+        type: 'flowNode',
+        position: { x: 250, y: 60 },
+        data: { label: 'Analysis', shape: 'action', laneId: 'lane-1', laneColor: '#e0e7ff' },
+      },
+      {
+        id: 'pf-t-d1',
+        type: 'flowNode',
+        position: { x: 450, y: 60 },
+        data: { label: 'Decision', shape: 'decision', laneId: 'lane-1', laneColor: '#e0e7ff' },
+      },
+      {
+        id: 'pf-t-a2',
+        type: 'flowNode',
+        position: { x: 650, y: 20 },
+        data: { label: 'Action', shape: 'action', laneId: 'lane-1', laneColor: '#e0e7ff' },
+      },
+      {
+        id: 'pf-t-e',
+        type: 'flowNode',
+        position: { x: 850, y: 60 },
+        data: { label: 'End', shape: 'end', laneId: 'lane-1', laneColor: '#e0e7ff' },
+      },
     ],
     edges: [
       { id: 'e-t-1', source: 'pf-t-s', target: 'pf-t-a1', type: 'flowEdge' },
       { id: 'e-t-2', source: 'pf-t-a1', target: 'pf-t-d1', type: 'flowEdge' },
-      { id: 'e-t-3', source: 'pf-t-d1', target: 'pf-t-a2', type: 'flowEdge', label: 'Yes', data: { conditionType: 'yes' } },
-      { id: 'e-t-4', source: 'pf-t-d1', target: 'pf-t-e', type: 'flowEdge', label: 'No', data: { conditionType: 'no' } },
+      {
+        id: 'e-t-3',
+        source: 'pf-t-d1',
+        target: 'pf-t-a2',
+        type: 'flowEdge',
+        label: 'Yes',
+        data: { conditionType: 'yes' },
+      },
+      {
+        id: 'e-t-4',
+        source: 'pf-t-d1',
+        target: 'pf-t-e',
+        type: 'flowEdge',
+        label: 'No',
+        data: { conditionType: 'no' },
+      },
       { id: 'e-t-5', source: 'pf-t-a2', target: 'pf-t-e', type: 'flowEdge' },
     ],
-    extensions: { processFlow: { lanes: [{ id: 'lane-1', label: 'Main Process', color: '#e0e7ff' }] } },
+    extensions: {
+      processFlow: { lanes: [{ id: 'lane-1', label: 'Main Process', color: '#e0e7ff' }] },
+    },
   },
   {
     id: 'pf-approval',
@@ -86,18 +128,72 @@ const PROCESS_FLOW_TEMPLATES: TemplateDefinition[] = [
     icon: Layers,
     tool: 'process_flow',
     nodes: [
-      { id: 'pf-ap-s', type: 'flowNode', position: { x: 50, y: 60 }, data: { label: 'Submit Request', shape: 'start', laneId: 'lane-req', laneColor: '#dbeafe' } },
-      { id: 'pf-ap-r', type: 'flowNode', position: { x: 250, y: 200 }, data: { label: 'Review', shape: 'action', laneId: 'lane-rev', laneColor: '#d1fae5' } },
-      { id: 'pf-ap-d', type: 'flowNode', position: { x: 450, y: 200 }, data: { label: 'Approve?', shape: 'decision', laneId: 'lane-rev', laneColor: '#d1fae5' } },
-      { id: 'pf-ap-n1', type: 'flowNode', position: { x: 650, y: 60 }, data: { label: 'Notify Approved', shape: 'action', laneId: 'lane-req', laneColor: '#dbeafe' } },
-      { id: 'pf-ap-n2', type: 'flowNode', position: { x: 650, y: 200 }, data: { label: 'Notify Rejected', shape: 'action', laneId: 'lane-rev', laneColor: '#d1fae5' } },
-      { id: 'pf-ap-e', type: 'flowNode', position: { x: 850, y: 130 }, data: { label: 'End', shape: 'end', laneId: 'lane-req', laneColor: '#dbeafe' } },
+      {
+        id: 'pf-ap-s',
+        type: 'flowNode',
+        position: { x: 50, y: 60 },
+        data: { label: 'Submit Request', shape: 'start', laneId: 'lane-req', laneColor: '#dbeafe' },
+      },
+      {
+        id: 'pf-ap-r',
+        type: 'flowNode',
+        position: { x: 250, y: 200 },
+        data: { label: 'Review', shape: 'action', laneId: 'lane-rev', laneColor: '#d1fae5' },
+      },
+      {
+        id: 'pf-ap-d',
+        type: 'flowNode',
+        position: { x: 450, y: 200 },
+        data: { label: 'Approve?', shape: 'decision', laneId: 'lane-rev', laneColor: '#d1fae5' },
+      },
+      {
+        id: 'pf-ap-n1',
+        type: 'flowNode',
+        position: { x: 650, y: 60 },
+        data: {
+          label: 'Notify Approved',
+          shape: 'action',
+          laneId: 'lane-req',
+          laneColor: '#dbeafe',
+        },
+      },
+      {
+        id: 'pf-ap-n2',
+        type: 'flowNode',
+        position: { x: 650, y: 200 },
+        data: {
+          label: 'Notify Rejected',
+          shape: 'action',
+          laneId: 'lane-rev',
+          laneColor: '#d1fae5',
+        },
+      },
+      {
+        id: 'pf-ap-e',
+        type: 'flowNode',
+        position: { x: 850, y: 130 },
+        data: { label: 'End', shape: 'end', laneId: 'lane-req', laneColor: '#dbeafe' },
+      },
     ],
     edges: [
       { id: 'e-ap-1', source: 'pf-ap-s', target: 'pf-ap-r', type: 'flowEdge' },
       { id: 'e-ap-2', source: 'pf-ap-r', target: 'pf-ap-d', type: 'flowEdge' },
-      { id: 'e-ap-3', source: 'pf-ap-d', target: 'pf-ap-n1', type: 'flowEdge', label: 'Yes', data: { conditionType: 'yes' } },
-      { id: 'e-ap-4', source: 'pf-ap-d', target: 'pf-ap-n2', type: 'flowEdge', label: 'No', data: { conditionType: 'no' } },
+      {
+        id: 'e-ap-3',
+        source: 'pf-ap-d',
+        target: 'pf-ap-n1',
+        type: 'flowEdge',
+        label: 'Yes',
+        data: { conditionType: 'yes' },
+      },
+      {
+        id: 'e-ap-4',
+        source: 'pf-ap-d',
+        target: 'pf-ap-n2',
+        type: 'flowEdge',
+        label: 'No',
+        data: { conditionType: 'no' },
+      },
       { id: 'e-ap-5', source: 'pf-ap-n1', target: 'pf-ap-e', type: 'flowEdge' },
       { id: 'e-ap-6', source: 'pf-ap-n2', target: 'pf-ap-e', type: 'flowEdge' },
     ],
@@ -119,13 +215,53 @@ const PROCESS_FLOW_TEMPLATES: TemplateDefinition[] = [
     icon: LayoutGrid,
     tool: 'process_flow',
     nodes: [
-      { id: 'pf-pdca-s', type: 'flowNode', position: { x: 50, y: 60 }, data: { label: 'Start', shape: 'start', laneId: 'lane-pdca', laneColor: '#e0e7ff' } },
-      { id: 'pf-pdca-p', type: 'flowNode', position: { x: 250, y: 60 }, data: { label: 'Plan', shape: 'action', laneId: 'lane-pdca', laneColor: '#e0e7ff' } },
-      { id: 'pf-pdca-d', type: 'flowNode', position: { x: 450, y: 60 }, data: { label: 'Do', shape: 'action', laneId: 'lane-pdca', laneColor: '#e0e7ff' } },
-      { id: 'pf-pdca-c', type: 'flowNode', position: { x: 650, y: 60 }, data: { label: 'Check', shape: 'action', laneId: 'lane-pdca', laneColor: '#e0e7ff' } },
-      { id: 'pf-pdca-a', type: 'flowNode', position: { x: 850, y: 60 }, data: { label: 'Act', shape: 'action', laneId: 'lane-pdca', laneColor: '#e0e7ff' } },
-      { id: 'pf-pdca-ok', type: 'flowNode', position: { x: 1050, y: 60 }, data: { label: 'Satisfactory?', shape: 'decision', laneId: 'lane-pdca', laneColor: '#e0e7ff' } },
-      { id: 'pf-pdca-e', type: 'flowNode', position: { x: 1250, y: 60 }, data: { label: 'Standardize', shape: 'end', laneId: 'lane-pdca', laneColor: '#e0e7ff' } },
+      {
+        id: 'pf-pdca-s',
+        type: 'flowNode',
+        position: { x: 50, y: 60 },
+        data: { label: 'Start', shape: 'start', laneId: 'lane-pdca', laneColor: '#e0e7ff' },
+      },
+      {
+        id: 'pf-pdca-p',
+        type: 'flowNode',
+        position: { x: 250, y: 60 },
+        data: { label: 'Plan', shape: 'action', laneId: 'lane-pdca', laneColor: '#e0e7ff' },
+      },
+      {
+        id: 'pf-pdca-d',
+        type: 'flowNode',
+        position: { x: 450, y: 60 },
+        data: { label: 'Do', shape: 'action', laneId: 'lane-pdca', laneColor: '#e0e7ff' },
+      },
+      {
+        id: 'pf-pdca-c',
+        type: 'flowNode',
+        position: { x: 650, y: 60 },
+        data: { label: 'Check', shape: 'action', laneId: 'lane-pdca', laneColor: '#e0e7ff' },
+      },
+      {
+        id: 'pf-pdca-a',
+        type: 'flowNode',
+        position: { x: 850, y: 60 },
+        data: { label: 'Act', shape: 'action', laneId: 'lane-pdca', laneColor: '#e0e7ff' },
+      },
+      {
+        id: 'pf-pdca-ok',
+        type: 'flowNode',
+        position: { x: 1050, y: 60 },
+        data: {
+          label: 'Satisfactory?',
+          shape: 'decision',
+          laneId: 'lane-pdca',
+          laneColor: '#e0e7ff',
+        },
+      },
+      {
+        id: 'pf-pdca-e',
+        type: 'flowNode',
+        position: { x: 1250, y: 60 },
+        data: { label: 'Standardize', shape: 'end', laneId: 'lane-pdca', laneColor: '#e0e7ff' },
+      },
     ],
     edges: [
       { id: 'e-pdca-1', source: 'pf-pdca-s', target: 'pf-pdca-p', type: 'flowEdge' },
@@ -133,32 +269,116 @@ const PROCESS_FLOW_TEMPLATES: TemplateDefinition[] = [
       { id: 'e-pdca-3', source: 'pf-pdca-d', target: 'pf-pdca-c', type: 'flowEdge' },
       { id: 'e-pdca-4', source: 'pf-pdca-c', target: 'pf-pdca-a', type: 'flowEdge' },
       { id: 'e-pdca-5', source: 'pf-pdca-a', target: 'pf-pdca-ok', type: 'flowEdge' },
-      { id: 'e-pdca-6', source: 'pf-pdca-ok', target: 'pf-pdca-e', type: 'flowEdge', label: 'Yes', data: { conditionType: 'yes' } },
-      { id: 'e-pdca-7', source: 'pf-pdca-ok', target: 'pf-pdca-p', type: 'flowEdge', label: 'No', data: { conditionType: 'no' } },
+      {
+        id: 'e-pdca-6',
+        source: 'pf-pdca-ok',
+        target: 'pf-pdca-e',
+        type: 'flowEdge',
+        label: 'Yes',
+        data: { conditionType: 'yes' },
+      },
+      {
+        id: 'e-pdca-7',
+        source: 'pf-pdca-ok',
+        target: 'pf-pdca-p',
+        type: 'flowEdge',
+        label: 'No',
+        data: { conditionType: 'no' },
+      },
     ],
-    extensions: { processFlow: { lanes: [{ id: 'lane-pdca', label: 'PDCA Cycle', color: '#e0e7ff' }] } },
+    extensions: {
+      processFlow: { lanes: [{ id: 'lane-pdca', label: 'PDCA Cycle', color: '#e0e7ff' }] },
+    },
   },
   {
     id: 'pf-o2c',
     nameEn: 'Order-to-Cash (O2C)',
     namePl: 'Order-to-Cash (O2C)',
     descEn: 'Order → Credit Check → Confirm → Pick & Pack → Ship → Invoice → Payment → Close',
-    descPl: 'Zamówienie → Weryfikacja kredytowa → Potwierdzenie → Kompletacja → Wysyłka → Faktura → Płatność → Zamknięcie',
+    descPl:
+      'Zamówienie → Weryfikacja kredytowa → Potwierdzenie → Kompletacja → Wysyłka → Faktura → Płatność → Zamknięcie',
     icon: Workflow,
     tool: 'process_flow',
     nodes: [
-      { id: 'pf-o2c-s', type: 'flowNode', position: { x: 50, y: 60 }, data: { label: 'Order Received', shape: 'start', laneId: 'lane-sales', laneColor: '#dbeafe' } },
-      { id: 'pf-o2c-cc', type: 'flowNode', position: { x: 250, y: 200 }, data: { label: 'Credit Check', shape: 'decision', laneId: 'lane-finance', laneColor: '#d1fae5' } },
-      { id: 'pf-o2c-oc', type: 'flowNode', position: { x: 450, y: 60 }, data: { label: 'Order Confirmation', shape: 'action', laneId: 'lane-sales', laneColor: '#dbeafe' } },
-      { id: 'pf-o2c-pp', type: 'flowNode', position: { x: 650, y: 340 }, data: { label: 'Pick & Pack', shape: 'action', laneId: 'lane-warehouse', laneColor: '#fef3c7' } },
-      { id: 'pf-o2c-sh', type: 'flowNode', position: { x: 850, y: 340 }, data: { label: 'Ship', shape: 'action', laneId: 'lane-warehouse', laneColor: '#fef3c7' } },
-      { id: 'pf-o2c-inv', type: 'flowNode', position: { x: 1050, y: 200 }, data: { label: 'Invoice', shape: 'action', laneId: 'lane-finance', laneColor: '#d1fae5' } },
-      { id: 'pf-o2c-pay', type: 'flowNode', position: { x: 1250, y: 200 }, data: { label: 'Payment', shape: 'action', laneId: 'lane-finance', laneColor: '#d1fae5' } },
-      { id: 'pf-o2c-e', type: 'flowNode', position: { x: 1450, y: 60 }, data: { label: 'Close', shape: 'end', laneId: 'lane-sales', laneColor: '#dbeafe' } },
+      {
+        id: 'pf-o2c-s',
+        type: 'flowNode',
+        position: { x: 50, y: 60 },
+        data: {
+          label: 'Order Received',
+          shape: 'start',
+          laneId: 'lane-sales',
+          laneColor: '#dbeafe',
+        },
+      },
+      {
+        id: 'pf-o2c-cc',
+        type: 'flowNode',
+        position: { x: 250, y: 200 },
+        data: {
+          label: 'Credit Check',
+          shape: 'decision',
+          laneId: 'lane-finance',
+          laneColor: '#d1fae5',
+        },
+      },
+      {
+        id: 'pf-o2c-oc',
+        type: 'flowNode',
+        position: { x: 450, y: 60 },
+        data: {
+          label: 'Order Confirmation',
+          shape: 'action',
+          laneId: 'lane-sales',
+          laneColor: '#dbeafe',
+        },
+      },
+      {
+        id: 'pf-o2c-pp',
+        type: 'flowNode',
+        position: { x: 650, y: 340 },
+        data: {
+          label: 'Pick & Pack',
+          shape: 'action',
+          laneId: 'lane-warehouse',
+          laneColor: '#fef3c7',
+        },
+      },
+      {
+        id: 'pf-o2c-sh',
+        type: 'flowNode',
+        position: { x: 850, y: 340 },
+        data: { label: 'Ship', shape: 'action', laneId: 'lane-warehouse', laneColor: '#fef3c7' },
+      },
+      {
+        id: 'pf-o2c-inv',
+        type: 'flowNode',
+        position: { x: 1050, y: 200 },
+        data: { label: 'Invoice', shape: 'action', laneId: 'lane-finance', laneColor: '#d1fae5' },
+      },
+      {
+        id: 'pf-o2c-pay',
+        type: 'flowNode',
+        position: { x: 1250, y: 200 },
+        data: { label: 'Payment', shape: 'action', laneId: 'lane-finance', laneColor: '#d1fae5' },
+      },
+      {
+        id: 'pf-o2c-e',
+        type: 'flowNode',
+        position: { x: 1450, y: 60 },
+        data: { label: 'Close', shape: 'end', laneId: 'lane-sales', laneColor: '#dbeafe' },
+      },
     ],
     edges: [
       { id: 'e-o2c-1', source: 'pf-o2c-s', target: 'pf-o2c-cc', type: 'flowEdge' },
-      { id: 'e-o2c-2', source: 'pf-o2c-cc', target: 'pf-o2c-oc', type: 'flowEdge', label: 'Approved', data: { conditionType: 'yes' } },
+      {
+        id: 'e-o2c-2',
+        source: 'pf-o2c-cc',
+        target: 'pf-o2c-oc',
+        type: 'flowEdge',
+        label: 'Approved',
+        data: { conditionType: 'yes' },
+      },
       { id: 'e-o2c-3', source: 'pf-o2c-oc', target: 'pf-o2c-pp', type: 'flowEdge' },
       { id: 'e-o2c-4', source: 'pf-o2c-pp', target: 'pf-o2c-sh', type: 'flowEdge' },
       { id: 'e-o2c-5', source: 'pf-o2c-sh', target: 'pf-o2c-inv', type: 'flowEdge' },
@@ -180,20 +400,83 @@ const PROCESS_FLOW_TEMPLATES: TemplateDefinition[] = [
     nameEn: 'Procure-to-Pay (P2P)',
     namePl: 'Procure-to-Pay (P2P)',
     descEn: 'Requisition → Approval → PO Creation → Goods Receipt → Invoice Match → Payment',
-    descPl: 'Zapotrzebowanie → Zatwierdzenie → Zamówienie → Przyjęcie towaru → Dopasowanie faktury → Płatność',
+    descPl:
+      'Zapotrzebowanie → Zatwierdzenie → Zamówienie → Przyjęcie towaru → Dopasowanie faktury → Płatność',
     icon: Workflow,
     tool: 'process_flow',
     nodes: [
-      { id: 'pf-p2p-s', type: 'flowNode', position: { x: 50, y: 60 }, data: { label: 'Requisition', shape: 'start', laneId: 'lane-procurement', laneColor: '#dbeafe' } },
-      { id: 'pf-p2p-ap', type: 'flowNode', position: { x: 250, y: 200 }, data: { label: 'Approval', shape: 'decision', laneId: 'lane-approvals', laneColor: '#fef3c7' } },
-      { id: 'pf-p2p-po', type: 'flowNode', position: { x: 450, y: 60 }, data: { label: 'PO Creation', shape: 'action', laneId: 'lane-procurement', laneColor: '#dbeafe' } },
-      { id: 'pf-p2p-gr', type: 'flowNode', position: { x: 650, y: 60 }, data: { label: 'Goods Receipt', shape: 'action', laneId: 'lane-procurement', laneColor: '#dbeafe' } },
-      { id: 'pf-p2p-im', type: 'flowNode', position: { x: 850, y: 340 }, data: { label: 'Invoice Match', shape: 'action', laneId: 'lane-finance', laneColor: '#d1fae5' } },
-      { id: 'pf-p2p-pay', type: 'flowNode', position: { x: 1050, y: 340 }, data: { label: 'Payment', shape: 'end', laneId: 'lane-finance', laneColor: '#d1fae5' } },
+      {
+        id: 'pf-p2p-s',
+        type: 'flowNode',
+        position: { x: 50, y: 60 },
+        data: {
+          label: 'Requisition',
+          shape: 'start',
+          laneId: 'lane-procurement',
+          laneColor: '#dbeafe',
+        },
+      },
+      {
+        id: 'pf-p2p-ap',
+        type: 'flowNode',
+        position: { x: 250, y: 200 },
+        data: {
+          label: 'Approval',
+          shape: 'decision',
+          laneId: 'lane-approvals',
+          laneColor: '#fef3c7',
+        },
+      },
+      {
+        id: 'pf-p2p-po',
+        type: 'flowNode',
+        position: { x: 450, y: 60 },
+        data: {
+          label: 'PO Creation',
+          shape: 'action',
+          laneId: 'lane-procurement',
+          laneColor: '#dbeafe',
+        },
+      },
+      {
+        id: 'pf-p2p-gr',
+        type: 'flowNode',
+        position: { x: 650, y: 60 },
+        data: {
+          label: 'Goods Receipt',
+          shape: 'action',
+          laneId: 'lane-procurement',
+          laneColor: '#dbeafe',
+        },
+      },
+      {
+        id: 'pf-p2p-im',
+        type: 'flowNode',
+        position: { x: 850, y: 340 },
+        data: {
+          label: 'Invoice Match',
+          shape: 'action',
+          laneId: 'lane-finance',
+          laneColor: '#d1fae5',
+        },
+      },
+      {
+        id: 'pf-p2p-pay',
+        type: 'flowNode',
+        position: { x: 1050, y: 340 },
+        data: { label: 'Payment', shape: 'end', laneId: 'lane-finance', laneColor: '#d1fae5' },
+      },
     ],
     edges: [
       { id: 'e-p2p-1', source: 'pf-p2p-s', target: 'pf-p2p-ap', type: 'flowEdge' },
-      { id: 'e-p2p-2', source: 'pf-p2p-ap', target: 'pf-p2p-po', type: 'flowEdge', label: 'Approved', data: { conditionType: 'yes' } },
+      {
+        id: 'e-p2p-2',
+        source: 'pf-p2p-ap',
+        target: 'pf-p2p-po',
+        type: 'flowEdge',
+        label: 'Approved',
+        data: { conditionType: 'yes' },
+      },
       { id: 'e-p2p-3', source: 'pf-p2p-po', target: 'pf-p2p-gr', type: 'flowEdge' },
       { id: 'e-p2p-4', source: 'pf-p2p-gr', target: 'pf-p2p-im', type: 'flowEdge' },
       { id: 'e-p2p-5', source: 'pf-p2p-im', target: 'pf-p2p-pay', type: 'flowEdge' },
@@ -217,12 +500,47 @@ const PROCESS_FLOW_TEMPLATES: TemplateDefinition[] = [
     icon: Layers,
     tool: 'process_flow',
     nodes: [
-      { id: 'pf-inc-s', type: 'flowNode', position: { x: 50, y: 60 }, data: { label: 'Report', shape: 'start', laneId: 'lane-servicedesk', laneColor: '#dbeafe' } },
-      { id: 'pf-inc-cl', type: 'flowNode', position: { x: 250, y: 60 }, data: { label: 'Classify', shape: 'action', laneId: 'lane-servicedesk', laneColor: '#dbeafe' } },
-      { id: 'pf-inc-inv', type: 'flowNode', position: { x: 450, y: 200 }, data: { label: 'Investigate', shape: 'action', laneId: 'lane-l2', laneColor: '#d1fae5' } },
-      { id: 'pf-inc-res', type: 'flowNode', position: { x: 650, y: 200 }, data: { label: 'Resolve', shape: 'action', laneId: 'lane-l2', laneColor: '#d1fae5' } },
-      { id: 'pf-inc-close', type: 'flowNode', position: { x: 850, y: 60 }, data: { label: 'Close', shape: 'action', laneId: 'lane-servicedesk', laneColor: '#dbeafe' } },
-      { id: 'pf-inc-rev', type: 'flowNode', position: { x: 1050, y: 340 }, data: { label: 'Review', shape: 'end', laneId: 'lane-mgmt', laneColor: '#fef3c7' } },
+      {
+        id: 'pf-inc-s',
+        type: 'flowNode',
+        position: { x: 50, y: 60 },
+        data: { label: 'Report', shape: 'start', laneId: 'lane-servicedesk', laneColor: '#dbeafe' },
+      },
+      {
+        id: 'pf-inc-cl',
+        type: 'flowNode',
+        position: { x: 250, y: 60 },
+        data: {
+          label: 'Classify',
+          shape: 'action',
+          laneId: 'lane-servicedesk',
+          laneColor: '#dbeafe',
+        },
+      },
+      {
+        id: 'pf-inc-inv',
+        type: 'flowNode',
+        position: { x: 450, y: 200 },
+        data: { label: 'Investigate', shape: 'action', laneId: 'lane-l2', laneColor: '#d1fae5' },
+      },
+      {
+        id: 'pf-inc-res',
+        type: 'flowNode',
+        position: { x: 650, y: 200 },
+        data: { label: 'Resolve', shape: 'action', laneId: 'lane-l2', laneColor: '#d1fae5' },
+      },
+      {
+        id: 'pf-inc-close',
+        type: 'flowNode',
+        position: { x: 850, y: 60 },
+        data: { label: 'Close', shape: 'action', laneId: 'lane-servicedesk', laneColor: '#dbeafe' },
+      },
+      {
+        id: 'pf-inc-rev',
+        type: 'flowNode',
+        position: { x: 1050, y: 340 },
+        data: { label: 'Review', shape: 'end', laneId: 'lane-mgmt', laneColor: '#fef3c7' },
+      },
     ],
     edges: [
       { id: 'e-inc-1', source: 'pf-inc-s', target: 'pf-inc-cl', type: 'flowEdge' },
@@ -255,7 +573,12 @@ const MINDMAP_TEMPLATES: TemplateDefinition[] = [
     icon: FileText,
     tool: 'mindmap',
     nodes: [
-      { id: 'root', type: 'root', position: { x: 400, y: 300 }, data: { label: 'Central Idea', branchKey: 'root' } },
+      {
+        id: 'root',
+        type: 'root',
+        position: { x: 400, y: 300 },
+        data: { label: 'Central Idea', branchKey: 'root' },
+      },
     ],
     edges: [],
     extensions: {},
@@ -269,11 +592,36 @@ const MINDMAP_TEMPLATES: TemplateDefinition[] = [
     icon: LayoutGrid,
     tool: 'mindmap',
     nodes: [
-      { id: 'root', type: 'root', position: { x: 400, y: 300 }, data: { label: 'SWOT', branchKey: 'root' } },
-      { id: 'b-s', type: 'branch', position: { x: 200, y: 150 }, data: { label: 'Strengths', branchKey: 'strengths' } },
-      { id: 'b-w', type: 'branch', position: { x: 600, y: 150 }, data: { label: 'Weaknesses', branchKey: 'weaknesses' } },
-      { id: 'b-o', type: 'branch', position: { x: 200, y: 450 }, data: { label: 'Opportunities', branchKey: 'opportunities' } },
-      { id: 'b-t', type: 'branch', position: { x: 600, y: 450 }, data: { label: 'Threats', branchKey: 'threats' } },
+      {
+        id: 'root',
+        type: 'root',
+        position: { x: 400, y: 300 },
+        data: { label: 'SWOT', branchKey: 'root' },
+      },
+      {
+        id: 'b-s',
+        type: 'branch',
+        position: { x: 200, y: 150 },
+        data: { label: 'Strengths', branchKey: 'strengths' },
+      },
+      {
+        id: 'b-w',
+        type: 'branch',
+        position: { x: 600, y: 150 },
+        data: { label: 'Weaknesses', branchKey: 'weaknesses' },
+      },
+      {
+        id: 'b-o',
+        type: 'branch',
+        position: { x: 200, y: 450 },
+        data: { label: 'Opportunities', branchKey: 'opportunities' },
+      },
+      {
+        id: 'b-t',
+        type: 'branch',
+        position: { x: 600, y: 450 },
+        data: { label: 'Threats', branchKey: 'threats' },
+      },
     ],
     edges: [
       { id: 'e-s', source: 'root', target: 'b-s' },
@@ -292,12 +640,42 @@ const MINDMAP_TEMPLATES: TemplateDefinition[] = [
     icon: GitBranch,
     tool: 'mindmap',
     nodes: [
-      { id: 'root', type: 'root', position: { x: 100, y: 300 }, data: { label: 'Problem', branchKey: 'root' } },
-      { id: 'w1', type: 'branch', position: { x: 300, y: 300 }, data: { label: 'Why? (1)', branchKey: 'why1' } },
-      { id: 'w2', type: 'branch', position: { x: 500, y: 300 }, data: { label: 'Why? (2)', branchKey: 'why2' } },
-      { id: 'w3', type: 'branch', position: { x: 700, y: 300 }, data: { label: 'Why? (3)', branchKey: 'why3' } },
-      { id: 'w4', type: 'branch', position: { x: 900, y: 300 }, data: { label: 'Why? (4)', branchKey: 'why4' } },
-      { id: 'w5', type: 'branch', position: { x: 1100, y: 300 }, data: { label: 'Root Cause', branchKey: 'root_cause' } },
+      {
+        id: 'root',
+        type: 'root',
+        position: { x: 100, y: 300 },
+        data: { label: 'Problem', branchKey: 'root' },
+      },
+      {
+        id: 'w1',
+        type: 'branch',
+        position: { x: 300, y: 300 },
+        data: { label: 'Why? (1)', branchKey: 'why1' },
+      },
+      {
+        id: 'w2',
+        type: 'branch',
+        position: { x: 500, y: 300 },
+        data: { label: 'Why? (2)', branchKey: 'why2' },
+      },
+      {
+        id: 'w3',
+        type: 'branch',
+        position: { x: 700, y: 300 },
+        data: { label: 'Why? (3)', branchKey: 'why3' },
+      },
+      {
+        id: 'w4',
+        type: 'branch',
+        position: { x: 900, y: 300 },
+        data: { label: 'Why? (4)', branchKey: 'why4' },
+      },
+      {
+        id: 'w5',
+        type: 'branch',
+        position: { x: 1100, y: 300 },
+        data: { label: 'Root Cause', branchKey: 'root_cause' },
+      },
     ],
     edges: [
       { id: 'e-w1', source: 'root', target: 'w1' },
@@ -317,13 +695,48 @@ const MINDMAP_TEMPLATES: TemplateDefinition[] = [
     icon: Network,
     tool: 'mindmap',
     nodes: [
-      { id: 'root', type: 'root', position: { x: 800, y: 300 }, data: { label: 'Effect / Problem', branchKey: 'root' } },
-      { id: 'b-man', type: 'branch', position: { x: 200, y: 100 }, data: { label: 'Man', branchKey: 'man' } },
-      { id: 'b-machine', type: 'branch', position: { x: 400, y: 100 }, data: { label: 'Machine', branchKey: 'machine' } },
-      { id: 'b-material', type: 'branch', position: { x: 600, y: 100 }, data: { label: 'Material', branchKey: 'material' } },
-      { id: 'b-method', type: 'branch', position: { x: 200, y: 500 }, data: { label: 'Method', branchKey: 'method' } },
-      { id: 'b-measurement', type: 'branch', position: { x: 400, y: 500 }, data: { label: 'Measurement', branchKey: 'measurement' } },
-      { id: 'b-environment', type: 'branch', position: { x: 600, y: 500 }, data: { label: 'Environment', branchKey: 'environment' } },
+      {
+        id: 'root',
+        type: 'root',
+        position: { x: 800, y: 300 },
+        data: { label: 'Effect / Problem', branchKey: 'root' },
+      },
+      {
+        id: 'b-man',
+        type: 'branch',
+        position: { x: 200, y: 100 },
+        data: { label: 'Man', branchKey: 'man' },
+      },
+      {
+        id: 'b-machine',
+        type: 'branch',
+        position: { x: 400, y: 100 },
+        data: { label: 'Machine', branchKey: 'machine' },
+      },
+      {
+        id: 'b-material',
+        type: 'branch',
+        position: { x: 600, y: 100 },
+        data: { label: 'Material', branchKey: 'material' },
+      },
+      {
+        id: 'b-method',
+        type: 'branch',
+        position: { x: 200, y: 500 },
+        data: { label: 'Method', branchKey: 'method' },
+      },
+      {
+        id: 'b-measurement',
+        type: 'branch',
+        position: { x: 400, y: 500 },
+        data: { label: 'Measurement', branchKey: 'measurement' },
+      },
+      {
+        id: 'b-environment',
+        type: 'branch',
+        position: { x: 600, y: 500 },
+        data: { label: 'Environment', branchKey: 'environment' },
+      },
     ],
     edges: [
       { id: 'e-man', source: 'b-man', target: 'root' },
@@ -344,10 +757,30 @@ const MINDMAP_TEMPLATES: TemplateDefinition[] = [
     icon: Network,
     tool: 'mindmap',
     nodes: [
-      { id: 'root', type: 'root', position: { x: 400, y: 300 }, data: { label: 'Project', branchKey: 'root' } },
-      { id: 'b-high', type: 'branch', position: { x: 200, y: 150 }, data: { label: 'High Influence', branchKey: 'high_influence' } },
-      { id: 'b-med', type: 'branch', position: { x: 600, y: 150 }, data: { label: 'Medium Influence', branchKey: 'medium_influence' } },
-      { id: 'b-low', type: 'branch', position: { x: 400, y: 500 }, data: { label: 'Low Influence', branchKey: 'low_influence' } },
+      {
+        id: 'root',
+        type: 'root',
+        position: { x: 400, y: 300 },
+        data: { label: 'Project', branchKey: 'root' },
+      },
+      {
+        id: 'b-high',
+        type: 'branch',
+        position: { x: 200, y: 150 },
+        data: { label: 'High Influence', branchKey: 'high_influence' },
+      },
+      {
+        id: 'b-med',
+        type: 'branch',
+        position: { x: 600, y: 150 },
+        data: { label: 'Medium Influence', branchKey: 'medium_influence' },
+      },
+      {
+        id: 'b-low',
+        type: 'branch',
+        position: { x: 400, y: 500 },
+        data: { label: 'Low Influence', branchKey: 'low_influence' },
+      },
     ],
     edges: [
       { id: 'e-high', source: 'root', target: 'b-high' },
@@ -365,12 +798,42 @@ const MINDMAP_TEMPLATES: TemplateDefinition[] = [
     icon: Network,
     tool: 'mindmap',
     nodes: [
-      { id: 'root', type: 'root', position: { x: 400, y: 300 }, data: { label: "Porter's 5 Forces", branchKey: 'root' } },
-      { id: 'b-rivalry', type: 'branch', position: { x: 400, y: 80 }, data: { label: 'Competitive Rivalry', branchKey: 'rivalry' } },
-      { id: 'b-entrants', type: 'branch', position: { x: 700, y: 200 }, data: { label: 'New Entrants', branchKey: 'new_entrants' } },
-      { id: 'b-substitutes', type: 'branch', position: { x: 650, y: 450 }, data: { label: 'Substitutes', branchKey: 'substitutes' } },
-      { id: 'b-buyers', type: 'branch', position: { x: 150, y: 450 }, data: { label: 'Buyer Power', branchKey: 'buyer_power' } },
-      { id: 'b-suppliers', type: 'branch', position: { x: 100, y: 200 }, data: { label: 'Supplier Power', branchKey: 'supplier_power' } },
+      {
+        id: 'root',
+        type: 'root',
+        position: { x: 400, y: 300 },
+        data: { label: "Porter's 5 Forces", branchKey: 'root' },
+      },
+      {
+        id: 'b-rivalry',
+        type: 'branch',
+        position: { x: 400, y: 80 },
+        data: { label: 'Competitive Rivalry', branchKey: 'rivalry' },
+      },
+      {
+        id: 'b-entrants',
+        type: 'branch',
+        position: { x: 700, y: 200 },
+        data: { label: 'New Entrants', branchKey: 'new_entrants' },
+      },
+      {
+        id: 'b-substitutes',
+        type: 'branch',
+        position: { x: 650, y: 450 },
+        data: { label: 'Substitutes', branchKey: 'substitutes' },
+      },
+      {
+        id: 'b-buyers',
+        type: 'branch',
+        position: { x: 150, y: 450 },
+        data: { label: 'Buyer Power', branchKey: 'buyer_power' },
+      },
+      {
+        id: 'b-suppliers',
+        type: 'branch',
+        position: { x: 100, y: 200 },
+        data: { label: 'Supplier Power', branchKey: 'supplier_power' },
+      },
     ],
     edges: [
       { id: 'e-rivalry', source: 'root', target: 'b-rivalry' },
@@ -390,13 +853,48 @@ const MINDMAP_TEMPLATES: TemplateDefinition[] = [
     icon: Workflow,
     tool: 'mindmap',
     nodes: [
-      { id: 'root', type: 'root', position: { x: 400, y: 300 }, data: { label: 'Value Chain', branchKey: 'root' } },
-      { id: 'b-inbound', type: 'branch', position: { x: 100, y: 150 }, data: { label: 'Inbound Logistics', branchKey: 'inbound' } },
-      { id: 'b-ops', type: 'branch', position: { x: 300, y: 100 }, data: { label: 'Operations', branchKey: 'operations' } },
-      { id: 'b-outbound', type: 'branch', position: { x: 500, y: 100 }, data: { label: 'Outbound Logistics', branchKey: 'outbound' } },
-      { id: 'b-marketing', type: 'branch', position: { x: 700, y: 150 }, data: { label: 'Marketing & Sales', branchKey: 'marketing' } },
-      { id: 'b-service', type: 'branch', position: { x: 600, y: 450 }, data: { label: 'Service', branchKey: 'service' } },
-      { id: 'b-support', type: 'branch', position: { x: 200, y: 450 }, data: { label: 'Support Activities', branchKey: 'support' } },
+      {
+        id: 'root',
+        type: 'root',
+        position: { x: 400, y: 300 },
+        data: { label: 'Value Chain', branchKey: 'root' },
+      },
+      {
+        id: 'b-inbound',
+        type: 'branch',
+        position: { x: 100, y: 150 },
+        data: { label: 'Inbound Logistics', branchKey: 'inbound' },
+      },
+      {
+        id: 'b-ops',
+        type: 'branch',
+        position: { x: 300, y: 100 },
+        data: { label: 'Operations', branchKey: 'operations' },
+      },
+      {
+        id: 'b-outbound',
+        type: 'branch',
+        position: { x: 500, y: 100 },
+        data: { label: 'Outbound Logistics', branchKey: 'outbound' },
+      },
+      {
+        id: 'b-marketing',
+        type: 'branch',
+        position: { x: 700, y: 150 },
+        data: { label: 'Marketing & Sales', branchKey: 'marketing' },
+      },
+      {
+        id: 'b-service',
+        type: 'branch',
+        position: { x: 600, y: 450 },
+        data: { label: 'Service', branchKey: 'service' },
+      },
+      {
+        id: 'b-support',
+        type: 'branch',
+        position: { x: 200, y: 450 },
+        data: { label: 'Support Activities', branchKey: 'support' },
+      },
     ],
     edges: [
       { id: 'e-inbound', source: 'root', target: 'b-inbound' },
@@ -417,14 +915,54 @@ const MINDMAP_TEMPLATES: TemplateDefinition[] = [
     icon: LayoutGrid,
     tool: 'mindmap',
     nodes: [
-      { id: 'root', type: 'root', position: { x: 400, y: 300 }, data: { label: 'McKinsey 7S', branchKey: 'root' } },
-      { id: 'b-strategy', type: 'branch', position: { x: 400, y: 60 }, data: { label: 'Strategy', branchKey: 'strategy' } },
-      { id: 'b-structure', type: 'branch', position: { x: 680, y: 140 }, data: { label: 'Structure', branchKey: 'structure' } },
-      { id: 'b-systems', type: 'branch', position: { x: 720, y: 350 }, data: { label: 'Systems', branchKey: 'systems' } },
-      { id: 'b-values', type: 'branch', position: { x: 550, y: 520 }, data: { label: 'Shared Values', branchKey: 'shared_values' } },
-      { id: 'b-skills', type: 'branch', position: { x: 250, y: 520 }, data: { label: 'Skills', branchKey: 'skills' } },
-      { id: 'b-style', type: 'branch', position: { x: 80, y: 350 }, data: { label: 'Style', branchKey: 'style' } },
-      { id: 'b-staff', type: 'branch', position: { x: 120, y: 140 }, data: { label: 'Staff', branchKey: 'staff' } },
+      {
+        id: 'root',
+        type: 'root',
+        position: { x: 400, y: 300 },
+        data: { label: 'McKinsey 7S', branchKey: 'root' },
+      },
+      {
+        id: 'b-strategy',
+        type: 'branch',
+        position: { x: 400, y: 60 },
+        data: { label: 'Strategy', branchKey: 'strategy' },
+      },
+      {
+        id: 'b-structure',
+        type: 'branch',
+        position: { x: 680, y: 140 },
+        data: { label: 'Structure', branchKey: 'structure' },
+      },
+      {
+        id: 'b-systems',
+        type: 'branch',
+        position: { x: 720, y: 350 },
+        data: { label: 'Systems', branchKey: 'systems' },
+      },
+      {
+        id: 'b-values',
+        type: 'branch',
+        position: { x: 550, y: 520 },
+        data: { label: 'Shared Values', branchKey: 'shared_values' },
+      },
+      {
+        id: 'b-skills',
+        type: 'branch',
+        position: { x: 250, y: 520 },
+        data: { label: 'Skills', branchKey: 'skills' },
+      },
+      {
+        id: 'b-style',
+        type: 'branch',
+        position: { x: 80, y: 350 },
+        data: { label: 'Style', branchKey: 'style' },
+      },
+      {
+        id: 'b-staff',
+        type: 'branch',
+        position: { x: 120, y: 140 },
+        data: { label: 'Staff', branchKey: 'staff' },
+      },
     ],
     edges: [
       { id: 'e-strategy', source: 'root', target: 'b-strategy' },
@@ -463,15 +1001,60 @@ const WHITEBOARD_TEMPLATES: TemplateDefinition[] = [
     icon: LayoutGrid,
     tool: 'whiteboard',
     nodes: [
-      { id: 'f-kp', type: 'frameNode', position: { x: 0, y: 0 }, data: { label: 'Key Partners', width: 200, height: 300 } },
-      { id: 'f-ka', type: 'frameNode', position: { x: 220, y: 0 }, data: { label: 'Key Activities', width: 200, height: 150 } },
-      { id: 'f-kr', type: 'frameNode', position: { x: 220, y: 160 }, data: { label: 'Key Resources', width: 200, height: 140 } },
-      { id: 'f-vp', type: 'frameNode', position: { x: 440, y: 0 }, data: { label: 'Value Propositions', width: 200, height: 300 } },
-      { id: 'f-cr', type: 'frameNode', position: { x: 660, y: 0 }, data: { label: 'Customer Relationships', width: 200, height: 150 } },
-      { id: 'f-ch', type: 'frameNode', position: { x: 660, y: 160 }, data: { label: 'Channels', width: 200, height: 140 } },
-      { id: 'f-cs', type: 'frameNode', position: { x: 880, y: 0 }, data: { label: 'Customer Segments', width: 200, height: 300 } },
-      { id: 'f-cost', type: 'frameNode', position: { x: 0, y: 320 }, data: { label: 'Cost Structure', width: 540, height: 150 } },
-      { id: 'f-rev', type: 'frameNode', position: { x: 560, y: 320 }, data: { label: 'Revenue Streams', width: 520, height: 150 } },
+      {
+        id: 'f-kp',
+        type: 'frameNode',
+        position: { x: 0, y: 0 },
+        data: { label: 'Key Partners', width: 200, height: 300 },
+      },
+      {
+        id: 'f-ka',
+        type: 'frameNode',
+        position: { x: 220, y: 0 },
+        data: { label: 'Key Activities', width: 200, height: 150 },
+      },
+      {
+        id: 'f-kr',
+        type: 'frameNode',
+        position: { x: 220, y: 160 },
+        data: { label: 'Key Resources', width: 200, height: 140 },
+      },
+      {
+        id: 'f-vp',
+        type: 'frameNode',
+        position: { x: 440, y: 0 },
+        data: { label: 'Value Propositions', width: 200, height: 300 },
+      },
+      {
+        id: 'f-cr',
+        type: 'frameNode',
+        position: { x: 660, y: 0 },
+        data: { label: 'Customer Relationships', width: 200, height: 150 },
+      },
+      {
+        id: 'f-ch',
+        type: 'frameNode',
+        position: { x: 660, y: 160 },
+        data: { label: 'Channels', width: 200, height: 140 },
+      },
+      {
+        id: 'f-cs',
+        type: 'frameNode',
+        position: { x: 880, y: 0 },
+        data: { label: 'Customer Segments', width: 200, height: 300 },
+      },
+      {
+        id: 'f-cost',
+        type: 'frameNode',
+        position: { x: 0, y: 320 },
+        data: { label: 'Cost Structure', width: 540, height: 150 },
+      },
+      {
+        id: 'f-rev',
+        type: 'frameNode',
+        position: { x: 560, y: 320 },
+        data: { label: 'Revenue Streams', width: 520, height: 150 },
+      },
     ],
     edges: [],
     extensions: {},
@@ -485,10 +1068,50 @@ const WHITEBOARD_TEMPLATES: TemplateDefinition[] = [
     icon: LayoutGrid,
     tool: 'whiteboard',
     nodes: [
-      { id: 'f-qw', type: 'frameNode', position: { x: 0, y: 0 }, data: { label: 'Quick Wins (High Impact, Low Effort)', width: 350, height: 250, bgColor: 'rgba(209,250,229,0.4)' } },
-      { id: 'f-bb', type: 'frameNode', position: { x: 370, y: 0 }, data: { label: 'Big Bets (High Impact, High Effort)', width: 350, height: 250, bgColor: 'rgba(219,234,254,0.4)' } },
-      { id: 'f-fi', type: 'frameNode', position: { x: 0, y: 270 }, data: { label: 'Fill-ins (Low Impact, Low Effort)', width: 350, height: 250, bgColor: 'rgba(254,243,199,0.4)' } },
-      { id: 'f-mp', type: 'frameNode', position: { x: 370, y: 270 }, data: { label: 'Money Pit (Low Impact, High Effort)', width: 350, height: 250, bgColor: 'rgba(252,231,243,0.4)' } },
+      {
+        id: 'f-qw',
+        type: 'frameNode',
+        position: { x: 0, y: 0 },
+        data: {
+          label: 'Quick Wins (High Impact, Low Effort)',
+          width: 350,
+          height: 250,
+          bgColor: 'rgba(209,250,229,0.4)',
+        },
+      },
+      {
+        id: 'f-bb',
+        type: 'frameNode',
+        position: { x: 370, y: 0 },
+        data: {
+          label: 'Big Bets (High Impact, High Effort)',
+          width: 350,
+          height: 250,
+          bgColor: 'rgba(219,234,254,0.4)',
+        },
+      },
+      {
+        id: 'f-fi',
+        type: 'frameNode',
+        position: { x: 0, y: 270 },
+        data: {
+          label: 'Fill-ins (Low Impact, Low Effort)',
+          width: 350,
+          height: 250,
+          bgColor: 'rgba(254,243,199,0.4)',
+        },
+      },
+      {
+        id: 'f-mp',
+        type: 'frameNode',
+        position: { x: 370, y: 270 },
+        data: {
+          label: 'Money Pit (Low Impact, High Effort)',
+          width: 350,
+          height: 250,
+          bgColor: 'rgba(252,231,243,0.4)',
+        },
+      },
     ],
     edges: [],
     extensions: {},
@@ -502,9 +1125,34 @@ const WHITEBOARD_TEMPLATES: TemplateDefinition[] = [
     icon: Layers,
     tool: 'whiteboard',
     nodes: [
-      { id: 'f-good', type: 'frameNode', position: { x: 0, y: 0 }, data: { label: 'What went well', width: 280, height: 350, bgColor: 'rgba(209,250,229,0.4)' } },
-      { id: 'f-improve', type: 'frameNode', position: { x: 300, y: 0 }, data: { label: 'What to improve', width: 280, height: 350, bgColor: 'rgba(254,243,199,0.4)' } },
-      { id: 'f-actions', type: 'frameNode', position: { x: 600, y: 0 }, data: { label: 'Action items', width: 280, height: 350, bgColor: 'rgba(219,234,254,0.4)' } },
+      {
+        id: 'f-good',
+        type: 'frameNode',
+        position: { x: 0, y: 0 },
+        data: {
+          label: 'What went well',
+          width: 280,
+          height: 350,
+          bgColor: 'rgba(209,250,229,0.4)',
+        },
+      },
+      {
+        id: 'f-improve',
+        type: 'frameNode',
+        position: { x: 300, y: 0 },
+        data: {
+          label: 'What to improve',
+          width: 280,
+          height: 350,
+          bgColor: 'rgba(254,243,199,0.4)',
+        },
+      },
+      {
+        id: 'f-actions',
+        type: 'frameNode',
+        position: { x: 600, y: 0 },
+        data: { label: 'Action items', width: 280, height: 350, bgColor: 'rgba(219,234,254,0.4)' },
+      },
     ],
     edges: [],
     extensions: {},
@@ -518,15 +1166,60 @@ const WHITEBOARD_TEMPLATES: TemplateDefinition[] = [
     icon: LayoutGrid,
     tool: 'whiteboard',
     nodes: [
-      { id: 'f-lc-problem', type: 'frameNode', position: { x: 0, y: 0 }, data: { label: 'Problem', width: 200, height: 300 } },
-      { id: 'f-lc-solution', type: 'frameNode', position: { x: 220, y: 0 }, data: { label: 'Solution', width: 200, height: 150 } },
-      { id: 'f-lc-metrics', type: 'frameNode', position: { x: 220, y: 160 }, data: { label: 'Key Metrics', width: 200, height: 140 } },
-      { id: 'f-lc-uvp', type: 'frameNode', position: { x: 440, y: 0 }, data: { label: 'Unique Value Proposition', width: 200, height: 300 } },
-      { id: 'f-lc-advantage', type: 'frameNode', position: { x: 660, y: 0 }, data: { label: 'Unfair Advantage', width: 200, height: 150 } },
-      { id: 'f-lc-channels', type: 'frameNode', position: { x: 660, y: 160 }, data: { label: 'Channels', width: 200, height: 140 } },
-      { id: 'f-lc-segments', type: 'frameNode', position: { x: 880, y: 0 }, data: { label: 'Customer Segments', width: 200, height: 300 } },
-      { id: 'f-lc-cost', type: 'frameNode', position: { x: 0, y: 320 }, data: { label: 'Cost Structure', width: 540, height: 150 } },
-      { id: 'f-lc-revenue', type: 'frameNode', position: { x: 560, y: 320 }, data: { label: 'Revenue Streams', width: 520, height: 150 } },
+      {
+        id: 'f-lc-problem',
+        type: 'frameNode',
+        position: { x: 0, y: 0 },
+        data: { label: 'Problem', width: 200, height: 300 },
+      },
+      {
+        id: 'f-lc-solution',
+        type: 'frameNode',
+        position: { x: 220, y: 0 },
+        data: { label: 'Solution', width: 200, height: 150 },
+      },
+      {
+        id: 'f-lc-metrics',
+        type: 'frameNode',
+        position: { x: 220, y: 160 },
+        data: { label: 'Key Metrics', width: 200, height: 140 },
+      },
+      {
+        id: 'f-lc-uvp',
+        type: 'frameNode',
+        position: { x: 440, y: 0 },
+        data: { label: 'Unique Value Proposition', width: 200, height: 300 },
+      },
+      {
+        id: 'f-lc-advantage',
+        type: 'frameNode',
+        position: { x: 660, y: 0 },
+        data: { label: 'Unfair Advantage', width: 200, height: 150 },
+      },
+      {
+        id: 'f-lc-channels',
+        type: 'frameNode',
+        position: { x: 660, y: 160 },
+        data: { label: 'Channels', width: 200, height: 140 },
+      },
+      {
+        id: 'f-lc-segments',
+        type: 'frameNode',
+        position: { x: 880, y: 0 },
+        data: { label: 'Customer Segments', width: 200, height: 300 },
+      },
+      {
+        id: 'f-lc-cost',
+        type: 'frameNode',
+        position: { x: 0, y: 320 },
+        data: { label: 'Cost Structure', width: 540, height: 150 },
+      },
+      {
+        id: 'f-lc-revenue',
+        type: 'frameNode',
+        position: { x: 560, y: 320 },
+        data: { label: 'Revenue Streams', width: 520, height: 150 },
+      },
     ],
     edges: [],
     extensions: {},
@@ -540,31 +1233,156 @@ const WHITEBOARD_TEMPLATES: TemplateDefinition[] = [
     icon: Workflow,
     tool: 'whiteboard',
     nodes: [
-      { id: 'f-cjm-h-aware', type: 'frameNode', position: { x: 0, y: 0 }, data: { label: 'Awareness', width: 220, height: 60, bgColor: 'rgba(219,234,254,0.5)' } },
-      { id: 'f-cjm-h-consider', type: 'frameNode', position: { x: 240, y: 0 }, data: { label: 'Consideration', width: 220, height: 60, bgColor: 'rgba(209,250,229,0.5)' } },
-      { id: 'f-cjm-h-purchase', type: 'frameNode', position: { x: 480, y: 0 }, data: { label: 'Purchase', width: 220, height: 60, bgColor: 'rgba(254,243,199,0.5)' } },
-      { id: 'f-cjm-h-retain', type: 'frameNode', position: { x: 720, y: 0 }, data: { label: 'Retention', width: 220, height: 60, bgColor: 'rgba(252,231,243,0.5)' } },
-      { id: 'f-cjm-h-advocate', type: 'frameNode', position: { x: 960, y: 0 }, data: { label: 'Advocacy', width: 220, height: 60, bgColor: 'rgba(237,233,254,0.5)' } },
-      { id: 'f-cjm-tp1', type: 'frameNode', position: { x: 0, y: 80 }, data: { label: 'Touchpoints', width: 220, height: 100 } },
-      { id: 'f-cjm-tp2', type: 'frameNode', position: { x: 240, y: 80 }, data: { label: 'Touchpoints', width: 220, height: 100 } },
-      { id: 'f-cjm-tp3', type: 'frameNode', position: { x: 480, y: 80 }, data: { label: 'Touchpoints', width: 220, height: 100 } },
-      { id: 'f-cjm-tp4', type: 'frameNode', position: { x: 720, y: 80 }, data: { label: 'Touchpoints', width: 220, height: 100 } },
-      { id: 'f-cjm-tp5', type: 'frameNode', position: { x: 960, y: 80 }, data: { label: 'Touchpoints', width: 220, height: 100 } },
-      { id: 'f-cjm-em1', type: 'frameNode', position: { x: 0, y: 200 }, data: { label: 'Emotions', width: 220, height: 100 } },
-      { id: 'f-cjm-em2', type: 'frameNode', position: { x: 240, y: 200 }, data: { label: 'Emotions', width: 220, height: 100 } },
-      { id: 'f-cjm-em3', type: 'frameNode', position: { x: 480, y: 200 }, data: { label: 'Emotions', width: 220, height: 100 } },
-      { id: 'f-cjm-em4', type: 'frameNode', position: { x: 720, y: 200 }, data: { label: 'Emotions', width: 220, height: 100 } },
-      { id: 'f-cjm-em5', type: 'frameNode', position: { x: 960, y: 200 }, data: { label: 'Emotions', width: 220, height: 100 } },
-      { id: 'f-cjm-pp1', type: 'frameNode', position: { x: 0, y: 320 }, data: { label: 'Pain Points', width: 220, height: 100 } },
-      { id: 'f-cjm-pp2', type: 'frameNode', position: { x: 240, y: 320 }, data: { label: 'Pain Points', width: 220, height: 100 } },
-      { id: 'f-cjm-pp3', type: 'frameNode', position: { x: 480, y: 320 }, data: { label: 'Pain Points', width: 220, height: 100 } },
-      { id: 'f-cjm-pp4', type: 'frameNode', position: { x: 720, y: 320 }, data: { label: 'Pain Points', width: 220, height: 100 } },
-      { id: 'f-cjm-pp5', type: 'frameNode', position: { x: 960, y: 320 }, data: { label: 'Pain Points', width: 220, height: 100 } },
-      { id: 'f-cjm-op1', type: 'frameNode', position: { x: 0, y: 440 }, data: { label: 'Opportunities', width: 220, height: 100 } },
-      { id: 'f-cjm-op2', type: 'frameNode', position: { x: 240, y: 440 }, data: { label: 'Opportunities', width: 220, height: 100 } },
-      { id: 'f-cjm-op3', type: 'frameNode', position: { x: 480, y: 440 }, data: { label: 'Opportunities', width: 220, height: 100 } },
-      { id: 'f-cjm-op4', type: 'frameNode', position: { x: 720, y: 440 }, data: { label: 'Opportunities', width: 220, height: 100 } },
-      { id: 'f-cjm-op5', type: 'frameNode', position: { x: 960, y: 440 }, data: { label: 'Opportunities', width: 220, height: 100 } },
+      {
+        id: 'f-cjm-h-aware',
+        type: 'frameNode',
+        position: { x: 0, y: 0 },
+        data: { label: 'Awareness', width: 220, height: 60, bgColor: 'rgba(219,234,254,0.5)' },
+      },
+      {
+        id: 'f-cjm-h-consider',
+        type: 'frameNode',
+        position: { x: 240, y: 0 },
+        data: { label: 'Consideration', width: 220, height: 60, bgColor: 'rgba(209,250,229,0.5)' },
+      },
+      {
+        id: 'f-cjm-h-purchase',
+        type: 'frameNode',
+        position: { x: 480, y: 0 },
+        data: { label: 'Purchase', width: 220, height: 60, bgColor: 'rgba(254,243,199,0.5)' },
+      },
+      {
+        id: 'f-cjm-h-retain',
+        type: 'frameNode',
+        position: { x: 720, y: 0 },
+        data: { label: 'Retention', width: 220, height: 60, bgColor: 'rgba(252,231,243,0.5)' },
+      },
+      {
+        id: 'f-cjm-h-advocate',
+        type: 'frameNode',
+        position: { x: 960, y: 0 },
+        data: { label: 'Advocacy', width: 220, height: 60, bgColor: 'rgba(237,233,254,0.5)' },
+      },
+      {
+        id: 'f-cjm-tp1',
+        type: 'frameNode',
+        position: { x: 0, y: 80 },
+        data: { label: 'Touchpoints', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-tp2',
+        type: 'frameNode',
+        position: { x: 240, y: 80 },
+        data: { label: 'Touchpoints', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-tp3',
+        type: 'frameNode',
+        position: { x: 480, y: 80 },
+        data: { label: 'Touchpoints', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-tp4',
+        type: 'frameNode',
+        position: { x: 720, y: 80 },
+        data: { label: 'Touchpoints', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-tp5',
+        type: 'frameNode',
+        position: { x: 960, y: 80 },
+        data: { label: 'Touchpoints', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-em1',
+        type: 'frameNode',
+        position: { x: 0, y: 200 },
+        data: { label: 'Emotions', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-em2',
+        type: 'frameNode',
+        position: { x: 240, y: 200 },
+        data: { label: 'Emotions', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-em3',
+        type: 'frameNode',
+        position: { x: 480, y: 200 },
+        data: { label: 'Emotions', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-em4',
+        type: 'frameNode',
+        position: { x: 720, y: 200 },
+        data: { label: 'Emotions', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-em5',
+        type: 'frameNode',
+        position: { x: 960, y: 200 },
+        data: { label: 'Emotions', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-pp1',
+        type: 'frameNode',
+        position: { x: 0, y: 320 },
+        data: { label: 'Pain Points', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-pp2',
+        type: 'frameNode',
+        position: { x: 240, y: 320 },
+        data: { label: 'Pain Points', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-pp3',
+        type: 'frameNode',
+        position: { x: 480, y: 320 },
+        data: { label: 'Pain Points', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-pp4',
+        type: 'frameNode',
+        position: { x: 720, y: 320 },
+        data: { label: 'Pain Points', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-pp5',
+        type: 'frameNode',
+        position: { x: 960, y: 320 },
+        data: { label: 'Pain Points', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-op1',
+        type: 'frameNode',
+        position: { x: 0, y: 440 },
+        data: { label: 'Opportunities', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-op2',
+        type: 'frameNode',
+        position: { x: 240, y: 440 },
+        data: { label: 'Opportunities', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-op3',
+        type: 'frameNode',
+        position: { x: 480, y: 440 },
+        data: { label: 'Opportunities', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-op4',
+        type: 'frameNode',
+        position: { x: 720, y: 440 },
+        data: { label: 'Opportunities', width: 220, height: 100 },
+      },
+      {
+        id: 'f-cjm-op5',
+        type: 'frameNode',
+        position: { x: 960, y: 440 },
+        data: { label: 'Opportunities', width: 220, height: 100 },
+      },
     ],
     edges: [],
     extensions: {},
@@ -583,15 +1401,60 @@ const EXTRA_MINDMAP_TEMPLATES: TemplateDefinition[] = [
     icon: GitBranch,
     tool: 'mindmap',
     nodes: [
-      { id: 'root', type: 'root', position: { x: 400, y: 50 }, data: { label: 'Company Vision', branchKey: 'root' } },
-      { id: 'o1', type: 'branch', position: { x: 200, y: 180 }, data: { label: 'Objective 1', branchKey: 'obj1' } },
-      { id: 'o2', type: 'branch', position: { x: 600, y: 180 }, data: { label: 'Objective 2', branchKey: 'obj2' } },
-      { id: 'kr1', type: 'leaf', position: { x: 80, y: 320 }, data: { label: 'KR 1.1', branchKey: 'obj1' } },
-      { id: 'kr2', type: 'leaf', position: { x: 320, y: 320 }, data: { label: 'KR 1.2', branchKey: 'obj1' } },
-      { id: 'kr3', type: 'leaf', position: { x: 480, y: 320 }, data: { label: 'KR 2.1', branchKey: 'obj2' } },
-      { id: 'kr4', type: 'leaf', position: { x: 720, y: 320 }, data: { label: 'KR 2.2', branchKey: 'obj2' } },
-      { id: 'i1', type: 'leaf', position: { x: 80, y: 450 }, data: { label: 'Initiative A', branchKey: 'obj1' } },
-      { id: 'i2', type: 'leaf', position: { x: 480, y: 450 }, data: { label: 'Initiative B', branchKey: 'obj2' } },
+      {
+        id: 'root',
+        type: 'root',
+        position: { x: 400, y: 50 },
+        data: { label: 'Company Vision', branchKey: 'root' },
+      },
+      {
+        id: 'o1',
+        type: 'branch',
+        position: { x: 200, y: 180 },
+        data: { label: 'Objective 1', branchKey: 'obj1' },
+      },
+      {
+        id: 'o2',
+        type: 'branch',
+        position: { x: 600, y: 180 },
+        data: { label: 'Objective 2', branchKey: 'obj2' },
+      },
+      {
+        id: 'kr1',
+        type: 'leaf',
+        position: { x: 80, y: 320 },
+        data: { label: 'KR 1.1', branchKey: 'obj1' },
+      },
+      {
+        id: 'kr2',
+        type: 'leaf',
+        position: { x: 320, y: 320 },
+        data: { label: 'KR 1.2', branchKey: 'obj1' },
+      },
+      {
+        id: 'kr3',
+        type: 'leaf',
+        position: { x: 480, y: 320 },
+        data: { label: 'KR 2.1', branchKey: 'obj2' },
+      },
+      {
+        id: 'kr4',
+        type: 'leaf',
+        position: { x: 720, y: 320 },
+        data: { label: 'KR 2.2', branchKey: 'obj2' },
+      },
+      {
+        id: 'i1',
+        type: 'leaf',
+        position: { x: 80, y: 450 },
+        data: { label: 'Initiative A', branchKey: 'obj1' },
+      },
+      {
+        id: 'i2',
+        type: 'leaf',
+        position: { x: 480, y: 450 },
+        data: { label: 'Initiative B', branchKey: 'obj2' },
+      },
     ],
     edges: [
       { id: 'e-o1', source: 'root', target: 'o1' },
@@ -609,20 +1472,67 @@ const EXTRA_MINDMAP_TEMPLATES: TemplateDefinition[] = [
     id: 'mm-kotter8',
     nameEn: "Kotter's 8 Steps",
     namePl: '8 Kroków Kottera',
-    descEn: 'Change management: Urgency → Coalition → Vision → Communicate → Remove Obstacles → Wins → Build → Anchor',
-    descPl: 'Zarządzanie zmianą: Pilność → Koalicja → Wizja → Komunikacja → Usuwanie barier → Wygrane → Budowanie → Zakotwiczenie',
+    descEn:
+      'Change management: Urgency → Coalition → Vision → Communicate → Remove Obstacles → Wins → Build → Anchor',
+    descPl:
+      'Zarządzanie zmianą: Pilność → Koalicja → Wizja → Komunikacja → Usuwanie barier → Wygrane → Budowanie → Zakotwiczenie',
     icon: GitBranch,
     tool: 'mindmap',
     nodes: [
-      { id: 'root', type: 'root', position: { x: 400, y: 300 }, data: { label: "Kotter's 8 Steps", branchKey: 'root' } },
-      { id: 'b-urgency', type: 'branch', position: { x: 100, y: 80 }, data: { label: '1. Create Urgency', branchKey: 'urgency' } },
-      { id: 'b-coalition', type: 'branch', position: { x: 300, y: 50 }, data: { label: '2. Form Coalition', branchKey: 'coalition' } },
-      { id: 'b-vision', type: 'branch', position: { x: 550, y: 50 }, data: { label: '3. Create Vision', branchKey: 'vision' } },
-      { id: 'b-communicate', type: 'branch', position: { x: 730, y: 120 }, data: { label: '4. Communicate Vision', branchKey: 'communicate' } },
-      { id: 'b-obstacles', type: 'branch', position: { x: 750, y: 350 }, data: { label: '5. Remove Obstacles', branchKey: 'obstacles' } },
-      { id: 'b-wins', type: 'branch', position: { x: 600, y: 520 }, data: { label: '6. Create Short-term Wins', branchKey: 'wins' } },
-      { id: 'b-build', type: 'branch', position: { x: 300, y: 540 }, data: { label: '7. Build on Change', branchKey: 'build' } },
-      { id: 'b-anchor', type: 'branch', position: { x: 80, y: 420 }, data: { label: '8. Anchor in Culture', branchKey: 'anchor' } },
+      {
+        id: 'root',
+        type: 'root',
+        position: { x: 400, y: 300 },
+        data: { label: "Kotter's 8 Steps", branchKey: 'root' },
+      },
+      {
+        id: 'b-urgency',
+        type: 'branch',
+        position: { x: 100, y: 80 },
+        data: { label: '1. Create Urgency', branchKey: 'urgency' },
+      },
+      {
+        id: 'b-coalition',
+        type: 'branch',
+        position: { x: 300, y: 50 },
+        data: { label: '2. Form Coalition', branchKey: 'coalition' },
+      },
+      {
+        id: 'b-vision',
+        type: 'branch',
+        position: { x: 550, y: 50 },
+        data: { label: '3. Create Vision', branchKey: 'vision' },
+      },
+      {
+        id: 'b-communicate',
+        type: 'branch',
+        position: { x: 730, y: 120 },
+        data: { label: '4. Communicate Vision', branchKey: 'communicate' },
+      },
+      {
+        id: 'b-obstacles',
+        type: 'branch',
+        position: { x: 750, y: 350 },
+        data: { label: '5. Remove Obstacles', branchKey: 'obstacles' },
+      },
+      {
+        id: 'b-wins',
+        type: 'branch',
+        position: { x: 600, y: 520 },
+        data: { label: '6. Create Short-term Wins', branchKey: 'wins' },
+      },
+      {
+        id: 'b-build',
+        type: 'branch',
+        position: { x: 300, y: 540 },
+        data: { label: '7. Build on Change', branchKey: 'build' },
+      },
+      {
+        id: 'b-anchor',
+        type: 'branch',
+        position: { x: 80, y: 420 },
+        data: { label: '8. Anchor in Culture', branchKey: 'anchor' },
+      },
     ],
     edges: [
       { id: 'e-urgency', source: 'root', target: 'b-urgency' },
@@ -638,7 +1548,12 @@ const EXTRA_MINDMAP_TEMPLATES: TemplateDefinition[] = [
   },
 ];
 
-const ALL_TEMPLATES = [...PROCESS_FLOW_TEMPLATES, ...MINDMAP_TEMPLATES, ...EXTRA_MINDMAP_TEMPLATES, ...WHITEBOARD_TEMPLATES];
+const ALL_TEMPLATES = [
+  ...PROCESS_FLOW_TEMPLATES,
+  ...MINDMAP_TEMPLATES,
+  ...EXTRA_MINDMAP_TEMPLATES,
+  ...WHITEBOARD_TEMPLATES,
+];
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -664,53 +1579,58 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
 
   const templates = ALL_TEMPLATES.filter((t) => t.tool === activeTool);
 
-  const handleApply = useCallback(async (template: TemplateDefinition, withAIFill = false) => {
-    setApplying(template.id);
-    try {
-      await Api.saveMyIdeaMap(ideaId, {
-        nodes: template.nodes,
-        edges: template.edges,
-        preferredTool: template.tool,
-        extensions: template.extensions,
-      });
+  const handleApply = useCallback(
+    async (template: TemplateDefinition, withAIFill = false) => {
+      setApplying(template.id);
+      try {
+        await Api.saveMyIdeaMap(ideaId, {
+          nodes: template.nodes,
+          edges: template.edges,
+          preferredTool: template.tool,
+          extensions: template.extensions,
+        });
 
-      if (withAIFill && template.nodes.length > 0) {
-        setAiFilling(template.id);
-        try {
-          const { generateAIProposal } = await import('@/services/ideaAIGenerator');
-          const batch = await generateAIProposal({
-            ideaId,
-            generatorType: 'mindmap_expand',
-            tool: activeTool,
-            context: {
-              seedText: `Fill the ${isPl ? template.namePl : template.nameEn} template with company-specific data`,
-              title: isPl ? template.namePl : template.nameEn,
-              existingNodes: template.nodes,
-              existingEdges: template.edges,
-              language: i18n.language || 'en',
-            },
-          });
-          if (batch?.proposals?.length) {
-            window.dispatchEvent(
-              new CustomEvent('idea-workspace-ai-proposal', { detail: { batch } })
-            );
+        if (withAIFill && template.nodes.length > 0) {
+          setAiFilling(template.id);
+          try {
+            const { generateAIProposal } = await import('@/services/ideaAIGenerator');
+            const batch = await generateAIProposal({
+              ideaId,
+              generatorType: 'mindmap_expand',
+              tool: activeTool,
+              context: {
+                seedText: `Fill the ${isPl ? template.namePl : template.nameEn} template with company-specific data`,
+                title: isPl ? template.namePl : template.nameEn,
+                existingNodes: template.nodes,
+                existingEdges: template.edges,
+                language: i18n.language || 'en',
+              },
+            });
+            if (batch?.proposals?.length) {
+              window.dispatchEvent(
+                new CustomEvent('idea-workspace-ai-proposal', { detail: { batch } })
+              );
+            }
+          } catch {
+            // AI fill is optional, template is already applied
+          } finally {
+            setAiFilling(null);
           }
-        } catch {
-          // AI fill is optional, template is already applied
-        } finally {
-          setAiFilling(null);
         }
-      }
 
-      toast.success(isPl ? 'Szablon zastosowany' : 'Template applied');
-      onApplied();
-      onClose();
-    } catch (err: any) {
-      toast.error(err?.message || (isPl ? 'Nie udało się zastosować szablonu' : 'Failed to apply template'));
-    } finally {
-      setApplying(null);
-    }
-  }, [activeTool, i18n.language, ideaId, isPl, onApplied, onClose]);
+        toast.success(isPl ? 'Szablon zastosowany' : 'Template applied');
+        onApplied();
+        onClose();
+      } catch (err: any) {
+        toast.error(
+          err?.message || (isPl ? 'Nie udało się zastosować szablonu' : 'Failed to apply template')
+        );
+      } finally {
+        setApplying(null);
+      }
+    },
+    [activeTool, i18n.language, ideaId, isPl, onApplied, onClose]
+  );
 
   if (!open) return null;
 
@@ -724,7 +1644,9 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
               {isPl ? 'Galeria szablonów' : 'Template Gallery'}
             </h2>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              {isPl ? 'Wybierz szablon aby szybko rozpocząć' : 'Choose a template to get started quickly'}
+              {isPl
+                ? 'Wybierz szablon aby szybko rozpocząć'
+                : 'Choose a template to get started quickly'}
             </p>
           </div>
           <button
@@ -768,8 +1690,12 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                             className="inline-flex items-center gap-1 text-[9px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors disabled:opacity-50"
                           >
                             {applying === template.id && !aiFilling
-                              ? (isPl ? 'Stosowanie…' : 'Applying…')
-                              : (isPl ? 'Użyj szablonu' : 'Use template')}
+                              ? isPl
+                                ? 'Stosowanie…'
+                                : 'Applying…'
+                              : isPl
+                                ? 'Użyj szablonu'
+                                : 'Use template'}
                             <ArrowRight size={10} />
                           </button>
                           {template.nodes.length > 0 && (

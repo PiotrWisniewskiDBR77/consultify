@@ -9,10 +9,16 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import {
+  FilterableTable,
+  type FilterChip,
+  type GridItem,
+  GridView,
+  type TableColumn,
+  type ViewMode,
+} from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
-import { FilterableTable, type FilterChip, type GridItem, GridView, type TableColumn, type ViewMode } from '../shared/ModuleHub';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-
 import { TemplatePreview } from './previews/TemplatePreview';
 import { TEMPLATE_TYPE_META, type TemplateItem } from './types';
 
@@ -44,8 +50,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
       const q = searchQuery.toLowerCase();
       data = data.filter(
         (item) =>
-          item.title.toLowerCase().includes(q) ||
-          (item.description || '').toLowerCase().includes(q)
+          item.title.toLowerCase().includes(q) || (item.description || '').toLowerCase().includes(q)
       );
     }
     for (const f of activeFilters) {
@@ -83,7 +88,11 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         filterable: true,
         filterOptions: [
           { value: 'report', label: isPolish ? 'Raport' : 'Report', color: 'bg-blue-400' },
-          { value: 'presentation', label: isPolish ? 'Prezentacja' : 'Presentation', color: 'bg-purple-400' },
+          {
+            value: 'presentation',
+            label: isPolish ? 'Prezentacja' : 'Presentation',
+            color: 'bg-purple-400',
+          },
         ],
         render: (row: TemplateItem) => {
           const meta = TEMPLATE_TYPE_META[row.type];
@@ -130,8 +139,12 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         render: (row: TemplateItem) => (
           <span className="text-sm text-slate-600 dark:text-slate-300">
             {row.scope === 'application'
-              ? (isPolish ? 'System' : 'Application')
-              : (isPolish ? 'Organizacja' : 'Organization')}
+              ? isPolish
+                ? 'System'
+                : 'Application'
+              : isPolish
+                ? 'Organizacja'
+                : 'Organization'}
           </span>
         ),
       },
@@ -143,7 +156,11 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         filterOptions: [
           { value: 'active', label: isPolish ? 'Aktywny' : 'Active', color: 'bg-emerald-400' },
           { value: 'draft', label: isPolish ? 'Szkic' : 'Draft', color: 'bg-slate-400' },
-          { value: 'archived', label: isPolish ? 'Zarchiwizowany' : 'Archived', color: 'bg-slate-500' },
+          {
+            value: 'archived',
+            label: isPolish ? 'Zarchiwizowany' : 'Archived',
+            color: 'bg-slate-500',
+          },
         ],
       },
       {
@@ -155,7 +172,11 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           const d = new Date(row.updatedAt);
           return (
             <span className="text-sm text-slate-500 dark:text-slate-400">
-              {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+              {d.toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
             </span>
           );
         },
@@ -200,9 +221,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     },
   ];
 
-  const selectedItem = selectedId
-    ? filteredData.find((i) => i.id === selectedId) || null
-    : null;
+  const selectedItem = selectedId ? filteredData.find((i) => i.id === selectedId) || null : null;
   const previewItem = selectedItem ? { ...selectedItem, title: selectedItem.title } : null;
   const itemIds = filteredData.map((i) => i.id);
 

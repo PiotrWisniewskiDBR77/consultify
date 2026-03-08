@@ -44,7 +44,9 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
             key={id}
             onClick={() => onPaletteChange(id)}
             className={`w-full flex items-center gap-2 p-2 rounded-xl transition-colors ${
-              activePalette === id ? 'bg-violet-500/10 ring-1 ring-violet-500/30' : 'hover:bg-slate-50 dark:hover:bg-navy-800'
+              activePalette === id
+                ? 'bg-violet-500/10 ring-1 ring-violet-500/30'
+                : 'hover:bg-slate-50 dark:hover:bg-navy-800'
             }`}
           >
             <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -52,7 +54,9 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
                 <div key={i} className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: c }} />
               ))}
             </div>
-            <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 flex-1 text-left">{palette.name}</span>
+            <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 flex-1 text-left">
+              {palette.name}
+            </span>
             {activePalette === id && <Check size={12} className="text-violet-500" />}
           </button>
         ))}
@@ -60,7 +64,10 @@ export const ColorPalette: React.FC<ColorPaletteProps> = ({
 
       <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-navy-700/60">
         <button
-          onClick={() => { onAutoAssign(); onClose(); }}
+          onClick={() => {
+            onAutoAssign();
+            onClose();
+          }}
           className="w-full px-3 py-2 rounded-xl text-[10px] font-bold text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 transition-colors"
         >
           {isPl ? 'Auto-przypisz kolory do wierszy' : 'Auto-assign colors to rows'}

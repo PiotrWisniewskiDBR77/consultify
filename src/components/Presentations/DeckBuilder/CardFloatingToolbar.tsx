@@ -36,10 +36,7 @@ const BG_TYPES = [
   { id: 'image', label: 'Background image' },
 ];
 
-export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({
-  card,
-  onUpdateCard,
-}) => {
+export const CardFloatingToolbar: React.FC<CardFloatingToolbarProps> = ({ card, onUpdateCard }) => {
   const { t } = useTranslation();
   const [expandedPanel, setExpandedPanel] = useState<'layout' | 'bg' | null>(null);
 

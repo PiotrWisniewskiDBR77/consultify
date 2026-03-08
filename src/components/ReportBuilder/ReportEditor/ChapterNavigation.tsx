@@ -190,7 +190,12 @@ const RAG_DOT_CLASSES: Record<string, string> = {
   red: 'bg-red-500',
 };
 
-const SortableBlockItem: React.FC<SortableBlockItemProps> = ({ block, isSelected, onSelect, ragStatus }) => {
+const SortableBlockItem: React.FC<SortableBlockItemProps> = ({
+  block,
+  isSelected,
+  onSelect,
+  ragStatus,
+}) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
   });

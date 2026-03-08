@@ -202,6 +202,9 @@ const logAudit = async (
 };
 
 const ensureToolsSchema = async (): Promise<void> => {
+  if (process.env.DB_MANAGED_SCHEMA === 'off') {
+    return;
+  }
   try {
     await queryHelpers.queryRun(
       `CREATE TABLE IF NOT EXISTS tool_sessions (

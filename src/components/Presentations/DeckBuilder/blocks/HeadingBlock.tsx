@@ -19,10 +19,7 @@ export const HeadingBlock: React.FC<Props> = ({ block, theme }) => {
   };
 
   return (
-    <div
-      className={sizeClasses[level] || sizeClasses[1]}
-      style={{ color: theme.colors.heading }}
-    >
+    <div className={sizeClasses[level] || sizeClasses[1]} style={{ color: theme.colors.heading }}>
       {text}
     </div>
   );

@@ -83,12 +83,9 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
 
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(
-          `/api/stage-gates/${projectId}/evaluate/${gateType}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const response = await fetch(`/api/stage-gates/${projectId}/evaluate/${gateType}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         if (response.ok) {
           const data = await response.json();
@@ -205,7 +202,8 @@ export const StageGateModal: React.FC<StageGateModalProps> = ({
                   <div>
                     <p className="text-sm font-medium text-red-700 dark:text-red-300">{error}</p>
                     <p className="text-xs text-red-500 dark:text-red-400 mt-1">
-                      Nie można ocenić bramki. Sprawdź konfigurację projektu lub skontaktuj się z administratorem.
+                      Nie można ocenić bramki. Sprawdź konfigurację projektu lub skontaktuj się z
+                      administratorem.
                     </p>
                   </div>
                 </div>

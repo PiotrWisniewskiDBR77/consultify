@@ -15,6 +15,21 @@ import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.
 
 export class LLMController {
   private static lastHealthEventWriteAt = new Map<string, number>();
+  private static providerHealthCooldowns = new Map<
+    string,
+    { until: number; error: string; status: 'auth_failed' | 'rate_limited' }
+  >();
+  private static isAuthLikeProviderError(error: unknown, httpStatus?: number | null): boolean {
+    const msg = String((error as any)?.message || error || '').toLowerCase();
+    return (
+      httpStatus === 401 ||
+      httpStatus === 403 ||
+      msg.includes('incorrect api key') ||
+      msg.includes('invalid api key') ||
+      msg.includes('key invalid') ||
+      msg.includes('unauthorized')
+    );
+  }
   private static resolveEnvConfigured(provider: string): {
     isConfigured: boolean;
     envKey?: string;
@@ -1230,6 +1245,7 @@ export class LLMController {
       const healthResults = await Promise.all(
         (providers || []).map(async (provider: any) => {
           const providerId = String(provider.provider || '').toLowerCase();
+          const cooldownKey = `${providerId}:${String(provider.id || provider.model_id || provider.provider || '')}`;
           const rawKey = typeof provider.api_key === 'string' ? provider.api_key.trim() : '';
           const hasKey =
             !!rawKey &&
@@ -1251,6 +1267,20 @@ export class LLMController {
             return row;
           }
 
+          const cooldown = LLMController.providerHealthCooldowns.get(cooldownKey);
+          if (cooldown && cooldown.until > Date.now()) {
+            return {
+              id: provider.id || provider.model_id || provider.provider,
+              name: provider.name || provider.provider,
+              provider: provider.provider,
+              status: 'unhealthy',
+              available: false,
+              error: cooldown.error,
+              lastCheck: nowIso,
+              cooldownUntil: new Date(cooldown.until).toISOString(),
+            };
+          }
+
           try {
             // Local providers can hang when the daemon isn't running; keep them extra-fast by default.
             const providerTimeoutMs = isLocal ? Math.min(timeoutMs, 800) : timeoutMs;
@@ -1267,6 +1297,17 @@ export class LLMController {
             );
 
             const ok = !!(result as any)?.success;
+            const resultError = String((result as any)?.error || '');
+            const httpStatus = Number((result as any)?.httpStatus || 0) || null;
+            if (!ok && LLMController.isAuthLikeProviderError(resultError, httpStatus)) {
+              LLMController.providerHealthCooldowns.set(cooldownKey, {
+                until: Date.now() + 5 * 60_000,
+                error: resultError || 'Invalid provider credentials',
+                status: 'auth_failed',
+              });
+            } else if (ok) {
+              LLMController.providerHealthCooldowns.delete(cooldownKey);
+            }
             const row = {
               id: provider.id || provider.model_id || provider.provider,
               name: provider.name || provider.provider,
@@ -1304,6 +1345,13 @@ export class LLMController {
             }
             return row;
           } catch (e: any) {
+            if (LLMController.isAuthLikeProviderError(e, null)) {
+              LLMController.providerHealthCooldowns.set(cooldownKey, {
+                until: Date.now() + 5 * 60_000,
+                error: e?.message || String(e),
+                status: 'auth_failed',
+              });
+            }
             const row = {
               id: provider.id || provider.model_id || provider.provider,
               name: provider.name || provider.provider,

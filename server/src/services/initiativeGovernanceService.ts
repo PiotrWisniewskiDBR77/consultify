@@ -96,6 +96,13 @@ class InitiativeGovernanceService {
     const childGoals = await queryHelpers.queryAll<{ id: string; progress: number }>(
       `SELECT id, progress FROM goals WHERE parent_goal_id=$1`, [goalId],
     );
+    const linkedInitiatives = await queryHelpers.queryAll<{ id: string; progress: number; contribution_weight: number }>(
+      `SELECT i.id, COALESCE(i.progress, 0) as progress, COALESCE(gil.contribution_weight, 1.0) as contribution_weight
+       FROM goal_initiative_links gil
+       JOIN initiatives i ON i.id = gil.initiative_id
+       WHERE gil.goal_id=$1 AND i.organization_id=$2`,
+      [goalId, orgId],
+    );
 
     let weightedProgress = 0;
     let totalWeight = 0;
@@ -103,9 +110,20 @@ class InitiativeGovernanceService {
       weightedProgress += (child.progress || 0);
       totalWeight += 1;
     }
+    for (const initiative of linkedInitiatives) {
+      const weight = initiative.contribution_weight || 1;
+      weightedProgress += (initiative.progress || 0) * weight;
+      totalWeight += weight;
+    }
     const avgProgress = totalWeight > 0 ? weightedProgress / totalWeight : 0;
 
-    return { goal, linkedInitiatives: links.length, childGoals: childGoals.length, rollupProgress: avgProgress };
+    return {
+      goal,
+      linkedInitiatives: links.length,
+      childGoals: childGoals.length,
+      initiativeProgressCount: linkedInitiatives.length,
+      rollupProgress: avgProgress,
+    };
   }
 
   async unlinkGoalFromInitiative(goalId: string, initiativeId: string) {
@@ -144,19 +162,149 @@ class InitiativeGovernanceService {
     return queryHelpers.queryAll(sql, initiativeId ? [orgId, initiativeId] : [orgId]);
   }
 
-  async applyBlueprint(blueprintId: string) {
-    await queryHelpers.queryRun(
-      `UPDATE initiative_ai_blueprints SET status='applied', applied_at=CURRENT_TIMESTAMP WHERE id=$1`,
-      [blueprintId],
+  async applyBlueprint(orgId: string, blueprintId: string, userId: string) {
+    const blueprint = await queryHelpers.queryFirst<any>(
+      `SELECT * FROM initiative_ai_blueprints WHERE id=$1 AND organization_id=$2`,
+      [blueprintId, orgId],
     );
-    return { ok: true };
+    if (!blueprint) return { ok: false, reason: 'not_found' };
+    if (!blueprint.initiative_id) return { ok: false, reason: 'initiative_missing' };
+    if (blueprint.status === 'applied') {
+      return { ok: true, reused: true, initiativeId: blueprint.initiative_id };
+    }
+
+    const wbs = safeJsonArray(blueprint.generated_wbs);
+    const milestones = safeJsonArray(blueprint.generated_milestones);
+    const deps = safeJsonArray(blueprint.generated_deps);
+    const resources = safeJsonArray(blueprint.generated_resources);
+
+    const taskMap = new Map<string, string>();
+    const taskIds: string[] = [];
+    const milestoneIds: string[] = [];
+    const resourceIds: string[] = [];
+    let tasksCreated = 0;
+    let dependenciesCreated = 0;
+
+    for (const [index, item] of wbs.entries()) {
+      const normalized = normalizeBlueprintWbsItem(item, index);
+      const taskId = uuidv4();
+      await queryHelpers.queryRun(
+        `INSERT INTO tasks
+           (id, project_id, organization_id, title, description, status, priority, assignee_id, due_date,
+            estimated_hours, tags, task_type, initiative_id, progress, acceptance_criteria, created_at, updated_at)
+         VALUES ($1,
+           (SELECT project_id FROM initiatives WHERE id=$2 AND organization_id=$3),
+           $3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$2,0,$13,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`,
+        [
+          taskId,
+          blueprint.initiative_id,
+          orgId,
+          normalized.title,
+          normalized.description,
+          normalized.status,
+          normalized.priority,
+          normalized.assigneeId,
+          normalized.dueDate,
+          normalized.estimatedHours,
+          JSON.stringify(normalized.tags),
+          normalized.taskType,
+          normalized.acceptanceCriteria,
+        ],
+      );
+      tasksCreated++;
+      taskIds.push(taskId);
+      for (const key of normalized.identityKeys) {
+        taskMap.set(key, taskId);
+      }
+    }
+
+    for (const dep of deps) {
+      const normalized = normalizeBlueprintDependency(dep);
+      const fromId = resolveBlueprintTaskRef(normalized.from, taskMap);
+      const toId = resolveBlueprintTaskRef(normalized.to, taskMap);
+      if (!fromId || !toId || fromId === toId) continue;
+      await queryHelpers.queryRun(
+        `INSERT INTO task_dependencies (id, from_task_id, to_task_id, type, created_at)
+         VALUES ($1,$2,$3,$4,CURRENT_TIMESTAMP)`,
+        [uuidv4(), fromId, toId, normalized.type],
+      );
+      dependenciesCreated++;
+    }
+
+    for (const [index, item] of milestones.entries()) {
+      const normalized = normalizeBlueprintMilestone(item, index);
+      const milestoneId = uuidv4();
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_milestones
+           (id, initiative_id, organization_id, name, description, target_date, status, order_index, is_gate, gate_decision_id, created_at, updated_at, created_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,$11)`,
+        [
+          milestoneId,
+          blueprint.initiative_id,
+          orgId,
+          normalized.name,
+          normalized.description,
+          normalized.targetDate,
+          normalized.status,
+          normalized.orderIndex,
+          normalized.isGate ? 1 : 0,
+          normalized.gateDecisionId,
+          userId,
+        ],
+      );
+      milestoneIds.push(milestoneId);
+    }
+
+    for (const resource of resources) {
+      const normalized = normalizeBlueprintResource(resource);
+      const resourceId = uuidv4();
+      await queryHelpers.queryRun(
+        `INSERT INTO initiative_resources
+           (id, initiative_id, organization_id, user_id, name, role, allocation_percentage, start_date, end_date, notes, created_at, updated_at, source)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,'blueprint')`,
+        [
+          resourceId,
+          blueprint.initiative_id,
+          orgId,
+          normalized.userId,
+          normalized.name,
+          normalized.role,
+          normalized.allocationPercentage,
+          normalized.startDate,
+          normalized.endDate,
+          normalized.notes,
+        ],
+      );
+      resourceIds.push(resourceId);
+    }
+
+    await queryHelpers.queryRun(
+      `UPDATE initiative_ai_blueprints
+       SET status='applied', applied_at=CURRENT_TIMESTAMP
+       WHERE id=$1 AND organization_id=$2`,
+      [blueprintId, orgId],
+    );
+
+    return {
+      ok: true,
+      reused: false,
+      initiativeId: blueprint.initiative_id,
+      tasksCreated,
+      dependenciesCreated,
+      milestonesCreated: milestoneIds.length,
+      resourcesCreated: resourceIds.length,
+      createdTaskIds: taskIds,
+      createdMilestoneIds: milestoneIds,
+      createdResourceIds: resourceIds,
+    };
   }
 
-  async rejectBlueprint(blueprintId: string) {
-    await queryHelpers.queryRun(
-      `UPDATE initiative_ai_blueprints SET status='rejected' WHERE id=$1`, [blueprintId],
+  async rejectBlueprint(orgId: string, blueprintId: string) {
+    const result = await queryHelpers.queryRun(
+      `UPDATE initiative_ai_blueprints SET status='rejected' WHERE id=$1 AND organization_id=$2`,
+      [blueprintId, orgId],
     );
-    return { ok: true };
+    return { ok: result.changes > 0 };
   }
 
   // ── V4-INIT-07: Governance Gates ──
@@ -187,7 +335,7 @@ class InitiativeGovernanceService {
 
   async evaluateGate(orgId: string, gateId: string) {
     const gate = await queryHelpers.queryFirst<{
-      required_decisions: string; required_approvers: string; initiative_id: string;
+      required_decisions: string; required_approvers: string; required_raid_status: string; initiative_id: string;
     }>(
       `SELECT * FROM initiative_governance_gates WHERE id=$1 AND organization_id=$2`,
       [gateId, orgId],
@@ -195,6 +343,8 @@ class InitiativeGovernanceService {
     if (!gate) return null;
 
     const requiredDecisions = JSON.parse(gate.required_decisions || '[]');
+    const requiredApprovers = JSON.parse(gate.required_approvers || '[]');
+    const requiredRaidStatus = JSON.parse(gate.required_raid_status || '{}');
     const decisionsMet: boolean[] = [];
     for (const decId of requiredDecisions) {
       const dec = await queryHelpers.queryFirst<{ workflow_status: string }>(
@@ -203,9 +353,44 @@ class InitiativeGovernanceService {
       decisionsMet.push(dec?.workflow_status === 'published');
     }
 
+    const raidChecks = Object.entries(requiredRaidStatus as Record<string, unknown>);
+    let raidReady = true;
+    const raidDetails: Record<string, number> = {};
+    for (const [statusKey, minRequired] of raidChecks) {
+      const countRow = await queryHelpers.queryFirst<{ cnt: number }>(
+        `SELECT COUNT(*) as cnt FROM raid_items WHERE initiative_id=$1 AND organization_id=$2 AND lower(status)=lower($3)`,
+        [gate.initiative_id, orgId, statusKey],
+      );
+      const count = Number(countRow?.cnt ?? 0);
+      raidDetails[statusKey] = count;
+      if (count < Number(minRequired ?? 0)) raidReady = false;
+    }
+
+    let approversReady = true;
+    const approverDetails: Array<{ userId: string; approved: boolean }> = [];
+    for (const approverId of requiredApprovers as string[]) {
+      const approved = decisionsMet.length > 0
+        ? !!(await queryHelpers.queryFirst(
+            `SELECT id FROM decisions
+             WHERE initiative_id=$1 AND lower(workflow_status)='published' AND approved_by=$2
+             LIMIT 1`,
+            [gate.initiative_id, approverId],
+          ))
+        : !!approverId;
+      approverDetails.push({ userId: approverId, approved });
+      if (!approved) approversReady = false;
+    }
+
     const allDecisionsMet = decisionsMet.every(Boolean);
-    const result = { decisionsReady: allDecisionsMet, decisionDetails: decisionsMet };
-    const status = allDecisionsMet ? 'passed' : 'blocked';
+    const result = {
+      decisionsReady: allDecisionsMet,
+      decisionDetails: decisionsMet,
+      raidReady,
+      raidDetails,
+      approversReady,
+      approverDetails,
+    };
+    const status = allDecisionsMet && raidReady && approversReady ? 'passed' : 'blocked';
 
     await queryHelpers.queryRun(
       `UPDATE initiative_governance_gates SET status=$1, evaluated_at=CURRENT_TIMESTAMP, evaluation_result=$2 WHERE id=$3`,
@@ -238,3 +423,78 @@ class InitiativeGovernanceService {
 }
 
 export const initiativeGovernanceService = new InitiativeGovernanceService();
+
+function safeJsonArray(value: unknown): any[] {
+  if (!value) return [];
+  try {
+    return Array.isArray(value) ? value : JSON.parse(String(value));
+  } catch {
+    return [];
+  }
+}
+
+function normalizeBlueprintWbsItem(item: any, index: number) {
+  const title = String(item?.title || item?.name || item?.label || `Task ${index + 1}`).trim();
+  const identityKeys = [
+    item?.id,
+    item?.key,
+    item?.templateKey,
+    item?.ref,
+    title,
+    String(index),
+  ]
+    .filter(Boolean)
+    .map((value) => String(value));
+
+  return {
+    title,
+    description: item?.description || item?.deliverables || null,
+    status: String(item?.status || 'todo').toLowerCase(),
+    priority: String(item?.priority || 'medium').toLowerCase(),
+    assigneeId: item?.assigneeId || item?.ownerId || null,
+    dueDate: item?.dueDate || item?.targetDate || null,
+    estimatedHours: item?.estimatedHours ?? item?.effortHours ?? null,
+    tags: Array.isArray(item?.tags) ? item.tags.map(String) : [],
+    taskType: item?.taskType || 'task',
+    acceptanceCriteria: item?.acceptanceCriteria || null,
+    identityKeys,
+  };
+}
+
+function normalizeBlueprintDependency(dep: any) {
+  return {
+    from: dep?.from || dep?.fromId || dep?.source || dep?.sourceId || dep?.predecessor,
+    to: dep?.to || dep?.toId || dep?.target || dep?.targetId || dep?.successor,
+    type: dep?.type || dep?.dependencyType || 'hard',
+  };
+}
+
+function resolveBlueprintTaskRef(ref: unknown, taskMap: Map<string, string>): string | null {
+  if (!ref) return null;
+  const direct = taskMap.get(String(ref));
+  return direct ?? null;
+}
+
+function normalizeBlueprintMilestone(item: any, index: number) {
+  return {
+    name: String(item?.name || item?.title || `Milestone ${index + 1}`).trim(),
+    description: item?.description || null,
+    targetDate: item?.targetDate || item?.date || null,
+    status: item?.status || 'PENDING',
+    orderIndex: item?.orderIndex ?? item?.order ?? index,
+    isGate: Boolean(item?.isGate || item?.gateDecisionId),
+    gateDecisionId: item?.gateDecisionId || null,
+  };
+}
+
+function normalizeBlueprintResource(item: any) {
+  return {
+    userId: item?.userId || null,
+    name: item?.name || item?.role || 'Team Member',
+    role: item?.role || 'member',
+    allocationPercentage: item?.allocationPercentage ?? item?.allocationPct ?? 100,
+    startDate: item?.startDate || null,
+    endDate: item?.endDate || null,
+    notes: item?.notes || (Array.isArray(item?.skills) ? `Skills: ${item.skills.join(', ')}` : null),
+  };
+}

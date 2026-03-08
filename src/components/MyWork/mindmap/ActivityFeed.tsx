@@ -22,7 +22,16 @@ import { useTranslation } from 'react-i18next';
 export interface ActivityEntry {
   id: string;
   timestamp: number;
-  type: 'node_added' | 'node_deleted' | 'node_edited' | 'node_status' | 'ai_expand' | 'ai_suggestion' | 'comment' | 'vote' | 'convert';
+  type:
+    | 'node_added'
+    | 'node_deleted'
+    | 'node_edited'
+    | 'node_status'
+    | 'ai_expand'
+    | 'ai_suggestion'
+    | 'comment'
+    | 'vote'
+    | 'convert';
   actor: string;
   nodeLabel?: string;
   nodeId?: string;
@@ -120,13 +129,16 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
     return sorted.filter((e) => e.type === filter);
   }, [entries, filter]);
 
-  const formatTime = useCallback((ts: number) => {
-    const diff = Date.now() - ts;
-    if (diff < 60_000) return isPl ? 'teraz' : 'now';
-    if (diff < 3600_000) return `${Math.floor(diff / 60_000)}m`;
-    if (diff < 86400_000) return `${Math.floor(diff / 3600_000)}h`;
-    return new Date(ts).toLocaleDateString();
-  }, [isPl]);
+  const formatTime = useCallback(
+    (ts: number) => {
+      const diff = Date.now() - ts;
+      if (diff < 60_000) return isPl ? 'teraz' : 'now';
+      if (diff < 3600_000) return `${Math.floor(diff / 60_000)}m`;
+      if (diff < 86400_000) return `${Math.floor(diff / 3600_000)}h`;
+      return new Date(ts).toLocaleDateString();
+    },
+    [isPl]
+  );
 
   if (!open) return null;
 
@@ -139,7 +151,10 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
           {isPl ? 'Aktywność' : 'Activity Feed'}
         </span>
         <span className="text-[10px] text-slate-400">{entries.length}</span>
-        <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+        <button
+          onClick={onClose}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+        >
           <X size={14} />
         </button>
       </div>
@@ -186,7 +201,8 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                       {entry.type === 'node_added' && (isPl ? 'dodał' : 'added')}{' '}
                       {entry.type === 'node_deleted' && (isPl ? 'usunął' : 'deleted')}{' '}
                       {entry.type === 'node_edited' && (isPl ? 'edytował' : 'edited')}{' '}
-                      {entry.type === 'node_status' && (isPl ? 'zmienił status' : 'changed status of')}{' '}
+                      {entry.type === 'node_status' &&
+                        (isPl ? 'zmienił status' : 'changed status of')}{' '}
                       {entry.type === 'ai_expand' && (isPl ? 'użył AI na' : 'used AI on')}{' '}
                       {entry.type === 'comment' && (isPl ? 'skomentował' : 'commented on')}{' '}
                       {entry.type === 'vote' && (isPl ? 'zagłosował na' : 'voted on')}{' '}
@@ -204,7 +220,9 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                       <div className="text-[9px] text-slate-400 mt-0.5">{entry.detail}</div>
                     )}
                   </div>
-                  <span className="text-[8px] text-slate-400 shrink-0 mt-0.5">{formatTime(entry.timestamp)}</span>
+                  <span className="text-[8px] text-slate-400 shrink-0 mt-0.5">
+                    {formatTime(entry.timestamp)}
+                  </span>
                 </div>
               );
             })}

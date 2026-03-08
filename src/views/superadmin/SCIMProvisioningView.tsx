@@ -220,10 +220,17 @@ const SCIMProvisioningView: React.FC = () => {
   };
 
   // Resolve Conflict
-  const handleResolveConflict = async (conflictId: string, resolution: 'merge' | 'skip' | 'overwrite') => {
+  const handleResolveConflict = async (
+    conflictId: string,
+    resolution: 'merge' | 'skip' | 'overwrite'
+  ) => {
     try {
       await api.post(`/scim/admin/conflicts/${conflictId}/resolve`, { resolution });
-      setConflicts(conflicts.map((c) => (c.id === conflictId ? { ...c, resolution, resolvedAt: new Date().toISOString() } : c)));
+      setConflicts(
+        conflicts.map((c) =>
+          c.id === conflictId ? { ...c, resolution, resolvedAt: new Date().toISOString() } : c
+        )
+      );
     } catch (error) {
       console.error('[SCIM] Resolve conflict error:', error);
     }
@@ -288,16 +295,16 @@ const SCIMProvisioningView: React.FC = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-slate-50 dark:bg-gray-900/50 rounded-lg p-4 border border-slate-200/60 dark:border-transparent">
-                <div className="text-2xl font-bold text-slate-900 dark:text-white">{tokens.length}</div>
-                <div className="text-sm text-slate-600 dark:text-gray-400">
-                  Active Tokens
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {tokens.length}
                 </div>
+                <div className="text-sm text-slate-600 dark:text-gray-400">Active Tokens</div>
               </div>
               <div className="bg-slate-50 dark:bg-gray-900/50 rounded-lg p-4 border border-slate-200/60 dark:border-transparent">
-                <div className="text-2xl font-bold text-slate-900 dark:text-white">{groupMappings.length}</div>
-                <div className="text-sm text-slate-600 dark:text-gray-400">
-                  Group Mappings
+                <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                  {groupMappings.length}
                 </div>
+                <div className="text-sm text-slate-600 dark:text-gray-400">Group Mappings</div>
               </div>
               <div className="bg-slate-50 dark:bg-gray-900/50 rounded-lg p-4 border border-slate-200/60 dark:border-transparent">
                 <div className="text-2xl font-bold text-slate-900 dark:text-white">
@@ -337,9 +344,7 @@ const SCIMProvisioningView: React.FC = () => {
         </h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">
-              Base URL
-            </label>
+            <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">Base URL</label>
             <div className="flex items-center gap-2">
               <code className="flex-1 px-3 py-2 bg-slate-50 dark:bg-gray-900 rounded-lg text-sm text-slate-900 dark:text-violet-300 font-mono border border-slate-200 dark:border-gray-700">
                 {window.location.origin}/api/scim/v2
@@ -354,27 +359,19 @@ const SCIMProvisioningView: React.FC = () => {
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-slate-600 dark:text-gray-400">
-                Users Endpoint:
-              </span>
+              <span className="text-slate-600 dark:text-gray-400">Users Endpoint:</span>
               <code className="ml-2 text-violet-700 dark:text-violet-300">/Users</code>
             </div>
             <div>
-              <span className="text-slate-600 dark:text-gray-400">
-                Groups Endpoint:
-              </span>
+              <span className="text-slate-600 dark:text-gray-400">Groups Endpoint:</span>
               <code className="ml-2 text-violet-700 dark:text-violet-300">/Groups</code>
             </div>
             <div>
-              <span className="text-slate-600 dark:text-gray-400">
-                Authentication:
-              </span>
+              <span className="text-slate-600 dark:text-gray-400">Authentication:</span>
               <code className="ml-2 text-violet-700 dark:text-violet-300">Bearer Token</code>
             </div>
             <div>
-              <span className="text-slate-600 dark:text-gray-400">
-                PATCH Support:
-              </span>
+              <span className="text-slate-600 dark:text-gray-400">PATCH Support:</span>
               <code className="ml-2 text-green-600 dark:text-green-400">Yes</code>
             </div>
           </div>
@@ -452,9 +449,7 @@ const SCIMProvisioningView: React.FC = () => {
       {tokens.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
           <Key className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
-          <p className="text-slate-700 dark:text-gray-300">
-            No tokens generated yet
-          </p>
+          <p className="text-slate-700 dark:text-gray-300">No tokens generated yet</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             Generate a token to enable SCIM provisioning
           </p>
@@ -667,9 +662,7 @@ const SCIMProvisioningView: React.FC = () => {
       {groupMappings.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
           <Users className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
-          <p className="text-slate-700 dark:text-gray-300">
-            No group mappings configured
-          </p>
+          <p className="text-slate-700 dark:text-gray-300">No group mappings configured</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             Map IdP groups to automatically assign roles
           </p>
@@ -697,7 +690,9 @@ const SCIMProvisioningView: React.FC = () => {
               {groupMappings.map((mapping) => (
                 <tr key={mapping.id} className="hover:bg-slate-50 dark:hover:bg-gray-800/30">
                   <td className="px-4 py-3">
-                    <div className="text-slate-900 dark:text-white font-medium">{mapping.externalGroupName}</div>
+                    <div className="text-slate-900 dark:text-white font-medium">
+                      {mapping.externalGroupName}
+                    </div>
                     <div className="text-sm text-slate-500 dark:text-gray-400">
                       {mapping.externalGroupId}
                     </div>
@@ -819,9 +814,7 @@ const SCIMProvisioningView: React.FC = () => {
       {syncLogs.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
           <History className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
-          <p className="text-slate-700 dark:text-gray-300">
-            No sync activity yet
-          </p>
+          <p className="text-slate-700 dark:text-gray-300">No sync activity yet</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             Logs will appear here when your IdP syncs users
           </p>
@@ -844,10 +837,10 @@ const SCIMProvisioningView: React.FC = () => {
                           : 'bg-yellow-400'
                     }`}
                   />
-                  <span className="text-slate-900 dark:text-white font-medium">{log.operation}</span>
-                  <span className="text-slate-600 dark:text-gray-400">
-                    {log.resourceType}
+                  <span className="text-slate-900 dark:text-white font-medium">
+                    {log.operation}
                   </span>
+                  <span className="text-slate-600 dark:text-gray-400">{log.resourceType}</span>
                   {log.externalId && (
                     <code className="text-xs text-slate-600 dark:text-gray-300 bg-slate-50 dark:bg-gray-900 px-2 py-0.5 rounded border border-slate-200 dark:border-gray-700">
                       {log.externalId}

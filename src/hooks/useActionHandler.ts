@@ -147,10 +147,7 @@ const buildNavigateRoute = (payload: NavigateContract): string | null => {
     return withQuery('/discovery-tools', params);
   }
 
-  if (
-    moduleKey === 'presentations' ||
-    moduleKey === 'presentation'
-  ) {
+  if (moduleKey === 'presentations' || moduleKey === 'presentation') {
     const templateId = normalizeValue(payload.templateId) || params.templateId || '';
     const wantsWizard =
       surface === 'wizard' || surface === 'new' || surface === 'create' || params.new === '1';

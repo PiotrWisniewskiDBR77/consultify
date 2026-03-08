@@ -533,9 +533,7 @@ export function compute16DScores(data: SIRIAssessmentData): SIRI16DScore[] {
     const dimScore = data.dimensions[area.dimension];
     const areaScore = data.prioritisationMatrix?.[area.id];
     const current =
-      typeof areaScore === 'number' && areaScore > 0
-        ? areaScore
-        : (dimScore?.current || 0);
+      typeof areaScore === 'number' && areaScore > 0 ? areaScore : dimScore?.current || 0;
     const target = dimScore?.target || 0;
     return {
       areaId: area.id,

@@ -16,10 +16,10 @@ const ideaRooms = new Map<string, Map<string, { userId: string; userName: string
 export function initializeIdeaCollabGateway(io: SocketIOServer): void {
   const collabNs = io.of('/collab');
 
-  collabNs.on('connection', (socket) => {
-    const ideaId = socket.handshake.query?.ideaId as string;
-    const userId = socket.handshake.query?.userId as string;
-    const userName = socket.handshake.query?.userName as string || 'Anonymous';
+  collabNs.on('connection', (socket: any) => {
+    const ideaId = socket.handshake?.query?.ideaId as string;
+    const userId = socket.handshake?.query?.userId as string;
+    const userName = (socket.handshake?.query?.userName as string) || 'Anonymous';
 
     if (!ideaId) {
       socket.disconnect(true);
@@ -35,7 +35,7 @@ export function initializeIdeaCollabGateway(io: SocketIOServer): void {
     const participants = ideaRooms.get(ideaId)!;
     participants.set(socket.id, { userId: userId || socket.id, userName, cursor: undefined });
 
-    collabNs.to(room).emit('presence', {
+    (collabNs as any).to(room).emit('presence', {
       users: Array.from(participants.values()).map((p) => ({
         id: p.userId,
         name: p.userName,
@@ -64,7 +64,7 @@ export function initializeIdeaCollabGateway(io: SocketIOServer): void {
     socket.on('disconnect', () => {
       participants.delete(socket.id);
       if (participants.size === 0) ideaRooms.delete(ideaId);
-      collabNs.to(room).emit('presence', {
+      (collabNs as any).to(room).emit('presence', {
         users: Array.from(participants.values()).map((p) => ({
           id: p.userId,
           name: p.userName,

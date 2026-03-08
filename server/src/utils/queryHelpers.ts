@@ -71,6 +71,13 @@ export function queryOne<T = any>(sql: string, params: unknown[] = []): Promise<
 }
 
 /**
+ * Back-compat alias used by newer enterprise services.
+ */
+export function queryFirst<T = any>(sql: string, params: unknown[] = []): Promise<T | null> {
+  return queryOne<T>(sql, params);
+}
+
+/**
  * Promise-based wrapper for db.run
  */
 export function queryRun(sql: string, params: unknown[] = []): Promise<QueryResult> {

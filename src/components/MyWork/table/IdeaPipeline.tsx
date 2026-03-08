@@ -83,7 +83,10 @@ interface IdeaPipelineProps {
   onConvertToInitiative?: (nodeId: string) => void;
 }
 
-function evaluateCriteria(node: TableNode, stage: PipelineStage): { met: number; total: number; details: boolean[] } {
+function evaluateCriteria(
+  node: TableNode,
+  stage: PipelineStage
+): { met: number; total: number; details: boolean[] } {
   const data = node.data || {};
   const details: boolean[] = [];
 
@@ -156,26 +159,38 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
   }, [stageGroups, stages]);
 
   const totalIdeas = nodes.length;
-  const conversionRate = totalIdeas > 0 ? Math.round(((stageGroups.get('initiative')?.length || 0) / totalIdeas) * 100) : 0;
+  const conversionRate =
+    totalIdeas > 0
+      ? Math.round(((stageGroups.get('initiative')?.length || 0) / totalIdeas) * 100)
+      : 0;
 
-  const handlePromote = useCallback((nodeId: string, currentStage: string) => {
-    const idx = stages.findIndex((s) => s.id === currentStage);
-    if (idx < 0 || idx >= stages.length - 1) return;
-    const nextStage = stages[idx + 1].id;
-    setPromotingId(nodeId);
+  const handlePromote = useCallback(
+    (nodeId: string, currentStage: string) => {
+      const idx = stages.findIndex((s) => s.id === currentStage);
+      if (idx < 0 || idx >= stages.length - 1) return;
+      const nextStage = stages[idx + 1].id;
+      setPromotingId(nodeId);
 
-    if (nextStage === 'initiative' && onConvertToInitiative) {
-      onConvertToInitiative(nodeId);
-    }
-    onStageChange(nodeId, nextStage);
-    setTimeout(() => setPromotingId(null), 600);
-  }, [onConvertToInitiative, onStageChange, stages]);
+      if (nextStage === 'initiative' && onConvertToInitiative) {
+        onConvertToInitiative(nodeId);
+      }
+      onStageChange(nodeId, nextStage);
+      setTimeout(() => setPromotingId(null), 600);
+    },
+    [onConvertToInitiative, onStageChange, stages]
+  );
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20 backdrop-blur-[2px]" onClick={onClose}>
-      <div className="w-[680px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20 backdrop-blur-[2px]"
+      onClick={onClose}
+    >
+      <div
+        className="w-[680px] max-w-[95vw] max-h-[85vh] rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 shadow-2xl overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-200/60 dark:border-navy-700/60">
           <Rocket size={16} className="text-violet-500" />
@@ -185,9 +200,14 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
           <div className="flex-1" />
           <div className="flex items-center gap-1.5 mr-3">
             <TrendingUp size={11} className="text-emerald-500" />
-            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">{conversionRate}% {isPl ? 'konwersja' : 'conversion'}</span>
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+              {conversionRate}% {isPl ? 'konwersja' : 'conversion'}
+            </span>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={14} className="text-slate-400" />
           </button>
         </div>
@@ -201,23 +221,36 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
               return (
                 <React.Fragment key={item.stage.id}>
                   <button
-                    onClick={() => setSelectedStage(selectedStage === item.stage.id ? null : item.stage.id)}
+                    onClick={() =>
+                      setSelectedStage(selectedStage === item.stage.id ? null : item.stage.id)
+                    }
                     className={`flex-1 rounded-xl px-3 py-2.5 transition-all cursor-pointer ${selectedStage === item.stage.id ? 'ring-2 ring-violet-500/40' : 'hover:ring-1 hover:ring-slate-300'}`}
                     style={{ backgroundColor: `${item.stage.color}15` }}
                   >
                     <div className="flex items-center gap-1.5 mb-1">
                       <span style={{ color: item.stage.color }}>{item.stage.icon}</span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: item.stage.color }}>
+                      <span
+                        className="text-[9px] font-bold uppercase tracking-wider"
+                        style={{ color: item.stage.color }}
+                      >
                         {isPl ? item.stage.labelPl : item.stage.label}
                       </span>
                     </div>
-                    <div className="text-lg font-black text-slate-800 dark:text-slate-200">{item.count}</div>
+                    <div className="text-lg font-black text-slate-800 dark:text-slate-200">
+                      {item.count}
+                    </div>
                     <div className="mt-1 h-1 rounded-full bg-slate-200/60 dark:bg-navy-700/60 overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${widthPct}%`, backgroundColor: item.stage.color }} />
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${widthPct}%`, backgroundColor: item.stage.color }}
+                      />
                     </div>
                   </button>
                   {idx < funnelData.length - 1 && (
-                    <ChevronRight size={14} className="text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                    <ChevronRight
+                      size={14}
+                      className="text-slate-300 dark:text-slate-600 flex-shrink-0"
+                    />
                   )}
                 </React.Fragment>
               );
@@ -247,8 +280,14 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                     </span>
                     <div className="mt-1.5 space-y-1">
                       {(isPl ? stage.criteriaPl : stage.criteria).map((c, i) => (
-                        <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-300">
-                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: stage.color }} />
+                        <div
+                          key={i}
+                          className="flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-300"
+                        >
+                          <div
+                            className="w-1.5 h-1.5 rounded-full"
+                            style={{ backgroundColor: stage.color }}
+                          />
                           {c}
                         </div>
                       ))}
@@ -257,30 +296,45 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
 
                   {/* Items */}
                   {stageNodes.length === 0 ? (
-                    <p className="text-xs text-slate-400 text-center py-4">{isPl ? 'Brak pomysłów na tym etapie' : 'No ideas at this stage'}</p>
+                    <p className="text-xs text-slate-400 text-center py-4">
+                      {isPl ? 'Brak pomysłów na tym etapie' : 'No ideas at this stage'}
+                    </p>
                   ) : (
                     <div className="space-y-1.5">
                       {stageNodes.map((node) => {
                         const eval_ = evaluateCriteria(node, stage);
                         const nextStageIdx = stages.findIndex((s) => s.id === selectedStage) + 1;
-                        const nextStage = nextStageIdx < stages.length ? stages[nextStageIdx] : null;
+                        const nextStage =
+                          nextStageIdx < stages.length ? stages[nextStageIdx] : null;
                         const canPromote = nextStage && eval_.met === eval_.total;
                         const nodeColor = node.data?.color || ROW_ACCENT_COLORS[0];
 
                         return (
-                          <div key={node.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white dark:bg-navy-900/30 border border-slate-200/30 dark:border-navy-700/30">
-                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: nodeColor }} />
+                          <div
+                            key={node.id}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white dark:bg-navy-900/30 border border-slate-200/30 dark:border-navy-700/30"
+                          >
+                            <div
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: nodeColor }}
+                            />
                             <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex-1 truncate">
                               {node.data?.label || node.id}
                             </span>
                             <div className="flex items-center gap-1">
-                              <span className={`text-[9px] font-bold ${eval_.met === eval_.total ? 'text-emerald-500' : 'text-amber-500'}`}>
+                              <span
+                                className={`text-[9px] font-bold ${eval_.met === eval_.total ? 'text-emerald-500' : 'text-amber-500'}`}
+                              >
                                 {eval_.met}/{eval_.total}
                               </span>
                               <div className="w-8 h-1 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                                 <div
                                   className="h-full rounded-full transition-all"
-                                  style={{ width: `${(eval_.met / Math.max(eval_.total, 1)) * 100}%`, backgroundColor: eval_.met === eval_.total ? '#10b981' : '#f59e0b' }}
+                                  style={{
+                                    width: `${(eval_.met / Math.max(eval_.total, 1)) * 100}%`,
+                                    backgroundColor:
+                                      eval_.met === eval_.total ? '#10b981' : '#f59e0b',
+                                  }}
                                 />
                               </div>
                             </div>
@@ -289,10 +343,24 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
                                 onClick={() => handlePromote(node.id, selectedStage)}
                                 disabled={!canPromote || promotingId === node.id}
                                 className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-bold transition-colors ${canPromote ? 'text-white hover:opacity-90' : 'text-slate-400 bg-slate-100 dark:bg-navy-800 cursor-not-allowed'}`}
-                                style={canPromote ? { backgroundColor: nextStage.color } : undefined}
-                                title={canPromote ? (isPl ? `Promuj do: ${nextStage.labelPl}` : `Promote to: ${nextStage.label}`) : (isPl ? 'Spełnij wszystkie kryteria' : 'Meet all criteria first')}
+                                style={
+                                  canPromote ? { backgroundColor: nextStage.color } : undefined
+                                }
+                                title={
+                                  canPromote
+                                    ? isPl
+                                      ? `Promuj do: ${nextStage.labelPl}`
+                                      : `Promote to: ${nextStage.label}`
+                                    : isPl
+                                      ? 'Spełnij wszystkie kryteria'
+                                      : 'Meet all criteria first'
+                                }
                               >
-                                {promotingId === node.id ? <Loader2 size={9} className="animate-spin" /> : <ArrowRight size={9} />}
+                                {promotingId === node.id ? (
+                                  <Loader2 size={9} className="animate-spin" />
+                                ) : (
+                                  <ArrowRight size={9} />
+                                )}
                                 {isPl ? nextStage.labelPl : nextStage.label}
                               </button>
                             )}
@@ -307,7 +375,11 @@ export const IdeaPipeline: React.FC<IdeaPipelineProps> = ({
           ) : (
             <div className="text-center py-8">
               <Target size={24} className="text-slate-300 mx-auto mb-2" />
-              <p className="text-xs text-slate-400">{isPl ? 'Kliknij etap aby zobaczyć pomysły i kryteria' : 'Click a stage to see ideas and criteria'}</p>
+              <p className="text-xs text-slate-400">
+                {isPl
+                  ? 'Kliknij etap aby zobaczyć pomysły i kryteria'
+                  : 'Click a stage to see ideas and criteria'}
+              </p>
             </div>
           )}
         </div>

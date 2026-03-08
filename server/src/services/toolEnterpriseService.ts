@@ -37,13 +37,16 @@ class ToolEnterpriseService {
     return queryHelpers.queryAll(sql, category ? [orgId, category] : [orgId]);
   }
 
-  async getTemplate(templateId: string) {
+  async getTemplate(orgId: string, templateId: string) {
     return queryHelpers.queryFirst(
-      `SELECT * FROM tool_template_library WHERE id=$1`, [templateId],
+      `SELECT * FROM tool_template_library
+       WHERE id=$1
+         AND (organization_id=$2 OR organization_id IS NULL OR is_system=1)`,
+      [templateId, orgId],
     );
   }
 
-  async updateTemplate(templateId: string, data: Partial<{
+  async updateTemplate(orgId: string, templateId: string, data: Partial<{
     templateName: string; description: string; schemaJson: object;
     defaultConfig: object; isOrgCurated: boolean;
   }>) {
@@ -61,17 +64,23 @@ class ToolEnterpriseService {
     sets.push(`version=version+1`);
     sets.push(`updated_at=CURRENT_TIMESTAMP`);
     params.push(templateId);
-    await queryHelpers.queryRun(
-      `UPDATE tool_template_library SET ${sets.join(', ')} WHERE id=$${idx}`, params,
+    params.push(orgId);
+    const result = await queryHelpers.queryRun(
+      `UPDATE tool_template_library
+       SET ${sets.join(', ')}
+       WHERE id=$${idx} AND organization_id=$${idx + 1} AND is_system=0`,
+      params,
     );
-    return { ok: true };
+    return { ok: result.changes > 0 };
   }
 
-  async deleteTemplate(templateId: string) {
-    await queryHelpers.queryRun(
-      `DELETE FROM tool_template_library WHERE id=$1 AND is_system=0`, [templateId],
+  async deleteTemplate(orgId: string, templateId: string) {
+    const result = await queryHelpers.queryRun(
+      `DELETE FROM tool_template_library
+       WHERE id=$1 AND organization_id=$2 AND is_system=0`,
+      [templateId, orgId],
     );
-    return { deleted: true };
+    return { deleted: result.changes > 0 };
   }
 
   // ── V4-TOOL-06: Knowledge Bank + RAG ──
@@ -108,9 +117,12 @@ class ToolEnterpriseService {
     return queryHelpers.queryAll(sql, toolSessionId ? [orgId, toolSessionId] : [orgId]);
   }
 
-  async deleteKnowledgeEntry(entryId: string) {
-    await queryHelpers.queryRun(`DELETE FROM tool_knowledge_bank WHERE id=$1`, [entryId]);
-    return { deleted: true };
+  async deleteKnowledgeEntry(orgId: string, entryId: string) {
+    const result = await queryHelpers.queryRun(
+      `DELETE FROM tool_knowledge_bank WHERE id=$1 AND organization_id=$2`,
+      [entryId, orgId]
+    );
+    return { deleted: result.changes > 0 };
   }
 
   async createRagQuery(orgId: string, data: {

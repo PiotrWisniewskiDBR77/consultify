@@ -14,27 +14,25 @@ import {
   Bot,
   Check,
   CheckCircle,
-  ChevronDown,
   ChevronRight,
   Circle,
   Clock,
   Edit3,
   Lightbulb,
   MessageSquare,
-  MoreHorizontal,
   Plus,
   RefreshCw,
   Send,
   Sparkles,
   Star,
   Tag,
-  Trash2,
   User,
   X,
 } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
 
@@ -151,7 +149,10 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
   const isPolish = i18n.language === 'pl';
 
   // Filter questions for current category
-  const categoryQuestions = category ? questions.filter((q) => q.category === category) : [];
+  const categoryQuestions = useMemo(
+    () => (category ? questions.filter((q) => q.category === category) : []),
+    [category, questions]
+  );
   const answeredCount = categoryQuestions.filter((q) => q.status === 'answered').length;
   const totalCount = categoryQuestions.length;
   const missingCount = totalCount - answeredCount;
@@ -190,6 +191,19 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
         ? [singleQuestion]
         : []
       : categoryQuestions;
+  const selectedQuestion = categoryQuestions.find((q) => q.id === expandedId) || null;
+
+  useEffect(() => {
+    if (runtimeMode === 'single_question' && singleQuestion && !expandedId) {
+      setExpandedId(singleQuestion.id);
+    }
+  }, [runtimeMode, singleQuestion, expandedId]);
+
+  useEffect(() => {
+    if (expandedId && !categoryQuestions.some((q) => q.id === expandedId)) {
+      setExpandedId(null);
+    }
+  }, [expandedId, categoryQuestions]);
 
   // Start editing answer
   const handleStartEdit = useCallback((question: InterviewQuestion) => {
@@ -239,25 +253,6 @@ export const QuestionsList: React.FC<QuestionsListProps> = ({
       }
     },
     [editValue, editNotes, onUpdateQuestion, categoryQuestions, isPolish]
-  );
-
-  // Save notes only (without changing status)
-  const handleSaveNotesOnly = useCallback(
-    async (questionId: string) => {
-      setSavingId(questionId);
-      setSaveError(null);
-      try {
-        await onUpdateQuestion(questionId, {
-          notes: editNotes.trim() || undefined,
-        });
-      } catch (error) {
-        console.error('[QuestionsList] Failed to save notes:', error);
-        setSaveError(isPolish ? 'Nie udało się zapisać notatki.' : 'Failed to save notes.');
-      } finally {
-        setSavingId(null);
-      }
-    },
-    [editNotes, onUpdateQuestion, isPolish]
   );
 
   // Cancel edit
@@ -420,7 +415,7 @@ Rules:
     } finally {
       setChatLoading(false);
     }
-  }, [chatInput, chatLoading, chatMessages, chatQuestion, isPolish]);
+  }, [category, chatInput, chatLoading, chatMessages, chatQuestion, isPolish]);
 
   const handleApplyChatToQuestion = useCallback(async () => {
     if (!chatQuestion) return;
@@ -603,319 +598,461 @@ Rules:
         </button>
       )}
 
-      {/* Questions List */}
-      {visibleQuestions.map((question) => {
-        const statusConfig = STATUS_CONFIG[question.status];
-        const StatusIcon = statusConfig.icon;
-        const isExpanded = expandedId === question.id;
-        const isEditing = editingId === question.id;
+      {categoryQuestions.length > 0 && (
+        <div className="min-h-[360px]">
+          <TableWithPreviewLayout<InterviewQuestion & { title: string }>
+            selectedId={selectedQuestion?.id || null}
+            selectedItem={
+              selectedQuestion
+                ? { ...selectedQuestion, title: selectedQuestion.questionText }
+                : null
+            }
+            onSelect={(id) => setExpandedId(id)}
+            itemIds={visibleQuestions.map((q) => q.id)}
+            renderPreview={(item) => {
+              const statusConfig = STATUS_CONFIG[item.status];
+              const StatusIcon = statusConfig.icon;
+              const isEditing = editingId === item.id;
 
-        return (
-          <div
-            key={question.id}
-            className={`rounded-xl border transition-colors ${
-              isExpanded
-                ? 'border-primary-500/30 bg-white/70 dark:bg-navy-900/55'
-                : 'border-slate-200/60 dark:border-navy-700/50 bg-white/55 dark:bg-navy-900/35'
-            }`}
-          >
-            {/* Question Header */}
-            <div className="flex items-start gap-3 p-3">
-              {/* Status Button */}
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    !readOnly &&
-                    setShowStatusMenu(showStatusMenu === question.id ? null : question.id)
-                  }
-                  disabled={readOnly}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${statusConfig.bgColor} ${readOnly ? 'cursor-default' : 'hover:opacity-80'}`}
-                  title={isPolish ? statusConfig.labelPl : statusConfig.labelEn}
-                >
-                  <StatusIcon size={16} className={statusConfig.color} />
-                </button>
-                {renderStatusMenu(question)}
-              </div>
-
-              {/* Question Content */}
-              <div className="flex-1 min-w-0">
-                <button
-                  onClick={() => setExpandedId(isExpanded ? null : question.id)}
-                  className="w-full text-left"
-                >
-                  <p className="text-sm font-medium text-navy-900 dark:text-white">
-                    {question.questionText}
-                  </p>
-                </button>
-
-                {/* Tags */}
-                {question.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {question.tags.map((tag) => {
-                      const tagConfig = TAG_OPTIONS.find((t) => t.value === tag);
-                      return tagConfig ? (
-                        <span
-                          key={tag}
-                          className={`px-1.5 py-0.5 rounded text-xs ${tagConfig.color}`}
-                        >
-                          {isPolish ? tagConfig.labelPl : tagConfig.labelEn}
-                        </span>
-                      ) : null;
-                    })}
-                  </div>
-                )}
-
-                {/* Answer Preview (collapsed) */}
-                {!isExpanded && question.answerText && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
-                    {question.answerText}
-                  </p>
-                )}
-              </div>
-
-              {/* Right side: Confidence + Chat + Actions */}
-              <div className="flex items-center gap-2 shrink-0">
-                {/* Confidence */}
-                <div className="hidden sm:flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((score) => (
-                    <Star
-                      key={score}
-                      size={12}
-                      className={
-                        question.confidenceScore >= score
-                          ? 'text-amber-400 fill-amber-400'
-                          : 'text-slate-300 dark:text-slate-600'
-                      }
-                    />
-                  ))}
-                </div>
-
-                {/* E2.4: Chat-assist button (visible in header for quick access) */}
-                {!readOnly && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openChatForQuestion(question);
-                    }}
-                    className="p-1.5 rounded hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors group"
-                    title={isPolish ? 'Czat AI do tego pytania' : 'AI Chat for this question'}
-                  >
-                    <Sparkles size={14} className="text-purple-400 group-hover:text-purple-500" />
-                  </button>
-                )}
-
-                {/* Tag Button */}
-                <div className="relative">
-                  <button
-                    onClick={() =>
-                      !readOnly && setShowTagMenu(showTagMenu === question.id ? null : question.id)
-                    }
-                    disabled={readOnly}
-                    className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
-                    title={isPolish ? 'Tagi' : 'Tags'}
-                  >
-                    <Tag size={14} className="text-slate-400" />
-                  </button>
-                  {renderTagMenu(question)}
-                </div>
-
-                {/* Expand/Collapse */}
-                <button
-                  onClick={() => setExpandedId(isExpanded ? null : question.id)}
-                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
-                >
-                  <ChevronRight
-                    size={16}
-                    className={`text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-                  />
-                </button>
-              </div>
-            </div>
-
-            {/* Expanded Content */}
-            {isExpanded && (
-              <div className="px-3 pb-3 border-t border-slate-100 dark:border-navy-800 pt-3">
-                {/* Confidence Selector */}
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {isPolish ? 'Poziom pewności:' : 'Confidence level:'}
-                  </span>
-                  {renderConfidenceSelector(question.id, question.confidenceScore)}
-                </div>
-
-                {/* Answer Section */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Odpowiedź:' : 'Answer:'}
-                    </span>
-                    {!readOnly && (
-                      <div className="flex items-center gap-2">
-                        {/* AI assist (human-in-the-loop) */}
-                        <button
-                          onClick={() => handleAISuggest(question)}
-                          disabled={aiLoadingId === question.id}
-                          className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-500 disabled:opacity-50"
-                          title={
-                            isPolish
-                              ? 'Pomóż AI (wstępna propozycja)'
-                              : 'AI assist (draft suggestion)'
-                          }
-                        >
-                          <Sparkles size={12} />
-                          {aiLoadingId === question.id
-                            ? isPolish
-                              ? 'AI...'
-                              : 'AI...'
-                            : isPolish
-                              ? 'AI'
-                              : 'AI'}
-                        </button>
-
-                        {/* Chat → field insert */}
-                        <button
-                          onClick={() => openChatForQuestion(question)}
-                          className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300"
-                          title={isPolish ? 'Czat → wstaw do pola' : 'Chat → insert into field'}
-                        >
-                          <MessageSquare size={12} />
-                          {isPolish ? 'Czat' : 'Chat'}
-                        </button>
-
-                        {!isEditing && (
+              return (
+                <div className="space-y-4">
+                  <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.03] p-3 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="relative">
                           <button
-                            onClick={() => handleStartEdit(question)}
-                            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+                            onClick={() =>
+                              !readOnly &&
+                              setShowStatusMenu(showStatusMenu === item.id ? null : item.id)
+                            }
+                            disabled={readOnly}
+                            className={`inline-flex items-center gap-2 h-8 px-3 rounded-full ${statusConfig.bgColor} ${statusConfig.color} text-xs font-medium ${readOnly ? 'cursor-default' : 'hover:opacity-80'}`}
                           >
-                            <Edit3 size={12} />
-                            {isPolish ? 'Edytuj' : 'Edit'}
+                            <StatusIcon size={13} />
+                            {isPolish ? statusConfig.labelPl : statusConfig.labelEn}
                           </button>
+                          {renderStatusMenu(item)}
+                        </div>
+
+                        <span className="inline-flex items-center gap-1 h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.08] text-xs text-slate-600 dark:text-slate-300">
+                          <Star size={12} className="text-amber-400" />
+                          {item.confidenceScore || 0}/5
+                        </span>
+                      </div>
+
+                      {!readOnly && (
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowTagMenu(showTagMenu === item.id ? null : item.id)}
+                            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.08] text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
+                          >
+                            <Tag size={12} />
+                            {isPolish ? 'Tagi' : 'Tags'}
+                          </button>
+                          {renderTagMenu(item)}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Poziom pewności' : 'Confidence level'}
+                      </span>
+                      {renderConfidenceSelector(item.id, item.confidenceScore)}
+                    </div>
+
+                    {item.tags.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {item.tags.map((tag) => {
+                          const tagConfig = TAG_OPTIONS.find((t) => t.value === tag);
+                          return tagConfig ? (
+                            <span
+                              key={tag}
+                              className={`px-2 py-1 rounded-full text-xs ${tagConfig.color}`}
+                            >
+                              {isPolish ? tagConfig.labelPl : tagConfig.labelEn}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Brak tagów' : 'No tags yet'}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Odpowiedź' : 'Answer'}
+                      </span>
+                      {!readOnly && !isEditing && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleAISuggest(item)}
+                            disabled={aiLoadingId === item.id}
+                            className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-500 disabled:opacity-50"
+                          >
+                            <Sparkles size={12} />
+                            {aiLoadingId === item.id ? 'AI...' : 'AI'}
+                          </button>
+                          <button
+                            onClick={() => openChatForQuestion(item)}
+                            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
+                          >
+                            <MessageSquare size={12} />
+                            {isPolish ? 'Czat' : 'Chat'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {isEditing ? (
+                      <div className="space-y-3">
+                        <textarea
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[140px]"
+                          rows={6}
+                          placeholder={isPolish ? 'Wpisz odpowiedź...' : 'Type your answer...'}
+                          autoFocus
+                        />
+
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                            {isPolish ? 'Notatki (opcjonalne)' : 'Notes (optional)'}
+                          </label>
+                          <textarea
+                            value={editNotes}
+                            onChange={(e) => setEditNotes(e.target.value)}
+                            className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none min-h-[72px]"
+                            rows={3}
+                            placeholder={
+                              isPolish
+                                ? 'Dodatkowe notatki, kontekst...'
+                                : 'Additional notes, context...'
+                            }
+                          />
+                        </div>
+
+                        {saveError && (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs">
+                            <AlertTriangle size={14} />
+                            {saveError}
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2 text-xs text-slate-400">
+                          <Sparkles size={12} />
+                          <span>
+                            {isPolish
+                              ? 'Użyj AI lub czatu, aby szybciej dopracować odpowiedź.'
+                              : 'Use AI or chat to refine the answer faster.'}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className={`p-4 rounded-xl text-sm transition-all ${
+                          item.answerText
+                            ? 'bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white border border-slate-200 dark:border-navy-700'
+                            : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30'
+                        }`}
+                        onClick={() => !readOnly && !item.answerText && handleStartEdit(item)}
+                      >
+                        {item.answerText ? (
+                          <div>
+                            <div className="whitespace-pre-wrap">{item.answerText}</div>
+                            {item.notes && (
+                              <div className="mt-3 pt-3 border-t border-slate-200/50 dark:border-navy-700/50">
+                                <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
+                                  {isPolish ? 'Notatki' : 'Notes'}
+                                </span>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 whitespace-pre-wrap">
+                                  {item.notes}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center gap-2 py-6">
+                            <Plus size={16} />
+                            <span className="font-medium">
+                              {isPolish ? 'Kliknij, aby dodać odpowiedź' : 'Click to add an answer'}
+                            </span>
+                          </div>
                         )}
                       </div>
                     )}
                   </div>
 
-                  {isEditing ? (
-                    <div className="space-y-3">
-                      {/* Answer textarea */}
-                      <textarea
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none min-h-[120px]"
-                        rows={5}
-                        placeholder={isPolish ? 'Wpisz odpowiedź...' : 'Type your answer...'}
-                        autoFocus
-                      />
-
-                      {/* Notes textarea (E2.1) */}
-                      <div>
-                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
-                          {isPolish ? 'Notatki (opcjonalne):' : 'Notes (optional):'}
-                        </label>
-                        <textarea
-                          value={editNotes}
-                          onChange={(e) => setEditNotes(e.target.value)}
-                          className="w-full p-3 text-sm border border-slate-200 dark:border-navy-700 rounded-xl bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none min-h-[60px]"
-                          rows={2}
-                          placeholder={
-                            isPolish
-                              ? 'Dodatkowe notatki, kontekst...'
-                              : 'Additional notes, context...'
-                          }
-                        />
-                      </div>
-
-                      {/* Save error message */}
-                      {saveError && (
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs">
-                          <AlertTriangle size={14} />
-                          {saveError}
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs text-slate-400">
-                          <Sparkles size={12} />
-                          <span>
-                            {isPolish
-                              ? 'Tip: Użyj AI lub Czat aby pomóc sformułować odpowiedź'
-                              : 'Tip: Use AI or Chat to help draft your answer'}
-                          </span>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={handleCancelEdit}
-                            className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                          >
-                            {isPolish ? 'Anuluj' : 'Cancel'}
-                          </button>
-                          <button
-                            onClick={() => handleSaveAnswer(question.id)}
-                            disabled={savingId === question.id}
-                            className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 disabled:cursor-wait text-white rounded-lg font-medium transition-colors flex items-center gap-2"
-                          >
-                            {savingId === question.id ? (
-                              <RefreshCw size={14} className="animate-spin" />
-                            ) : (
-                              <Check size={14} />
-                            )}
-                            {isPolish ? 'Zapisz' : 'Save'}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div
-                      className={`p-4 rounded-xl text-sm transition-all ${
-                        question.answerText
-                          ? 'bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white border border-slate-200 dark:border-navy-700'
-                          : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-2 border-dashed border-blue-300 dark:border-blue-700 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30'
-                      }`}
-                      onClick={() => !readOnly && !question.answerText && handleStartEdit(question)}
-                    >
-                      {question.answerText ? (
-                        <div>
-                          <div className="whitespace-pre-wrap">{question.answerText}</div>
-                          {/* Show notes if present */}
-                          {question.notes && (
-                            <div className="mt-2 pt-2 border-t border-slate-200/50 dark:border-navy-700/50">
-                              <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
-                                {isPolish ? 'Notatki:' : 'Notes:'}
-                              </span>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 whitespace-pre-wrap">
-                                {question.notes}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center gap-2 py-4">
-                          <Plus size={16} />
-                          <span className="font-medium">
-                            {isPolish
-                              ? 'Kliknij, aby dodać odpowiedź...'
-                              : 'Click to add your answer...'}
-                          </span>
-                        </div>
-                      )}
+                  {item.answeredBy && item.answeredAt && (
+                    <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+                      <User size={12} />
+                      <span>{item.answeredBy}</span>
+                      <span>•</span>
+                      <span>{new Date(item.answeredAt).toLocaleString()}</span>
                     </div>
                   )}
                 </div>
+              );
+            }}
+            renderPreviewFooter={(item) => {
+              const isEditing = editingId === item.id;
 
-                {/* Answered By */}
-                {question.answeredBy && question.answeredAt && (
-                  <div className="flex items-center gap-2 mt-2 text-xs text-slate-400 dark:text-slate-500">
-                    <User size={12} />
-                    <span>{question.answeredBy}</span>
-                    <span>•</span>
-                    <span>{new Date(question.answeredAt).toLocaleString()}</span>
+              if (readOnly) {
+                return (
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {item.answerText
+                      ? isPolish
+                        ? 'Odpowiedź zapisana.'
+                        : 'Answer saved.'
+                      : isPolish
+                        ? 'Brak odpowiedzi.'
+                        : 'No answer yet.'}
                   </div>
-                )}
+                );
+              }
+
+              if (isEditing) {
+                return (
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={handleCancelEdit}
+                      className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                    >
+                      {isPolish ? 'Anuluj' : 'Cancel'}
+                    </button>
+                    <button
+                      onClick={() => handleSaveAnswer(item.id)}
+                      disabled={savingId === item.id}
+                      className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 disabled:cursor-wait text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                    >
+                      {savingId === item.id ? (
+                        <RefreshCw size={14} className="animate-spin" />
+                      ) : (
+                        <Check size={14} />
+                      )}
+                      {isPolish ? 'Zapisz' : 'Save'}
+                    </button>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => handleStartEdit(item)}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200/70 dark:border-white/[0.08] text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
+                  >
+                    <Edit3 size={14} />
+                    {item.answerText
+                      ? isPolish
+                        ? 'Edytuj odpowiedź'
+                        : 'Edit answer'
+                      : isPolish
+                        ? 'Dodaj odpowiedź'
+                        : 'Add answer'}
+                  </button>
+                  <button
+                    onClick={() => openChatForQuestion(item)}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200/70 dark:border-white/[0.08] text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
+                  >
+                    <MessageSquare size={14} />
+                    {isPolish ? 'Czat AI' : 'AI chat'}
+                  </button>
+                  <button
+                    onClick={() => handleAISuggest(item)}
+                    disabled={aiLoadingId === item.id}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-purple-500 text-white text-sm hover:bg-purple-600 disabled:opacity-50 transition-colors"
+                  >
+                    <Sparkles size={14} />
+                    {isPolish ? 'Wstępna propozycja AI' : 'Draft with AI'}
+                  </button>
+                </div>
+              );
+            }}
+          >
+            <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/50 bg-white/60 dark:bg-navy-900/35 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px] table-fixed">
+                  <thead>
+                    <tr className="border-b border-slate-200/60 dark:border-navy-700/50 bg-slate-50/80 dark:bg-navy-950/50">
+                      <th className="w-[84px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Status' : 'Status'}
+                      </th>
+                      <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Pytanie' : 'Question'}
+                      </th>
+                      <th className="w-[104px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Pewność' : 'Confidence'}
+                      </th>
+                      <th className="w-[160px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Tagi' : 'Tags'}
+                      </th>
+                      <th className="w-[220px] px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Odpowiedź' : 'Answer'}
+                      </th>
+                      <th className="w-[124px] px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Akcje' : 'Actions'}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleQuestions.map((question) => {
+                      const statusConfig = STATUS_CONFIG[question.status];
+                      const StatusIcon = statusConfig.icon;
+                      const isSelected = expandedId === question.id;
+
+                      return (
+                        <tr
+                          key={question.id}
+                          onClick={() => setExpandedId(question.id)}
+                          onDoubleClick={() => !readOnly && handleStartEdit(question)}
+                          className={`border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'bg-primary-50 dark:bg-primary-500/10'
+                              : 'hover:bg-slate-50/80 dark:hover:bg-navy-800/40'
+                          }`}
+                        >
+                          <td className="px-4 py-3">
+                            <div className="relative">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!readOnly) {
+                                    setShowStatusMenu(
+                                      showStatusMenu === question.id ? null : question.id
+                                    );
+                                  }
+                                }}
+                                disabled={readOnly}
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center ${statusConfig.bgColor} ${readOnly ? 'cursor-default' : 'hover:opacity-80'}`}
+                                title={isPolish ? statusConfig.labelPl : statusConfig.labelEn}
+                              >
+                                <StatusIcon size={16} className={statusConfig.color} />
+                              </button>
+                              {renderStatusMenu(question)}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-navy-900 dark:text-white truncate">
+                                {question.questionText}
+                              </div>
+                              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400 truncate">
+                                {question.answerText
+                                  ? isPolish
+                                    ? 'Kliknij, aby podejrzeć lub edytować odpowiedź'
+                                    : 'Click to review or edit the answer'
+                                  : isPolish
+                                    ? 'Brak odpowiedzi'
+                                    : 'No answer yet'}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((score) => (
+                                <Star
+                                  key={score}
+                                  size={12}
+                                  className={
+                                    question.confidenceScore >= score
+                                      ? 'text-amber-400 fill-amber-400'
+                                      : 'text-slate-300 dark:text-slate-600'
+                                  }
+                                />
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {question.tags.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {question.tags.slice(0, 2).map((tag) => {
+                                  const tagConfig = TAG_OPTIONS.find((t) => t.value === tag);
+                                  return tagConfig ? (
+                                    <span
+                                      key={tag}
+                                      className={`px-1.5 py-0.5 rounded text-[11px] ${tagConfig.color}`}
+                                    >
+                                      {isPolish ? tagConfig.labelPl : tagConfig.labelEn}
+                                    </span>
+                                  ) : null;
+                                })}
+                                {question.tags.length > 2 && (
+                                  <span className="text-[11px] text-slate-400">
+                                    +{question.tags.length - 2}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                              {question.answerText ||
+                                (isPolish ? 'Brak odpowiedzi' : 'No answer yet')}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div
+                              className="flex items-center justify-end gap-1"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {!readOnly && (
+                                <button
+                                  onClick={() => openChatForQuestion(question)}
+                                  className="p-1.5 rounded hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                                  title={
+                                    isPolish
+                                      ? 'Czat AI do tego pytania'
+                                      : 'AI chat for this question'
+                                  }
+                                >
+                                  <Sparkles size={14} className="text-purple-400" />
+                                </button>
+                              )}
+                              <div className="relative">
+                                <button
+                                  onClick={() =>
+                                    !readOnly &&
+                                    setShowTagMenu(showTagMenu === question.id ? null : question.id)
+                                  }
+                                  disabled={readOnly}
+                                  className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+                                  title={isPolish ? 'Tagi' : 'Tags'}
+                                >
+                                  <Tag size={14} className="text-slate-400" />
+                                </button>
+                                {renderTagMenu(question)}
+                              </div>
+                              <button
+                                onClick={() => setExpandedId(question.id)}
+                                className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+                                title={isPolish ? 'Pokaż szczegóły' : 'Show details'}
+                              >
+                                <ChevronRight
+                                  size={16}
+                                  className={`text-slate-400 transition-transform ${
+                                    isSelected ? 'rotate-90' : ''
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </div>
-        );
-      })}
+            </div>
+          </TableWithPreviewLayout>
+        </div>
+      )}
 
       {/* Empty State */}
       {categoryQuestions.length === 0 && !showNewQuestion && (

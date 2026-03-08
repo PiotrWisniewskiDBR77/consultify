@@ -65,7 +65,10 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => {
-                trackFunnelEvent('landing_primary_cta_clicked', { cta: 'launch_free_trial', variant });
+                trackFunnelEvent('landing_primary_cta_clicked', {
+                  cta: 'launch_free_trial',
+                  variant,
+                });
                 onLaunchTrial();
               }}
               className="px-7 py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold shadow-lg shadow-purple-500/20 transition-colors flex items-center justify-center gap-2"
@@ -87,7 +90,10 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
           </div>
 
           <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-            {t('landing.profitHero.ctaNote', 'Short teasers are public. Full videos unlock after login.')}
+            {t(
+              'landing.profitHero.ctaNote',
+              'Short teasers are public. Full videos unlock after login.'
+            )}
           </div>
         </div>
 
@@ -169,4 +175,3 @@ export const ProfitHeroSection: React.FC<ProfitHeroSectionProps> = ({
 };
 
 export default ProfitHeroSection;
-

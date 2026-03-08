@@ -9,8 +9,8 @@ import {
   CARD_SIZES,
   COMMUNICATION_REGISTERS,
   CONTENT_DEPTHS,
-  IMAGE_SOURCES,
   type DeckTemplate,
+  IMAGE_SOURCES,
   type WizardSettings,
 } from './types';
 
@@ -55,10 +55,13 @@ export const SetupStep: React.FC<SetupStepProps> = ({
         const profile = raw?.data ?? raw;
 
         if (profile.preferred_mode) onChange('presentationMode', profile.preferred_mode as any);
-        if (profile.preferred_register) onChange('communicationRegister', profile.preferred_register as any);
-        if (profile.preferred_image_style) onChange('imageStylePreset', profile.preferred_image_style as any);
+        if (profile.preferred_register)
+          onChange('communicationRegister', profile.preferred_register as any);
+        if (profile.preferred_image_style)
+          onChange('imageStylePreset', profile.preferred_image_style as any);
         if (profile.preferred_color_set) onChange('colorSetId', profile.preferred_color_set);
-        if (profile.preferred_content_depth) onChange('contentDepth', profile.preferred_content_depth as any);
+        if (profile.preferred_content_depth)
+          onChange('contentDepth', profile.preferred_content_depth as any);
         setSmartDefaultsApplied(true);
       } catch {
         /* silent — defaults remain unchanged */
@@ -67,7 +70,9 @@ export const SetupStep: React.FC<SetupStepProps> = ({
       }
     };
     fetchSmartDefaults();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const canProceed = settings.title.trim().length > 0;
@@ -86,7 +91,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
             <Wand2 size={12} />
             {t(
               'presentations.setup.smartDefaults',
-              'Suggested based on your organization\'s preferences'
+              "Suggested based on your organization's preferences"
             )}
           </div>
         )}
@@ -139,10 +144,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
               {t('presentations.setup.aiGenerates', 'AI Generates')}
             </p>
             <p className="text-xs text-slate-400 mt-0.5">
-              {t(
-                'presentations.setup.aiGeneratesDesc',
-                'AI proposes structure from your sources'
-              )}
+              {t('presentations.setup.aiGeneratesDesc', 'AI proposes structure from your sources')}
             </p>
           </button>
           {templates
@@ -393,8 +395,7 @@ export const SetupStep: React.FC<SetupStepProps> = ({
           disabled={!canProceed}
           className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-500 disabled:opacity-50"
         >
-          <Sparkles size={16} />{' '}
-          {t('presentations.setup.generateOutline', 'Generate Outline')}
+          <Sparkles size={16} /> {t('presentations.setup.generateOutline', 'Generate Outline')}
         </button>
       </div>
     </div>

@@ -515,8 +515,10 @@ export function advanceCoachState(
         }
         moveToNextDimension(next, dimIds);
       } else if (action === 'modify' && state.currentDimensionId && payload) {
-        const current = payload.current ?? state.proposedScores[state.currentDimensionId]?.current ?? 0;
-        const target = payload.target ?? state.proposedScores[state.currentDimensionId]?.target ?? 0;
+        const current =
+          payload.current ?? state.proposedScores[state.currentDimensionId]?.current ?? 0;
+        const target =
+          payload.target ?? state.proposedScores[state.currentDimensionId]?.target ?? 0;
         next.proposedScores = {
           ...state.proposedScores,
           [state.currentDimensionId]: { current, target },
@@ -687,9 +689,7 @@ export function runConsistencyCheck(params: {
   for (const [dimId, { current, target }] of entries) {
     if (target > 0 && target < current) {
       const label = getDimensionLabel(dimId);
-      issues.push(
-        `Target below current for ${label.en}: current=${current}, target=${target}`
-      );
+      issues.push(`Target below current for ${label.en}: current=${current}, target=${target}`);
     }
   }
 

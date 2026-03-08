@@ -4197,7 +4197,11 @@ export const TimelinePlanner: React.FC<TimelinePlannerProps> = ({
 
   useEffect(() => {
     Api.get('/report-builder')
-      .then((r: any) => setAvailableReports((r?.reports || []).map((x: any) => ({ id: x.id, title: x.title || x.id }))))
+      .then((r: any) =>
+        setAvailableReports(
+          (r?.reports || []).map((x: any) => ({ id: x.id, title: x.title || x.id }))
+        )
+      )
       .catch(() => setAvailableReports([]));
   }, []);
 

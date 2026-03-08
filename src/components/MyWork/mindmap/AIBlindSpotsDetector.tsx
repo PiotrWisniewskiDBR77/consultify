@@ -2,7 +2,16 @@
  * AIBlindSpotsDetector — Floating notification panel that detects missing areas
  * in the mind map and suggests additions.
  */
-import { AlertTriangle, ChevronDown, ChevronUp, Eye, Loader2, Plus, RefreshCw, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  Loader2,
+  Plus,
+  RefreshCw,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -73,7 +82,11 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
 
       const res = await Api.getMyIdeaGapAnalysis(ideaId, {
         seedText: ideaTitle,
-        mapNodes: nodes.map((n) => ({ id: n.id, type: 'idea', data: { label: n.data?.label, branchKey: n.data?.branchKey } })),
+        mapNodes: nodes.map((n) => ({
+          id: n.id,
+          type: 'idea',
+          data: { label: n.data?.label, branchKey: n.data?.branchKey },
+        })),
         branchKeys: Object.keys(branchCounts),
         language: i18n.language,
       });
@@ -85,7 +98,9 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
             area: g.area || g.text || 'Missing area',
             description: g.description || g.detail || '',
             branchKey: g.branchKey || 'options',
-            severity: g.severity || (g.confidence && g.confidence > 0.7 ? 'high' : g.confidence > 0.4 ? 'medium' : 'low'),
+            severity:
+              g.severity ||
+              (g.confidence && g.confidence > 0.7 ? 'high' : g.confidence > 0.4 ? 'medium' : 'low'),
           }))
         );
         setExpanded(true);
@@ -118,11 +133,14 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
     setDismissed((prev) => new Set([...prev, id]));
   }, []);
 
-  const handleAdd = useCallback((spot: BlindSpot) => {
-    onAddBlindSpot(spot);
-    handleDismiss(spot.id);
-    toast.success(isPl ? 'Dodano do mapy' : 'Added to map', { duration: 800 });
-  }, [handleDismiss, isPl, onAddBlindSpot]);
+  const handleAdd = useCallback(
+    (spot: BlindSpot) => {
+      onAddBlindSpot(spot);
+      handleDismiss(spot.id);
+      toast.success(isPl ? 'Dodano do mapy' : 'Added to map', { duration: 800 });
+    },
+    [handleDismiss, isPl, onAddBlindSpot]
+  );
 
   if (visibleSpots.length === 0 && !loading) return null;
 
@@ -146,7 +164,11 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
           </span>
           {loading && <Loader2 size={12} className="animate-spin text-amber-500" />}
           <span className="text-[10px] text-slate-400 font-medium">{visibleSpots.length}</span>
-          {expanded ? <ChevronDown size={12} className="text-slate-400" /> : <ChevronUp size={12} className="text-slate-400" />}
+          {expanded ? (
+            <ChevronDown size={12} className="text-slate-400" />
+          ) : (
+            <ChevronUp size={12} className="text-slate-400" />
+          )}
         </button>
 
         {/* Content */}
@@ -157,11 +179,18 @@ export const AIBlindSpotsDetector: React.FC<AIBlindSpotsDetectorProps> = ({
                 key={spot.id}
                 className="flex items-start gap-2 p-2.5 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30"
               >
-                <AlertTriangle size={12} className={`mt-0.5 shrink-0 ${severityColor[spot.severity]}`} />
+                <AlertTriangle
+                  size={12}
+                  className={`mt-0.5 shrink-0 ${severityColor[spot.severity]}`}
+                />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">{spot.area}</div>
+                  <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                    {spot.area}
+                  </div>
                   {spot.description && (
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{spot.description}</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                      {spot.description}
+                    </div>
                   )}
                   <div className="flex items-center gap-2 mt-1.5">
                     <button

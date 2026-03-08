@@ -34,7 +34,13 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({ template }) =>
           {template.category}
         </span>
         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 dark:bg-white/[0.06] text-slate-500 dark:text-slate-400">
-          {template.scope === 'application' ? (isPolish ? 'System' : 'Application') : (isPolish ? 'Organizacja' : 'Organization')}
+          {template.scope === 'application'
+            ? isPolish
+              ? 'System'
+              : 'Application'
+            : isPolish
+              ? 'Organizacja'
+              : 'Organization'}
         </span>
       </div>
 
@@ -66,7 +72,10 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({ template }) =>
           })}
         />
         {template.sectionCount != null && (
-          <DetailRow label={isPolish ? 'Sekcje' : 'Sections'} value={String(template.sectionCount)} />
+          <DetailRow
+            label={isPolish ? 'Sekcje' : 'Sections'}
+            value={String(template.sectionCount)}
+          />
         )}
         {template.slideCount != null && (
           <DetailRow label={isPolish ? 'Slajdy' : 'Slides'} value={String(template.slideCount)} />
@@ -78,9 +87,10 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({ template }) =>
         type="button"
         className="w-full flex items-center justify-center gap-2 h-10 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium transition-colors"
         onClick={() => {
-          const path = template.type === 'presentation'
-            ? `/presentations/wizard?templateId=${encodeURIComponent(template.id)}`
-            : `/reports/builder?templateId=${encodeURIComponent(template.id)}`;
+          const path =
+            template.type === 'presentation'
+              ? `/presentations/wizard?templateId=${encodeURIComponent(template.id)}`
+              : `/reports/builder?templateId=${encodeURIComponent(template.id)}`;
           navigate(path);
         }}
       >

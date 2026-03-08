@@ -11,7 +11,7 @@ const personas = [
     tag: 'Founders & Owners',
     headline: 'Move fast without burning cash.',
     description:
-      "You built something real. Now you need a strategy that scales it — without hiring a McKinsey team. Consultify is your always-on strategic partner: from market analysis to financial modeling to execution tracking, all in one place.",
+      'You built something real. Now you need a strategy that scales it — without hiring a McKinsey team. Consultify is your always-on strategic partner: from market analysis to financial modeling to execution tracking, all in one place.',
     points: [
       'Business model stress-testing',
       'Investor-ready financial models',
@@ -39,7 +39,7 @@ const personas = [
     tag: 'Consulting Firms',
     headline: 'Deliver 10× the value in half the time.',
     description:
-      "Stop writing the same slides in PowerPoint. Consultify automates your analysis and deliverables so your team focuses on insight and relationships — not formatting and data gathering.",
+      'Stop writing the same slides in PowerPoint. Consultify automates your analysis and deliverables so your team focuses on insight and relationships — not formatting and data gathering.',
     points: [
       'White-label client workspaces',
       'Automated analysis & decks',
@@ -53,12 +53,8 @@ const personas = [
     tag: 'AI-First Leaders',
     headline: 'You think in systems. We speak your language.',
     description:
-      "You already know AI is the lever. Consultify is where that bet pays off — a full MCP-integrated, multi-LLM platform with proprietary consulting intelligence layered on top.",
-    points: [
-      'Full API & MCP access',
-      'Custom LLM routing',
-      'Build your own AI consulting stack',
-    ],
+      'You already know AI is the lever. Consultify is where that bet pays off — a full MCP-integrated, multi-LLM platform with proprietary consulting intelligence layered on top.',
+    points: ['Full API & MCP access', 'Custom LLM routing', 'Build your own AI consulting stack'],
   },
 ];
 
@@ -69,7 +65,9 @@ export const ForWhomSection: React.FC = () => {
     <section className="py-24 px-6 relative z-10">
       <div
         className="absolute top-0 left-0 right-0 h-px"
-        style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)' }}
+        style={{
+          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)',
+        }}
       />
 
       <div className="max-w-7xl mx-auto">
@@ -103,7 +101,10 @@ export const ForWhomSection: React.FC = () => {
             viewport={{ once: true }}
             className="text-base text-white/50 max-w-xl mx-auto"
           >
-            {t('landing.forWhom.sub', 'Whoever you are — if results matter to you, Consultify is your co-pilot.')}
+            {t(
+              'landing.forWhom.sub',
+              'Whoever you are — if results matter to you, Consultify is your co-pilot.'
+            )}
           </motion.p>
         </div>
 
@@ -125,7 +126,8 @@ export const ForWhomSection: React.FC = () => {
                 }}
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLDivElement).style.borderColor = `${persona.color}45`;
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = `0 0 40px -12px ${persona.glow}`;
+                  (e.currentTarget as HTMLDivElement).style.boxShadow =
+                    `0 0 40px -12px ${persona.glow}`;
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.08)';
@@ -147,7 +149,10 @@ export const ForWhomSection: React.FC = () => {
                   <div className="flex items-start justify-between mb-5">
                     <div
                       className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{ background: `${persona.color}18`, border: `1px solid ${persona.color}30` }}
+                      style={{
+                        background: `${persona.color}18`,
+                        border: `1px solid ${persona.color}30`,
+                      }}
                     >
                       <Icon size={22} style={{ color: persona.color }} strokeWidth={2} />
                     </div>
@@ -159,8 +164,12 @@ export const ForWhomSection: React.FC = () => {
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-black text-white mb-3 leading-tight">{persona.headline}</h3>
-                  <p className="text-sm text-white/50 leading-relaxed mb-5">{persona.description}</p>
+                  <h3 className="text-xl font-black text-white mb-3 leading-tight">
+                    {persona.headline}
+                  </h3>
+                  <p className="text-sm text-white/50 leading-relaxed mb-5">
+                    {persona.description}
+                  </p>
 
                   <div className="space-y-2">
                     {persona.points.map((point) => (

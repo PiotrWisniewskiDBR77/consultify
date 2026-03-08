@@ -104,6 +104,107 @@ function lineVal(lines: StatementLine[] | undefined, code: string, period: strin
   return l?.values?.[period] ?? 0;
 }
 
+function lineValAny(lines: StatementLine[] | undefined, codes: string[], period: string): number {
+  for (const code of codes) {
+    const value = lineVal(lines, code, period);
+    if (value !== 0) return value;
+  }
+  return 0;
+}
+
+function isInvestmentAnalysisType(value: unknown): boolean {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+  return (
+    normalized === 'investment_case' ||
+    normalized === 'investment' ||
+    normalized === 'financial' ||
+    normalized === 'capex' ||
+    normalized.includes('investment') ||
+    normalized.includes('capex')
+  );
+}
+
+function computeInvestmentRatios(data: StatementData, periods: string[]): RatioResult[] {
+  if (!periods.length) return [];
+  const cashFlows = periods.map((period) => {
+    const direct = lineValAny(data.cf, ['FCF', 'FREE_CASH_FLOW', 'NET_CHANGE_CASH'], period);
+    if (direct !== 0) return direct;
+    const operating = lineValAny(data.cf, ['OPERATING_CF', 'OPERATING_CASH_FLOW'], period);
+    const capexRaw = lineValAny(data.cf, ['CAPEX_CF', 'CAPEX'], period);
+    const capex = capexRaw > 0 ? -capexRaw : capexRaw;
+    return operating + capex;
+  });
+
+  if (cashFlows.every((value) => value === 0)) return [];
+
+  const initialInvestment =
+    Math.abs(cashFlows.find((value) => value < 0) || 0) ||
+    Math.abs(lineValAny(data.cf, ['CAPEX_CF', 'CAPEX'], periods[0]) || 0);
+  if (!initialInvestment) return [];
+
+  const npvAt = (rate: number): number =>
+    cashFlows.reduce((acc, cashFlow, index) => acc + cashFlow / Math.pow(1 + rate, index), 0);
+
+  const npv = npvAt(0.1);
+
+  let irr: number | null = null;
+  let low = -0.99;
+  let high = 10;
+  let lowNpv = npvAt(low);
+  const highNpv = npvAt(high);
+  if (Number.isFinite(lowNpv) && Number.isFinite(highNpv) && lowNpv * highNpv < 0) {
+    for (let i = 0; i < 80; i += 1) {
+      const mid = (low + high) / 2;
+      const npvMid = npvAt(mid);
+      if (Math.abs(npvMid) < 0.0001) {
+        irr = mid;
+        break;
+      }
+      if (lowNpv * npvMid < 0) {
+        high = mid;
+      } else {
+        low = mid;
+        lowNpv = npvMid;
+      }
+    }
+    irr = irr ?? (low + high) / 2;
+  }
+
+  let paybackPeriods: number | null = null;
+  let cumulative = 0;
+  for (let index = 0; index < cashFlows.length; index += 1) {
+    const prev = cumulative;
+    cumulative += cashFlows[index];
+    if (cumulative >= 0) {
+      const delta = cumulative - prev;
+      const fraction = delta !== 0 ? (0 - prev) / delta : 0;
+      paybackPeriods = index + Math.max(0, fraction);
+      break;
+    }
+  }
+
+  const roi = (cashFlows.reduce((acc, value) => acc + value, 0) / initialInvestment) * 100;
+
+  return [
+    { category: 'investment', code: 'npv', name: 'NPV', value: npv },
+    {
+      category: 'investment',
+      code: 'irr_pct',
+      name: 'IRR %',
+      value: irr == null ? null : irr * 100,
+    },
+    {
+      category: 'investment',
+      code: 'payback_periods',
+      name: 'Payback (periods)',
+      value: paybackPeriods,
+    },
+    { category: 'investment', code: 'roi_pct', name: 'ROI %', value: roi },
+  ];
+}
+
 export async function createAnalysis(
   orgId: string,
   data: {
@@ -502,12 +603,16 @@ export async function runFullAnalysis(orgId: string, analysisId: string): Promis
   const { statementData: sd, periods: ps } = a;
   const v = computeVerticalAnalysis(sd, ps);
   const h = computeHorizontalAnalysis(sd, ps);
-  const lr = ps.length > 0 ? computeRatios(sd, ps[ps.length - 1]) : [];
+  const investmentRatios = isInvestmentAnalysisType(a.analysisType)
+    ? computeInvestmentRatios(sd, ps)
+    : [];
+  const lr = ps.length > 0 ? [...computeRatios(sd, ps[ps.length - 1]), ...investmentRatios] : [];
   const tr = computeTrends(sd, ps);
   const ins = generateInsights(v, h, lr, tr);
   await dbRun(`DELETE FROM financial_analysis_ratios WHERE analysis_id=?`, [analysisId]);
   for (const p of ps) {
-    for (const r of computeRatios(sd, p)) {
+    const ratiosForPeriod = [...computeRatios(sd, p), ...(p === ps[ps.length - 1] ? investmentRatios : [])];
+    for (const r of ratiosForPeriod) {
       if (r.value === null) continue;
       await dbRun(
         `INSERT INTO financial_analysis_ratios (id,analysis_id,period,category,ratio_code,ratio_name,value,benchmark_value,interpretation,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`,

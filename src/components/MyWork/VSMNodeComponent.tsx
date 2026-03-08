@@ -10,17 +10,9 @@
  *
  * Register the exported `vsmNodeTypes` record with React Flow.
  */
-import {
-  ArrowRight,
-  ArrowRightLeft,
-  Box,
-  ShoppingCart,
-  Truck,
-  Users,
-  Zap,
-} from 'lucide-react';
+import { ArrowRight, ArrowRightLeft, Box, ShoppingCart, Truck, Users, Zap } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Handle, Position, type NodeProps } from 'reactflow';
+import { Handle, type NodeProps, Position } from 'reactflow';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,13 +40,13 @@ export type VSMShape =
   | 'vsm_kaizen';
 
 const FIELD_LABELS: Record<VSMFieldKey, { en: string; pl: string; abbr: string }> = {
-  cycleTime:       { en: 'Cycle Time',     pl: 'Czas cyklu',    abbr: 'C/T' },
-  changeoverTime:  { en: 'Changeover',     pl: 'Przezbrojenie', abbr: 'C/O' },
-  uptimePercent:   { en: 'Uptime',         pl: 'Dostępność',   abbr: 'Up%' },
-  batchSize:       { en: 'Batch Size',     pl: 'Partia',        abbr: 'Batch' },
-  operators:       { en: 'Operators',      pl: 'Operatorzy',    abbr: 'Ops' },
-  inventory:       { en: 'Inventory',      pl: 'Zapas',         abbr: 'Inv' },
-  scrapRate:       { en: 'Scrap Rate',     pl: 'Odpad',         abbr: 'Scrap' },
+  cycleTime: { en: 'Cycle Time', pl: 'Czas cyklu', abbr: 'C/T' },
+  changeoverTime: { en: 'Changeover', pl: 'Przezbrojenie', abbr: 'C/O' },
+  uptimePercent: { en: 'Uptime', pl: 'Dostępność', abbr: 'Up%' },
+  batchSize: { en: 'Batch Size', pl: 'Partia', abbr: 'Batch' },
+  operators: { en: 'Operators', pl: 'Operatorzy', abbr: 'Ops' },
+  inventory: { en: 'Inventory', pl: 'Zapas', abbr: 'Inv' },
+  scrapRate: { en: 'Scrap Rate', pl: 'Odpad', abbr: 'Scrap' },
 };
 
 // ── Inline field editor ──────────────────────────────────────────────────────
@@ -108,7 +100,8 @@ const InlineField: React.FC<InlineFieldProps> = ({ label, value, suffix, locked,
             }
           }}
         >
-          {value}{suffix || ''}
+          {value}
+          {suffix || ''}
         </span>
       )}
     </div>
@@ -177,7 +170,7 @@ function emitFieldChange(nodeId: string | undefined, field: VSMFieldKey, value: 
   window.dispatchEvent(
     new CustomEvent('idea-workspace-node-update', {
       detail: { nodeId, data: { [field]: parsed } },
-    }),
+    })
   );
 }
 
@@ -189,7 +182,7 @@ export const VSMProcessNode: React.FC<NodeProps> = ({ id, data, selected }) => {
 
   const fieldChange = useCallback(
     (field: VSMFieldKey) => (val: string) => emitFieldChange(id, field, val),
-    [id],
+    [id]
   );
 
   return (
@@ -205,12 +198,44 @@ export const VSMProcessNode: React.FC<NodeProps> = ({ id, data, selected }) => {
       </div>
 
       <div className="px-2 py-1.5 space-y-0.5">
-        <InlineField label="C/T" value={data?.cycleTime} locked={locked} onCommit={fieldChange('cycleTime')} />
-        <InlineField label="C/O" value={data?.changeoverTime} locked={locked} onCommit={fieldChange('changeoverTime')} />
-        <InlineField label="Up%" value={data?.uptimePercent} suffix="%" locked={locked} onCommit={fieldChange('uptimePercent')} />
-        <InlineField label="Batch" value={data?.batchSize} locked={locked} onCommit={fieldChange('batchSize')} />
-        <InlineField label="Ops" value={data?.operators} locked={locked} onCommit={fieldChange('operators')} />
-        <InlineField label="Scrap" value={data?.scrapRate} suffix="%" locked={locked} onCommit={fieldChange('scrapRate')} />
+        <InlineField
+          label="C/T"
+          value={data?.cycleTime}
+          locked={locked}
+          onCommit={fieldChange('cycleTime')}
+        />
+        <InlineField
+          label="C/O"
+          value={data?.changeoverTime}
+          locked={locked}
+          onCommit={fieldChange('changeoverTime')}
+        />
+        <InlineField
+          label="Up%"
+          value={data?.uptimePercent}
+          suffix="%"
+          locked={locked}
+          onCommit={fieldChange('uptimePercent')}
+        />
+        <InlineField
+          label="Batch"
+          value={data?.batchSize}
+          locked={locked}
+          onCommit={fieldChange('batchSize')}
+        />
+        <InlineField
+          label="Ops"
+          value={data?.operators}
+          locked={locked}
+          onCommit={fieldChange('operators')}
+        />
+        <InlineField
+          label="Scrap"
+          value={data?.scrapRate}
+          suffix="%"
+          locked={locked}
+          onCommit={fieldChange('scrapRate')}
+        />
       </div>
 
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" />
@@ -227,7 +252,7 @@ export const VSMInventoryNode: React.FC<NodeProps> = ({ id, data, selected }) =>
 
   const fieldChange = useCallback(
     (field: VSMFieldKey) => (val: string) => emitFieldChange(id, field, val),
-    [id],
+    [id]
   );
 
   return (
@@ -248,13 +273,16 @@ export const VSMInventoryNode: React.FC<NodeProps> = ({ id, data, selected }) =>
           background: 'linear-gradient(180deg, #fef3c7 0%, #fbbf24 100%)',
         }}
       >
-        <span className="text-[9px] font-bold text-amber-900 mb-1">
-          {qty != null ? qty : '?'}
-        </span>
+        <span className="text-[9px] font-bold text-amber-900 mb-1">{qty != null ? qty : '?'}</span>
       </div>
 
       <div className="mt-0.5">
-        <InlineField label="Qty" value={data?.inventory} locked={locked} onCommit={fieldChange('inventory')} />
+        <InlineField
+          label="Qty"
+          value={data?.inventory}
+          locked={locked}
+          onCommit={fieldChange('inventory')}
+        />
       </div>
 
       <LabelEditor
@@ -282,7 +310,12 @@ export const VSMSupplierNode: React.FC<NodeProps> = ({ data, selected }) => {
       }`}
     >
       <Truck size={20} className="text-slate-600 dark:text-slate-300 mb-1" />
-      <LabelEditor label={label} locked={locked} onLabelChange={data?.onLabelChange} className="text-[10px] font-semibold text-slate-700 dark:text-slate-200" />
+      <LabelEditor
+        label={label}
+        locked={locked}
+        onLabelChange={data?.onLabelChange}
+        className="text-[10px] font-semibold text-slate-700 dark:text-slate-200"
+      />
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" />
     </div>
   );
@@ -301,7 +334,12 @@ export const VSMCustomerNode: React.FC<NodeProps> = ({ data, selected }) => {
       }`}
     >
       <Users size={20} className="text-emerald-600 dark:text-emerald-300 mb-1" />
-      <LabelEditor label={label} locked={locked} onLabelChange={data?.onLabelChange} className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-200" />
+      <LabelEditor
+        label={label}
+        locked={locked}
+        onLabelChange={data?.onLabelChange}
+        className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-200"
+      />
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
     </div>
   );
@@ -339,7 +377,11 @@ export const VSMPullArrowNode: React.FC<NodeProps> = ({ data, selected }) => {
     >
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
       <div className="flex items-center gap-0.5">
-        <ArrowRightLeft size={22} className="text-indigo-600 dark:text-indigo-300" strokeWidth={2.5} />
+        <ArrowRightLeft
+          size={22}
+          className="text-indigo-600 dark:text-indigo-300"
+          strokeWidth={2.5}
+        />
       </div>
       <span className="absolute -bottom-3 text-[7px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">
         Pull
@@ -365,17 +407,27 @@ export const VSMSupermarketNode: React.FC<NodeProps> = ({ id, data, selected }) 
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
 
       <ShoppingCart size={18} className="text-teal-600 dark:text-teal-300 mb-1" />
-      <LabelEditor label={label} locked={locked} onLabelChange={data?.onLabelChange} className="text-[9px] font-semibold text-teal-700 dark:text-teal-200" />
+      <LabelEditor
+        label={label}
+        locked={locked}
+        onLabelChange={data?.onLabelChange}
+        className="text-[9px] font-semibold text-teal-700 dark:text-teal-200"
+      />
 
       {/* Kanban slots */}
       <div className="flex gap-0.5 mt-1">
         {Array.from({ length: Math.min(qty ?? 3, 6) }).map((_, i) => (
-          <div key={i} className="w-2.5 h-3 rounded-sm border border-teal-400 dark:border-teal-600 bg-teal-100 dark:bg-teal-800/50" />
+          <div
+            key={i}
+            className="w-2.5 h-3 rounded-sm border border-teal-400 dark:border-teal-600 bg-teal-100 dark:bg-teal-800/50"
+          />
         ))}
       </div>
 
       {qty != null && (
-        <span className="text-[7px] font-bold text-teal-600 dark:text-teal-400 mt-0.5">{qty} pcs</span>
+        <span className="text-[7px] font-bold text-teal-600 dark:text-teal-400 mt-0.5">
+          {qty} pcs
+        </span>
       )}
 
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" />
@@ -393,7 +445,9 @@ export const VSMFifoNode: React.FC<NodeProps> = ({ data, selected }) => {
       }`}
     >
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" />
-      <span className="text-[10px] font-bold text-orange-600 dark:text-orange-300 tracking-widest">FIFO</span>
+      <span className="text-[10px] font-bold text-orange-600 dark:text-orange-300 tracking-widest">
+        FIFO
+      </span>
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" />
     </div>
   );

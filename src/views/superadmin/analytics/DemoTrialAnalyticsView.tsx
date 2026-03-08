@@ -198,9 +198,7 @@ const DemoTrialAnalyticsView: React.FC = () => {
                     className="border-t border-slate-100 dark:border-navy-800 hover:bg-slate-50 dark:hover:bg-navy-800/30"
                   >
                     <td className="px-4 py-2 text-slate-600 dark:text-slate-400">
-                      {e.createdAt
-                        ? new Date(e.createdAt).toLocaleString()
-                        : '—'}
+                      {e.createdAt ? new Date(e.createdAt).toLocaleString() : '—'}
                     </td>
                     <td className="px-4 py-2">
                       <span
@@ -225,7 +223,8 @@ const DemoTrialAnalyticsView: React.FC = () => {
                     </td>
                     <td className="px-4 py-2 text-slate-500 text-xs max-w-[200px] truncate">
                       {e.metadata
-                        ? JSON.stringify(e.metadata).slice(0, 80) + (JSON.stringify(e.metadata).length > 80 ? '…' : '')
+                        ? JSON.stringify(e.metadata).slice(0, 80) +
+                          (JSON.stringify(e.metadata).length > 80 ? '…' : '')
                         : '—'}
                     </td>
                   </tr>

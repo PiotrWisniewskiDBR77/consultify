@@ -17,7 +17,7 @@ import {
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { INTENT_COLORS, type CardIntent, type IntentInfo, type OutlineItem } from './types';
+import { type CardIntent, INTENT_COLORS, type IntentInfo, type OutlineItem } from './types';
 
 interface OutlineStepProps {
   outline: OutlineItem[];
@@ -36,10 +36,21 @@ const IMAGE_HINT_ICONS: Record<string, React.FC<{ size?: number; className?: str
 };
 
 const ALL_INTENTS: CardIntent[] = [
-  'cover', 'executive_summary', 'section_intro', 'key_messages',
-  'performance_overview', 'single_insight', 'comparison', 'assessment',
-  'recommendation_portfolio', 'initiative_portfolio', 'prioritization_matrix',
-  'roadmap', 'risk_management', 'next_steps', 'appendix',
+  'cover',
+  'executive_summary',
+  'section_intro',
+  'key_messages',
+  'performance_overview',
+  'single_insight',
+  'comparison',
+  'assessment',
+  'recommendation_portfolio',
+  'initiative_portfolio',
+  'prioritization_matrix',
+  'roadmap',
+  'risk_management',
+  'next_steps',
+  'appendix',
 ];
 
 export const OutlineStep: React.FC<OutlineStepProps> = ({
@@ -73,9 +84,7 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
       );
     }
     if (!enabledSlides.some((s) => s.intent === 'cover')) {
-      warnings.push(
-        t('presentations.outline.validation.noCover', 'Missing cover slide')
-      );
+      warnings.push(t('presentations.outline.validation.noCover', 'Missing cover slide'));
     }
     return warnings;
   }, [enabledSlides, t]);
@@ -138,7 +147,8 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
         intent,
         title: info?.label || intent.replace(/_/g, ' '),
         enabled: true,
-        imageHint: intent === 'performance_overview' || intent === 'single_insight' ? 'chart' : undefined,
+        imageHint:
+          intent === 'performance_overview' || intent === 'single_insight' ? 'chart' : undefined,
       },
     ]);
     setAddMenuOpen(false);
@@ -204,7 +214,10 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
       {validation.length > 0 && (
         <div className="bg-yellow-50 dark:bg-yellow-500/5 border border-yellow-200 dark:border-yellow-500/20 rounded-xl p-3">
           {validation.map((w, i) => (
-            <div key={i} className="flex items-center gap-2 text-sm text-yellow-700 dark:text-yellow-300">
+            <div
+              key={i}
+              className="flex items-center gap-2 text-sm text-yellow-700 dark:text-yellow-300"
+            >
               <AlertTriangle size={14} className="text-yellow-500 flex-shrink-0" />
               {w}
             </div>
@@ -271,14 +284,16 @@ export const OutlineStep: React.FC<OutlineStepProps> = ({
                 </select>
 
                 {/* Image hint */}
-                {item.imageHint && item.imageHint !== 'none' && (() => {
-                  const HintIcon = IMAGE_HINT_ICONS[item.imageHint] || Image;
-                  return (
-                    <span className="text-slate-400" title={`Image: ${item.imageHint}`}>
-                      <HintIcon size={12} />
-                    </span>
-                  );
-                })()}
+                {item.imageHint &&
+                  item.imageHint !== 'none' &&
+                  (() => {
+                    const HintIcon = IMAGE_HINT_ICONS[item.imageHint] || Image;
+                    return (
+                      <span className="text-slate-400" title={`Image: ${item.imageHint}`}>
+                        <HintIcon size={12} />
+                      </span>
+                    );
+                  })()}
               </div>
 
               {/* Content hint (editable) */}

@@ -40,7 +40,18 @@ export type GeneratorType =
   | 'process_summary'
   | 'vsm_generator'
   | 'sticky_summarize'
-  | 'vsm_future_state';
+  | 'vsm_future_state'
+  | 'wb_find_themes'
+  | 'wb_name_clusters'
+  | 'wb_to_map_branches'
+  | 'wb_to_table'
+  | 'wb_extract_actions'
+  | 'table_rows'
+  | 'table_simplify'
+  | 'ai_retrieve_artifacts'
+  | 'ai_propose_attachments'
+  | 'ai_build_linked_table'
+  | 'ai_autofill_mappings';
 
 export interface AISuggestionItem {
   id: string;

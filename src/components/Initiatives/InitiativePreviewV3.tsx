@@ -115,22 +115,30 @@ export const InitiativePreviewV3Body: React.FC<{
             {isPolish ? 'Inicjatywa' : 'Initiative'}
           </span>
           <div className="flex flex-wrap items-center justify-end gap-1.5 min-w-0">
-            <span className={`${pillBase} text-slate-700 dark:text-slate-200`}>{status.replace(/_/g, ' ')}</span>
+            <span className={`${pillBase} text-slate-700 dark:text-slate-200`}>
+              {status.replace(/_/g, ' ')}
+            </span>
             {progress != null ? (
               <span className={`${pillBase} text-slate-700 dark:text-slate-200`}>
-                <span className="text-slate-500 dark:text-slate-400">{t('preview.progress', 'Progress')}</span>
+                <span className="text-slate-500 dark:text-slate-400">
+                  {t('preview.progress', 'Progress')}
+                </span>
                 <span className="text-slate-900 dark:text-white">{progress}%</span>
               </span>
             ) : null}
             {axis ? (
               <span className={`${pillBase} text-slate-700 dark:text-slate-200`}>
-                <span className="text-slate-500 dark:text-slate-400">{isPolish ? 'Oś' : 'Axis'}</span>
+                <span className="text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Oś' : 'Axis'}
+                </span>
                 <span className="text-slate-900 dark:text-white">{axis}</span>
               </span>
             ) : null}
             {priority ? (
               <span className={`${pillBase} text-slate-700 dark:text-slate-200`}>
-                <span className="text-slate-500 dark:text-slate-400">{isPolish ? 'Pilność' : 'Priority'}</span>
+                <span className="text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Pilność' : 'Priority'}
+                </span>
                 <span className="text-slate-900 dark:text-white">{priority}</span>
               </span>
             ) : null}
@@ -139,11 +147,15 @@ export const InitiativePreviewV3Body: React.FC<{
 
         <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
           <div>
-            <div className="text-slate-500 dark:text-slate-400">{isPolish ? 'Utworzono' : 'Created'}</div>
+            <div className="text-slate-500 dark:text-slate-400">
+              {isPolish ? 'Utworzono' : 'Created'}
+            </div>
             <div className="text-slate-900 dark:text-white">{createdAt}</div>
           </div>
           <div className="text-right">
-            <div className="text-slate-500 dark:text-slate-400">{isPolish ? 'Ostatnia zmiana' : 'Last modified'}</div>
+            <div className="text-slate-500 dark:text-slate-400">
+              {isPolish ? 'Ostatnia zmiana' : 'Last modified'}
+            </div>
             <div className="text-slate-900 dark:text-white">{updatedAt}</div>
           </div>
         </div>
@@ -337,7 +349,9 @@ export const InitiativePreviewV3Footer: React.FC<{
       {/* Relations (2 rows) */}
       <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
         {relationsPill(isPolish ? 'Źródło' : 'Source', sourceLabel)}
-        {typeof tasksCount === 'number' ? relationsPill(isPolish ? 'Zadania' : 'Tasks', String(tasksCount)) : null}
+        {typeof tasksCount === 'number'
+          ? relationsPill(isPolish ? 'Zadania' : 'Tasks', String(tasksCount))
+          : null}
       </div>
 
       <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />

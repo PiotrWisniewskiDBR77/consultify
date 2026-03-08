@@ -5,8 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
 import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
 import { AIFreezeBanner } from '../components/AIFreezeBanner';
-import { DemoModeBanner } from '../components/layout/DemoModeBanner';
-import GlobalAccessBanners from '../components/layout/GlobalAccessBanners';
 import { DemoSessionManager } from '../components/demo/DemoSessionManager';
 import { DocumentSidePanel } from '../components/documents/DocumentSidePanel';
 import { DocumentToggleButton } from '../components/documents/DocumentToggleButton';
@@ -15,6 +13,8 @@ import { FeedbackToggleButton } from '../components/Feedback/FeedbackToggleButto
 import { HelpSidePanel } from '../components/Help/HelpSidePanel';
 import { HelpToggleButton } from '../components/Help/HelpToggleButton';
 import { MicroVideoHelpTrigger } from '../components/Help/MicroVideoHelpTrigger';
+import { DemoModeBanner } from '../components/layout/DemoModeBanner';
+import GlobalAccessBanners from '../components/layout/GlobalAccessBanners';
 import { NotificationDropdown } from '../components/layout/NotificationDropdown';
 import { UserProfileMenu } from '../components/layout/UserProfileMenu';
 import { LLMSelector } from '../components/LLMSelector';
@@ -240,8 +240,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                         ? 'bg-purple-500 text-white hover:bg-purple-600'
                         : 'bg-purple-500/15 text-purple-600 dark:text-purple-400 hover:bg-purple-500/25'
                     }`}
-                    title={isChatCollapsed ? t('layout.aiPanel.open', 'Open AI panel') : t('layout.aiPanel.close', 'Close AI panel')}
-                    aria-label={isChatCollapsed ? t('layout.aiPanel.open', 'Open AI panel') : t('layout.aiPanel.close', 'Close AI panel')}
+                    title={
+                      isChatCollapsed
+                        ? t('layout.aiPanel.open', 'Open AI panel')
+                        : t('layout.aiPanel.close', 'Close AI panel')
+                    }
+                    aria-label={
+                      isChatCollapsed
+                        ? t('layout.aiPanel.open', 'Open AI panel')
+                        : t('layout.aiPanel.close', 'Close AI panel')
+                    }
                     aria-pressed={!isChatCollapsed}
                   >
                     <Sparkles size={18} />

@@ -77,8 +77,37 @@ class AuditEventsService {
       );
       return id;
     } catch (err: any) {
-      logger.error('[AuditEventsService] Failed to log:', err?.message);
-      throw err;
+      const message = String(err?.message || '');
+      logger.warn('[AuditEventsService] Unified insert failed, trying legacy schema:', message);
+      try {
+        await db.run(
+          `INSERT INTO audit_events (
+            id, ts, actor_user_id, actor_type, org_id, action_type, entity_type, entity_id,
+            metadata_json, ip, user_agent
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            new Date().toISOString(),
+            input.actorId || null,
+            input.actorType,
+            input.organizationId || null,
+            input.action,
+            input.resourceType,
+            input.resourceId || null,
+            JSON.stringify({
+              before: input.before || null,
+              after: input.after || null,
+              ...(input.metadata || {}),
+            }),
+            input.ip || null,
+            input.userAgent || null,
+          ]
+        );
+        return id;
+      } catch (legacyErr: any) {
+        logger.error('[AuditEventsService] Failed to log:', legacyErr?.message || message);
+        return id;
+      }
     }
   }
 

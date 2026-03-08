@@ -149,17 +149,88 @@ export const COLUMN_TYPE_LABELS: Record<ColumnType, { en: string; pl: string }> 
 };
 
 export const ROW_ACCENT_COLORS = [
-  '#8b5cf6', '#6366f1', '#3b82f6', '#06b6d4', '#10b981',
-  '#84cc16', '#eab308', '#f97316', '#ef4444', '#ec4899',
-  '#a855f7', '#14b8a6', '#f59e0b', '#64748b',
+  '#8b5cf6',
+  '#6366f1',
+  '#3b82f6',
+  '#06b6d4',
+  '#10b981',
+  '#84cc16',
+  '#eab308',
+  '#f97316',
+  '#ef4444',
+  '#ec4899',
+  '#a855f7',
+  '#14b8a6',
+  '#f59e0b',
+  '#64748b',
 ];
 
 export const COLOR_PALETTES: Record<string, { name: string; colors: string[] }> = {
-  pastel: { name: 'Pastel', colors: ['#e0e7ff', '#dbeafe', '#d1fae5', '#fef3c7', '#fce7f3', '#ede9fe', '#ccfbf1', '#fee2e2'] },
-  vibrant: { name: 'Vibrant', colors: ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16'] },
-  earth: { name: 'Earth', colors: ['#92400e', '#78350f', '#365314', '#1e3a5f', '#4a1d96', '#831843', '#134e4a', '#713f12'] },
-  ocean: { name: 'Ocean', colors: ['#0ea5e9', '#06b6d4', '#14b8a6', '#2dd4bf', '#67e8f9', '#a5f3fc', '#bae6fd', '#7dd3fc'] },
-  sunset: { name: 'Sunset', colors: ['#f97316', '#fb923c', '#fbbf24', '#ef4444', '#f43f5e', '#ec4899', '#f472b6', '#fda4af'] },
+  pastel: {
+    name: 'Pastel',
+    colors: [
+      '#e0e7ff',
+      '#dbeafe',
+      '#d1fae5',
+      '#fef3c7',
+      '#fce7f3',
+      '#ede9fe',
+      '#ccfbf1',
+      '#fee2e2',
+    ],
+  },
+  vibrant: {
+    name: 'Vibrant',
+    colors: [
+      '#8b5cf6',
+      '#3b82f6',
+      '#10b981',
+      '#f59e0b',
+      '#ef4444',
+      '#ec4899',
+      '#06b6d4',
+      '#84cc16',
+    ],
+  },
+  earth: {
+    name: 'Earth',
+    colors: [
+      '#92400e',
+      '#78350f',
+      '#365314',
+      '#1e3a5f',
+      '#4a1d96',
+      '#831843',
+      '#134e4a',
+      '#713f12',
+    ],
+  },
+  ocean: {
+    name: 'Ocean',
+    colors: [
+      '#0ea5e9',
+      '#06b6d4',
+      '#14b8a6',
+      '#2dd4bf',
+      '#67e8f9',
+      '#a5f3fc',
+      '#bae6fd',
+      '#7dd3fc',
+    ],
+  },
+  sunset: {
+    name: 'Sunset',
+    colors: [
+      '#f97316',
+      '#fb923c',
+      '#fbbf24',
+      '#ef4444',
+      '#f43f5e',
+      '#ec4899',
+      '#f472b6',
+      '#fda4af',
+    ],
+  },
 };
 
 export const COLUMN_TYPE_COLORS: Partial<Record<ColumnType, string>> = {
@@ -186,8 +257,16 @@ export const COLUMN_TYPE_COLORS: Partial<Record<ColumnType, string>> = {
 };
 
 export const SELECT_COLORS = [
-  '#e0e7ff', '#dbeafe', '#d1fae5', '#fef3c7', '#fce7f3',
-  '#ede9fe', '#ccfbf1', '#fee2e2', '#e0f2fe', '#f3e8ff',
+  '#e0e7ff',
+  '#dbeafe',
+  '#d1fae5',
+  '#fef3c7',
+  '#fce7f3',
+  '#ede9fe',
+  '#ccfbf1',
+  '#fee2e2',
+  '#e0f2fe',
+  '#f3e8ff',
 ];
 
 export function evaluateFormula(formula: string, row: Record<string, any>): string | number {
@@ -212,11 +291,17 @@ export function computeAggregation(
   const nums = values.map((v) => Number(v)).filter((n) => Number.isFinite(n));
   if (nums.length === 0) return agg === 'count' ? '0' : '—';
   switch (agg) {
-    case 'sum': return String(Math.round(nums.reduce((a, b) => a + b, 0) * 100) / 100);
-    case 'avg': return String(Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 100) / 100);
-    case 'count': return String(nums.length);
-    case 'min': return String(Math.min(...nums));
-    case 'max': return String(Math.max(...nums));
-    default: return '';
+    case 'sum':
+      return String(Math.round(nums.reduce((a, b) => a + b, 0) * 100) / 100);
+    case 'avg':
+      return String(Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 100) / 100);
+    case 'count':
+      return String(nums.length);
+    case 'min':
+      return String(Math.min(...nums));
+    case 'max':
+      return String(Math.max(...nums));
+    default:
+      return '';
   }
 }

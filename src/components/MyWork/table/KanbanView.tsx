@@ -51,20 +51,28 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
     return groups;
   }, [groupByColumn, nodes]);
 
-  const handleDragStart = useCallback((nodeId: string) => {
-    if (locked) return;
-    setDragNodeId(nodeId);
-  }, [locked]);
+  const handleDragStart = useCallback(
+    (nodeId: string) => {
+      if (locked) return;
+      setDragNodeId(nodeId);
+    },
+    [locked]
+  );
 
-  const handleDrop = useCallback((laneKey: string) => {
-    if (!dragNodeId || locked) return;
-    onFieldChange(dragNodeId, groupByColumn.key, laneKey === '—' ? null : laneKey);
-    setDragNodeId(null);
-  }, [dragNodeId, groupByColumn.key, locked, onFieldChange]);
+  const handleDrop = useCallback(
+    (laneKey: string) => {
+      if (!dragNodeId || locked) return;
+      onFieldChange(dragNodeId, groupByColumn.key, laneKey === '—' ? null : laneKey);
+      setDragNodeId(null);
+    },
+    [dragNodeId, groupByColumn.key, locked, onFieldChange]
+  );
 
   const colors = groupByColumn.optionColors || {};
 
-  const displayColumns = columns.filter((c) => c.visible && c.key !== groupByColumn.key && c.key !== 'type').slice(0, 3);
+  const displayColumns = columns
+    .filter((c) => c.visible && c.key !== groupByColumn.key && c.key !== 'type')
+    .slice(0, 3);
 
   return (
     <div className="w-full h-full flex gap-3 p-4 overflow-x-auto">
@@ -105,7 +113,10 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                 >
                   <div className="flex items-start gap-2">
                     {!locked && (
-                      <GripVertical size={12} className="text-slate-300 dark:text-navy-600 mt-0.5 flex-shrink-0 cursor-grab" />
+                      <GripVertical
+                        size={12}
+                        className="text-slate-300 dark:text-navy-600 mt-0.5 flex-shrink-0 cursor-grab"
+                      />
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
@@ -118,16 +129,23 @@ export const KanbanView: React.FC<KanbanViewProps> = ({
                           <div key={col.key} className="flex items-center gap-1 mt-1">
                             <span className="text-[9px] text-slate-400">{col.header}:</span>
                             {col.type === 'rating' ? (
-                              <span className="text-[10px] text-amber-500">{'★'.repeat(Number(val) || 0)}</span>
+                              <span className="text-[10px] text-amber-500">
+                                {'★'.repeat(Number(val) || 0)}
+                              </span>
                             ) : col.type === 'progress' ? (
                               <div className="flex items-center gap-1">
                                 <div className="w-12 h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                                  <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Number(val) || 0}%` }} />
+                                  <div
+                                    className="h-full rounded-full bg-emerald-500"
+                                    style={{ width: `${Number(val) || 0}%` }}
+                                  />
                                 </div>
                                 <span className="text-[9px] text-slate-400">{val}%</span>
                               </div>
                             ) : (
-                              <span className="text-[10px] text-slate-600 dark:text-slate-300 truncate">{String(val)}</span>
+                              <span className="text-[10px] text-slate-600 dark:text-slate-300 truncate">
+                                {String(val)}
+                              </span>
                             )}
                           </div>
                         );

@@ -14,7 +14,7 @@ export const HelpToggleButton: React.FC = () => {
   const { t } = useTranslation();
   const { toggleSidePanel, activeSidePanel } = useAppStore();
 
-  if (activeSidePanel !== null) return null;
+  if (activeSidePanel === 'HELP') return null;
 
   return (
     <button

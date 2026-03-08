@@ -35,6 +35,7 @@ import React, { useState } from 'react';
 
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
+import { useHelpSidePanel } from '../../contexts/HelpContext';
 import AIBudgetsView from './AIBudgetsView';
 import { ComplianceCenterView } from './ComplianceCenterView';
 import CustomRolesBuilder from './CustomRolesBuilder';
@@ -73,6 +74,27 @@ const TAB_HELP_CARDS: Record<string, string> = {
 
 export const SecurityModule: React.FC<SecurityModuleProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState(initialTab || 'sso');
+  const { setHelpDocumentIdOverride } = useHelpSidePanel();
+
+  React.useEffect(() => {
+    const mapping: Record<string, string> = {
+      sso: 'superadmin_sso',
+      scim: 'superadmin_security_scim',
+      roles: 'superadmin_security_roles',
+      permissions: 'superadmin_security_permissions',
+      policies: 'superadmin_security',
+      sessions: 'superadmin_security_sessions',
+      audit: 'superadmin_security_audit',
+      workflows: 'superadmin_security_workflows',
+      incidents: 'superadmin_security_incidents',
+      threats: 'superadmin_security_threats',
+      dlp: 'superadmin_security_dlp',
+      'ai-budgets': 'superadmin_security_ai_budgets',
+      compliance: 'superadmin_compliance',
+    };
+    setHelpDocumentIdOverride(mapping[activeTab] || 'superadmin_security');
+    return () => setHelpDocumentIdOverride(null);
+  }, [activeTab, setHelpDocumentIdOverride]);
 
   const tabs: Tab[] = [
     { id: 'sso', label: 'SSO', icon: <Key size={16} /> },

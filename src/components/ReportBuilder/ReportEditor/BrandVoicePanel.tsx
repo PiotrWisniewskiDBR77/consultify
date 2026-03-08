@@ -137,7 +137,8 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
   const [error, setError] = useState<string | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
-  const [register, setRegister] = useState<BrandVoiceProfile['registerPreferences']['default']>('professional');
+  const [register, setRegister] =
+    useState<BrandVoiceProfile['registerPreferences']['default']>('professional');
   const [preferredWords, setPreferredWords] = useState('');
   const [forbiddenWords, setForbiddenWords] = useState('');
   const [requireEvidence, setRequireEvidence] = useState(true);
@@ -280,9 +281,7 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
                 onChange={() => setRegister(opt)}
                 className="accent-purple-500"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                {t.registers[opt]}
-              </span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">{t.registers[opt]}</span>
             </label>
           ))}
         </div>
@@ -301,7 +300,11 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               onChange={(e) => setPreferredWords(e.target.value)}
               rows={3}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
-              placeholder={isPl ? 'np. transformacja, optymalizacja, strategia' : 'e.g. transformation, optimization, strategy'}
+              placeholder={
+                isPl
+                  ? 'np. transformacja, optymalizacja, strategia'
+                  : 'e.g. transformation, optimization, strategy'
+              }
             />
           </div>
           <div>
@@ -314,7 +317,11 @@ export const BrandVoicePanel: React.FC<BrandVoicePanelProps> = ({ organizationId
               onChange={(e) => setForbiddenWords(e.target.value)}
               rows={3}
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
-              placeholder={isPl ? 'np. synergia, holistyczny, game-changer' : 'e.g. synergy, holistic, game-changer'}
+              placeholder={
+                isPl
+                  ? 'np. synergia, holistyczny, game-changer'
+                  : 'e.g. synergy, holistic, game-changer'
+              }
             />
           </div>
         </div>

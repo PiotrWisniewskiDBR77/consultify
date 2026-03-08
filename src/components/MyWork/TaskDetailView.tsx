@@ -3237,6 +3237,7 @@ Return ONLY the final comment text.`;
           component = (
             <CommentsCanvas
               comments={nModeComments}
+              locked={isDone}
               onDeleteComment={handleDeleteComment}
               dateFilter={nCommentDateFilter}
               onDateFilterChange={setNCommentDateFilter}
@@ -3263,6 +3264,7 @@ Return ONLY the final comment text.`;
           component = (
             <AttachmentsLinksCanvas
               attachments={attachments}
+              readOnly={isDone}
               onUploadAttachments={handleUploadAttachments}
               onDeleteAttachment={handleDeleteAttachment}
               onEditAttachment={(id, patch) => {

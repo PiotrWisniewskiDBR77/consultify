@@ -214,7 +214,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
     },
     {
       id: 'archive',
-      label: t('rap.actions.archive', 'Archiwizuj'),
+      label: t('rap.actions.delete', 'Usuń'),
       icon: Archive,
       divider: true,
       variant: 'danger',
@@ -288,6 +288,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
           data={filteredData}
           selectedRowId={selectedId}
           onRowClick={(row) => setSelectedId(row.id)}
+          onRowDoubleClick={(row) => navigate(`/presentations/builder/${row.id}`)}
           getRowActions={(row) => getRowActions(row as unknown as PresentationItem)}
           activeFilters={activeFilters}
           onFilterChange={onFilterChange}

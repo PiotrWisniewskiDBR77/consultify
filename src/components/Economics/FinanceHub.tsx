@@ -2,7 +2,7 @@
  * FinanceHub (Economics route)
  *
  * KANON v3 (Golden Standard Table+Cards+Preview):
- * - 4 main functional tabs: Modele / Analiza / Predykcja / Wycena przedsiębiorstw
+ * - 5 main functional tabs: Modele / Analiza / Predykcja / Wycena przedsiębiorstw / Analiza inwestycyjna
  * - Table + Preview layout: FilterableTable + TableWithPreviewLayout (gap-1.5, preview width clamp, no divider)
  * - Grid/Cards alternative: GridView SSOT with finance type accents
  * - Table canvas padding: pl-4 pr-1.5 pt-3 pb-4
@@ -64,6 +64,20 @@ import { CreateAnalysisModal } from './modals/CreateAnalysisModal';
 import { CreateBudgetModal } from './modals/CreateBudgetModal';
 import { CreateModelModal } from './modals/CreateModelModal';
 import { CreateValuationModal } from './modals/CreateValuationModal';
+
+function isInvestmentAnalysisType(value: unknown): boolean {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+  return (
+    normalized === 'financial' ||
+    normalized === 'investment_case' ||
+    normalized === 'investment' ||
+    normalized === 'capex' ||
+    normalized.includes('investment') ||
+    normalized.includes('capex')
+  );
+}
 
 export const FinanceHub: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -165,12 +179,14 @@ export const FinanceHub: React.FC = () => {
     const kind: FinanceKind =
       activeTab === 'models'
         ? 'models'
-        : activeTab === 'analysis' || activeTab === 'investment'
+        : activeTab === 'analysis'
           ? 'analysis'
+          : activeTab === 'investment'
+            ? 'investment'
           : activeTab === 'prediction'
             ? 'prediction'
             : 'valuation';
-    if (kind === 'analysis') loadAnalyses().catch(() => {});
+    if (kind === 'analysis' || kind === 'investment') loadAnalyses().catch(() => {});
     if (kind === 'models') loadModels().catch(() => {});
     if (kind === 'prediction') {
       loadModels().catch(() => {});
@@ -200,7 +216,7 @@ export const FinanceHub: React.FC = () => {
 
   const handleExport = useCallback((row: FinanceRow) => {
     const sourceType =
-      row.kind === 'analysis'
+      row.kind === 'analysis' || row.kind === 'investment'
         ? 'financial_analysis'
         : row.kind === 'valuation'
           ? 'valuation'
@@ -291,10 +307,12 @@ export const FinanceHub: React.FC = () => {
         id: 'investment' as ModuleTab,
         label: t('finance.tabs.investment', 'Analiza inwestycyjna'),
         icon: <Target size={16} />,
-        count: analyses.length,
+        count: analyses.filter((row: any) =>
+          isInvestmentAnalysisType(row.analysisType || row.analysis_type)
+        ).length,
       },
     ],
-    [t, models.length, analyses.length, valuations.length, budgets.length]
+    [t, models.length, analyses, valuations.length, budgets.length]
   );
 
   // ---- Per-tab columns ----
@@ -415,7 +433,7 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.columns.analysisType', 'Type'),
           width: '140px',
           render: (row: FinanceRow) =>
-            row.kind === 'analysis' ? (
+            row.kind === 'analysis' || row.kind === 'investment' ? (
               <span className="text-sm text-slate-700 dark:text-slate-200 capitalize">
                 {row.analysisType}
               </span>
@@ -428,7 +446,7 @@ export const FinanceHub: React.FC = () => {
           label: t('finance.columns.periods', 'Periods'),
           width: '100px',
           render: (row: FinanceRow) =>
-            row.kind === 'analysis' ? (
+            row.kind === 'analysis' || row.kind === 'investment' ? (
               <span className="text-sm text-slate-700 dark:text-slate-200">{row.periodCount}</span>
             ) : (
               <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
@@ -439,7 +457,7 @@ export const FinanceHub: React.FC = () => {
           label: t('common.currency', 'Currency'),
           width: '90px',
           render: (row: FinanceRow) =>
-            row.kind === 'analysis' ? (
+            row.kind === 'analysis' || row.kind === 'investment' ? (
               <span className="text-sm text-slate-700 dark:text-slate-200">{row.currency}</span>
             ) : (
               <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
@@ -574,7 +592,7 @@ export const FinanceHub: React.FC = () => {
               ? (row as FinanceModelRow).predictionType === 'budget'
                 ? `${isPl ? 'Budżet' : 'Budget'} • ${(row as FinanceModelRow).periodStart || ''} → ${(row as FinanceModelRow).periodEnd || ''}`
                 : `${(row as FinanceModelRow).scenario} • ${(row as FinanceModelRow).currency} • ${(row as FinanceModelRow).horizonMonths} ${isPl ? 'mies.' : 'mo'}`
-              : row.kind === 'analysis'
+              : row.kind === 'analysis' || row.kind === 'investment'
                 ? `${(row as FinanceAnalysisRow).analysisType} • ${(row as FinanceAnalysisRow).currency} • ${(row as FinanceAnalysisRow).periodCount} ${isPl ? 'okr.' : 'per.'}`
                 : `${(row as FinanceValuationRow).method} • ${(row as FinanceValuationRow).currency} • ${(row as FinanceValuationRow).horizonYears} ${isPl ? 'lat' : 'yr'}`,
       })),
@@ -834,7 +852,8 @@ export const FinanceHub: React.FC = () => {
     const isModelWorkspace =
       activeDocument.kind === 'models' ||
       (activeDocument.kind === 'prediction' && activeModelRow.predictionType === 'model');
-    const openAnalysis = activeDocument.kind === 'analysis';
+    const openAnalysis =
+      activeDocument.kind === 'analysis' || activeDocument.kind === 'investment';
     const openValuation = activeDocument.kind === 'valuation';
     const needsFullHeight = isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
     return (
@@ -942,7 +961,7 @@ export const FinanceHub: React.FC = () => {
                 <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {t(
                     'finance.investment.emptyHint',
-                    'Create a financial analysis and treat it as an investment case from this tab.'
+                    'Create a dedicated investment case with NPV, IRR, payback, and ROI metrics from this tab.'
                   )}
                 </div>
               </div>
@@ -1021,6 +1040,7 @@ export const FinanceHub: React.FC = () => {
 
       {showAnalysisCreateModal && (
         <CreateAnalysisModal
+          defaultAnalysisType={activeTab === 'investment' ? 'investment_case' : 'comprehensive'}
           onClose={() => {
             setShowAnalysisCreateModal(false);
           }}

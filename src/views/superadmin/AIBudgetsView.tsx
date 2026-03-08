@@ -21,6 +21,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+
 import { api } from '../../services/api';
 
 interface Budget {
@@ -264,7 +265,9 @@ const AIBudgetsView: React.FC = () => {
           <div className="flex items-center justify-between mb-2">
             <AlertTriangle className="text-amber-400" size={24} />
           </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">{usageStats?.alertCount || 0}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            {usageStats?.alertCount || 0}
+          </div>
           <div className="text-sm text-amber-300">Active Alerts</div>
         </div>
 
@@ -279,7 +282,9 @@ const AIBudgetsView: React.FC = () => {
 
       {/* Budget Progress */}
       <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Budget Utilization</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          Budget Utilization
+        </h3>
         <div className="space-y-4">
           {usageStats?.budgets.map((budget) => (
             <div key={budget.id}>
@@ -321,7 +326,9 @@ const AIBudgetsView: React.FC = () => {
       {/* Recent Alerts */}
       {alerts.length > 0 && (
         <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Recent Alerts</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+            Recent Alerts
+          </h3>
           <div className="space-y-3">
             {alerts.slice(0, 3).map((alert) => (
               <div
@@ -347,9 +354,7 @@ const AIBudgetsView: React.FC = () => {
                   />
                   <div>
                     <div className="text-slate-900 dark:text-white font-medium">{alert.title}</div>
-                    <div className="text-sm text-slate-600 dark:text-gray-400">
-                      {alert.message}
-                    </div>
+                    <div className="text-sm text-slate-600 dark:text-gray-400">{alert.message}</div>
                   </div>
                 </div>
                 <button
@@ -366,13 +371,20 @@ const AIBudgetsView: React.FC = () => {
 
       {/* Model Costs Reference */}
       <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Model Pricing (per 1K tokens)</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+          Model Pricing (per 1K tokens)
+        </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Object.entries(modelCosts)
             .slice(0, 8)
             .map(([model, costs]) => (
-              <div key={model} className="bg-slate-50 dark:bg-gray-900/50 rounded-lg p-3 border border-slate-200/60 dark:border-transparent">
-                <div className="text-sm font-medium text-slate-900 dark:text-white truncate">{model}</div>
+              <div
+                key={model}
+                className="bg-slate-50 dark:bg-gray-900/50 rounded-lg p-3 border border-slate-200/60 dark:border-transparent"
+              >
+                <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                  {model}
+                </div>
                 <div className="text-xs text-slate-600 dark:text-gray-400 mt-1">
                   In: ${costs.input.toFixed(4)} • Out: ${costs.output.toFixed(4)}
                 </div>
@@ -404,9 +416,7 @@ const AIBudgetsView: React.FC = () => {
       {budgets.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
           <DollarSign className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
-          <p className="text-slate-700 dark:text-gray-300">
-            No budgets configured
-          </p>
+          <p className="text-slate-700 dark:text-gray-300">No budgets configured</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             Create a budget to control AI spending
           </p>
@@ -416,7 +426,10 @@ const AIBudgetsView: React.FC = () => {
           {budgets.map((budget) => {
             const percentUsed = (budget.currentUsage / budget.budgetLimit) * 100;
             return (
-              <div key={budget.id} className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-4">
+              <div
+                key={budget.id}
+                className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-4"
+              >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div
@@ -506,7 +519,9 @@ const AIBudgetsView: React.FC = () => {
       {showBudgetModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Create Budget</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+              Create Budget
+            </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">
@@ -703,7 +718,9 @@ const AIBudgetsView: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Model Access Control</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+            Model Access Control
+          </h3>
           <p className="text-sm text-slate-600 dark:text-gray-400">
             Restrict which AI models users can access
           </p>
@@ -720,9 +737,7 @@ const AIBudgetsView: React.FC = () => {
       {modelPermissions.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
           <Bot className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
-          <p className="text-slate-700 dark:text-gray-300">
-            No model restrictions configured
-          </p>
+          <p className="text-slate-700 dark:text-gray-300">No model restrictions configured</p>
           <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             All models are accessible by default
           </p>
@@ -759,7 +774,9 @@ const AIBudgetsView: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-sm text-slate-700 dark:text-gray-200 capitalize">{perm.scopeType}</span>
+                    <span className="text-sm text-slate-700 dark:text-gray-200 capitalize">
+                      {perm.scopeType}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -797,7 +814,9 @@ const AIBudgetsView: React.FC = () => {
       {showModelModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Add Model Restriction</h3>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
+              Add Model Restriction
+            </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-slate-700 dark:text-gray-300 mb-1">
@@ -867,7 +886,9 @@ const AIBudgetsView: React.FC = () => {
                   }
                   className="rounded border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-violet-600"
                 />
-                <span className="text-sm text-slate-700 dark:text-gray-200">Allow access to this model</span>
+                <span className="text-sm text-slate-700 dark:text-gray-200">
+                  Allow access to this model
+                </span>
               </label>
             </div>
             <div className="flex gap-3 mt-6">

@@ -447,7 +447,9 @@ export const NewPageModal: React.FC<NewPageModalProps> = ({
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     {uploading
-                      ? pl ? 'Przetwarzam…' : 'Processing…'
+                      ? pl
+                        ? 'Przetwarzam…'
+                        : 'Processing…'
                       : pl
                         ? 'Tekst zostanie wyekstrahowany do nowej notatki'
                         : 'Text will be extracted into a new note'}

@@ -41,9 +41,7 @@ export const PresentationModeSelector: React.FC<PresentationModeSelectorProps> =
                   : 'border-slate-200 dark:border-navy-700 hover:border-slate-300 dark:hover:border-navy-600'
               }`}
             >
-              <Icon
-                className={`w-6 h-6 mb-2 ${selected ? 'text-purple-500' : 'text-slate-400'}`}
-              />
+              <Icon className={`w-6 h-6 mb-2 ${selected ? 'text-purple-500' : 'text-slate-400'}`} />
               <p className="font-semibold text-sm text-slate-900 dark:text-white">
                 {t(mode.labelKey, mode.id)}
               </p>

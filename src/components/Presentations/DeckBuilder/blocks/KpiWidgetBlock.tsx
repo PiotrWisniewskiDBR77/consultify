@@ -34,7 +34,11 @@ export const KpiWidgetBlock: React.FC<Props> = ({ block, theme }) => {
           {change && (
             <span
               className={`text-xs font-medium ${
-                trend === 'up' ? 'text-green-500' : trend === 'down' ? 'text-red-500' : 'text-slate-400'
+                trend === 'up'
+                  ? 'text-green-500'
+                  : trend === 'down'
+                    ? 'text-red-500'
+                    : 'text-slate-400'
               }`}
             >
               {change}

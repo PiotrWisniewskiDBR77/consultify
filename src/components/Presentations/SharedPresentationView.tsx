@@ -1,12 +1,11 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-
-import type { Deck } from './wizard/types';
+import { useLocation, useParams } from 'react-router-dom';
 
 import { CardRenderer } from './DeckBuilder/CardRenderer';
 import { deckFromUnifiedJson } from './DeckBuilder/deckData';
+import type { Deck } from './wizard/types';
 
 function safeJsonParse<T>(raw: unknown, fallback: T): T {
   if (!raw) return fallback;
@@ -60,7 +59,9 @@ export const SharedPresentationView: React.FC = () => {
                 deck_id: String(row.id || deckJson.deck_id || shareToken),
                 title: String(row.title || deckJson.title || 'Untitled'),
                 status: 'shared' as const,
-                updated_at: String(row.updated_at || deckJson.updated_at || new Date().toISOString()),
+                updated_at: String(
+                  row.updated_at || deckJson.updated_at || new Date().toISOString()
+                ),
               }
             : deckFromUnifiedJson({
                 deckId: String(row.id || shareToken),
@@ -115,10 +116,7 @@ export const SharedPresentationView: React.FC = () => {
   }, [canGoNext, canGoPrev]);
 
   const shellClassName = useMemo(
-    () =>
-      isEmbed
-        ? 'min-h-screen bg-transparent'
-        : 'min-h-screen bg-slate-950 text-white',
+    () => (isEmbed ? 'min-h-screen bg-transparent' : 'min-h-screen bg-slate-950 text-white'),
     [isEmbed]
   );
 
@@ -140,7 +138,8 @@ export const SharedPresentationView: React.FC = () => {
             {t('presentations.shared.unavailableTitle', 'Presentation unavailable')}
           </h1>
           <p className="mt-2 text-sm text-slate-400">
-            {error || t('presentations.shared.unavailableBody', 'The shared link is invalid or expired.')}
+            {error ||
+              t('presentations.shared.unavailableBody', 'The shared link is invalid or expired.')}
           </p>
         </div>
       </div>

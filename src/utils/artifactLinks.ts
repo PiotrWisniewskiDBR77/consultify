@@ -1,3 +1,5 @@
+// ── V5-IDEA-31: Unified artifact identity contract ──────────────────────────
+
 export type ArtifactType =
   | 'decision'
   | 'initiative'
@@ -10,27 +12,186 @@ export type ArtifactType =
   | 'project'
   | 'risk'
   | 'external'
-  | 'idea';
+  | 'idea'
+  | 'notebook'
+  | 'presentation'
+  | 'meeting'
+  | 'financial_model'
+  | 'budget'
+  | 'valuation'
+  | 'analysis';
 
-export type ParsedArtifactRef = {
+/**
+ * Canonical artifact reference — the universal way to point to any artifact.
+ * Replaces `ParsedArtifactRef` as the canonical shared type.
+ */
+export type ArtifactRef = {
   type: ArtifactType;
   id: string;
 };
 
-const ARTIFACT_PREFIX: Record<ArtifactType, string> = {
-  decision: 'DEC',
-  initiative: 'INI',
-  task: 'TSK',
-  notification: 'NTF',
-  report: 'RPT',
-  assessment: 'ASM',
-  tool: 'TOL',
-  insight: 'INS',
-  project: 'PRJ',
-  risk: 'RSK',
-  external: 'EXT',
-  idea: 'IDE',
+/** @deprecated Use ArtifactRef instead */
+export type ParsedArtifactRef = ArtifactRef;
+
+/** Human-readable artifact index code (e.g. "DEC-041", "INIT-024") */
+export type ArtifactIndex = string;
+
+/**
+ * V5 Artifact Identity Map — canonical icon, accent, and label per type.
+ * Source of truth for all UI rendering of artifact badges, chips, previews.
+ */
+export interface ArtifactIdentity {
+  icon: string;
+  accent: string;
+  labelEn: string;
+  labelPl: string;
+  prefix: string;
+}
+
+export const ARTIFACT_IDENTITY: Record<ArtifactType, ArtifactIdentity> = {
+  initiative: {
+    icon: 'Rocket',
+    accent: 'blue',
+    labelEn: 'Initiative',
+    labelPl: 'Inicjatywa',
+    prefix: 'INIT',
+  },
+  idea: { icon: 'Lightbulb', accent: 'violet', labelEn: 'Idea', labelPl: 'Pomysł', prefix: 'IDEA' },
+  task: {
+    icon: 'CheckSquare',
+    accent: 'emerald',
+    labelEn: 'Task',
+    labelPl: 'Zadanie',
+    prefix: 'TASK',
+  },
+  decision: {
+    icon: 'Scale',
+    accent: 'amber',
+    labelEn: 'Decision',
+    labelPl: 'Decyzja',
+    prefix: 'DEC',
+  },
+  notebook: {
+    icon: 'BookOpen',
+    accent: 'indigo',
+    labelEn: 'Notebook',
+    labelPl: 'Notatnik',
+    prefix: 'NOTE',
+  },
+  tool: {
+    icon: 'Wrench',
+    accent: 'emerald',
+    labelEn: 'Tool',
+    labelPl: 'Narzędzie',
+    prefix: 'TOOL',
+  },
+  assessment: {
+    icon: 'CheckCircle2',
+    accent: 'cyan',
+    labelEn: 'Assessment',
+    labelPl: 'Ocena',
+    prefix: 'ASM',
+  },
+  report: {
+    icon: 'FileBarChart2',
+    accent: 'slate',
+    labelEn: 'Report',
+    labelPl: 'Raport',
+    prefix: 'REP',
+  },
+  presentation: {
+    icon: 'Presentation',
+    accent: 'fuchsia',
+    labelEn: 'Presentation',
+    labelPl: 'Prezentacja',
+    prefix: 'DECK',
+  },
+  meeting: {
+    icon: 'CalendarDays',
+    accent: 'sky',
+    labelEn: 'Meeting',
+    labelPl: 'Spotkanie',
+    prefix: 'MTG',
+  },
+  notification: {
+    icon: 'Bell',
+    accent: 'red',
+    labelEn: 'Notification',
+    labelPl: 'Powiadomienie',
+    prefix: 'NTF',
+  },
+  insight: {
+    icon: 'Lightbulb',
+    accent: 'lime',
+    labelEn: 'Insight',
+    labelPl: 'Insight',
+    prefix: 'INS',
+  },
+  project: {
+    icon: 'FolderKanban',
+    accent: 'indigo',
+    labelEn: 'Project',
+    labelPl: 'Projekt',
+    prefix: 'PRJ',
+  },
+  risk: { icon: 'AlertTriangle', accent: 'red', labelEn: 'Risk', labelPl: 'Ryzyko', prefix: 'RSK' },
+  external: {
+    icon: 'ExternalLink',
+    accent: 'slate',
+    labelEn: 'External',
+    labelPl: 'Zewnętrzny',
+    prefix: 'EXT',
+  },
+  financial_model: {
+    icon: 'Calculator',
+    accent: 'emerald',
+    labelEn: 'Financial Model',
+    labelPl: 'Model finansowy',
+    prefix: 'FIN',
+  },
+  budget: { icon: 'Wallet', accent: 'green', labelEn: 'Budget', labelPl: 'Budżet', prefix: 'BDG' },
+  valuation: {
+    icon: 'TrendingUp',
+    accent: 'teal',
+    labelEn: 'Valuation',
+    labelPl: 'Wycena',
+    prefix: 'VAL',
+  },
+  analysis: {
+    icon: 'BarChart3',
+    accent: 'orange',
+    labelEn: 'Analysis',
+    labelPl: 'Analiza',
+    prefix: 'ANL',
+  },
 };
+
+/**
+ * Get the accent color class for a given artifact type.
+ */
+export function getArtifactAccent(type: ArtifactType): string {
+  return ARTIFACT_IDENTITY[type]?.accent || 'slate';
+}
+
+/**
+ * Get the icon name for a given artifact type.
+ */
+export function getArtifactIcon(type: ArtifactType): string {
+  return ARTIFACT_IDENTITY[type]?.icon || 'FileText';
+}
+
+/**
+ * Get the human-readable label for a given artifact type.
+ */
+export function getArtifactLabel(type: ArtifactType, lang: string = 'en'): string {
+  const identity = ARTIFACT_IDENTITY[type];
+  if (!identity) return type;
+  return lang.startsWith('pl') ? identity.labelPl : identity.labelEn;
+}
+
+const ARTIFACT_PREFIX: Record<string, string> = Object.fromEntries(
+  Object.entries(ARTIFACT_IDENTITY).map(([k, v]) => [k, v.prefix])
+);
 
 function normalizeId(rawId: string): string {
   const cleaned = String(rawId || '')
@@ -62,6 +223,21 @@ function getBasePath(type: ArtifactType, id: string): string {
       return '/my-work';
     case 'idea':
       return '/my-work';
+    case 'notebook':
+      return '/my-work';
+    case 'presentation':
+      return '/presentations';
+    case 'meeting':
+      return '/meeting';
+    // V5-IDEA-34: Finance artifact parity
+    case 'financial_model':
+      return `/economics?tab=models&open=${id}`;
+    case 'budget':
+      return `/economics?tab=prediction&open=${id}`;
+    case 'valuation':
+      return `/economics?tab=valuation&open=${id}`;
+    case 'analysis':
+      return `/economics?tab=analysis&open=${id}`;
     case 'external':
     default:
       return '/my-work';
@@ -86,6 +262,82 @@ export function parseArtifactRef(value: string | null | undefined): ParsedArtifa
   const id = raw.slice(separatorIndex + 1).trim();
   if (!id) return null;
   return { type, id };
+}
+
+// ── V5-IDEA-32: Workspace object attachment helpers ─────────────────────────
+
+export type WorkspaceObjectType =
+  | 'node'
+  | 'sticky'
+  | 'cluster'
+  | 'frame'
+  | 'step'
+  | 'lane'
+  | 'vsm_block'
+  | 'table'
+  | 'row'
+  | 'knowledge_card'
+  | 'idea_card';
+
+export type WorkspaceObjectRef = {
+  workspaceType: 'idea_workspace';
+  workspaceId: string;
+  objectType: WorkspaceObjectType;
+  objectId: string;
+};
+
+export type ArtifactLinkRole = 'context' | 'source' | 'output' | 'evidence' | 'related';
+
+export type ArtifactLink = {
+  artifactRef: ArtifactRef;
+  artifactIndex?: string;
+  label?: string;
+  linkRole?: ArtifactLinkRole;
+  pinned?: boolean;
+};
+
+export type ObjectAttachment = {
+  objectRef: WorkspaceObjectRef;
+  artifactLink: ArtifactLink;
+  attachedAt?: string;
+  attachedBy?: string;
+};
+
+export function buildWorkspaceObjectRef(
+  workspaceId: string,
+  objectType: WorkspaceObjectType,
+  objectId: string
+): WorkspaceObjectRef {
+  return { workspaceType: 'idea_workspace', workspaceId, objectType, objectId };
+}
+
+export function buildArtifactLink(
+  type: ArtifactType,
+  id: string,
+  role: ArtifactLinkRole = 'related',
+  label?: string
+): ArtifactLink {
+  return {
+    artifactRef: { type, id },
+    artifactIndex: buildArtifactCode(type, id),
+    label,
+    linkRole: role,
+  };
+}
+
+export function attachArtifactToObject(
+  workspaceId: string,
+  objectType: WorkspaceObjectType,
+  objectId: string,
+  artifactType: ArtifactType,
+  artifactId: string,
+  role: ArtifactLinkRole = 'related'
+): ObjectAttachment {
+  return {
+    objectRef: buildWorkspaceObjectRef(workspaceId, objectType, objectId),
+    artifactLink: buildArtifactLink(artifactType, artifactId, role),
+    attachedAt: new Date().toISOString(),
+  };
 }
 
 export function buildArtifactPermalink(type: ArtifactType, id: string): string {

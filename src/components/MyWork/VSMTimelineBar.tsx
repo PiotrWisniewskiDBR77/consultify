@@ -5,7 +5,7 @@
  * from process-flow nodes and renders a visual bar with green (VA) and red
  * (NVA) segments plus numeric KPIs.
  */
-import { Clock, TrendingUp, Timer } from 'lucide-react';
+import { Clock, Timer, TrendingUp } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -99,14 +99,16 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) =
 
       <div className="flex items-center gap-1.5">
         <TrendingUp size={13} className="text-violet-500" />
-        <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
-          PCE:
-        </span>
-        <span className={`text-[11px] font-bold ${
-          metrics.pce >= 25 ? 'text-emerald-700 dark:text-emerald-300' :
-          metrics.pce >= 10 ? 'text-amber-700 dark:text-amber-300' :
-          'text-red-700 dark:text-red-300'
-        }`}>
+        <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">PCE:</span>
+        <span
+          className={`text-[11px] font-bold ${
+            metrics.pce >= 25
+              ? 'text-emerald-700 dark:text-emerald-300'
+              : metrics.pce >= 10
+                ? 'text-amber-700 dark:text-amber-300'
+                : 'text-red-700 dark:text-red-300'
+          }`}
+        >
           {metrics.pce.toFixed(1)}%
         </span>
       </div>
@@ -118,14 +120,22 @@ export const VSMTimelineBar: React.FC<VSMTimelineBarProps> = ({ nodes, isPl }) =
             <div
               className="h-full bg-emerald-500 dark:bg-emerald-400 transition-all duration-300"
               style={{ width: `${vaPercent}%` }}
-              title={isPl ? `Wartość dodana: ${vaPercent.toFixed(1)}%` : `Value-added: ${vaPercent.toFixed(1)}%`}
+              title={
+                isPl
+                  ? `Wartość dodana: ${vaPercent.toFixed(1)}%`
+                  : `Value-added: ${vaPercent.toFixed(1)}%`
+              }
             />
           )}
           {nvaPercent > 0 && (
             <div
               className="h-full bg-red-400 dark:bg-red-500 transition-all duration-300"
               style={{ width: `${nvaPercent}%` }}
-              title={isPl ? `Bez wartości: ${nvaPercent.toFixed(1)}%` : `Non-value-added: ${nvaPercent.toFixed(1)}%`}
+              title={
+                isPl
+                  ? `Bez wartości: ${nvaPercent.toFixed(1)}%`
+                  : `Non-value-added: ${nvaPercent.toFixed(1)}%`
+              }
             />
           )}
         </div>

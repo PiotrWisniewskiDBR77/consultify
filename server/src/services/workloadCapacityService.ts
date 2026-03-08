@@ -6,6 +6,12 @@
 import DbPromise from '../utils/DbPromise.js';
 
 const DEFAULT_WEEKLY_HOURS = 40;
+const displayNameSql = (userAlias: string, fallbackExpr: string) =>
+  `COALESCE(NULLIF(TRIM(COALESCE(${userAlias}.first_name, '') || ' ' || COALESCE(${userAlias}.last_name, '')), ''), ${userAlias}.email, ${fallbackExpr})`;
+const recentDaysSql = (days: number) =>
+  process.env.DB_TYPE === 'postgres'
+    ? `CURRENT_DATE - INTERVAL '${days} days'`
+    : `date('now', '-${days} days')`;
 
 interface UserCapacityRow {
   user_id: string;
@@ -80,7 +86,7 @@ function formatDate(d: Date): string {
 export async function getCapacityOverview(orgId: string): Promise<CapacityOverview> {
   const members = await DbPromise.all<UserCapacityRow>(
     `SELECT DISTINCT pm.user_id,
-            COALESCE(u.name, u.email, pm.user_id) as name,
+            ${displayNameSql('u', 'pm.user_id')} as name,
             COALESCE(u.email, '') as email,
             COALESCE(pm.allocation_percent, 100) as allocation_percent
      FROM project_members pm
@@ -123,7 +129,7 @@ export async function getCapacityOverview(orgId: string): Promise<CapacityOvervi
       `SELECT user_id, COALESCE(SUM(hours), 0) as actual_hours
        FROM time_entries
        WHERE user_id IN (${placeholders}) AND organization_id = ?
-         AND date >= date('now', '-7 days')
+         AND date >= ${recentDaysSql(7)}
        GROUP BY user_id`,
       [...userIds, orgId]
     );
@@ -297,7 +303,7 @@ export async function getInitiativeCapacity(
     allocation_percentage: number;
   }>(
     `SELECT ir.user_id,
-            COALESCE(u.name, u.email, ir.user_id) AS name,
+            ${displayNameSql('u', 'ir.user_id')} AS name,
             ir.role,
             COALESCE(ir.allocation_percentage, 0) AS allocation_percentage
      FROM initiative_resources ir
@@ -417,12 +423,12 @@ export async function getLevelingAlerts(orgId: string): Promise<LevelingAlerts> 
     total_alloc: number;
   }>(
     `SELECT ir.user_id,
-            COALESCE(u.name, u.email, ir.user_id) AS name,
+            ${displayNameSql('u', 'ir.user_id')} AS name,
             COALESCE(SUM(ir.allocation_percentage), 0) AS total_alloc
      FROM initiative_resources ir
      LEFT JOIN users u ON u.id = ir.user_id
      WHERE ir.organization_id = ?
-     GROUP BY ir.user_id, u.name, u.email`,
+     GROUP BY ir.user_id, u.first_name, u.last_name, u.email`,
     [orgId]
   );
 

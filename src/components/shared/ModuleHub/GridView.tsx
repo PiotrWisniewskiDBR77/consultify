@@ -229,12 +229,6 @@ export const GridView: React.FC<GridViewProps> = ({
   const isPolish = i18n.language?.startsWith('pl');
   const [menuItemId, setMenuItemId] = useState<string | null>(null);
 
-  if (items.length === 0 && !onNewItem) {
-    return (
-      <div className="flex items-center justify-center py-12 text-slate-500">{emptyMessage}</div>
-    );
-  }
-
   const labels = useMemo(
     () => ({
       open: isPolish ? 'Otwórz' : 'Open',
@@ -247,13 +241,18 @@ export const GridView: React.FC<GridViewProps> = ({
     [isPolish, newItemLabel, emptyMessage]
   );
 
+  if (items.length === 0 && !onNewItem) {
+    return (
+      <div className="flex items-center justify-center py-12 text-slate-500">{emptyMessage}</div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
       {/* Item Cards */}
       {items.map((item) => {
         const statusConfig = STATUS_CONFIG[item.status] || STATUS_CONFIG.DRAFT;
-        const accent =
-          TYPE_ACCENTS[item.type] ||
+        const accent = TYPE_ACCENTS[item.type] ||
           TYPE_ACCENTS[item.typeColor] || {
             borderLeft: 'border-l-slate-400 dark:border-l-slate-500',
             pill: 'bg-slate-100 text-slate-700 dark:bg-white/[0.06] dark:text-slate-200',
@@ -262,7 +261,11 @@ export const GridView: React.FC<GridViewProps> = ({
 
         const title = String(item.name ?? '');
         const rawBrief = String(item.brief ?? item.summary ?? item.description ?? '').trim();
-        const firstLine = rawBrief.split('\n').find((l) => l.trim().length > 0)?.trim() || '';
+        const firstLine =
+          rawBrief
+            .split('\n')
+            .find((l) => l.trim().length > 0)
+            ?.trim() || '';
         const brief = firstLine.length > 140 ? `${firstLine.slice(0, 137)}…` : firstLine;
         const isSelected = Boolean(selectedItemId && item.id === selectedItemId);
 
@@ -401,9 +404,7 @@ export const GridView: React.FC<GridViewProps> = ({
 
             {/* Footer */}
             <div className="flex items-center justify-between px-3 py-2.5 border-t border-slate-200/70 dark:border-white/[0.06]">
-              <div className="flex items-center gap-2">
-                {extraCardActions?.(item)}
-              </div>
+              <div className="flex items-center gap-2">{extraCardActions?.(item)}</div>
               <span className="text-[11px] text-slate-500 dark:text-slate-400">
                 {formatRelativeTime(item.updatedAt, isPolish)}
               </span>

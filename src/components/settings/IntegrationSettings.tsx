@@ -95,10 +95,16 @@ interface Integration {
   error_count?: number | null;
 }
 
+interface ProjectOption {
+  id: string;
+  name: string;
+}
+
 export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ currentUser }) => {
   const { t } = useTranslation();
   const [providers, setProviders] = useState<IntegrationProvider[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
@@ -297,13 +303,30 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
     }
   }, []);
 
+  const fetchProjects = useCallback(async () => {
+    try {
+      const data = await (Api as any).getProjects?.();
+      const rows = Array.isArray(data) ? data : data?.projects || [];
+      setProjects(
+        (rows || []).map((item: any) => ({
+          id: String(item?.id || ''),
+          name: String(item?.name || 'Untitled project'),
+        }))
+      );
+    } catch (err) {
+      console.error('Failed to load projects for integration mappings:', err);
+      setProjects([]);
+    }
+  }, []);
+
   useEffect(() => {
     fetchIntegrations();
     fetchProviders();
+    fetchProjects();
     fetchWebhooks();
     fetchAvailableEvents();
     fetchMcpProviders();
-  }, [currentUser.organizationId, fetchWebhooks, fetchAvailableEvents, fetchProviders]);
+  }, [currentUser.organizationId, fetchWebhooks, fetchAvailableEvents, fetchProviders, fetchProjects]);
 
   // Show message if user has no organization
   if (!currentUser.organizationId) {
@@ -340,7 +363,20 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
   const handleConnect = (providerId: string) => {
     setSelectedProvider(providerId);
     setEditingIntegrationId(null);
-    setConfigInput('');
+    if (providerId === 'slack' || providerId === 'microsoft_teams' || providerId === 'teams') {
+      setConfigInput(
+        JSON.stringify(
+          {
+            webhookUrl: '',
+            projectChannelMappings: [],
+          },
+          null,
+          2
+        )
+      );
+    } else {
+      setConfigInput('');
+    }
     setIsModalOpen(true);
   };
 
@@ -401,6 +437,30 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
       setConnecting(false);
     }
   };
+
+  const isCommunicationProvider =
+    selectedProvider === 'slack' ||
+    selectedProvider === 'microsoft_teams' ||
+    selectedProvider === 'teams';
+
+  const parseEditorConfig = useCallback(() => {
+    const raw = String(configInput || '').trim();
+    if (!raw) return {};
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return { webhookUrl: raw };
+    }
+  }, [configInput]);
+
+  const setEditorConfig = useCallback((next: any) => {
+    setConfigInput(JSON.stringify(next || {}, null, 2));
+  }, []);
+
+  const communicationConfig = isCommunicationProvider ? parseEditorConfig() : {};
+  const communicationMappings = Array.isArray((communicationConfig as any)?.projectChannelMappings)
+    ? (communicationConfig as any).projectChannelMappings
+    : [];
 
   const handleDelete = async (id: string) => {
     if (!confirm('Disconnect this integration?')) return;
@@ -870,6 +930,123 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ curren
               {providers.find((p) => p.name === selectedProvider)?.displayName || selectedProvider}
             </h3>
             <div className="space-y-4">
+              {isCommunicationProvider && (
+                <div className="space-y-4 rounded-xl border border-slate-200 dark:border-navy-700 p-4 bg-slate-50 dark:bg-navy-900/40">
+                  <div>
+                    <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                      Project channel mappings
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      Assign at least one project to a Slack or Teams channel. Optional mapping webhook
+                      URLs can override the default webhook per project.
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      Default webhook URL
+                    </label>
+                    <input
+                      value={String((communicationConfig as any)?.webhookUrl || '')}
+                      onChange={(e) =>
+                        setEditorConfig({
+                          ...communicationConfig,
+                          webhookUrl: e.target.value,
+                          projectChannelMappings: communicationMappings,
+                        })
+                      }
+                      className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm"
+                      placeholder="https://hooks.slack.com/... or Teams incoming webhook"
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    {communicationMappings.map((mapping: any, index: number) => (
+                      <div
+                        key={`${mapping?.projectId || 'global'}-${index}`}
+                        className="grid gap-3 md:grid-cols-[1.2fr_1fr_1.3fr_auto]"
+                      >
+                        <select
+                          value={String(mapping?.projectId || '')}
+                          onChange={(e) => {
+                            const next = [...communicationMappings];
+                            next[index] = { ...next[index], projectId: e.target.value || null };
+                            setEditorConfig({
+                              ...communicationConfig,
+                              projectChannelMappings: next,
+                            });
+                          }}
+                          className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm"
+                        >
+                          <option value="">Select project</option>
+                          {projects.map((project) => (
+                            <option key={project.id} value={project.id}>
+                              {project.name}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          value={String(mapping?.channelId || '')}
+                          onChange={(e) => {
+                            const next = [...communicationMappings];
+                            next[index] = { ...next[index], channelId: e.target.value };
+                            setEditorConfig({
+                              ...communicationConfig,
+                              projectChannelMappings: next,
+                            });
+                          }}
+                          className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm"
+                          placeholder="channel-id"
+                        />
+                        <input
+                          value={String(mapping?.webhookUrl || '')}
+                          onChange={(e) => {
+                            const next = [...communicationMappings];
+                            next[index] = { ...next[index], webhookUrl: e.target.value };
+                            setEditorConfig({
+                              ...communicationConfig,
+                              projectChannelMappings: next,
+                            });
+                          }}
+                          className="px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-sm"
+                          placeholder="Optional project-specific webhook URL"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = communicationMappings.filter((_: any, i: number) => i !== index);
+                            setEditorConfig({
+                              ...communicationConfig,
+                              projectChannelMappings: next,
+                            });
+                          }}
+                          className="px-3 py-2 rounded-lg text-sm bg-white border border-slate-200 text-slate-600 hover:text-red-600 hover:bg-red-50 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-300"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditorConfig({
+                          ...communicationConfig,
+                          projectChannelMappings: [
+                            ...communicationMappings,
+                            { projectId: null, channelId: '', webhookUrl: '' },
+                          ],
+                        })
+                      }
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 dark:bg-navy-950 dark:border-navy-700 dark:text-slate-200"
+                    >
+                      <Plus size={14} />
+                      Add project mapping
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Webhook URL / API Token / JSON config

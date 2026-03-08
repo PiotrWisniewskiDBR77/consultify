@@ -65,11 +65,21 @@ export const Sparkline: React.FC<SparklineProps> = ({
         </linearGradient>
       </defs>
       <path d={areaD} fill={`url(#spark-grad-${color.replace('#', '')})`} />
-      <path d={pathD} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-      {showDots && points.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r={1.5} fill={color} />
-      ))}
-      <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r={2} fill={color} />
+      <path
+        d={pathD}
+        fill="none"
+        stroke={color}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {showDots && points.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={1.5} fill={color} />)}
+      <circle
+        cx={points[points.length - 1].x}
+        cy={points[points.length - 1].y}
+        r={2}
+        fill={color}
+      />
     </svg>
   );
 };
@@ -81,7 +91,11 @@ interface TrendIndicatorProps {
   showLabel?: boolean;
 }
 
-export const TrendIndicator: React.FC<TrendIndicatorProps> = ({ current, previous, showLabel = false }) => {
+export const TrendIndicator: React.FC<TrendIndicatorProps> = ({
+  current,
+  previous,
+  showLabel = false,
+}) => {
   if (previous == null) return null;
 
   const diff = current - previous;
@@ -98,7 +112,9 @@ export const TrendIndicator: React.FC<TrendIndicatorProps> = ({ current, previou
 
   const isUp = diff > 0;
   return (
-    <span className={`inline-flex items-center gap-0.5 text-[8px] font-bold ${isUp ? 'text-emerald-500' : 'text-red-500'}`}>
+    <span
+      className={`inline-flex items-center gap-0.5 text-[8px] font-bold ${isUp ? 'text-emerald-500' : 'text-red-500'}`}
+    >
       {isUp ? <TrendingUp size={8} /> : <TrendingDown size={8} />}
       {showLabel && `${isUp ? '+' : ''}${pctChange}%`}
     </span>
@@ -106,7 +122,12 @@ export const TrendIndicator: React.FC<TrendIndicatorProps> = ({ current, previou
 };
 
 // ── Heatmap utilities ──────────────────────────────────────────────────────
-function getHeatmapColor(value: number, min: number, max: number, palette: 'warm' | 'cool' | 'diverging' = 'warm'): string {
+function getHeatmapColor(
+  value: number,
+  min: number,
+  max: number,
+  palette: 'warm' | 'cool' | 'diverging' = 'warm'
+): string {
   const range = max - min || 1;
   const normalized = Math.max(0, Math.min(1, (value - min) / range));
 
@@ -191,9 +212,13 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
     <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-3">
       <div className="flex items-center gap-2 mb-2">
         <Flame size={12} className="text-amber-500" />
-        <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">{isPl ? 'Heatmapa' : 'Heatmap'}</span>
+        <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300">
+          {isPl ? 'Heatmapa' : 'Heatmap'}
+        </span>
         <div className="flex-1" />
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X size={10} /></button>
+        <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+          <X size={10} />
+        </button>
       </div>
 
       {/* Palette */}
@@ -212,7 +237,10 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
       {/* Column toggles */}
       <div className="space-y-1">
         {numericCols.map((col) => (
-          <label key={col.key} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 cursor-pointer">
+          <label
+            key={col.key}
+            className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 cursor-pointer"
+          >
             <input
               type="checkbox"
               checked={enabledColumns.has(col.key)}
@@ -223,7 +251,9 @@ export const HeatmapControls: React.FC<HeatmapControlsProps> = ({
           </label>
         ))}
         {numericCols.length === 0 && (
-          <p className="text-[9px] text-slate-400 text-center py-2">{isPl ? 'Brak kolumn numerycznych' : 'No numeric columns'}</p>
+          <p className="text-[9px] text-slate-400 text-center py-2">
+            {isPl ? 'Brak kolumn numerycznych' : 'No numeric columns'}
+          </p>
         )}
       </div>
     </div>
@@ -258,7 +288,9 @@ export const AnalyticsSummaryStrip: React.FC<AnalyticsSummaryStripProps> = ({
 
         return (
           <div key={col.key} className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">{col.header}</span>
+            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400">
+              {col.header}
+            </span>
             <Sparkline values={sparkValues} width={40} height={14} color="#8b5cf6" />
             <span className="text-[9px] font-bold text-slate-600 dark:text-slate-300 tabular-nums">
               ø{Math.round(avg * 10) / 10}

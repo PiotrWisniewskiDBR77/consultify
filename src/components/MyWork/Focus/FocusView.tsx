@@ -65,6 +65,7 @@ import { useTranslation } from 'react-i18next';
 
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
 import { useAppStore } from '@/store/useAppStore';
+
 import { Api } from '../../../services/api';
 import type { PMOCategory } from '../../../types/myWork';
 import { type RowAction, RowActionsMenu } from '../../shared/RowActionsMenu';
@@ -924,12 +925,13 @@ export const FocusView: React.FC<FocusViewProps> = ({
     maxWeek: 15,
     capacityAware: true,
   });
-  const [workloadSummary, setWorkloadSummary] = useState<{ total: number; overdue: number; atRisk: number } | null>(
-    null
-  );
-  const [activeTemplate, setActiveTemplate] = useState<keyof typeof FOCUS_RULE_TEMPLATES>(
-    loadFocusTemplateKey
-  );
+  const [workloadSummary, setWorkloadSummary] = useState<{
+    total: number;
+    overdue: number;
+    atRisk: number;
+  } | null>(null);
+  const [activeTemplate, setActiveTemplate] =
+    useState<keyof typeof FOCUS_RULE_TEMPLATES>(loadFocusTemplateKey);
   const [rulesSaving, setRulesSaving] = useState(false);
 
   // Filters
@@ -1167,7 +1169,10 @@ export const FocusView: React.FC<FocusViewProps> = ({
 
       if (focusRules.capacityAware) {
         const activeWeekItems = byCol.thisWeek.filter((i) => !i.isCompleted);
-        if (activeWeekItems.length + byCol.today.filter((i) => !i.isCompleted).length > focusRules.maxWeek) {
+        if (
+          activeWeekItems.length + byCol.today.filter((i) => !i.isCompleted).length >
+          focusRules.maxWeek
+        ) {
           const allowedWeek = Math.max(
             0,
             focusRules.maxWeek - byCol.today.filter((i) => !i.isCompleted).length
@@ -1274,11 +1279,15 @@ export const FocusView: React.FC<FocusViewProps> = ({
       ).length;
       const thisWeekTotal =
         itemsByColumn.today.filter((item) => !item.isCompleted && item.id !== movingItemId).length +
-        itemsByColumn.thisWeek.filter((item) => !item.isCompleted && item.id !== movingItemId).length;
+        itemsByColumn.thisWeek.filter((item) => !item.isCompleted && item.id !== movingItemId)
+          .length;
 
       if (targetColumn === 'today' && todayCount >= focusRules.maxToday) {
         toast.error(
-          t('myWork.focus.limitToday', 'Today limit reached. Adjust focus rules or move something out.')
+          t(
+            'myWork.focus.limitToday',
+            'Today limit reached. Adjust focus rules or move something out.'
+          )
         );
         return false;
       }
@@ -1621,10 +1630,12 @@ export const FocusView: React.FC<FocusViewProps> = ({
                 {t('myWork.focus.rules', 'Focus rules')}
               </div>
               <div className="mt-1 text-sm font-semibold text-navy-900 dark:text-white">
-                {t('myWork.focus.owner', 'Planner')} {currentUser?.firstName || currentUser?.email || ''}
+                {t('myWork.focus.owner', 'Planner')}{' '}
+                {currentUser?.firstName || currentUser?.email || ''}
               </div>
               <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {activeCounts.today}/{focusRules.maxToday} {t('myWork.focus.columns.today', 'Today')} ·{' '}
+                {activeCounts.today}/{focusRules.maxToday}{' '}
+                {t('myWork.focus.columns.today', 'Today')} ·{' '}
                 {activeCounts.today + activeCounts.thisWeek}/{focusRules.maxWeek}{' '}
                 {t('myWork.focus.columns.thisWeek', 'This Week')}
               </div>
@@ -1636,31 +1647,35 @@ export const FocusView: React.FC<FocusViewProps> = ({
             )}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {(Object.keys(FOCUS_RULE_TEMPLATES) as (keyof typeof FOCUS_RULE_TEMPLATES)[]).map((key) => {
-              const template = FOCUS_RULE_TEMPLATES[key];
-              const active = activeTemplate === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => persistFocusRules(
-                    {
-                      maxToday: template.maxToday,
-                      maxWeek: template.maxWeek,
-                      capacityAware: template.capacityAware,
-                    },
-                    key
-                  )}
-                  className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-colors ${
-                    active
-                      ? 'border-brand/40 bg-brand/10 text-brand'
-                      : 'border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
-                  }`}
-                >
-                  <Sparkles size={12} />
-                  {template.label}
-                </button>
-              );
-            })}
+            {(Object.keys(FOCUS_RULE_TEMPLATES) as (keyof typeof FOCUS_RULE_TEMPLATES)[]).map(
+              (key) => {
+                const template = FOCUS_RULE_TEMPLATES[key];
+                const active = activeTemplate === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() =>
+                      persistFocusRules(
+                        {
+                          maxToday: template.maxToday,
+                          maxWeek: template.maxWeek,
+                          capacityAware: template.capacityAware,
+                        },
+                        key
+                      )
+                    }
+                    className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-colors ${
+                      active
+                        ? 'border-brand/40 bg-brand/10 text-brand'
+                        : 'border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <Sparkles size={12} />
+                    {template.label}
+                  </button>
+                );
+              }
+            )}
           </div>
         </div>
 
@@ -1722,7 +1737,10 @@ export const FocusView: React.FC<FocusViewProps> = ({
                 max={20}
                 value={focusRules.maxToday}
                 onChange={(e) =>
-                  setFocusRules((prev) => ({ ...prev, maxToday: Math.max(1, Math.min(20, Number(e.target.value) || 1)) }))
+                  setFocusRules((prev) => ({
+                    ...prev,
+                    maxToday: Math.max(1, Math.min(20, Number(e.target.value) || 1)),
+                  }))
                 }
                 onBlur={() => persistFocusRules(focusRules, activeTemplate)}
                 className="mt-1 w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2"
@@ -1736,7 +1754,10 @@ export const FocusView: React.FC<FocusViewProps> = ({
                 max={50}
                 value={focusRules.maxWeek}
                 onChange={(e) =>
-                  setFocusRules((prev) => ({ ...prev, maxWeek: Math.max(1, Math.min(50, Number(e.target.value) || 1)) }))
+                  setFocusRules((prev) => ({
+                    ...prev,
+                    maxWeek: Math.max(1, Math.min(50, Number(e.target.value) || 1)),
+                  }))
                 }
                 onBlur={() => persistFocusRules(focusRules, activeTemplate)}
                 className="mt-1 w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2"
@@ -1788,7 +1809,10 @@ export const FocusView: React.FC<FocusViewProps> = ({
               className="shrink-0 bg-slate-50 dark:bg-navy-950 p-3"
               style={{ width: 'clamp(340px, 28%, 480px)' }}
             >
-              <PreviewPaneShell title={t('myWork.focus.aiPlan', 'AI Plan')} onClose={() => setShowAIPlan(false)}>
+              <PreviewPaneShell
+                title={t('myWork.focus.aiPlan', 'AI Plan')}
+                onClose={() => setShowAIPlan(false)}
+              >
                 <AIPlanView embedded onClose={() => setShowAIPlan(false)} />
               </PreviewPaneShell>
             </div>
@@ -1831,7 +1855,8 @@ export const FocusView: React.FC<FocusViewProps> = ({
                           thisWeek: 'later',
                           later: 'later',
                         };
-                        if (selectedItem.column !== 'later') handleSnooze(selectedItem, next[selectedItem.column]);
+                        if (selectedItem.column !== 'later')
+                          handleSnooze(selectedItem, next[selectedItem.column]);
                       }}
                       disabled={selectedItem.column === 'later'}
                       className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed"

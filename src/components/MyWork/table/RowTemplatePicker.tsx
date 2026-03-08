@@ -150,10 +150,13 @@ export const RowTemplatePicker: React.FC<RowTemplatePickerProps> = ({
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
-  const handleSelect = useCallback((tpl: RowTemplate) => {
-    onSelect(tpl);
-    onClose();
-  }, [onClose, onSelect]);
+  const handleSelect = useCallback(
+    (tpl: RowTemplate) => {
+      onSelect(tpl);
+      onClose();
+    },
+    [onClose, onSelect]
+  );
 
   if (!open) return null;
 
@@ -178,7 +181,10 @@ export const RowTemplatePicker: React.FC<RowTemplatePickerProps> = ({
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             {isPl ? 'Szablon wiersza' : 'Row Template'}
           </span>
-          <button onClick={onClose} className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+          <button
+            onClick={onClose}
+            className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+          >
             <X size={11} className="text-slate-400" />
           </button>
         </div>

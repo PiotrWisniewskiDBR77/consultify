@@ -5,9 +5,7 @@ import { ROUTES } from '@/routes/routeConfig';
 
 import type { CardBlock, CuratedColorSet, DeckCard } from '../wizard/types';
 import { CURATED_COLOR_SETS } from '../wizard/types';
-
 import { AnimatedBlock, AnimatedCard } from './AnimatedBlock';
-import { BlockSourceBadge, CardSourceFooter } from './SourceTraceability';
 import { ArtifactEmbedBlock } from './blocks/ArtifactEmbedBlock';
 import { BulletListBlock } from './blocks/BulletListBlock';
 import { CalloutBlock } from './blocks/CalloutBlock';
@@ -23,6 +21,7 @@ import { SmartLayoutBlock } from './blocks/SmartLayoutBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { TimelineBlock } from './blocks/TimelineBlock';
 import { assignBlocksToRegions, selectLayout } from './layouts/LayoutEngine';
+import { BlockSourceBadge, CardSourceFooter } from './SourceTraceability';
 
 interface CardRendererProps {
   card: DeckCard;
@@ -70,8 +69,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   onSourceClick,
 }) => {
   const navigate = useNavigate();
-  const theme =
-    CURATED_COLOR_SETS.find((c) => c.id === colorSetId) || CURATED_COLOR_SETS[1];
+  const theme = CURATED_COLOR_SETS.find((c) => c.id === colorSetId) || CURATED_COLOR_SETS[1];
 
   const bgStyle = getBackgroundStyle(card, theme);
 
@@ -196,9 +194,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
                   style={{ gridArea: region.gridArea }}
                   className="flex flex-col gap-2 overflow-hidden"
                 >
-                  {blocksInRegion.map((block, idx) =>
-                    renderBlockItem(block as CardBlock, idx)
-                  )}
+                  {blocksInRegion.map((block, idx) => renderBlockItem(block as CardBlock, idx))}
                 </div>
               );
             })}
@@ -229,10 +225,7 @@ export const CardRenderer: React.FC<CardRendererProps> = ({
   );
 };
 
-function getBackgroundStyle(
-  card: DeckCard,
-  theme: CuratedColorSet
-): React.CSSProperties {
+function getBackgroundStyle(card: DeckCard, theme: CuratedColorSet): React.CSSProperties {
   switch (card.background.type) {
     case 'color':
       return { backgroundColor: card.background.value || theme.colors.background };

@@ -77,24 +77,70 @@ const SEVERITY_CONFIG = {
 
 // ── Category config ────────────────────────────────────────────
 
-const CATEGORY_META: Record<GateCategory, { icon: React.ReactNode; labelKey: string; fallback: string }> = {
-  structure: { icon: <Shield size={14} />, labelKey: 'reports.qualityGates.cat.structure', fallback: 'Structure' },
-  content: { icon: <FileCheck size={14} />, labelKey: 'reports.qualityGates.cat.content', fallback: 'Content' },
-  compliance: { icon: <Eye size={14} />, labelKey: 'reports.qualityGates.cat.compliance', fallback: 'Compliance' },
-  traceability: { icon: <Link size={14} />, labelKey: 'reports.qualityGates.cat.traceability', fallback: 'Traceability' },
-  coverage: { icon: <BarChart3 size={14} />, labelKey: 'reports.qualityGates.cat.coverage', fallback: 'Coverage' },
+const CATEGORY_META: Record<
+  GateCategory,
+  { icon: React.ReactNode; labelKey: string; fallback: string }
+> = {
+  structure: {
+    icon: <Shield size={14} />,
+    labelKey: 'reports.qualityGates.cat.structure',
+    fallback: 'Structure',
+  },
+  content: {
+    icon: <FileCheck size={14} />,
+    labelKey: 'reports.qualityGates.cat.content',
+    fallback: 'Content',
+  },
+  compliance: {
+    icon: <Eye size={14} />,
+    labelKey: 'reports.qualityGates.cat.compliance',
+    fallback: 'Compliance',
+  },
+  traceability: {
+    icon: <Link size={14} />,
+    labelKey: 'reports.qualityGates.cat.traceability',
+    fallback: 'Traceability',
+  },
+  coverage: {
+    icon: <BarChart3 size={14} />,
+    labelKey: 'reports.qualityGates.cat.coverage',
+    fallback: 'Coverage',
+  },
 };
 
-const CATEGORY_ORDER: GateCategory[] = ['structure', 'content', 'compliance', 'traceability', 'coverage'];
+const CATEGORY_ORDER: GateCategory[] = [
+  'structure',
+  'content',
+  'compliance',
+  'traceability',
+  'coverage',
+];
 
 function inferCategory(gate: QualityGateResult): GateCategory {
   if (gate.category) return gate.category;
   const t = gate.gateType;
-  if (t === 'EMPTY_REPORT' || t === 'MISSING_REQUIRED_SECTION' || t === 'MISSING_RECOMMENDED_SECTION' || t === 'SECTION_ORDER_WARNING') return 'structure';
-  if (t === 'EMPTY_CONTENT' || t === 'SHORT_CONTENT' || t === 'NUMERIC_INCONSISTENCY' || t === 'CROSS_SECTION_INCONSISTENCY') return 'content';
+  if (
+    t === 'EMPTY_REPORT' ||
+    t === 'MISSING_REQUIRED_SECTION' ||
+    t === 'MISSING_RECOMMENDED_SECTION' ||
+    t === 'SECTION_ORDER_WARNING'
+  )
+    return 'structure';
+  if (
+    t === 'EMPTY_CONTENT' ||
+    t === 'SHORT_CONTENT' ||
+    t === 'NUMERIC_INCONSISTENCY' ||
+    t === 'CROSS_SECTION_INCONSISTENCY'
+  )
+    return 'content';
   if (t === 'BRAND_VOICE_VIOLATION') return 'compliance';
   if (t === 'MISSING_SOURCE_REFS' || t === 'LOW_TRACEABILITY_COVERAGE') return 'traceability';
-  if (t === 'TEMPLATE_SECTION_MISSING' || t === 'TEMPLATE_SECTION_EMPTY' || t === 'RAG_CONTENT_MISMATCH') return 'coverage';
+  if (
+    t === 'TEMPLATE_SECTION_MISSING' ||
+    t === 'TEMPLATE_SECTION_EMPTY' ||
+    t === 'RAG_CONTENT_MISMATCH'
+  )
+    return 'coverage';
   return 'content';
 }
 
@@ -149,21 +195,24 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
   const warningCount = report?.gates.filter((g) => g.severity === 'warning').length ?? 0;
   const passedCount = (report?.gates.length ?? 0) === 0 ? 1 : 0;
 
-  const handleFixWithAI = useCallback(async (gate: QualityGateResult) => {
-    setFixingGateId(gate.id);
-    try {
-      await fetch(`${API_URL}/report-builder/${reportId}/agent/message`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ message: `Fix: ${gate.message}` }),
-      });
-      await runCheck();
-    } catch {
-      /* */
-    } finally {
-      setFixingGateId(null);
-    }
-  }, [reportId, runCheck]);
+  const handleFixWithAI = useCallback(
+    async (gate: QualityGateResult) => {
+      setFixingGateId(gate.id);
+      try {
+        await fetch(`${API_URL}/report-builder/${reportId}/agent/message`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ message: `Fix: ${gate.message}` }),
+        });
+        await runCheck();
+      } catch {
+        /* */
+      } finally {
+        setFixingGateId(null);
+      }
+    },
+    [reportId, runCheck]
+  );
 
   if (!report && !loading) return null;
 
@@ -182,11 +231,7 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
         : 'bg-emerald-500/10 border-emerald-500/30';
 
   const summaryText =
-    errorCount > 0
-      ? 'text-red-400'
-      : warningCount > 0
-        ? 'text-amber-400'
-        : 'text-emerald-400';
+    errorCount > 0 ? 'text-red-400' : warningCount > 0 ? 'text-amber-400' : 'text-emerald-400';
 
   return (
     <div className={`rounded-xl bg-navy-900/50 border border-navy-700/50 p-4 ${className}`}>
@@ -243,8 +288,10 @@ export const QualityGatesPanel: React.FC<QualityGatesPanelProps> = ({
                 ? t('reports.qualityGates.allPassed', 'All quality checks passed!')
                 : [
                     errorCount > 0 && `${errorCount} ${t('reports.qualityGates.errors', 'errors')}`,
-                    warningCount > 0 && `${warningCount} ${t('reports.qualityGates.warnings', 'warnings')}`,
-                    passedCount > 0 && t('reports.qualityGates.allPassed', 'All quality checks passed!'),
+                    warningCount > 0 &&
+                      `${warningCount} ${t('reports.qualityGates.warnings', 'warnings')}`,
+                    passedCount > 0 &&
+                      t('reports.qualityGates.allPassed', 'All quality checks passed!'),
                   ]
                     .filter(Boolean)
                     .join(', ')}

@@ -128,7 +128,13 @@ async function runKnownToolAi(params: {
     mode: 'generate',
     systemInstruction,
     fieldLabel: `Known tool preview AI (${intentLabel})`,
-    artifactContext: { id: tool.id, title: tool.name, type: 'tool', status: 'library', priority: 'medium' },
+    artifactContext: {
+      id: tool.id,
+      title: tool.name,
+      type: 'tool',
+      status: 'library',
+      priority: 'medium',
+    },
     language,
   });
 }
@@ -196,7 +202,9 @@ export const KnownToolPreviewV3Body: React.FC<{
         `Output language MUST be ${language === 'pl' ? 'Polish' : 'English'}.`,
         `Do NOT invent facts. Use only the provided text.`,
         `Return plain text only. No markdown.`,
-        mode === 'expand' ? `Expand with actionable detail; keep structure.` : `Shorten; keep meaning; keep it crisp.`,
+        mode === 'expand'
+          ? `Expand with actionable detail; keep structure.`
+          : `Shorten; keep meaning; keep it crisp.`,
       ].join('\n');
 
       try {
@@ -205,8 +213,15 @@ export const KnownToolPreviewV3Body: React.FC<{
           text: detailsText || initialDetailsText || tool.description || tool.name,
           mode,
           systemInstruction,
-          fieldLabel: mode === 'expand' ? 'Known tool details (expand)' : 'Known tool details (shorten)',
-          artifactContext: { id: tool.id, title: tool.name, type: 'tool', status: 'library', priority: 'medium' },
+          fieldLabel:
+            mode === 'expand' ? 'Known tool details (expand)' : 'Known tool details (shorten)',
+          artifactContext: {
+            id: tool.id,
+            title: tool.name,
+            type: 'tool',
+            status: 'library',
+            priority: 'medium',
+          },
           language,
         });
         if (!refined) throw new Error('empty');
@@ -221,7 +236,8 @@ export const KnownToolPreviewV3Body: React.FC<{
     [detailsText, initialDetailsText, isPolish, tool.description, tool.id, tool.name]
   );
 
-  const metaPillBase = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium';
+  const metaPillBase =
+    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium';
   const neutralMetaPill = `${metaPillBase} bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300`;
 
   const categoryLabel =
@@ -244,7 +260,9 @@ export const KnownToolPreviewV3Body: React.FC<{
       <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-            <span className={`${metaPillBase} border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200`}>
+            <span
+              className={`${metaPillBase} border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200`}
+            >
               {categoryLabel}
             </span>
             <span className={neutralMetaPill}>
@@ -253,7 +271,9 @@ export const KnownToolPreviewV3Body: React.FC<{
                 : t('tools.hub.license.free', isPolish ? 'Darmowe' : 'Free')}
             </span>
             {tool.isComingSoon ? (
-              <span className={neutralMetaPill}>{t('common.comingSoon', isPolish ? 'Wkrótce' : 'Coming soon')}</span>
+              <span className={neutralMetaPill}>
+                {t('common.comingSoon', isPolish ? 'Wkrótce' : 'Coming soon')}
+              </span>
             ) : null}
           </div>
           <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 shrink-0">
@@ -487,7 +507,9 @@ export const KnownToolPreviewV3Footer: React.FC<{
         ) : aiError ? (
           <div className="mt-2 text-xs text-red-600 dark:text-red-400">{aiError}</div>
         ) : aiText ? (
-          <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{aiText}</div>
+          <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
+            {aiText}
+          </div>
         ) : null}
       </div>
 
@@ -511,7 +533,9 @@ export const KnownToolPreviewV3Footer: React.FC<{
                 </span>
               ))}
               {overflowCount > 0 ? (
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">+{overflowCount}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  +{overflowCount}
+                </span>
               ) : null}
             </>
           ) : (
@@ -552,4 +576,3 @@ export const KnownToolPreviewV3Footer: React.FC<{
     </div>
   );
 };
-

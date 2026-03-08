@@ -45,9 +45,9 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  const [availableKpis, setAvailableKpis] = useState<Array<{ id: string; name: string; initiativeName?: string | null }>>(
-    []
-  );
+  const [availableKpis, setAvailableKpis] = useState<
+    Array<{ id: string; name: string; initiativeName?: string | null }>
+  >([]);
   const [kpisLoading, setKpisLoading] = useState(false);
   const [kpiSearch, setKpiSearch] = useState('');
   const [selectedKpiIds, setSelectedKpiIds] = useState<string[]>([]);
@@ -393,7 +393,9 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
 
                 <div className="mt-2 max-h-56 overflow-auto rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/40 dark:bg-navy-800/40">
                   {kpisLoading ? (
-                    <div className="p-3 text-sm text-slate-500">{t('common.loading', 'Loading...')}</div>
+                    <div className="p-3 text-sm text-slate-500">
+                      {t('common.loading', 'Loading...')}
+                    </div>
                   ) : filteredKpis.length === 0 ? (
                     <div className="p-3 text-sm text-slate-500">
                       {t('results.kpiReports.create.noKpis', 'No KPIs found.')}
@@ -414,7 +416,9 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                               onChange={(e) => {
                                 const next = e.target.checked;
                                 setSelectedKpiIds((prev) =>
-                                  next ? Array.from(new Set([...prev, k.id])) : prev.filter((id) => id !== k.id)
+                                  next
+                                    ? Array.from(new Set([...prev, k.id]))
+                                    : prev.filter((id) => id !== k.id)
                                 );
                               }}
                             />
@@ -423,7 +427,9 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                                 {k.name}
                               </div>
                               {k.initiativeName ? (
-                                <div className="text-xs text-slate-500 truncate">{k.initiativeName}</div>
+                                <div className="text-xs text-slate-500 truncate">
+                                  {k.initiativeName}
+                                </div>
                               ) : null}
                             </div>
                           </label>
@@ -434,8 +440,8 @@ export const ResultsKpiReportsView: React.FC<ResultsKpiReportsViewProps> = ({
                 </div>
 
                 <div className="mt-1 text-xs text-slate-500">
-                  {t('results.kpiReports.create.selectedCount', 'Selected')}: {selectedKpiIds.length}/
-                  {availableKpis.length}
+                  {t('results.kpiReports.create.selectedCount', 'Selected')}:{' '}
+                  {selectedKpiIds.length}/{availableKpis.length}
                 </div>
               </div>
 

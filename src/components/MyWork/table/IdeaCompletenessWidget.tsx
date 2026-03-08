@@ -2,13 +2,7 @@
  * IdeaCompletenessWidget — Small widget showing idea workspace completeness.
  * Coverage, node/edge counts, branch depth, conversion readiness.
  */
-import {
-  BarChart3,
-  CheckCircle2,
-  GitBranch,
-  Layers,
-  Target,
-} from 'lucide-react';
+import { BarChart3, CheckCircle2, GitBranch, Layers, Target } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -58,20 +52,59 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
     const completeness = Math.round((checks.filter(Boolean).length / checks.length) * 100);
 
     const readiness =
-      completeness >= 80 ? (isPl ? 'Gotowe' : 'Ready') :
-      completeness >= 50 ? (isPl ? 'W trakcie' : 'In progress') :
-      (isPl ? 'Początek' : 'Starting');
+      completeness >= 80
+        ? isPl
+          ? 'Gotowe'
+          : 'Ready'
+        : completeness >= 50
+          ? isPl
+            ? 'W trakcie'
+            : 'In progress'
+          : isPl
+            ? 'Początek'
+            : 'Starting';
 
     const readinessColor =
-      completeness >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
-      completeness >= 50 ? 'text-amber-600 dark:text-amber-400' :
-      'text-slate-500 dark:text-slate-400';
+      completeness >= 80
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : completeness >= 50
+          ? 'text-amber-600 dark:text-amber-400'
+          : 'text-slate-500 dark:text-slate-400';
 
     const items: MetricItem[] = [
-      { icon: Layers, labelEn: 'Nodes', labelPl: 'Węzły', value: nodeCount, color: 'text-blue-500' },
-      { icon: GitBranch, labelEn: 'Edges', labelPl: 'Połączenia', value: edgeCount, color: 'text-violet-500' },
-      { icon: Target, labelEn: 'Branches', labelPl: 'Gałęzie', value: branchNodes.length, color: 'text-indigo-500' },
-      { icon: BarChart3, labelEn: 'Completeness', labelPl: 'Kompletność', value: `${completeness}%`, color: completeness >= 80 ? 'text-emerald-500' : completeness >= 50 ? 'text-amber-500' : 'text-red-500' },
+      {
+        icon: Layers,
+        labelEn: 'Nodes',
+        labelPl: 'Węzły',
+        value: nodeCount,
+        color: 'text-blue-500',
+      },
+      {
+        icon: GitBranch,
+        labelEn: 'Edges',
+        labelPl: 'Połączenia',
+        value: edgeCount,
+        color: 'text-violet-500',
+      },
+      {
+        icon: Target,
+        labelEn: 'Branches',
+        labelPl: 'Gałęzie',
+        value: branchNodes.length,
+        color: 'text-indigo-500',
+      },
+      {
+        icon: BarChart3,
+        labelEn: 'Completeness',
+        labelPl: 'Kompletność',
+        value: `${completeness}%`,
+        color:
+          completeness >= 80
+            ? 'text-emerald-500'
+            : completeness >= 50
+              ? 'text-amber-500'
+              : 'text-red-500',
+      },
     ];
 
     return { items, completeness, readiness, readinessColor };
@@ -92,7 +125,11 @@ export const IdeaCompletenessWidget: React.FC<IdeaCompletenessWidgetProps> = ({
       <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden mb-3">
         <div
           className={`h-full rounded-full transition-all ${
-            metrics.completeness >= 80 ? 'bg-emerald-500' : metrics.completeness >= 50 ? 'bg-amber-500' : 'bg-red-400'
+            metrics.completeness >= 80
+              ? 'bg-emerald-500'
+              : metrics.completeness >= 50
+                ? 'bg-amber-500'
+                : 'bg-red-400'
           }`}
           style={{ width: `${metrics.completeness}%` }}
         />

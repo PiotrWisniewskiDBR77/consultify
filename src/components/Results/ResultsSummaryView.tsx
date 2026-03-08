@@ -15,14 +15,18 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { useConversationStore } from '@/store/useConversationStore';
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
-import { FilterableTable, type TableColumn, type TableRow } from '../shared/ModuleHub/FilterableTable';
-import { TableWithPreviewLayout, type PreviewableItem } from '../shared/TableWithPreviewLayout';
+import {
+  FilterableTable,
+  type TableColumn,
+  type TableRow,
+} from '../shared/ModuleHub/FilterableTable';
+import { type PreviewableItem, TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { KPICreateModal } from './KPICreateModal';
 import { ROIDetailDrawer } from './ROIDetailDrawer';
 
@@ -95,9 +99,7 @@ const MonitoringPills: React.FC<{
         ].join(' ')}
       >
         {hasKpi ? <Link2 size={12} /> : <Link2Off size={12} />}
-        <span className="truncate">
-          KPI{typeof kpiCount === 'number' ? ` · ${kpiCount}` : ''}
-        </span>
+        <span className="truncate">KPI{typeof kpiCount === 'number' ? ` · ${kpiCount}` : ''}</span>
       </span>
       <span
         className={[
@@ -136,7 +138,7 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedItem = useMemo(
-    () => (selectedId ? items.find((i) => i.id === selectedId) ?? null : null),
+    () => (selectedId ? (items.find((i) => i.id === selectedId) ?? null) : null),
     [items, selectedId]
   );
 
@@ -367,7 +369,9 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
           const detailsMenu: RowAction[] = [
             {
               id: 'toggle',
-              label: detailsExpanded ? t('common.collapse', 'Collapse') : t('common.expand', 'Expand'),
+              label: detailsExpanded
+                ? t('common.collapse', 'Collapse')
+                : t('common.expand', 'Expand'),
               onClick: () => setDetailsExpanded((v) => !v),
             },
             {
@@ -423,7 +427,10 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
 
                 <div className="mt-2 space-y-1">
                   <p className="text-slate-500 dark:text-slate-400">
-                    {t('results.summary.preview.subtitle', 'Completion summary and monitoring coverage')}
+                    {t(
+                      'results.summary.preview.subtitle',
+                      'Completion summary and monitoring coverage'
+                    )}
                   </p>
                   <MonitoringPills
                     hasKpi={i.hasKpiMonitoring}
@@ -458,7 +465,9 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
               </div>
 
               <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                <span className="text-slate-500 dark:text-slate-400">{t('common.status', 'Status')}</span>
+                <span className="text-slate-500 dark:text-slate-400">
+                  {t('common.status', 'Status')}
+                </span>
                 <span className="text-slate-900 dark:text-white">{i.status || '—'}</span>
 
                 <span className="text-slate-500 dark:text-slate-400">
@@ -466,7 +475,9 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
                 </span>
                 <span className="text-slate-700 dark:text-slate-200">{i.priority || '—'}</span>
 
-                <span className="text-slate-500 dark:text-slate-400">{t('common.owner', 'Owner')}</span>
+                <span className="text-slate-500 dark:text-slate-400">
+                  {t('common.owner', 'Owner')}
+                </span>
                 <span className="text-slate-700 dark:text-slate-200">{i.ownerName || '—'}</span>
               </div>
             </div>
@@ -477,10 +488,8 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
             'inline-flex items-center h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors active:scale-[0.98]';
           const footerPillBase =
             'inline-flex items-center justify-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-          const pillNeutral =
-            `${footerPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
-          const pillPrimary =
-            `${footerPillBase} border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15`;
+          const pillNeutral = `${footerPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
+          const pillPrimary = `${footerPillBase} border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15`;
 
           const aiHints = [
             {
@@ -528,9 +537,15 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
             </span>
           );
 
-          const kpiTone = i.hasKpiMonitoring ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400';
-          const roiPlanTone = i.hasRoiPlan ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400';
-          const roiActualTone = i.hasRoiRealized ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400';
+          const kpiTone = i.hasKpiMonitoring
+            ? 'text-emerald-700 dark:text-emerald-300'
+            : 'text-slate-500 dark:text-slate-400';
+          const roiPlanTone = i.hasRoiPlan
+            ? 'text-emerald-700 dark:text-emerald-300'
+            : 'text-slate-500 dark:text-slate-400';
+          const roiActualTone = i.hasRoiRealized
+            ? 'text-emerald-700 dark:text-emerald-300'
+            : 'text-slate-500 dark:text-slate-400';
 
           return (
             <div className="space-y-0">
@@ -571,7 +586,11 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
               {/* Actions */}
               <div className="space-y-2.5 py-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <button type="button" onClick={() => openInitiative(i.id)} className={pillPrimary}>
+                  <button
+                    type="button"
+                    onClick={() => openInitiative(i.id)}
+                    className={pillPrimary}
+                  >
                     <ExternalLink size={14} />
                     {t('common.open', 'Open')}
                   </button>
@@ -679,4 +698,3 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
 };
 
 export default ResultsSummaryView;
-

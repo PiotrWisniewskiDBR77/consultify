@@ -34,6 +34,7 @@ import {
   getInitiativeBudgetSummary,
   getPortfolioBudgetSummary,
 } from '../services/executionBudgetService.js';
+import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import { detectRiskSignals } from '../services/riskDetectionService.js';
 import {
   getCapacityTimeline,
@@ -59,6 +60,49 @@ router.get(
     const { projectId } = req.query;
     const signals = await detectRiskSignals(orgId, projectId as string | undefined);
     return res.json({ signals, count: signals.length });
+  })
+);
+
+router.post(
+  '/risk-signals/dispatch',
+  verifyToken,
+  isAuthenticated,
+  requireOrgRole('admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const projectId =
+      typeof req.body?.projectId === 'string' && req.body.projectId.trim()
+        ? req.body.projectId.trim()
+        : undefined;
+    const signals = await detectRiskSignals(orgId, projectId);
+    const criticalSignals = signals.slice(0, 5);
+
+    const deliveries = await Promise.all(
+      criticalSignals.map((signal) =>
+        dispatchProjectCommunicationEvent({
+          organizationId: orgId,
+          projectId,
+          eventType: 'risk_alert',
+          title: signal.title,
+          body: signal.description || signal.suggestedAction || 'Execution risk detected.',
+          deepLink: signal.initiativeId ? `/initiatives/${signal.initiativeId}` : null,
+          severity:
+            signal.severity === 'CRITICAL'
+              ? 'critical'
+              : signal.severity === 'HIGH'
+                ? 'high'
+                : 'normal',
+        })
+      )
+    );
+
+    return res.json({
+      success: true,
+      signals: criticalSignals.length,
+      deliveries: deliveries.flat(),
+    });
   })
 );
 

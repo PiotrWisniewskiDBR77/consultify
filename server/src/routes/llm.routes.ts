@@ -984,6 +984,35 @@ router.get(
     const orgProviderState = new Map(
       (orgProviders || []).map((provider: any) => [String(provider.id), provider.is_enabled_for_org !== false])
     );
+    const entrypointByUseCase: Record<string, string> = {
+      chat: '/ai-chat',
+      document_understanding: '/ai-chat + attachments',
+      reports: '/reports + report builder',
+      presentations: '/presentations',
+      visuals: '/presentations visual generation',
+    };
+    const uxStatusByUseCase: Record<string, 'ready' | 'partial' | 'blocked'> = {
+      chat: 'ready',
+      document_understanding: 'ready',
+      reports: 'ready',
+      presentations: 'ready',
+      visuals: 'partial',
+    };
+    const releaseBundles = organizationId
+      ? ((await dbAll(
+          `SELECT id, purpose, status, prompt_key, prompt_version, primary_model_id, fallback_model_id, policy_version
+           FROM ai_eval_release_bundles
+           WHERE organization_id = ?`,
+          [organizationId],
+          { fallback: true } as any
+        ).catch(() => [])) as any[])
+      : [];
+    const bundleById = new Map(releaseBundles.map((bundle) => [String(bundle.id), bundle]));
+    const publishedBundleIds = new Set(
+      releaseBundles
+        .filter((bundle) => String(bundle.status || '').toLowerCase() === 'published')
+        .map((bundle) => String(bundle.id))
+    );
 
     const useCases = await Promise.all(
       EXECUTIVE_USE_CASES.map(async (useCase) => {
@@ -1004,7 +1033,12 @@ router.get(
                 lp.health_status,
                 lp.cost_per_1k,
                 lp.provider_type,
-                lp.execution_regions
+                lp.execution_regions,
+                apa.release_bundle_id,
+                apa.prompt_key,
+                apa.prompt_version,
+                apa.policy_version,
+                apa.fallback_model_id
               FROM ai_purpose_assignments apa
               INNER JOIN llm_providers lp ON lp.id = apa.provider_id
               WHERE apa.purpose IN (${placeholders})
@@ -1052,6 +1086,18 @@ router.get(
             }
 
             const primary = assignments[0] || null;
+            const releaseBundleId = String(primary?.release_bundle_id || '').trim() || null;
+            const bundle =
+              (releaseBundleId ? bundleById.get(releaseBundleId) : null) ||
+              releaseBundles.find((item) => getRoutingPurposeKeys(String(item.purpose || '')).includes(purpose)) ||
+              null;
+            const promptKey = String(primary?.prompt_key || bundle?.prompt_key || '').trim() || null;
+            const promptVersion =
+              String(primary?.prompt_version || bundle?.prompt_version || '').trim() || null;
+            const policyVersion =
+              String(primary?.policy_version || bundle?.policy_version || '').trim() || null;
+            const releasePublished = releaseBundleId ? publishedBundleIds.has(releaseBundleId) : false;
+            const entrypoint = entrypointByUseCase[useCase.key] || useCase.key;
             const fallbacks = assignments.slice(1, 4).map((row) => ({
               providerId: row.provider_id,
               provider: row.provider,
@@ -1076,15 +1122,50 @@ router.get(
                   : primary?.health_status === 'unhealthy'
                     ? 'degraded'
                     : 'healthy';
+            const blockers: string[] = [];
+            if (assignments.length === 0) blockers.push('missing_assignment');
+            if (eligibleAssignments.length === 0) blockers.push('no_eligible_assignment');
+            if (!releasePublished) blockers.push('release_not_published');
+            if (!promptKey || !promptVersion) blockers.push('prompt_not_traced');
+            if (organizationId && !policyVersion) blockers.push('policy_not_traced');
+            if (useCase.key === 'visuals') blockers.push('ux_partial');
+            const completenessStatus =
+              blockers.length === 0
+                ? 'ready'
+                : blockers.some((blocker) =>
+                      ['missing_assignment', 'no_eligible_assignment', 'release_not_published'].includes(blocker)
+                    )
+                  ? 'blocked'
+                  : 'partial';
+            const completenessScore = Math.max(
+              0,
+              [
+                assignments.length > 0 ? 20 : 0,
+                eligibleAssignments.length > 0 ? 20 : 0,
+                releasePublished ? 20 : 0,
+                promptKey && promptVersion ? 20 : 0,
+                !organizationId || policyVersion ? 10 : 0,
+                uxStatusByUseCase[useCase.key] === 'ready' ? 10 : 0,
+              ].reduce((sum, item) => sum + item, 0)
+            );
 
             return {
               purpose,
+              entrypoint,
               assignmentCount: assignments.length,
               eligibleAssignmentCount: eligibleAssignments.length,
               status,
               policyAllowed: primaryPolicy?.policyAllowed ?? assignments.length === 0,
               enabledForOrg: organizationId ? orgProviderState.get(String(primary?.provider_id || '')) !== false : true,
               residencyStatus: primaryPolicy?.residencyStatus ?? 'allowed',
+              releaseBundleId: releaseBundleId || String(bundle?.id || '').trim() || null,
+              releaseStatus: releasePublished ? 'published' : bundle ? String(bundle.status || 'draft') : 'missing',
+              promptKey,
+              promptVersion,
+              policyVersion,
+              completenessStatus,
+              completenessScore,
+              blockers,
               primary: primary
                 ? {
                     providerId: primary.provider_id,
@@ -1119,13 +1200,36 @@ router.get(
               : healthy > 0
                 ? 'healthy'
                 : 'unknown';
+        const completenessStates = purposes.map((item) => item.completenessStatus);
+        const completenessStatus = completenessStates.includes('blocked')
+          ? 'blocked'
+          : completenessStates.includes('partial')
+            ? 'partial'
+            : 'ready';
+        const completenessScore =
+          purposes.length > 0
+            ? Math.round(
+                purposes.reduce((sum, item) => sum + Number(item.completenessScore || 0), 0) / purposes.length
+              )
+            : 0;
+        const releaseCoveragePct =
+          purposes.length > 0
+            ? Math.round(
+                (purposes.filter((item) => item.releaseStatus === 'published').length / purposes.length) * 100
+              )
+            : 0;
 
         return {
           key: useCase.key,
           label: useCase.label,
           description: useCase.description,
           businessOwner: useCase.businessOwner,
+          entrypoint: entrypointByUseCase[useCase.key] || useCase.key,
+          uxStatus: uxStatusByUseCase[useCase.key] || 'partial',
           status: overallStatus,
+          completenessStatus,
+          completenessScore,
+          releaseCoveragePct,
           coveragePct:
             useCase.purposes.length > 0 ? Math.round((covered / useCase.purposes.length) * 100) : 0,
           healthyPurposes: healthy,
@@ -1198,6 +1302,9 @@ router.get(
         vendorConcentrationPct: finOps?.vendorConcentrationPct || 0,
         topVendor: finOps?.topVendor || null,
         impactedOrganizations: Number((impactedOrganizationsRow as any)?.impacted || 0),
+        readinessReady: useCases.filter((u: any) => u.completenessStatus === 'ready').length,
+        readinessPartial: useCases.filter((u: any) => u.completenessStatus === 'partial').length,
+        readinessBlocked: useCases.filter((u: any) => u.completenessStatus === 'blocked').length,
       },
       vendorScorecards: finOps?.vendorScorecards || [],
       finOps,

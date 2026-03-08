@@ -11,8 +11,7 @@ import {
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { INTENT_COLORS, type DeckCard } from '../wizard/types';
-
+import { type DeckCard, INTENT_COLORS } from '../wizard/types';
 import { CardRenderer } from './CardRenderer';
 
 interface SlideSorterProps {
@@ -109,7 +108,10 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                     <CardRenderer card={card} colorSetId={colorSetId} scale={0.2} />
                   </div>
                   <div className="absolute top-1 left-1 flex items-center gap-0.5">
-                    <GripVertical size={10} className="text-white/70 cursor-grab opacity-0 group-hover:opacity-100" />
+                    <GripVertical
+                      size={10}
+                      className="text-white/70 cursor-grab opacity-0 group-hover:opacity-100"
+                    />
                     <span className="text-[9px] font-bold text-white bg-black/40 rounded px-1">
                       {index + 1}
                     </span>
@@ -119,7 +121,10 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                   {outdated && (
                     <div
                       className="absolute bottom-1 left-1 flex items-center gap-0.5 px-1 py-0.5 rounded bg-amber-500/90 text-white text-[7px] font-bold"
-                      title={t('presentations.builder.dataRefresh.outdated', 'Data may be outdated')}
+                      title={t(
+                        'presentations.builder.dataRefresh.outdated',
+                        'Data may be outdated'
+                      )}
                     >
                       <RefreshCw size={8} className="animate-spin-slow" />
                       <span>{t('presentations.builder.dataRefresh.stale', 'Stale')}</span>
@@ -153,9 +158,7 @@ export const SlideSorter: React.FC<SlideSorterProps> = ({
                   <span className="text-slate-700 dark:text-slate-300 truncate flex-1">
                     {card.title}
                   </span>
-                  {outdated && (
-                    <RefreshCw size={10} className="text-amber-500 flex-shrink-0" />
-                  )}
+                  {outdated && <RefreshCw size={10} className="text-amber-500 flex-shrink-0" />}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

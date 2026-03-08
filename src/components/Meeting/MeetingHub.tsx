@@ -3,12 +3,14 @@ import {
   CheckSquare2,
   ClipboardList,
   FileText,
+  Loader2,
   Plus,
   Sparkles,
   Users,
   X,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,6 +23,7 @@ import {
 import { FilterableTable, type TableColumn } from '@/components/shared/ModuleHub';
 import { useModuleOpenDocuments } from '@/components/shared/ModuleHub/useModuleOpenDocuments';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
+import { Api } from '@/services/api';
 
 type FollowUpStatus = 'open' | 'done';
 type MeetingStatus = 'scheduled' | 'completed';
@@ -34,6 +37,7 @@ interface FollowUpItem {
 
 interface MeetingItem {
   id: string;
+  projectId?: string | null;
   title: string;
   startAt: string;
   endAt: string;
@@ -46,16 +50,6 @@ interface MeetingItem {
   status: MeetingStatus;
 }
 
-const STORAGE_KEY = 'consultify.meeting.module.v1';
-
-function createMeetingId() {
-  return `meeting-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function seedMeetings(): MeetingItem[] {
-  return [];
-}
-
 export const MeetingHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -66,9 +60,13 @@ export const MeetingHub: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
   const [meetings, setMeetings] = useState<MeetingItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDecisionModal, setShowDecisionModal] = useState(false);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [operatorBrief, setOperatorBrief] = useState<any>(null);
+  const [operatorBriefLoading, setOperatorBriefLoading] = useState(false);
   const [draft, setDraft] = useState({
     title: '',
     startAt: '',
@@ -82,31 +80,29 @@ export const MeetingHub: React.FC = () => {
     title: '',
     owner: '',
   });
+  const [decisionDraft, setDecisionDraft] = useState('');
 
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('meeting');
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      const initial = seedMeetings();
-      setMeetings(initial);
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
-      return;
-    }
+  const loadMeetings = async () => {
+    setLoading(true);
     try {
-      const parsed = JSON.parse(raw);
-      setMeetings(Array.isArray(parsed) ? parsed : []);
-    } catch {
+      const data = await (Api as any).getMeetings?.();
+      const rows = Array.isArray(data) ? data : data?.meetings || [];
+      setMeetings(Array.isArray(rows) ? rows : []);
+    } catch (error) {
+      console.error('Failed to load meetings:', error);
       setMeetings([]);
+      toast.error(t('meeting.errors.loadFailed', 'Failed to load meetings'));
+    } finally {
+      setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(meetings));
-  }, [meetings]);
+    void loadMeetings();
+  }, []);
 
   const filteredMeetings = useMemo(() => {
     let data = [...meetings].sort(
@@ -143,10 +139,31 @@ export const MeetingHub: React.FC = () => {
     () => meetings.find((item) => item.id === activeDocumentId) || null,
     [meetings, activeDocumentId]
   );
+  const briefingMeeting = activeMeeting || selectedMeeting;
 
-  const updateMeeting = (meetingId: string, updater: (meeting: MeetingItem) => MeetingItem) => {
-    setMeetings((prev) => prev.map((item) => (item.id === meetingId ? updater(item) : item)));
-  };
+  useEffect(() => {
+    let cancelled = false;
+    const targetMeetingId = briefingMeeting?.id;
+    if (!targetMeetingId) {
+      setOperatorBrief(null);
+      return;
+    }
+    setOperatorBriefLoading(true);
+    void (Api as any)
+      .getAIOperatorMeetingBrief?.(targetMeetingId)
+      .then((data: any) => {
+        if (!cancelled) setOperatorBrief(data || null);
+      })
+      .catch(() => {
+        if (!cancelled) setOperatorBrief(null);
+      })
+      .finally(() => {
+        if (!cancelled) setOperatorBriefLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [briefingMeeting?.id]);
 
   const openMeetingDocument = (row: MeetingItem) => {
     setSelectedId(row.id);
@@ -329,71 +346,110 @@ export const MeetingHub: React.FC = () => {
     );
   }, [activeFilters, counts, t]);
 
-  const handleCreateMeeting = () => {
+  const handleCreateMeeting = async () => {
     if (!draft.title.trim() || !draft.startAt) return;
-
-    const meeting: MeetingItem = {
-      id: createMeetingId(),
-      title: draft.title.trim(),
-      startAt: draft.startAt,
-      endAt: draft.endAt || draft.startAt,
-      location: draft.location.trim(),
-      attendees: splitLines(draft.attendees),
-      preRead: splitLines(draft.preRead),
-      agenda: splitLines(draft.agenda),
-      decisions: [],
-      followUps: [],
-      status: 'scheduled',
-    };
-
-    setMeetings((prev) => [meeting, ...prev]);
-    setSelectedId(meeting.id);
-    setShowCreateModal(false);
-    setDraft({
-      title: '',
-      startAt: '',
-      endAt: '',
-      location: '',
-      attendees: '',
-      preRead: '',
-      agenda: '',
-    });
+    try {
+      const response = await (Api as any).createMeeting?.({
+        title: draft.title.trim(),
+        startAt: draft.startAt,
+        endAt: draft.endAt || draft.startAt,
+        location: draft.location.trim(),
+        attendees: splitLines(draft.attendees),
+        preRead: splitLines(draft.preRead),
+        agenda: splitLines(draft.agenda),
+        decisions: [],
+      });
+      const meeting = response?.meeting as MeetingItem | undefined;
+      if (!meeting) throw new Error('Meeting was not created');
+      setMeetings((prev) => [meeting, ...prev]);
+      setSelectedId(meeting.id);
+      setShowCreateModal(false);
+      setDraft({
+        title: '',
+        startAt: '',
+        endAt: '',
+        location: '',
+        attendees: '',
+        preRead: '',
+        agenda: '',
+      });
+      toast.success(t('meeting.notifications.created', 'Meeting created'));
+    } catch (error) {
+      console.error('Failed to create meeting:', error);
+      toast.error(t('meeting.errors.createFailed', 'Failed to create meeting'));
+    }
   };
 
-  const handleToggleMeetingStatus = (meetingId: string) => {
-    updateMeeting(meetingId, (meeting) => ({
-      ...meeting,
-      status: meeting.status === 'completed' ? 'scheduled' : 'completed',
-    }));
+  const handleToggleMeetingStatus = async (meetingId: string) => {
+    const current = meetings.find((meeting) => meeting.id === meetingId);
+    if (!current) return;
+    const nextStatus = current.status === 'completed' ? 'scheduled' : 'completed';
+    try {
+      const response = await (Api as any).updateMeetingStatus?.(meetingId, nextStatus);
+      const meeting = response?.meeting as MeetingItem | undefined;
+      if (!meeting) throw new Error('Meeting status update failed');
+      setMeetings((prev) => prev.map((item) => (item.id === meetingId ? meeting : item)));
+    } catch (error) {
+      console.error('Failed to update meeting status:', error);
+      toast.error(t('meeting.errors.statusFailed', 'Failed to update meeting status'));
+    }
   };
 
-  const handleAddFollowUp = () => {
+  const handleAddFollowUp = async () => {
     if (!activeMeeting || !followUpDraft.title.trim()) return;
-    updateMeeting(activeMeeting.id, (meeting) => ({
-      ...meeting,
-      followUps: [
-        ...meeting.followUps,
-        {
-          id: `${meeting.id}-fu-${Date.now()}`,
-          title: followUpDraft.title.trim(),
-          owner: followUpDraft.owner.trim() || (isPolish ? 'Nieprzypisane' : 'Unassigned'),
-          status: 'open',
-        },
-      ],
-    }));
-    setFollowUpDraft({ title: '', owner: '' });
-    setShowFollowUpModal(false);
+    try {
+      const response = await (Api as any).addMeetingFollowUp?.(activeMeeting.id, {
+        title: followUpDraft.title.trim(),
+        owner: followUpDraft.owner.trim() || (isPolish ? 'Nieprzypisane' : 'Unassigned'),
+      });
+      const meeting = response?.meeting as MeetingItem | undefined;
+      if (!meeting) throw new Error('Follow-up was not created');
+      setMeetings((prev) => prev.map((item) => (item.id === activeMeeting.id ? meeting : item)));
+      setFollowUpDraft({ title: '', owner: '' });
+      setShowFollowUpModal(false);
+      toast.success(t('meeting.followUp.notifications.created', 'Follow-up added'));
+    } catch (error) {
+      console.error('Failed to add follow-up:', error);
+      toast.error(t('meeting.followUp.errors.createFailed', 'Failed to add follow-up'));
+    }
   };
 
-  const handleToggleFollowUpStatus = (meetingId: string, followUpId: string) => {
-    updateMeeting(meetingId, (meeting) => ({
-      ...meeting,
-      followUps: meeting.followUps.map((item) =>
-        item.id === followUpId
-          ? { ...item, status: item.status === 'done' ? 'open' : 'done' }
-          : item
-      ),
-    }));
+  const handleAddDecision = async () => {
+    if (!activeMeeting || !decisionDraft.trim()) return;
+    try {
+      const response = await (Api as any).addMeetingDecision?.(activeMeeting.id, decisionDraft.trim());
+      const meeting = response?.meeting as MeetingItem | undefined;
+      if (!meeting) throw new Error('Decision was not created');
+      setMeetings((prev) => prev.map((item) => (item.id === activeMeeting.id ? meeting : item)));
+      setDecisionDraft('');
+      setShowDecisionModal(false);
+      toast.success(t('meeting.decisions.notifications.created', 'Decision added'));
+    } catch (error) {
+      console.error('Failed to add decision:', error);
+      toast.error(t('meeting.decisions.errors.createFailed', 'Failed to add decision'));
+    }
+  };
+
+  const handleToggleFollowUpStatus = async (meetingId: string, followUpId: string) => {
+    const meeting = meetings.find((item) => item.id === meetingId);
+    const followUp = meeting?.followUps.find((item) => item.id === followUpId);
+    if (!meeting || !followUp) return;
+    const nextStatus = followUp.status === 'done' ? 'open' : 'done';
+    try {
+      const response = await (Api as any).updateMeetingFollowUpStatus?.(
+        meetingId,
+        followUpId,
+        nextStatus
+      );
+      const updated = response?.meeting as MeetingItem | undefined;
+      if (!updated) throw new Error('Follow-up status update failed');
+      setMeetings((prev) => prev.map((item) => (item.id === meetingId ? updated : item)));
+    } catch (error) {
+      console.error('Failed to update follow-up status:', error);
+      toast.error(
+        t('meeting.followUp.errors.statusFailed', 'Failed to update follow-up status')
+      );
+    }
   };
 
   const previewItem = selectedMeeting ? { ...selectedMeeting, title: selectedMeeting.title } : null;
@@ -430,7 +486,14 @@ export const MeetingHub: React.FC = () => {
         }
         rightControls={
           <div className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] px-3 h-9 text-xs text-slate-500 dark:text-slate-400">
-            {t('meeting.sync.localOnly', 'This device only')}
+            {loading ? (
+              <>
+                <Loader2 size={12} className="mr-2 animate-spin" />
+                <span>{t('meeting.sync.loading', 'Loading workspace')}</span>
+              </>
+            ) : (
+              t('meeting.sync.workspace', 'Shared workspace')
+            )}
           </div>
         }
         aiControl={
@@ -447,12 +510,21 @@ export const MeetingHub: React.FC = () => {
         availableViewModes={['table', 'calendar']}
         showTabCounts
       >
-        {activeMeeting ? (
+        {loading ? (
+          <div className="flex h-full items-center justify-center">
+            <Loader2 size={24} className="animate-spin text-slate-400" />
+          </div>
+        ) : activeMeeting ? (
           <MeetingDetailView
             meeting={activeMeeting}
             isPolish={isPolish}
+            operatorBrief={
+              operatorBrief?.meetingId === activeMeeting.id ? operatorBrief : null
+            }
+            operatorBriefLoading={operatorBriefLoading}
             onBack={() => setActiveDocumentId(null)}
             onToggleStatus={() => handleToggleMeetingStatus(activeMeeting.id)}
+            onAddDecision={() => setShowDecisionModal(true)}
             onAddFollowUp={() => setShowFollowUpModal(true)}
             onToggleFollowUpStatus={(followUpId) =>
               handleToggleFollowUpStatus(activeMeeting.id, followUpId)
@@ -471,7 +543,14 @@ export const MeetingHub: React.FC = () => {
                 if (meeting) openMeetingDocument(meeting);
               }}
               itemIds={filteredMeetings.map((item) => item.id)}
-              renderPreview={(item) => <MeetingPreview meeting={item} isPolish={isPolish} />}
+              renderPreview={(item) => (
+                <MeetingPreview
+                  meeting={item}
+                  isPolish={isPolish}
+                  operatorBrief={operatorBrief?.meetingId === item.id ? operatorBrief : null}
+                  operatorBriefLoading={operatorBriefLoading && briefingMeeting?.id === item.id}
+                />
+              )}
             >
               <FilterableTable
                 columns={columns}
@@ -568,7 +647,7 @@ export const MeetingHub: React.FC = () => {
 
             <div className="flex items-center justify-between px-5 py-4 border-t border-slate-200 dark:border-navy-700">
               <div className="text-xs text-slate-500 dark:text-slate-400">
-                {t('meeting.modal.note', 'External calendar sync stays out of scope for this MVP.')}
+                {t('meeting.modal.note', 'Meeting details are stored in the shared workspace.')}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -586,6 +665,54 @@ export const MeetingHub: React.FC = () => {
                   {t('meeting.actions.create', 'Create meeting')}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {showDecisionModal && activeMeeting ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+              <div>
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {t('meeting.decisions.title', 'Add decision')}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {activeMeeting.title}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDecisionModal(false)}
+                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="space-y-4 p-5">
+              <Field label={t('meeting.decisions.fields.value', 'Decision')}>
+                <textarea
+                  className="min-h-32 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-transparent px-3 py-2 text-sm"
+                  value={decisionDraft}
+                  onChange={(e) => setDecisionDraft(e.target.value)}
+                />
+              </Field>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-slate-200 dark:border-navy-700">
+              <button
+                type="button"
+                onClick={() => setShowDecisionModal(false)}
+                className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm"
+              >
+                {t('common.cancel', 'Cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleAddDecision}
+                className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium"
+              >
+                {t('meeting.decisions.actions.add', 'Add decision')}
+              </button>
             </div>
           </div>
         </div>
@@ -659,11 +786,24 @@ const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, 
 const MeetingDetailView: React.FC<{
   meeting: MeetingItem;
   isPolish: boolean;
+  operatorBrief?: any;
+  operatorBriefLoading?: boolean;
   onBack: () => void;
   onToggleStatus: () => void;
+  onAddDecision: () => void;
   onAddFollowUp: () => void;
   onToggleFollowUpStatus: (followUpId: string) => void;
-}> = ({ meeting, isPolish, onBack, onToggleStatus, onAddFollowUp, onToggleFollowUpStatus }) => (
+}> = ({
+  meeting,
+  isPolish,
+  operatorBrief,
+  operatorBriefLoading,
+  onBack,
+  onToggleStatus,
+  onAddDecision,
+  onAddFollowUp,
+  onToggleFollowUpStatus,
+}) => (
   <div className="p-4 lg:p-6">
     <div className="rounded-2xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.04] overflow-hidden">
       <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-200/70 dark:border-white/[0.08]">
@@ -694,6 +834,13 @@ const MeetingDetailView: React.FC<{
           </button>
           <button
             type="button"
+            onClick={onAddDecision}
+            className="h-9 px-4 rounded-full border border-slate-200 dark:border-white/[0.08] text-sm font-medium"
+          >
+            {isPolish ? 'Dodaj decyzję' : 'Add decision'}
+          </button>
+          <button
+            type="button"
             onClick={onAddFollowUp}
             className="h-9 px-4 rounded-full bg-primary-600 text-white text-sm font-medium"
           >
@@ -709,6 +856,12 @@ const MeetingDetailView: React.FC<{
         </div>
       </div>
       <div className="grid gap-4 p-5 lg:grid-cols-2">
+        <MeetingOperatorBriefCard
+          isPolish={isPolish}
+          brief={operatorBrief}
+          loading={operatorBriefLoading}
+          className="lg:col-span-2"
+        />
         <PreviewSection
           icon={<Users size={14} />}
           title={isPolish ? 'Uczestnicy' : 'Attendees'}
@@ -784,9 +937,16 @@ const MeetingDetailView: React.FC<{
   </div>
 );
 
-const MeetingPreview: React.FC<{ meeting: MeetingItem; isPolish: boolean }> = ({
+const MeetingPreview: React.FC<{
+  meeting: MeetingItem;
+  isPolish: boolean;
+  operatorBrief?: any;
+  operatorBriefLoading?: boolean;
+}> = ({
   meeting,
   isPolish,
+  operatorBrief,
+  operatorBriefLoading,
 }) => (
   <div className="space-y-4">
     <div className="flex items-center gap-2 flex-wrap">
@@ -805,6 +965,11 @@ const MeetingPreview: React.FC<{ meeting: MeetingItem; isPolish: boolean }> = ({
     </div>
 
     <div className="space-y-2">
+      <MeetingOperatorBriefCard
+        isPolish={isPolish}
+        brief={operatorBrief}
+        loading={operatorBriefLoading}
+      />
       <PreviewSection
         icon={<Users size={14} />}
         title={isPolish ? 'Uczestnicy' : 'Attendees'}
@@ -836,6 +1001,49 @@ const MeetingPreview: React.FC<{ meeting: MeetingItem; isPolish: boolean }> = ({
         emptyLabel={isPolish ? 'Brak follow-upów' : 'No follow-ups yet'}
       />
     </div>
+  </div>
+);
+
+const MeetingOperatorBriefCard: React.FC<{
+  isPolish: boolean;
+  brief?: any;
+  loading?: boolean;
+  className?: string;
+}> = ({ isPolish, brief, loading = false, className = '' }) => (
+  <div
+    className={`rounded-xl border border-purple-200/70 dark:border-purple-500/20 bg-purple-50/60 dark:bg-purple-500/5 p-3 ${className}`.trim()}
+  >
+    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-purple-700 dark:text-purple-300">
+      <Sparkles size={14} />
+      <span>{isPolish ? 'Operator brief' : 'Operator brief'}</span>
+    </div>
+    {loading ? (
+      <div className="text-sm text-slate-500 dark:text-slate-400">
+        {isPolish ? 'Przygotowuję briefing spotkania...' : 'Preparing meeting brief...'}
+      </div>
+    ) : brief ? (
+      <div className="space-y-2">
+        <div className="text-sm text-slate-700 dark:text-slate-200">{brief.prepSummary}</div>
+        {Array.isArray(brief.agendaGaps) && brief.agendaGaps.length ? (
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {(brief.agendaGaps as string[]).slice(0, 2).join(' • ')}
+          </div>
+        ) : null}
+        {Array.isArray(brief.followUpSuggestions) && brief.followUpSuggestions.length ? (
+          <div className="space-y-1">
+            {(brief.followUpSuggestions as string[]).slice(0, 3).map((item) => (
+              <div key={item} className="text-xs text-slate-600 dark:text-slate-300">
+                {item}
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    ) : (
+      <div className="text-sm text-slate-500 dark:text-slate-400">
+        {isPolish ? 'Brak briefingu operatora dla tego spotkania.' : 'No operator brief for this meeting.'}
+      </div>
+    )}
   </div>
 );
 

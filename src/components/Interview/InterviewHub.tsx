@@ -79,6 +79,9 @@ const safeToastError = (error: any, defaultMessage: string, isPolish: boolean) =
   toast.error(errorMessage);
 };
 
+import { type GridItem, GridView } from '@/components/shared/ModuleHub/GridView';
+import { EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { Modal } from '@/components/ui/primitives/Modal';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -86,9 +89,6 @@ import {
   type TableFilters,
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
-import { Modal } from '@/components/ui/primitives/Modal';
-import { GridView, type GridItem } from '@/components/shared/ModuleHub/GridView';
-import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 
 import { RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
@@ -303,8 +303,7 @@ const BUTTON_ACTIVE = `
 // Topbar pills (filters / view tool) — match MyWork Inbox/Tasks.
 const TOPBAR_PILL_BASE =
   'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-const TOPBAR_PILL_INACTIVE =
-  `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
+const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
 
 // Tab styles for dynamic tabs
 const TAB_BASE = `
@@ -441,25 +440,30 @@ export const InterviewHub: React.FC = () => {
     { id: 'people', pl: 'Ludzkie', en: 'People' },
   ];
 
-  const getTemplateBusinessCategory = useCallback((raw?: string | null): TemplateBusinessCategory => {
-    const s = String(raw || '').trim().toLowerCase();
-    if (!s) return 'operational';
+  const getTemplateBusinessCategory = useCallback(
+    (raw?: string | null): TemplateBusinessCategory => {
+      const s = String(raw || '')
+        .trim()
+        .toLowerCase();
+      if (!s) return 'operational';
 
-    // Digital bucket
-    if (/(digital|data|automation|ai|it|tech)/.test(s)) return 'digital';
+      // Digital bucket
+      if (/(digital|data|automation|ai|it|tech)/.test(s)) return 'digital';
 
-    // Cost bucket
-    if (/(cost|efficien|finance|roi|budget)/.test(s)) return 'cost';
+      // Cost bucket
+      if (/(cost|efficien|finance|roi|budget)/.test(s)) return 'cost';
 
-    // People bucket
-    if (/(people|hr|human|culture|team|customer|client|stakeholder)/.test(s)) return 'people';
+      // People bucket
+      if (/(people|hr|human|culture|team|customer|client|stakeholder)/.test(s)) return 'people';
 
-    // Strategic bucket
-    if (/(strateg|alignment|executive|governance|vision|portfolio)/.test(s)) return 'strategic';
+      // Strategic bucket
+      if (/(strateg|alignment|executive|governance|vision|portfolio)/.test(s)) return 'strategic';
 
-    // Default
-    return 'operational';
-  }, []);
+      // Default
+      return 'operational';
+    },
+    []
+  );
 
   useEffect(() => {
     setInsightPreviewDetailsExpanded(false);
@@ -503,9 +507,9 @@ export const InterviewHub: React.FC = () => {
   const [previewAiMenuOpen, setPreviewAiMenuOpen] = useState(false);
   const [previewAiText, setPreviewAiText] = useState<string | null>(null);
   const [previewAiError, setPreviewAiError] = useState<string | null>(null);
-  const [previewAiLastIntent, setPreviewAiLastIntent] = useState<'summary' | 'risks' | 'next_steps'>(
-    'summary'
-  );
+  const [previewAiLastIntent, setPreviewAiLastIntent] = useState<
+    'summary' | 'risks' | 'next_steps'
+  >('summary');
 
   // Sessions preview (Outlook-style)
   const [previewSessionId, setPreviewSessionId] = useState<string | null>(null);
@@ -888,7 +892,13 @@ export const InterviewHub: React.FC = () => {
     }
 
     return result;
-  }, [templates, searchQuery, templateCategoryFilter, templateStatusFilter, getTemplateBusinessCategory]);
+  }, [
+    templates,
+    searchQuery,
+    templateCategoryFilter,
+    templateStatusFilter,
+    getTemplateBusinessCategory,
+  ]);
 
   // -------------------------
   // Assignments (Assigned tab) status filter
@@ -1562,10 +1572,10 @@ export const InterviewHub: React.FC = () => {
                   onClick={b.onClick}
                   disabled={!!b.disabled}
                   className={`${chipBase} ${
-                    (b.id === 'all' ? activeId === null : activeId === b.id) ? chipActive : chipInactive
-                  } ${
-                    b.disabled ? 'opacity-60 cursor-not-allowed' : ''
-                  }`}
+                    (b.id === 'all' ? activeId === null : activeId === b.id)
+                      ? chipActive
+                      : chipInactive
+                  } ${b.disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
                   <span>{b.label}</span>
                   <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
@@ -1609,19 +1619,22 @@ export const InterviewHub: React.FC = () => {
           id: 'in_progress',
           label: isPolish ? 'W trakcie' : 'In progress',
           count: inProgressCount,
-          onClick: () => setSessionStatusFilter((prev) => (prev === 'in_progress' ? 'all' : 'in_progress')),
+          onClick: () =>
+            setSessionStatusFilter((prev) => (prev === 'in_progress' ? 'all' : 'in_progress')),
         },
         {
           id: 'submitted',
           label: isPolish ? 'Wysłane' : 'Submitted',
           count: submittedCount,
-          onClick: () => setSessionStatusFilter((prev) => (prev === 'submitted' ? 'all' : 'submitted')),
+          onClick: () =>
+            setSessionStatusFilter((prev) => (prev === 'submitted' ? 'all' : 'submitted')),
         },
         {
           id: 'completed',
           label: isPolish ? 'Zakończone' : 'Completed',
           count: completedCount,
-          onClick: () => setSessionStatusFilter((prev) => (prev === 'completed' ? 'all' : 'completed')),
+          onClick: () =>
+            setSessionStatusFilter((prev) => (prev === 'completed' ? 'all' : 'completed')),
         },
       ];
 
@@ -1825,9 +1838,13 @@ export const InterviewHub: React.FC = () => {
               return (
                 <tr
                   key={session.id}
-                  onClick={() => (opts?.onRowClick ? opts.onRowClick(session.id) : handleViewSession(session))}
+                  onClick={() =>
+                    opts?.onRowClick ? opts.onRowClick(session.id) : handleViewSession(session)
+                  }
                   onDoubleClick={() =>
-                    opts?.onRowDoubleClick ? opts.onRowDoubleClick(session.id) : handleViewSession(session)
+                    opts?.onRowDoubleClick
+                      ? opts.onRowDoubleClick(session.id)
+                      : handleViewSession(session)
                   }
                   className={[
                     'group cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0',
@@ -2567,7 +2584,10 @@ export const InterviewHub: React.FC = () => {
   };
 
   // Render templates table (Resizable + Preview-ready)
-  const renderTemplatesTable = (opts?: { onSelectRow?: (id: string) => void; onOpenFull?: (id: string) => void }) => {
+  const renderTemplatesTable = (opts?: {
+    onSelectRow?: (id: string) => void;
+    onOpenFull?: (id: string) => void;
+  }) => {
     const hiddenSet = new Set(templatesHiddenColumns);
     const colSpan =
       1 +
@@ -3100,7 +3120,10 @@ export const InterviewHub: React.FC = () => {
     loadInterviewAssignmentsHiddenColumns(INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY, true)
   );
   const [managedHiddenColumns, setManagedHiddenColumns] = useState<string[]>(() =>
-    loadInterviewAssignmentsHiddenColumns(INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY, true)
+    loadInterviewAssignmentsHiddenColumns(
+      INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY,
+      true
+    )
   );
   const [isAssignmentsViewSettingsOpen, setIsAssignmentsViewSettingsOpen] = useState(false);
   const [assignmentsViewSettingsShowAssignee, setAssignmentsViewSettingsShowAssignee] =
@@ -3205,7 +3228,11 @@ export const InterviewHub: React.FC = () => {
         };
       }
       if (days === 0) {
-        return { days, label: isPolish ? 'Dziś!' : 'Today!', colorClass: 'text-red-400 bg-red-500/10' };
+        return {
+          days,
+          label: isPolish ? 'Dziś!' : 'Today!',
+          colorClass: 'text-red-400 bg-red-500/10',
+        };
       }
       if (days <= 3) {
         return {
@@ -3229,7 +3256,9 @@ export const InterviewHub: React.FC = () => {
         const projectId = await ensureProjectId();
         if (!projectId) {
           toast.error(
-            isPolish ? 'Wybierz projekt przed rozpoczęciem wywiadu' : 'Select a project before starting'
+            isPolish
+              ? 'Wybierz projekt przed rozpoczęciem wywiadu'
+              : 'Select a project before starting'
           );
           return;
         }
@@ -3252,13 +3281,17 @@ export const InterviewHub: React.FC = () => {
           });
         } else {
           console.warn('[InterviewHub] No session in result:', result);
-          toast.error(isPolish ? 'Brak sesji w odpowiedzi serwera' : 'No session in server response');
+          toast.error(
+            isPolish ? 'Brak sesji w odpowiedzi serwera' : 'No session in server response'
+          );
         }
 
         // Refresh assignments
         const [myRes, managedRes] = await Promise.all([
           Api.get('/interview/assignments/my').catch(() => []),
-          canViewManaged ? Api.get('/interview/assignments/managed').catch(() => []) : Promise.resolve([]),
+          canViewManaged
+            ? Api.get('/interview/assignments/managed').catch(() => [])
+            : Promise.resolve([]),
         ]);
         setMyAssignments(Array.isArray(myRes) ? myRes : []);
         if (canViewManaged) setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
@@ -3326,7 +3359,10 @@ export const InterviewHub: React.FC = () => {
   );
 
   const runAssignmentAi = useCallback(
-    async (intent: 'summary' | 'risks' | 'next_steps' | 'expand_details' | 'summarize_details', a: InterviewAssignment) => {
+    async (
+      intent: 'summary' | 'risks' | 'next_steps' | 'expand_details' | 'summarize_details',
+      a: InterviewAssignment
+    ) => {
       try {
         const title = getAssignmentTitle(a);
         const due = a.dueAt ? new Date(a.dueAt).toLocaleDateString() : '—';
@@ -3338,17 +3374,25 @@ export const InterviewHub: React.FC = () => {
         const intentLine = (() => {
           switch (intent) {
             case 'summary':
-              return isPolish ? 'Podsumuj czego dotyczy i co jest wymagane.' : 'Summarize what this is and what is required.';
+              return isPolish
+                ? 'Podsumuj czego dotyczy i co jest wymagane.'
+                : 'Summarize what this is and what is required.';
             case 'risks':
               return isPolish
                 ? 'Wypisz ryzyka i typowe blokery (max 5).'
                 : 'List risks and typical blockers (max 5).';
             case 'next_steps':
-              return isPolish ? 'Zaproponuj następne kroki (max 5), konkretnie.' : 'Propose next steps (max 5), concrete.';
+              return isPolish
+                ? 'Zaproponuj następne kroki (max 5), konkretnie.'
+                : 'Propose next steps (max 5), concrete.';
             case 'expand_details':
-              return isPolish ? 'Rozwiń szczegóły do krótkiego planu wykonania.' : 'Expand details into a short execution plan.';
+              return isPolish
+                ? 'Rozwiń szczegóły do krótkiego planu wykonania.'
+                : 'Expand details into a short execution plan.';
             case 'summarize_details':
-              return isPolish ? 'Podsumuj szczegóły w 5 punktach.' : 'Summarize details in 5 bullets.';
+              return isPolish
+                ? 'Podsumuj szczegóły w 5 punktach.'
+                : 'Summarize details in 5 bullets.';
           }
         })();
 
@@ -3800,7 +3844,9 @@ Return ONLY the answer text (no markdown fences).`;
                         </div>
                         <span
                           className="text-sm text-slate-700 dark:text-slate-200 truncate max-w-[220px]"
-                          title={assignment.assignee?.name || assignment.assignee?.email || 'Unknown'}
+                          title={
+                            assignment.assignee?.name || assignment.assignee?.email || 'Unknown'
+                          }
                         >
                           {assignment.assignee?.name || assignment.assignee?.email || 'Unknown'}
                         </span>
@@ -3956,7 +4002,8 @@ Return ONLY the answer text (no markdown fences).`;
                             id: 'open',
                             label: isPolish ? 'Otwórz' : 'Open',
                             icon: ChevronRight,
-                            onClick: () => void openInterviewAssignmentFull(assignment, showAssignee),
+                            onClick: () =>
+                              void openInterviewAssignmentFull(assignment, showAssignee),
                             divider:
                               (showAssignee && canAssign && assignment.status === 'submitted') ||
                               (!showAssignee &&
@@ -4037,7 +4084,9 @@ Return ONLY the answer text (no markdown fences).`;
                     : 0;
                 const statusCfg = getSessionStatusConfig(s.status);
                 const started = s.startedAt ? new Date(s.startedAt).toLocaleDateString() : '—';
-                const last = s.lastActivityAt ? new Date(s.lastActivityAt).toLocaleDateString() : '—';
+                const last = s.lastActivityAt
+                  ? new Date(s.lastActivityAt).toLocaleDateString()
+                  : '—';
 
                 return (
                   <div className="space-y-4 text-sm">
@@ -4135,10 +4184,8 @@ Return ONLY the answer text (no markdown fences).`;
                   'inline-flex items-center h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-transparent text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-white/70 dark:hover:bg-white/[0.06] transition-colors';
                 const pillBase =
                   'inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-                const pillNeutral =
-                  `${pillBase} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
-                const pillPrimary =
-                  `${pillBase} bg-primary-600 text-white border-primary-500/40 hover:bg-primary-700`;
+                const pillNeutral = `${pillBase} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
+                const pillPrimary = `${pillBase} bg-primary-600 text-white border-primary-500/40 hover:bg-primary-700`;
 
                 return (
                   <div className="space-y-0">
@@ -4152,9 +4199,14 @@ Return ONLY the answer text (no markdown fences).`;
                           className={hintChip}
                           onClick={() => {
                             if (!canRunAi) {
-                              toast(isPolish ? 'AI dostępne po zakończeniu sesji' : 'AI available after completion', {
-                                duration: 2500,
-                              });
+                              toast(
+                                isPolish
+                                  ? 'AI dostępne po zakończeniu sesji'
+                                  : 'AI available after completion',
+                                {
+                                  duration: 2500,
+                                }
+                              );
                               return;
                             }
                             void handleGenerateInsight(s, 'summary');
@@ -4166,9 +4218,14 @@ Return ONLY the answer text (no markdown fences).`;
                           className={hintChip}
                           onClick={() => {
                             if (!canRunAi) {
-                              toast(isPolish ? 'AI dostępne po zakończeniu sesji' : 'AI available after completion', {
-                                duration: 2500,
-                              });
+                              toast(
+                                isPolish
+                                  ? 'AI dostępne po zakończeniu sesji'
+                                  : 'AI available after completion',
+                                {
+                                  duration: 2500,
+                                }
+                              );
                               return;
                             }
                             void handleGenerateInsight(s, 'risk_assessment');
@@ -4180,9 +4237,14 @@ Return ONLY the answer text (no markdown fences).`;
                           className={hintChip}
                           onClick={() => {
                             if (!canRunAi) {
-                              toast(isPolish ? 'AI dostępne po zakończeniu sesji' : 'AI available after completion', {
-                                duration: 2500,
-                              });
+                              toast(
+                                isPolish
+                                  ? 'AI dostępne po zakończeniu sesji'
+                                  : 'AI available after completion',
+                                {
+                                  duration: 2500,
+                                }
+                              );
                               return;
                             }
                             void handleGenerateInsight(s, 'recommendations');
@@ -4246,7 +4308,10 @@ Return ONLY the answer text (no markdown fences).`;
                           {isPolish ? 'Otwórz' : 'Open'}
                         </button>
                         {canRunAi ? (
-                          <button onClick={() => handleGenerateInsight(s, 'summary')} className={pillNeutral}>
+                          <button
+                            onClick={() => handleGenerateInsight(s, 'summary')}
+                            className={pillNeutral}
+                          >
                             <Sparkles size={14} />
                             {isPolish ? 'Generuj wnioski' : 'Generate insights'}
                           </button>
@@ -4367,7 +4432,9 @@ Return ONLY the answer text (no markdown fences).`;
                   day: 'numeric',
                 })
               : '—';
-            const detailsText = String(item.content || item.description || item.sourceQuote || '').trim();
+            const detailsText = String(
+              item.content || item.description || item.sourceQuote || ''
+            ).trim();
             const createdAt = item.createdAt ? new Date(item.createdAt) : null;
             const createdRelative = (() => {
               if (!createdAt || Number.isNaN(createdAt.getTime())) return null;
@@ -4420,7 +4487,8 @@ Return ONLY the answer text (no markdown fences).`;
             const buildAiPrompt = (kind: string) => {
               const base = `Title: ${item.title}\n\nContent:\n${detailsText || '—'}`;
               if (kind === 'summarize') return `Summarize this insight in 5 bullets.\n\n${base}`;
-              if (kind === 'risks') return `Extract risks (with severity) from this insight.\n\n${base}`;
+              if (kind === 'risks')
+                return `Extract risks (with severity) from this insight.\n\n${base}`;
               if (kind === 'next') return `Propose next steps as a prioritized plan.\n\n${base}`;
               return base;
             };
@@ -4542,7 +4610,9 @@ Return ONLY the answer text (no markdown fences).`;
                             label: isPolish ? 'Kopiuj prompt AI' : 'Copy AI prompt',
                             icon: Copy,
                             onClick: () =>
-                              copyToClipboard(buildAiPrompt(insightPreviewAiActiveId || 'summarize')),
+                              copyToClipboard(
+                                buildAiPrompt(insightPreviewAiActiveId || 'summarize')
+                              ),
                           },
                           {
                             id: 'copy-details',
@@ -4654,10 +4724,8 @@ Return ONLY the answer text (no markdown fences).`;
           renderPreviewFooter={(item) => {
             const pillBase =
               'inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-            const pillSecondary =
-              `${pillBase} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
-            const pillPrimary =
-              `${pillBase} bg-primary-600 text-white border-primary-500/40 hover:bg-primary-700`;
+            const pillSecondary = `${pillBase} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
+            const pillPrimary = `${pillBase} bg-primary-600 text-white border-primary-500/40 hover:bg-primary-700`;
             const pillTertiary =
               'inline-flex items-center gap-2 h-9 px-3 rounded-full text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]';
 
@@ -4672,7 +4740,11 @@ Return ONLY the answer text (no markdown fences).`;
                   disabled={!!item.exportedToTools}
                   className={`${pillSecondary} ${item.exportedToTools ? 'opacity-60 cursor-not-allowed' : ''}`}
                   title={
-                    item.exportedToTools ? (isPolish ? 'Już wyeksportowano' : 'Already exported') : undefined
+                    item.exportedToTools
+                      ? isPolish
+                        ? 'Już wyeksportowano'
+                        : 'Already exported'
+                      : undefined
                   }
                 >
                   <Send size={14} />
@@ -4685,7 +4757,9 @@ Return ONLY the answer text (no markdown fences).`;
                       : 'Export: Tools'}
                 </button>
                 <button
-                  onClick={() => !item.exportedToAssessment && handleExportInsightToAssessment(item.id)}
+                  onClick={() =>
+                    !item.exportedToAssessment && handleExportInsightToAssessment(item.id)
+                  }
                   disabled={!!item.exportedToAssessment}
                   className={`${pillSecondary} ${item.exportedToAssessment ? 'opacity-60 cursor-not-allowed' : ''}`}
                   title={
@@ -4908,7 +4982,13 @@ Return ONLY the answer text (no markdown fences).`;
                                 }}
                                 className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
                               >
-                                {canAssign ? (isPolish ? 'Edytuj' : 'Edit') : isPolish ? 'Otwórz' : 'Open'}
+                                {canAssign
+                                  ? isPolish
+                                    ? 'Edytuj'
+                                    : 'Edit'
+                                  : isPolish
+                                    ? 'Otwórz'
+                                    : 'Open'}
                               </button>
                               <button
                                 onClick={(e) => {
@@ -5041,7 +5121,9 @@ Return ONLY the answer text (no markdown fences).`;
                                 }}
                                 className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
                               >
-                                {isPolish ? 'Kopiuj prompt: Usprawnienia' : 'Copy prompt: Improvements'}
+                                {isPolish
+                                  ? 'Kopiuj prompt: Usprawnienia'
+                                  : 'Copy prompt: Improvements'}
                               </button>
                               <button
                                 onClick={(e) => {
@@ -5089,7 +5171,9 @@ Return ONLY the answer text (no markdown fences).`;
                       <span className="text-slate-500 dark:text-slate-400">
                         {isPolish ? 'Kategoria' : 'Category'}
                       </span>
-                      <span className="text-slate-700 dark:text-slate-200 truncate">{item.category || '—'}</span>
+                      <span className="text-slate-700 dark:text-slate-200 truncate">
+                        {item.category || '—'}
+                      </span>
 
                       <span className="text-slate-500 dark:text-slate-400">
                         {isPolish ? 'Użycia' : 'Used'}
@@ -5147,7 +5231,9 @@ Return ONLY the answer text (no markdown fences).`;
       const rows = myAssignments || [];
       const selected = previewAssignmentId ? rows.find((a) => a.id === previewAssignmentId) : null;
       const selectedItem = selected
-        ? ({ ...selected, title: getAssignmentTitle(selected) } as InterviewAssignment & { title: string })
+        ? ({ ...selected, title: getAssignmentTitle(selected) } as InterviewAssignment & {
+            title: string;
+          })
         : null;
 
       const gridItems: GridItem[] = rows.map((a) => {
@@ -5215,7 +5301,9 @@ Return ONLY the answer text (no markdown fences).`;
                     <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${statusColor}`}>
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${statusColor}`}
+                          >
                             <span className="w-1.5 h-1.5 rounded-full bg-current" />
                             {statusLabel}
                           </span>
@@ -5223,15 +5311,21 @@ Return ONLY the answer text (no markdown fences).`;
                             {isPolish ? 'Postęp' : 'Progress'}: {progress}%
                           </span>
                           {dtd ? (
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${dtd.colorClass}`}>
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${dtd.colorClass}`}
+                            >
                               {dtd.label}
                             </span>
                           ) : null}
                         </div>
                       </div>
                       {a.assignee?.name || a.assignee?.email ? (
-                        <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 truncate" title={a.assignee?.name || a.assignee?.email}>
-                          {isPolish ? 'Przydzielony do' : 'Assignee'}: {a.assignee?.name || a.assignee?.email}
+                        <div
+                          className="mt-2 text-xs text-slate-600 dark:text-slate-300 truncate"
+                          title={a.assignee?.name || a.assignee?.email}
+                        >
+                          {isPolish ? 'Przydzielony do' : 'Assignee'}:{' '}
+                          {a.assignee?.name || a.assignee?.email}
                         </div>
                       ) : null}
                     </div>
@@ -5256,7 +5350,10 @@ Return ONLY the answer text (no markdown fences).`;
                           </button>
                           {previewDetailsMenuOpen && (
                             <>
-                              <div className="fixed inset-0 z-40" onClick={() => setPreviewDetailsMenuOpen(false)} />
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setPreviewDetailsMenuOpen(false)}
+                              />
                               <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
                                 <button
                                   onClick={(e) => {
@@ -5332,7 +5429,9 @@ Return ONLY the answer text (no markdown fences).`;
                     <div className="py-1">
                       <div className="flex items-center justify-between gap-2 mb-1.5">
                         <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                          <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
+                          <span className="text-[10px] font-medium uppercase tracking-wider">
+                            AI
+                          </span>
                         </div>
                         <div className="relative">
                           <button
@@ -5345,13 +5444,19 @@ Return ONLY the answer text (no markdown fences).`;
                           </button>
                           {previewAiMenuOpen && (
                             <>
-                              <div className="fixed inset-0 z-40" onClick={() => setPreviewAiMenuOpen(false)} />
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setPreviewAiMenuOpen(false)}
+                              />
                               <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
                                 <button
                                   onClick={async () => {
                                     setPreviewAiMenuOpen(false);
                                     const text = await runAssignmentAi(previewAiLastIntent, a);
-                                    if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                                    if (!text)
+                                      setPreviewAiError(
+                                        isPolish ? 'AI niedostępne' : 'AI unavailable'
+                                      );
                                     else {
                                       setPreviewAiError(null);
                                       setPreviewAiText(text);
@@ -5394,7 +5499,8 @@ Return ONLY the answer text (no markdown fences).`;
                           onClick={async () => {
                             setPreviewAiLastIntent('summary');
                             const text = await runAssignmentAi('summary', a);
-                            if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                            if (!text)
+                              setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                             else {
                               setPreviewAiError(null);
                               setPreviewAiText(text);
@@ -5408,7 +5514,8 @@ Return ONLY the answer text (no markdown fences).`;
                           onClick={async () => {
                             setPreviewAiLastIntent('risks');
                             const text = await runAssignmentAi('risks', a);
-                            if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                            if (!text)
+                              setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                             else {
                               setPreviewAiError(null);
                               setPreviewAiText(text);
@@ -5422,7 +5529,8 @@ Return ONLY the answer text (no markdown fences).`;
                           onClick={async () => {
                             setPreviewAiLastIntent('next_steps');
                             const text = await runAssignmentAi('next_steps', a);
-                            if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                            if (!text)
+                              setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                             else {
                               setPreviewAiError(null);
                               setPreviewAiText(text);
@@ -5434,7 +5542,9 @@ Return ONLY the answer text (no markdown fences).`;
                       </div>
 
                       {previewAiError ? (
-                        <div className="mt-2 text-xs text-red-600 dark:text-red-400">{previewAiError}</div>
+                        <div className="mt-2 text-xs text-red-600 dark:text-red-400">
+                          {previewAiError}
+                        </div>
                       ) : previewAiText ? (
                         <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
                           {previewAiText}
@@ -5534,7 +5644,9 @@ Return ONLY the answer text (no markdown fences).`;
       const rows = filteredManagedAssignments || [];
       const selected = previewAssignmentId ? rows.find((a) => a.id === previewAssignmentId) : null;
       const selectedItem = selected
-        ? ({ ...selected, title: getAssignmentTitle(selected) } as InterviewAssignment & { title: string })
+        ? ({ ...selected, title: getAssignmentTitle(selected) } as InterviewAssignment & {
+            title: string;
+          })
         : null;
 
       const gridItems: GridItem[] = rows.map((a) => {
@@ -5602,7 +5714,9 @@ Return ONLY the answer text (no markdown fences).`;
                     <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${statusColor}`}>
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${statusColor}`}
+                          >
                             <span className="w-1.5 h-1.5 rounded-full bg-current" />
                             {statusLabel}
                           </span>
@@ -5610,15 +5724,21 @@ Return ONLY the answer text (no markdown fences).`;
                             {isPolish ? 'Postęp' : 'Progress'}: {progress}%
                           </span>
                           {dtd ? (
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${dtd.colorClass}`}>
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium ${dtd.colorClass}`}
+                            >
                               {dtd.label}
                             </span>
                           ) : null}
                         </div>
                       </div>
                       {a.assignee?.name || a.assignee?.email ? (
-                        <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 truncate" title={a.assignee?.name || a.assignee?.email}>
-                          {isPolish ? 'Przydzielony do' : 'Assignee'}: {a.assignee?.name || a.assignee?.email}
+                        <div
+                          className="mt-2 text-xs text-slate-600 dark:text-slate-300 truncate"
+                          title={a.assignee?.name || a.assignee?.email}
+                        >
+                          {isPolish ? 'Przydzielony do' : 'Assignee'}:{' '}
+                          {a.assignee?.name || a.assignee?.email}
                         </div>
                       ) : null}
                     </div>
@@ -5643,7 +5763,10 @@ Return ONLY the answer text (no markdown fences).`;
                           </button>
                           {previewDetailsMenuOpen && (
                             <>
-                              <div className="fixed inset-0 z-40" onClick={() => setPreviewDetailsMenuOpen(false)} />
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setPreviewDetailsMenuOpen(false)}
+                              />
                               <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
                                 <button
                                   onClick={(e) => {
@@ -5719,7 +5842,9 @@ Return ONLY the answer text (no markdown fences).`;
                     <div className="py-1">
                       <div className="flex items-center justify-between gap-2 mb-1.5">
                         <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                          <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
+                          <span className="text-[10px] font-medium uppercase tracking-wider">
+                            AI
+                          </span>
                         </div>
                         <div className="relative">
                           <button
@@ -5732,13 +5857,19 @@ Return ONLY the answer text (no markdown fences).`;
                           </button>
                           {previewAiMenuOpen && (
                             <>
-                              <div className="fixed inset-0 z-40" onClick={() => setPreviewAiMenuOpen(false)} />
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setPreviewAiMenuOpen(false)}
+                              />
                               <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
                                 <button
                                   onClick={async () => {
                                     setPreviewAiMenuOpen(false);
                                     const text = await runAssignmentAi(previewAiLastIntent, a);
-                                    if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                                    if (!text)
+                                      setPreviewAiError(
+                                        isPolish ? 'AI niedostępne' : 'AI unavailable'
+                                      );
                                     else {
                                       setPreviewAiError(null);
                                       setPreviewAiText(text);
@@ -5781,7 +5912,8 @@ Return ONLY the answer text (no markdown fences).`;
                           onClick={async () => {
                             setPreviewAiLastIntent('summary');
                             const text = await runAssignmentAi('summary', a);
-                            if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                            if (!text)
+                              setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                             else {
                               setPreviewAiError(null);
                               setPreviewAiText(text);
@@ -5795,7 +5927,8 @@ Return ONLY the answer text (no markdown fences).`;
                           onClick={async () => {
                             setPreviewAiLastIntent('risks');
                             const text = await runAssignmentAi('risks', a);
-                            if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                            if (!text)
+                              setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                             else {
                               setPreviewAiError(null);
                               setPreviewAiText(text);
@@ -5809,7 +5942,8 @@ Return ONLY the answer text (no markdown fences).`;
                           onClick={async () => {
                             setPreviewAiLastIntent('next_steps');
                             const text = await runAssignmentAi('next_steps', a);
-                            if (!text) setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
+                            if (!text)
+                              setPreviewAiError(isPolish ? 'AI niedostępne' : 'AI unavailable');
                             else {
                               setPreviewAiError(null);
                               setPreviewAiText(text);
@@ -5821,7 +5955,9 @@ Return ONLY the answer text (no markdown fences).`;
                       </div>
 
                       {previewAiError ? (
-                        <div className="mt-2 text-xs text-red-600 dark:text-red-400">{previewAiError}</div>
+                        <div className="mt-2 text-xs text-red-600 dark:text-red-400">
+                          {previewAiError}
+                        </div>
                       ) : previewAiText ? (
                         <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
                           {previewAiText}
@@ -6014,9 +6150,7 @@ Return ONLY the answer text (no markdown fences).`;
                   className="appearance-none pr-9 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
                   title={isPolish ? 'Filtr kategorii' : 'Category filter'}
                 >
-                  <option value="all">
-                    {isPolish ? 'Wszystkie kategorie' : 'All categories'}
-                  </option>
+                  <option value="all">{isPolish ? 'Wszystkie kategorie' : 'All categories'}</option>
                   {TEMPLATE_BUSINESS_CATEGORIES.map((c) => (
                     <option key={c.id} value={c.id}>
                       {isPolish ? c.pl : c.en}
@@ -6128,7 +6262,10 @@ Return ONLY the answer text (no markdown fences).`;
                 </button>
                 {sessionsViewMenuOpen && (
                   <>
-                    <div className="fixed inset-0 z-30" onClick={() => setSessionsViewMenuOpen(false)} />
+                    <div
+                      className="fixed inset-0 z-30"
+                      onClick={() => setSessionsViewMenuOpen(false)}
+                    />
                     <div className="absolute right-0 top-full mt-1 z-40 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
                       {(
                         [
@@ -6213,18 +6350,18 @@ Return ONLY the answer text (no markdown fences).`;
             {(activeTab === 'my-assignments' || activeTab === 'managed') &&
               !activeDocumentId &&
               canAssign && (
-              <button
-                onClick={() => {
-                  setSelectedTemplateForAssign(null);
-                  setShowAssignModal(true);
-                }}
-                className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-                title={isPolish ? 'Wyślij prośbę (assignment)' : 'Send assignment request'}
-              >
-                <Plus size={16} />
-                <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
-              </button>
-            )}
+                <button
+                  onClick={() => {
+                    setSelectedTemplateForAssign(null);
+                    setShowAssignModal(true);
+                  }}
+                  className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                  title={isPolish ? 'Wyślij prośbę (assignment)' : 'Send assignment request'}
+                >
+                  <Plus size={16} />
+                  <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
+                </button>
+              )}
 
             {/* Area/AI — rightmost in the topbar cluster */}
             <button
@@ -6233,7 +6370,6 @@ Return ONLY the answer text (no markdown fences).`;
             >
               <Sparkles size={18} />
             </button>
-
           </div>
         </div>
       </div>
@@ -6249,7 +6385,9 @@ Return ONLY the answer text (no markdown fences).`;
         onClose={() => setIsSessionsViewSettingsOpen(false)}
         title={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
         description={
-          isPolish ? 'Wybierz, które kolumny są widoczne w tabeli.' : 'Choose which columns are visible.'
+          isPolish
+            ? 'Wybierz, które kolumny są widoczne w tabeli.'
+            : 'Choose which columns are visible.'
         }
         size="sm"
         footer={

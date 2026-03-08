@@ -17,6 +17,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { cn } from '@/lib/utils';
+
 // Profile components
 import { MFASetup } from '../components/Profile/MFASetup';
 // Settings components
@@ -70,7 +72,6 @@ import { WorkPreferencesSettings } from '../components/settings/WorkPreferencesS
 // UI components
 import { Button } from '../components/ui/primitives/Button';
 import { ScrollArea } from '../components/ui/scroll-area';
-import { cn } from '@/lib/utils';
 import { ROUTES } from '../routes/routeConfig';
 // Store and types
 import { useAppStore } from '../store/useAppStore';

@@ -119,6 +119,13 @@ class ReportEnterpriseService {
   async addSourcePackItem(orgId: string, sourcePackId: string, data: {
     artifactType: string; artifactId: string; artifactTitle?: string; citationLabel?: string; sortOrder?: number;
   }): Promise<{ id: string }> {
+    const pack = await queryHelpers.queryOne<{ id: string }>(
+      `SELECT id FROM report_source_packs WHERE id = ? AND organization_id = ?`,
+      [sourcePackId, orgId]
+    );
+    if (!pack) {
+      throw new Error('source_pack_not_found');
+    }
     const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO report_source_pack_items (id, source_pack_id, artifact_type, artifact_id, artifact_title, citation_label, sort_order)
@@ -139,10 +146,14 @@ class ReportEnterpriseService {
     }));
   }
 
-  async getSourcePackItems(sourcePackId: string) {
+  async getSourcePackItems(orgId: string, sourcePackId: string) {
     const rows = (await queryHelpers.queryAll<any>(
-      `SELECT * FROM report_source_pack_items WHERE source_pack_id = ? ORDER BY sort_order`,
-      [sourcePackId]
+      `SELECT items.*
+       FROM report_source_pack_items items
+       JOIN report_source_packs packs ON packs.id = items.source_pack_id
+       WHERE items.source_pack_id = ? AND packs.organization_id = ?
+       ORDER BY items.sort_order`,
+      [sourcePackId, orgId]
     )) || [];
     return rows.map((r: any) => ({
       id: r.id, artifactType: r.artifact_type, artifactId: r.artifact_id,
@@ -356,12 +367,33 @@ class ReportEnterpriseService {
     };
   }
 
-  async resolveAIProposal(orgId: string, proposalId: string, userId: string, action: 'accept' | 'reject'): Promise<boolean> {
-    const result = await queryHelpers.queryRun(
-      `UPDATE report_ai_proposals SET status = ?, resolved_by = ?, resolved_at = ? WHERE id = ? AND organization_id = ?`,
-      [action === 'accept' ? 'accepted' : 'rejected', userId, new Date().toISOString(), proposalId, orgId]
+  async resolveAIProposal(
+    orgId: string,
+    proposalId: string,
+    userId: string,
+    action: 'accept' | 'reject'
+  ): Promise<{ ok: boolean; reason?: string; appliedSectionId?: string }> {
+    const proposal = await queryHelpers.queryOne<any>(
+      `SELECT * FROM report_ai_proposals WHERE id = ? AND organization_id = ?`,
+      [proposalId, orgId]
     );
-    return (result?.changes || 0) > 0;
+    if (!proposal) return { ok: false, reason: 'not_found' };
+
+    if (action === 'accept') {
+      const appliedSectionId = await this.applyAcceptedProposal(orgId, proposal, userId);
+      if (!appliedSectionId) return { ok: false, reason: 'target_not_found' };
+      const result = await queryHelpers.queryRun(
+        `UPDATE report_ai_proposals SET status = 'accepted', resolved_by = ?, resolved_at = ? WHERE id = ? AND organization_id = ?`,
+        [userId, new Date().toISOString(), proposalId, orgId]
+      );
+      return { ok: (result?.changes || 0) > 0, appliedSectionId };
+    }
+
+    const result = await queryHelpers.queryRun(
+      `UPDATE report_ai_proposals SET status = 'rejected', resolved_by = ?, resolved_at = ? WHERE id = ? AND organization_id = ?`,
+      [userId, new Date().toISOString(), proposalId, orgId]
+    );
+    return { ok: (result?.changes || 0) > 0 };
   }
 
   async getAIProposals(orgId: string, reportId: string, status?: string): Promise<AIProposal[]> {
@@ -443,6 +475,44 @@ class ReportEnterpriseService {
       errorMessage: r.error_message, createdAt: r.created_at,
     }));
   }
+
+  private async applyAcceptedProposal(orgId: string, proposal: any, userId: string): Promise<string | null> {
+    const section = proposal.section_id
+      ? await queryHelpers.queryOne<any>(
+          `SELECT id, section_key, content_format
+           FROM report_builder_sections
+           WHERE report_id = ? AND (id = ? OR section_key = ?)
+           LIMIT 1`,
+          [proposal.report_id, proposal.section_id, proposal.section_id]
+        )
+      : null;
+
+    if (!section) return null;
+
+    const now = new Date().toISOString();
+    const parsedJson = tryParseJson(proposal.proposed_content);
+    const editedContent =
+      typeof proposal.proposed_content === 'string'
+        ? proposal.proposed_content
+        : JSON.stringify(proposal.proposed_content);
+    const tiptapContent = parsedJson ? JSON.stringify(parsedJson) : null;
+
+    await queryHelpers.queryRun(
+      `UPDATE report_builder_sections
+       SET edited_content = ?, tiptap_content = COALESCE(?, tiptap_content),
+           edited_at = ?, edited_by = ?, updated_at = ?
+       WHERE id = ? AND report_id = ?`,
+      [editedContent, tiptapContent, now, userId, now, section.id, proposal.report_id]
+    );
+    await queryHelpers.queryRun(
+      `UPDATE report_builder_reports
+       SET updated_at = ?, updated_by = ?
+       WHERE id = ? AND organization_id = ?`,
+      [now, userId, proposal.report_id, orgId]
+    );
+
+    return section.id;
+  }
 }
 
 // ============================================================
@@ -459,6 +529,18 @@ function safeJsonArray(val: unknown): unknown[] {
   if (!val) return [];
   try { return typeof val === 'string' ? JSON.parse(val) : (val as unknown[]); }
   catch { return []; }
+}
+
+function tryParseJson(val: unknown): Record<string, unknown> | null {
+  if (typeof val !== 'string') return null;
+  const trimmed = val.trim();
+  if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) return null;
+  try {
+    const parsed = JSON.parse(trimmed);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 const reportEnterpriseService = new ReportEnterpriseService();

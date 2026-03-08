@@ -2,7 +2,7 @@
  * VoiceToNode — Speech recognition that creates mind map nodes from voice input.
  * Uses the Web Speech API (SpeechRecognition).
  */
-import { Loader2, Mic, MicOff, Square, Sparkles } from 'lucide-react';
+import { Loader2, Mic, MicOff, Sparkles, Square } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -24,9 +24,14 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
   const recognitionRef = useRef<any>(null);
 
   const startListening = useCallback(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      toast.error(isPl ? 'Przeglądarka nie obsługuje rozpoznawania mowy' : 'Browser does not support speech recognition');
+      toast.error(
+        isPl
+          ? 'Przeglądarka nie obsługuje rozpoznawania mowy'
+          : 'Browser does not support speech recognition'
+      );
       return;
     }
 
@@ -93,7 +98,11 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
   useEffect(() => {
     return () => {
       if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch { /* ignore */ }
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          /* ignore */
+        }
       }
     };
   }, []);
@@ -152,8 +161,12 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
 
           <div className="text-center text-[10px] text-slate-400 mb-4">
             {listening
-              ? (isPl ? '🔴 Nagrywam... Mów swoje pomysły' : '🔴 Recording... Speak your ideas')
-              : (isPl ? 'Kliknij mikrofon, aby rozpocząć' : 'Click microphone to start')}
+              ? isPl
+                ? '🔴 Nagrywam... Mów swoje pomysły'
+                : '🔴 Recording... Speak your ideas'
+              : isPl
+                ? 'Kliknij mikrofon, aby rozpocząć'
+                : 'Click microphone to start'}
           </div>
 
           {/* Transcript */}
@@ -176,7 +189,10 @@ export const VoiceToNode: React.FC<VoiceToNodeProps> = ({ open, onClose, locked,
               </div>
               <div className="space-y-1 max-h-[200px] overflow-y-auto">
                 {parsedNodes.map((label, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/5 border border-emerald-400/10">
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/5 border border-emerald-400/10"
+                  >
                     <Sparkles size={10} className="text-emerald-500 shrink-0" />
                     <span className="text-[11px] text-slate-700 dark:text-slate-200">{label}</span>
                   </div>

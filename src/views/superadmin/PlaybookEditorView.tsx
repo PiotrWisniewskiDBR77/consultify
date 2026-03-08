@@ -3,12 +3,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
 
-import { Api } from '../../services/api';
 import {
   PlaybookCanvas,
   PlaybookPropertiesPanel,
   PlaybookToolbar,
 } from '../../components/PlaybookEditor';
+import { Api } from '../../services/api';
 import {
   PlaybookEdge,
   PlaybookNode,

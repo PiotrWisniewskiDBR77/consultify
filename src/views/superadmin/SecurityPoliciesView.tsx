@@ -592,7 +592,11 @@ export const SecurityPoliciesView: React.FC = () => {
               if (existingPolicy) {
                 setSelectedPolicy(existingPolicy);
               } else if (globalPolicy) {
-                setSelectedPolicy({ ...globalPolicy, organizationId: org.id, organizationName: org.name });
+                setSelectedPolicy({
+                  ...globalPolicy,
+                  organizationId: org.id,
+                  organizationName: org.name,
+                });
               }
             }}
             className={`p-4 rounded-xl border cursor-pointer transition-all ${
@@ -755,7 +759,11 @@ export const SecurityPoliciesView: React.FC = () => {
 
   const handleSaveDataGovPolicy = async (
     orgId: string,
-    patch: { retentionDays?: number | null; legalHoldEnabled?: boolean; residencyRegion?: string | null }
+    patch: {
+      retentionDays?: number | null;
+      legalHoldEnabled?: boolean;
+      residencyRegion?: string | null;
+    }
   ) => {
     setSaving(true);
     try {
@@ -850,9 +858,7 @@ export const SecurityPoliciesView: React.FC = () => {
       String(policy?.retention_days ?? '') || ''
     );
     const [legalHold, setLegalHold] = useState<boolean>((policy?.legal_hold_enabled ?? 0) === 1);
-    const [residencyRegion, setResidencyRegion] = useState<string>(
-      policy?.residency_region ?? ''
-    );
+    const [residencyRegion, setResidencyRegion] = useState<string>(policy?.residency_region ?? '');
     const [dirty, setDirty] = useState(false);
 
     useEffect(() => {
@@ -891,7 +897,9 @@ export const SecurityPoliciesView: React.FC = () => {
       <tr className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
         <td className="px-6 py-4">
           <span className="font-medium text-slate-900 dark:text-white">{org.name}</span>
-          <span className="ml-2 text-xs text-slate-400 dark:text-slate-500 font-mono">{org.id}</span>
+          <span className="ml-2 text-xs text-slate-400 dark:text-slate-500 font-mono">
+            {org.id}
+          </span>
         </td>
         <td className="px-6 py-4">
           <input
@@ -971,10 +979,7 @@ export const SecurityPoliciesView: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-white/10">
             {lockouts.map((lockout) => (
-              <tr
-                key={lockout.id}
-                className="hover:bg-slate-50 dark:hover:bg-navy-800/20"
-              >
+              <tr key={lockout.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
                 <td className="px-6 py-4">
                   <span className="font-medium text-slate-900 dark:text-white">
                     {lockout.user_email}

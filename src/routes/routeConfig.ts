@@ -23,6 +23,7 @@ export const ROUTES = {
 
   // Main App Routes
   AI_CHAT: '/chat',
+  APP_INTRO: '/app-intro',
   AI_CHAT_CONVERSATION: '/chat/:conversationId',
   INTERVIEW: '/interview',
   DISCOVERY_CONSULTANT: '/discovery', // Legacy alias for Interview
@@ -207,6 +208,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
 
   // Main
   [AppView.AI_CHAT]: ROUTES.AI_CHAT,
+  [AppView.APP_INTRO]: ROUTES.APP_INTRO,
   [AppView.MY_WORK]: ROUTES.MY_WORK,
   [AppView.DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
   [AppView.USER_DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat

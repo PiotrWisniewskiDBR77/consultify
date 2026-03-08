@@ -4,9 +4,16 @@
  * Supports: auto-arrange, force-directed, grid snap, spacing equalization,
  * radial layout, tree layout. Works with ReactFlow Node/Edge arrays.
  */
-import type { Node, Edge } from 'reactflow';
+import type { Edge, Node } from 'reactflow';
 
-export type LayoutAlgorithm = 'auto' | 'force' | 'grid' | 'radial' | 'tree' | 'horizontal' | 'vertical';
+export type LayoutAlgorithm =
+  | 'auto'
+  | 'force'
+  | 'grid'
+  | 'radial'
+  | 'tree'
+  | 'horizontal'
+  | 'vertical';
 
 interface LayoutOptions {
   algorithm: LayoutAlgorithm;
@@ -90,7 +97,13 @@ function treeLayout(nodes: Node[], edges: Edge[], spacing: number): Node[] {
   }));
 }
 
-function radialLayout(nodes: Node[], edges: Edge[], spacing: number, cx: number, cy: number): Node[] {
+function radialLayout(
+  nodes: Node[],
+  edges: Edge[],
+  spacing: number,
+  cx: number,
+  cy: number
+): Node[] {
   const adj = buildAdjacency(nodes, edges);
   const rootId = findRoot(nodes, edges);
   const positions = new Map<string, { x: number; y: number }>();
@@ -139,7 +152,12 @@ function radialLayout(nodes: Node[], edges: Edge[], spacing: number, cx: number,
   }));
 }
 
-function forceDirectedLayout(nodes: Node[], edges: Edge[], spacing: number, iterations = 50): Node[] {
+function forceDirectedLayout(
+  nodes: Node[],
+  edges: Edge[],
+  spacing: number,
+  iterations = 50
+): Node[] {
   const positions = new Map<string, { x: number; y: number }>();
   for (const n of nodes) {
     positions.set(n.id, { ...n.position });

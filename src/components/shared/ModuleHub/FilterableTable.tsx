@@ -7,7 +7,7 @@ import { ChevronDown, Columns, Copy, Edit, Eye, Maximize2, Trash2 } from 'lucide
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { ColumnSelector, type ColumnConfig } from '@/components/Admin/shared/ColumnSelector';
+import { type ColumnConfig, ColumnSelector } from '@/components/Admin/shared/ColumnSelector';
 import { ColumnResizer } from '@/components/ui/ResizableTable';
 
 import { type RowAction, RowActionsMenu } from '../RowActionsMenu';
@@ -373,176 +373,182 @@ export const FilterableTable: React.FC<FilterableTableProps> = ({
       <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
         <div className="w-full overflow-x-auto">
           <table className="w-full table-fixed">
-          <thead>
-            <tr className="bg-white/60 dark:bg-navy-900/60 border-b border-slate-200/70 dark:border-white/[0.06]">
-              {visibleColumns.map((column, idx) => {
-                const cfg = columnConfigs.find((c) => c.id === column.id);
-                const width = columnWidths[column.id] ?? parsePx(column.width, 140);
-                const minWidth = cfg?.minWidth ?? (column.id === 'title' || column.id === 'name' ? 200 : 90);
-                const maxWidth = cfg?.maxWidth ?? (column.id === 'title' || column.id === 'name' ? 520 : 320);
-                const isLastDataCol = idx === visibleColumns.length - 1;
-                return (
-                <th
-                  key={column.id}
-                  className={`${cellPadding} relative text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
-                  style={{
-                    width: `${width}px`,
-                    minWidth: `${minWidth}px`,
-                    maxWidth: `${maxWidth}px`,
-                  }}
-                >
-                  <div className="flex items-center gap-1">
-                    <span>{column.label}</span>
-                    {column.filterable && (
-                      <FilterDropdown
-                        column={column}
-                        activeValues={getActiveFilterValues(column.id)}
-                        onApply={(values) => handleColumnFilter(column, values)}
-                      />
-                    )}
-                  </div>
-                  {!isLastDataCol ? (
-                    <ColumnResizer
-                      columnId={column.id}
-                      currentWidth={width}
-                      minWidth={minWidth}
-                      maxWidth={maxWidth}
-                      onResize={handleColumnResize}
-                    />
-                  ) : null}
-                </th>
-              );
-              })}
-              {!hideRowActions ? (
-                <th
-                  className={`${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
-                >
-                  {enableColumnSettings ? (
-                    <div className="flex justify-end">
-                      <ColumnSelector
-                        columns={columnConfigs}
-                        onChange={setColumnConfigs}
-                        onReset={resetColumns}
-                        trigger={
-                          <button
-                            type="button"
-                            className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                            title={t('common.columns', isPolish ? 'Kolumny' : 'Columns')}
-                            aria-label={t('common.columns', isPolish ? 'Kolumny' : 'Columns')}
-                          >
-                            <Columns size={14} />
-                          </button>
-                        }
-                      />
-                    </div>
-                  ) : null}
-                </th>
-              ) : null}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200/70 dark:divide-white/[0.06]">
-            {filteredData.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={visibleColumns.length + (hideRowActions ? 0 : 1)}
-                  className={`${density === 'compact' ? 'px-3' : 'px-4'} py-12 text-center text-slate-500`}
-                >
-                  {emptyMessage}
-                </td>
-              </tr>
-            ) : (
-              filteredData.map((row) => (
-                <tr
-                  key={row.id}
-                  onClick={() => onRowClick?.(row)}
-                  onDoubleClick={() => onRowDoubleClick?.(row)}
-                  className={[
-                    'group cursor-pointer transition-colors',
-                    row.id === selectedRowId
-                      ? 'bg-primary-500/10'
-                      : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]',
-                  ].join(' ')}
-                >
-                  {visibleColumns.map((column) => (
-                    <td key={column.id} className={cellPadding}>
-                      {column.render ? (
-                        column.render(row)
-                      ) : column.id === 'status' ? (
-                        <StatusBadge status={row.status} />
-                      ) : column.id === 'progress' ? (
-                        <ProgressBar progress={row.progress} />
-                      ) : column.id === 'updatedAt' ? (
-                        <span className="text-sm text-slate-500 dark:text-slate-400">
-                          {formatRelativeTime(row.updatedAt)}
-                        </span>
-                      ) : (
-                        <div className="min-w-0">
-                          <span
-                            className={[
-                              'text-sm text-slate-700 dark:text-slate-200',
-                              column.id === 'title' || column.id === 'name' ? 'block truncate' : '',
-                            ].join(' ')}
-                            title={typeof row[column.id] === 'string' ? row[column.id] : undefined}
-                          >
-                            {row[column.id]}
-                          </span>
-                        </div>
-                      )}
-                    </td>
-                  ))}
-                  {!hideRowActions ? (
-                    <td className={`${cellPadding} text-right`}>
-                      <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-                        {(() => {
-                          const actions: RowAction[] =
-                            getRowActions?.(row) ??
-                            ([
-                              {
-                                id: 'open',
-                                label: t('common.open', 'Open'),
-                                icon: Maximize2,
-                                variant: 'primary',
-                                onClick: () => onRowAction?.('edit', row),
-                              },
-                              {
-                                id: 'preview',
-                                label: t('common.preview', 'Preview'),
-                                icon: Eye,
-                                onClick: () => onRowAction?.('preview', row),
-                              },
-                              {
-                                id: 'duplicate',
-                                label: t('common.duplicate', 'Duplicate'),
-                                icon: Copy,
-                                onClick: () => onRowAction?.('duplicate', row),
-                              },
-                              {
-                                id: 'rename',
-                                label: t('common.edit', 'Edit'),
-                                icon: Edit,
-                                onClick: () => onRowAction?.('rename', row),
-                              },
-                              {
-                                id: 'delete',
-                                label: t('common.delete', 'Delete'),
-                                icon: Trash2,
-                                divider: true,
-                                variant: 'danger',
-                                onClick: () => onRowAction?.('delete', row),
-                              },
-                            ] as RowAction[]);
-
-                          if (!actions.length) return null;
-
-                          return <RowActionsMenu iconVariant="vertical" actions={actions} />;
-                        })()}
+            <thead>
+              <tr className="bg-white/60 dark:bg-navy-900/60 border-b border-slate-200/70 dark:border-white/[0.06]">
+                {visibleColumns.map((column, idx) => {
+                  const cfg = columnConfigs.find((c) => c.id === column.id);
+                  const width = columnWidths[column.id] ?? parsePx(column.width, 140);
+                  const minWidth =
+                    cfg?.minWidth ?? (column.id === 'title' || column.id === 'name' ? 200 : 90);
+                  const maxWidth =
+                    cfg?.maxWidth ?? (column.id === 'title' || column.id === 'name' ? 520 : 320);
+                  const isLastDataCol = idx === visibleColumns.length - 1;
+                  return (
+                    <th
+                      key={column.id}
+                      className={`${cellPadding} relative text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider`}
+                      style={{
+                        width: `${width}px`,
+                        minWidth: `${minWidth}px`,
+                        maxWidth: `${maxWidth}px`,
+                      }}
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>{column.label}</span>
+                        {column.filterable && (
+                          <FilterDropdown
+                            column={column}
+                            activeValues={getActiveFilterValues(column.id)}
+                            onApply={(values) => handleColumnFilter(column, values)}
+                          />
+                        )}
                       </div>
-                    </td>
-                  ) : null}
+                      {!isLastDataCol ? (
+                        <ColumnResizer
+                          columnId={column.id}
+                          currentWidth={width}
+                          minWidth={minWidth}
+                          maxWidth={maxWidth}
+                          onResize={handleColumnResize}
+                        />
+                      ) : null}
+                    </th>
+                  );
+                })}
+                {!hideRowActions ? (
+                  <th
+                    className={`${cellPadding} text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-20`}
+                  >
+                    {enableColumnSettings ? (
+                      <div className="flex justify-end">
+                        <ColumnSelector
+                          columns={columnConfigs}
+                          onChange={setColumnConfigs}
+                          onReset={resetColumns}
+                          trigger={
+                            <button
+                              type="button"
+                              className="inline-flex items-center justify-center h-7 w-7 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                              title={t('common.columns', isPolish ? 'Kolumny' : 'Columns')}
+                              aria-label={t('common.columns', isPolish ? 'Kolumny' : 'Columns')}
+                            >
+                              <Columns size={14} />
+                            </button>
+                          }
+                        />
+                      </div>
+                    ) : null}
+                  </th>
+                ) : null}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200/70 dark:divide-white/[0.06]">
+              {filteredData.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={visibleColumns.length + (hideRowActions ? 0 : 1)}
+                    className={`${density === 'compact' ? 'px-3' : 'px-4'} py-12 text-center text-slate-500`}
+                  >
+                    {emptyMessage}
+                  </td>
                 </tr>
-              ))
-            )}
-          </tbody>
+              ) : (
+                filteredData.map((row) => (
+                  <tr
+                    key={row.id}
+                    onClick={() => onRowClick?.(row)}
+                    onDoubleClick={() => onRowDoubleClick?.(row)}
+                    className={[
+                      'group cursor-pointer transition-colors',
+                      row.id === selectedRowId
+                        ? 'bg-primary-500/10'
+                        : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]',
+                    ].join(' ')}
+                  >
+                    {visibleColumns.map((column) => (
+                      <td key={column.id} className={cellPadding}>
+                        {column.render ? (
+                          column.render(row)
+                        ) : column.id === 'status' ? (
+                          <StatusBadge status={row.status} />
+                        ) : column.id === 'progress' ? (
+                          <ProgressBar progress={row.progress} />
+                        ) : column.id === 'updatedAt' ? (
+                          <span className="text-sm text-slate-500 dark:text-slate-400">
+                            {formatRelativeTime(row.updatedAt)}
+                          </span>
+                        ) : (
+                          <div className="min-w-0">
+                            <span
+                              className={[
+                                'text-sm text-slate-700 dark:text-slate-200',
+                                column.id === 'title' || column.id === 'name'
+                                  ? 'block truncate'
+                                  : '',
+                              ].join(' ')}
+                              title={
+                                typeof row[column.id] === 'string' ? row[column.id] : undefined
+                              }
+                            >
+                              {row[column.id]}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+                    ))}
+                    {!hideRowActions ? (
+                      <td className={`${cellPadding} text-right`}>
+                        <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                          {(() => {
+                            const actions: RowAction[] =
+                              getRowActions?.(row) ??
+                              ([
+                                {
+                                  id: 'open',
+                                  label: t('common.open', 'Open'),
+                                  icon: Maximize2,
+                                  variant: 'primary',
+                                  onClick: () => onRowAction?.('edit', row),
+                                },
+                                {
+                                  id: 'preview',
+                                  label: t('common.preview', 'Preview'),
+                                  icon: Eye,
+                                  onClick: () => onRowAction?.('preview', row),
+                                },
+                                {
+                                  id: 'duplicate',
+                                  label: t('common.duplicate', 'Duplicate'),
+                                  icon: Copy,
+                                  onClick: () => onRowAction?.('duplicate', row),
+                                },
+                                {
+                                  id: 'rename',
+                                  label: t('common.edit', 'Edit'),
+                                  icon: Edit,
+                                  onClick: () => onRowAction?.('rename', row),
+                                },
+                                {
+                                  id: 'delete',
+                                  label: t('common.delete', 'Delete'),
+                                  icon: Trash2,
+                                  divider: true,
+                                  variant: 'danger',
+                                  onClick: () => onRowAction?.('delete', row),
+                                },
+                              ] as RowAction[]);
+
+                            if (!actions.length) return null;
+
+                            return <RowActionsMenu iconVariant="vertical" actions={actions} />;
+                          })()}
+                        </div>
+                      </td>
+                    ) : null}
+                  </tr>
+                ))
+              )}
+            </tbody>
           </table>
         </div>
       </div>

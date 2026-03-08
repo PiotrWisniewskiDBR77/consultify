@@ -24,10 +24,5 @@ export const DividerBlock: React.FC<Props> = ({ block, theme }) => {
     );
   }
 
-  return (
-    <hr
-      className="my-2"
-      style={{ borderColor: theme.colors.primary + '15' }}
-    />
-  );
+  return <hr className="my-2" style={{ borderColor: theme.colors.primary + '15' }} />;
 };

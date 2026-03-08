@@ -143,10 +143,16 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     (e: React.DragEvent) => {
       e.preventDefault();
       const f = e.dataTransfer.files[0];
-      if (f && (ACCEPTED_TYPES.has(f.type) || ACCEPTED_EXTS.some((ext) => f.name.toLowerCase().endsWith(ext)))) {
+      if (
+        f &&
+        (ACCEPTED_TYPES.has(f.type) ||
+          ACCEPTED_EXTS.some((ext) => f.name.toLowerCase().endsWith(ext)))
+      ) {
         setFile(f);
       } else {
-        setError(t('finance.importWizard.unsupportedFormat', 'Supported formats: PDF, XLSX, XLS, CSV'));
+        setError(
+          t('finance.importWizard.unsupportedFormat', 'Supported formats: PDF, XLSX, XLS, CSV')
+        );
       }
     },
     [t]
@@ -392,7 +398,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
 
           {file && (
             <div className="mt-6 p-4 bg-slate-50 dark:bg-navy-900 rounded-xl flex items-center gap-3">
-              <FileText size={20} className={file.name.endsWith('.pdf') ? 'text-red-500' : 'text-green-500'} />
+              <FileText
+                size={20}
+                className={file.name.endsWith('.pdf') ? 'text-red-500' : 'text-green-500'}
+              />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                   {file.name}

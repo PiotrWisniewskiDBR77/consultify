@@ -19,6 +19,7 @@ import {
   Columns3,
   Diamond,
   Download,
+  ExternalLink,
   FileText,
   FileUp,
   Filter,
@@ -27,8 +28,9 @@ import {
   Globe,
   Group,
   Heart,
-  LayoutGrid,
   Layers,
+  LayoutGrid,
+  Link2,
   ListChecks,
   Loader2,
   MessageSquare,
@@ -39,8 +41,10 @@ import {
   Plus,
   Presentation,
   Redo2,
+  RefreshCw,
   Rocket,
   Save,
+  Scale,
   Search,
   Shield,
   Shuffle,
@@ -55,8 +59,8 @@ import {
   Type,
   Undo2,
   Upload,
-  Webhook,
   Wand2,
+  Webhook,
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -75,10 +79,24 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { generateAIProposal, type GeneratorType } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 
+import {
+  IDEA_STAGE_COLORS,
+  IDEA_STAGE_LABELS,
+  IDEA_STAGES_V5,
+  normalizeStageToV5,
+} from './ideaEntryTypes';
 import type { AIProposalBatch, CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { IdeaCompletenessWidget } from './table/IdeaCompletenessWidget';
 
-type ConvertTarget = 'initiative' | 'task_set' | 'decision' | 'team_chat' | 'report' | 'presentation' | 'action_plan' | 'raid_log';
+type ConvertTarget =
+  | 'initiative'
+  | 'task_set'
+  | 'decision'
+  | 'team_chat'
+  | 'report'
+  | 'presentation'
+  | 'action_plan'
+  | 'raid_log';
 
 interface IdeaWorkspaceToolsProps {
   open: boolean;
@@ -108,6 +126,7 @@ interface IdeaWorkspaceToolsProps {
   onAcceptChallenge: () => void;
   onConvert: (target: ConvertTarget) => void;
   onOpenChat: () => void;
+  onStageChange?: (stage: string) => void;
   onFocusAICommand?: () => void;
   onGenerateProposal?: (batch: AIProposalBatch) => void;
   graphNodes?: any[];
@@ -141,6 +160,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   onAcceptChallenge,
   onConvert,
   onOpenChat,
+  onStageChange,
   onFocusAICommand,
   onGenerateProposal,
   graphNodes = [],
@@ -152,9 +172,10 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   const isPl = i18n.language === 'pl';
   const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
   const [generatingId, setGeneratingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'challenge' | 'ai' | 'metadata' | 'convert' | 'quick_tools'>(
-    'challenge'
-  );
+  const [activeTab, setActiveTab] = useState<
+    'challenge' | 'ai' | 'metadata' | 'convert' | 'quick_tools'
+  >('challenge');
+  const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
 
   const wsContext: WorkspaceContext = useMemo(
     () => ({
@@ -192,65 +213,161 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   }, [isAccepted, isPl, seedText, sendToChat, title]);
 
   // ── AI Generator (real LLM) ─────────────────────────────────────────────────
-  const handleAIGenerate = useCallback(async (genType: GeneratorType) => {
-    if (!isAccepted || !onGenerateProposal || generatingId) return;
-    setGeneratingId(genType);
-    try {
-      const batch = await generateAIProposal({
-        ideaId,
-        generatorType: genType,
-        tool: activeTool,
-        context: {
-          seedText,
-          title,
-          branch,
-          area,
-          existingNodes: graphNodes,
-          existingEdges: graphEdges,
-          existingLanes: graphLanes,
-          language: i18n.language || 'en',
-        },
-      });
-      onGenerateProposal(batch);
-      toast.success(isPl ? 'Propozycja wygenerowana' : 'Proposal generated');
-    } catch (err: any) {
-      toast.error(err?.message || (isPl ? 'Nie udało się wygenerować' : 'Generation failed'));
-    } finally {
-      setGeneratingId(null);
-    }
-  }, [isAccepted, onGenerateProposal, generatingId, ideaId, activeTool, seedText, title, branch, area, graphNodes, graphEdges, graphLanes, i18n.language, isPl]);
+  const handleAIGenerate = useCallback(
+    async (genType: GeneratorType) => {
+      if (!isAccepted || !onGenerateProposal || generatingId) return;
+      setGeneratingId(genType);
+      try {
+        const batch = await generateAIProposal({
+          ideaId,
+          generatorType: genType,
+          tool: activeTool,
+          context: {
+            seedText,
+            title,
+            branch,
+            area,
+            existingNodes: graphNodes,
+            existingEdges: graphEdges,
+            existingLanes: graphLanes,
+            language: i18n.language || 'en',
+          },
+        });
+        onGenerateProposal(batch);
+        toast.success(isPl ? 'Propozycja wygenerowana' : 'Proposal generated');
+      } catch (err: any) {
+        toast.error(err?.message || (isPl ? 'Nie udało się wygenerować' : 'Generation failed'));
+      } finally {
+        setGeneratingId(null);
+      }
+    },
+    [
+      isAccepted,
+      onGenerateProposal,
+      generatingId,
+      ideaId,
+      activeTool,
+      seedText,
+      title,
+      branch,
+      area,
+      graphNodes,
+      graphEdges,
+      graphLanes,
+      i18n.language,
+      isPl,
+    ]
+  );
 
-  const handleGenerateLanes = useCallback(() => handleAIGenerate('lane_generator'), [handleAIGenerate]);
-  const handleGenerateFlow = useCallback(() => handleAIGenerate('flow_generator'), [handleAIGenerate]);
-  const handleGenerateTableColumns = useCallback(() => handleAIGenerate('table_columns'), [handleAIGenerate]);
-  const handleGenerateTableView = useCallback(() => handleAIGenerate('table_views'), [handleAIGenerate]);
-  const handleGenerateWBClusters = useCallback(() => handleAIGenerate('whiteboard_clusters'), [handleAIGenerate]);
-  const handleGenerateWBBrainstorm = useCallback(() => handleAIGenerate('whiteboard_brainstorm'), [handleAIGenerate]);
-  const handleGenerateWBOrganize = useCallback(() => handleAIGenerate('whiteboard_organize'), [handleAIGenerate]);
+  const handleGenerateLanes = useCallback(
+    () => handleAIGenerate('lane_generator'),
+    [handleAIGenerate]
+  );
+  const handleGenerateFlow = useCallback(
+    () => handleAIGenerate('flow_generator'),
+    [handleAIGenerate]
+  );
+  const handleGenerateTableColumns = useCallback(
+    () => handleAIGenerate('table_columns'),
+    [handleAIGenerate]
+  );
+  const handleGenerateTableRows = useCallback(
+    () => handleAIGenerate('table_rows' as GeneratorType),
+    [handleAIGenerate]
+  );
+  const handleGenerateTableSimplify = useCallback(
+    () => handleAIGenerate('table_simplify' as GeneratorType),
+    [handleAIGenerate]
+  );
+  const handleGenerateTableView = useCallback(
+    () => handleAIGenerate('table_views'),
+    [handleAIGenerate]
+  );
+  const handleGenerateWBClusters = useCallback(
+    () => handleAIGenerate('whiteboard_clusters'),
+    [handleAIGenerate]
+  );
+  const handleGenerateWBBrainstorm = useCallback(
+    () => handleAIGenerate('whiteboard_brainstorm'),
+    [handleAIGenerate]
+  );
+  const handleGenerateWBOrganize = useCallback(
+    () => handleAIGenerate('whiteboard_organize'),
+    [handleAIGenerate]
+  );
   const handleGenerateSummary = useCallback(() => handleAIGenerate('summary'), [handleAIGenerate]);
-  const handleGenerateStickySummarize = useCallback(() => handleAIGenerate('sticky_summarize'), [handleAIGenerate]);
-  const handleGenerateBottleneck = useCallback(() => handleAIGenerate('bottleneck'), [handleAIGenerate]);
-  const handleGenerateVSM = useCallback(() => handleAIGenerate('vsm_generator'), [handleAIGenerate]);
-  const handleGenerateVSMFuture = useCallback(() => handleAIGenerate('vsm_future_state' as GeneratorType), [handleAIGenerate]);
-  const handleGenerateAutoCluster = useCallback(() => handleAIGenerate('auto_cluster' as GeneratorType), [handleAIGenerate]);
+  const handleGenerateStickySummarize = useCallback(
+    () => handleAIGenerate('sticky_summarize'),
+    [handleAIGenerate]
+  );
+  const handleGenerateBottleneck = useCallback(
+    () => handleAIGenerate('bottleneck'),
+    [handleAIGenerate]
+  );
+  const handleGenerateVSM = useCallback(
+    () => handleAIGenerate('vsm_generator'),
+    [handleAIGenerate]
+  );
+  const handleGenerateVSMFuture = useCallback(
+    () => handleAIGenerate('vsm_future_state' as GeneratorType),
+    [handleAIGenerate]
+  );
+  const handleGenerateAutoCluster = useCallback(
+    () => handleAIGenerate('auto_cluster' as GeneratorType),
+    [handleAIGenerate]
+  );
+  const handleGenerateWBFindThemes = useCallback(
+    () => handleAIGenerate('wb_find_themes' as GeneratorType),
+    [handleAIGenerate]
+  );
+  const handleGenerateWBNameClusters = useCallback(
+    () => handleAIGenerate('wb_name_clusters' as GeneratorType),
+    [handleAIGenerate]
+  );
+  const handleGenerateWBToMapBranches = useCallback(
+    () => handleAIGenerate('wb_to_map_branches' as GeneratorType),
+    [handleAIGenerate]
+  );
+  const handleGenerateWBToTable = useCallback(
+    () => handleAIGenerate('wb_to_table' as GeneratorType),
+    [handleAIGenerate]
+  );
+  const handleGenerateWBExtractActions = useCallback(
+    () => handleAIGenerate('wb_extract_actions' as GeneratorType),
+    [handleAIGenerate]
+  );
 
   // Mind Map AI generators
-  const handleMMGenerateBranches = useCallback(() => handleAIGenerate('mm_branch_generator' as any), [handleAIGenerate]);
+  const handleMMGenerateBranches = useCallback(
+    () => handleAIGenerate('mm_branch_generator' as any),
+    [handleAIGenerate]
+  );
   const handleMMExpandBranch = useCallback(() => {
-    window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action: 'mm_ai_expand_branch' } }));
+    window.dispatchEvent(
+      new CustomEvent('idea-workspace-quick-action', { detail: { action: 'mm_ai_expand_branch' } })
+    );
   }, []);
-  const handleMMGapAnalysis = useCallback(() => handleAIGenerate('mm_gap_analysis' as any), [handleAIGenerate]);
-  const handleMMDeepenNode = useCallback(() => handleAIGenerate('mm_deepen_node' as any), [handleAIGenerate]);
-  const handleMMSummarize = useCallback(() => handleAIGenerate('mm_summarize' as any), [handleAIGenerate]);
+  const handleMMGapAnalysis = useCallback(
+    () => handleAIGenerate('mm_gap_analysis' as any),
+    [handleAIGenerate]
+  );
+  const handleMMDeepenNode = useCallback(
+    () => handleAIGenerate('mm_deepen_node' as any),
+    [handleAIGenerate]
+  );
+  const handleMMSummarize = useCallback(
+    () => handleAIGenerate('mm_summarize' as any),
+    [handleAIGenerate]
+  );
 
   const selectionSummary = useMemo(() => {
     if (!selection || selection.type === 'none') return null;
     const c = selection.count;
     const typeLabels: Record<string, string> = {
-      node: c === 1 ? (isPl ? '1 węzeł' : '1 node') : (isPl ? `${c} węzłów` : `${c} nodes`),
-      edge: c === 1 ? (isPl ? '1 połączenie' : '1 edge') : (isPl ? `${c} połączeń` : `${c} edges`),
+      node: c === 1 ? (isPl ? '1 węzeł' : '1 node') : isPl ? `${c} węzłów` : `${c} nodes`,
+      edge: c === 1 ? (isPl ? '1 połączenie' : '1 edge') : isPl ? `${c} połączeń` : `${c} edges`,
       lane: isPl ? '1 lane' : '1 lane',
-      row: c === 1 ? (isPl ? '1 wiersz' : '1 row') : (isPl ? `${c} wierszy` : `${c} rows`),
+      row: c === 1 ? (isPl ? '1 wiersz' : '1 row') : isPl ? `${c} wierszy` : `${c} rows`,
     };
     return typeLabels[selection.type] || null;
   }, [isPl, selection]);
@@ -380,14 +497,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
     { value: 100, label: isPl ? 'Krytyczny' : 'Critical' },
   ];
 
-  const stageLabel = (() => {
-    const s = String(stage || '').toLowerCase();
-    if (s === 'incubating') return isPl ? 'Inkubacja' : 'Incubating';
-    if (s === 'shaping') return isPl ? 'Kształtuje się' : 'Shaping';
-    if (s === 'ready') return isPl ? 'Gotowy' : 'Ready';
-    if (s === 'promoted') return isPl ? 'Promowany' : 'Promoted';
-    return isPl ? 'Iskra' : 'Spark';
-  })();
+  const v5Stage = normalizeStageToV5(stage);
+  const stageLabel = isPl ? IDEA_STAGE_LABELS[v5Stage].pl : IDEA_STAGE_LABELS[v5Stage].en;
+  const stageColor = IDEA_STAGE_COLORS[v5Stage];
 
   return (
     <ToolsPanelShell
@@ -400,13 +512,47 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       }
       onClose={onClose}
     >
-      {/* ─── Stage badge + selection summary ─── */}
+      {/* ─── V5 Stage selector + selection summary ─── */}
       <div className="px-3 pt-3 pb-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-400/20 to-orange-400/10 text-amber-600 dark:text-amber-400 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
-            {stageLabel}
-          </span>
+          <div className="relative">
+            <button
+              onClick={() => !isDraft && setStageDropdownOpen((v) => !v)}
+              disabled={isDraft}
+              className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r ${stageColor} px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow-sm transition-all hover:shadow-md disabled:opacity-50`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+              {stageLabel}
+              {!isDraft && <ChevronDown size={10} className="opacity-60" />}
+            </button>
+            {stageDropdownOpen && (
+              <div className="absolute top-full left-0 mt-1 z-[120] w-48 rounded-xl border border-slate-200/60 dark:border-white/[0.06] bg-white dark:bg-navy-900 shadow-xl py-1">
+                {IDEA_STAGES_V5.map((s) => {
+                  const label = isPl ? IDEA_STAGE_LABELS[s].pl : IDEA_STAGE_LABELS[s].en;
+                  const isActive = s === v5Stage;
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => {
+                        onStageChange?.(s);
+                        setStageDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-1.5 text-[11px] transition-colors ${
+                        isActive
+                          ? 'font-bold text-primary-600 dark:text-primary-400 bg-primary-500/5'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.03]'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block w-1.5 h-1.5 rounded-full mr-2 bg-gradient-to-r ${IDEA_STAGE_COLORS[s].split(' ')[0]} ${IDEA_STAGE_COLORS[s].split(' ')[1]}`}
+                      />
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
           <span className="text-[10px] text-slate-400 dark:text-slate-500">{draftSavedLabel}</span>
           {selectionSummary && (
             <span className="inline-flex items-center gap-1 rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 px-2 py-0.5 text-[10px] font-bold">
@@ -438,7 +584,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
       {/* ─── Quick Tools tab (mode-specific) ─── */}
       {activeTab === 'quick_tools' && (
         <div className="px-3 py-3 border-b border-slate-200/30 dark:border-white/[0.04]">
-          <SectionLabel>{toolLabel} — {isPl ? 'Szybkie narzędzia' : 'Quick tools'}</SectionLabel>
+          <SectionLabel>
+            {toolLabel} — {isPl ? 'Szybkie narzędzia' : 'Quick tools'}
+          </SectionLabel>
 
           {/* Templates button */}
           {onOpenTemplates && (activeTool === 'process_flow' || activeTool === 'mindmap') && (
@@ -482,27 +630,233 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
             </div>
           )}
 
+          {/* V5-IDEA-26: Cross-system transforms */}
+          {selection.type !== 'none' && selection.count > 0 && (
+            <div className="mb-3 pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+              <SectionLabel>{isPl ? 'Przekształć do' : 'Transform to'}</SectionLabel>
+              <div className="grid grid-cols-2 gap-1">
+                {(
+                  [
+                    {
+                      id: 'mindmap',
+                      label: isPl ? 'Mapa myśli' : 'Mind Map',
+                      icon: Network,
+                      action: 'xform_to_mindmap',
+                    },
+                    {
+                      id: 'whiteboard',
+                      label: isPl ? 'Tablica' : 'Whiteboard',
+                      icon: StickyNote,
+                      action: 'xform_to_whiteboard',
+                    },
+                    {
+                      id: 'process_flow',
+                      label: isPl ? 'Przepływ' : 'Flow',
+                      icon: GitMerge,
+                      action: 'xform_to_flow',
+                    },
+                    {
+                      id: 'table',
+                      label: isPl ? 'Tabela' : 'Table',
+                      icon: LayoutGrid,
+                      action: 'xform_to_table',
+                    },
+                  ] as const
+                )
+                  .filter((t) => t.id !== activeTool)
+                  .map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() =>
+                        window.dispatchEvent(
+                          new CustomEvent('idea-workspace-quick-action', {
+                            detail: { action: t.action, ideaId },
+                          })
+                        )
+                      }
+                      disabled={!isAccepted}
+                      className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors disabled:opacity-40"
+                    >
+                      <t.icon size={12} />
+                      {t.label}
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* V5-IDEA-33: Attach artifact to selected object */}
+          {selection.type !== 'none' && selection.count > 0 && (
+            <div className="mb-3 pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+              <SectionLabel>{isPl ? 'Artefakty' : 'Artifacts'}</SectionLabel>
+              <div className="space-y-1">
+                <QuickToolBtn
+                  icon={Link2}
+                  label={isPl ? 'Dołącz artefakt' : 'Attach artifact'}
+                  action="attach_artifact"
+                  disabled={!isAccepted}
+                />
+                <QuickToolBtn
+                  icon={ExternalLink}
+                  label={isPl ? 'Otwórz powiązane' : 'Open linked'}
+                  action="open_linked_artifacts"
+                  disabled={!isAccepted}
+                />
+              </div>
+
+              {/* V5-IDEA-36: AI artifact retrieval and link proposals */}
+              <div className="space-y-1.5 mt-2">
+                <GeneratorBtn
+                  icon={Sparkles}
+                  label={isPl ? 'AI: Znajdź artefakty' : 'AI: Find artifacts'}
+                  onClick={() => handleAIGenerate('ai_retrieve_artifacts' as GeneratorType)}
+                  disabled={!isAccepted || !!generatingId}
+                  isPl={isPl}
+                  loading={generatingId === 'ai_retrieve_artifacts'}
+                />
+                <GeneratorBtn
+                  icon={Link2}
+                  label={isPl ? 'AI: Zaproponuj powiązania' : 'AI: Propose attachments'}
+                  onClick={() => handleAIGenerate('ai_propose_attachments' as GeneratorType)}
+                  disabled={!isAccepted || !!generatingId}
+                  isPl={isPl}
+                  loading={generatingId === 'ai_propose_attachments'}
+                />
+              </div>
+            </div>
+          )}
+
           {/* MindMap quick tools */}
           {activeTool === 'mindmap' && (
             <div className="space-y-1.5">
-              <QuickToolBtn icon={Plus} label={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'} action="mm_add_child" disabled={!isAccepted} />
-              <QuickToolBtn icon={Plus} label={isPl ? 'Dodaj sąsiada (Enter)' : 'Add sibling (Enter)'} action="mm_add_sibling" disabled={!isAccepted} />
-              <QuickToolBtn icon={Layers} label={isPl ? 'Zwiń/Rozwiń (Space)' : 'Collapse/Expand (Space)'} action="mm_toggle_collapse" disabled={!isAccepted} />
-              <QuickToolBtn icon={LayoutGrid} label={isPl ? 'Auto-układ' : 'Auto-layout'} action="mm_auto_layout" disabled={!isAccepted} />
+              <QuickToolBtn
+                icon={Plus}
+                label={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
+                action="mm_add_child"
+                disabled={!isAccepted}
+              />
+              <QuickToolBtn
+                icon={Plus}
+                label={isPl ? 'Dodaj sąsiada (Enter)' : 'Add sibling (Enter)'}
+                action="mm_add_sibling"
+                disabled={!isAccepted}
+              />
+              <QuickToolBtn
+                icon={Layers}
+                label={isPl ? 'Zwiń/Rozwiń (Space)' : 'Collapse/Expand (Space)'}
+                action="mm_toggle_collapse"
+                disabled={!isAccepted}
+              />
+              <QuickToolBtn
+                icon={LayoutGrid}
+                label={isPl ? 'Auto-układ' : 'Auto-layout'}
+                action="mm_auto_layout"
+                disabled={!isAccepted}
+              />
+
+              {/* V5-IDEA-27: Knowledge cards */}
+              <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+                <SectionLabel>{isPl ? 'Wiedza' : 'Knowledge'}</SectionLabel>
+                <QuickToolBtn
+                  icon={FileText}
+                  label={isPl ? 'Karta wiedzy' : 'Knowledge card'}
+                  action="mm_add_knowledge"
+                  disabled={!isAccepted}
+                />
+                <QuickToolBtn
+                  icon={Star}
+                  label={isPl ? 'Notatka' : 'Note card'}
+                  action="mm_add_note"
+                  disabled={!isAccepted}
+                />
+                <QuickToolBtn
+                  icon={Shield}
+                  label={isPl ? 'Dowód / Evidence' : 'Evidence card'}
+                  action="mm_add_evidence"
+                  disabled={!isAccepted}
+                />
+              </div>
+
+              {/* V5-IDEA-38: Convert selection to outputs (mindmap) */}
+              {selection.type !== 'none' && selection.count > 0 && (
+                <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+                  <SectionLabel>
+                    {isPl ? 'Konwertuj zaznaczenie' : 'Convert selection'}
+                  </SectionLabel>
+                  <div className="space-y-1">
+                    <QuickToolBtn
+                      icon={Target}
+                      label={isPl ? '→ Inicjatywa' : '→ Initiative'}
+                      action="convert_initiative"
+                      disabled={!isAccepted}
+                    />
+                    <QuickToolBtn
+                      icon={CheckSquare}
+                      label={isPl ? '→ Zadania' : '→ Tasks'}
+                      action="convert_task_set"
+                      disabled={!isAccepted}
+                    />
+                    <QuickToolBtn
+                      icon={Scale}
+                      label={isPl ? '→ Decyzja' : '→ Decision'}
+                      action="convert_decision"
+                      disabled={!isAccepted}
+                    />
+                    <QuickToolBtn
+                      icon={FileText}
+                      label={isPl ? '→ Raport' : '→ Report'}
+                      action="convert_report"
+                      disabled={!isAccepted}
+                    />
+                    <QuickToolBtn
+                      icon={Presentation}
+                      label={isPl ? '→ Prezentacja' : '→ Presentation'}
+                      action="convert_presentation"
+                      disabled={!isAccepted}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Undo / Redo */}
               <div className="flex items-center gap-1 pt-1">
-                <QuickToolBtn icon={Undo2} label={isPl ? 'Cofnij (Ctrl+Z)' : 'Undo (Ctrl+Z)'} action="mm_undo" disabled={!isAccepted} />
-                <QuickToolBtn icon={Redo2} label={isPl ? 'Ponów (Ctrl+Shift+Z)' : 'Redo (Ctrl+Shift+Z)'} action="mm_redo" disabled={!isAccepted} />
+                <QuickToolBtn
+                  icon={Undo2}
+                  label={isPl ? 'Cofnij (Ctrl+Z)' : 'Undo (Ctrl+Z)'}
+                  action="mm_undo"
+                  disabled={!isAccepted}
+                />
+                <QuickToolBtn
+                  icon={Redo2}
+                  label={isPl ? 'Ponów (Ctrl+Shift+Z)' : 'Redo (Ctrl+Shift+Z)'}
+                  action="mm_redo"
+                  disabled={!isAccepted}
+                />
               </div>
 
               {/* Export */}
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'Eksport' : 'Export'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <QuickToolBtn icon={Download} label={isPl ? 'Eksportuj mapę (PNG/SVG/JSON)' : 'Export map (PNG/SVG/JSON)'} action="mm_export" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Presentation} label={isPl ? 'Eksport prezentacji' : 'Export presentation'} action="mm_export_pptx" disabled={!isAccepted} />
-                  <QuickToolBtn icon={FileText} label={isPl ? 'Osadź w raporcie' : 'Embed in report'} action="mm_embed_report" disabled={!isAccepted} />
+                  <QuickToolBtn
+                    icon={Download}
+                    label={isPl ? 'Eksportuj mapę (PNG/SVG/JSON)' : 'Export map (PNG/SVG/JSON)'}
+                    action="mm_export"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Presentation}
+                    label={isPl ? 'Eksport prezentacji' : 'Export presentation'}
+                    action="mm_export_pptx"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={FileText}
+                    label={isPl ? 'Osadź w raporcie' : 'Embed in report'}
+                    action="mm_embed_report"
+                    disabled={!isAccepted}
+                  />
                 </div>
               </div>
 
@@ -510,9 +864,24 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'Tryby wizualne' : 'Visual Modes'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <QuickToolBtn icon={Group} label={isPl ? 'Bąbelki klastrów' : 'Cluster bubbles'} action="mm_toggle_bubbles" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Layers} label={isPl ? 'Mapa ciepła' : 'Heatmap mode'} action="mm_toggle_heatmap" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Zap} label={isPl ? 'Cząsteczki na liniach' : 'Particle flow'} action="mm_toggle_particles" disabled={!isAccepted} />
+                  <QuickToolBtn
+                    icon={Group}
+                    label={isPl ? 'Bąbelki klastrów' : 'Cluster bubbles'}
+                    action="mm_toggle_bubbles"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Layers}
+                    label={isPl ? 'Mapa ciepła' : 'Heatmap mode'}
+                    action="mm_toggle_heatmap"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Zap}
+                    label={isPl ? 'Cząsteczki na liniach' : 'Particle flow'}
+                    action="mm_toggle_particles"
+                    disabled={!isAccepted}
+                  />
                 </div>
               </div>
 
@@ -520,10 +889,30 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'Przepływ pracy' : 'Workflow'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <QuickToolBtn icon={Rocket} label={isPl ? 'Konwersja zbiorcza' : 'Batch convert'} action="mm_batch_convert" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Presentation} label={isPl ? 'Tryb prezentacji' : 'Presentation mode'} action="mm_presentation" disabled={!isAccepted} />
-                  <QuickToolBtn icon={ListChecks} label={isPl ? 'Oś czasu' : 'Timeline view'} action="mm_timeline" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Save} label={isPl ? 'Historia snapshotów' : 'Snapshot history'} action="mm_snapshots" disabled={!isAccepted} />
+                  <QuickToolBtn
+                    icon={Rocket}
+                    label={isPl ? 'Konwersja zbiorcza' : 'Batch convert'}
+                    action="mm_batch_convert"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Presentation}
+                    label={isPl ? 'Tryb prezentacji' : 'Presentation mode'}
+                    action="mm_presentation"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={ListChecks}
+                    label={isPl ? 'Oś czasu' : 'Timeline view'}
+                    action="mm_timeline"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Save}
+                    label={isPl ? 'Historia snapshotów' : 'Snapshot history'}
+                    action="mm_snapshots"
+                    disabled={!isAccepted}
+                  />
                 </div>
               </div>
 
@@ -531,12 +920,52 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'Generatory AI' : 'AI Generators'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <GeneratorBtn icon={Wand2} label={isPl ? 'Generuj gałęzie' : 'Generate branches'} onClick={handleMMGenerateBranches} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'mm_branch_generator'} />
-                  <GeneratorBtn icon={Sparkles} label={isPl ? 'Rozbuduj wybraną gałąź' : 'Expand selected branch'} onClick={handleMMExpandBranch} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={false} />
-                  <GeneratorBtn icon={Search} label={isPl ? 'Analiza luk (gap analysis)' : 'Gap analysis'} onClick={handleMMGapAnalysis} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'mm_gap_analysis'} />
-                  <GeneratorBtn icon={Target} label={isPl ? 'Pogłęb wybrany temat' : 'Deepen selected topic'} onClick={handleMMDeepenNode} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'mm_deepen_node'} />
-                  <GeneratorBtn icon={Zap} label={isPl ? 'Podsumuj gałąź' : 'Summarize branch'} onClick={handleMMSummarize} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'mm_summarize'} />
-                  <QuickToolBtn icon={GitBranch} label={isPl ? 'Co jeśli...? (What-If)' : 'What if...? (What-If)'} action="mm_what_if" disabled={!isAccepted} />
+                  <GeneratorBtn
+                    icon={Wand2}
+                    label={isPl ? 'Generuj gałęzie' : 'Generate branches'}
+                    onClick={handleMMGenerateBranches}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'mm_branch_generator'}
+                  />
+                  <GeneratorBtn
+                    icon={Sparkles}
+                    label={isPl ? 'Rozbuduj wybraną gałąź' : 'Expand selected branch'}
+                    onClick={handleMMExpandBranch}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={false}
+                  />
+                  <GeneratorBtn
+                    icon={Search}
+                    label={isPl ? 'Analiza luk (gap analysis)' : 'Gap analysis'}
+                    onClick={handleMMGapAnalysis}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'mm_gap_analysis'}
+                  />
+                  <GeneratorBtn
+                    icon={Target}
+                    label={isPl ? 'Pogłęb wybrany temat' : 'Deepen selected topic'}
+                    onClick={handleMMDeepenNode}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'mm_deepen_node'}
+                  />
+                  <GeneratorBtn
+                    icon={Zap}
+                    label={isPl ? 'Podsumuj gałąź' : 'Summarize branch'}
+                    onClick={handleMMSummarize}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'mm_summarize'}
+                  />
+                  <QuickToolBtn
+                    icon={GitBranch}
+                    label={isPl ? 'Co jeśli...? (What-If)' : 'What if...? (What-If)'}
+                    action="mm_what_if"
+                    disabled={!isAccepted}
+                  />
                 </div>
               </div>
 
@@ -544,11 +973,36 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'AI: Inteligencja' : 'AI: Intelligence'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <QuickToolBtn icon={Network} label={isPl ? 'Wykryj zależności' : 'Detect dependencies'} action="mm_dependency_detect" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Target} label={isPl ? 'Priorytetyzacja AI' : 'AI Priority'} action="mm_priority_recommender" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Group} label={isPl ? 'Auto-klastry AI' : 'AI Auto-Clustering'} action="mm_auto_clustering" disabled={!isAccepted} />
-                  <QuickToolBtn icon={SmilePlus} label={isPl ? 'Analiza sentymentu' : 'Sentiment analysis'} action="mm_sentiment_analysis" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Globe} label={isPl ? 'Krajobraz konkurencyjny' : 'Competitive landscape'} action="mm_competitive_landscape" disabled={!isAccepted} />
+                  <QuickToolBtn
+                    icon={Network}
+                    label={isPl ? 'Wykryj zależności' : 'Detect dependencies'}
+                    action="mm_dependency_detect"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Target}
+                    label={isPl ? 'Priorytetyzacja AI' : 'AI Priority'}
+                    action="mm_priority_recommender"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Group}
+                    label={isPl ? 'Auto-klastry AI' : 'AI Auto-Clustering'}
+                    action="mm_auto_clustering"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={SmilePlus}
+                    label={isPl ? 'Analiza sentymentu' : 'Sentiment analysis'}
+                    action="mm_sentiment_analysis"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Globe}
+                    label={isPl ? 'Krajobraz konkurencyjny' : 'Competitive landscape'}
+                    action="mm_competitive_landscape"
+                    disabled={!isAccepted}
+                  />
                 </div>
               </div>
 
@@ -556,8 +1010,18 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'Współpraca' : 'Collaboration'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <QuickToolBtn icon={MessageSquare} label={isPl ? 'Komentarze do węzła' : 'Node comments'} action="mm_comments" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Activity} label={isPl ? 'Aktywność' : 'Activity feed'} action="mm_activity_feed" disabled={!isAccepted} />
+                  <QuickToolBtn
+                    icon={MessageSquare}
+                    label={isPl ? 'Komentarze do węzła' : 'Node comments'}
+                    action="mm_comments"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Activity}
+                    label={isPl ? 'Aktywność' : 'Activity feed'}
+                    action="mm_activity_feed"
+                    disabled={!isAccepted}
+                  />
                 </div>
               </div>
 
@@ -565,13 +1029,48 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'Analityka' : 'Analytics'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <QuickToolBtn icon={Heart} label={isPl ? 'Zdrowie mapy' : 'Map health'} action="mm_toggle_health" disabled={!isAccepted} />
-                  <QuickToolBtn icon={TrendingUp} label={isPl ? 'Lejek pomysłów' : 'Idea funnel'} action="mm_funnel_analytics" disabled={!isAccepted} />
-                  <QuickToolBtn icon={GitMerge} label={isPl ? 'Układ promieniowy' : 'Radial layout'} action="mm_radial_layout" disabled={!isAccepted} />
-                  <QuickToolBtn icon={ArrowLeftRight} label={isPl ? 'Porównanie gałęzi' : 'Branch comparison'} action="mm_branch_comparison" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Calendar} label={isPl ? 'Mapa ciepła czasu' : 'Time heatmap'} action="mm_time_heatmap" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Shuffle} label={isPl ? 'Układ siłowy' : 'Force layout'} action="mm_force_layout" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Box} label={isPl ? 'Widok 3D' : '3D View'} action="mm_3d_view" disabled={!isAccepted} />
+                  <QuickToolBtn
+                    icon={Heart}
+                    label={isPl ? 'Zdrowie mapy' : 'Map health'}
+                    action="mm_toggle_health"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={TrendingUp}
+                    label={isPl ? 'Lejek pomysłów' : 'Idea funnel'}
+                    action="mm_funnel_analytics"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={GitMerge}
+                    label={isPl ? 'Układ promieniowy' : 'Radial layout'}
+                    action="mm_radial_layout"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={ArrowLeftRight}
+                    label={isPl ? 'Porównanie gałęzi' : 'Branch comparison'}
+                    action="mm_branch_comparison"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Calendar}
+                    label={isPl ? 'Mapa ciepła czasu' : 'Time heatmap'}
+                    action="mm_time_heatmap"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Shuffle}
+                    label={isPl ? 'Układ siłowy' : 'Force layout'}
+                    action="mm_force_layout"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Box}
+                    label={isPl ? 'Widok 3D' : '3D View'}
+                    action="mm_3d_view"
+                    disabled={!isAccepted}
+                  />
                 </div>
               </div>
 
@@ -579,10 +1078,30 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'Import' : 'Import'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <QuickToolBtn icon={Mic} label={isPl ? 'Mów pomysły (Voice)' : 'Voice to Node'} action="mm_voice" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Upload} label={isPl ? 'Dokument → Mapa' : 'Document → Map'} action="mm_doc_to_map" disabled={!isAccepted} />
-                  <QuickToolBtn icon={MessageSquare} label={isPl ? 'Wywiady → Mapa' : 'Interviews → Map'} action="mm_interview_to_map" disabled={!isAccepted} />
-                  <QuickToolBtn icon={FileUp} label={isPl ? 'Import XMind/FreeMind' : 'Import XMind/FreeMind'} action="mm_import_external" disabled={!isAccepted} />
+                  <QuickToolBtn
+                    icon={Mic}
+                    label={isPl ? 'Mów pomysły (Voice)' : 'Voice to Node'}
+                    action="mm_voice"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Upload}
+                    label={isPl ? 'Dokument → Mapa' : 'Document → Map'}
+                    action="mm_doc_to_map"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={MessageSquare}
+                    label={isPl ? 'Wywiady → Mapa' : 'Interviews → Map'}
+                    action="mm_interview_to_map"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={FileUp}
+                    label={isPl ? 'Import XMind/FreeMind' : 'Import XMind/FreeMind'}
+                    action="mm_import_external"
+                    disabled={!isAccepted}
+                  />
                 </div>
               </div>
 
@@ -590,8 +1109,18 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'Eksport zaawansowany' : 'Advanced Export'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <QuickToolBtn icon={Code} label={isPl ? 'Eksport Mermaid/PlantUML' : 'Export Mermaid/PlantUML'} action="mm_export_diagram" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Webhook} label={isPl ? 'Konfiguracja webhooków' : 'Webhook settings'} action="mm_webhooks" disabled={!isAccepted} />
+                  <QuickToolBtn
+                    icon={Code}
+                    label={isPl ? 'Eksport Mermaid/PlantUML' : 'Export Mermaid/PlantUML'}
+                    action="mm_export_diagram"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Webhook}
+                    label={isPl ? 'Konfiguracja webhooków' : 'Webhook settings'}
+                    action="mm_webhooks"
+                    disabled={!isAccepted}
+                  />
                 </div>
               </div>
             </div>
@@ -600,83 +1129,532 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           {/* Process Flow quick tools + AI generators */}
           {activeTool === 'process_flow' && (
             <div className="space-y-1.5">
-              <QuickToolBtn icon={CircleDot} label="Start" action="pf_add_start" disabled={!isAccepted} />
-              <QuickToolBtn icon={Square} label={isPl ? 'Akcja' : 'Action'} action="pf_add_action" disabled={!isAccepted} />
-              <QuickToolBtn icon={Diamond} label={isPl ? 'Decyzja' : 'Decision'} action="pf_add_decision" disabled={!isAccepted} />
-              <QuickToolBtn icon={StopCircle} label={isPl ? 'Koniec' : 'End'} action="pf_add_end" disabled={!isAccepted} />
+              <QuickToolBtn
+                icon={CircleDot}
+                label="Start"
+                action="pf_add_start"
+                disabled={!isAccepted}
+              />
+              <QuickToolBtn
+                icon={Square}
+                label={isPl ? 'Akcja' : 'Action'}
+                action="pf_add_action"
+                disabled={!isAccepted}
+              />
+              <QuickToolBtn
+                icon={Diamond}
+                label={isPl ? 'Decyzja' : 'Decision'}
+                action="pf_add_decision"
+                disabled={!isAccepted}
+              />
+              <QuickToolBtn
+                icon={StopCircle}
+                label={isPl ? 'Koniec' : 'End'}
+                action="pf_add_end"
+                disabled={!isAccepted}
+              />
               <QuickToolBtn icon={Plus} label="Lane" action="pf_add_lane" disabled={!isAccepted} />
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'Generatory AI' : 'AI Generators'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <GeneratorBtn icon={Wand2} label={isPl ? 'Generuj lane\'y' : 'Generate lanes'} onClick={handleGenerateLanes} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'lane_generator'} />
-                  <GeneratorBtn icon={Zap} label={isPl ? 'Generuj przepływ' : 'Generate flow'} onClick={handleGenerateFlow} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'flow_generator'} />
-                  <GeneratorBtn icon={Shield} label={isPl ? 'AI: Wykryj wąskie gardła' : 'AI: Detect bottlenecks'} onClick={handleGenerateBottleneck} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'bottleneck'} />
-                  <GeneratorBtn icon={Wand2} label={isPl ? 'AI: Generuj VSM' : 'AI: Generate VSM'} onClick={handleGenerateVSM} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'vsm_generator'} />
-                  <GeneratorBtn icon={Zap} label={isPl ? 'AI: VSM Stan Przyszły' : 'AI: VSM Future State'} onClick={handleGenerateVSMFuture} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'vsm_future_state'} />
+                  <GeneratorBtn
+                    icon={Wand2}
+                    label={isPl ? "Generuj lane'y" : 'Generate lanes'}
+                    onClick={handleGenerateLanes}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'lane_generator'}
+                  />
+                  <GeneratorBtn
+                    icon={Zap}
+                    label={isPl ? 'Generuj przepływ' : 'Generate flow'}
+                    onClick={handleGenerateFlow}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'flow_generator'}
+                  />
+                  <GeneratorBtn
+                    icon={Shield}
+                    label={isPl ? 'AI: Wykryj wąskie gardła' : 'AI: Detect bottlenecks'}
+                    onClick={handleGenerateBottleneck}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'bottleneck'}
+                  />
+                  <GeneratorBtn
+                    icon={Wand2}
+                    label={isPl ? 'AI: Generuj VSM' : 'AI: Generate VSM'}
+                    onClick={handleGenerateVSM}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'vsm_generator'}
+                  />
+                  <GeneratorBtn
+                    icon={Zap}
+                    label={isPl ? 'AI: VSM Stan Przyszły' : 'AI: VSM Future State'}
+                    onClick={handleGenerateVSMFuture}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'vsm_future_state'}
+                  />
                 </div>
               </div>
+
+              {/* V5-IDEA-23: VSM mode tools */}
+              <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+                <SectionLabel>VSM</SectionLabel>
+                <div className="space-y-1.5">
+                  <QuickToolBtn
+                    icon={Box}
+                    label={isPl ? 'Proces VSM' : 'VSM Process'}
+                    action="pf_add_vsm_process"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Activity}
+                    label={isPl ? 'Zapas' : 'Inventory'}
+                    action="pf_add_vsm_inventory"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Globe}
+                    label={isPl ? 'Dostawca' : 'Supplier'}
+                    action="pf_add_vsm_supplier"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Heart}
+                    label={isPl ? 'Klient' : 'Customer'}
+                    action="pf_add_vsm_customer"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Zap}
+                    label="Kaizen"
+                    action="pf_add_vsm_kaizen"
+                    disabled={!isAccepted}
+                  />
+                </div>
+              </div>
+
+              {/* V5-IDEA-22: Automation mode tools */}
+              <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+                <SectionLabel>{isPl ? 'Automatyzacja' : 'Automation'}</SectionLabel>
+                <div className="space-y-1.5">
+                  <QuickToolBtn
+                    icon={Zap}
+                    label={isPl ? 'Oznacz jako kandydata' : 'Mark automation candidate'}
+                    action="pf_mark_automation"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={TrendingUp}
+                    label={isPl ? 'Dodaj metryki czasu' : 'Add time metrics'}
+                    action="pf_add_metrics"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={BarChart3}
+                    label={isPl ? 'Analiza oszczędności' : 'Savings analysis'}
+                    action="pf_savings_analysis"
+                    disabled={!isAccepted}
+                  />
+                </div>
+              </div>
+
+              {/* V5-IDEA-38: Convert selection to outputs (process flow) */}
+              {selection.type !== 'none' && selection.count > 0 && (
+                <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+                  <SectionLabel>{isPl ? 'Konwertuj segment' : 'Convert segment'}</SectionLabel>
+                  <div className="space-y-1">
+                    <QuickToolBtn
+                      icon={Target}
+                      label={isPl ? '→ Inicjatywa' : '→ Initiative'}
+                      action="pf_convert_initiative"
+                      disabled={!isAccepted}
+                    />
+                    <QuickToolBtn
+                      icon={CheckSquare}
+                      label={isPl ? '→ Zadania' : '→ Tasks'}
+                      action="pf_convert_task_set"
+                      disabled={!isAccepted}
+                    />
+                    <QuickToolBtn
+                      icon={FileText}
+                      label={isPl ? '→ Raport' : '→ Report'}
+                      action="pf_convert_report"
+                      disabled={!isAccepted}
+                    />
+                    <QuickToolBtn
+                      icon={BarChart3}
+                      label={isPl ? '→ Analiza' : '→ Analysis'}
+                      action="pf_convert_analysis"
+                      disabled={!isAccepted}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {/* Table quick tools + AI generators */}
           {activeTool === 'table' && (
             <div className="space-y-1.5">
-              <QuickToolBtn icon={Columns3} label={isPl ? 'Dodaj kolumnę' : 'Add column'} action="tbl_add_column" disabled={!isAccepted} />
-              <QuickToolBtn icon={ArrowDownUp} label={isPl ? 'Sortuj' : 'Sort'} action="tbl_sort" disabled={!isAccepted} />
-              <QuickToolBtn icon={Filter} label={isPl ? 'Filtruj' : 'Filter'} action="tbl_filter" disabled={!isAccepted} />
-              <QuickToolBtn icon={Sparkles} label={isPl ? 'Asystent AI (/)' : 'AI Assistant (/)'} action="tbl_ai_assistant" disabled={!isAccepted} />
-              <QuickToolBtn icon={LayoutGrid} label={isPl ? 'Framework' : 'Framework'} action="tbl_framework" disabled={!isAccepted} />
-              <QuickToolBtn icon={Download} label={isPl ? 'Eksportuj CSV' : 'Export CSV'} action="tbl_export_csv" disabled={!isAccepted} />
+              <QuickToolBtn
+                icon={Columns3}
+                label={isPl ? 'Dodaj kolumnę' : 'Add column'}
+                action="tbl_add_column"
+                disabled={!isAccepted}
+              />
+              <QuickToolBtn
+                icon={ArrowDownUp}
+                label={isPl ? 'Sortuj' : 'Sort'}
+                action="tbl_sort"
+                disabled={!isAccepted}
+              />
+              <QuickToolBtn
+                icon={Filter}
+                label={isPl ? 'Filtruj' : 'Filter'}
+                action="tbl_filter"
+                disabled={!isAccepted}
+              />
+              <QuickToolBtn
+                icon={Sparkles}
+                label={isPl ? 'Asystent AI (/)' : 'AI Assistant (/)'}
+                action="tbl_ai_assistant"
+                disabled={!isAccepted}
+              />
+              <QuickToolBtn
+                icon={LayoutGrid}
+                label={isPl ? 'Framework' : 'Framework'}
+                action="tbl_framework"
+                disabled={!isAccepted}
+              />
+              <QuickToolBtn
+                icon={Download}
+                label={isPl ? 'Eksportuj CSV' : 'Export CSV'}
+                action="tbl_export_csv"
+                disabled={!isAccepted}
+              />
 
               {/* View layout shortcuts */}
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'Widoki' : 'Views'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <QuickToolBtn icon={Layers} label="Kanban" action="tbl_kanban" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Target} label="Matrix" action="tbl_matrix" disabled={!isAccepted} />
-                  <QuickToolBtn icon={StickyNote} label={isPl ? 'Karteczki' : 'Sticky Notes'} action="tbl_sticky" disabled={!isAccepted} />
-                  <QuickToolBtn icon={BarChart3} label={isPl ? 'Podsumowanie' : 'Summary'} action="tbl_summary" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Palette} label={isPl ? 'Paleta kolorów' : 'Color Palette'} action="tbl_color_palette" disabled={!isAccepted} />
+                  <QuickToolBtn
+                    icon={Layers}
+                    label="Kanban"
+                    action="tbl_kanban"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Target}
+                    label="Matrix"
+                    action="tbl_matrix"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={StickyNote}
+                    label={isPl ? 'Karteczki' : 'Sticky Notes'}
+                    action="tbl_sticky"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={BarChart3}
+                    label={isPl ? 'Podsumowanie' : 'Summary'}
+                    action="tbl_summary"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Palette}
+                    label={isPl ? 'Paleta kolorów' : 'Color Palette'}
+                    action="tbl_color_palette"
+                    disabled={!isAccepted}
+                  />
                 </div>
               </div>
 
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'Generatory AI' : 'AI Generators'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <GeneratorBtn icon={Columns3} label={isPl ? 'Generuj kolumny' : 'Generate columns'} onClick={handleGenerateTableColumns} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'table_columns'} />
-                  <GeneratorBtn icon={Layers} label={isPl ? 'Generuj widoki' : 'Generate views'} onClick={handleGenerateTableView} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'table_views'} />
+                  <GeneratorBtn
+                    icon={Columns3}
+                    label={isPl ? 'Generuj kolumny' : 'Generate columns'}
+                    onClick={handleGenerateTableColumns}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'table_columns'}
+                  />
+                  <GeneratorBtn
+                    icon={Layers}
+                    label={isPl ? 'Generuj widoki' : 'Generate views'}
+                    onClick={handleGenerateTableView}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'table_views'}
+                  />
                 </div>
               </div>
+
+              {/* V5-IDEA-25: AI structure and simplification */}
+              <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+                <SectionLabel>{isPl ? 'Struktura AI' : 'AI Structure'}</SectionLabel>
+                <div className="space-y-1.5">
+                  <GeneratorBtn
+                    icon={Sparkles}
+                    label={isPl ? 'Generuj wiersze z opisu' : 'Generate rows from text'}
+                    onClick={handleGenerateTableRows}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'table_rows'}
+                  />
+                  <GeneratorBtn
+                    icon={Filter}
+                    label={isPl ? 'Uprość dane źródłowe' : 'Simplify source data'}
+                    onClick={handleGenerateTableSimplify}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'table_simplify'}
+                  />
+                </div>
+              </div>
+
+              {/* V5-IDEA-35: Table row artifact autofill and refresh */}
+              <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+                <SectionLabel>{isPl ? 'Artefakty w tabeli' : 'Table Artifacts'}</SectionLabel>
+                <div className="space-y-1.5">
+                  <QuickToolBtn
+                    icon={Link2}
+                    label={isPl ? 'Dołącz artefakt do wiersza' : 'Link artifact to row'}
+                    action="tbl_link_artifact_to_row"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Download}
+                    label={isPl ? 'Autofill z artefaktów' : 'Autofill from artifacts'}
+                    action="tbl_autofill_from_artifact"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={RefreshCw}
+                    label={isPl ? 'Odśwież dane' : 'Refresh artifact data'}
+                    action="tbl_refresh_artifact_data"
+                    disabled={!isAccepted}
+                  />
+                  {/* V5-IDEA-36: AI-driven linked table construction */}
+                  <GeneratorBtn
+                    icon={Sparkles}
+                    label={
+                      isPl ? 'AI: Buduj tabelę z artefaktów' : 'AI: Build table from artifacts'
+                    }
+                    onClick={() => handleAIGenerate('ai_build_linked_table' as GeneratorType)}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'ai_build_linked_table'}
+                  />
+                </div>
+              </div>
+
+              {/* V5-IDEA-38: Convert selection to outputs (table rows) */}
+              {selection.type !== 'none' && selection.count > 0 && (
+                <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+                  <SectionLabel>{isPl ? 'Konwertuj wiersze' : 'Convert rows'}</SectionLabel>
+                  <div className="space-y-1">
+                    <QuickToolBtn
+                      icon={Target}
+                      label={isPl ? '→ Inicjatywa' : '→ Initiative'}
+                      action="tbl_convert_initiative"
+                      disabled={!isAccepted}
+                    />
+                    <QuickToolBtn
+                      icon={CheckSquare}
+                      label={isPl ? '→ Zadania' : '→ Tasks'}
+                      action="tbl_convert_task_set"
+                      disabled={!isAccepted}
+                    />
+                    <QuickToolBtn
+                      icon={Presentation}
+                      label={isPl ? '→ Prezentacja' : '→ Presentation'}
+                      action="tbl_convert_presentation"
+                      disabled={!isAccepted}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {/* Whiteboard quick tools + AI generators */}
           {activeTool === 'whiteboard' && (
             <div className="space-y-1.5">
-              <QuickToolBtn icon={StickyNote} label={isPl ? 'Notatka' : 'Sticky note'} action="wb_add_sticky" disabled={!isAccepted} />
-              <QuickToolBtn icon={Type} label={isPl ? 'Tekst' : 'Text'} action="wb_add_text" disabled={!isAccepted} />
-              <QuickToolBtn icon={Group} label={isPl ? 'Grupa' : 'Group'} action="wb_add_group" disabled={!isAccepted} />
+              <QuickToolBtn
+                icon={StickyNote}
+                label={isPl ? 'Notatka' : 'Sticky note'}
+                action="wb_add_sticky"
+                disabled={!isAccepted}
+              />
+              <QuickToolBtn
+                icon={Type}
+                label={isPl ? 'Tekst' : 'Text'}
+                action="wb_add_text"
+                disabled={!isAccepted}
+              />
+              <QuickToolBtn
+                icon={Group}
+                label={isPl ? 'Grupa' : 'Group'}
+                action="wb_add_group"
+                disabled={!isAccepted}
+              />
 
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'Metryki i dane' : 'Metrics & Data'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <QuickToolBtn icon={TrendingUp} label={isPl ? 'KPI Badge' : 'KPI Badge'} action="wb_add_kpi" disabled={!isAccepted} />
-                  <QuickToolBtn icon={Target} label={isPl ? 'Wynik / Score' : 'Score Node'} action="wb_add_score" disabled={!isAccepted} />
-                  <QuickToolBtn icon={BarChart3} label={isPl ? 'Pasek postępu' : 'Progress Bar'} action="wb_add_progress" disabled={!isAccepted} />
-                  <QuickToolBtn icon={FileText} label={isPl ? 'Karta podsumowania' : 'Summary Card'} action="wb_add_summary" disabled={!isAccepted} />
+                  <QuickToolBtn
+                    icon={TrendingUp}
+                    label={isPl ? 'KPI Badge' : 'KPI Badge'}
+                    action="wb_add_kpi"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={Target}
+                    label={isPl ? 'Wynik / Score' : 'Score Node'}
+                    action="wb_add_score"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={BarChart3}
+                    label={isPl ? 'Pasek postępu' : 'Progress Bar'}
+                    action="wb_add_progress"
+                    disabled={!isAccepted}
+                  />
+                  <QuickToolBtn
+                    icon={FileText}
+                    label={isPl ? 'Karta podsumowania' : 'Summary Card'}
+                    action="wb_add_summary"
+                    disabled={!isAccepted}
+                  />
                 </div>
               </div>
 
               <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
                 <SectionLabel>{isPl ? 'Generatory AI' : 'AI Generators'}</SectionLabel>
                 <div className="space-y-1.5">
-                  <GeneratorBtn icon={Sparkles} label={isPl ? 'AI: Brainstorm' : 'AI: Brainstorm'} onClick={handleGenerateWBBrainstorm} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'whiteboard_brainstorm'} />
-                  <GeneratorBtn icon={Layers} label={isPl ? 'AI: Klastry tematyczne' : 'AI: Thematic clusters'} onClick={handleGenerateWBClusters} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'whiteboard_clusters'} />
-                  <GeneratorBtn icon={Group} label={isPl ? 'AI: Auto-klastry' : 'AI: Auto-cluster'} onClick={handleGenerateAutoCluster} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'auto_cluster'} />
-                  <GeneratorBtn icon={Wand2} label={isPl ? 'AI: Organizuj' : 'AI: Organize'} onClick={handleGenerateWBOrganize} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'whiteboard_organize'} />
-                  <GeneratorBtn icon={Layers} label={isPl ? 'AI: Podsumuj zaznaczone' : 'AI: Summarize selected'} onClick={handleGenerateStickySummarize} disabled={!isAccepted || !!generatingId} isPl={isPl} loading={generatingId === 'sticky_summarize'} />
+                  <GeneratorBtn
+                    icon={Sparkles}
+                    label={isPl ? 'AI: Brainstorm' : 'AI: Brainstorm'}
+                    onClick={handleGenerateWBBrainstorm}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'whiteboard_brainstorm'}
+                  />
+                  <GeneratorBtn
+                    icon={Layers}
+                    label={isPl ? 'AI: Klastry tematyczne' : 'AI: Thematic clusters'}
+                    onClick={handleGenerateWBClusters}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'whiteboard_clusters'}
+                  />
+                  <GeneratorBtn
+                    icon={Group}
+                    label={isPl ? 'AI: Auto-klastry' : 'AI: Auto-cluster'}
+                    onClick={handleGenerateAutoCluster}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'auto_cluster'}
+                  />
+                  <GeneratorBtn
+                    icon={Wand2}
+                    label={isPl ? 'AI: Organizuj' : 'AI: Organize'}
+                    onClick={handleGenerateWBOrganize}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'whiteboard_organize'}
+                  />
+                  <GeneratorBtn
+                    icon={Layers}
+                    label={isPl ? 'AI: Podsumuj zaznaczone' : 'AI: Summarize selected'}
+                    onClick={handleGenerateStickySummarize}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'sticky_summarize'}
+                  />
                 </div>
               </div>
+
+              {/* V5-IDEA-20: Facilitation generators */}
+              <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+                <SectionLabel>{isPl ? 'Facylitacja' : 'Facilitation'}</SectionLabel>
+                <div className="space-y-1.5">
+                  <GeneratorBtn
+                    icon={Search}
+                    label={isPl ? 'AI: Znajdź tematy' : 'AI: Find themes'}
+                    onClick={handleGenerateWBFindThemes}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'wb_find_themes'}
+                  />
+                  <GeneratorBtn
+                    icon={Target}
+                    label={isPl ? 'AI: Nazwij klastry' : 'AI: Name clusters'}
+                    onClick={handleGenerateWBNameClusters}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'wb_name_clusters'}
+                  />
+                  <GeneratorBtn
+                    icon={GitBranch}
+                    label={isPl ? 'Klastry → Gałęzie mapy' : 'Clusters → Map branches'}
+                    onClick={handleGenerateWBToMapBranches}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'wb_to_map_branches'}
+                  />
+                  <GeneratorBtn
+                    icon={LayoutGrid}
+                    label={isPl ? 'Notatki → Tabela' : 'Notes → Table'}
+                    onClick={handleGenerateWBToTable}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'wb_to_table'}
+                  />
+                  <GeneratorBtn
+                    icon={ListChecks}
+                    label={isPl ? 'AI: Wyciągnij akcje' : 'AI: Extract actions'}
+                    onClick={handleGenerateWBExtractActions}
+                    disabled={!isAccepted || !!generatingId}
+                    isPl={isPl}
+                    loading={generatingId === 'wb_extract_actions'}
+                  />
+                </div>
+              </div>
+
+              {/* V5-IDEA-38: Convert selection to outputs (whiteboard) */}
+              {selection.type !== 'none' && selection.count > 0 && (
+                <div className="pt-2 border-t border-slate-200/20 dark:border-white/[0.04]">
+                  <SectionLabel>{isPl ? 'Konwertuj klaster' : 'Convert cluster'}</SectionLabel>
+                  <div className="space-y-1">
+                    <QuickToolBtn
+                      icon={Target}
+                      label={isPl ? '→ Inicjatywa' : '→ Initiative'}
+                      action="wb_convert_initiative"
+                      disabled={!isAccepted}
+                    />
+                    <QuickToolBtn
+                      icon={CheckSquare}
+                      label={isPl ? '→ Zadania' : '→ Tasks'}
+                      action="wb_convert_task_set"
+                      disabled={!isAccepted}
+                    />
+                    <QuickToolBtn
+                      icon={FileText}
+                      label={isPl ? '→ Raport' : '→ Report'}
+                      action="wb_convert_report"
+                      disabled={!isAccepted}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -838,7 +1816,9 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
           <SectionLabel>{isPl ? 'Konwersja' : 'Convert'}</SectionLabel>
           {selection.type !== 'none' && selection.count > 0 && (
             <div className="mb-2 text-[10px] text-primary-600 dark:text-primary-400 bg-primary-500/5 rounded-lg px-2 py-1.5">
-              {isPl ? `Konwertuj zaznaczenie (${selection.count})` : `Convert selection (${selection.count})`}
+              {isPl
+                ? `Konwertuj zaznaczenie (${selection.count})`
+                : `Convert selection (${selection.count})`}
             </div>
           )}
           <div className="grid grid-cols-1 gap-1.5">
@@ -936,10 +1916,25 @@ const QuickToolBtn: React.FC<{
 // ── Node Properties Panel ────────────────────────────────────────────────────
 
 const NODE_STATUS_OPTIONS = [
-  { value: 'todo', labelEn: 'To Do', labelPl: 'Do zrobienia', color: 'bg-slate-200 text-slate-700' },
-  { value: 'in_progress', labelEn: 'In Progress', labelPl: 'W toku', color: 'bg-blue-100 text-blue-700' },
+  {
+    value: 'todo',
+    labelEn: 'To Do',
+    labelPl: 'Do zrobienia',
+    color: 'bg-slate-200 text-slate-700',
+  },
+  {
+    value: 'in_progress',
+    labelEn: 'In Progress',
+    labelPl: 'W toku',
+    color: 'bg-blue-100 text-blue-700',
+  },
   { value: 'done', labelEn: 'Done', labelPl: 'Gotowe', color: 'bg-green-100 text-green-700' },
-  { value: 'blocked', labelEn: 'Blocked', labelPl: 'Zablokowane', color: 'bg-red-100 text-red-700' },
+  {
+    value: 'blocked',
+    labelEn: 'Blocked',
+    labelPl: 'Zablokowane',
+    color: 'bg-red-100 text-red-700',
+  },
 ];
 
 const NodePropertiesPanel: React.FC<{
@@ -956,15 +1951,21 @@ const NodePropertiesPanel: React.FC<{
   const [tags, setTags] = useState(meta?.tags?.join(', ') || '');
   const [artifactRef, setArtifactRef] = useState(meta?.artifactRef || '');
 
-  const dispatchUpdate = useCallback((data: Record<string, any>) => {
-    window.dispatchEvent(
-      new CustomEvent('idea-workspace-node-update', { detail: { nodeId, data } })
-    );
-  }, [nodeId]);
+  const dispatchUpdate = useCallback(
+    (data: Record<string, any>) => {
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-node-update', { detail: { nodeId, data } })
+      );
+    },
+    [nodeId]
+  );
 
-  const handleBlur = useCallback((field: string, value: any) => {
-    dispatchUpdate({ [field]: value });
-  }, [dispatchUpdate]);
+  const handleBlur = useCallback(
+    (field: string, value: any) => {
+      dispatchUpdate({ [field]: value });
+    },
+    [dispatchUpdate]
+  );
 
   return (
     <div className="mb-3 p-2.5 rounded-xl bg-primary-500/5 border border-primary-500/10 space-y-2">
@@ -1034,7 +2035,10 @@ const NodePropertiesPanel: React.FC<{
           />
           <select
             value={durationUnit}
-            onChange={(e) => { setDurationUnit(e.target.value); handleBlur('durationUnit', e.target.value); }}
+            onChange={(e) => {
+              setDurationUnit(e.target.value);
+              handleBlur('durationUnit', e.target.value);
+            }}
             disabled={locked}
             className="px-1.5 py-1 text-[11px] rounded-lg border border-slate-200/60 dark:border-navy-600/60 bg-white/60 dark:bg-navy-800/60 text-slate-700 dark:text-slate-200 outline-none disabled:opacity-50"
           >
@@ -1053,12 +2057,17 @@ const NodePropertiesPanel: React.FC<{
         </label>
         <select
           value={status}
-          onChange={(e) => { setStatus(e.target.value); handleBlur('status', e.target.value); }}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            handleBlur('status', e.target.value);
+          }}
           disabled={locked}
           className="w-full mt-0.5 px-2 py-1 text-[11px] rounded-lg border border-slate-200/60 dark:border-navy-600/60 bg-white/60 dark:bg-navy-800/60 text-slate-700 dark:text-slate-200 outline-none focus:border-primary-400 disabled:opacity-50"
         >
           {NODE_STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{isPl ? opt.labelPl : opt.labelEn}</option>
+            <option key={opt.value} value={opt.value}>
+              {isPl ? opt.labelPl : opt.labelEn}
+            </option>
           ))}
         </select>
       </div>
@@ -1072,7 +2081,15 @@ const NodePropertiesPanel: React.FC<{
           type="text"
           value={tags}
           onChange={(e) => setTags(e.target.value)}
-          onBlur={() => handleBlur('tags', tags.split(',').map((t: string) => t.trim()).filter(Boolean))}
+          onBlur={() =>
+            handleBlur(
+              'tags',
+              tags
+                .split(',')
+                .map((t: string) => t.trim())
+                .filter(Boolean)
+            )
+          }
           disabled={locked}
           className="w-full mt-0.5 px-2 py-1 text-[11px] rounded-lg border border-slate-200/60 dark:border-navy-600/60 bg-white/60 dark:bg-navy-800/60 text-slate-700 dark:text-slate-200 outline-none focus:border-primary-400 disabled:opacity-50"
           placeholder={isPl ? 'tag1, tag2, tag3' : 'tag1, tag2, tag3'}
@@ -1121,7 +2138,12 @@ const GeneratorBtn: React.FC<{
         {loading ? (isPl ? 'Generuję…' : 'Generating…') : 'Propose → Accept'}
       </div>
     </div>
-    {!loading && <Sparkles size={10} className="text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity" />}
+    {!loading && (
+      <Sparkles
+        size={10}
+        className="text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity"
+      />
+    )}
   </button>
 );
 

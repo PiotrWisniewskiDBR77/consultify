@@ -405,8 +405,7 @@ export function computeEvidenceReport(params: {
   const missingEvidence = dimResults.filter((d) => d.evidenceStatus === 'missing').length;
   const needsReview = dimResults.filter((d) => d.evidenceStatus === 'needs_review').length;
 
-  const completenessPercent =
-    totalScored > 0 ? Math.round((withEvidence / totalScored) * 100) : 0;
+  const completenessPercent = totalScored > 0 ? Math.round((withEvidence / totalScored) * 100) : 0;
 
   const blockers: string[] = [];
 
@@ -479,7 +478,10 @@ async function fetchFromApi<T>(url: string, options?: RequestInit): Promise<T | 
   try {
     const token = localStorage.getItem('token');
     const res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       ...options,
     });
     if (!res.ok) return null;
@@ -490,7 +492,9 @@ async function fetchFromApi<T>(url: string, options?: RequestInit): Promise<T | 
 }
 
 export async function fetchEvidenceFromDB(assessmentId: string): Promise<DimensionEvidence[]> {
-  const result = await fetchFromApi<{ evidence: any[] }>(`${API_URL}/assessment-evidence/${assessmentId}`);
+  const result = await fetchFromApi<{ evidence: any[] }>(
+    `${API_URL}/assessment-evidence/${assessmentId}`
+  );
   if (result?.evidence?.length) {
     return result.evidence.map((e: any) => ({
       dimensionId: e.dimensionId,
@@ -506,18 +510,24 @@ export async function fetchEvidenceFromDB(assessmentId: string): Promise<Dimensi
   return [];
 }
 
-export async function saveEvidenceToDB(assessmentId: string, evidence: {
-  frameworkId: string;
-  dimensionId: string;
-  currentScore?: number;
-  targetScore?: number;
-  evidenceText?: string;
-  attachments?: string[];
-}): Promise<DimensionEvidence | null> {
-  const result = await fetchFromApi<{ evidence: any }>(`${API_URL}/assessment-evidence/${assessmentId}`, {
-    method: 'POST',
-    body: JSON.stringify(evidence),
-  });
+export async function saveEvidenceToDB(
+  assessmentId: string,
+  evidence: {
+    frameworkId: string;
+    dimensionId: string;
+    currentScore?: number;
+    targetScore?: number;
+    evidenceText?: string;
+    attachments?: string[];
+  }
+): Promise<DimensionEvidence | null> {
+  const result = await fetchFromApi<{ evidence: any }>(
+    `${API_URL}/assessment-evidence/${assessmentId}`,
+    {
+      method: 'POST',
+      body: JSON.stringify(evidence),
+    }
+  );
   if (result?.evidence) {
     const e = result.evidence;
     return {
@@ -534,7 +544,9 @@ export async function saveEvidenceToDB(assessmentId: string, evidence: {
   return null;
 }
 
-export async function fetchEvidenceReportFromDB(assessmentId: string): Promise<AssessmentEvidenceReport | null> {
+export async function fetchEvidenceReportFromDB(
+  assessmentId: string
+): Promise<AssessmentEvidenceReport | null> {
   const result = await fetchFromApi<any>(`${API_URL}/assessment-evidence/${assessmentId}/report`);
   if (result?.totalDimensions !== undefined) {
     return {

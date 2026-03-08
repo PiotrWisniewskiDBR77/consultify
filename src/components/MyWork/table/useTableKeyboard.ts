@@ -65,7 +65,9 @@ export function useTableKeyboard({
     const handler = (e: KeyboardEvent) => {
       const isCtrl = e.ctrlKey || e.metaKey;
       const isShift = e.shiftKey;
-      const isInput = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA';
+      const isInput =
+        document.activeElement?.tagName === 'INPUT' ||
+        document.activeElement?.tagName === 'TEXTAREA';
 
       if (isCtrl && e.key === 'z' && !isShift) {
         e.preventDefault();
@@ -91,12 +93,30 @@ export function useTableKeyboard({
       // View switching: Ctrl+Shift+<key>
       if (isCtrl && isShift) {
         switch (e.key.toUpperCase()) {
-          case 'K': e.preventDefault(); onSwitchView?.('kanban'); return;
-          case 'S': e.preventDefault(); onSwitchView?.('sticky'); return;
-          case 'M': e.preventDefault(); onSwitchView?.('matrix'); return;
-          case 'T': e.preventDefault(); onSwitchView?.('table'); return;
-          case 'F': e.preventDefault(); onToggleFilters?.(); return;
-          case 'D': e.preventDefault(); onToggleSummary?.(); return;
+          case 'K':
+            e.preventDefault();
+            onSwitchView?.('kanban');
+            return;
+          case 'S':
+            e.preventDefault();
+            onSwitchView?.('sticky');
+            return;
+          case 'M':
+            e.preventDefault();
+            onSwitchView?.('matrix');
+            return;
+          case 'T':
+            e.preventDefault();
+            onSwitchView?.('table');
+            return;
+          case 'F':
+            e.preventDefault();
+            onToggleFilters?.();
+            return;
+          case 'D':
+            e.preventDefault();
+            onToggleSummary?.();
+            return;
         }
       }
 
@@ -164,7 +184,22 @@ export function useTableKeyboard({
 
     container.addEventListener('keydown', handler);
     return () => container.removeEventListener('keydown', handler);
-  }, [colCount, containerRef, focusCell, onAddRow, onDelete, onEscape, onOpenAI, onRedo, onSave, onShowShortcuts, onSwitchView, onToggleFilters, onToggleSummary, onUndo]);
+  }, [
+    colCount,
+    containerRef,
+    focusCell,
+    onAddRow,
+    onDelete,
+    onEscape,
+    onOpenAI,
+    onRedo,
+    onSave,
+    onShowShortcuts,
+    onSwitchView,
+    onToggleFilters,
+    onToggleSummary,
+    onUndo,
+  ]);
 
   return { focusCell, focusRowRef, focusColRef };
 }

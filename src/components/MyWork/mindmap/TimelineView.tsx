@@ -38,7 +38,12 @@ const STATUS_COLORS: Record<string, string> = {
   converted: 'bg-purple-100 border-purple-400',
 };
 
-export const TimelineView: React.FC<TimelineViewProps> = ({ open, onClose, nodes, onSelectNode }) => {
+export const TimelineView: React.FC<TimelineViewProps> = ({
+  open,
+  onClose,
+  nodes,
+  onSelectNode,
+}) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
@@ -59,7 +64,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ open, onClose, nodes
     <div className="fixed inset-0 z-[92] bg-white/95 dark:bg-navy-950/95 backdrop-blur-xl flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
-        <button onClick={onClose} className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+        <button
+          onClick={onClose}
+          className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+        >
           <ChevronLeft size={16} />
         </button>
         <Calendar size={16} className="text-amber-500" />
@@ -83,7 +91,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ open, onClose, nodes
               <React.Fragment key={status}>
                 <div className="flex flex-col items-center min-w-[200px]">
                   {/* Status header */}
-                  <div className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 ${colorClass} mb-4`}>
+                  <div
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 ${colorClass} mb-4`}
+                  >
                     <Icon size={14} />
                     <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 capitalize">
                       {status.replace(/_/g, ' ')}
@@ -99,7 +109,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ open, onClose, nodes
                         onClick={() => onSelectNode(node.id)}
                         className="w-full text-left px-3 py-2 rounded-xl bg-white/60 dark:bg-navy-900/40 border border-slate-200/40 dark:border-navy-700/40 hover:bg-white dark:hover:bg-navy-900/60 hover:shadow-md transition-all"
                       >
-                        <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">{node.label}</div>
+                        <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">
+                          {node.label}
+                        </div>
                         <div className="text-[9px] text-slate-400 mt-0.5">{node.branchKey}</div>
                       </button>
                     ))}

@@ -35,7 +35,9 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
   const [converting, setConverting] = useState(false);
 
   const eligibleNodes = useMemo(() => {
-    return nodes.filter((n) => n.status !== 'converted' && !n.id.startsWith('branch-') && n.id !== 'root');
+    return nodes.filter(
+      (n) => n.status !== 'converted' && !n.id.startsWith('branch-') && n.id !== 'root'
+    );
   }, [nodes]);
 
   const toggleNode = useCallback((id: string) => {
@@ -55,22 +57,23 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
     }
   }, [eligibleNodes, selected.size]);
 
-  const handleConvert = useCallback(async (target: 'initiative' | 'decision') => {
-    if (selected.size === 0) return;
-    setConverting(true);
-    try {
-      onConvert(Array.from(selected), target);
-      toast.success(
-        isPl
-          ? `Konwertowano ${selected.size} elementów`
-          : `Converted ${selected.size} items`,
-        { duration: 1500 }
-      );
-      onClose();
-    } finally {
-      setConverting(false);
-    }
-  }, [isPl, onClose, onConvert, selected]);
+  const handleConvert = useCallback(
+    async (target: 'initiative' | 'decision') => {
+      if (selected.size === 0) return;
+      setConverting(true);
+      try {
+        onConvert(Array.from(selected), target);
+        toast.success(
+          isPl ? `Konwertowano ${selected.size} elementów` : `Converted ${selected.size} items`,
+          { duration: 1500 }
+        );
+        onClose();
+      } finally {
+        setConverting(false);
+      }
+    },
+    [isPl, onClose, onConvert, selected]
+  );
 
   if (!open) return null;
 
@@ -83,10 +86,15 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
               {isPl ? 'Konwersja zbiorcza' : 'Batch Convert'}
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-              {isPl ? `${eligibleNodes.length} elementów do konwersji` : `${eligibleNodes.length} items available`}
+              {isPl
+                ? `${eligibleNodes.length} elementów do konwersji`
+                : `${eligibleNodes.length} items available`}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
@@ -96,7 +104,11 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
             onClick={toggleAll}
             className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/60 dark:hover:bg-white/[0.04] transition-colors mb-2"
           >
-            {selected.size === eligibleNodes.length ? <CheckSquare size={14} className="text-amber-500" /> : <Square size={14} className="text-slate-400" />}
+            {selected.size === eligibleNodes.length ? (
+              <CheckSquare size={14} className="text-amber-500" />
+            ) : (
+              <Square size={14} className="text-slate-400" />
+            )}
             {isPl ? 'Zaznacz wszystko' : 'Select all'}
           </button>
 
@@ -113,7 +125,9 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
                   className="rounded border-slate-300 text-amber-500 focus:ring-amber-500"
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">{node.label}</div>
+                  <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200 truncate">
+                    {node.label}
+                  </div>
                   <div className="text-[9px] text-slate-400">{node.branchKey}</div>
                 </div>
                 {node.status && node.status !== 'idea' && (
@@ -133,7 +147,9 @@ export const BatchConvertModal: React.FC<BatchConvertModalProps> = ({
             className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[11px] font-bold bg-gradient-to-r from-amber-500/15 to-orange-500/10 text-amber-700 dark:text-amber-300 hover:from-amber-500/25 hover:to-orange-500/15 border border-amber-500/10 transition-all disabled:opacity-40"
           >
             {converting ? <Loader2 size={12} className="animate-spin" /> : <Rocket size={12} />}
-            {isPl ? `Konwertuj (${selected.size}) → Inicjatywy` : `Convert (${selected.size}) → Initiatives`}
+            {isPl
+              ? `Konwertuj (${selected.size}) → Inicjatywy`
+              : `Convert (${selected.size}) → Initiatives`}
           </button>
         </div>
       </div>

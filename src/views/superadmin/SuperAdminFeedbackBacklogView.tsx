@@ -47,13 +47,22 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return (tasks || []).filter((tItem) => {
-      if (priority !== 'ALL' && String(tItem.priority || '').toLowerCase() !== priority.toLowerCase())
+      if (
+        priority !== 'ALL' &&
+        String(tItem.priority || '').toLowerCase() !== priority.toLowerCase()
+      )
         return false;
       if (!q) return true;
       return (
-        String(tItem.title || '').toLowerCase().includes(q) ||
-        String(tItem.feedbackId || '').toLowerCase().includes(q) ||
-        String(tItem.description || '').toLowerCase().includes(q)
+        String(tItem.title || '')
+          .toLowerCase()
+          .includes(q) ||
+        String(tItem.feedbackId || '')
+          .toLowerCase()
+          .includes(q) ||
+        String(tItem.description || '')
+          .toLowerCase()
+          .includes(q)
       );
     });
   }, [tasks, query, priority]);
@@ -145,7 +154,8 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                           <span>
-                            {t('common.priority', 'Priority')}: <b>{String(item.priority || 'medium')}</b>
+                            {t('common.priority', 'Priority')}:{' '}
+                            <b>{String(item.priority || 'medium')}</b>
                           </span>
                           <span>
                             {t('common.status', 'Status')}: <b>{String(item.status || 'todo')}</b>
@@ -174,4 +184,3 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
 };
 
 export default SuperAdminFeedbackBacklogView;
-

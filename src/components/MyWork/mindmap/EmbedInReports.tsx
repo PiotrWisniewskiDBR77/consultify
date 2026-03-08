@@ -32,7 +32,10 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
   const [copied, setCopied] = useState(false);
 
   const branchNodes = useMemo(() => nodes.filter((n) => n.id.startsWith('branch-')), [nodes]);
-  const ideaNodes = useMemo(() => nodes.filter((n) => n.id !== 'root' && !n.id.startsWith('branch-')), [nodes]);
+  const ideaNodes = useMemo(
+    () => nodes.filter((n) => n.id !== 'root' && !n.id.startsWith('branch-')),
+    [nodes]
+  );
 
   const embedContent = useMemo(() => {
     if (format === 'markdown') {
@@ -88,7 +91,9 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
           .filter((e) => e.source === bn.id)
           .map((e) => {
             const node = ideaNodes.find((n) => n.id === e.target);
-            return node ? { id: node.id, label: node.data?.label, status: node.data?.status } : null;
+            return node
+              ? { id: node.id, label: node.data?.label, status: node.data?.status }
+              : null;
           })
           .filter(Boolean),
       })),
@@ -102,13 +107,16 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
   }, [branchNodes, edges, format, ideaId, ideaNodes, ideaTitle]);
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(embedContent).then(() => {
-      setCopied(true);
-      toast.success(isPl ? 'Skopiowano!' : 'Copied!', { duration: 1000 });
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      toast.error('Failed to copy');
-    });
+    navigator.clipboard
+      .writeText(embedContent)
+      .then(() => {
+        setCopied(true);
+        toast.success(isPl ? 'Skopiowano!' : 'Copied!', { duration: 1000 });
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => {
+        toast.error('Failed to copy');
+      });
   }, [embedContent, isPl]);
 
   if (!open) return null;
@@ -129,7 +137,10 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
               {isPl ? 'Osadź w raporcie' : 'Embed in Report'}
             </h3>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
@@ -161,12 +172,18 @@ export const EmbedInReports: React.FC<EmbedInReportsProps> = ({
               onClick={handleCopy}
               className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 dark:bg-navy-800/80 text-slate-500 hover:text-teal-600 transition-colors"
             >
-              {copied ? <CheckCircle2 size={14} className="text-emerald-500" /> : <ClipboardCopy size={14} />}
+              {copied ? (
+                <CheckCircle2 size={14} className="text-emerald-500" />
+              ) : (
+                <ClipboardCopy size={14} />
+              )}
             </button>
           </div>
 
           <p className="text-[9px] text-slate-400 mt-3 text-center">
-            {isPl ? 'Skopiuj i wklej do raportu, prezentacji lub dokumentu.' : 'Copy and paste into your report, presentation, or document.'}
+            {isPl
+              ? 'Skopiuj i wklej do raportu, prezentacji lub dokumentu.'
+              : 'Copy and paste into your report, presentation, or document.'}
           </p>
         </div>
       </div>

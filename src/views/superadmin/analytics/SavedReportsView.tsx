@@ -297,7 +297,10 @@ const SavedReportsView: React.FC = () => {
             <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
           </div>
           <button
-            onClick={() => { setError(null); fetchReports(); }}
+            onClick={() => {
+              setError(null);
+              fetchReports();
+            }}
             className="flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
           >
             <RefreshCw className="w-4 h-4" />

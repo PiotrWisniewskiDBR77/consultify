@@ -624,7 +624,7 @@ export interface NotebookPage {
   pinned: boolean;
   convertedTo:
     | {
-        type: 'task' | 'decision' | 'initiative' | 'report' | 'presentation';
+        type: 'task' | 'decision' | 'initiative' | 'report' | 'presentation' | 'assessment';
         id: string;
       }[]
     | null;

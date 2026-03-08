@@ -22,12 +22,7 @@ interface Quadrant {
   yRange: [number, number];
 }
 
-export const MatrixView: React.FC<MatrixViewProps> = ({
-  nodes,
-  xAxis,
-  yAxis,
-  onNodeClick,
-}) => {
+export const MatrixView: React.FC<MatrixViewProps> = ({ nodes, xAxis, yAxis, onNodeClick }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
@@ -35,10 +30,34 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
   const midY = 3;
 
   const quadrants: Quadrant[] = [
-    { labelEn: 'Quick Wins', labelPl: 'Szybkie wygrane', color: 'bg-emerald-500/10 border-emerald-500/20', xRange: [midX, 5], yRange: [0, midY] },
-    { labelEn: 'Major Projects', labelPl: 'Duże projekty', color: 'bg-amber-500/10 border-amber-500/20', xRange: [midX, 5], yRange: [midY, 5] },
-    { labelEn: 'Fill-ins', labelPl: 'Uzupełnienia', color: 'bg-slate-500/5 border-slate-500/10', xRange: [0, midX], yRange: [0, midY] },
-    { labelEn: 'Thankless Tasks', labelPl: 'Niewdzięczne zadania', color: 'bg-red-500/10 border-red-500/20', xRange: [0, midX], yRange: [midY, 5] },
+    {
+      labelEn: 'Quick Wins',
+      labelPl: 'Szybkie wygrane',
+      color: 'bg-emerald-500/10 border-emerald-500/20',
+      xRange: [midX, 5],
+      yRange: [0, midY],
+    },
+    {
+      labelEn: 'Major Projects',
+      labelPl: 'Duże projekty',
+      color: 'bg-amber-500/10 border-amber-500/20',
+      xRange: [midX, 5],
+      yRange: [midY, 5],
+    },
+    {
+      labelEn: 'Fill-ins',
+      labelPl: 'Uzupełnienia',
+      color: 'bg-slate-500/5 border-slate-500/10',
+      xRange: [0, midX],
+      yRange: [0, midY],
+    },
+    {
+      labelEn: 'Thankless Tasks',
+      labelPl: 'Niewdzięczne zadania',
+      color: 'bg-red-500/10 border-red-500/20',
+      xRange: [0, midX],
+      yRange: [midY, 5],
+    },
   ];
 
   const nodesByQuadrant = useMemo(() => {

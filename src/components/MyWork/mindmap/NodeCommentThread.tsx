@@ -34,7 +34,12 @@ function extractMentions(text: string): string[] {
 function formatTime(iso: string): string {
   try {
     const d = new Date(iso);
-    return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   } catch {
     return iso;
   }
@@ -74,12 +79,15 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
     inputRef.current?.focus();
   }, [currentUser, nodeId, onAddComment, text]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  }, [handleSubmit]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSubmit();
+      }
+    },
+    [handleSubmit]
+  );
 
   if (!open) return null;
 
@@ -95,7 +103,10 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
           <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate">{nodeLabel}</div>
         </div>
         <span className="text-[10px] text-slate-400 font-medium">{comments.length}</span>
-        <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+        <button
+          onClick={onClose}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+        >
           <X size={14} />
         </button>
       </div>
@@ -116,7 +127,9 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">{c.author}</span>
+                  <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
+                    {c.author}
+                  </span>
                   <span className="text-[8px] text-slate-400">{formatTime(c.createdAt)}</span>
                   {c.author === currentUser && (
                     <button
@@ -130,7 +143,9 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
                 <div className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed whitespace-pre-wrap">
                   {c.text.split(/(@\w+)/g).map((part, idx) =>
                     part.startsWith('@') ? (
-                      <span key={idx} className="text-blue-500 font-medium">{part}</span>
+                      <span key={idx} className="text-blue-500 font-medium">
+                        {part}
+                      </span>
                     ) : (
                       <span key={idx}>{part}</span>
                     )
@@ -153,7 +168,9 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={handleKeyDown}
                 rows={2}
-                placeholder={isPl ? 'Napisz komentarz... (@wzmianka)' : 'Write a comment... (@mention)'}
+                placeholder={
+                  isPl ? 'Napisz komentarz... (@wzmianka)' : 'Write a comment... (@mention)'
+                }
                 className="w-full px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-[11px] text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
               />
               <AtSign size={10} className="absolute right-2.5 bottom-2.5 text-slate-300" />

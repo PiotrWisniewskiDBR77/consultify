@@ -335,7 +335,11 @@ export async function computeStaffingGaps(planId: string, orgId: string): Promis
       const placeholders = requiredSkills.map(() => '?').join(',');
       const matchingUsers = await queryHelpers.queryAll<any>(
         `SELECT us.user_id,
-                COALESCE(u.name, u.email, us.user_id) as name,
+                COALESCE(
+                  NULLIF(TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')), ''),
+                  u.email,
+                  us.user_id
+                ) as name,
                 COUNT(DISTINCT us.skill_name) as matched_skills,
                 us.proficiency_level
          FROM user_skills us
@@ -346,7 +350,7 @@ export async function computeStaffingGaps(planId: string, orgId: string): Promis
              SELECT assigned_user_id FROM staffing_plan_roles
              WHERE staffing_plan_id = ? AND assigned_user_id IS NOT NULL
            )
-         GROUP BY us.user_id
+         GROUP BY us.user_id, u.first_name, u.last_name, u.email, us.proficiency_level
          ORDER BY matched_skills DESC
          LIMIT 10`,
         [orgId, ...requiredSkills.map(s => s.toLowerCase()), planId]

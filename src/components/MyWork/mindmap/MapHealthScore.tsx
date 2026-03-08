@@ -37,15 +37,19 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
     const maxCount = Math.max(...branchCounts, 1);
     const minCount = Math.min(...branchCounts);
     const avgCount = branchCounts.reduce((s, c) => s + c, 0) / Math.max(branchCounts.length, 1);
-    const balanceScore = branchCounts.length > 1
-      ? Math.max(0, 100 - Math.round(((maxCount - minCount) / Math.max(avgCount, 1)) * 30))
-      : 50;
+    const balanceScore =
+      branchCounts.length > 1
+        ? Math.max(0, 100 - Math.round(((maxCount - minCount) / Math.max(avgCount, 1)) * 30))
+        : 50;
 
     // Depth: average depth of the tree
     const depths: number[] = [];
     function measureDepth(nodeId: string, depth: number) {
       const children = edges.filter((e) => e.source === nodeId).map((e) => e.target);
-      if (children.length === 0) { depths.push(depth); return; }
+      if (children.length === 0) {
+        depths.push(depth);
+        return;
+      }
       for (const cid of children) measureDepth(cid, depth + 1);
     }
     for (const bn of branchNodes) measureDepth(bn.id, 1);
@@ -64,16 +68,60 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
     const crossBranchEdges = edges.filter((e) => {
       const src = nodes.find((n) => n.id === e.source);
       const tgt = nodes.find((n) => n.id === e.target);
-      return src && tgt && src.data?.branchKey && tgt.data?.branchKey && src.data.branchKey !== tgt.data.branchKey;
+      return (
+        src &&
+        tgt &&
+        src.data?.branchKey &&
+        tgt.data?.branchKey &&
+        src.data.branchKey !== tgt.data.branchKey
+      );
     });
     const connectivityScore = Math.min(100, crossBranchEdges.length * 20);
 
     return [
-      { key: 'balance', labelPl: 'Balans', labelEn: 'Balance', score: balanceScore, detail: isPl ? `Min: ${minCount}, Max: ${maxCount}` : `Min: ${minCount}, Max: ${maxCount}` },
-      { key: 'depth', labelPl: 'Głębokość', labelEn: 'Depth', score: depthScore, detail: isPl ? `Śr. głębokość: ${avgDepth.toFixed(1)}` : `Avg depth: ${avgDepth.toFixed(1)}` },
-      { key: 'coverage', labelPl: 'Pokrycie', labelEn: 'Coverage', score: coverageScore, detail: isPl ? `${coveredBranches}/${branchNodes.length} gałęzi` : `${coveredBranches}/${branchNodes.length} branches` },
-      { key: 'maturity', labelPl: 'Dojrzałość', labelEn: 'Maturity', score: maturityScore, detail: isPl ? `${matureCount}/${totalIdeas} dojrzałych` : `${matureCount}/${totalIdeas} mature` },
-      { key: 'connectivity', labelPl: 'Połączenia', labelEn: 'Connectivity', score: connectivityScore, detail: isPl ? `${crossBranchEdges.length} cross-branch` : `${crossBranchEdges.length} cross-branch` },
+      {
+        key: 'balance',
+        labelPl: 'Balans',
+        labelEn: 'Balance',
+        score: balanceScore,
+        detail: isPl ? `Min: ${minCount}, Max: ${maxCount}` : `Min: ${minCount}, Max: ${maxCount}`,
+      },
+      {
+        key: 'depth',
+        labelPl: 'Głębokość',
+        labelEn: 'Depth',
+        score: depthScore,
+        detail: isPl
+          ? `Śr. głębokość: ${avgDepth.toFixed(1)}`
+          : `Avg depth: ${avgDepth.toFixed(1)}`,
+      },
+      {
+        key: 'coverage',
+        labelPl: 'Pokrycie',
+        labelEn: 'Coverage',
+        score: coverageScore,
+        detail: isPl
+          ? `${coveredBranches}/${branchNodes.length} gałęzi`
+          : `${coveredBranches}/${branchNodes.length} branches`,
+      },
+      {
+        key: 'maturity',
+        labelPl: 'Dojrzałość',
+        labelEn: 'Maturity',
+        score: maturityScore,
+        detail: isPl
+          ? `${matureCount}/${totalIdeas} dojrzałych`
+          : `${matureCount}/${totalIdeas} mature`,
+      },
+      {
+        key: 'connectivity',
+        labelPl: 'Połączenia',
+        labelEn: 'Connectivity',
+        score: connectivityScore,
+        detail: isPl
+          ? `${crossBranchEdges.length} cross-branch`
+          : `${crossBranchEdges.length} cross-branch`,
+      },
     ];
   }, [edges, isPl, nodes]);
 
@@ -84,7 +132,12 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
 
   if (!visible || metrics.length === 0) return null;
 
-  const scoreColor = overallScore >= 70 ? 'text-emerald-500' : overallScore >= 40 ? 'text-amber-500' : 'text-red-500';
+  const scoreColor =
+    overallScore >= 70
+      ? 'text-emerald-500'
+      : overallScore >= 40
+        ? 'text-amber-500'
+        : 'text-red-500';
   const ringColor = overallScore >= 70 ? '#34d399' : overallScore >= 40 ? '#fbbf24' : '#ef4444';
 
   return (
@@ -96,8 +149,27 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
         >
           {/* Mini ring */}
           <svg width={28} height={28} className="transform -rotate-90 shrink-0">
-            <circle cx={14} cy={14} r={11} fill="none" stroke="currentColor" strokeWidth={3} className="text-slate-200 dark:text-navy-700" />
-            <circle cx={14} cy={14} r={11} fill="none" stroke={ringColor} strokeWidth={3} strokeDasharray={69.1} strokeDashoffset={69.1 - (overallScore / 100) * 69.1} strokeLinecap="round" className="transition-all duration-700" />
+            <circle
+              cx={14}
+              cy={14}
+              r={11}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={3}
+              className="text-slate-200 dark:text-navy-700"
+            />
+            <circle
+              cx={14}
+              cy={14}
+              r={11}
+              fill="none"
+              stroke={ringColor}
+              strokeWidth={3}
+              strokeDasharray={69.1}
+              strokeDashoffset={69.1 - (overallScore / 100) * 69.1}
+              strokeLinecap="round"
+              className="transition-all duration-700"
+            />
           </svg>
           <div className="flex-1 text-left">
             <div className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
@@ -105,21 +177,33 @@ export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, vi
             </div>
             <div className={`text-[13px] font-bold ${scoreColor}`}>{overallScore}%</div>
           </div>
-          {expanded ? <ChevronUp size={12} className="text-slate-400" /> : <ChevronDown size={12} className="text-slate-400" />}
+          {expanded ? (
+            <ChevronUp size={12} className="text-slate-400" />
+          ) : (
+            <ChevronDown size={12} className="text-slate-400" />
+          )}
         </button>
 
         {expanded && (
           <div className="px-3 pb-3 space-y-2">
             {metrics.map((m) => {
-              const color = m.score >= 70 ? 'bg-emerald-500' : m.score >= 40 ? 'bg-amber-500' : 'bg-red-500';
+              const color =
+                m.score >= 70 ? 'bg-emerald-500' : m.score >= 40 ? 'bg-amber-500' : 'bg-red-500';
               return (
                 <div key={m.key}>
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400">{isPl ? m.labelPl : m.labelEn}</span>
-                    <span className="text-[9px] font-bold text-slate-600 dark:text-slate-300">{m.score}%</span>
+                    <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400">
+                      {isPl ? m.labelPl : m.labelEn}
+                    </span>
+                    <span className="text-[9px] font-bold text-slate-600 dark:text-slate-300">
+                      {m.score}%
+                    </span>
                   </div>
                   <div className="h-1.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                    <div className={`h-full rounded-full ${color} transition-all duration-500`} style={{ width: `${m.score}%` }} />
+                    <div
+                      className={`h-full rounded-full ${color} transition-all duration-500`}
+                      style={{ width: `${m.score}%` }}
+                    />
                   </div>
                   <div className="text-[8px] text-slate-400 mt-0.5">{m.detail}</div>
                 </div>

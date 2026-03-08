@@ -4,7 +4,7 @@ import React from 'react';
 import { type PreviewableItem } from '../shared/TableWithPreviewLayout';
 
 export type FinanceStatus = 'DRAFT' | 'REVIEW' | 'APPROVED';
-export type FinanceKind = 'models' | 'analysis' | 'prediction' | 'valuation';
+export type FinanceKind = 'models' | 'analysis' | 'investment' | 'prediction' | 'valuation';
 export type PredictionType = 'model' | 'budget';
 
 export type FinanceRowBase = PreviewableItem & {
@@ -26,7 +26,7 @@ export type FinanceModelRow = FinanceRowBase & {
 };
 
 export type FinanceAnalysisRow = FinanceRowBase & {
-  kind: 'analysis';
+  kind: 'analysis' | 'investment';
   analysisType: string;
   currency: string;
   periodCount: number;
@@ -45,6 +45,7 @@ export type FinanceRow = FinanceModelRow | FinanceAnalysisRow | FinanceValuation
 export const KIND_LABELS: Record<FinanceKind, { code: string; en: string; pl: string }> = {
   models: { code: 'MDL', en: 'Model', pl: 'Model' },
   analysis: { code: 'ANL', en: 'Analysis', pl: 'Analiza' },
+  investment: { code: 'INV', en: 'Investment', pl: 'Inwestycja' },
   prediction: { code: 'PRD', en: 'Scenario', pl: 'Scenariusz' },
   valuation: { code: 'VAL', en: 'Valuation', pl: 'Wycena' },
 };
@@ -57,6 +58,10 @@ export const KIND_ICONS: Record<FinanceKind, React.ReactNode> = {
   analysis: React.createElement(BarChart3, {
     size: 14,
     className: 'text-emerald-500 dark:text-emerald-400',
+  }),
+  investment: React.createElement(Target, {
+    size: 14,
+    className: 'text-fuchsia-500 dark:text-fuchsia-400',
   }),
   prediction: React.createElement(TrendingUp, {
     size: 14,
@@ -71,6 +76,7 @@ export const KIND_ICONS: Record<FinanceKind, React.ReactNode> = {
 export const KIND_ACCENT: Record<FinanceKind, string> = {
   models: 'border-l-blue-500 dark:border-l-blue-400',
   analysis: 'border-l-emerald-500 dark:border-l-emerald-400',
+  investment: 'border-l-fuchsia-500 dark:border-l-fuchsia-400',
   prediction: 'border-l-purple-500 dark:border-l-purple-400',
   valuation: 'border-l-amber-500 dark:border-l-amber-400',
 };

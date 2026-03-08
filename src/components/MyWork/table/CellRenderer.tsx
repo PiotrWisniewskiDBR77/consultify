@@ -79,7 +79,10 @@ const SelectCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  const bgColor = colors[String(value)] || SELECT_COLORS[options.indexOf(String(value)) % SELECT_COLORS.length] || '#e0e7ff';
+  const bgColor =
+    colors[String(value)] ||
+    SELECT_COLORS[options.indexOf(String(value)) % SELECT_COLORS.length] ||
+    '#e0e7ff';
 
   return (
     <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
@@ -97,19 +100,28 @@ const SelectCell: React.FC<CellProps> = ({ column, value, onChange, locked }) =>
           {options.map((opt) => (
             <button
               key={opt}
-              onClick={() => { onChange(opt); setOpen(false); }}
+              onClick={() => {
+                onChange(opt);
+                setOpen(false);
+              }}
               className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2"
             >
               <span
                 className="w-3 h-3 rounded-sm flex-shrink-0"
-                style={{ backgroundColor: colors[opt] || SELECT_COLORS[options.indexOf(opt) % SELECT_COLORS.length] }}
+                style={{
+                  backgroundColor:
+                    colors[opt] || SELECT_COLORS[options.indexOf(opt) % SELECT_COLORS.length],
+                }}
               />
               {opt}
             </button>
           ))}
           {value && (
             <button
-              onClick={() => { onChange(null); setOpen(false); }}
+              onClick={() => {
+                onChange(null);
+                setOpen(false);
+              }}
               className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
             >
               Clear
@@ -157,7 +169,8 @@ const MultiSelectCell: React.FC<CellProps> = ({ column, value, onChange, locked 
             key={s}
             className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-semibold"
             style={{
-              backgroundColor: colors[s] || SELECT_COLORS[options.indexOf(s) % SELECT_COLORS.length] || '#e0e7ff',
+              backgroundColor:
+                colors[s] || SELECT_COLORS[options.indexOf(s) % SELECT_COLORS.length] || '#e0e7ff',
               color: '#334155',
             }}
           >
@@ -174,7 +187,9 @@ const MultiSelectCell: React.FC<CellProps> = ({ column, value, onChange, locked 
               onClick={() => toggle(opt)}
               className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2"
             >
-              <span className={`w-3 h-3 rounded-sm border flex items-center justify-center ${selected.includes(opt) ? 'bg-violet-500 border-violet-500' : 'border-slate-300 dark:border-navy-600'}`}>
+              <span
+                className={`w-3 h-3 rounded-sm border flex items-center justify-center ${selected.includes(opt) ? 'bg-violet-500 border-violet-500' : 'border-slate-300 dark:border-navy-600'}`}
+              >
                 {selected.includes(opt) && <Check size={8} className="text-white" />}
               </span>
               {opt}
@@ -234,7 +249,9 @@ const RatingCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
         >
           <Star
             size={14}
-            className={star <= rating ? 'text-amber-400 fill-amber-400' : 'text-slate-300 dark:text-navy-600'}
+            className={
+              star <= rating ? 'text-amber-400 fill-amber-400' : 'text-slate-300 dark:text-navy-600'
+            }
           />
         </button>
       ))}
@@ -247,7 +264,9 @@ const RatingCell: React.FC<CellProps> = ({ value, onChange, locked }) => {
 const PersonCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
   <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
     <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0">
-      {String(value || '?').charAt(0).toUpperCase()}
+      {String(value || '?')
+        .charAt(0)
+        .toUpperCase()}
     </div>
     <input
       value={String(value ?? '')}
@@ -271,7 +290,12 @@ const UrlCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
       className="flex-1 bg-transparent border-0 outline-none text-xs text-blue-600 dark:text-blue-400 underline focus:ring-2 focus:ring-violet-500/30 rounded"
     />
     {value && (
-      <a href={String(value)} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-blue-500">
+      <a
+        href={String(value)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-slate-400 hover:text-blue-500"
+      >
         <ExternalLink size={11} />
       </a>
     )}
@@ -336,14 +360,35 @@ const AIGeneratedCell: React.FC<CellProps> = ({ value, onAIRefresh, locked }) =>
 
 // ── Main CellRenderer ────────────────────────────────────────────────────────
 
-const WrappedFileCell: React.FC<CellProps> = ({ value, onChange, locked }) => <FileCell value={value} onChange={onChange} locked={locked} />;
-const WrappedRelationCell: React.FC<CellProps> = ({ value, onChange, locked, allNodes }) => <RelationCell value={value} onChange={onChange} locked={locked} allNodes={(allNodes || []).map((n) => ({ id: n.id, label: n.label || n.id }))} />;
-const WrappedRollupCell: React.FC<CellProps> = ({ value, onChange, locked }) => <RollupCell value={value} onChange={onChange} locked={locked} />;
-const WrappedEmojiCell: React.FC<CellProps> = ({ value, onChange, locked }) => <EmojiCell value={value} onChange={onChange} locked={locked} />;
-const WrappedColorCell: React.FC<CellProps> = ({ value, onChange, locked }) => <ColorCell value={value} onChange={onChange} locked={locked} />;
-const WrappedCurrencyCell: React.FC<CellProps> = ({ value, onChange, locked }) => <CurrencyCell value={value} onChange={onChange} locked={locked} />;
-const WrappedPhoneCell: React.FC<CellProps> = ({ value, onChange, locked }) => <PhoneCell value={value} onChange={onChange} locked={locked} />;
-const WrappedEmailCell: React.FC<CellProps> = ({ value, onChange, locked }) => <EmailCell value={value} onChange={onChange} locked={locked} />;
+const WrappedFileCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
+  <FileCell value={value} onChange={onChange} locked={locked} />
+);
+const WrappedRelationCell: React.FC<CellProps> = ({ value, onChange, locked, allNodes }) => (
+  <RelationCell
+    value={value}
+    onChange={onChange}
+    locked={locked}
+    allNodes={(allNodes || []).map((n) => ({ id: n.id, label: n.label || n.id }))}
+  />
+);
+const WrappedRollupCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
+  <RollupCell value={value} onChange={onChange} locked={locked} />
+);
+const WrappedEmojiCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
+  <EmojiCell value={value} onChange={onChange} locked={locked} />
+);
+const WrappedColorCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
+  <ColorCell value={value} onChange={onChange} locked={locked} />
+);
+const WrappedCurrencyCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
+  <CurrencyCell value={value} onChange={onChange} locked={locked} />
+);
+const WrappedPhoneCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
+  <PhoneCell value={value} onChange={onChange} locked={locked} />
+);
+const WrappedEmailCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
+  <EmailCell value={value} onChange={onChange} locked={locked} />
+);
 
 const RENDERERS: Record<ColumnType, React.FC<CellProps>> = {
   text: TextCell,

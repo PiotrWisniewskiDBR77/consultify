@@ -19,6 +19,7 @@ import notificationService from '../services/notificationService.js';
 import { evaluateGatePolicy } from '../services/workflow/gatePolicy.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
@@ -55,6 +56,49 @@ const requireUser = (req: AuthenticatedRequest) => {
   if (!user) throw new Error('Unauthorized');
   return user;
 };
+
+async function ensureInterviewEvidenceColumns(): Promise<void> {
+  const cols = await getTableColumns('interview_evidence');
+  if (!cols.has('category')) {
+    await queryHelpers.queryRun(`ALTER TABLE interview_evidence ADD COLUMN category TEXT`);
+  }
+}
+
+async function resolveLinkedArtifact(
+  organizationId: string,
+  artifactType: string,
+  artifactId: string
+): Promise<{ title: string; status?: string; type: string } | null> {
+  const tableMap: Record<string, { table: string; titleCol: string; statusCol?: string }> = {
+    task: { table: 'tasks', titleCol: 'title', statusCol: 'status' },
+    initiative: { table: 'initiatives', titleCol: 'name', statusCol: 'status' },
+    decision: { table: 'decisions', titleCol: 'title', statusCol: 'status' },
+    project: { table: 'projects', titleCol: 'name', statusCol: 'status' },
+    assessment: { table: 'assessments', titleCol: 'name', statusCol: 'status' },
+    report: { table: 'report_builder_reports', titleCol: 'title', statusCol: 'status' },
+    presentation: { table: 'presentations', titleCol: 'title', statusCol: 'status' },
+  };
+  const config = tableMap[artifactType];
+  if (!config) return null;
+  try {
+    const statusSelect = config.statusCol ? `, ${config.statusCol} as status` : '';
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT id, ${config.titleCol} as title${statusSelect}
+       FROM ${config.table}
+       WHERE id = ? AND organization_id = ?
+       LIMIT 1`,
+      [artifactId, organizationId]
+    );
+    if (!row) return null;
+    return {
+      title: String(row.title || artifactId),
+      status: row.status ? String(row.status) : undefined,
+      type: artifactType,
+    };
+  } catch {
+    return null;
+  }
+}
 
 // Response builders
 const buildSessionResponse = (row: any) => {
@@ -124,6 +168,7 @@ const buildEvidenceResponse = (row: any) => {
     id: row.id,
     sessionId: row.session_id,
     questionId: row.question_id,
+    category: row.category,
     evidenceType: row.evidence_type,
     title: row.title,
     description: row.description,
@@ -3340,6 +3385,7 @@ ${JSON.stringify(questions || [], null, 2)}
   getEvidence: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { sessionId } = req.params;
+    await ensureInterviewEvidenceColumns();
 
     try {
       await assertSessionAccessibleOrThrow({
@@ -3378,7 +3424,9 @@ ${JSON.stringify(questions || [], null, 2)}
       fileType,
       mimeType, // frontend compatibility
       url,
+      category,
     } = req.body;
+    await ensureInterviewEvidenceColumns();
 
     try {
       await assertSessionEditable(sessionId, user.organizationId);
@@ -3429,13 +3477,14 @@ ${JSON.stringify(questions || [], null, 2)}
 
     await queryHelpers.queryRun(
       `INSERT INTO interview_evidence
-       (id, session_id, organization_id, question_id, evidence_type, title, description, file_name, file_size, file_type, url, uploaded_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, session_id, organization_id, question_id, category, evidence_type, title, description, file_name, file_size, file_type, url, uploaded_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         sessionId,
         user.organizationId,
         questionId || null,
+        category || null,
         evidenceType,
         resolvedTitle,
         description || null,
@@ -3493,6 +3542,139 @@ ${JSON.stringify(questions || [], null, 2)}
     await queryHelpers.queryRun(
       `DELETE FROM interview_evidence WHERE id = ? AND organization_id = ?`,
       [evidenceId, user.organizationId]
+    );
+
+    res.json({ success: true });
+  }),
+
+  getLinkedItems: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+
+    try {
+      await assertSessionAccessibleOrThrow({
+        sessionId,
+        organizationId: user.organizationId,
+        userId: user.id,
+      });
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      if (msg.toLowerCase().includes('not found')) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const rows =
+      (await queryHelpers.queryAll<any>(
+        `SELECT id, target_type, target_id
+         FROM link_graph_edges
+         WHERE organization_id = ? AND source_type = 'interview_session' AND source_id = ?
+         ORDER BY created_at DESC`,
+        [user.organizationId, sessionId]
+      )) || [];
+
+    const items = (
+      await Promise.all(
+        rows.map(async (row: any) => {
+          const resolved = await resolveLinkedArtifact(
+            user.organizationId,
+            String(row.target_type || ''),
+            String(row.target_id || '')
+          );
+          if (!resolved) return null;
+          return {
+            edgeId: String(row.id),
+            id: String(row.target_id),
+            type: resolved.type,
+            title: resolved.title,
+            status: resolved.status,
+          };
+        })
+      )
+    ).filter(Boolean);
+
+    res.json(items);
+  }),
+
+  addLinkedItem: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+    const itemType = String(req.body?.type || '').trim().toLowerCase();
+    const itemId = String(req.body?.id || '').trim();
+
+    if (!itemType || !itemId) {
+      res.status(400).json({ error: 'type and id are required' });
+      return;
+    }
+
+    try {
+      await assertSessionEditable(sessionId, user.organizationId);
+      await assertSessionOwnedByUser(sessionId, user.organizationId, user.id);
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      if (msg.toLowerCase().includes('not found')) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+      if (msg.toLowerCase().includes('locked')) {
+        res.status(409).json({ error: 'Session is locked' });
+        return;
+      }
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    const resolved = await resolveLinkedArtifact(user.organizationId, itemType, itemId);
+    if (!resolved) {
+      res.status(404).json({ error: 'Linked artifact not found' });
+      return;
+    }
+
+    const edgeId = uuidv4();
+    await queryHelpers.queryRun(
+      `INSERT INTO link_graph_edges
+       (id, organization_id, source_type, source_id, target_type, target_id, relation, container_type, container_id, created_by, created_at)
+       VALUES (?, ?, 'interview_session', ?, ?, ?, 'ref', 'interview_supporting_material', ?, ?, ?)`,
+      [edgeId, user.organizationId, sessionId, itemType, itemId, sessionId, user.id, new Date().toISOString()]
+    );
+
+    res.status(201).json({
+      edgeId,
+      id: itemId,
+      type: itemType,
+      title: resolved.title,
+      status: resolved.status,
+    });
+  }),
+
+  deleteLinkedItem: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId, edgeId } = req.params;
+
+    try {
+      await assertSessionEditable(sessionId, user.organizationId);
+      await assertSessionOwnedByUser(sessionId, user.organizationId, user.id);
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      if (msg.toLowerCase().includes('not found')) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+      if (msg.toLowerCase().includes('locked')) {
+        res.status(409).json({ error: 'Session is locked' });
+        return;
+      }
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
+    await queryHelpers.queryRun(
+      `DELETE FROM link_graph_edges
+       WHERE id = ? AND organization_id = ? AND source_type = 'interview_session' AND source_id = ?`,
+      [edgeId, user.organizationId, sessionId]
     );
 
     res.json({ success: true });

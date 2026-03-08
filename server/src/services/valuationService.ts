@@ -3,6 +3,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import * as audit from './auditService.js';
+import {
+  computeModel,
+  getModel,
+  getOutputs,
+  persistComputeResult,
+  type PeriodOutput,
+} from './financialModelingService.js';
 
 export type ValuationStatus = 'DRAFT' | 'REVIEW' | 'APPROVED';
 export type ValuationSourceType = 'financial_model' | 'budget' | 'manual';
@@ -398,6 +405,99 @@ async function loadForecastFromBudget(
   };
 }
 
+async function loadForecastFromFinancialModel(
+  orgId: string,
+  modelId: string,
+  horizonYears: number
+): Promise<ForecastBundle> {
+  const model = await getModel(modelId);
+  if (!model || String(model.organization_id || '') !== orgId) {
+    throw new Error('Source financial model not found');
+  }
+
+  let periods: PeriodOutput[] =
+    safeJsonParse<{ periods?: PeriodOutput[] }>(model.approved_snapshot, {}).periods || [];
+
+  if (!Array.isArray(periods) || periods.length === 0) {
+    const outputs = await getOutputs(modelId, model.scenario || 'base');
+    if (Array.isArray(outputs) && outputs.length > 0) {
+      const grouped = new Map<string, PeriodOutput>();
+      for (const row of outputs) {
+        const periodDate = String(row.period_date || '');
+        if (!periodDate) continue;
+        if (!grouped.has(periodDate)) {
+          grouped.set(periodDate, {
+            date: periodDate,
+            label: String(row.period_label || periodDate),
+            pl: {},
+            bs: {},
+            cf: {},
+          });
+        }
+        const bucket = grouped.get(periodDate)!;
+        const statementType = String(row.statement_type || '').toLowerCase();
+        const target =
+          statementType === 'pl' ? bucket.pl : statementType === 'bs' ? bucket.bs : bucket.cf;
+        target[String(row.line_code || '')] = Number(row.value || 0);
+      }
+      periods = Array.from(grouped.values()).sort((a, b) => a.date.localeCompare(b.date));
+    }
+  }
+
+  if (!Array.isArray(periods) || periods.length === 0) {
+    const recomputed = await computeModel(modelId);
+    await persistComputeResult(modelId, recomputed, model.scenario || 'base');
+    periods = recomputed.periods || [];
+  }
+
+  if (!periods.length) {
+    throw new Error('Financial model outputs not found. Compute the model first.');
+  }
+
+  const yearBuckets: Record<string, PeriodOutput[]> = {};
+  for (const period of periods) {
+    const year = String(period.date || '').slice(0, 4);
+    if (!year) continue;
+    if (!yearBuckets[year]) yearBuckets[year] = [];
+    yearBuckets[year].push(period);
+  }
+
+  const yearsSorted = Object.keys(yearBuckets)
+    .sort((a, b) => Number(a) - Number(b))
+    .slice(0, horizonYears);
+
+  const years = yearsSorted.map((year, idx) => {
+    const bucket = yearBuckets[year] || [];
+    const sum = (section: 'pl' | 'cf', code: string) =>
+      bucket.reduce((acc, period) => acc + Number(period?.[section]?.[code] || 0), 0);
+    const revenue = sum('pl', 'REVENUE');
+    const ebitda = sum('pl', 'EBITDA');
+    const operatingCf = sum('cf', 'OPERATING_CF');
+    const capexCf = sum('cf', 'CAPEX_CF');
+    return {
+      year: idx + 1,
+      fcff: round(operatingCf + capexCf, 2),
+      revenue: round(revenue, 2),
+      ebitda: round(ebitda, 2),
+    };
+  });
+
+  if (!years.length) {
+    throw new Error('Financial model did not produce annual forecast years');
+  }
+
+  const last = years[years.length - 1];
+  return {
+    years,
+    companyMetric: { revenueLastYear: last?.revenue, ebitdaLastYear: last?.ebitda },
+    sourceQuality: {
+      sourceType: 'financial_model',
+      sourceId: modelId,
+      sourceStatus: String(model.status || ''),
+    },
+  };
+}
+
 function loadForecastFromManual(
   manual: ValuationAssumptions['manualForecast'],
   horizonYears: number
@@ -627,7 +727,8 @@ export async function computeValuation(orgId: string, valuationId: string): Prom
 
   let forecast: ForecastBundle;
   if (val.source_type === 'financial_model') {
-    throw new Error('T054 source is not available in this branch; use Budget or Manual');
+    if (!val.source_id) throw new Error('Missing sourceId');
+    forecast = await loadForecastFromFinancialModel(orgId, val.source_id, horizonYears);
   } else if (val.source_type === 'budget') {
     if (!val.source_id) throw new Error('Missing sourceId');
     forecast = await loadForecastFromBudget(orgId, val.source_id, horizonYears);

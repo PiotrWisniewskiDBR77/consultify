@@ -79,7 +79,9 @@ export const LandingFilmModal: React.FC<LandingFilmModalProps> = ({
                   setHasEnded(true);
                   trackFunnelEvent('landing_video_full_completed', { filmId: film.id, variant });
                 }}
-                onPlay={() => trackFunnelEvent('landing_video_full_started', { filmId: film.id, variant })}
+                onPlay={() =>
+                  trackFunnelEvent('landing_video_full_started', { filmId: film.id, variant })
+                }
               >
                 <source src={film.fullUrl} type="video/mp4" />
               </video>
@@ -92,12 +94,18 @@ export const LandingFilmModal: React.FC<LandingFilmModalProps> = ({
                         {t('landing.films.after.title', 'Ready to launch?')}
                       </p>
                       <p className="text-white/70 text-sm">
-                        {t('landing.films.after.subtitle', 'Start your free trial and watch all full videos.')}
+                        {t(
+                          'landing.films.after.subtitle',
+                          'Start your free trial and watch all full videos.'
+                        )}
                       </p>
                     </div>
                     <button
                       onClick={() => {
-                        trackFunnelEvent('landing_primary_cta_clicked', { cta: 'launch_free_trial', variant });
+                        trackFunnelEvent('landing_primary_cta_clicked', {
+                          cta: 'launch_free_trial',
+                          variant,
+                        });
                         onLaunchTrial();
                         onClose();
                       }}
@@ -117,4 +125,3 @@ export const LandingFilmModal: React.FC<LandingFilmModalProps> = ({
 };
 
 export default LandingFilmModal;
-

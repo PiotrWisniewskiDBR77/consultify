@@ -93,12 +93,14 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
         case 'filter':
           onFilter({
             logic: 'and',
-            rules: [{
-              id: `ai-${Date.now()}`,
-              column: action.column,
-              operator: action.operator || 'contains',
-              value: action.value || '',
-            }],
+            rules: [
+              {
+                id: `ai-${Date.now()}`,
+                column: action.column,
+                operator: action.operator || 'contains',
+                value: action.value || '',
+              },
+            ],
           });
           toast.success(isPl ? 'Filtr zastosowany' : 'Filter applied');
           break;
@@ -126,7 +128,9 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
               position: { x: 0, y: 0 },
             }));
             onAddRows(newRows);
-            toast.success(isPl ? `Dodano ${newRows.length} wierszy` : `Added ${newRows.length} rows`);
+            toast.success(
+              isPl ? `Dodano ${newRows.length} wierszy` : `Added ${newRows.length} rows`
+            );
           }
           break;
         case 'summarize':
@@ -145,7 +149,19 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [command, columns, i18n.language, ideaId, isPl, loading, onAddColumn, onAddRows, onFilter, onGroup, onSort]);
+  }, [
+    command,
+    columns,
+    i18n.language,
+    ideaId,
+    isPl,
+    loading,
+    onAddColumn,
+    onAddRows,
+    onFilter,
+    onGroup,
+    onSort,
+  ]);
 
   if (!open) return null;
 
@@ -168,14 +184,19 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
             className="flex-1 bg-transparent border-0 outline-none text-sm text-slate-800 dark:text-slate-200 placeholder-slate-400"
           />
           {loading && <Loader2 size={16} className="animate-spin text-violet-400" />}
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800">
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
+          >
             <X size={14} className="text-slate-400" />
           </button>
         </div>
 
         {lastResult && (
           <div className="px-4 py-3 border-t border-slate-200/60 dark:border-navy-700/60 bg-violet-500/5">
-            <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{lastResult}</p>
+            <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+              {lastResult}
+            </p>
           </div>
         )}
 

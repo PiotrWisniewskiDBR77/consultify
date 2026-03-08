@@ -117,7 +117,13 @@ export const EnterpriseHealthMonitor: React.FC = () => {
   const [appMetrics, setAppMetrics] = useState<HealthMetricsPayload | null>(null);
   const [alerts, setAlerts] = useState<AlertConfig[]>([]);
   const [showCreateAlert, setShowCreateAlert] = useState(false);
-  const [newAlert, setNewAlert] = useState({ name: '', metric: 'cpu_usage', threshold: 90, operator: 'gt' as 'gt' | 'lt' | 'eq', channels: [] as string[] });
+  const [newAlert, setNewAlert] = useState({
+    name: '',
+    metric: 'cpu_usage',
+    threshold: 90,
+    operator: 'gt' as 'gt' | 'lt' | 'eq',
+    channels: [] as string[],
+  });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeView, setActiveView] = useState<'overview' | 'services' | 'metrics' | 'alerts'>(
@@ -134,8 +140,10 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       ]);
 
       setHealth(data as any);
-      const servicesData: HealthServicesPayload = (servicesPayload as any)?.data ?? (servicesPayload as any);
-      const metricsData: HealthMetricsPayload = (metricsPayload as any)?.data ?? (metricsPayload as any);
+      const servicesData: HealthServicesPayload =
+        (servicesPayload as any)?.data ?? (servicesPayload as any);
+      const metricsData: HealthMetricsPayload =
+        (metricsPayload as any)?.data ?? (metricsPayload as any);
       setAppMetrics(metricsData);
 
       const ts = (data as any)?.timestamp || new Date().toISOString();
@@ -196,7 +204,9 @@ export const EnterpriseHealthMonitor: React.FC = () => {
         const cpuCores = Number((data as any)?.system?.cpus || 0) || 0;
         const load1 = Number((data as any)?.system?.loadAvg?.[0] || 0) || 0;
         const cpuUsageApprox =
-          cpuCores > 0 ? Math.min(100, Math.max(0, (load1 / cpuCores) * 100)) : Math.min(100, load1 * 10);
+          cpuCores > 0
+            ? Math.min(100, Math.max(0, (load1 / cpuCores) * 100))
+            : Math.min(100, load1 * 10);
         setMetrics({
           cpu: {
             usage: Math.round(cpuUsageApprox * 100) / 100,
@@ -230,21 +240,28 @@ export const EnterpriseHealthMonitor: React.FC = () => {
   }, []);
 
   const handleCreateAlert = async () => {
-    if (!newAlert.name.trim()) { toast.error('Alert name is required'); return; }
+    if (!newAlert.name.trim()) {
+      toast.error('Alert name is required');
+      return;
+    }
     try {
       await Api.post('/superadmin/system-health/alerts', newAlert);
       toast.success('Alert created');
       setShowCreateAlert(false);
       setNewAlert({ name: '', metric: 'cpu_usage', threshold: 90, operator: 'gt', channels: [] });
       fetchAlerts();
-    } catch { toast.error('Failed to create alert'); }
+    } catch {
+      toast.error('Failed to create alert');
+    }
   };
 
   const handleToggleAlert = async (alert: AlertConfig) => {
     try {
       await Api.put(`/superadmin/system-health/alerts/${alert.id}/toggle`, {});
       fetchAlerts();
-    } catch { toast.error('Failed to toggle alert'); }
+    } catch {
+      toast.error('Failed to toggle alert');
+    }
   };
 
   const handleDeleteAlert = async (id: string) => {
@@ -253,7 +270,9 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       await Api.delete(`/superadmin/system-health/alerts/${id}`);
       toast.success('Alert deleted');
       fetchAlerts();
-    } catch { toast.error('Failed to delete alert'); }
+    } catch {
+      toast.error('Failed to delete alert');
+    }
   };
 
   useEffect(() => {
@@ -388,7 +407,9 @@ export const EnterpriseHealthMonitor: React.FC = () => {
             <div className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-xl border border-blue-500/20">
               <div className="flex items-center gap-3 mb-3">
                 <Database className="w-5 h-5 text-blue-400" />
-                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">Database</span>
+                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  Database
+                </span>
               </div>
               <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
                 {health?.database?.responseTime || 0}ms
@@ -399,7 +420,9 @@ export const EnterpriseHealthMonitor: React.FC = () => {
             <div className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-xl border border-purple-500/20">
               <div className="flex items-center gap-3 mb-3">
                 <Brain className="w-5 h-5 text-purple-400" />
-                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">AI Services</span>
+                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  AI Services
+                </span>
               </div>
               <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
                 {Object.values(health?.ai?.providers || {}).filter(Boolean).length}
@@ -410,12 +433,16 @@ export const EnterpriseHealthMonitor: React.FC = () => {
             <div className="p-4 bg-gradient-to-br from-amber-500/10 to-amber-600/5 rounded-xl border border-amber-500/20">
               <div className="flex items-center gap-3 mb-3">
                 <Clock className="w-5 h-5 text-amber-400" />
-                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">Uptime</span>
+                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  Uptime
+                </span>
               </div>
               <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
                 {health?.system?.uptime?.formatted || '0m'}
               </div>
-              <div className="text-xs text-amber-600 dark:text-amber-400 mt-1">{health?.system?.environment}</div>
+              <div className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                {health?.system?.environment}
+              </div>
             </div>
           </div>
 
@@ -460,7 +487,10 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   {['1m', '5m', '15m'].map((label, i) => (
-                    <div key={label} className="p-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg text-center">
+                    <div
+                      key={label}
+                      className="p-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg text-center"
+                    >
                       <div className="text-slate-500 dark:text-slate-400">{label}</div>
                       <div className="text-slate-900 dark:text-slate-100 font-medium mt-1">
                         {(health?.system?.loadAvg?.[i] || 0).toFixed(2)}
@@ -539,7 +569,9 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                       <Icon className={`w-5 h-5 ${statusConfig.text}`} />
                     </div>
                     <div>
-                      <h4 className="font-medium text-slate-900 dark:text-slate-100">{service.name}</h4>
+                      <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                        {service.name}
+                      </h4>
                       <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
                         <span>Latency: {service.latency}ms</span>
                         <span>•</span>
@@ -618,14 +650,18 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     <Activity className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                   )}
                 </div>
-                <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{value}</div>
+                <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                  {value}
+                </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{label}</div>
               </div>
             ))}
           </div>
 
           <div className="p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-            <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4">System Information</h3>
+            <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-4">
+              System Information
+            </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[
                 { label: 'Node.js Version', value: health?.system?.nodeVersion || 'Unknown' },
@@ -635,7 +671,9 @@ export const EnterpriseHealthMonitor: React.FC = () => {
               ].map(({ label, value }) => (
                 <div key={label}>
                   <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
-                  <div className="text-sm text-slate-900 dark:text-slate-100 font-medium mt-1 capitalize">{value}</div>
+                  <div className="text-sm text-slate-900 dark:text-slate-100 font-medium mt-1 capitalize">
+                    {value}
+                  </div>
                 </div>
               ))}
             </div>
@@ -647,7 +685,9 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       {activeView === 'alerts' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">Alert Configuration</h3>
+            <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
+              Alert Configuration
+            </h3>
             <button
               onClick={() => setShowCreateAlert(true)}
               className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
@@ -683,7 +723,9 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                 <div className="flex gap-2">
                   <select
                     value={newAlert.operator}
-                    onChange={(e) => setNewAlert({ ...newAlert, operator: e.target.value as 'gt' | 'lt' | 'eq' })}
+                    onChange={(e) =>
+                      setNewAlert({ ...newAlert, operator: e.target.value as 'gt' | 'lt' | 'eq' })
+                    }
                     className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white w-20"
                   >
                     <option value="gt">&gt;</option>
@@ -694,13 +736,24 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     type="number"
                     placeholder="Threshold"
                     value={newAlert.threshold}
-                    onChange={(e) => setNewAlert({ ...newAlert, threshold: Number(e.target.value) })}
+                    onChange={(e) =>
+                      setNewAlert({ ...newAlert, threshold: Number(e.target.value) })
+                    }
                     className="flex-1 px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white"
                   />
                 </div>
                 <div className="flex gap-2 items-center">
                   <button
-                    onClick={() => { setShowCreateAlert(false); setNewAlert({ name: '', metric: 'cpu_usage', threshold: 90, operator: 'gt', channels: [] }); }}
+                    onClick={() => {
+                      setShowCreateAlert(false);
+                      setNewAlert({
+                        name: '',
+                        metric: 'cpu_usage',
+                        threshold: 90,
+                        operator: 'gt',
+                        channels: [],
+                      });
+                    }}
                     className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   >
                     Cancel

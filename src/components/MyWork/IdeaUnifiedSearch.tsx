@@ -37,7 +37,10 @@ function highlightMatch(text: string, query: string): React.ReactNode {
   );
 }
 
-function collectSearchableFields(node: { id: string; data?: any }): Array<{ field: string; text: string }> {
+function collectSearchableFields(node: {
+  id: string;
+  data?: any;
+}): Array<{ field: string; text: string }> {
   const d = node.data || {};
   const fields: Array<{ field: string; text: string }> = [];
 
@@ -116,7 +119,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
         onHighlightNode(hit.nodeId);
       }
     },
-    [hits, onHighlightNode],
+    [hits, onHighlightNode]
   );
 
   const handleKeyDown = useCallback(
@@ -139,7 +142,7 @@ export const IdeaUnifiedSearch: React.FC<IdeaUnifiedSearchProps> = ({
         return;
       }
     },
-    [activeIndex, hits.length, navigateToHit, onClose],
+    [activeIndex, hits.length, navigateToHit, onClose]
   );
 
   useEffect(() => {

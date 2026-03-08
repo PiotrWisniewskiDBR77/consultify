@@ -83,14 +83,18 @@ export const UsageStatsPanel: React.FC = () => {
             <Building2 size={20} className="text-blue-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Organizations</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">{totals.totalOrgs}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            {totals.totalOrgs}
+          </div>
         </div>
         <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-3 mb-2">
             <Users size={20} className="text-green-400" />
             <span className="text-sm text-slate-600 dark:text-slate-500">Total Users</span>
           </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">{totals.totalUsers}</div>
+          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            {totals.totalUsers}
+          </div>
         </div>
         <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-3 mb-2">

@@ -46,7 +46,7 @@ router.get('/connectors', asyncHandler(async (req: AuthRequest, res: Response) =
 
 router.post('/routing-rules', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ channel: z.string(), ruleName: z.string().optional(), conditionsJson: z.record(z.unknown()).optional(), targetUserId: z.string().optional(), targetProjectId: z.string().optional(), priority: z.number().optional(), actionType: z.string().optional(), actionConfig: z.record(z.unknown()).optional() });
+  const s = z.object({ channel: z.string(), ruleName: z.string().optional(), conditionsJson: z.record(z.string(), z.unknown()).optional(), targetUserId: z.string().optional(), targetProjectId: z.string().optional(), priority: z.number().optional(), actionType: z.string().optional(), actionConfig: z.record(z.string(), z.unknown()).optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   const r = await inboxEnterpriseService.createRoutingRule(id.orgId, p.data);
   res.status(201).json(r);
@@ -74,7 +74,7 @@ router.delete('/routing-rules/:ruleId', asyncHandler(async (req: AuthRequest, re
 
 router.post('/focus/boards', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ name: z.string().optional(), capacityLimit: z.number().optional(), rulesJson: z.record(z.unknown()).optional(), templateId: z.string().optional() });
+  const s = z.object({ name: z.string().optional(), capacityLimit: z.number().optional(), rulesJson: z.record(z.string(), z.unknown()).optional(), templateId: z.string().optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   const r = await inboxEnterpriseService.createFocusBoard(id.userId, id.orgId, p.data);
   res.status(201).json(r);
@@ -117,7 +117,7 @@ router.delete('/focus/items/:itemId', asyncHandler(async (req: AuthRequest, res:
 
 router.post('/focus/templates', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ name: z.string(), description: z.string().optional(), rulesJson: z.record(z.unknown()).optional(), capacityLimit: z.number().optional(), isOrgDefault: z.boolean().optional() });
+  const s = z.object({ name: z.string(), description: z.string().optional(), rulesJson: z.record(z.string(), z.unknown()).optional(), capacityLimit: z.number().optional(), isOrgDefault: z.boolean().optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   const r = await inboxEnterpriseService.createFocusTemplate(id.orgId, id.userId, p.data);
   res.status(201).json(r);

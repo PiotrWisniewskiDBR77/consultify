@@ -59,25 +59,34 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
     onScenesChange([...scenes, newScene]);
   }, [currentViewport, isPl, onScenesChange, scenes]);
 
-  const handleDeleteScene = useCallback((id: string) => {
-    onScenesChange(scenes.filter((s) => s.id !== id));
-  }, [onScenesChange, scenes]);
+  const handleDeleteScene = useCallback(
+    (id: string) => {
+      onScenesChange(scenes.filter((s) => s.id !== id));
+    },
+    [onScenesChange, scenes]
+  );
 
-  const handleRenameScene = useCallback((id: string) => {
-    if (!editName.trim()) return;
-    onScenesChange(scenes.map((s) => s.id === id ? { ...s, name: editName.trim() } : s));
-    setEditingId(null);
-  }, [editName, onScenesChange, scenes]);
+  const handleRenameScene = useCallback(
+    (id: string) => {
+      if (!editName.trim()) return;
+      onScenesChange(scenes.map((s) => (s.id === id ? { ...s, name: editName.trim() } : s)));
+      setEditingId(null);
+    },
+    [editName, onScenesChange, scenes]
+  );
 
-  const handleMoveScene = useCallback((id: string, direction: 'up' | 'down') => {
-    const idx = scenes.findIndex((s) => s.id === id);
-    if (idx === -1) return;
-    const newIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (newIdx < 0 || newIdx >= scenes.length) return;
-    const next = [...scenes];
-    [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
-    onScenesChange(next);
-  }, [onScenesChange, scenes]);
+  const handleMoveScene = useCallback(
+    (id: string, direction: 'up' | 'down') => {
+      const idx = scenes.findIndex((s) => s.id === id);
+      if (idx === -1) return;
+      const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (newIdx < 0 || newIdx >= scenes.length) return;
+      const next = [...scenes];
+      [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
+      onScenesChange(next);
+    },
+    [onScenesChange, scenes]
+  );
 
   // Presentation mode keyboard navigation
   useEffect(() => {
@@ -120,7 +129,10 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
     return (
       <div className="absolute top-2 right-4 z-[55]">
         <button
-          onClick={() => { setExpanded(true); handleAddScene(); }}
+          onClick={() => {
+            setExpanded(true);
+            handleAddScene();
+          }}
           className="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 dark:bg-navy-900/90 backdrop-blur-sm rounded-xl border border-slate-200/60 dark:border-navy-700/60 shadow-sm text-[10px] font-semibold text-slate-600 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
         >
           <Bookmark size={12} />
@@ -182,7 +194,10 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     onBlur={() => handleRenameScene(scene.id)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleRenameScene(scene.id); if (e.key === 'Escape') setEditingId(null); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleRenameScene(scene.id);
+                      if (e.key === 'Escape') setEditingId(null);
+                    }}
                     className="flex-1 text-[10px] bg-transparent border-b border-primary-400 outline-none text-slate-700 dark:text-slate-300"
                     onClick={(e) => e.stopPropagation()}
                   />
@@ -193,25 +208,38 @@ export const IdeaScenesManager: React.FC<IdeaScenesManagerProps> = ({
                 )}
                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleMoveScene(scene.id, 'up'); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMoveScene(scene.id, 'up');
+                    }}
                     className="p-0.5 text-slate-400 hover:text-slate-600"
                   >
                     <ChevronUp size={10} />
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleMoveScene(scene.id, 'down'); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMoveScene(scene.id, 'down');
+                    }}
                     className="p-0.5 text-slate-400 hover:text-slate-600"
                   >
                     <ChevronDown size={10} />
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); setEditingId(scene.id); setEditName(scene.name); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingId(scene.id);
+                      setEditName(scene.name);
+                    }}
                     className="p-0.5 text-slate-400 hover:text-primary-500"
                   >
                     <Edit3 size={10} />
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleDeleteScene(scene.id); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteScene(scene.id);
+                    }}
                     className="p-0.5 text-slate-400 hover:text-red-500"
                   >
                     <Trash2 size={10} />

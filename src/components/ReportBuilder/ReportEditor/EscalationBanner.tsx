@@ -4,13 +4,7 @@
  * Evaluates R1 report data against escalation thresholds and displays
  * a banner suggesting escalation to R2 (Steering Committee) when conditions are met.
  */
-import {
-  AlertTriangle,
-  ArrowRight,
-  Loader2,
-  ShieldAlert,
-  X,
-} from 'lucide-react';
+import { AlertTriangle, ArrowRight, Loader2, ShieldAlert, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -46,10 +40,10 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
     if (!reportId || (reportTypeV3 || '').toUpperCase() !== 'R1') return;
     setLoading(true);
     try {
-      const res = await fetch(
-        `${API_URL}/report-builder/${reportId}/evaluate-escalation`,
-        { method: 'POST', headers: getHeaders() }
-      );
+      const res = await fetch(`${API_URL}/report-builder/${reportId}/evaluate-escalation`, {
+        method: 'POST',
+        headers: getHeaders(),
+      });
       if (res.ok) {
         const data: EscalationTrigger = await res.json();
         setTrigger(data);
@@ -84,8 +78,14 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
       <div className="flex-1 min-w-0">
         <div className={`text-sm font-medium ${bannerText}`}>
           {isCritical
-            ? t('reports.escalation.criticalTitle', 'Critical: Steering Committee escalation recommended')
-            : t('reports.escalation.warningTitle', 'Attention: Consider escalating to Steering Committee')}
+            ? t(
+                'reports.escalation.criticalTitle',
+                'Critical: Steering Committee escalation recommended'
+              )
+            : t(
+                'reports.escalation.warningTitle',
+                'Attention: Consider escalating to Steering Committee'
+              )}
         </div>
         <ul className="mt-1.5 space-y-0.5">
           {trigger.reasons.map((reason, i) => (
@@ -98,13 +98,21 @@ export const EscalationBanner: React.FC<EscalationBannerProps> = ({
         <div className="flex items-center gap-3 mt-2">
           <div className="flex items-center gap-4 text-[10px] text-slate-500 uppercase tracking-wide">
             {trigger.blockedInitiatives > 0 && (
-              <span>{trigger.blockedInitiatives} {t('reports.escalation.blocked', 'blocked')}</span>
+              <span>
+                {trigger.blockedInitiatives} {t('reports.escalation.blocked', 'blocked')}
+              </span>
             )}
             {trigger.overdueDecisions > 0 && (
-              <span>{trigger.overdueDecisions} {t('reports.escalation.overdueDecisions', 'overdue decisions')}</span>
+              <span>
+                {trigger.overdueDecisions}{' '}
+                {t('reports.escalation.overdueDecisions', 'overdue decisions')}
+              </span>
             )}
             {trigger.budgetDeviations > 0 && (
-              <span>{trigger.budgetDeviations} {t('reports.escalation.budgetDeviations', 'budget deviations')}</span>
+              <span>
+                {trigger.budgetDeviations}{' '}
+                {t('reports.escalation.budgetDeviations', 'budget deviations')}
+              </span>
             )}
           </div>
         </div>

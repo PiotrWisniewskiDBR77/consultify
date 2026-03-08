@@ -22,9 +22,9 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
-import { ROUTES } from '@/routes/routeConfig';
 
 import {
   FilterableTable,
@@ -117,7 +117,11 @@ export const PresentationsHub: React.FC = () => {
     try {
       const res = (await Api.get('/presentations/decks')) as any;
       const payload = res?.data;
-      const rows = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : [];
+      const rows = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
       const items: PresentationDeck[] = rows.map((r: any) => ({
         id: r.id,
         title: r.title || 'Untitled',
@@ -126,7 +130,7 @@ export const PresentationsHub: React.FC = () => {
         sourceType: r.deck_type || r.sourceType || 'tool',
         sourceId: r.source_id || r.sourceId,
         lastExportAt: r.exported_at || r.lastExportAt,
-        exportFormats: r.export_format ? [r.export_format] : (r.exportFormats || []),
+        exportFormats: r.export_format ? [r.export_format] : r.exportFormats || [],
         thumbnailUrl: r.thumbnail_url || r.thumbnailUrl,
         status: r.status || 'draft',
         slideCount: r.slide_count || r.slideCount || 0,
@@ -383,7 +387,12 @@ export const PresentationsHub: React.FC = () => {
 
   const handleDeleteDeck = useCallback(
     async (deck: PresentationDeck) => {
-      if (!window.confirm(t('presentations.deleteConfirm', `Delete "${deck.title}"? This cannot be undone.`))) return;
+      if (
+        !window.confirm(
+          t('presentations.deleteConfirm', `Delete "${deck.title}"? This cannot be undone.`)
+        )
+      )
+        return;
       try {
         await Api.delete(`/presentations/decks/${deck.id}`);
         toast.success(t('presentations.deleteSuccess', 'Deck deleted'));
@@ -396,23 +405,26 @@ export const PresentationsHub: React.FC = () => {
     [fetchDecks, t]
   );
 
-  const handleOpenSource = useCallback((deck: PresentationDeck) => {
-    if (!deck.sourceId) return;
-    // Prefer opening via target hub deep-link so it lands in Dynamic Tabs (no orphan full pages).
-    if (deck.sourceType === 'tool') {
-      navigate(`${ROUTES.DISCOVERY_TOOLS.ROOT}?docId=${encodeURIComponent(deck.sourceId)}`);
-      return;
-    }
-    const path =
-      deck.sourceType === 'assessment'
-        ? `/assessments/${deck.sourceId}`
-        : deck.sourceType === 'finance'
-          ? `/finance/models/${deck.sourceId}`
-          : '#';
-    if (path !== '#') {
-      window.location.href = path;
-    }
-  }, [navigate]);
+  const handleOpenSource = useCallback(
+    (deck: PresentationDeck) => {
+      if (!deck.sourceId) return;
+      // Prefer opening via target hub deep-link so it lands in Dynamic Tabs (no orphan full pages).
+      if (deck.sourceType === 'tool') {
+        navigate(`${ROUTES.DISCOVERY_TOOLS.ROOT}?docId=${encodeURIComponent(deck.sourceId)}`);
+        return;
+      }
+      const path =
+        deck.sourceType === 'assessment'
+          ? `/assessments/${deck.sourceId}`
+          : deck.sourceType === 'finance'
+            ? `/finance/models/${deck.sourceId}`
+            : '#';
+      if (path !== '#') {
+        window.location.href = path;
+      }
+    },
+    [navigate]
+  );
 
   const handleRenameSubmit = useCallback(async () => {
     if (!renameModalDeck || !renameValue.trim()) return;
@@ -587,7 +599,10 @@ export const PresentationsHub: React.FC = () => {
                     className="mx-auto text-slate-400 dark:text-slate-500 mb-4"
                   />
                   <p className="text-slate-600 dark:text-slate-300 mb-4">
-                    {t('presentations.openInBuilder', 'Open this deck in the full editor to view and edit slides.')}
+                    {t(
+                      'presentations.openInBuilder',
+                      'Open this deck in the full editor to view and edit slides.'
+                    )}
                   </p>
                   <button
                     onClick={() => navigate(`/presentations/builder/${activeDocumentId}`)}

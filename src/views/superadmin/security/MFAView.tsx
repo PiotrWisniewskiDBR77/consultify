@@ -96,9 +96,7 @@ export const MFAView: React.FC = () => {
                   <div className="flex items-center gap-4">
                     <div
                       className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        method.is_enabled
-                          ? 'bg-green-500/20'
-                          : 'bg-slate-100 dark:bg-white/10'
+                        method.is_enabled ? 'bg-green-500/20' : 'bg-slate-100 dark:bg-white/10'
                       }`}
                     >
                       <Key

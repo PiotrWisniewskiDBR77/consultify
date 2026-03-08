@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+
 import type { CanvasToolType } from './ideaSelectionTypes';
 
 interface GhostCard {
@@ -28,7 +29,11 @@ export interface IdeaGhostCardsProps {
   isAccepted: boolean;
   graphNodes: any[];
   graphEdges: any[];
-  onMaterialize: (card: { text: string; position: { x: number; y: number }; branchKey?: string }) => void;
+  onMaterialize: (card: {
+    text: string;
+    position: { x: number; y: number };
+    branchKey?: string;
+  }) => void;
 }
 
 const GHOST_COLORS: Record<string, string> = {
@@ -100,7 +105,7 @@ export const IdeaGhostCards: React.FC<IdeaGhostCardsProps> = ({
               text: s.text,
               suggestedPosition: {
                 x: baseX + 220 + (i % 3) * 60,
-                y: baseY + (Math.floor(i / 3)) * 140,
+                y: baseY + Math.floor(i / 3) * 140,
               },
               branchKey: s.actionPayload?.branchKey || undefined,
               confidence: s.confidence || 0.6,
@@ -116,17 +121,23 @@ export const IdeaGhostCards: React.FC<IdeaGhostCardsProps> = ({
     };
 
     const timer = setTimeout(fetchGhosts, 2000);
-    return () => { cancelled = true; clearTimeout(timer); };
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [activeTool, graphEdges, graphNodes, i18n.language, ideaId, seedText, shouldFetch, title]);
 
-  const handleMaterialize = useCallback((ghost: GhostCard) => {
-    onMaterialize({
-      text: ghost.text,
-      position: ghost.suggestedPosition,
-      branchKey: ghost.branchKey,
-    });
-    setDismissed((prev) => new Set(prev).add(ghost.id));
-  }, [onMaterialize]);
+  const handleMaterialize = useCallback(
+    (ghost: GhostCard) => {
+      onMaterialize({
+        text: ghost.text,
+        position: ghost.suggestedPosition,
+        branchKey: ghost.branchKey,
+      });
+      setDismissed((prev) => new Set(prev).add(ghost.id));
+    },
+    [onMaterialize]
+  );
 
   const visibleGhosts = useMemo(
     () => ghosts.filter((g) => !dismissed.has(g.id)),
@@ -150,7 +161,9 @@ export const IdeaGhostCards: React.FC<IdeaGhostCardsProps> = ({
             }}
             onClick={() => handleMaterialize(ghost)}
           >
-            <div className={`relative w-[170px] min-h-[80px] p-3 rounded-xl border-2 border-dashed ${colorClass} backdrop-blur-sm`}>
+            <div
+              className={`relative w-[170px] min-h-[80px] p-3 rounded-xl border-2 border-dashed ${colorClass} backdrop-blur-sm`}
+            >
               <div className="flex items-start gap-1.5">
                 <Sparkles size={10} className="text-violet-400 mt-0.5 shrink-0" />
                 <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">

@@ -15,14 +15,14 @@ export const SummaryCardNode: React.FC<NodeProps> = ({ data, selected }) => {
   const title: string = data?.label || 'Summary';
 
   const completenessColor =
-    completeness >= 75 ? 'text-emerald-500' :
-    completeness >= 50 ? 'text-amber-500' :
-    'text-slate-400';
+    completeness >= 75
+      ? 'text-emerald-500'
+      : completeness >= 50
+        ? 'text-amber-500'
+        : 'text-slate-400';
 
   const completenessBarColor =
-    completeness >= 75 ? 'bg-emerald-400' :
-    completeness >= 50 ? 'bg-amber-400' :
-    'bg-slate-300';
+    completeness >= 75 ? 'bg-emerald-400' : completeness >= 50 ? 'bg-amber-400' : 'bg-slate-300';
 
   return (
     <div
@@ -48,7 +48,9 @@ export const SummaryCardNode: React.FC<NodeProps> = ({ data, selected }) => {
       <div className="flex items-center gap-3 mb-2">
         <div className="flex items-center gap-1">
           <Hash size={9} className="text-slate-400" />
-          <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">{nodeCount}</span>
+          <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+            {nodeCount}
+          </span>
         </div>
         <div className="flex items-center gap-1">
           <BarChart3 size={9} className={completenessColor} />
@@ -81,7 +83,11 @@ export const SummaryCardNode: React.FC<NodeProps> = ({ data, selected }) => {
         </div>
       )}
 
-      <Handle type="source" position={Position.Bottom} className="!w-2 !h-2 !bg-violet-400 !-bottom-1" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!w-2 !h-2 !bg-violet-400 !-bottom-1"
+      />
     </div>
   );
 };

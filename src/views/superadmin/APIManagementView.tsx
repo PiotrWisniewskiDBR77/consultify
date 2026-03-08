@@ -385,7 +385,12 @@ export const APIManagementView: React.FC = () => {
   const [webhooks, setWebhooks] = useState<WebhookItem[]>([]);
   const [webhooksLoading, setWebhooksLoading] = useState(false);
   const [showCreateWebhook, setShowCreateWebhook] = useState(false);
-  const [webhookForm, setWebhookForm] = useState({ name: '', url: '', events: '' as string, secret: '' });
+  const [webhookForm, setWebhookForm] = useState({
+    name: '',
+    url: '',
+    events: '' as string,
+    secret: '',
+  });
   const [creatingWebhook, setCreatingWebhook] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -400,7 +405,11 @@ export const APIManagementView: React.FC = () => {
       const keys = rawKeys.map((k: any) => ({
         ...k,
         keyType: k.keyType || 'org',
-        scopes: Array.isArray(k.scopes) ? k.scopes : typeof k.scopes === 'string' ? JSON.parse(k.scopes || '[]') : [],
+        scopes: Array.isArray(k.scopes)
+          ? k.scopes
+          : typeof k.scopes === 'string'
+            ? JSON.parse(k.scopes || '[]')
+            : [],
         allowedIps: Array.isArray(k.allowedIps) ? k.allowedIps : [],
         usageCount: Number(k.usageCount) || 0,
         rateLimitPerMinute: Number(k.rateLimitPerMinute) || 60,
@@ -575,10 +584,7 @@ export const APIManagementView: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-white/10">
             {apiKeys.map((key) => (
-              <tr
-                key={key.id}
-                className="hover:bg-slate-50 dark:hover:bg-navy-800/20"
-              >
+              <tr key={key.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
                 <td className="px-6 py-4">
                   <div>
                     <div className="font-medium text-slate-900 dark:text-white">{key.name}</div>

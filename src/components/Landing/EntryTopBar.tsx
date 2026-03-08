@@ -99,22 +99,21 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
     <header
       className="fixed top-0 left-0 right-0 h-14 z-[100] transition-colors duration-300"
       style={{
-        background: isDark
-          ? 'rgba(10, 8, 30, 0.72)'
-          : 'rgba(255, 255, 255, 0.80)',
+        background: isDark ? 'rgba(10, 8, 30, 0.72)' : 'rgba(255, 255, 255, 0.80)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: isDark
-          ? '1px solid rgba(255,255,255,0.07)'
-          : '1px solid rgba(0,0,0,0.06)',
+        borderBottom: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid rgba(0,0,0,0.06)',
       }}
     >
       <div className="max-w-7xl mx-auto h-full px-5 flex items-center justify-between gap-4">
-
         {/* ── Left: Logo + Become Partner + Demo + Trial ── */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Logo */}
-          <a href="/" className="flex items-center transition-opacity duration-200 hover:opacity-80 mr-1" title="Consultify">
+          <a
+            href="/"
+            className="flex items-center transition-opacity duration-200 hover:opacity-80 mr-1"
+            title="Consultify"
+          >
             <img
               src={isDark ? '/assets/logos/logo-dark.svg' : '/assets/logos/logo-light.svg'}
               alt="Consultify"
@@ -125,18 +124,42 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
           {/* Ghost pill helper */}
           {(['partner', 'demo', 'trial'] as const).map((id) => {
             const cfg = {
-              partner: { label: t('partner.becomePartner', 'Become Partner'), icon: <Handshake size={13} />, onClick: () => navigate('/become-partner') },
-              demo:    { label: t('landing.topBar.demo', 'Demo'),             icon: null,                   onClick: onDemoClick },
-              trial:   { label: t('landing.topBar.trial', 'Trial'),           icon: null,                   onClick: onTrialClick },
+              partner: {
+                label: t('partner.becomePartner', 'Become Partner'),
+                icon: <Handshake size={13} />,
+                onClick: () => navigate('/become-partner'),
+              },
+              demo: { label: t('landing.topBar.demo', 'Demo'), icon: null, onClick: onDemoClick },
+              trial: {
+                label: t('landing.topBar.trial', 'Trial'),
+                icon: null,
+                onClick: onTrialClick,
+              },
             }[id];
             return (
               <button
                 key={id}
                 onClick={cfg.onClick}
                 className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer"
-                style={{ color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)', border: isDark ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(0,0,0,0.12)', background: 'transparent' }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'; (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#fff' : '#000'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)'; }}
+                style={{
+                  color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)',
+                  border: isDark
+                    ? '1px solid rgba(255,255,255,0.14)'
+                    : '1px solid rgba(0,0,0,0.12)',
+                  background: 'transparent',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = isDark
+                    ? 'rgba(255,255,255,0.07)'
+                    : 'rgba(0,0,0,0.05)';
+                  (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#fff' : '#000';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+                  (e.currentTarget as HTMLButtonElement).style.color = isDark
+                    ? 'rgba(255,255,255,0.65)'
+                    : 'rgba(0,0,0,0.60)';
+                }}
               >
                 {cfg.icon}
                 <span>{cfg.label}</span>
@@ -147,7 +170,6 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
 
         {/* ── Right: Nav hamburger + auth pills ── */}
         <div className="hidden md:flex items-center gap-2">
-
           {/* Hamburger nav dropdown */}
           <div className="relative" ref={navRef}>
             <button
@@ -157,7 +179,9 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                 color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)',
                 border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.10)',
                 background: isNavOpen
-                  ? isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)'
+                  ? isDark
+                    ? 'rgba(255,255,255,0.07)'
+                    : 'rgba(0,0,0,0.05)'
                   : 'transparent',
               }}
             >
@@ -175,50 +199,75 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                   className="absolute right-0 mt-2 w-52 py-2 z-50"
                   style={{
                     background: isDark ? 'rgba(12,8,32,0.97)' : '#fff',
-                    border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)',
+                    border: isDark
+                      ? '1px solid rgba(255,255,255,0.12)'
+                      : '1px solid rgba(0,0,0,0.08)',
                     borderRadius: '16px',
-                    boxShadow: isDark ? '0 24px 48px rgba(0,0,0,0.70)' : '0 12px 32px rgba(0,0,0,0.12)',
+                    boxShadow: isDark
+                      ? '0 24px 48px rgba(0,0,0,0.70)'
+                      : '0 12px 32px rgba(0,0,0,0.12)',
                   }}
                 >
                   {navLinks.map((link) => (
                     <button
                       key={link.href}
-                      onClick={() => { navigate(link.href); setIsNavOpen(false); }}
+                      onClick={() => {
+                        navigate(link.href);
+                        setIsNavOpen(false);
+                      }}
                       className="w-full text-left px-4 py-2.5 text-sm flex items-center justify-between group transition-colors"
                       style={{
                         color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.70)',
                       }}
                       onMouseEnter={(e) => {
                         (e.currentTarget as HTMLButtonElement).style.background = isDark
-                          ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
-                        (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#fff' : '#000';
+                          ? 'rgba(255,255,255,0.05)'
+                          : 'rgba(0,0,0,0.04)';
+                        (e.currentTarget as HTMLButtonElement).style.color = isDark
+                          ? '#fff'
+                          : '#000';
                       }}
                       onMouseLeave={(e) => {
                         (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
                         (e.currentTarget as HTMLButtonElement).style.color = isDark
-                          ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.70)';
+                          ? 'rgba(255,255,255,0.70)'
+                          : 'rgba(0,0,0,0.70)';
                       }}
                     >
                       <span className="font-medium">{link.label}</span>
-                      <ChevronRight size={13} className="opacity-30 group-hover:opacity-70 transition-opacity" />
+                      <ChevronRight
+                        size={13}
+                        className="opacity-30 group-hover:opacity-70 transition-opacity"
+                      />
                     </button>
                   ))}
 
-                  <div className="mx-3 my-2 h-px" style={{ background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }} />
+                  <div
+                    className="mx-3 my-2 h-px"
+                    style={{ background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }}
+                  />
 
                   <div className="px-3 pb-1 flex gap-2">
                     <button
-                      onClick={() => { onDemoClick(); setIsNavOpen(false); }}
+                      onClick={() => {
+                        onDemoClick();
+                        setIsNavOpen(false);
+                      }}
                       className="flex-1 py-1.5 rounded-full text-xs font-medium text-center transition-all"
                       style={{
                         color: isDark ? 'rgba(255,255,255,0.60)' : 'rgba(0,0,0,0.55)',
-                        border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.10)',
+                        border: isDark
+                          ? '1px solid rgba(255,255,255,0.12)'
+                          : '1px solid rgba(0,0,0,0.10)',
                       }}
                     >
                       Demo
                     </button>
                     <button
-                      onClick={() => { onTrialClick(); setIsNavOpen(false); }}
+                      onClick={() => {
+                        onTrialClick();
+                        setIsNavOpen(false);
+                      }}
                       className="flex-1 py-1.5 rounded-full text-xs font-medium text-center text-white transition-all"
                       style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
                     >
@@ -231,7 +280,10 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
           </div>
 
           {/* Separator */}
-          <div className="h-4 w-px" style={{ background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)' }} />
+          <div
+            className="h-4 w-px"
+            style={{ background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)' }}
+          />
 
           {/* Language pill */}
           <div className="relative" ref={langRef}>
@@ -245,7 +297,10 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
             >
               <Globe size={13} />
               <span>{currentLang.displayCode}</span>
-              <ChevronDown size={11} className={`transition-transform duration-200 ${isLangOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                size={11}
+                className={`transition-transform duration-200 ${isLangOpen ? 'rotate-180' : ''}`}
+              />
             </button>
 
             <AnimatePresence>
@@ -258,9 +313,13 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                   className="absolute right-0 mt-2 w-44 py-1.5 z-50"
                   style={{
                     background: isDark ? 'rgba(18,12,40,0.95)' : '#fff',
-                    border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)',
+                    border: isDark
+                      ? '1px solid rgba(255,255,255,0.12)'
+                      : '1px solid rgba(0,0,0,0.08)',
                     borderRadius: '14px',
-                    boxShadow: isDark ? '0 20px 40px rgba(0,0,0,0.60)' : '0 12px 32px rgba(0,0,0,0.12)',
+                    boxShadow: isDark
+                      ? '0 20px 40px rgba(0,0,0,0.60)'
+                      : '0 12px 32px rgba(0,0,0,0.12)',
                   }}
                 >
                   {languages.map((lang) => (
@@ -269,13 +328,21 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                       onClick={() => handleLangChange(lang.code)}
                       className="w-full text-left px-4 py-2 text-sm transition-colors flex items-center justify-between"
                       style={{
-                        color: i18n.language.startsWith(lang.code) ? '#a855f7' : isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)',
-                        background: i18n.language.startsWith(lang.code) ? 'rgba(168,85,247,0.10)' : 'transparent',
+                        color: i18n.language.startsWith(lang.code)
+                          ? '#a855f7'
+                          : isDark
+                            ? 'rgba(255,255,255,0.65)'
+                            : 'rgba(0,0,0,0.65)',
+                        background: i18n.language.startsWith(lang.code)
+                          ? 'rgba(168,85,247,0.10)'
+                          : 'transparent',
                         fontWeight: i18n.language.startsWith(lang.code) ? 700 : 400,
                       }}
                     >
                       {lang.label}
-                      {i18n.language.startsWith(lang.code) && <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />}
+                      {i18n.language.startsWith(lang.code) && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                      )}
                     </button>
                   ))}
                 </motion.div>
@@ -284,19 +351,30 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
           </div>
 
           {/* Separator */}
-          <div className="h-4 w-px" style={{ background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)' }} />
+          <div
+            className="h-4 w-px"
+            style={{ background: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)' }}
+          />
 
           {/* Log in */}
           <button
             onClick={() => navigate('/login')}
             className="px-4 py-1.5 text-sm font-medium transition-all duration-200 cursor-pointer rounded-full"
-            style={{ color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)', border: isDark ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(0,0,0,0.12)', background: 'transparent' }}
+            style={{
+              color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)',
+              border: isDark ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(0,0,0,0.12)',
+              background: 'transparent',
+            }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLButtonElement).style.color = isDark ? '#fff' : '#000';
-              (e.currentTarget as HTMLButtonElement).style.background = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)';
+              (e.currentTarget as HTMLButtonElement).style.background = isDark
+                ? 'rgba(255,255,255,0.07)'
+                : 'rgba(0,0,0,0.05)';
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color = isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.60)';
+              (e.currentTarget as HTMLButtonElement).style.color = isDark
+                ? 'rgba(255,255,255,0.65)'
+                : 'rgba(0,0,0,0.60)';
               (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
             }}
           >
@@ -307,9 +385,16 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
           <button
             onClick={() => navigate('/register')}
             className="px-5 py-1.5 rounded-full text-sm font-semibold text-white transition-all duration-200 cursor-pointer"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', boxShadow: '0 0 20px -6px rgba(124,58,237,0.60)' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.88'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+            style={{
+              background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+              boxShadow: '0 0 20px -6px rgba(124,58,237,0.60)',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.opacity = '0.88';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.opacity = '1';
+            }}
           >
             {t('landing.topBar.signUp', 'Sign up')}
           </button>
@@ -324,7 +409,11 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
               color: isDark ? 'rgba(255,255,255,0.70)' : 'rgba(0,0,0,0.60)',
               background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
             }}
-            aria-label={isMobileMenuOpen ? t('common.closeMenu', 'Close menu') : t('common.openMenu', 'Open menu')}
+            aria-label={
+              isMobileMenuOpen
+                ? t('common.closeMenu', 'Close menu')
+                : t('common.openMenu', 'Open menu')
+            }
           >
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -354,9 +443,27 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                   />
 
                   {[
-                    { label: t('landing.topBar.demo', 'Demo'), onClick: () => { onDemoClick(); setIsMobileMenuOpen(false); } },
-                    { label: t('landing.topBar.trial', 'Trial'), onClick: () => { onTrialClick(); setIsMobileMenuOpen(false); } },
-                    { label: t('landing.topBar.login', 'Log in'), onClick: () => { onLoginClick(); setIsMobileMenuOpen(false); } },
+                    {
+                      label: t('landing.topBar.demo', 'Demo'),
+                      onClick: () => {
+                        onDemoClick();
+                        setIsMobileMenuOpen(false);
+                      },
+                    },
+                    {
+                      label: t('landing.topBar.trial', 'Trial'),
+                      onClick: () => {
+                        onTrialClick();
+                        setIsMobileMenuOpen(false);
+                      },
+                    },
+                    {
+                      label: t('landing.topBar.login', 'Log in'),
+                      onClick: () => {
+                        onLoginClick();
+                        setIsMobileMenuOpen(false);
+                      },
+                    },
                   ].map((item) => (
                     <button
                       key={item.label}
@@ -365,7 +472,9 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                       style={{
                         color: isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)',
                         background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                        border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+                        border: isDark
+                          ? '1px solid rgba(255,255,255,0.08)'
+                          : '1px solid rgba(0,0,0,0.06)',
                       }}
                     >
                       {item.label}

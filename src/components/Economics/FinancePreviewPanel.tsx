@@ -97,7 +97,7 @@ export function useFinancePreview({
             }
           );
         }
-      } else if (row.kind === 'analysis') {
+      } else if (row.kind === 'analysis' || row.kind === 'investment') {
         metaPills.push(
           { label: t('finance.columns.analysisType', 'Type'), value: row.analysisType },
           { label: t('common.currency', 'Currency'), value: row.currency },
@@ -175,10 +175,10 @@ export function useFinancePreview({
                 (isPl
                   ? `Model finansowy P&L / Bilans / CF.\nScenariusz: ${row.scenario}\nWaluta: ${row.currency}\nHoryzont: ${row.horizonMonths} miesięcy\nStart: ${row.startDate || '—'}`
                   : `Financial model P&L / BS / CF.\nScenario: ${row.scenario}\nCurrency: ${row.currency}\nHorizon: ${row.horizonMonths} months\nStart: ${row.startDate || '—'}`)}
-              {row.kind === 'analysis' &&
+              {(row.kind === 'analysis' || row.kind === 'investment') &&
                 (isPl
-                  ? `Analiza finansowa: ${row.analysisType}\nWaluta: ${row.currency}\nLiczba okresów: ${row.periodCount}`
-                  : `Financial analysis: ${row.analysisType}\nCurrency: ${row.currency}\nPeriods: ${row.periodCount}`)}
+                  ? `${row.kind === 'investment' ? 'Case inwestycyjny' : 'Analiza finansowa'}: ${row.analysisType}\nWaluta: ${row.currency}\nLiczba okresów: ${row.periodCount}`
+                  : `${row.kind === 'investment' ? 'Investment case' : 'Financial analysis'}: ${row.analysisType}\nCurrency: ${row.currency}\nPeriods: ${row.periodCount}`)}
               {row.kind === 'prediction' &&
                 (() => {
                   const pRow = row as FinanceModelRow;
@@ -258,7 +258,7 @@ export function useFinancePreview({
             )}
 
           {/* Analysis: ratio summary */}
-          {row.kind === 'analysis' &&
+          {(row.kind === 'analysis' || row.kind === 'investment') &&
             analysisPreviewRatios &&
             analysisPreviewRatios.length > 0 &&
             (() => {
@@ -282,6 +282,11 @@ export function useFinancePreview({
                   en: 'Efficiency',
                   pl: 'Efektywność',
                   color: 'text-purple-600 dark:text-purple-400',
+                },
+                investment: {
+                  en: 'Investment',
+                  pl: 'Inwestycja',
+                  color: 'text-fuchsia-600 dark:text-fuchsia-400',
                 },
                 growth: { en: 'Growth', pl: 'Wzrost', color: 'text-cyan-600 dark:text-cyan-400' },
               };
@@ -567,6 +572,12 @@ export function useFinancePreview({
               isPl ? 'Znajdź anomalie' : 'Find anomalies',
               isPl ? 'Zaproponuj działania' : 'Suggest actions',
             ];
+          case 'investment':
+            return [
+              isPl ? 'Oceń NPV i IRR' : 'Evaluate NPV and IRR',
+              isPl ? 'Sprawdź payback' : 'Check payback',
+              isPl ? 'Rekomendacja go/no-go' : 'Go/no-go recommendation',
+            ];
           case 'prediction':
             return [
               isPl ? 'Oceń założenia' : 'Evaluate assumptions',
@@ -627,7 +638,7 @@ export function useFinancePreview({
                     );
                   }
                 })}
-              {row.kind === 'analysis' && (
+              {(row.kind === 'analysis' || row.kind === 'investment') && (
                 <>
                   {primaryPill(t('finance.actions.reanalyze', 'Przelicz ponownie'), async () => {
                     try {

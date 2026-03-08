@@ -13,9 +13,11 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 interface AICommandPromptProps {
   editor: Editor | null;
+  pageId?: string | null;
   noteTitle: string;
   noteContent: string;
   noteTags: string[];
+  onProposalCreated?: () => void;
   onFocus?: () => void;
   onBlur?: () => void;
   inputRef?: React.RefObject<HTMLInputElement | null>;
@@ -27,9 +29,11 @@ const PLACEHOLDER_EN = 'e.g. write a 5-step plan to implement…';
 
 export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
   editor,
+  pageId,
   noteTitle,
   noteContent,
   noteTags,
+  onProposalCreated,
   onFocus,
   onBlur,
   inputRef: inputRefProp,
@@ -66,30 +70,40 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
         },
         () => {
           const text = result.trim();
-          if (text && editor) {
+          if (text && editor && pageId) {
             const aiLabel = isPl ? 'Komentarz AI' : 'AI comment';
             const paragraphs = text.split(/\n\n+/).filter(Boolean);
-            const content = [
-              {
-                type: 'paragraph',
-                content: [{ type: 'text', text: `✨ ${aiLabel}` }],
-              },
-              ...paragraphs.map((p) => ({
-                type: 'paragraph',
-                content: [{ type: 'text', text: p.trim() }],
-              })),
-            ];
-            editor
-              .chain()
-              .focus()
-              .insertContent({
-                type: 'callout',
-                attrs: { variant: 'purple' },
-                content,
+            const blockContent = {
+              type: 'callout',
+              attrs: { variant: 'purple' },
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [{ type: 'text', text: `✨ ${aiLabel}` }],
+                },
+                ...paragraphs.map((p) => ({
+                  type: 'paragraph',
+                  content: [{ type: 'text', text: p.trim() }],
+                })),
+              ],
+            };
+            void Api.notebookCreateAIProposal(pageId, {
+              proposalType: 'append',
+              blockContent,
+              rationale: cmd.slice(0, 500),
+            })
+              .then(() => {
+                trackFunnelEvent('notebook_ai_command_prompt_used', { commandLength: cmd.length });
+                onProposalCreated?.();
+                toast.success(
+                  isPl ? 'Propozycja AI gotowa do review' : 'AI proposal ready for review'
+                );
               })
-              .run();
-            trackFunnelEvent('notebook_ai_command_prompt_used', { commandLength: cmd.length });
-            toast.success(isPl ? 'Wstawiono do notatki' : 'Inserted into note');
+              .catch(() => {
+                toast.error(
+                  isPl ? 'Nie udało się utworzyć propozycji AI' : 'Failed to create AI proposal'
+                );
+              });
           }
           setCommand('');
           setIsGenerating(false);
@@ -108,7 +122,7 @@ export const AICommandPrompt: React.FC<AICommandPromptProps> = ({
         setIsGenerating(false);
       }
     }
-  }, [command, editor, noteTitle, noteContent, noteTags, isPl]);
+  }, [command, editor, noteTitle, noteContent, noteTags, isPl, pageId, onProposalCreated]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

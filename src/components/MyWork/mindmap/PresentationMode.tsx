@@ -21,15 +21,43 @@ interface PresentationModeProps {
 }
 
 const BRANCH_COLORS: Record<string, { bg: string; text: string; accent: string }> = {
-  problem: { bg: 'from-rose-500/20 to-rose-600/10', text: 'text-rose-700 dark:text-rose-300', accent: 'bg-rose-500' },
-  goal: { bg: 'from-emerald-500/20 to-emerald-600/10', text: 'text-emerald-700 dark:text-emerald-300', accent: 'bg-emerald-500' },
-  options: { bg: 'from-amber-500/20 to-amber-600/10', text: 'text-amber-700 dark:text-amber-300', accent: 'bg-amber-500' },
-  evidence: { bg: 'from-sky-500/20 to-sky-600/10', text: 'text-sky-700 dark:text-sky-300', accent: 'bg-sky-500' },
-  risks: { bg: 'from-purple-500/20 to-purple-600/10', text: 'text-purple-700 dark:text-purple-300', accent: 'bg-purple-500' },
-  experiments: { bg: 'from-cyan-500/20 to-cyan-600/10', text: 'text-cyan-700 dark:text-cyan-300', accent: 'bg-cyan-500' },
+  problem: {
+    bg: 'from-rose-500/20 to-rose-600/10',
+    text: 'text-rose-700 dark:text-rose-300',
+    accent: 'bg-rose-500',
+  },
+  goal: {
+    bg: 'from-emerald-500/20 to-emerald-600/10',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    accent: 'bg-emerald-500',
+  },
+  options: {
+    bg: 'from-amber-500/20 to-amber-600/10',
+    text: 'text-amber-700 dark:text-amber-300',
+    accent: 'bg-amber-500',
+  },
+  evidence: {
+    bg: 'from-sky-500/20 to-sky-600/10',
+    text: 'text-sky-700 dark:text-sky-300',
+    accent: 'bg-sky-500',
+  },
+  risks: {
+    bg: 'from-purple-500/20 to-purple-600/10',
+    text: 'text-purple-700 dark:text-purple-300',
+    accent: 'bg-purple-500',
+  },
+  experiments: {
+    bg: 'from-cyan-500/20 to-cyan-600/10',
+    text: 'text-cyan-700 dark:text-cyan-300',
+    accent: 'bg-cyan-500',
+  },
 };
 
-const DEFAULT_COLORS = { bg: 'from-slate-500/20 to-slate-600/10', text: 'text-slate-700 dark:text-slate-300', accent: 'bg-slate-500' };
+const DEFAULT_COLORS = {
+  bg: 'from-slate-500/20 to-slate-600/10',
+  text: 'text-slate-700 dark:text-slate-300',
+  accent: 'bg-slate-500',
+};
 
 export const PresentationMode: React.FC<PresentationModeProps> = ({
   open,
@@ -68,8 +96,14 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
   React.useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goNext(); }
-      if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev(); }
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        goNext();
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goPrev();
+      }
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handler);
@@ -102,7 +136,10 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
             {currentSlide + 1} / {slides.length}
           </span>
         </div>
-        <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+        <button
+          onClick={onClose}
+          className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+        >
           <X size={16} />
         </button>
       </div>
@@ -122,7 +159,10 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
               {branches.map((b) => {
                 const colors = BRANCH_COLORS[b.branchKey] || DEFAULT_COLORS;
                 return (
-                  <div key={b.branchKey} className={`px-3 py-1.5 rounded-full ${colors.text} text-[10px] font-bold bg-gradient-to-r ${colors.bg}`}>
+                  <div
+                    key={b.branchKey}
+                    className={`px-3 py-1.5 rounded-full ${colors.text} text-[10px] font-bold bg-gradient-to-r ${colors.bg}`}
+                  >
                     {b.label} ({b.nodes.length})
                   </div>
                 );
@@ -131,48 +171,54 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
           </div>
         )}
 
-        {slide.type === 'branch' && slide.branch && (() => {
-          const b = slide.branch;
-          const colors = BRANCH_COLORS[b.branchKey] || DEFAULT_COLORS;
-          return (
-            <div className="w-full max-w-3xl animate-fade-in">
-              <div className="flex items-center gap-3 mb-8">
-                <div className={`w-3 h-3 rounded-full ${colors.accent}`} />
-                <GitBranch size={20} className={colors.text} />
-                <h2 className={`text-2xl font-bold ${colors.text}`}>{b.label}</h2>
-                <span className="text-sm text-slate-400 ml-2">({b.nodes.length})</span>
-              </div>
+        {slide.type === 'branch' &&
+          slide.branch &&
+          (() => {
+            const b = slide.branch;
+            const colors = BRANCH_COLORS[b.branchKey] || DEFAULT_COLORS;
+            return (
+              <div className="w-full max-w-3xl animate-fade-in">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className={`w-3 h-3 rounded-full ${colors.accent}`} />
+                  <GitBranch size={20} className={colors.text} />
+                  <h2 className={`text-2xl font-bold ${colors.text}`}>{b.label}</h2>
+                  <span className="text-sm text-slate-400 ml-2">({b.nodes.length})</span>
+                </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {b.nodes.map((node, idx) => (
-                  <div
-                    key={node.id}
-                    className={`p-4 rounded-2xl bg-gradient-to-br ${colors.bg} border border-slate-200/30 dark:border-navy-700/30 animate-slide-up`}
-                    style={{ animationDelay: `${idx * 100}ms` }}
-                  >
-                    <div className="flex items-start gap-2">
-                      <span className="text-[10px] font-bold text-slate-400 mt-0.5">{idx + 1}.</span>
-                      <div>
-                        <div className={`text-sm font-semibold ${colors.text}`}>{node.label}</div>
-                        {node.status && node.status !== 'idea' && (
-                          <div className="text-[9px] text-slate-400 mt-1 capitalize">{node.status.replace(/_/g, ' ')}</div>
-                        )}
+                <div className="grid grid-cols-2 gap-3">
+                  {b.nodes.map((node, idx) => (
+                    <div
+                      key={node.id}
+                      className={`p-4 rounded-2xl bg-gradient-to-br ${colors.bg} border border-slate-200/30 dark:border-navy-700/30 animate-slide-up`}
+                      style={{ animationDelay: `${idx * 100}ms` }}
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 mt-0.5">
+                          {idx + 1}.
+                        </span>
+                        <div>
+                          <div className={`text-sm font-semibold ${colors.text}`}>{node.label}</div>
+                          {node.status && node.status !== 'idea' && (
+                            <div className="text-[9px] text-slate-400 mt-1 capitalize">
+                              {node.status.replace(/_/g, ' ')}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              <button
-                onClick={() => onFocusBranch(b.branchKey)}
-                className={`mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold ${colors.text} bg-gradient-to-r ${colors.bg} hover:opacity-80 transition-opacity`}
-              >
-                <ChevronRight size={14} />
-                {isPl ? 'Przejdź do gałęzi na mapie' : 'Go to branch on map'}
-              </button>
-            </div>
-          );
-        })()}
+                <button
+                  onClick={() => onFocusBranch(b.branchKey)}
+                  className={`mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-bold ${colors.text} bg-gradient-to-r ${colors.bg} hover:opacity-80 transition-opacity`}
+                >
+                  <ChevronRight size={14} />
+                  {isPl ? 'Przejdź do gałęzi na mapie' : 'Go to branch on map'}
+                </button>
+              </div>
+            );
+          })()}
       </div>
 
       {/* Navigation */}
@@ -193,7 +239,9 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
               key={idx}
               onClick={() => setCurrentSlide(idx)}
               className={`w-2 h-2 rounded-full transition-all ${
-                idx === currentSlide ? 'bg-amber-500 w-4' : 'bg-slate-300 dark:bg-navy-600 hover:bg-slate-400'
+                idx === currentSlide
+                  ? 'bg-amber-500 w-4'
+                  : 'bg-slate-300 dark:bg-navy-600 hover:bg-slate-400'
               }`}
             />
           ))}

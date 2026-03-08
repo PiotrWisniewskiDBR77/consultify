@@ -2,7 +2,7 @@
 >
 > **Status:** Draft (working doc)  
 > **Owner:** Piotr + team  
-> **Last updated:** 2026-02-27  
+> **Last updated:** 2026-03-07  
 >
 > **Cel dokumentu:** zamienić SSOT (źródła prawdy + notatki procesowe) na **jeden, kompletny rejestr zmian** (“co trzeba dowieźć”), który następnie można zamienić w **plan sprintów / plan wdrożenia**.
 >
@@ -71,7 +71,7 @@ Zmiana jest domknięta dopiero, gdy:
 - **CR-004 — i18n PL+EN + locked/read-only jako standard**
   - **SSOT refs**: `docs/ui-standards/README.md`, `docs/ui-standards/UI_UX_CANON_V3.md`, `docs/product/REQUIREMENTS_V3_SSOT.md`
   - **V3 task mapping**: *rozproszone (reguła globalna, brak jednego epika w ledgerze)*
-  - **Coverage**: PARTIAL *(jest wdrożone w wielu miejscach, ale brak jednej checklisty pokrycia moduł‑po‑module)*
+  - **Coverage**: COVERED *(po finalnym compliance sweep: locked/read-only propagation, i18n cleanup i `smoke:v3:global-standards`)*
 
 - **CR-005 — Program-level gates (Demo Script + Verification Matrix jako prawda operacyjna)**
   - **SSOT refs**: `docs/product/V3_IMPLEMENTATION_PROGRAM.md`
@@ -88,34 +88,34 @@ Zmiana jest domknięta dopiero, gdy:
 - **CR-011 — Command Row zamiast wielu pasków**
   - **SSOT refs**: `docs/ui-standards/UI_UX_CANON_V3.md`, `docs/product/PROCESS_MYWORK_TO_DELIVERABLES_V3.md`
   - **V3 task mapping**: `V3-A03` *(oraz modułowe poprawki)*
-  - **Coverage**: COVERED/PARTIAL *(w zależności od ekranu; wymaga weryfikacji w matrix)*
+  - **Coverage**: COVERED *(po finalnym closure audit i module-hub sweep)*
 
 - **CR-012 — App Table Standard w każdym hubie tabelarycznym**
   - **SSOT refs**: `docs/ui-standards/03-modules/app-table-standard.md`
   - **V3 task mapping**: `V3-A03`, `V3-D03` + modułowe taski
-  - **Coverage**: COVERED/PARTIAL *(wymaga matrix audit per hub)*
+  - **Coverage**: COVERED *(huby V3 objęte finalnym audit sweepem)*
 
 - **CR-013 — Table + Preview Pane Standard (Outlook-style)**
   - **SSOT refs**: `docs/ui-standards/03-modules/table-preview-pane-standard.md`
   - **V3 task mapping**: `V3-A07`, `V3-C01`, `V3-D03` *(Insights preview)*, `EXECUTION_V3.md` (preview MUST)
-  - **Coverage**: COVERED/PARTIAL *(global roll-out; wymagany audit per hub)*
+  - **Coverage**: COVERED *(w zakresie V3 acceptance)*
 
 - **CR-014 — N‑mode D/N/C + required sections + completeness + AI assist**
   - **SSOT refs**: `docs/ui-standards/01-shell-layout/presentation-modes.md`, `docs/product/NMODE_MANAGEMENT_V3.md`
   - **V3 task mapping**: `V3-K01`, `V3-F01`
-  - **Coverage**: COVERED *(core), PARTIAL *(rozszerzenia per artefakt)*
+  - **Coverage**: COVERED *(core + representative artifact sweep zamknięty na potrzeby V3 acceptance)*
 
 ### 2.3 MyWork (personal hub)
 
 - **CR-020 — MyWork “pill tabs” + kanoniczna kolejność + spójność**
   - **SSOT refs**: `docs/ui-standards/UI_UX_CANON_V3.md`, `docs/product/OPERATING_MODEL_V3.md`
   - **V3 task mapping**: `V3-A03` *(compliance sweep)* + `V3-C01..C06`
-  - **Coverage**: COVERED/PARTIAL *(wymaga matrix potwierdzenia)*
+  - **Coverage**: COVERED *(po finalnym compliance sweep)*
 
 - **CR-021 — MyWork huby tabelaryczne: AppTable + PreviewPane + CommandRow**
   - **SSOT refs**: `docs/ui-standards/03-modules/app-table-standard.md`, `docs/ui-standards/03-modules/table-preview-pane-standard.md`
   - **V3 task mapping**: `V3-C01`, `V3-A07`, `V3-A03`
-  - **Coverage**: COVERED/PARTIAL
+  - **Coverage**: COVERED
 
 - **CR-022 — MyWork Focus = “lekki cockpit” (lanes + DnD + quick add)**
   - **SSOT refs**: `docs/MYWORK_MODULE_SPECIFICATION.md` (Focus MUST), `docs/product/PROCESS_MYWORK_TO_DELIVERABLES_V3.md`
@@ -141,23 +141,23 @@ Zmiana jest domknięta dopiero, gdy:
 
 - **CR-030 — Notebook v3 jako workspace: create-from-note + panel 3-tools strip**
   - **SSOT refs**: `docs/product/NOTEBOOK_V3.md`, `docs/ui-standards/02-components/workspace-3-tools-strip.md`
-  - **V3 task mapping**: **MISSING** *(brak dedykowanego taska Notebook w ledgerze)*
-  - **Coverage**: MISSING
+  - **V3 task mapping**: `V3-C07` *(outline-first modal + assessment/report/presentation create-from-note domknięte po finalnym smoke pack)*
+  - **Coverage**: COVERED
 
 - **CR-031 — Embedded references (chips → expand preview) + live metadata**
   - **SSOT refs**: `docs/product/NOTEBOOK_V3.md`, `docs/product/LINK_GRAPH_V3.md`
-  - **V3 task mapping**: **MISSING** *(brak epika Link Graph w ledgerze; częściowo impl w UI nie jest udokumentowane jako task)*
-  - **Coverage**: MISSING/PARTIAL
+  - **V3 task mapping**: `V3-A09` *(inline chips + expand preview + live metadata resolver domknięte po finalnym smoke pack)*
+  - **Coverage**: COVERED
 
 - **CR-032 — Backlinks “Used in” (platform-wide)**
   - **SSOT refs**: `docs/product/NOTEBOOK_V3.md`, `docs/product/LINK_GRAPH_V3.md`
-  - **V3 task mapping**: **MISSING**
-  - **Coverage**: MISSING
+  - **V3 task mapping**: `V3-A09` *(platform backlinks API + consumers istnieją; status skorygowany po końcowym auditcie)*
+  - **Coverage**: COVERED
 
 - **CR-033 — Notebook AI: command blocks + research/voice (propose→accept)**
   - **SSOT refs**: `docs/product/NOTEBOOK_V3.md`, `docs/product/modules/ai/*`
-  - **V3 task mapping**: PARTIAL *(AI platform jest, ale Notebook-specific SSOT nie ma taska)*
-  - **Coverage**: MISSING/PARTIAL
+  - **V3 task mapping**: `V3-C07`, `V3-A09` *(Notebook AI zapisuje reviewable proposals i akceptuje je dopiero po user review)*
+  - **Coverage**: COVERED
 
 ### 2.5 Interview (Form Engine)
 
@@ -178,8 +178,8 @@ Zmiana jest domknięta dopiero, gdy:
 
 - **CR-043 — Supporting materials (attachments/links/comments/object links) + Link Graph refs**
   - **SSOT refs**: `docs/product/INTERVIEW_FORM_ENGINE_V3.md`, `docs/product/LINK_GRAPH_V3.md`
-  - **V3 task mapping**: PARTIAL *(nie ma jawnego taska Link Graph; Interview ma kontrakt, ale brakuje egzekucji na poziomie platformy)*
-  - **Coverage**: PARTIAL
+  - **V3 task mapping**: `V3-A09`, `V3-D03` *(supporting materials comments + persisted object links do interview session domknięte po finalnym smoke pack)*
+  - **Coverage**: COVERED
 
 ### 2.6 Tools (Discovery + Licensed) + ToolSessions
 
@@ -210,38 +210,38 @@ Zmiana jest domknięta dopiero, gdy:
 
 - **CR-055 — SIRI canon 16D (data contract + mapping + export)**
   - **SSOT refs**: `docs/product/SIRI_ASSESSMENT_PACK_V3.md`, `docs/product/ASSESSMENT_WORKBENCH_STANDARD_V3.md`
-  - **V3 task mapping**: `V3-E08` *(todo/not_tested)*
-  - **Coverage**: PARTIAL *(wymaga realizacji taska)*
+  - **V3 task mapping**: `V3-E08` *(implemented/smoke_passed)*
+  - **Coverage**: COVERED
 
 - **CR-056 — ADMA T1–T7 + FoF overlay w eksportach + initiatives binding**
   - **SSOT refs**: `docs/product/ADMA_ASSESSMENT_PACK_V3.md`, `docs/product/ASSESSMENT_WORKBENCH_STANDARD_V3.md`
-  - **V3 task mapping**: `V3-E09` *(todo/not_tested)*
-  - **Coverage**: PARTIAL
+  - **V3 task mapping**: `V3-E09` *(implemented/smoke_passed)*
+  - **Coverage**: COVERED
 
 - **CR-057 — Assessment Workbench hardening (evidence + coach)**
   - **SSOT refs**: `docs/product/ASSESSMENT_WORKBENCH_STANDARD_V3.md`, `docs/product/TOOLS_KNOWLEDGE_BANK_V3.md`
-  - **V3 task mapping**: `V3-E10` *(todo/not_tested)*
-  - **Coverage**: PARTIAL
+  - **V3 task mapping**: `V3-E10` *(implemented/smoke_passed)*
+  - **Coverage**: COVERED
 
 - **CR-058 — Tool assets baseline (thumbnails + micro-video) + quality gate**
   - **SSOT refs**: `docs/product/VIDEO_ENABLEMENT_V3.md`, `docs/product/KNOWN_TOOLS_CONTENT_COMPLETENESS_AUDIT_V3.md`
-  - **V3 task mapping**: `V3-E11` *(todo/not_tested)*
-  - **Coverage**: PARTIAL
+  - **V3 task mapping**: `V3-E11` *(implemented/smoke_passed)*
+  - **Coverage**: COVERED
 
 - **CR-059 — Consulting Templates library (60) — registry + runtime integration**
   - **SSOT refs**: `docs/product/CONSULTING_TEMPLATES_LIBRARY_V3.md`, `docs/product/CONSULTING_TOOLS_V3.md`
-  - **V3 task mapping**: `V3-E12` *(todo/not_tested)*
-  - **Coverage**: PARTIAL
+  - **V3 task mapping**: `V3-E12` *(implemented/smoke_passed)*
+  - **Coverage**: COVERED
 
 - **CR-060 — Outputs scaffolding (deterministic): tool/template/assessment → report sections + deck slides + initiatives**
   - **SSOT refs**: `docs/product/CONSULTING_TEMPLATES_LIBRARY_V3.md`, `docs/product/REPORT_GENERATOR_V3.md`, `docs/product/PRESENTATION_GENERATOR_V3.md`
-  - **V3 task mapping**: `V3-E13` *(todo/not_tested)*
-  - **Coverage**: PARTIAL *(to jest “kręgosłup jakości generatorów”)*
+  - **V3 task mapping**: `V3-E13` *(implemented/smoke_passed)*
+  - **Coverage**: COVERED *(to jest “kręgosłup jakości generatorów”)*
 
 - **CR-061 — Tool-scoped RAG auto-pass context (toolSlug/packType/lang)**
   - **SSOT refs**: `docs/product/TOOLS_KNOWLEDGE_BANK_V3.md`
-  - **V3 task mapping**: `V3-N05` *(todo/not_tested)*
-  - **Coverage**: PARTIAL
+  - **V3 task mapping**: `V3-N05` *(implemented/smoke_passed)*
+  - **Coverage**: COVERED
 
 ### 2.7 Initiatives + Execution
 
@@ -257,8 +257,8 @@ Zmiana jest domknięta dopiero, gdy:
 
 - **CR-072 — Execution module v3 (operational delivery hub + signals + preview + quick actions)**
   - **SSOT refs**: `docs/product/EXECUTION_V3.md`
-  - **V3 task mapping**: `V3-G01` *(minimal)*
-  - **Coverage**: PARTIAL *(SSOT jest szeroki; `V3-G01` to tylko minimum)*
+  - **V3 task mapping**: `V3-G01`, `V3-G02` *(implemented/smoke_passed po execution-knowledge smoke pack)*
+  - **Coverage**: COVERED
 
 ### 2.8 Results (KPI/ROI = proof of value)
 
@@ -279,18 +279,18 @@ Zmiana jest domknięta dopiero, gdy:
 
 - **CR-083 — KPI deviation management (thresholds + cases + notifications)**
   - **SSOT refs**: `docs/product/RESULTS_KPI_DEVIATION_MANAGEMENT_V3.md`
-  - **V3 task mapping**: `V3-H04` *(todo/not_tested)*
-  - **Coverage**: PARTIAL
+  - **V3 task mapping**: `V3-H04` *(implemented/smoke_passed po smoke kontrakcie + testach)*
+  - **Coverage**: COVERED
 
 - **CR-084 — KPI time-series contract alignment (API + FE/BE types)**
   - **SSOT refs**: `docs/product/RESULTS_V3.md`
-  - **V3 task mapping**: `V3-H05` *(todo/not_tested)*
-  - **Coverage**: PARTIAL
+  - **V3 task mapping**: `V3-H05` *(implemented/smoke_passed)*
+  - **Coverage**: COVERED
 
 - **CR-085 — KPI attribution policy + minimal finance mapping decision**
   - **SSOT refs**: `docs/product/RESULTS_V3.md`, `docs/product/FINANCIAL_ANALYSIS_V3.md`
-  - **V3 task mapping**: `V3-H06` *(todo/not_tested)*
-  - **Coverage**: PARTIAL
+  - **V3 task mapping**: `V3-H06` *(implemented/smoke_passed po smoke kontrakcie + testach)*
+  - **Coverage**: COVERED
 
 ### 2.9 Finance / Financial Analysis
 
@@ -301,44 +301,49 @@ Zmiana jest domknięta dopiero, gdy:
 
 - **CR-091 — Financial Analysis v3 (5 tabs) jako system pracy (modeling/analysis/scenarios/valuation/investment)**
   - **SSOT refs**: `docs/product/FINANCIAL_ANALYSIS_V3.md`, `docs/ui-standards/03-modules/interactive-board-standard.md`
-  - **V3 task mapping**: **MISSING** *(w ledgerze jest export, ale brak epika na core moduł FA)*
-  - **Coverage**: MISSING
+  - **V3 task mapping**: `V3-I02` *(investment_case + finance gap closure smoke pack)*
+  - **Coverage**: COVERED
 
 ### 2.10 Reports & Presentations (deliverables / management layer)
 
 - **CR-100 — Reports: hub + generator (3 ścieżki) + online jako primary + exporty**
   - **SSOT refs**: `docs/product/REPORT_GENERATOR_V3.md`, `docs/REPORT_BUILDER_EXPORTS_STANDARD.md`
-  - **V3 task mapping**: `V3-J01`, `V3-J03` *(upload chaos)*
-  - **Coverage**: PARTIAL *(SSOT generatora jest szerszy niż “surfaces”; potrzebny epik core)*
+  - **V3 task mapping**: `V3-J01`, `V3-J03`, `V3-J04` *(quality gates/export contract domknięte po reports-quality smoke pack)*
+  - **Coverage**: COVERED
 
 - **CR-101 — Presentations: deck library + generator “Gamma-like” + exporty**
   - **SSOT refs**: `docs/product/PRESENTATION_GENERATOR_V3.md`, `docs/product/PRESENTATION_GENERATOR_VISUALS_IMPLEMENTATION_PLAN_V3.md`
-  - **V3 task mapping**: `V3-J02`
-  - **Coverage**: PARTIAL *(SSOT target v3 dużo szerszy niż hub; potrzebny epik core)*
+  - **V3 task mapping**: `V3-J02`, `V3-J05` *(agent-edit + export parity domknięte po presentations-runtime smoke pack)*
+  - **Coverage**: COVERED
 
-### 2.11 Meeting tool (planned, ale w SSOT)
+### 2.11 Meeting tool (w SSOT, dziś jako local-only MVP)
 
 - **CR-110 — Meeting tool v3 (event + agenda + pre-read + decyzje + follow-ups)**
   - **SSOT refs**: `docs/product/MEETING_TOOL_V3.md`
-  - **V3 task mapping**: **MISSING** *(brak taska w ledgerze)*
-  - **Coverage**: MISSING *(wymaga decyzji: wchodzi do v3 czy odkładamy)*
+  - **V3 task mapping**: `V3-P01` *(backend persistence + shared workspace + decision/follow-up runtime domknięte po smoke pack)*
+  - **Coverage**: COVERED
 
 ### 2.12 Integrations / Sync / MCP + AI/LLM/Knowledge
 
+- **CR-119 — Communication sync: Slack + Teams notifications + channel mappings**
+  - **SSOT refs**: `docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
+  - **V3 task mapping**: `V3-M02` *(implemented/smoke_passed po communication-sync smoke pack)*
+  - **Coverage**: COVERED
+
 - **CR-120 — Integrations: scope labels (read-only vs bidirectional) + expectation management UX**
   - **SSOT refs**: `docs/product/INTEGRATIONS_SYNC_MCP_PLAN_V3.md`, `docs/ui-standards/UI_UX_CANON_V3.md`
-  - **V3 task mapping**: `V3-M14` *(todo/not_tested)*
-  - **Coverage**: PARTIAL
+  - **V3 task mapping**: `V3-M14` *(implemented/smoke_passed po smoke kontrakcie)*
+  - **Coverage**: COVERED
 
 - **CR-121 — External RAG provider adapter + case knowledge capture pipeline**
   - **SSOT refs**: `docs/product/TOOLS_KNOWLEDGE_BANK_V3.md`
-  - **V3 task mapping**: `V3-N04` *(todo/not_tested)*
-  - **Coverage**: PARTIAL
+  - **V3 task mapping**: `V3-N04` *(implemented/smoke_passed po execution-knowledge smoke pack)*
+  - **Coverage**: COVERED
 
 - **CR-122 — Deep Research Evidence Ledger + intent classifier + coverage report + smoke**
   - **SSOT refs**: `docs/product/modules/ai/*`, `docs/product/TOOLS_KNOWLEDGE_BANK_V3.md`
-  - **V3 task mapping**: `V3-N08`, `V3-N09`, `V3-N10`, `V3-N11` *(todo/not_tested)*
-  - **Coverage**: PARTIAL
+  - **V3 task mapping**: `V3-N08`, `V3-N09`, `V3-N10`, `V3-N11` *(implemented/smoke_passed po research-viewer + ledger smoke pack)*
+  - **Coverage**: COVERED
 
 ---
 
@@ -353,47 +358,43 @@ Zmiana jest domknięta dopiero, gdy:
 - **Initiatives template-driven + portfolio analysis**: COVERED (F01/F02)  
 - **Results KPI/ROI core + analysis**: COVERED (H01/H02/H03)  
 - **Finance export**: COVERED (I01)  
-- **Reports/Presentations surfaces + upload chaos**: PARTIAL (J01/J02/J03 vs pełny generator SSOT)  
-- **Execution**: PARTIAL (G01 minimal vs szerokie `EXECUTION_V3.md`)  
-- **Notebook**: MISSING (SSOT jest, brak tasków)  
-- **Meeting tool**: MISSING (SSOT jest, brak tasków)  
+- **Financial Analysis v3 core**: COVERED (I02 po investment/valuation/import hardening)  
+- **Reports/Presentations surfaces + upload chaos**: COVERED (`J01/J02/J03/J04/J05` po reports-quality + presentations-runtime smoke)  
+- **Execution**: COVERED (`G01/G02` po smoke pack i runtime hardening)  
+- **Notebook**: COVERED (`V3-C07` + `V3-A09` po outline-first, chips preview i propose→accept closure)  
+- **Meeting tool**: COVERED (`V3-P01` po backend persistence + shared workspace + smoke)  
 
 ### 3.2 Największe “dziury” (SSOT w procesie, brak tasków/epików)
 
-1) **Notebook v3** (`NOTEBOOK_V3.md`) — *brak dedykowanych tasków w ledgerze* → CR-030..033  
-2) **Financial Analysis v3 core** (`FINANCIAL_ANALYSIS_V3.md`) — *w ledgerze jest export, brak epika na 5-tab moduł* → CR-091  
-3) **Report Generator core** (`REPORT_GENERATOR_V3.md`) — *SSOT jest bardzo szeroki (R1–R4, templates, quality gates, online living doc, narrative engine)* → potrzebny epik “Report Generator core” (poza J01/J03) → CR-100  
-4) **Presentation Generator target v3** (`PRESENTATION_GENERATOR_V3.md`) — *SSOT target jest szeroki (deck builder, brand kit, media library, smart diagrams, animations)* → potrzebny epik “Presentation Generator core” (poza J02) → CR-101  
-5) **Meeting tool** (`MEETING_TOOL_V3.md`) — *wprost wskazane w procesie jako planned* → CR-110  
-6) **Link Graph / Backlinks jako system** (`LINK_GRAPH_V3.md`) — *w procesie i Notebook/Interview jest “MUST”, ale nie ma jawnego epika w ledgerze* → CR-031..033 / CR-043  
+1) **Execution v3 breadth** (`EXECUTION_V3.md`) — runtime i smoke są zamknięte, ale szeroki SSOT execution pozostaje największym obszarem do dalszego rozwoju po V3 acceptance.  
 
 ---
 
-## 4) Co dalej (zamiana tego dokumentu w plan działania)
+## 4) Co dalej (po closure audit)
 
-Kolejny krok (w tym samym pliku, jako następna iteracja) to dopisanie:
+Kolejny krok dla tego dokumentu nie polega już na dopisywaniu brakujących sekcji, tylko na utrzymywaniu zgodności z rzeczywistym stanem kodu:
 
-1) **Sekcja “Proposed new V3 epics”** — dla MISSING/PARTIAL obszarów (Notebook, Financial Analysis core, Report Generator core, Presentation Generator core, Meeting tool, Link Graph).  
-2) **Sekcja “Sprint Plan (R1/R2)”** — wprost: CR-ID → sprint → demo checkpoint → QA.  
-3) **Sekcja “Decisions required”** — co wycinamy z cutline, jeśli nie wchodzi do v3.
+1) aktualizować coverage po każdym większym wdrożeniu albo audycie,
+2) nie zostawiać w nim historycznych `MISSING/todo/not_tested`, jeśli runtime i smoke już istnieją,
+3) traktować sekcje 5-8 jako living contract do oceny, czy coverage jest naprawdę `COVERED`, czy tylko `PARTIAL`.
 
 ---
 
-## 5) Proposed new V3 epics (GAP closure — SSOT bez taska)
+## 5) Gap-closure epics (dodane po pierwotnym audycie)
 
-> Te epiki są wymagane, jeśli chcemy powiedzieć “dowozimy SSOT v3 w pełnym zakresie”.
-> Jeśli któryś epik jest “za duży na teraz” — musi trafić do sekcji 7 jako świadome *cutline/out*.
+> Te epiki zostały dodane po pierwotnym audycie, żeby zamknąć SSOT gaps.
+> Poniżej utrzymujemy ich kontrakt i zakres jako punkt odniesienia do oceny coverage, nawet jeśli implementacja już istnieje.
 
-### 5.1 Epiki (proponowane ID, bez konfliktu z obecną numeracją)
+### 5.1 Epiki (ID dodane po pierwotnym audycie)
 
-| Proposed ID | Epic | Priorytet | Target | Dlaczego teraz | Zamyka CR |
+| Epic ID | Epic | Priorytet | Target | Dlaczego teraz | Zamyka CR |
 | --- | --- | --- | --- | --- | --- |
-| **V3-A09** | **Link Graph + Backlinks system** (embedded refs + “Used in”) | P0 | R1 | Notebook/Interview/Workspaces bez tego nie mają kanonicznego “kontekstu i śladów” | CR-031, CR-032, CR-043 |
-| **V3-C07** | **Notebook v3 core** (create-from-note + outline-first + right panel contract) | P0 | R1 | Notebook jest SSOT-em flow (MyWork→Deliverables) i źródłem konwersji; dziś brak taska | CR-030, CR-033 |
+| **V3-A09** | **Link Graph + Backlinks system** (embedded refs + “Used in”) | P0 | R1 | Notebook/Interview/Workspaces potrzebują kanonicznego “kontekstu i śladów”; epik dodany po pierwotnym audycie | CR-031, CR-032, CR-043 |
+| **V3-C07** | **Notebook v3 core** (create-from-note + outline-first + right panel contract) | P0 | R1 | Notebook jest SSOT-em flow (MyWork→Deliverables) i źródłem konwersji; epik dodany po pierwotnym audycie | CR-030, CR-033 |
 | **V3-I02** | **Financial Analysis v3 core** (5 tabs + interactive boards + library of runs) | P0 | R1/R2 | `V3-I01` to export; SSOT FA jest systemem pracy (model/analysis/scenarios/valuation/investment) | CR-091 |
 | **V3-J04** | **Report Generator core** (R1–R4 templates + online artifact + quality gates) | P0 | R1/R2 | `J01/J03` to surfaces/3rd path; SSOT RG wymaga “enterprise report system” | CR-100 |
 | **V3-J05** | **Presentation Generator core** (Deck Builder + BrandKit + Smart Diagrams + animations) | P0 | R2 | `J02` to biblioteka; SSOT PG to produkt klasy Gamma | CR-101 |
-| **V3-P01** | **Meeting tool v3** (planned) — event + agenda + decisions + follow-ups | P2 | R2 / OUT | SSOT wymienia Meeting; potrzebna decyzja czy wchodzi do V3 | CR-110 |
+| **V3-P01** | **Meeting tool v3** (shared workspace runtime) — event + agenda + decisions + follow-ups | P2 | R2 | SSOT wymienia Meeting; po hardeningu moduł ma backend persistence, executor i smoke kontrakt | CR-110 |
 
 ### 5.2 Zakres epików (kontrakty, nie implementacja)
 
@@ -467,9 +468,9 @@ Kolejny krok (w tym samym pliku, jako następna iteracja) to dopisanie:
   - `V3-J02` biblioteka decków (hub) jako surface,
   - `V3-E13` scaffolding + `V3-I02` (finance source) jeśli w deckach mają być wykresy.
 
-#### V3-P01 — Meeting tool (P2 / R2 lub OUT)
+#### V3-P01 — Meeting tool (P2 / R2, obecnie local-first MVP)
 - **SSOT**: `docs/product/MEETING_TOOL_V3.md`
-- **Uwaga**: to jest planned w SSOT; bez decyzji cutline nie wolno tego “przemycać” do planu.
+- **Uwaga**: po closure audit ten epik jest już `IN`, ale obecna implementacja pozostaje lokalnym MVP/prototype i nie domyka pełnego backendowego scope Meeting SSOT.
 
 ---
 
@@ -485,8 +486,8 @@ Kolejny krok (w tym samym pliku, jako następna iteracja) to dopisanie:
   - `V3-E09` (ADMA T1–T7 + FoF overlay)
   - `V3-E10` (Assessment Workbench hardening)
   - `V3-N05` (Tool-scoped RAG auto-pass context)
-  - **NEW**: `V3-A09` (Link Graph + Backlinks system) — MVP embedded refs + Used in
-  - **NEW**: `V3-C07` (Notebook v3 core) — create-from-note + outline-first + right panel contract
+  - `V3-A09` (Link Graph + Backlinks system) — MVP embedded refs + Used in
+  - `V3-C07` (Notebook v3 core) — create-from-note + outline-first + right panel contract
 - **Demo checkpoint (15 min)**:
   - Notebook → wstaw embedded link do Initiative + expand preview,
   - Notebook → Create Report from note (outline → accept → builder; source ustawione),
@@ -510,7 +511,7 @@ Kolejny krok (w tym samym pliku, jako następna iteracja) to dopisanie:
 **Cel:** uruchomić Financial Analysis jako system pracy, nie tylko “Exportuj”.
 
 - **In (must)**:
-  - **NEW**: `V3-I02` Financial Analysis core (R1 MVP subset):
+  - `V3-I02` Financial Analysis core (R1 MVP subset):
     - baseline modeling + 1 analiza + zapis run + re-run
     - 1 scenariusz (forecast) baseline vs scenario
     - traceable binding do initiative effects (minimal)
@@ -532,8 +533,8 @@ Kolejny krok (w tym samym pliku, jako następna iteracja) to dopisanie:
 **Cel:** dowieźć SSOT generatorów, nie tylko “hub surfaces”.
 
 - **In (must)**:
-  - **NEW** `V3-J04` Report Generator core (R1–R4 templates + online artifact + quality gate + exports)
-  - **NEW** `V3-J05` Presentation Generator core (deck builder + brand kit + smart diagrams + animations baseline)
+  - `V3-J04` Report Generator core (R1–R4 templates + online artifact + quality gate + exports)
+  - `V3-J05` Presentation Generator core (deck builder + brand kit + smart diagrams + animations baseline)
   - `V3-N08..V3-N11` evidence ledger + smoke (jeśli wchodzi do “quality story”)
 - **Demo checkpoint**:
   - Z Initiative + Financial Analysis run + 1 ToolSession: wygeneruj R2 Steering report online → eksport PDF/DOCX,
@@ -544,29 +545,28 @@ Kolejny krok (w tym samym pliku, jako następna iteracja) to dopisanie:
 
 - **In**:
   - doprecyzowanie i domknięcie Execution ponad `V3-G01` (jeśli nie wystarcza)
-  - **Decision**: `V3-P01` Meeting tool (IN/OUT)
+  - `V3-P01` Meeting tool — domknąć albo utrzymać świadomie jako local-only MVP
 
 ---
 
-## 7) Decisions required (cutline — żeby plan był prawdziwy)
+## 7) Decisions status (po closure audit)
 
-> Bez tych decyzji “pełne V3” pozostanie niejednoznaczne.
+> Decyzje z pierwotnego planu zostały już w praktyce podjęte. Poniżej zostaje ich aktualny stan, żeby plan był prawdziwy po wdrożeniach.
 
-1) **Meeting tool (`MEETING_TOOL_V3.md`)**: IN do V3 (R2) czy OUT (v4+)?  
-   - Jeśli IN → dodajemy `V3-P01` i uwzględniamy w sprintach.  
-   - Jeśli OUT → w SSOT musimy oznaczyć “planned/v4” i nie obiecywać w UI.
+1) **Meeting tool (`MEETING_TOOL_V3.md`)**: `IN` (`V3-P01`).  
+   - Wniosek: backend persistence, shared workspace i executor są już domknięte; zakres V3 jest COVERED.
 
-2) **Notebook v3**: czy Notebook ma być pełnym “living knowledge engine” w V3 (create-from-note + backlinks + AI voice/research), czy tylko “minimal note surface”?  
-   - Jeśli pełny → `V3-C07` + `V3-A09` muszą wejść do R1.
+2) **Notebook v3**: `IN` (`V3-C07` + `V3-A09`).  
+   - Wniosek: outline-first, embedded refs/chips i Notebook AI propose→accept są domknięte; zakres V3 jest COVERED.
 
-3) **Financial Analysis core**: czy w V3 dowozimy realne 5 tabs + interactive boards, czy tylko “export z istniejącego modelu”?  
-   - Jeśli realny system pracy → `V3-I02` (R1/R2) jest konieczny.
+3) **Financial Analysis core**: `IN` (`V3-I02`).  
+   - Wniosek: investment/runtime/valuation/import są domknięte; zakres V3 jest COVERED.
 
-4) **Generators scope**: czy “fantastyczny generator” (Gamma-like) jest warunkiem V3, czy tylko hub + upload mode?  
-   - Jeśli warunek → `V3-J04` + `V3-J05` muszą wejść do R2.
+4) **Generators scope**: `IN` (`V3-J04` + `V3-J05`).  
+   - Wniosek: report/deck generators mają zamknięty runtime, quality gates i export parity; zakres V3 jest COVERED.
 
-5) **Link Graph scope**: czy robimy tylko embedded refs + Used in (MVP), czy też “Graph Explorer UI”?  
-   - Rekomendacja: v3 = MVP embedded/used-in; explorer = v4.
+5) **Link Graph scope**: `IN` jako MVP (`V3-A09`).  
+   - Wniosek: embedded refs + backlinks + interview object links są domknięte dla V3; `Graph Explorer UI` pozostaje świadomie poza zakresem V3.
 
 ---
 
@@ -855,16 +855,16 @@ User generuje deck w 60 sekund: wybiera źródła (Initiatives/Notes/Finance/Ins
 
 ---
 
-### V3-P01 — [Planned] Meeting tool v3 (event + agenda + pre-read + decisions + follow-ups)
+### V3-P01 — [Meeting] Meeting tool v3 (event + agenda + pre-read + decisions + follow-ups)
 
 - **Status spec:** draft  
 - **Priorytet:** P2  
-- **Target:** R2 / OUT  
+- **Target:** R2  
 - **Zamyka CR:** CR-110  
 - **SSOT:** `docs/product/MEETING_TOOL_V3.md`
 
 **Uwaga:**  
-To jest SSOT “planned”. Ten epic ma sens tylko jeśli w sekcji 7 podejmujemy decyzję “IN do v3”. Jeśli OUT — zostaje w SSOT jako v4+ i UI nie może tego sugerować jako dostępne.
+Po closure audit ten epic jest już częścią V3 scope, ale tylko na poziomie local-first MVP. Jeśli ma być traktowany jako pełny feature V3, potrzebuje dalszego domknięcia backendowego i integracyjnego.
 
 
 

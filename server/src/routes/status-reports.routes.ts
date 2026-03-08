@@ -16,6 +16,10 @@ interface AuthRequest extends Request {
   user?: { id: string; organizationId: string };
 }
 
+function paramStr(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? String(value[0] || '') : String(value || '');
+}
+
 // ─── Initiative-scoped (StatusReportBuilder) ───
 
 router.get(
@@ -26,7 +30,7 @@ router.get(
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const { initiativeId } = req.params;
-    const reports = await statusReportService.listReports(initiativeId, orgId, { limit: 1 });
+    const reports = await statusReportService.listReports(paramStr(initiativeId), orgId, { limit: 1 });
     const latest = reports[0];
     if (!latest) return res.json({ report: null });
     const full = await statusReportService.getReport(latest.id, orgId);
@@ -43,7 +47,7 @@ router.get(
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const { initiativeId } = req.params;
     const { limit = 20, offset = 0, status } = req.query;
-    const reports = await statusReportService.listReports(initiativeId, orgId, {
+    const reports = await statusReportService.listReports(paramStr(initiativeId), orgId, {
       limit: Number(limit),
       offset: Number(offset),
       status: status as string,
@@ -62,7 +66,7 @@ router.post(
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
     const { initiativeId } = req.params;
     const { periodType = 'WEEKLY', periodDate } = req.body || {};
-    const result = await statusReportService.generateReport(orgId, initiativeId, periodType, userId, {
+    const result = await statusReportService.generateReport(orgId, paramStr(initiativeId), periodType, userId, {
       periodDate,
     });
     res.status(201).json(result);
@@ -82,7 +86,7 @@ router.post(
     if (!Array.isArray(recipients) || recipients.length === 0) {
       return res.status(400).json({ error: 'recipients array required' });
     }
-    const report = await statusReportService.getReport(reportId, orgId);
+    const report = await statusReportService.getReport(paramStr(reportId), orgId);
     if (!report) return res.status(404).json({ error: 'Report not found' });
     for (const r of recipients) {
       const email = typeof r === 'string' ? r : r?.email;
@@ -106,9 +110,9 @@ router.post(
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const { id: reportId } = req.params;
-    const report = await statusReportService.getReport(reportId, req.user!.organizationId!);
+    const report = await statusReportService.getReport(paramStr(reportId), req.user!.organizationId!);
     if (!report) return res.status(404).json({ error: 'Report not found' });
-    await statusReportService.approveReport(reportId, userId);
+    await statusReportService.approveReport(paramStr(reportId), userId);
     res.json({ success: true });
   })
 );
@@ -121,9 +125,9 @@ router.post(
     const orgId = req.user?.organizationId;
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
     const { id: reportId } = req.params;
-    const report = await statusReportService.getReport(reportId, orgId);
+    const report = await statusReportService.getReport(paramStr(reportId), orgId);
     if (!report) return res.status(404).json({ error: 'Report not found' });
-    await statusReportService.publishReport(reportId);
+    await statusReportService.publishReport(paramStr(reportId));
     res.json({ success: true });
   })
 );

@@ -103,11 +103,7 @@ function previewGraphicPath(slug: string): string {
 // Build asset specs — files don't exist yet, so exists: false for all
 // ---------------------------------------------------------------------------
 
-function buildAssetStatus(
-  path: string,
-  required: boolean,
-  format: string,
-): AssetStatus {
+function buildAssetStatus(path: string, required: boolean, format: string): AssetStatus {
   return {
     required,
     exists: false,
@@ -130,9 +126,7 @@ function buildToolAssetSpec(slug: string): ToolAssetSpec {
 
 const TOOL_ASSET_SPECS: ToolAssetSpec[] = ALL_TOOL_SLUGS.map(buildToolAssetSpec);
 
-const SLUG_INDEX = new Map<string, ToolAssetSpec>(
-  TOOL_ASSET_SPECS.map((s) => [s.toolSlug, s]),
-);
+const SLUG_INDEX = new Map<string, ToolAssetSpec>(TOOL_ASSET_SPECS.map((s) => [s.toolSlug, s]));
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -172,8 +166,7 @@ export function runToolAssetsAudit(): ToolAssetsAuditReport {
 
   // R0: all thumbnails + preview graphics present
   const r0Gate =
-    tools.every((t) => t.thumbnail.exists) &&
-    tools.every((t) => t.previewGraphic.exists);
+    tools.every((t) => t.thumbnail.exists) && tools.every((t) => t.previewGraphic.exists);
 
   // R1: R0 + all micro-videos present
   const r1Gate = r0Gate && tools.every((t) => t.microVideo.exists);
@@ -201,7 +194,10 @@ async function fetchFromApi<T>(url: string): Promise<T | null> {
   try {
     const token = localStorage.getItem('token');
     const res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     });
     if (!res.ok) return null;
     return await res.json();
@@ -229,7 +225,9 @@ export async function fetchToolAssetsAuditFromDB(): Promise<ToolAssetsAuditRepor
         thumbnail: mapAsset(findAsset('thumbnail')),
         microVideo: mapAsset(findAsset('micro_video')),
         previewGraphic: mapAsset(findAsset('preview_graphic')),
-        qualityGatePass: (findAsset('thumbnail')?.exists ?? false) && (findAsset('preview_graphic')?.exists ?? false),
+        qualityGatePass:
+          (findAsset('thumbnail')?.exists ?? false) &&
+          (findAsset('preview_graphic')?.exists ?? false),
       };
     });
     return {
@@ -238,7 +236,10 @@ export async function fetchToolAssetsAuditFromDB(): Promise<ToolAssetsAuditRepor
       thumbnailsMissing: result.thumbnailsMissing,
       microVideosPresent: result.microVideosPresent,
       microVideosMissing: result.microVideosMissing,
-      qualityGatePassRate: result.totalTools > 0 ? tools.filter(t => t.qualityGatePass).length / result.totalTools : 0,
+      qualityGatePassRate:
+        result.totalTools > 0
+          ? tools.filter((t) => t.qualityGatePass).length / result.totalTools
+          : 0,
       tools,
       r0Gate: result.r0Gate,
       r1Gate: result.r1Gate,
@@ -265,7 +266,9 @@ export async function fetchToolAssetsFromDB(toolSlug: string): Promise<ToolAsset
       thumbnail: mapAsset(findAsset('thumbnail')),
       microVideo: mapAsset(findAsset('micro_video')),
       previewGraphic: mapAsset(findAsset('preview_graphic')),
-      qualityGatePass: (findAsset('thumbnail')?.exists ?? false) && (findAsset('preview_graphic')?.exists ?? false),
+      qualityGatePass:
+        (findAsset('thumbnail')?.exists ?? false) &&
+        (findAsset('preview_graphic')?.exists ?? false),
     };
   }
   return null;

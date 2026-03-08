@@ -11,6 +11,7 @@ import {
   FileText,
   Image,
   Link,
+  MessageSquare,
   MoreVertical,
   Paperclip,
   Plus,
@@ -25,19 +26,22 @@ import type { InterviewCategory } from './CategorySidebar';
 import { CATEGORY_CONFIG } from './CategorySidebar';
 
 // Types
-export type EvidenceType = 'file' | 'link';
+export type EvidenceType = 'file' | 'link' | 'comment';
 
 export interface InterviewEvidence {
   id: string;
   sessionId: string;
   category?: InterviewCategory;
   evidenceType: EvidenceType;
+  title?: string;
   name: string;
   url?: string;
   description?: string;
   fileSize?: number;
+  fileType?: string;
   mimeType?: string;
   uploadedBy?: string;
+  createdAt?: string;
   uploadedAt: string;
 }
 
@@ -51,6 +55,7 @@ export interface EvidencePanelProps {
     description?: string,
     category?: InterviewCategory
   ) => Promise<void>;
+  onAddComment: (text: string, category?: InterviewCategory) => Promise<void>;
   onDeleteEvidence: (evidenceId: string) => Promise<void>;
   isLoading?: boolean;
   readOnly?: boolean;
@@ -77,6 +82,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   activeCategory,
   onUploadFile,
   onAddLink,
+  onAddComment,
   onDeleteEvidence,
   isLoading = false,
   readOnly = false,
@@ -84,10 +90,11 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
 
-  const [showAddType, setShowAddType] = useState<'file' | 'link' | null>(null);
+  const [showAddType, setShowAddType] = useState<'file' | 'link' | 'comment' | null>(null);
   const [linkName, setLinkName] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
   const [linkDescription, setLinkDescription] = useState('');
+  const [commentText, setCommentText] = useState('');
   const [showMenuId, setShowMenuId] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'category'>('all');
   const [isDragging, setIsDragging] = useState(false);
@@ -119,6 +126,13 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
     setLinkDescription('');
     setShowAddType(null);
   }, [linkName, linkUrl, linkDescription, activeCategory, onAddLink]);
+
+  const handleAddComment = useCallback(async () => {
+    if (!commentText.trim()) return;
+    await onAddComment(commentText.trim(), activeCategory);
+    setCommentText('');
+    setShowAddType(null);
+  }, [activeCategory, commentText, onAddComment]);
 
   // Handle drag and drop
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -201,6 +215,13 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 title={isPolish ? 'Dodaj link' : 'Add link'}
               >
                 <Link size={14} />
+              </button>
+              <button
+                onClick={() => setShowAddType('comment')}
+                className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+                title={isPolish ? 'Dodaj komentarz' : 'Add comment'}
+              >
+                <MessageSquare size={14} />
               </button>
             </div>
           )}
@@ -289,10 +310,49 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         </div>
       )}
 
+      {showAddType === 'comment' && (
+        <div className="bg-white dark:bg-navy-900 rounded-lg border border-blue-300 dark:border-blue-500/50 p-3 space-y-3">
+          <textarea
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            rows={4}
+            className="w-full p-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder={isPolish ? 'Dodaj komentarz kontekstowy...' : 'Add a contextual comment...'}
+            autoFocus
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setShowAddType(null);
+                setCommentText('');
+              }}
+              className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400"
+            >
+              {isPolish ? 'Anuluj' : 'Cancel'}
+            </button>
+            <button
+              onClick={handleAddComment}
+              disabled={!commentText.trim()}
+              className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 text-white rounded-lg"
+            >
+              {isPolish ? 'Dodaj' : 'Add'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Evidence List */}
       <div className="space-y-2">
         {filteredEvidence.map((item) => {
-          const FileIcon = item.evidenceType === 'link' ? Link : getFileIcon(item.mimeType);
+          const displayName = item.name || item.title || (isPolish ? 'Bez tytułu' : 'Untitled');
+          const uploadedAt = item.uploadedAt || item.createdAt || '';
+          const mimeType = item.mimeType || item.fileType;
+          const FileIcon =
+            item.evidenceType === 'link'
+              ? Link
+              : item.evidenceType === 'comment'
+                ? MessageSquare
+                : getFileIcon(mimeType);
           const categoryConfig = item.category ? CATEGORY_CONFIG[item.category] : null;
 
           return (
@@ -305,6 +365,8 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
                   item.evidenceType === 'link'
                     ? 'bg-blue-100 dark:bg-blue-900/30'
+                    : item.evidenceType === 'comment'
+                      ? 'bg-amber-100 dark:bg-amber-900/30'
                     : 'bg-slate-100 dark:bg-navy-800'
                 }`}
               >
@@ -313,6 +375,8 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   className={
                     item.evidenceType === 'link'
                       ? 'text-blue-600 dark:text-blue-400'
+                      : item.evidenceType === 'comment'
+                        ? 'text-amber-600 dark:text-amber-400'
                       : 'text-slate-500 dark:text-slate-400'
                   }
                 />
@@ -328,12 +392,12 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                       rel="noopener noreferrer"
                       className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 truncate"
                     >
-                      {item.name}
+                      {displayName}
                       <ExternalLink size={12} className="inline ml-1" />
                     </a>
                   ) : (
                     <span className="text-sm font-medium text-navy-900 dark:text-white truncate">
-                      {item.name}
+                      {displayName}
                     </span>
                   )}
                   {categoryConfig && (
@@ -347,7 +411,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                   {item.fileSize && <span>{formatFileSize(item.fileSize)}</span>}
                   {item.description && <span className="truncate">{item.description}</span>}
-                  <span>{new Date(item.uploadedAt).toLocaleDateString()}</span>
+                  {uploadedAt ? <span>{new Date(uploadedAt).toLocaleDateString()}</span> : null}
                 </div>
               </div>
 
@@ -403,6 +467,13 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 >
                   <Link size={16} />
                   {isPolish ? 'Dodaj link' : 'Add link'}
+                </button>
+                <button
+                  onClick={() => setShowAddType('comment')}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
+                >
+                  <MessageSquare size={16} />
+                  {isPolish ? 'Dodaj komentarz' : 'Add comment'}
                 </button>
               </div>
             )}

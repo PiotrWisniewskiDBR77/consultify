@@ -6,6 +6,7 @@
 import { type NextFunction, type Request, type Response, Router } from 'express';
 import fs from 'fs';
 import path from 'path';
+import PDFDocument from 'pdfkit';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -28,6 +29,16 @@ function getOrgId(req: any): string {
   return req.user?.organizationId || req.user?.organization_id || '';
 }
 
+function isSchemaMissingError(error: unknown): boolean {
+  const msg = String((error as any)?.message || '').toLowerCase();
+  return (
+    msg.includes('does not exist') ||
+    msg.includes('no such table') ||
+    msg.includes('no such column') ||
+    msg.includes('relation')
+  );
+}
+
 function normalizeDeckRow(row: any) {
   return {
     ...row,
@@ -35,6 +46,152 @@ function normalizeDeckRow(row: any) {
     source_refs: JSON.parse(row.source_refs_json || '[]'),
     outline_json: JSON.parse(row.outline_json || '[]'),
     validation_warnings: JSON.parse(row.validation_warnings || '[]'),
+  };
+}
+
+function parseDeckPayload(row: any): any {
+  try {
+    return JSON.parse(row?.deck_json || row?.unified_json || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function getDeckCards(row: any): any[] {
+  const parsed = parseDeckPayload(row);
+  return Array.isArray(parsed.cards)
+    ? parsed.cards
+    : Array.isArray(parsed.slides)
+      ? parsed.slides
+      : [];
+}
+
+function buildAgentReply(appliedActions: string[], isPolish: boolean): string {
+  if (appliedActions.length === 0) {
+    return isPolish
+      ? 'Nie rozpoznałem instrukcji. Spróbuj np. skrócić deck, dodać summary, dodać notes lub odświeżyć dane.'
+      : 'I could not match that instruction. Try asking me to make the deck concise, add a summary, add notes, or refresh the data.';
+  }
+  return isPolish
+    ? `Zastosowałem: ${appliedActions.join(', ')}.`
+    : `Applied: ${appliedActions.join(', ')}.`;
+}
+
+function applyAgentEdit(deck: any, prompt: string, isPolish: boolean) {
+  const normalized = String(prompt || '').trim().toLowerCase();
+  const cards = Array.isArray(deck?.cards) ? [...deck.cards] : [];
+  const appliedActions: string[] = [];
+  const nowIso = new Date().toISOString();
+
+  if (
+    normalized.includes('summary') ||
+    normalized.includes('podsum') ||
+    normalized.includes('executive')
+  ) {
+    const hasSummary = cards.some((card: any) => card.intent === 'executive_summary');
+    if (!hasSummary) {
+      const sourceTitles = cards
+        .slice(0, 4)
+        .map((card: any) => String(card.title || card.intent || 'Slide'))
+        .filter(Boolean);
+      cards.splice(1, 0, {
+        card_id: `card-summary-${Date.now()}`,
+        deck_id: deck.deck_id,
+        order_index: 1,
+        intent: 'executive_summary',
+        layout_id: 'content_full',
+        title: isPolish ? 'Podsumowanie zarządcze' : 'Executive Summary',
+        blocks: [
+          {
+            block_id: `block-summary-${Date.now()}`,
+            card_id: `card-summary-${Date.now()}`,
+            type: 'bullet_list',
+            content: {
+              items: sourceTitles.length
+                ? sourceTitles.map((title: string) =>
+                    isPolish ? `Kluczowy punkt: ${title}` : `Key point: ${title}`
+                  )
+                : [isPolish ? 'Dodano sekcję podsumowania.' : 'Summary slide added.'],
+            },
+            is_refreshable: false,
+            position: { area: 'full', order: 0 },
+            ai_editable: true,
+          },
+        ],
+        source_refs: [],
+        has_refreshable_data: false,
+        background: { type: 'theme' },
+        animations: { entrance: 'fade', block_stagger: false },
+        is_locked: false,
+      });
+      appliedActions.push(isPolish ? 'dodano slide summary' : 'added summary slide');
+    }
+  }
+
+  if (
+    normalized.includes('concise') ||
+    normalized.includes('short') ||
+    normalized.includes('skr') ||
+    normalized.includes('zwi')
+  ) {
+    for (const card of cards) {
+      for (const block of card.blocks || []) {
+        if (typeof block?.content?.text === 'string') {
+          block.content.text = block.content.text.slice(0, 180);
+        }
+        if (Array.isArray(block?.content?.items)) {
+          block.content.items = block.content.items
+            .slice(0, 4)
+            .map((item: any) =>
+              typeof item === 'string' ? item.slice(0, 120) : String(item?.title || item).slice(0, 120)
+            );
+        }
+      }
+    }
+    appliedActions.push(isPolish ? 'skrócono copy' : 'made copy concise');
+  }
+
+  if (normalized.includes('note') || normalized.includes('speaker') || normalized.includes('notat')) {
+    for (const card of cards) {
+      const firstBlock = (card.blocks || []).find((block: any) => block?.content);
+      const baseText = extractBlockText(firstBlock || {});
+      card.speaker_notes = `${card.title || card.intent}: ${baseText || (isPolish ? 'omów kluczowy komunikat' : 'cover the key message')}`;
+    }
+    deck.speaker_notes_generated = true;
+    appliedActions.push(isPolish ? 'dodano speaker notes' : 'added speaker notes');
+  }
+
+  if (normalized.includes('update data') || normalized.includes('refresh') || normalized.includes('odświe')) {
+    for (const card of cards) {
+      for (const block of card.blocks || []) {
+        if (block?.is_refreshable) {
+          block.content = { ...(block.content || {}), _agent_refreshed_at: nowIso };
+        }
+      }
+    }
+    appliedActions.push(isPolish ? 'odświeżono bloki danych' : 'refreshed data blocks');
+  }
+
+  if (normalized.includes('visual') || normalized.includes('styl') || normalized.includes('design')) {
+    for (const card of cards.slice(0, 3)) {
+      card.background = {
+        type: 'gradient',
+        value: 'linear-gradient(135deg, #0B3D91, #1A8A8A)',
+      };
+    }
+    appliedActions.push(isPolish ? 'wzmocniono styl slajdów' : 'improved slide styling');
+  }
+
+  const reindexedCards = cards.map((card: any, index: number) => ({ ...card, order_index: index }));
+
+  return {
+    deck: {
+      ...deck,
+      cards: reindexedCards,
+      updated_at: nowIso,
+    },
+    reply: buildAgentReply(appliedActions, isPolish),
+    appliedActions,
   };
 }
 
@@ -277,11 +434,19 @@ router.get(
   '/decks',
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
-    const rows = await dbAll(
-      `SELECT id, title, description, deck_type, audience, goal, language, theme, presentation_mode, slide_count, status, export_format, exported_at, created_at, updated_at, source_id, thumbnail_url, source_refs_json FROM presentation_decks WHERE organization_id = ? ORDER BY updated_at DESC`,
-      [orgId]
-    );
-    res.json({ success: true, data: rows || [] });
+    try {
+      const rows = await dbAll(
+        `SELECT id, title, description, deck_type, audience, goal, language, theme, presentation_mode, slide_count, status, export_format, exported_at, created_at, updated_at, source_id, thumbnail_url, source_refs_json FROM presentation_decks WHERE organization_id = ? ORDER BY updated_at DESC`,
+        [orgId]
+      );
+      res.json({ success: true, data: rows || [] });
+    } catch (error) {
+      if (isSchemaMissingError(error)) {
+        logger.warn('[Presentations] Deck listing unavailable: schema not ready');
+        return res.json({ success: true, data: [], unavailable: true });
+      }
+      throw error;
+    }
   })
 );
 
@@ -320,6 +485,50 @@ router.get(
     );
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.sendFile(path.resolve(deck.export_path));
+  })
+);
+
+router.get(
+  '/decks/:deckId/export/pdf',
+  asyncHandler(async (req, res) => {
+    const { deckId } = req.params;
+    const orgId = getOrgId(req);
+    if (!(await enforceNoLegalHold(res, orgId, 'Presentation PDF export'))) return;
+
+    const deck = (await dbGet(
+      `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [deckId, orgId]
+    )) as any;
+    if (!deck) return res.status(404).json({ success: false, error: 'Deck not found' });
+
+    const cards = getDeckCards(deck);
+    const filename = `${String(deck.title || 'presentation').replace(/[^a-zA-Z0-9-_ ]/g, '')}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    const doc = new PDFDocument({ margin: 48, size: 'A4' });
+    doc.pipe(res);
+
+    cards.forEach((card: any, index: number) => {
+      if (index > 0) doc.addPage();
+      doc.fontSize(22).text(String(card.title || card.key_message || `Slide ${index + 1}`));
+      doc.moveDown(0.5);
+      doc.fontSize(10).fillColor('#666').text(`Slide ${index + 1}`);
+      doc.moveDown(1);
+      const blocks = Array.isArray(card.blocks) ? card.blocks : [];
+      if (blocks.length === 0) {
+        doc.fillColor('#111').fontSize(12).text('No slide content');
+        return;
+      }
+      blocks.slice(0, 8).forEach((block: any) => {
+        const text = extractBlockText(block);
+        if (!text) return;
+        doc.fillColor('#111').fontSize(12).text(`• ${text.slice(0, 500)}`);
+        doc.moveDown(0.35);
+      });
+    });
+
+    doc.end();
   })
 );
 
@@ -569,6 +778,41 @@ router.put(
     );
 
     res.json({ success: true });
+  })
+);
+
+router.post(
+  '/decks/:deckId/agent-edit',
+  asyncHandler(async (req, res) => {
+    const { deckId } = req.params;
+    const orgId = getOrgId(req);
+    const prompt = String(req.body?.prompt || '').trim();
+    if (!prompt) return res.status(400).json({ success: false, error: 'prompt is required' });
+
+    const row = (await dbGet(
+      `SELECT * FROM presentation_decks WHERE id = ? AND organization_id = ?`,
+      [deckId, orgId]
+    )) as any;
+    if (!row) return res.status(404).json({ success: false, error: 'Deck not found' });
+
+    const deck = parseDeckPayload(row);
+    const isPolish = String(req.headers['accept-language'] || '').toLowerCase().startsWith('pl');
+    const result = applyAgentEdit(
+      {
+        ...deck,
+        deck_id: deck.deck_id || deckId,
+        title: deck.title || row.title,
+      },
+      prompt,
+      isPolish
+    );
+
+    await dbRun(
+      `UPDATE presentation_decks SET deck_json = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+      [JSON.stringify(result.deck), deckId, orgId]
+    );
+
+    res.json({ success: true, data: result });
   })
 );
 

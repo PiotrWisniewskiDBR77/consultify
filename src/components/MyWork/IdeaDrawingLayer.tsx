@@ -37,8 +37,16 @@ export interface IdeaDrawingLayerProps {
 }
 
 const COLORS = [
-  '#1e293b', '#ef4444', '#f97316', '#eab308', '#22c55e',
-  '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#ffffff',
+  '#1e293b',
+  '#ef4444',
+  '#f97316',
+  '#eab308',
+  '#22c55e',
+  '#3b82f6',
+  '#8b5cf6',
+  '#ec4899',
+  '#06b6d4',
+  '#ffffff',
 ];
 
 const MIN_STROKE = 1;
@@ -65,64 +73,76 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
   const [undoStack, setUndoStack] = useState<DrawingPath[][]>([]);
   const [redoStack, setRedoStack] = useState<DrawingPath[][]>([]);
 
-  const screenToCanvas = useCallback((clientX: number, clientY: number) => {
-    const svg = svgRef.current;
-    if (!svg) return { x: 0, y: 0 };
-    const rect = svg.getBoundingClientRect();
-    const sx = clientX - rect.left;
-    const sy = clientY - rect.top;
-    if (!viewportTransform) return { x: sx, y: sy };
-    const { x: vx, y: vy, zoom } = viewportTransform;
-    return { x: (sx - vx) / zoom, y: (sy - vy) / zoom };
-  }, [viewportTransform]);
+  const screenToCanvas = useCallback(
+    (clientX: number, clientY: number) => {
+      const svg = svgRef.current;
+      if (!svg) return { x: 0, y: 0 };
+      const rect = svg.getBoundingClientRect();
+      const sx = clientX - rect.left;
+      const sy = clientY - rect.top;
+      if (!viewportTransform) return { x: sx, y: sy };
+      const { x: vx, y: vy, zoom } = viewportTransform;
+      return { x: (sx - vx) / zoom, y: (sy - vy) / zoom };
+    },
+    [viewportTransform]
+  );
 
-  const startDrawing = useCallback((e: React.PointerEvent) => {
-    if (!active) return;
-    const svg = svgRef.current;
-    if (!svg) return;
-    const { x, y } = screenToCanvas(e.clientX, e.clientY);
+  const startDrawing = useCallback(
+    (e: React.PointerEvent) => {
+      if (!active) return;
+      const svg = svgRef.current;
+      if (!svg) return;
+      const { x, y } = screenToCanvas(e.clientX, e.clientY);
 
-    if (tool === 'eraser') {
-      const target = e.target as SVGElement;
-      const pathId = target.getAttribute('data-path-id');
-      if (pathId) {
-        setUndoStack((prev) => [...prev, paths]);
-        setRedoStack([]);
-        onPathsChange(paths.filter((p) => p.id !== pathId));
+      if (tool === 'eraser') {
+        const target = e.target as SVGElement;
+        const pathId = target.getAttribute('data-path-id');
+        if (pathId) {
+          setUndoStack((prev) => [...prev, paths]);
+          setRedoStack([]);
+          onPathsChange(paths.filter((p) => p.id !== pathId));
+        }
+        return;
       }
-      return;
-    }
 
-    setDrawing(true);
-    setCurrentPath(`M ${x} ${y}`);
-    svg.setPointerCapture(e.pointerId);
-  }, [active, onPathsChange, paths, screenToCanvas, tool]);
+      setDrawing(true);
+      setCurrentPath(`M ${x} ${y}`);
+      svg.setPointerCapture(e.pointerId);
+    },
+    [active, onPathsChange, paths, screenToCanvas, tool]
+  );
 
-  const continueDrawing = useCallback((e: React.PointerEvent) => {
-    if (!drawing || !active) return;
-    const { x, y } = screenToCanvas(e.clientX, e.clientY);
-    setCurrentPath((prev) => `${prev} L ${x} ${y}`);
-  }, [active, drawing, screenToCanvas]);
+  const continueDrawing = useCallback(
+    (e: React.PointerEvent) => {
+      if (!drawing || !active) return;
+      const { x, y } = screenToCanvas(e.clientX, e.clientY);
+      setCurrentPath((prev) => `${prev} L ${x} ${y}`);
+    },
+    [active, drawing, screenToCanvas]
+  );
 
-  const endDrawing = useCallback((e: React.PointerEvent) => {
-    if (!drawing || !active) return;
-    setDrawing(false);
-    if (currentPath.length < 10) return;
+  const endDrawing = useCallback(
+    (e: React.PointerEvent) => {
+      if (!drawing || !active) return;
+      setDrawing(false);
+      if (currentPath.length < 10) return;
 
-    const newPath: DrawingPath = {
-      id: `draw-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      d: currentPath,
-      stroke: color,
-      strokeWidth,
-      opacity: tool === 'highlighter' ? 0.35 : 1,
-      tool: tool as 'pen' | 'highlighter',
-    };
+      const newPath: DrawingPath = {
+        id: `draw-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        d: currentPath,
+        stroke: color,
+        strokeWidth,
+        opacity: tool === 'highlighter' ? 0.35 : 1,
+        tool: tool as 'pen' | 'highlighter',
+      };
 
-    setUndoStack((prev) => [...prev, paths]);
-    setRedoStack([]);
-    onPathsChange([...paths, newPath]);
-    setCurrentPath('');
-  }, [active, color, currentPath, drawing, onPathsChange, paths, strokeWidth, tool]);
+      setUndoStack((prev) => [...prev, paths]);
+      setRedoStack([]);
+      onPathsChange([...paths, newPath]);
+      setCurrentPath('');
+    },
+    [active, color, currentPath, drawing, onPathsChange, paths, strokeWidth, tool]
+  );
 
   const handleUndo = useCallback(() => {
     if (undoStack.length === 0) return;
@@ -151,8 +171,14 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
     if (!active) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); handleUndo(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); handleRedo(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        handleUndo();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        handleRedo();
+      }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
@@ -258,7 +284,9 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
                 key={c}
                 onClick={() => setColor(c)}
                 className={`w-4 h-4 rounded-full border transition-all ${
-                  color === c ? 'ring-2 ring-primary-500 ring-offset-1 scale-110' : 'border-slate-300 dark:border-navy-600'
+                  color === c
+                    ? 'ring-2 ring-primary-500 ring-offset-1 scale-110'
+                    : 'border-slate-300 dark:border-navy-600'
                 }`}
                 style={{ backgroundColor: c }}
               />

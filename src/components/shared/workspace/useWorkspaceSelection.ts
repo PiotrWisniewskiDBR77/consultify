@@ -7,4 +7,3 @@ export function useWorkspaceSelection(initial: WorkspaceSelection = { kind: 'non
   const clearSelection = useCallback(() => setSelection({ kind: 'none' }), []);
   return { selection, setSelection, clearSelection };
 }
-

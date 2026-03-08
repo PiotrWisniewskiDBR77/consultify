@@ -7,10 +7,12 @@
 import {
   Code2,
   Download,
+  FileBarChart2,
   FileImage,
   FileJson,
   FileText,
   Loader2,
+  Presentation,
   X,
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
@@ -72,6 +74,25 @@ const FORMATS: ExportFormat[] = [
     descEn: 'Raw data for backup/import',
     ext: 'json',
   },
+  // V5-IDEA-40: Report/deck export from workspace
+  {
+    id: 'report',
+    icon: FileBarChart2,
+    labelPl: 'Raport',
+    labelEn: 'Report',
+    descPl: 'Generuj raport z zaznaczenia lub całości',
+    descEn: 'Generate report from selection or whole idea',
+    ext: 'report',
+  },
+  {
+    id: 'presentation',
+    icon: Presentation,
+    labelPl: 'Prezentacja (deck)',
+    labelEn: 'Presentation (deck)',
+    descPl: 'Generuj deck z zaznaczenia lub całości',
+    descEn: 'Generate deck from selection or whole idea',
+    ext: 'deck',
+  },
 ];
 
 export interface IdeaExportMenuProps {
@@ -110,10 +131,13 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
     URL.revokeObjectURL(url);
   }, []);
 
-  const downloadText = useCallback((content: string, filename: string, mimeType: string) => {
-    const blob = new Blob([content], { type: mimeType });
-    downloadBlob(blob, filename);
-  }, [downloadBlob]);
+  const downloadText = useCallback(
+    (content: string, filename: string, mimeType: string) => {
+      const blob = new Blob([content], { type: mimeType });
+      downloadBlob(blob, filename);
+    },
+    [downloadBlob]
+  );
 
   const safeFilename = title?.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 50) || 'idea-map';
 
@@ -170,9 +194,7 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
         childMap.set(edge.source, children);
       }
 
-      const rootNodes = graphNodes.filter(
-        (n) => !graphEdges.some((e: any) => e.target === n.id)
-      );
+      const rootNodes = graphNodes.filter((n) => !graphEdges.some((e: any) => e.target === n.id));
 
       const renderNode = (node: any, depth: number) => {
         const label = node.data?.label || node.id;
@@ -192,7 +214,11 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
         }
       }
 
-      lines.push('', `---`, `*Exported from Idea Workspace (${new Date().toISOString().slice(0, 10)})*`);
+      lines.push(
+        '',
+        `---`,
+        `*Exported from Idea Workspace (${new Date().toISOString().slice(0, 10)})*`
+      );
       downloadText(lines.join('\n'), `${safeFilename}.md`, 'text/markdown');
     } finally {
       setExporting(null);
@@ -268,15 +294,69 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
     }
   }, [downloadText, extensions, graphEdges, graphNodes, ideaId, safeFilename, title]);
 
-  const handleExport = useCallback((formatId: string) => {
-    switch (formatId) {
-      case 'png': exportPNG(); break;
-      case 'svg': exportSVG(); break;
-      case 'pdf': exportPDF(); break;
-      case 'markdown': exportMarkdown(); break;
-      case 'json': exportJSON(); break;
-    }
-  }, [exportJSON, exportMarkdown, exportPDF, exportPNG, exportSVG]);
+  // V5-IDEA-40: Report/deck export via conversion system
+  const exportToReport = useCallback(() => {
+    setExporting('report');
+    window.dispatchEvent(
+      new CustomEvent('idea-workspace-quick-action', {
+        detail: { action: 'convert_report', ideaId },
+      })
+    );
+    setTimeout(() => {
+      setExporting(null);
+      onClose();
+    }, 500);
+  }, [ideaId, onClose]);
+
+  const exportToPresentation = useCallback(() => {
+    setExporting('presentation');
+    window.dispatchEvent(
+      new CustomEvent('idea-workspace-quick-action', {
+        detail: { action: 'convert_presentation', ideaId },
+      })
+    );
+    setTimeout(() => {
+      setExporting(null);
+      onClose();
+    }, 500);
+  }, [ideaId, onClose]);
+
+  const handleExport = useCallback(
+    (formatId: string) => {
+      switch (formatId) {
+        case 'png':
+          exportPNG();
+          break;
+        case 'svg':
+          exportSVG();
+          break;
+        case 'pdf':
+          exportPDF();
+          break;
+        case 'markdown':
+          exportMarkdown();
+          break;
+        case 'json':
+          exportJSON();
+          break;
+        case 'report':
+          exportToReport();
+          break;
+        case 'presentation':
+          exportToPresentation();
+          break;
+      }
+    },
+    [
+      exportJSON,
+      exportMarkdown,
+      exportPDF,
+      exportPNG,
+      exportSVG,
+      exportToPresentation,
+      exportToReport,
+    ]
+  );
 
   if (!open) return null;
 
@@ -310,7 +390,11 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
                 className="group w-full flex items-center gap-3 p-3 rounded-xl border border-slate-200/60 dark:border-navy-700/60 hover:border-primary-400/40 hover:bg-primary-500/[0.02] transition-all disabled:opacity-50"
               >
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500/10 to-violet-500/10 flex items-center justify-center text-primary-600 dark:text-primary-400 shrink-0">
-                  {isExporting ? <Loader2 size={18} className="animate-spin" /> : <Icon size={18} />}
+                  {isExporting ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <Icon size={18} />
+                  )}
                 </div>
                 <div className="flex-1 text-left">
                   <div className="text-[12px] font-bold text-slate-800 dark:text-slate-100">
@@ -320,7 +404,10 @@ export const IdeaExportMenu: React.FC<IdeaExportMenuProps> = ({
                     {isPl ? format.descPl : format.descEn}
                   </div>
                 </div>
-                <Code2 size={14} className="text-slate-300 dark:text-slate-600 group-hover:text-primary-400 transition-colors" />
+                <Code2
+                  size={14}
+                  className="text-slate-300 dark:text-slate-600 group-hover:text-primary-400 transition-colors"
+                />
               </button>
             );
           })}

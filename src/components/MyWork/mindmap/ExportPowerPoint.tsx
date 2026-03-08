@@ -36,7 +36,10 @@ function generateSlideHTML(title: string, branches: ExportPowerPointProps['branc
     ...branches.map((branch) => {
       const color = slideColors[branch.branchKey] || '#94a3b8';
       const nodesList = branch.nodes
-        .map((n) => `<li style="margin-bottom:8px;font-size:16px;color:#334155;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:10px;"></span>${n.label}${n.status ? ` <span style="font-size:12px;color:#94a3b8;">(${n.status})</span>` : ''}</li>`)
+        .map(
+          (n) =>
+            `<li style="margin-bottom:8px;font-size:16px;color:#334155;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:10px;"></span>${n.label}${n.status ? ` <span style="font-size:12px;color:#94a3b8;">(${n.status})</span>` : ''}</li>`
+        )
         .join('');
       return `<div style="page-break-after:always;padding:60px;min-height:700px;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:32px;">
@@ -94,7 +97,9 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success(isPl ? 'Prezentacja wyeksportowana!' : 'Presentation exported!', { duration: 1500 });
+      toast.success(isPl ? 'Prezentacja wyeksportowana!' : 'Presentation exported!', {
+        duration: 1500,
+      });
       onClose();
     } catch (err: any) {
       toast.error(err?.message || 'Export failed');
@@ -127,16 +132,22 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
               {isPl ? 'Eksport prezentacji' : 'Export Presentation'}
             </h3>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
 
         <div className="px-5 py-4">
           <div className="p-3 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30 mb-4">
-            <div className="text-[11px] font-bold text-slate-700 dark:text-slate-200">{ideaTitle}</div>
+            <div className="text-[11px] font-bold text-slate-700 dark:text-slate-200">
+              {ideaTitle}
+            </div>
             <div className="text-[10px] text-slate-500 mt-1">
-              {branches.length} {isPl ? 'gałęzi' : 'branches'} · {totalIdeas} {isPl ? 'pomysłów' : 'ideas'} · {branches.length + 2} {isPl ? 'slajdów' : 'slides'}
+              {branches.length} {isPl ? 'gałęzi' : 'branches'} · {totalIdeas}{' '}
+              {isPl ? 'pomysłów' : 'ideas'} · {branches.length + 2} {isPl ? 'slajdów' : 'slides'}
             </div>
           </div>
 
@@ -159,7 +170,9 @@ export const ExportPowerPoint: React.FC<ExportPowerPointProps> = ({
           </div>
 
           <p className="text-[9px] text-slate-400 mt-3 text-center">
-            {isPl ? 'Otwórz HTML w przeglądarce i użyj Ctrl+P aby zapisać jako PDF.' : 'Open HTML in browser and use Ctrl+P to save as PDF.'}
+            {isPl
+              ? 'Otwórz HTML w przeglądarce i użyj Ctrl+P aby zapisać jako PDF.'
+              : 'Open HTML in browser and use Ctrl+P to save as PDF.'}
           </p>
         </div>
       </div>

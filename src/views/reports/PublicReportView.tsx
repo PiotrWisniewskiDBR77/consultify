@@ -159,8 +159,7 @@ export const PublicReportView: React.FC = () => {
         <div className="text-center text-sm text-gray-400 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700 pt-6">
           <p className="flex items-center justify-center gap-2">
             <Lock className="w-4 h-4" />
-            {t('reports.sharedSnapshotFooter', 'This is a read-only shared snapshot')} •
-            Consultify
+            {t('reports.sharedSnapshotFooter', 'This is a read-only shared snapshot')} • Consultify
           </p>
           <p className="text-xs mt-1 text-gray-400 dark:text-gray-500 dark:text-gray-400">
             {t('reports.snapshotGeneratedAt', 'Generated')}:{' '}

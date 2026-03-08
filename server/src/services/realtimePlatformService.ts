@@ -23,13 +23,15 @@ class RealtimePlatformService {
     channelType: string; resourceType: string; resourceId: string;
   }) {
     const id = uuidv4();
-    await queryHelpers.queryRun(
+    const result = await queryHelpers.queryRun(
       `INSERT INTO realtime_channels (id, organization_id, channel_type, resource_type, resource_id)
        VALUES ($1,$2,$3,$4,$5)
        ON CONFLICT (organization_id, resource_type, resource_id) DO NOTHING`,
       [id, orgId, data.channelType, data.resourceType, data.resourceId],
     );
-    return { id };
+    if (result.changes > 0) return { id };
+    const existing = await this.getChannel(orgId, data.resourceType, data.resourceId);
+    return { id: (existing as any)?.id ?? id };
   }
 
   async getChannel(orgId: string, resourceType: string, resourceId: string) {
@@ -59,15 +61,31 @@ class RealtimePlatformService {
     userId: string; userName?: string; userColor?: string;
     cursorState?: object; activeElement?: string;
   }) {
-    const id = uuidv4();
     const cursorJson = data.cursorState ? JSON.stringify(data.cursorState) : '{}';
+    const existing = await queryHelpers.queryFirst<{ id: string }>(
+      `SELECT id FROM realtime_presence
+       WHERE channel_id=$1 AND user_id=$2 AND is_connected=1
+       ORDER BY connected_at DESC LIMIT 1`,
+      [channelId, data.userId],
+    );
+    if (existing?.id) {
+      await queryHelpers.queryRun(
+        `UPDATE realtime_presence
+         SET user_name=$1, user_color=$2, cursor_state=$3, active_element=$4,
+             last_heartbeat_at=CURRENT_TIMESTAMP
+         WHERE id=$5`,
+        [data.userName ?? null, data.userColor ?? null, cursorJson, data.activeElement ?? null, existing.id],
+      );
+      return { id: existing.id, reused: true };
+    }
+
+    const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO realtime_presence (id, channel_id, user_id, user_name, user_color, cursor_state, active_element, is_connected, last_heartbeat_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,1,CURRENT_TIMESTAMP)
-       ON CONFLICT DO NOTHING`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,1,CURRENT_TIMESTAMP)`,
       [id, channelId, data.userId, data.userName ?? null, data.userColor ?? null, cursorJson, data.activeElement ?? null],
     );
-    return { id };
+    return { id, reused: false };
   }
 
   async heartbeatPresence(channelId: string, userId: string) {
@@ -108,13 +126,15 @@ class RealtimePlatformService {
     resourceType: string; resourceId: string; crdtType?: string;
   }) {
     const id = uuidv4();
-    await queryHelpers.queryRun(
+    const result = await queryHelpers.queryRun(
       `INSERT INTO crdt_documents (id, organization_id, resource_type, resource_id, crdt_type)
        VALUES ($1,$2,$3,$4,$5)
        ON CONFLICT (organization_id, resource_type, resource_id) DO NOTHING`,
       [id, orgId, data.resourceType, data.resourceId, data.crdtType ?? 'yjs'],
     );
-    return { id };
+    if (result.changes > 0) return { id };
+    const existing = await this.getCrdtDocument(orgId, data.resourceType, data.resourceId);
+    return { id: (existing as any)?.id ?? id };
   }
 
   async getCrdtDocument(orgId: string, resourceType: string, resourceId: string) {
@@ -302,15 +322,31 @@ class RealtimePlatformService {
     toolSessionId: string; userId: string; userName?: string; userColor?: string;
     cursorState?: object; activeBlockId?: string; editingField?: string;
   }) {
-    const id = uuidv4();
     const cursorJson = data.cursorState ? JSON.stringify(data.cursorState) : '{}';
+    const existing = await queryHelpers.queryFirst<{ id: string }>(
+      `SELECT id FROM tool_session_presence
+       WHERE organization_id=$1 AND tool_session_id=$2 AND user_id=$3 AND is_connected=1
+       ORDER BY connected_at DESC LIMIT 1`,
+      [orgId, data.toolSessionId, data.userId],
+    );
+    if (existing?.id) {
+      await queryHelpers.queryRun(
+        `UPDATE tool_session_presence
+         SET user_name=$1, user_color=$2, cursor_state=$3, active_block_id=$4, editing_field=$5,
+             last_heartbeat_at=CURRENT_TIMESTAMP
+         WHERE id=$6`,
+        [data.userName ?? null, data.userColor ?? null, cursorJson, data.activeBlockId ?? null, data.editingField ?? null, existing.id],
+      );
+      return { id: existing.id, reused: true };
+    }
+
+    const id = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO tool_session_presence (id, organization_id, tool_session_id, user_id, user_name, user_color, cursor_state, active_block_id, editing_field, is_connected, last_heartbeat_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,1,CURRENT_TIMESTAMP)
-       ON CONFLICT DO NOTHING`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,1,CURRENT_TIMESTAMP)`,
       [id, orgId, data.toolSessionId, data.userId, data.userName ?? null, data.userColor ?? null, cursorJson, data.activeBlockId ?? null, data.editingField ?? null],
     );
-    return { id };
+    return { id, reused: false };
   }
 
   async heartbeatToolPresence(orgId: string, toolSessionId: string, userId: string, cursorState?: object) {

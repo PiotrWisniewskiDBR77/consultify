@@ -24,8 +24,8 @@ import {
   Eye,
   EyeOff,
   FileText,
-  Flame,
   Flag,
+  Flame,
   GanttChart,
   GitBranch,
   Hourglass,
@@ -63,15 +63,21 @@ import {
 import { useUserCan } from '@/hooks/useUserCan';
 import { useAppStore } from '@/store/useAppStore';
 
-import { DecisionsPanelContent, type DecisionsBulkBarPayload } from './DecisionsPanelContent';
+import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
+import {
+  composeIdeaBodyFromSeedIntent,
+  deriveIdeaTitleFromSeedIntent,
+  type IdeaWorkspaceSeedIntent,
+  normalizePreferredSystem,
+} from './ideaEntryTypes';
 import type { CanvasToolType } from './ideaSelectionTypes';
+import { EMPTY_SELECTION, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
-import { InboxContent, type InboxBulkBarPayload, type InboxCounts } from './InboxContent';
-import type { IdeaStage, IdeasBulkBarPayload, MyIdea } from './MyIdeasListContent';
+import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './InboxContent';
+import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './MyIdeasListContent';
 import { MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
-import { EMPTY_SELECTION, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
@@ -134,8 +140,28 @@ const TAB_SYSTEM_PROMPTS: Record<ModuleTab, string> = {
     'You are a decision advisor. Help analyze decisions — weigh pros/cons, assess risks, identify stakeholders, and recommend approaches. Structure thinking clearly.',
   notebook:
     'You are a knowledge companion. Help the user develop ideas, structure notes, extract insights, and connect concepts. Be thoughtful and build on existing content.',
-  ideas:
-    'You are an innovation scout. Help evaluate ideas — assess feasibility, market fit, quick wins, and next steps. Be encouraging but realistic.',
+  ideas: [
+    'You have two roles inside the Idea Workspace:',
+    '',
+    "BUILDER — create structure on the user's behalf:",
+    '  • generate mind maps, process flows, tables, whiteboard clusters',
+    '  • expand branches, add nodes, propose layouts',
+    '  • convert selections into tasks, initiatives, decisions, reports',
+    '  • always propose changes for preview before applying',
+    '',
+    "EXPERT — challenge, question, and improve the user's thinking:",
+    '  • challenge assumptions and identify blind spots',
+    '  • suggest missing dimensions, risks, and frameworks',
+    '  • recommend measurements, KPIs, and next steps',
+    '  • explain trade-offs and simplify complexity',
+    '',
+    'Rules:',
+    '  • Never silently overwrite workspace content — always propose, preview, then apply.',
+    '  • Be concise. Prefer structured output (bullets, numbered lists, tables) over paragraphs.',
+    '  • When the user describes a problem, default to Builder mode and propose an initial structure.',
+    '  • When the user asks "why", "what if", or "am I missing", switch to Expert mode.',
+    '  • Reference the active system (mind map, whiteboard, process flow, table) when relevant.',
+  ].join('\n'),
 };
 
 // Q3: Per-tab quick prompts shown as chips in the chat panel
@@ -170,9 +196,12 @@ const TAB_QUICK_PROMPTS: Record<ModuleTab, string[]> = {
   ],
   notebook: ['Summarize this note', 'Extract action items', 'What perspectives am I missing?'],
   ideas: [
-    'Evaluate my top idea',
-    'Which ideas are ready to promote?',
-    'Find connections between my ideas',
+    'Build an initial structure for my idea',
+    'Challenge my assumptions',
+    'What am I missing?',
+    'Suggest next steps',
+    'Turn this into a decision matrix',
+    'Find root causes',
   ],
 };
 type ItemStatus =
@@ -219,6 +248,27 @@ interface OpenDocument {
   data?: any;
 }
 
+function getDocumentTab(type: OpenDocument['type']): ModuleTab {
+  switch (type) {
+    case 'task':
+      return 'tasks';
+    case 'idea':
+      return 'ideas';
+    case 'decision':
+      return 'decisions';
+    case 'notification':
+      return 'inbox';
+  }
+}
+
+function getInitialMyWorkTab(searchParams: URLSearchParams, canViewExecutive: boolean): ModuleTab {
+  if (searchParams.get('ideaId') || searchParams.get('idea')) return 'ideas';
+  if (searchParams.get('taskId') || searchParams.get('task')) return 'tasks';
+  if (searchParams.get('decisionId') || searchParams.get('decision')) return 'decisions';
+
+  return canViewExecutive ? 'executive' : 'focus';
+}
+
 // Shared button styles (KANON v3): pill buttons, h-9, hover = bg-only.
 // SSOT: docs/ui-standards/00-foundation/visual-language.md (8.3) + UI_UX_CANON_V3.md (buttons).
 const BUTTON_BASE = `
@@ -247,8 +297,7 @@ const BUTTON_ACTIVE = `
 // Topbar pills (filters / view tool) — keep consistent with BUTTON_* but smaller text.
 const TOPBAR_PILL_BASE =
   'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-const TOPBAR_PILL_INACTIVE =
-  `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
+const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
 
 // Tab styles for dynamic tabs
 const TAB_BASE = `
@@ -327,7 +376,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const canViewExecutive = isAdmin || isManager || isSuperAdmin;
 
   // Tab state — managers land on Executive, regular users on Focus
-  const [activeTab, setActiveTab] = useState<ModuleTab>(canViewExecutive ? 'executive' : 'focus');
+  const [activeTab, setActiveTab] = useState<ModuleTab>(() =>
+    getInitialMyWorkTab(searchParams, canViewExecutive)
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
 
@@ -343,16 +394,22 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [showStartupTemplates, setShowStartupTemplates] = useState(false);
   const [ideaStageFilter, setIdeaStageFilter] = useState<IdeaStage | 'all'>('all');
   const [ideasStageCounts, setIdeasStageCounts] = useState<{
-    total: number; spark: number; incubating: number; shaping: number; ready: number; promoted: number;
+    total: number;
+    spark: number;
+    incubating: number;
+    shaping: number;
+    ready: number;
+    promoted: number;
   }>({ total: 0, spark: 0, incubating: 0, shaping: 0, ready: 0, promoted: 0 });
   const [ideasBulkUi, setIdeasBulkUi] = useState<{
     selectedCount: number;
     allSelected: boolean;
     someSelected: boolean;
   } | null>(null);
-  const ideasBulkActionsRef = useRef<
-    Pick<IdeasBulkBarPayload, 'selectAllVisible' | 'clearSelection' | 'convert' | 'tag' | 'deleteSelected'> | null
-  >(null);
+  const ideasBulkActionsRef = useRef<Pick<
+    IdeasBulkBarPayload,
+    'selectAllVisible' | 'clearSelection' | 'convert' | 'tag' | 'deleteSelected'
+  > | null>(null);
 
   const handleIdeaPanelChange = useCallback((panel: WorkspacePanelKey) => {
     setIdeaActivePanel(panel);
@@ -379,9 +436,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     allSelected: boolean;
     someSelected: boolean;
   } | null>(null);
-  const inboxBulkActionsRef = useRef<
-    Pick<InboxBulkBarPayload, 'selectAllVisible' | 'clearSelection' | 'triage'> | null
-  >(null);
+  const inboxBulkActionsRef = useRef<Pick<
+    InboxBulkBarPayload,
+    'selectAllVisible' | 'clearSelection' | 'triage'
+  > | null>(null);
   const [notebookLinkedIdeasOpen, setNotebookLinkedIdeasOpen] = useState(false);
   const [notebookTopicsOpen, setNotebookTopicsOpen] = useState(false);
   const [notebookChatOpen, setNotebookChatOpen] = useState(false);
@@ -438,20 +496,18 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     allSelected: boolean;
     someSelected: boolean;
   } | null>(null);
-  const decisionsBulkActionsRef = useRef<
-    Pick<
-      NonNullable<DecisionsBulkBarPayload>,
-      | 'selectAllVisible'
-      | 'clearSelection'
-      | 'approve'
-      | 'reject'
-      | 'deleteSelected'
-      | 'changePriority'
-      | 'remind'
-      | 'escalate'
-      | 'snoozeTomorrow'
-    >
-  | null>(null);
+  const decisionsBulkActionsRef = useRef<Pick<
+    NonNullable<DecisionsBulkBarPayload>,
+    | 'selectAllVisible'
+    | 'clearSelection'
+    | 'approve'
+    | 'reject'
+    | 'deleteSelected'
+    | 'changePriority'
+    | 'remind'
+    | 'escalate'
+    | 'snoozeTomorrow'
+  > | null>(null);
   // V3-A02: Dynamic documents state with sessionStorage persistence
   const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>(() => {
     try {
@@ -465,6 +521,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   });
   // Always start on list view — workspace opens only via explicit user action (click idea / "New")
   const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  const [pendingDocument, setPendingDocument] = useState<OpenDocument | null>(null);
+  const [pendingUrlCleanup, setPendingUrlCleanup] = useState<{
+    documentId: string;
+    keys: string[];
+  } | null>(null);
   useEffect(() => {
     try {
       window.sessionStorage.setItem(
@@ -533,10 +594,40 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setActiveDocumentId(doc.id);
   }, []);
 
-  // Robust: whenever user switches main tab, always show list view (close any open document)
-  // Also update per-tab chat context (Q1/Q3) enriched with M1 workload summary
   useEffect(() => {
-    setActiveDocumentId(null);
+    if (!pendingDocument) return;
+    if (getDocumentTab(pendingDocument.type) !== activeTab) return;
+
+    handleOpenDocument(pendingDocument);
+    setPendingDocument(null);
+  }, [activeTab, handleOpenDocument, pendingDocument]);
+
+  useEffect(() => {
+    if (!pendingUrlCleanup) return;
+    if (activeDocumentId !== pendingUrlCleanup.documentId) return;
+
+    const next = new URLSearchParams(searchParams);
+    pendingUrlCleanup.keys.forEach((key) => next.delete(key));
+    setSearchParams(next, { replace: true });
+    setPendingUrlCleanup(null);
+  }, [activeDocumentId, pendingUrlCleanup, searchParams, setSearchParams]);
+
+  // Close document only when the user actually switches the main tab.
+  const previousActiveTabRef = useRef<ModuleTab>(activeTab);
+  useEffect(() => {
+    if (previousActiveTabRef.current !== activeTab) {
+      setActiveDocumentId(null);
+      previousActiveTabRef.current = activeTab;
+    }
+  }, [activeTab]);
+
+  // Update per-tab chat context (Q1/Q3) enriched with M1 workload summary + V5 workspace context.
+  const activeIdeaDoc = useMemo(() => {
+    if (activeTab !== 'ideas' || !activeDocumentId) return null;
+    return openDocuments.find((d) => d.id === activeDocumentId && d.type === 'idea') || null;
+  }, [activeTab, activeDocumentId, openDocuments]);
+
+  useEffect(() => {
     let prompt = TAB_SYSTEM_PROMPTS[activeTab] || '';
     if (contextSummary) {
       const ctx: string[] = [];
@@ -552,9 +643,30 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         prompt += `\n\nUser's current workload: ${ctx.join(', ')}.`;
       }
     }
+
+    if (activeIdeaDoc) {
+      const wsCtx: string[] = [];
+      wsCtx.push(`Active idea: "${activeIdeaDoc.name}"`);
+      wsCtx.push(`Active system: ${ideaActiveTool}`);
+      wsCtx.push(ideaLocked ? 'Stage: seed (not yet accepted)' : 'Stage: active (accepted)');
+      if (ideaSelection.type !== 'none') {
+        wsCtx.push(`Selection: ${ideaSelection.count} ${ideaSelection.type}(s) selected`);
+      }
+      prompt += `\n\nWorkspace context:\n${wsCtx.join('\n')}`;
+    }
+
     setChatSystemPrompt(prompt || null);
     setChatQuickPrompts(TAB_QUICK_PROMPTS[activeTab] || null);
-  }, [activeTab, contextSummary, setChatSystemPrompt, setChatQuickPrompts]);
+  }, [
+    activeTab,
+    contextSummary,
+    setChatSystemPrompt,
+    setChatQuickPrompts,
+    activeIdeaDoc,
+    ideaActiveTool,
+    ideaLocked,
+    ideaSelection,
+  ]);
 
   // Deep link support: header dropdown → open inside My Work
   useEffect(() => {
@@ -571,7 +683,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setActiveDocumentId(null);
     if (myWorkIntent.open) {
       const o = myWorkIntent.open;
-      handleOpenDocument({
+      const nextDoc: OpenDocument = {
         id: o.id,
         type: o.type,
         name:
@@ -592,10 +704,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 ? ('idea' as const)
                 : ('todo' as const),
         data: o.data,
-      });
+      };
+
+      if (myWorkIntent.tab && getDocumentTab(nextDoc.type) !== activeTab) {
+        setPendingDocument(nextDoc);
+      } else {
+        handleOpenDocument(nextDoc);
+      }
     }
     clearMyWorkIntent();
-  }, [myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
+  }, [activeTab, myWorkIntent, clearMyWorkIntent, handleOpenDocument]);
 
   // L7: Save session context for cross-session continuity
   useEffect(() => {
@@ -683,41 +801,49 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // URL deep link support:
   // - /my-work?taskId=...
   // - /my-work?decisionId=...
+  // - /my-work?ideaId=...
   // Back-compat:
   // - /my-work?decision=...  (used by backend notification actionUrl)
   // - /my-work?task=...      (legacy/manual links)
   useEffect(() => {
     const taskId = searchParams.get('taskId') || searchParams.get('task');
     const decisionId = searchParams.get('decisionId') || searchParams.get('decision');
-    if (!taskId && !decisionId) return;
+    const ideaId = searchParams.get('ideaId') || searchParams.get('idea');
+    if (!taskId && !decisionId && !ideaId) return;
 
     if (taskId) {
       setActiveTab('tasks');
-      handleOpenDocument({
+      setPendingDocument({
         id: taskId,
         type: 'task',
         name: isPolish ? 'Zadanie' : 'Task',
         status: 'todo',
       });
+      setPendingUrlCleanup({ documentId: taskId, keys: ['taskId', 'task'] });
     }
 
     if (decisionId) {
       setActiveTab('decisions');
-      handleOpenDocument({
+      setPendingDocument({
         id: decisionId,
         type: 'decision',
         name: isPolish ? 'Decyzja' : 'Decision',
         status: 'pending',
       });
+      setPendingUrlCleanup({ documentId: decisionId, keys: ['decisionId', 'decision'] });
     }
 
-    const next = new URLSearchParams(searchParams);
-    next.delete('taskId');
-    next.delete('task');
-    next.delete('decisionId');
-    next.delete('decision');
-    setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams, handleOpenDocument, isPolish]);
+    if (ideaId) {
+      setActiveTab('ideas');
+      setPendingDocument({
+        id: ideaId,
+        type: 'idea',
+        name: isPolish ? 'Pomysł' : 'Idea',
+        status: 'idea',
+      });
+      setPendingUrlCleanup({ documentId: ideaId, keys: ['ideaId', 'idea'] });
+    }
+  }, [searchParams, isPolish]);
 
   // Tab configuration
   // A1.2: Executive tab only visible to admin/manager/superadmin roles
@@ -916,19 +1042,37 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setShowStartupTemplates(true);
   }, []);
 
-  const handleStartupTemplateSelect = useCallback((templateId: string, defaultTool: string) => {
-    const newId = `new-idea-${Date.now()}`;
-    if (defaultTool && ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(defaultTool)) {
-      setIdeaActiveTool(defaultTool as CanvasToolType);
-    }
-    handleOpenDocument({
-      id: newId,
-      type: 'idea',
-      name: isPolish ? 'Nowy pomysł' : 'New Idea',
-      status: 'idea',
-      data: { isNew: true, templateId },
-    });
-  }, [handleOpenDocument, isPolish]);
+  const handleStartupTemplateSelect = useCallback(
+    (seedIntent: IdeaWorkspaceSeedIntent) => {
+      const newId = `new-idea-${Date.now()}`;
+      const preferredSystem = normalizePreferredSystem(seedIntent.preferredSystem);
+      if (preferredSystem) {
+        setIdeaActiveTool(preferredSystem);
+      }
+      const body = composeIdeaBodyFromSeedIntent(seedIntent);
+      const title = deriveIdeaTitleFromSeedIntent(
+        seedIntent,
+        isPolish ? 'Nowy pomysł' : 'New Idea'
+      );
+      handleOpenDocument({
+        id: newId,
+        type: 'idea',
+        name: title,
+        status: 'idea',
+        data: {
+          isNew: true,
+          seedIntent,
+          creationPayload: {
+            title,
+            body,
+            tags: [],
+            sourceType: 'manual',
+          },
+        },
+      });
+    },
+    [handleOpenDocument, isPolish]
+  );
 
   const handleIdeaClick = useCallback(
     (ideaId: string, ideaData?: MyIdea) => {
@@ -1045,17 +1189,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   const handleTasksBulkBarChange = useCallback(
     (
-      payload:
-        | {
-            selectedCount: number;
-            selectAllVisible: () => void;
-            clearSelection: () => void;
-            complete: () => void;
-            changePriority: () => void;
-            changeDueDate: () => void;
-            deleteSelected: () => void;
-          }
-        | null
+      payload: {
+        selectedCount: number;
+        selectAllVisible: () => void;
+        clearSelection: () => void;
+        complete: () => void;
+        changePriority: () => void;
+        changeDueDate: () => void;
+        deleteSelected: () => void;
+      } | null
     ) => {
       if (!payload) {
         setTasksBulkUi(null);
@@ -1125,7 +1267,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   );
 
   const handleIdeaCountsChange = useCallback(
-    (counts: { total: number; spark: number; incubating: number; shaping: number; ready: number; promoted: number }) => {
+    (counts: {
+      total: number;
+      spark: number;
+      incubating: number;
+      shaping: number;
+      ready: number;
+      promoted: number;
+    }) => {
       setTabCounts((prev) => ({ ...prev, ideas: counts.total }));
       setIdeasStageCounts(counts);
     },
@@ -1161,16 +1310,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setInboxCounts(counts);
   }, []);
 
-  const applyInboxPreset = useCallback(
-    (next: InboxPreset) => {
-      // Canon v3: "ALL" means no preset filters are active.
-      setInboxPreset(next);
-      setInboxStatusTab(next === 'saved' ? 'saved' : 'open');
-      setInboxSection(next === 'today' ? 'today' : next === 'this_week' ? 'this_week' : 'all');
-      setInboxActionRequiredOnly(next === 'action_required');
-    },
-    []
-  );
+  const applyInboxPreset = useCallback((next: InboxPreset) => {
+    // Canon v3: "ALL" means no preset filters are active.
+    setInboxPreset(next);
+    setInboxStatusTab(next === 'saved' ? 'saved' : 'open');
+    setInboxSection(next === 'today' ? 'today' : next === 'this_week' ? 'this_week' : 'all');
+    setInboxActionRequiredOnly(next === 'action_required');
+  }, []);
 
   const handleInboxBulkBarChange = useCallback((payload: InboxBulkBarPayload | null) => {
     if (!payload) {
@@ -1553,11 +1699,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               {taskFilters.map((f) => {
                 const isActive = taskFilter === f.id;
                 const count =
-                  f.id === 'all'
-                    ? tabCounts.tasks
-                    : typeof f.count === 'number'
-                      ? f.count
-                      : 0;
+                  f.id === 'all' ? tabCounts.tasks : typeof f.count === 'number' ? f.count : 0;
                 return (
                   <button
                     key={f.id}
@@ -1587,7 +1729,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: string;
         count: number;
       }> = [
-        { id: 'all', label: isPolish ? 'Wszystkie' : 'ALL', count: c?.counts.open ?? tabCounts.inbox },
+        {
+          id: 'all',
+          label: isPolish ? 'Wszystkie' : 'ALL',
+          count: c?.counts.open ?? tabCounts.inbox,
+        },
         { id: 'overdue', label: isPolish ? 'Zaległe' : 'Overdue', count: c?.overdue ?? 0 },
         { id: 'saved', label: isPolish ? 'Zapisane' : 'Saved', count: c?.counts.saved ?? 0 },
         { id: 'ai', label: isPolish ? 'AI' : 'AI', count: c?.ai ?? 0 },
@@ -1598,7 +1744,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           count: c?.actionRequired ?? 0,
         },
         { id: 'today', label: isPolish ? 'Dziś' : 'Today', count: c?.newToday ?? 0 },
-        { id: 'this_week', label: isPolish ? 'Ten tydz.' : 'This week', count: c?.newThisWeek ?? 0 },
+        {
+          id: 'this_week',
+          label: isPolish ? 'Ten tydz.' : 'This week',
+          count: c?.newThisWeek ?? 0,
+        },
       ];
 
       const chipBase =
@@ -1717,11 +1867,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               {decisionFilters.map((f) => {
                 const isActive = decisionFilter === f.id;
                 const count =
-                  f.id === 'all'
-                    ? tabCounts.decisions
-                    : typeof f.count === 'number'
-                      ? f.count
-                      : 0;
+                  f.id === 'all' ? tabCounts.decisions : typeof f.count === 'number' ? f.count : 0;
                 return (
                   <button
                     key={f.id}
@@ -1954,10 +2100,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   <Sparkles size={14} />
                   {isPolish ? 'Konwertuj' : 'Convert'}
                 </button>
-                <button
-                  onClick={() => bulk?.tag()}
-                  className={`${bulkPillBase} ${chipInactive}`}
-                >
+                <button onClick={() => bulk?.tag()} className={`${bulkPillBase} ${chipInactive}`}>
                   <Tag size={14} />
                   {isPolish ? 'Taguj' : 'Tag'}
                 </button>
@@ -1980,12 +2123,42 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: React.ReactNode;
         count: number;
       }> = [
-        { id: 'all', label: isPolish ? 'Wszystkie' : 'ALL', icon: null, count: ideasStageCounts.total },
-        { id: 'spark', label: isPolish ? 'Iskra' : 'Spark', icon: <Lightbulb size={14} />, count: ideasStageCounts.spark },
-        { id: 'incubating', label: isPolish ? 'Rośnie' : 'Growing', icon: <Sprout size={14} />, count: ideasStageCounts.incubating },
-        { id: 'shaping', label: isPolish ? 'Kształtuje' : 'Shaping', icon: <TreePine size={14} />, count: ideasStageCounts.shaping },
-        { id: 'ready', label: isPolish ? 'Gotowy' : 'Ready', icon: <CheckCircle2 size={14} />, count: ideasStageCounts.ready },
-        { id: 'promoted', label: isPolish ? 'Promowany' : 'Promoted', icon: <Rocket size={14} />, count: ideasStageCounts.promoted },
+        {
+          id: 'all',
+          label: isPolish ? 'Wszystkie' : 'ALL',
+          icon: null,
+          count: ideasStageCounts.total,
+        },
+        {
+          id: 'spark',
+          label: isPolish ? 'Iskra' : 'Spark',
+          icon: <Lightbulb size={14} />,
+          count: ideasStageCounts.spark,
+        },
+        {
+          id: 'incubating',
+          label: isPolish ? 'Rośnie' : 'Growing',
+          icon: <Sprout size={14} />,
+          count: ideasStageCounts.incubating,
+        },
+        {
+          id: 'shaping',
+          label: isPolish ? 'Kształtuje' : 'Shaping',
+          icon: <TreePine size={14} />,
+          count: ideasStageCounts.shaping,
+        },
+        {
+          id: 'ready',
+          label: isPolish ? 'Gotowy' : 'Ready',
+          icon: <CheckCircle2 size={14} />,
+          count: ideasStageCounts.ready,
+        },
+        {
+          id: 'promoted',
+          label: isPolish ? 'Promowany' : 'Promoted',
+          icon: <Rocket size={14} />,
+          count: ideasStageCounts.promoted,
+        },
       ];
 
       return (
@@ -2105,6 +2278,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             <IdeaMapWorkspace
               ideaId={activeDoc.id}
               initialOpenMap={Boolean((activeDoc as any)?.data?.openMap)}
+              creationPayload={(activeDoc as any)?.data?.creationPayload}
+              seedIntent={(activeDoc as any)?.data?.seedIntent}
               onClose={() => handleCloseDocument(activeDoc.id)}
               onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
               toolsOpen={ideaToolsOpen}
@@ -2527,8 +2702,18 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               >
                 {(
                   [
-                    { id: 'table' as TasksViewMode, icon: LayoutList, titlePl: 'Lista', titleEn: 'List' },
-                    { id: 'kanban' as TasksViewMode, icon: Kanban, titlePl: 'Kanban', titleEn: 'Kanban' },
+                    {
+                      id: 'table' as TasksViewMode,
+                      icon: LayoutList,
+                      titlePl: 'Lista',
+                      titleEn: 'List',
+                    },
+                    {
+                      id: 'kanban' as TasksViewMode,
+                      icon: Kanban,
+                      titlePl: 'Kanban',
+                      titleEn: 'Kanban',
+                    },
                     {
                       id: 'calendar' as TasksViewMode,
                       icon: CalendarDays,
@@ -2568,8 +2753,18 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               >
                 {(
                   [
-                    { id: 'table' as DecisionsViewMode, icon: LayoutList, titlePl: 'Lista', titleEn: 'List' },
-                    { id: 'kanban' as DecisionsViewMode, icon: Kanban, titlePl: 'Kanban', titleEn: 'Kanban' },
+                    {
+                      id: 'table' as DecisionsViewMode,
+                      icon: LayoutList,
+                      titlePl: 'Lista',
+                      titleEn: 'List',
+                    },
+                    {
+                      id: 'kanban' as DecisionsViewMode,
+                      icon: Kanban,
+                      titlePl: 'Kanban',
+                      titleEn: 'Kanban',
+                    },
                     {
                       id: 'timeline' as DecisionsViewMode,
                       icon: GanttChart,
@@ -2669,20 +2864,29 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
             {/* Ideas workspace — panel strip (block 2: Tools / Context / AI) */}
             {activeTab === 'ideas' && activeDocumentId && (
-              <WorkspacePanelStrip
-                value={ideaActivePanel}
-                onChange={handleIdeaPanelChange}
-              />
+              <WorkspacePanelStrip value={ideaActivePanel} onChange={handleIdeaPanelChange} />
             )}
 
             {/* Ideas: view mode switcher — List / Cards / Tags */}
             {activeTab === 'ideas' && !activeDocumentId && (
               <div className="inline-flex items-center gap-0.5 p-0.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
-                {([
-                  { id: 'list' as IdeasViewMode, icon: LayoutList, label: 'List', labelPl: 'Lista' },
-                  { id: 'cards' as IdeasViewMode, icon: LayoutGrid, label: 'Cards', labelPl: 'Karty' },
-                  { id: 'garden' as IdeasViewMode, icon: Tag, label: 'Tags', labelPl: 'Tagi' },
-                ] as const).map(({ id, icon: Icon, label, labelPl }) => (
+                {(
+                  [
+                    {
+                      id: 'list' as IdeasViewMode,
+                      icon: LayoutList,
+                      label: 'List',
+                      labelPl: 'Lista',
+                    },
+                    {
+                      id: 'cards' as IdeasViewMode,
+                      icon: LayoutGrid,
+                      label: 'Cards',
+                      labelPl: 'Karty',
+                    },
+                    { id: 'garden' as IdeasViewMode, icon: Tag, label: 'Tags', labelPl: 'Tagi' },
+                  ] as const
+                ).map(({ id, icon: Icon, label, labelPl }) => (
                   <button
                     key={id}
                     onClick={() => setIdeasViewMode(id)}

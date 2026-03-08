@@ -141,7 +141,7 @@ router.post('/scoring-proposals/:proposalId/review', asyncHandler(async (req: Au
 
 router.post('/eval/datasets', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ frameworkId: z.string(), name: z.string(), description: z.string().optional(), goldenItems: z.array(z.record(z.unknown())).optional() });
+  const s = z.object({ frameworkId: z.string(), name: z.string(), description: z.string().optional(), goldenItems: z.array(z.record(z.string(), z.unknown())).optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   const r = await assessmentEnterpriseService.createEvalDataset(id.orgId, { ...p.data, createdBy: id.userId });
   res.status(201).json(r);
@@ -155,7 +155,7 @@ router.get('/eval/datasets', asyncHandler(async (req: AuthRequest, res: Response
 
 router.post('/eval/runs', asyncHandler(async (req: AuthRequest, res: Response) => {
   const id = requireUser(req, res); if (!id) return;
-  const s = z.object({ datasetId: z.string(), aiModelUsed: z.string().optional(), accuracy: z.number().optional(), precisionScore: z.number().optional(), recall: z.number().optional(), f1Score: z.number().optional(), detailsJson: z.record(z.unknown()).optional() });
+  const s = z.object({ datasetId: z.string(), aiModelUsed: z.string().optional(), accuracy: z.number().optional(), precisionScore: z.number().optional(), recall: z.number().optional(), f1Score: z.number().optional(), detailsJson: z.record(z.string(), z.unknown()).optional() });
   const p = s.safeParse(req.body); if (!p.success) { res.status(400).json({ error: p.error.message }); return; }
   const r = await assessmentEnterpriseService.createEvalRun(id.orgId, { ...p.data, runBy: id.userId });
   res.status(201).json(r);

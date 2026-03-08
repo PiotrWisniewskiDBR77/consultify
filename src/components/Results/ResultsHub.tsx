@@ -1,4 +1,12 @@
-import { BarChart3, ClipboardList, DollarSign, FileText, Plus, Sparkles, Target } from 'lucide-react';
+import {
+  BarChart3,
+  ClipboardList,
+  DollarSign,
+  FileText,
+  Plus,
+  Sparkles,
+  Target,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,15 +21,15 @@ import { ModuleTab, TabConfig, ViewMode } from '../shared/ModuleHub/types';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { KPICreateModal } from './KPICreateModal';
 import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
-import { ResultsGridView } from './ResultsKPITable';
-import { ResultsKpisTableV3 } from './ResultsKpisTableV3';
-import { ROITrackingView } from './ROITrackingView';
-import { ResultsKpiReportsView } from './ResultsKpiReportsView';
-import { ResultsSummaryView } from './ResultsSummaryView';
 import { OperationalAnalysisView } from './OperationalAnalysisView';
+import { ResultsKpiReportsView } from './ResultsKpiReportsView';
+import { ResultsKpisTableV3 } from './ResultsKpisTableV3';
+import { ResultsGridView } from './ResultsKPITable';
+import { ResultsSummaryView } from './ResultsSummaryView';
 import { ROIAnalysisView } from './ROIAnalysisView';
 import { ROIDetailDrawer } from './ROIDetailDrawer';
 import { ROIOpenModal } from './ROIOpenModal';
+import { ROITrackingView } from './ROITrackingView';
 
 export type KPIStatus = 'on-target' | 'below' | 'no-data';
 export type KPITrend = 'up' | 'down' | 'stable';
@@ -108,8 +116,7 @@ export const ResultsHub: React.FC = () => {
         Api.get('/benefits/kpi-mappings'),
       ]);
 
-      const kpisPayload: any =
-        kpisRes.status === 'fulfilled' ? (kpisRes.value as any) : null;
+      const kpisPayload: any = kpisRes.status === 'fulfilled' ? (kpisRes.value as any) : null;
       const kpisList = (kpisPayload?.data || []) as any[];
 
       const mappingsPayload: any =
@@ -135,7 +142,11 @@ export const ResultsHub: React.FC = () => {
         const legacyInitiativeName = k?.initiativeName || k?.initiative_name || null;
         const derivedInitiativeName =
           legacyInitiativeName ||
-          (linked.length === 1 ? linked[0]?.name : linked.length > 1 ? `${linked[0]?.name} +${linked.length - 1}` : null);
+          (linked.length === 1
+            ? linked[0]?.name
+            : linked.length > 1
+              ? `${linked[0]?.name} +${linked.length - 1}`
+              : null);
 
         return {
           ...k,
@@ -291,7 +302,16 @@ export const ResultsHub: React.FC = () => {
     } catch {
       // silent
     }
-  }, [activeFilters, activeTab, displayMode, openChatWithContext, searchQuery, setDisplayMode, t, viewMode]);
+  }, [
+    activeFilters,
+    activeTab,
+    displayMode,
+    openChatWithContext,
+    searchQuery,
+    setDisplayMode,
+    t,
+    viewMode,
+  ]);
 
   const aiControl = useMemo(
     () => (
@@ -410,7 +430,9 @@ export const ResultsHub: React.FC = () => {
 
           <button
             type="button"
-            onClick={() => setFilter('needsEntry', 'true', t('results.filters.needsEntry', 'Needs entry'))}
+            onClick={() =>
+              setFilter('needsEntry', 'true', t('results.filters.needsEntry', 'Needs entry'))
+            }
             className={`${chipBase} ${
               activeFilters.some((f) => f.column === 'needsEntry' && f.value === 'true')
                 ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
@@ -454,7 +476,9 @@ export const ResultsHub: React.FC = () => {
 
           <button
             type="button"
-            onClick={() => setFilter('status', 'on-target', t('results.filters.onTarget', 'On target'))}
+            onClick={() =>
+              setFilter('status', 'on-target', t('results.filters.onTarget', 'On target'))
+            }
             className={`${chipBase} ${
               activeFilters.some((f) => f.column === 'status' && f.value === 'on-target')
                 ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
@@ -592,7 +616,7 @@ export const ResultsHub: React.FC = () => {
               ? () => setKpiReportCreateNonce(Date.now())
               : activeTab === 'roi'
                 ? () => setRoiOpenModal(true)
-              : undefined
+                : undefined
         }
         newItemLabel={
           activeTab === 'kpis'
@@ -601,7 +625,7 @@ export const ResultsHub: React.FC = () => {
               ? t('results.kpiReports.new', '+ New KPI report')
               : activeTab === 'roi'
                 ? t('results.roi.add', '+ Record ROI')
-              : undefined
+                : undefined
         }
         // A03 canon: Results hub uses the canonical subset order (table→grid).
         // Non-KPI tabs can ignore viewMode; we keep the toggle consistent across the hub.

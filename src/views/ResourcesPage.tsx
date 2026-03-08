@@ -4,9 +4,9 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { FullVideoModal } from '@/components/Landing/FullVideoModal';
 import { EntryFooter } from '@/components/Landing/EntryFooter';
 import { EntryTopBar } from '@/components/Landing/EntryTopBar';
+import { FullVideoModal } from '@/components/Landing/FullVideoModal';
 import { LANDING_FILMS, LandingFilm } from '@/config/landingFilms';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
@@ -17,7 +17,14 @@ export const ResourcesPage: React.FC = () => {
   const { currentUser } = useAppStore();
 
   const films = useMemo(
-    () => [LANDING_FILMS.film1, LANDING_FILMS.film2, LANDING_FILMS.film3, LANDING_FILMS.film4, LANDING_FILMS.film5, LANDING_FILMS.film6],
+    () => [
+      LANDING_FILMS.film1,
+      LANDING_FILMS.film2,
+      LANDING_FILMS.film3,
+      LANDING_FILMS.film4,
+      LANDING_FILMS.film5,
+      LANDING_FILMS.film6,
+    ],
     []
   );
 
@@ -65,7 +72,12 @@ export const ResourcesPage: React.FC = () => {
                     className="w-full aspect-video object-contain"
                     playsInline
                     controls
-                    onPlay={() => trackFunnelEvent('landing_video_teaser_started', { filmId: film.id, location: 'resources' })}
+                    onPlay={() =>
+                      trackFunnelEvent('landing_video_teaser_started', {
+                        filmId: film.id,
+                        location: 'resources',
+                      })
+                    }
                     onEnded={() => {
                       setEndedTeasers((prev) => ({ ...prev, [film.id]: true }));
                       trackFunnelEvent('landing_video_teaser_completed', {
@@ -115,7 +127,10 @@ export const ResourcesPage: React.FC = () => {
                         ) : (
                           <>
                             <Lock size={18} />
-                            {t('landing.resources.watchFullAfterLogin', 'Watch full version after login')}
+                            {t(
+                              'landing.resources.watchFullAfterLogin',
+                              'Watch full version after login'
+                            )}
                           </>
                         )}
                       </button>
@@ -151,7 +166,10 @@ export const ResourcesPage: React.FC = () => {
         title={openFullFilm ? t(openFullFilm.titleKey, openFullFilm.id) : undefined}
         onEnded={() => {
           if (openFullFilm) {
-            trackFunnelEvent('landing_video_full_completed', { filmId: openFullFilm.id, location: 'resources' });
+            trackFunnelEvent('landing_video_full_completed', {
+              filmId: openFullFilm.id,
+              location: 'resources',
+            });
           }
         }}
       />
@@ -160,4 +178,3 @@ export const ResourcesPage: React.FC = () => {
 };
 
 export default ResourcesPage;
-

@@ -182,19 +182,18 @@ Generate 6-10 diverse suggestions. Prioritize suggestions grounded in company da
       options: { tier: 'STANDARD' },
     });
 
-    const response = await llmService.chat({
-      model: modelCfg.modelId,
-      provider: modelCfg.provider,
+    const response = await llmService.call({
+      type: 'text',
+      modelConfig: modelCfg,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userMessage },
       ],
       temperature: 0.7,
       maxTokens: 2000,
-      responseFormat: { type: 'json_object' },
     });
 
-    const content = String(response?.content || response?.message?.content || '');
+    const content = String((response as any)?.content || (response as any)?.message?.content || '');
     let parsed: any;
     try {
       parsed = JSON.parse(content);
@@ -342,19 +341,18 @@ Return exactly one JSON action object.`;
       options: { tier: 'BUDGET' },
     });
 
-    const response = await llmService.chat({
-      model: modelCfg.modelId,
-      provider: modelCfg.provider,
+    const response = await llmService.call({
+      type: 'text',
+      modelConfig: modelCfg,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: naturalLanguage },
       ],
       temperature: 0.3,
       maxTokens: 1000,
-      responseFormat: { type: 'json_object' },
     });
 
-    const content = String(response?.content || response?.message?.content || '');
+    const content = String((response as any)?.content || (response as any)?.message?.content || '');
     return JSON.parse(content);
   } catch {
     return { type: 'error', message: isPl ? 'Nie udało się przetworzyć polecenia' : 'Failed to process command' };
@@ -389,19 +387,18 @@ Return a JSON array: [{ "rowId": "...", "value": "..." }]`;
       options: { tier: 'STANDARD' },
     });
 
-    const response = await llmService.chat({
-      model: modelCfg.modelId,
-      provider: modelCfg.provider,
+    const response = await llmService.call({
+      type: 'text',
+      modelConfig: modelCfg,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: rowsDesc },
       ],
       temperature: 0.5,
       maxTokens: 2000,
-      responseFormat: { type: 'json_object' },
     });
 
-    const content = String(response?.content || response?.message?.content || '');
+    const content = String((response as any)?.content || (response as any)?.message?.content || '');
     const parsed = JSON.parse(content);
     return (Array.isArray(parsed) ? parsed : parsed?.results || []).map((r: any) => ({
       rowId: String(r.rowId || r.row_id || ''),

@@ -10,6 +10,7 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import auditEventsService from '../services/AuditEventsService.js';
+import { dispatchProjectCommunicationEvent } from '../services/integrations/communicationSyncService.js';
 import ActivityService from '../services/ActivityService.js';
 import {
   getAllowedTaskTransitions,
@@ -19,6 +20,11 @@ import {
 import NotificationService from '../services/notificationService.js';
 import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
 import TaskAssignmentService from '../services/taskAssignmentService.js';
+import {
+  createIssueFromTask,
+  parseJiraConfig,
+  updateIssueFromTask,
+} from '../services/integrations/jiraOrgClient.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import DbPromise from '../utils/DbPromise.js';
@@ -231,6 +237,222 @@ function buildTransitionErrorPayload(from: string | null | undefined, to: string
     to,
     allowedNext: getAllowedTaskTransitions(from),
   };
+}
+
+function isRetriableSyncError(message: string): boolean {
+  return /HTTP\s*5\d\d/i.test(message) || /timeout/i.test(message) || /ECONN/i.test(message);
+}
+
+async function logJiraTaskSyncEvent(params: {
+  integrationId: string;
+  status: 'success' | 'partial' | 'failed';
+  itemsCreated?: number;
+  itemsUpdated?: number;
+  itemsFailed?: number;
+  errorSummary?: string | null;
+  errorDetails?: unknown;
+  direction?: 'read_only' | 'bidirectional';
+  triggerType?: 'event' | 'manual';
+}): Promise<void> {
+  try {
+    const cols = await DbPromise.all<{ name: string }>('PRAGMA table_info(integration_sync_log)', []);
+    const names = new Set((cols || []).map((c) => String(c.name || '')));
+    if (!names.size) return;
+
+    const now = new Date().toISOString();
+    const logId = `log-${uuidv4()}`;
+    const errorDetails =
+      params.errorDetails == null
+        ? null
+        : typeof params.errorDetails === 'string'
+          ? params.errorDetails
+          : JSON.stringify(params.errorDetails);
+
+    if (names.has('items_processed')) {
+      await DbPromise.run(
+        `INSERT INTO integration_sync_log (
+           id, integration_id, sync_type, direction, trigger_type,
+           status, items_processed, items_created, items_updated, items_failed,
+           error_summary, error_details, started_at, completed_at, duration_ms
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          logId,
+          params.integrationId,
+          'single_item',
+          params.direction || 'bidirectional',
+          params.triggerType || 'event',
+          params.status,
+          (params.itemsCreated || 0) + (params.itemsUpdated || 0) + (params.itemsFailed || 0),
+          params.itemsCreated || 0,
+          params.itemsUpdated || 0,
+          params.itemsFailed || 0,
+          params.errorSummary || null,
+          errorDetails,
+          now,
+          now,
+          0,
+        ]
+      );
+      return;
+    }
+
+    await DbPromise.run(
+      `INSERT INTO integration_sync_log (
+         id, integration_id, sync_type, direction, status, items_synced, items_failed, error_details,
+         started_at, completed_at, duration_ms
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        logId,
+        params.integrationId,
+        'single_item',
+        params.direction || 'bidirectional',
+        params.status,
+        (params.itemsCreated || 0) + (params.itemsUpdated || 0),
+        params.itemsFailed || 0,
+        errorDetails,
+        now,
+        now,
+        0,
+      ]
+    );
+  } catch (err: any) {
+    logger.warn('[TaskController] Failed to write Jira sync log', { error: err?.message });
+  }
+}
+
+async function syncTaskToJiraIntegrations(params: {
+  organizationId: string;
+  task: { id: string; title: string; description?: string | null; status?: string | null };
+}): Promise<void> {
+  const { organizationId, task } = params;
+  const integrations = await DbPromise.all<{
+    integration_id: string;
+    settings: string | null;
+    provider_name?: string | null;
+  }>(
+    `
+      SELECT i.id as integration_id, i.settings, p.name as provider_name
+      FROM integrations i
+      LEFT JOIN integration_providers p ON p.id = i.provider_id
+      WHERE i.organization_id = ?
+        AND (p.name = 'jira' OR i.provider_id = 'jira')
+        AND (i.status IS NULL OR i.status IN ('active','connected'))
+    `,
+    [organizationId]
+  ).catch(() => []);
+
+  for (const integration of integrations || []) {
+    const integrationId = String(integration.integration_id || '').trim();
+    if (!integrationId) continue;
+
+    let settings: Record<string, unknown> = {};
+    try {
+      settings = integration.settings ? JSON.parse(integration.settings) : {};
+    } catch {
+      settings = {};
+    }
+
+    const cfg = parseJiraConfig(settings);
+    if (!cfg) {
+      await logJiraTaskSyncEvent({
+        integrationId,
+        status: 'failed',
+        itemsFailed: 1,
+        errorSummary: 'jira_config_missing',
+        errorDetails: ['Missing Jira config fields (baseUrl/email/apiToken/projectKey)'],
+      });
+      continue;
+    }
+
+    try {
+      const existing = await DbPromise.get<{
+        id: string;
+        external_id: string | null;
+        metadata: string | null;
+      }>(
+        `SELECT id, external_id, metadata
+         FROM integration_sync_mappings
+         WHERE integration_id = ? AND local_type = 'task' AND local_id = ?
+         LIMIT 1`,
+        [integrationId, task.id]
+      );
+
+      if (existing?.id) {
+        let metadata: Record<string, unknown> = {};
+        try {
+          metadata = existing.metadata ? JSON.parse(existing.metadata) : {};
+        } catch {
+          metadata = {};
+        }
+        const issueIdOrKey = String(metadata.key || existing.external_id || '').trim();
+        await updateIssueFromTask({
+          config: cfg,
+          issueIdOrKey,
+          task,
+          deepLinkUrl: null,
+        });
+        await DbPromise.run(
+          `UPDATE integration_sync_mappings
+           SET sync_status = 'synced', last_sync_at = datetime('now'), updated_at = datetime('now')
+           WHERE id = ?`,
+          [existing.id]
+        );
+        await logJiraTaskSyncEvent({
+          integrationId,
+          status: 'success',
+          itemsUpdated: 1,
+        });
+        continue;
+      }
+
+      const created = await createIssueFromTask({
+        config: cfg,
+        task,
+        deepLinkUrl: null,
+      });
+      const now = new Date().toISOString();
+      await DbPromise.run(
+        `INSERT INTO integration_sync_mappings (
+           id, integration_id,
+           local_type, local_id,
+           external_type, external_id, external_url,
+           sync_status, last_sync_at, created_at, updated_at, metadata
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?, ?)`,
+        [
+          `sync-${uuidv4()}`,
+          integrationId,
+          'task',
+          task.id,
+          'issue',
+          created.id,
+          created.browseUrl,
+          now,
+          now,
+          now,
+          JSON.stringify({ key: created.key }),
+        ]
+      );
+      await logJiraTaskSyncEvent({
+        integrationId,
+        status: 'success',
+        itemsCreated: 1,
+      });
+    } catch (err: any) {
+      const message = String(err?.message || 'Failed to sync task to Jira');
+      await logJiraTaskSyncEvent({
+        integrationId,
+        status: 'partial',
+        itemsFailed: 1,
+        errorSummary: 'jira_sync_failed',
+        errorDetails: [{ message, retriable: isRetriableSyncError(message) }],
+      });
+      logger.warn('[TaskController] Jira task sync failed', {
+        integrationId,
+        taskId: task.id,
+        error: message,
+      });
+    }
+  }
 }
 
 // ==========================================
@@ -1097,6 +1319,51 @@ export class TaskController {
         })
         .catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
 
+      await syncTaskToJiraIntegrations({
+        organizationId: orgId,
+        task: {
+          id,
+          title,
+          description: description || null,
+          status: finalStatus,
+        },
+      });
+
+      const dueAtMs = dueDate ? new Date(dueDate).getTime() : Number.NaN;
+      if (effectiveProjectId && Number.isFinite(dueAtMs)) {
+        const daysUntilDue = Math.ceil((dueAtMs - Date.now()) / (1000 * 60 * 60 * 24));
+        if (daysUntilDue <= 7) {
+          await dispatchProjectCommunicationEvent({
+            organizationId: orgId,
+            projectId: effectiveProjectId,
+            eventType: 'task_due',
+            title: `Task due soon: ${title}`,
+            body:
+              daysUntilDue <= 0
+                ? `Task "${title}" is due now or overdue.`
+                : `Task "${title}" is due in ${daysUntilDue} day${daysUntilDue === 1 ? '' : 's'}.`,
+            deepLink: `/my-work/tasks/${id}`,
+            severity: daysUntilDue <= 1 ? 'high' : 'normal',
+          }).catch((err: any) =>
+            logger.warn('[TaskController] Task due communication sync failed:', err?.message)
+          );
+        }
+      }
+
+      if (effectiveProjectId && finalStatus === 'blocked') {
+        await dispatchProjectCommunicationEvent({
+          organizationId: orgId,
+          projectId: effectiveProjectId,
+          eventType: 'blocker_detected',
+          title: `Task blocked: ${title}`,
+          body: finalBlockedReason || `Task "${title}" was marked as blocked.`,
+          deepLink: `/my-work/tasks/${id}`,
+          severity: 'high',
+        }).catch((err: any) =>
+          logger.warn('[TaskController] Blocker communication sync failed:', err?.message)
+        );
+      }
+
       // Recalculate Initiative Progress
       if (initiativeId) {
         // Lazy load for now to avoid circular dependency
@@ -1451,6 +1718,79 @@ export class TaskController {
           organizationId: orgId,
         })
         .catch((err: any) => logger.error('[TaskController] Audit log failed:', err?.message));
+
+      const syncedTask = await DbPromise.get<TaskRow>(`SELECT * FROM tasks WHERE id = ? AND organization_id = ?`, [
+        id,
+        orgId,
+      ]);
+      await syncTaskToJiraIntegrations({
+        organizationId: orgId,
+        task: {
+          id,
+          title: String((updates as any).title || currentTask.title || ''),
+          description:
+            (updates as any).description !== undefined
+              ? ((updates as any).description as string | null)
+              : (currentTask.description as string | null),
+          status: String((updates as any).status || syncedTask?.status || currentTask.status || ''),
+        },
+      });
+
+      const nextProjectId = String(syncedTask?.project_id || currentTask.project_id || '').trim();
+      const nextTitle = String((updates as any).title || syncedTask?.title || currentTask.title || '');
+      const nextStatus = String(
+        (updates as any).status || syncedTask?.status || currentTask.status || ''
+      ).toLowerCase();
+      const nextDueDate =
+        (updates as any).dueDate ??
+        (updates as any).due_date ??
+        syncedTask?.due_date ??
+        currentTask.due_date ??
+        null;
+
+      if (nextProjectId && nextDueDate) {
+        const dueAtMs = new Date(String(nextDueDate)).getTime();
+        if (Number.isFinite(dueAtMs)) {
+          const daysUntilDue = Math.ceil((dueAtMs - Date.now()) / (1000 * 60 * 60 * 24));
+          if (daysUntilDue <= 7) {
+            await dispatchProjectCommunicationEvent({
+              organizationId: orgId,
+              projectId: nextProjectId,
+              eventType: 'task_due',
+              title: `Task due soon: ${nextTitle}`,
+              body:
+                daysUntilDue <= 0
+                  ? `Task "${nextTitle}" is due now or overdue.`
+                  : `Task "${nextTitle}" is due in ${daysUntilDue} day${daysUntilDue === 1 ? '' : 's'}.`,
+              deepLink: `/my-work/tasks/${id}`,
+              severity: daysUntilDue <= 1 ? 'high' : 'normal',
+            }).catch((err: any) =>
+              logger.warn('[TaskController] Task due communication sync failed:', err?.message)
+            );
+          }
+        }
+      }
+
+      if (nextProjectId && nextStatus === 'blocked') {
+        const nextBlockedReason = String(
+          (updates as any).blockedReason ||
+            (updates as any).blocked_reason ||
+            syncedTask?.blocked_reason ||
+            currentTask.blocked_reason ||
+            ''
+        ).trim();
+        await dispatchProjectCommunicationEvent({
+          organizationId: orgId,
+          projectId: nextProjectId,
+          eventType: 'blocker_detected',
+          title: `Task blocked: ${nextTitle}`,
+          body: nextBlockedReason || `Task "${nextTitle}" was marked as blocked.`,
+          deepLink: `/my-work/tasks/${id}`,
+          severity: 'high',
+        }).catch((err: any) =>
+          logger.warn('[TaskController] Blocker communication sync failed:', err?.message)
+        );
+      }
 
       // V4-TASK-05: Emit task.updated event for automation rules engine
       try {

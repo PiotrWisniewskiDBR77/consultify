@@ -107,7 +107,9 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
     );
 
     toast.success(
-      isPl ? `Dodano ${selectedInsights.length} insightów` : `Added ${selectedInsights.length} insights`,
+      isPl
+        ? `Dodano ${selectedInsights.length} insightów`
+        : `Added ${selectedInsights.length} insights`,
       { duration: 1500 }
     );
     onClose();
@@ -125,7 +127,10 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
               {isPl ? 'Wywiady → Mapa' : 'Interviews → Map'}
             </h3>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
@@ -134,11 +139,16 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
           {loading ? (
             <div className="flex items-center justify-center gap-2 py-8">
               <Loader2 size={16} className="animate-spin text-violet-500" />
-              <span className="text-[11px] text-slate-500">{isPl ? 'Szukam insightów...' : 'Finding insights...'}</span>
+              <span className="text-[11px] text-slate-500">
+                {isPl ? 'Szukam insightów...' : 'Finding insights...'}
+              </span>
             </div>
           ) : insights.length === 0 ? (
             <div className="text-center py-8">
-              <MessageSquare size={32} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <MessageSquare
+                size={32}
+                className="text-slate-300 dark:text-slate-600 mx-auto mb-3"
+              />
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 {isPl ? 'Brak insightów do zaimportowania' : 'No insights to import'}
               </p>
@@ -159,14 +169,18 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
                       className="mt-0.5 rounded border-slate-300 text-violet-500 focus:ring-violet-500"
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">{insight.text}</div>
+                      <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                        {insight.text}
+                      </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400">
                           {insight.category.replace(/_/g, ' ')}
                         </span>
                         <span className="text-[9px] text-slate-400">→ {branchKey}</span>
                         {insight.confidence != null && (
-                          <span className="text-[8px] text-slate-400">{Math.round(insight.confidence * 100)}%</span>
+                          <span className="text-[8px] text-slate-400">
+                            {Math.round(insight.confidence * 100)}%
+                          </span>
                         )}
                       </div>
                     </div>
@@ -178,7 +192,10 @@ export const InterviewToMap: React.FC<InterviewToMapProps> = ({
         </div>
 
         <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center gap-2">
-          <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors">
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300/60 dark:border-navy-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+          >
             {isPl ? 'Anuluj' : 'Cancel'}
           </button>
           <button

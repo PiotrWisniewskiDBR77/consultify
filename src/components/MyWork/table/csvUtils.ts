@@ -8,7 +8,7 @@ export function exportToCSV(columns: ColumnDef[], nodes: TableNode[]): string {
   const headers = visibleCols.map((c) => escapeCSV(c.header));
   const rows = nodes.map((node) =>
     visibleCols.map((col) => {
-      const val = col.key === 'type' ? (node.type || '') : (node.data?.[col.key] ?? '');
+      const val = col.key === 'type' ? node.type || '' : (node.data?.[col.key] ?? '');
       if (Array.isArray(val)) return escapeCSV(val.join('; '));
       return escapeCSV(String(val));
     })
@@ -70,7 +70,10 @@ export function csvToNodes(
 
   for (const header of headers) {
     if (!colMap.has(header.toLowerCase()) && header.toLowerCase() !== 'type') {
-      const key = header.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      const key = header
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
       newColumns.push({
         key: key || `col_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
         header,
@@ -114,7 +117,7 @@ export function copyTableToClipboard(columns: ColumnDef[], nodes: TableNode[]) {
   const headers = visibleCols.map((c) => c.header);
   const rows = nodes.map((node) =>
     visibleCols.map((col) => {
-      const val = col.key === 'type' ? (node.type || '') : (node.data?.[col.key] ?? '');
+      const val = col.key === 'type' ? node.type || '' : (node.data?.[col.key] ?? '');
       return Array.isArray(val) ? val.join('; ') : String(val);
     })
   );

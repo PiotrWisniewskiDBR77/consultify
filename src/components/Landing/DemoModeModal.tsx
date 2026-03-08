@@ -50,24 +50,26 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
           await Api.enterDemo();
           onSuccess({ ...user, hasWorkspace: true, isDemo: true }, 'demo');
         }
+      } else {
+        if (tab === 'signup') {
+          const user = await Api.register({
+            email: form.email,
+            password: form.password,
+            firstName: form.firstName?.trim() || 'User',
+            lastName: form.lastName?.trim() || 'Trial',
+            companyName: form.companyName?.trim() || 'My Company',
+            utm_medium: 'trial_modal',
+          });
+          onSuccess({ ...user, hasWorkspace: true }, 'trial');
         } else {
-          if (tab === 'signup') {
-            const user = await Api.register({
-              email: form.email,
-              password: form.password,
-              firstName: form.firstName?.trim() || 'User',
-              lastName: form.lastName?.trim() || 'Trial',
-              companyName: form.companyName?.trim() || 'My Company',
-              utm_medium: 'trial_modal',
-            });
-            onSuccess({ ...user, hasWorkspace: true }, 'trial');
-          } else {
           const user = await Api.login(form.email, form.password);
           onSuccess({ ...user, hasWorkspace: true }, 'trial');
         }
       }
     } catch (err: any) {
-      setError(err?.message || (mode === 'demo' ? 'Failed to start demo' : 'Failed to start trial'));
+      setError(
+        err?.message || (mode === 'demo' ? 'Failed to start demo' : 'Failed to start trial')
+      );
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +123,10 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
               <div className="flex gap-1 p-1 rounded-lg bg-navy-800/60 mb-4">
                 <button
                   type="button"
-                  onClick={() => { setTab('signup'); setError(null); }}
+                  onClick={() => {
+                    setTab('signup');
+                    setError(null);
+                  }}
                   className={`flex-1 flex items-center justify-center py-2 rounded-md text-xs font-medium transition-all duration-200 ${
                     tab === 'signup'
                       ? 'bg-white/10 text-slate-100 shadow-sm'
@@ -132,7 +137,10 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setTab('login'); setError(null); }}
+                  onClick={() => {
+                    setTab('login');
+                    setError(null);
+                  }}
                   className={`flex-1 flex items-center justify-center py-2 rounded-md text-xs font-medium transition-all duration-200 ${
                     tab === 'login'
                       ? 'bg-white/10 text-slate-100 shadow-sm'
@@ -163,7 +171,12 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                     <div>
                       <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
                         {tEn('auth.firstName', 'First name')}
-                        {mode === 'demo' && <span className="normal-case text-slate-600"> ({tEn('common.optional', 'optional')})</span>}
+                        {mode === 'demo' && (
+                          <span className="normal-case text-slate-600">
+                            {' '}
+                            ({tEn('common.optional', 'optional')})
+                          </span>
+                        )}
                       </label>
                       <input
                         type="text"
@@ -196,7 +209,9 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                           <input
                             type="text"
                             value={form.companyName}
-                            onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))}
+                            onChange={(e) =>
+                              setForm((f) => ({ ...f, companyName: e.target.value }))
+                            }
                             className="w-full px-3 py-2 text-sm rounded-lg bg-navy-800/80 border border-white/5 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/30 transition-colors"
                             placeholder="My Company"
                           />
@@ -219,9 +234,7 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                     placeholder={tab === 'signup' ? 'Min. 8 characters' : '••••••••'}
                   />
                 </div>
-                {error && (
-                  <p className="text-xs text-danger-400 py-1">{error}</p>
-                )}
+                {error && <p className="text-xs text-danger-400 py-1">{error}</p>}
                 <button
                   type="submit"
                   disabled={isLoading}
@@ -235,12 +248,12 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                   ) : (
                     <>
                       {mode === 'demo'
-                        ? (tab === 'signup'
+                        ? tab === 'signup'
                           ? tEn('demo.modal.startDemo', 'Sign up & Enter Demo')
-                          : tEn('demo.modal.logInAndDemo', 'Log in & Enter Demo'))
-                        : (tab === 'signup'
+                          : tEn('demo.modal.logInAndDemo', 'Log in & Enter Demo')
+                        : tab === 'signup'
                           ? tEn('trial.modal.startTrial', 'Sign up & Start Trial')
-                          : tEn('trial.modal.logInAndTrial', 'Log in & Continue'))}
+                          : tEn('trial.modal.logInAndTrial', 'Log in & Continue')}
                       <ArrowRight size={16} />
                     </>
                   )}
@@ -275,7 +288,10 @@ export const DemoModeModal: React.FC<DemoModeModalProps> = ({
                   </div>
                 )}
                 <p className="text-xs text-slate-600 mt-3 pt-3 border-t border-white/5">
-                  {tEn('demo.modal.commercialDescription', 'For production use with your own data and team, contact our sales team.')}
+                  {tEn(
+                    'demo.modal.commercialDescription',
+                    'For production use with your own data and team, contact our sales team.'
+                  )}
                 </p>
               </div>
 
