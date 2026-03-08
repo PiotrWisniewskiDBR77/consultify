@@ -99,6 +99,23 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: end-to-end Report Generator SSOT (R1–R4 canonical report types, wizard/builder, templates, AI narrative, RAG/escalation mapping, export quality gates PDF/DOCX/PPTX)
   - **Authority**: Highest for report generator behavior
 
+### Interview (v3 as-is + v6 redesign target)
+
+- `docs/product/INTERVIEW_FORM_ENGINE_V3.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: as-is / v3 canonical contract for template engine, runtime, assignment workflow and supporting materials
+  - **Authority**: Highest for current shipped Interview behavior until V6 rollout
+
+- `docs/product/INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: to-be V6 redesign of Interview as Templates Studio + Interview Runtime + Insight Report + knowledge collection system
+  - **Authority**: Highest for V6 redesign target state and implementation planning
+
+- `docs/product/INTERVIEW_TEMPLATES_LIBRARY_V6.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical system / organization / private template library and seed packs for V6
+  - **Authority**: High for template taxonomy, seed library scope and AI-first authoring rules
+
 ### Authoritative backend data model (ERD)
 
 - `docs/product/RESET_ERD_CONSULTINITY.md`

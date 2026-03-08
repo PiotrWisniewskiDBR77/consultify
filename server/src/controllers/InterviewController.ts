@@ -14,6 +14,7 @@ import type { Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
+import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
 import notificationService from '../services/notificationService.js';
 import { evaluateGatePolicy } from '../services/workflow/gatePolicy.js';
@@ -57,10 +58,217 @@ const requireUser = (req: AuthenticatedRequest) => {
   return user;
 };
 
+const resolveTemplateScopeFromRow = (row: any): 'system' | 'organization' | 'private' => {
+  const explicit = String(row?.template_scope || '')
+    .trim()
+    .toLowerCase();
+  if (explicit === 'system' || explicit === 'organization' || explicit === 'private') {
+    return explicit;
+  }
+  return row?.organization_id ? 'organization' : 'system';
+};
+
+const resolveRequestedTemplateScope = (params: {
+  requestedScope?: unknown;
+  requestedVisibility?: unknown;
+  userRole?: string;
+}): 'system' | 'organization' | 'private' => {
+  const requestedScope = String(params.requestedScope || '')
+    .trim()
+    .toLowerCase();
+  if (requestedScope === 'private') return 'private';
+  if (requestedScope === 'system') {
+    return ['SUPERADMIN'].includes(String(params.userRole || '').toUpperCase())
+      ? 'system'
+      : 'organization';
+  }
+
+  const requestedVisibility = String(params.requestedVisibility || '')
+    .trim()
+    .toLowerCase();
+  if (requestedVisibility === 'global') {
+    return ['SUPERADMIN'].includes(String(params.userRole || '').toUpperCase())
+      ? 'system'
+      : 'organization';
+  }
+  if (requestedVisibility === 'admin_only') return 'private';
+  return 'organization';
+};
+
+const resolveTemplateStoragePolicy = (params: {
+  scope: 'system' | 'organization' | 'private';
+  organizationId: string;
+  requestedVisibility?: unknown;
+}) => {
+  const explicitVisibility = String(params.requestedVisibility || '')
+    .trim()
+    .toLowerCase();
+  if (params.scope === 'system') {
+    return {
+      organizationId: null,
+      visibility: explicitVisibility || 'global',
+    };
+  }
+  if (params.scope === 'private') {
+    return {
+      organizationId: params.organizationId,
+      visibility: 'admin_only',
+    };
+  }
+  return {
+    organizationId: params.organizationId,
+    visibility: explicitVisibility && explicitVisibility !== 'global' ? explicitVisibility : 'org',
+  };
+};
+
+const canAccessTemplate = (
+  row: any,
+  user: { organizationId: string; id: string; role?: string }
+) => {
+  const scope = resolveTemplateScopeFromRow(row);
+  if (scope === 'system') {
+    return row?.visibility !== 'admin_only' || ['ADMIN', 'SUPERADMIN'].includes(user.role || '');
+  }
+  if (scope === 'private') {
+    return row?.organization_id === user.organizationId && row?.created_by === user.id;
+  }
+  return row?.organization_id === user.organizationId;
+};
+
+const canManageTemplate = (
+  row: any,
+  user: { organizationId: string; id: string; role?: string }
+) => {
+  const scope = resolveTemplateScopeFromRow(row);
+  if (scope === 'system') {
+    return ['SUPERADMIN'].includes(user.role || '');
+  }
+  if (scope === 'private') {
+    return row?.organization_id === user.organizationId && row?.created_by === user.id;
+  }
+  return row?.organization_id === user.organizationId;
+};
+
 async function ensureInterviewEvidenceColumns(): Promise<void> {
   const cols = await getTableColumns('interview_evidence');
   if (!cols.has('category')) {
     await queryHelpers.queryRun(`ALTER TABLE interview_evidence ADD COLUMN category TEXT`);
+  }
+  if (!cols.has('evidence_role')) {
+    await queryHelpers.queryRun(
+      `ALTER TABLE interview_evidence ADD COLUMN evidence_role TEXT DEFAULT 'supporting'`
+    );
+  }
+  if (!cols.has('transcript_text')) {
+    await queryHelpers.queryRun(`ALTER TABLE interview_evidence ADD COLUMN transcript_text TEXT`);
+  }
+  if (!cols.has('ingest_to_knowledge')) {
+    await queryHelpers.queryRun(
+      `ALTER TABLE interview_evidence ADD COLUMN ingest_to_knowledge INTEGER DEFAULT 1`
+    );
+  }
+  if (!cols.has('knowledge_document_id')) {
+    await queryHelpers.queryRun(
+      `ALTER TABLE interview_evidence ADD COLUMN knowledge_document_id TEXT`
+    );
+  }
+}
+
+async function ensureInterviewQuestionV6Columns(): Promise<void> {
+  const cols = await getTableColumns('interview_questions');
+  const missingColumns: Array<{ name: string; sql: string }> = [
+    {
+      name: 'answer_type',
+      sql: `ALTER TABLE interview_questions ADD COLUMN answer_type TEXT DEFAULT 'open'`,
+    },
+    {
+      name: 'expected_answer_shape',
+      sql: `ALTER TABLE interview_questions ADD COLUMN expected_answer_shape TEXT`,
+    },
+    {
+      name: 'allow_voice',
+      sql: `ALTER TABLE interview_questions ADD COLUMN allow_voice INTEGER DEFAULT 0`,
+    },
+    {
+      name: 'allow_file_upload',
+      sql: `ALTER TABLE interview_questions ADD COLUMN allow_file_upload INTEGER DEFAULT 0`,
+    },
+    {
+      name: 'allow_url',
+      sql: `ALTER TABLE interview_questions ADD COLUMN allow_url INTEGER DEFAULT 0`,
+    },
+    {
+      name: 'allow_context_note',
+      sql: `ALTER TABLE interview_questions ADD COLUMN allow_context_note INTEGER DEFAULT 1`,
+    },
+    {
+      name: 'answer_mode',
+      sql: `ALTER TABLE interview_questions ADD COLUMN answer_mode TEXT DEFAULT 'text'`,
+    },
+    {
+      name: 'answer_payload',
+      sql: `ALTER TABLE interview_questions ADD COLUMN answer_payload TEXT DEFAULT '{}'`,
+    },
+    { name: 'context_note', sql: `ALTER TABLE interview_questions ADD COLUMN context_note TEXT` },
+    {
+      name: 'voice_transcript',
+      sql: `ALTER TABLE interview_questions ADD COLUMN voice_transcript TEXT`,
+    },
+    {
+      name: 'voice_transcript_status',
+      sql: `ALTER TABLE interview_questions ADD COLUMN voice_transcript_status TEXT DEFAULT 'none'`,
+    },
+    {
+      name: 'voice_audio_evidence_id',
+      sql: `ALTER TABLE interview_questions ADD COLUMN voice_audio_evidence_id TEXT`,
+    },
+    {
+      name: 'source_template_question_id',
+      sql: `ALTER TABLE interview_questions ADD COLUMN source_template_question_id TEXT`,
+    },
+    {
+      name: 'answer_knowledge_doc_id',
+      sql: `ALTER TABLE interview_questions ADD COLUMN answer_knowledge_doc_id TEXT`,
+    },
+    {
+      name: 'context_note_knowledge_doc_id',
+      sql: `ALTER TABLE interview_questions ADD COLUMN context_note_knowledge_doc_id TEXT`,
+    },
+  ];
+
+  for (const column of missingColumns) {
+    if (!cols.has(column.name)) {
+      await queryHelpers.queryRun(column.sql);
+    }
+  }
+}
+
+async function ingestInterviewTextArtifact(params: {
+  organizationId: string;
+  sourceType: string;
+  title: string;
+  content?: string | null;
+  metadata?: Record<string, unknown>;
+}): Promise<string | null> {
+  const content = String(params.content || '').trim();
+  if (!content) return null;
+
+  try {
+    const pipeline = new IngestionPipeline();
+    const result = await pipeline.ingestText(content, {
+      title: params.title,
+      organizationId: params.organizationId,
+      sourceType: params.sourceType,
+      metadata: params.metadata || {},
+    });
+    return result.documentId || null;
+  } catch (error) {
+    logger.warn(
+      `[InterviewController] Knowledge ingestion skipped for ${params.sourceType}: ${String(
+        (error as Error)?.message || error
+      )}`
+    );
+    return null;
   }
 }
 
@@ -138,6 +346,22 @@ const buildQuestionResponse = (row: any) => {
     category: row.category,
     questionText: row.question_text,
     answerText: row.answer_text || '',
+    answerType: row.answer_type || 'open',
+    answerOptions: parseJson(row.answer_options, []),
+    expectedAnswerShape: row.expected_answer_shape || '',
+    answerMode: row.answer_mode || (row.answer_text ? 'text' : 'empty'),
+    answerPayload: parseJson(row.answer_payload, {}),
+    contextNote: row.context_note || '',
+    notes: row.context_note || '',
+    voiceTranscript: row.voice_transcript || '',
+    voiceTranscriptStatus: row.voice_transcript_status || 'none',
+    voiceAudioEvidenceId: row.voice_audio_evidence_id || undefined,
+    allowVoice: row.allow_voice === 1,
+    allowFileUpload: row.allow_file_upload === 1,
+    allowUrl: row.allow_url === 1,
+    allowContextNote: row.allow_context_note !== 0,
+    answerKnowledgeDocId: row.answer_knowledge_doc_id || undefined,
+    contextNoteKnowledgeDocId: row.context_note_knowledge_doc_id || undefined,
     status: row.status,
     confidenceScore: row.confidence_score || 0,
     answeredBy: row.answered_by,
@@ -170,32 +394,49 @@ const buildEvidenceResponse = (row: any) => {
     questionId: row.question_id,
     category: row.category,
     evidenceType: row.evidence_type,
+    evidenceRole: row.evidence_role || 'supporting',
     title: row.title,
+    name: row.file_name || row.title,
     description: row.description,
     filePath: row.file_path,
     fileName: row.file_name,
     fileSize: row.file_size,
     fileType: row.file_type,
     url: row.url,
+    transcriptText: row.transcript_text || '',
+    ingestToKnowledge: row.ingest_to_knowledge !== 0,
+    knowledgeDocumentId: row.knowledge_document_id || undefined,
     uploadedBy: row.uploaded_by,
     createdAt: row.created_at,
+    uploadedAt: row.created_at,
   };
 };
 
 // Template response builders (Interview templates library)
 const buildTemplateResponse = (row: any) => {
   if (!row) return null;
+  const scope = resolveTemplateScopeFromRow(row);
+  const resolvedVisibility =
+    row.visibility || (scope === 'system' ? 'global' : scope === 'private' ? 'admin_only' : 'org');
   return {
     id: row.id,
+    organizationId: row.organization_id || undefined,
     name: row.name,
     description: row.description || '',
     questionCount: row.question_count ?? 0,
     category: typeof row.category === 'string' ? row.category.toLowerCase() : row.category,
     isDefault: row.is_default === 1,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at || row.created_at,
+    scope,
+    visibility: resolvedVisibility,
+    audience: row.audience || '',
+    estimatedTimeMinutes: row.estimated_time_minutes ?? 10,
+    runtimeModeDefault: row.runtime_mode_default || 'one_question_per_screen',
     status: row.status || 'approved',
     sessionsUsed: row.sessions_used ?? 0,
+    createdBy: row.created_by || undefined,
+    updatedAt: row.updated_at || row.created_at,
+    sourceTemplateId: row.source_template_id || undefined,
+    createdAt: row.created_at,
   };
 };
 
@@ -211,6 +452,11 @@ const buildTemplateQuestionResponse = (row: any) => {
     isRequired: row.is_required === 1,
     helpHint: row.help_hint || null,
     answerOptions: parseJson(row.answer_options, [] as unknown[]),
+    expectedAnswerShape: row.expected_answer_shape || '',
+    allowVoice: row.allow_voice === 1,
+    allowFileUpload: row.allow_file_upload === 1,
+    allowUrl: row.allow_url === 1,
+    allowContextNote: row.allow_context_note !== 0,
   };
 };
 
@@ -261,13 +507,14 @@ async function createSessionFromTemplate(params: {
   const { user, templateId, projectId, name, assignmentId } = params;
 
   const template = await queryHelpers.queryOne(
-    `SELECT * FROM interview_library_templates
-     WHERE id = ?
-       AND (organization_id IS NULL OR organization_id = ?)`,
-    [templateId, user.organizationId]
+    `SELECT * FROM interview_library_templates WHERE id = ?`,
+    [templateId]
   );
 
   if (!template) throw new Error('Template not found');
+  if (!canAccessTemplate(template, user)) {
+    throw new Error('Permission denied');
+  }
 
   // Minimal visibility guard
   if (template.visibility === 'admin_only' && !['ADMIN', 'SUPERADMIN'].includes(user.role)) {
@@ -281,6 +528,7 @@ async function createSessionFromTemplate(params: {
 
   const id = uuidv4();
   const now = new Date().toISOString();
+  await ensureInterviewQuestionV6Columns();
   const resolvedProjectId = await resolveValidProjectId({
     organizationId: user.organizationId,
     projectId,
@@ -326,8 +574,8 @@ async function createSessionFromTemplate(params: {
     const questionId = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO interview_questions
-       (id, session_id, organization_id, category, question_text, status, sort_order, is_template, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, session_id, organization_id, category, question_text, status, sort_order, is_template, answer_type, answer_options, expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note, source_template_question_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         questionId,
         id,
@@ -337,6 +585,14 @@ async function createSessionFromTemplate(params: {
         'not_started',
         tq.sort_order,
         1,
+        tq.answer_type || 'open',
+        tq.answer_options || '[]',
+        tq.expected_answer_shape || null,
+        tq.allow_voice || 0,
+        tq.allow_file_upload || 0,
+        tq.allow_url || 0,
+        tq.allow_context_note ?? 1,
+        tq.id,
         now,
         now,
       ]
@@ -2313,14 +2569,25 @@ export const InterviewController = {
           JOIN projects p ON p.id = s.project_id 
           WHERE s.template_id = t.id AND p.organization_id = ?) as sessions_used
        FROM interview_library_templates t
-       WHERE (t.organization_id IS NULL OR t.organization_id = ?)
-         AND (t.visibility != 'admin_only' OR ? IN ('ADMIN', 'SUPERADMIN'))
+       WHERE (
+         COALESCE(NULLIF(t.template_scope, ''), CASE WHEN t.organization_id IS NULL THEN 'system' ELSE 'organization' END) = 'system'
+         OR (
+           COALESCE(NULLIF(t.template_scope, ''), CASE WHEN t.organization_id IS NULL THEN 'system' ELSE 'organization' END) = 'organization'
+           AND t.organization_id = ?
+         )
+         OR (
+           COALESCE(NULLIF(t.template_scope, ''), CASE WHEN t.organization_id IS NULL THEN 'system' ELSE 'organization' END) = 'private'
+           AND t.organization_id = ?
+           AND t.created_by = ?
+         )
+       )
+         AND (t.visibility != 'admin_only' OR ? IN ('ADMIN', 'SUPERADMIN') OR t.created_by = ?)
        ORDER BY
          CASE t.status WHEN 'approved' THEN 0 WHEN 'in_review' THEN 1 ELSE 2 END,
          t.is_default DESC,
          t.category ASC,
          t.name ASC`,
-      [user.organizationId, user.organizationId, user.role]
+      [user.organizationId, user.organizationId, user.organizationId, user.id, user.role, user.id]
     );
 
     res.json((rows || []).map(buildTemplateResponse));
@@ -2335,13 +2602,11 @@ export const InterviewController = {
          t.*,
          (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count
        FROM interview_library_templates t
-       WHERE t.id = ?
-         AND (t.organization_id IS NULL OR t.organization_id = ?)
-         AND (t.visibility != 'admin_only' OR ? IN ('ADMIN', 'SUPERADMIN'))`,
-      [id, user.organizationId, user.role]
+       WHERE t.id = ?`,
+      [id]
     );
 
-    if (!row) {
+    if (!row || !canAccessTemplate(row, user)) {
       res.status(404).json({ error: 'Template not found' });
       return;
     }
@@ -2354,13 +2619,10 @@ export const InterviewController = {
     const { id } = req.params;
 
     const tpl = await queryHelpers.queryOne(
-      `SELECT * FROM interview_library_templates
-       WHERE id = ?
-         AND (organization_id IS NULL OR organization_id = ?)
-         AND (visibility != 'admin_only' OR ? IN ('ADMIN', 'SUPERADMIN'))`,
-      [id, user.organizationId, user.role]
+      `SELECT * FROM interview_library_templates WHERE id = ?`,
+      [id]
     );
-    if (!tpl) {
+    if (!tpl || !canAccessTemplate(tpl, user)) {
       res.status(404).json({ error: 'Template not found' });
       return;
     }
@@ -2380,11 +2642,10 @@ export const InterviewController = {
 
     try {
       const tpl = await queryHelpers.queryOne(
-        `SELECT status FROM interview_library_templates
-         WHERE id = ? AND (organization_id IS NULL OR organization_id = ?)`,
-        [id, user.organizationId]
+        `SELECT * FROM interview_library_templates WHERE id = ?`,
+        [id]
       );
-      if (!tpl) {
+      if (!tpl || !canAccessTemplate(tpl, user)) {
         res.status(404).json({ error: 'Template not found' });
         return;
       }
@@ -2416,7 +2677,18 @@ export const InterviewController = {
 
   createTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-    const { name, description, category, status, visibility, isDefault } = req.body || {};
+    const {
+      name,
+      description,
+      category,
+      status,
+      visibility,
+      isDefault,
+      scope,
+      audience,
+      estimatedTimeMinutes,
+      runtimeModeDefault,
+    } = req.body || {};
 
     if (!name?.trim()) {
       res.status(400).json({ error: 'Template name is required' });
@@ -2425,19 +2697,33 @@ export const InterviewController = {
 
     const templateId = uuidv4();
     const now = new Date().toISOString();
+    const templateScope = resolveRequestedTemplateScope({
+      requestedScope: scope,
+      requestedVisibility: visibility,
+      userRole: user.role,
+    });
+    const storagePolicy = resolveTemplateStoragePolicy({
+      scope: templateScope,
+      organizationId: user.organizationId,
+      requestedVisibility: visibility,
+    });
 
     await queryHelpers.queryRun(
       `INSERT INTO interview_library_templates
-       (id, organization_id, name, description, category, status, visibility, is_default, version, created_by, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, organization_id, name, description, category, status, visibility, template_scope, audience, estimated_time_minutes, runtime_mode_default, is_default, version, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         templateId,
-        user.organizationId, // org-scoped template
+        storagePolicy.organizationId,
         name.trim(),
         description || '',
         category || 'CUSTOM',
         status || 'draft',
-        visibility || 'org',
+        storagePolicy.visibility,
+        templateScope,
+        audience || '',
+        Number.isFinite(Number(estimatedTimeMinutes)) ? Number(estimatedTimeMinutes) : 10,
+        runtimeModeDefault || 'one_question_per_screen',
         isDefault ? 1 : 0,
         1,
         user.id,
@@ -2458,15 +2744,14 @@ export const InterviewController = {
   cloneTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
-    const { name } = req.body || {};
+    const { name, scope } = req.body || {};
 
     // Get source template
     const source = await queryHelpers.queryOne(
-      `SELECT * FROM interview_library_templates
-       WHERE id = ? AND (organization_id IS NULL OR organization_id = ?)`,
-      [id, user.organizationId]
+      `SELECT * FROM interview_library_templates WHERE id = ?`,
+      [id]
     );
-    if (!source) {
+    if (!source || !canAccessTemplate(source, user)) {
       res.status(404).json({ error: 'Template not found' });
       return;
     }
@@ -2480,19 +2765,34 @@ export const InterviewController = {
     // Create new template
     const newTemplateId = uuidv4();
     const now = new Date().toISOString();
+    const clonedScope = resolveRequestedTemplateScope({
+      requestedScope: scope,
+      requestedVisibility: 'admin_only',
+      userRole: user.role,
+    });
+    const storagePolicy = resolveTemplateStoragePolicy({
+      scope: clonedScope,
+      organizationId: user.organizationId,
+      requestedVisibility: clonedScope === 'private' ? 'admin_only' : 'org',
+    });
 
     await queryHelpers.queryRun(
       `INSERT INTO interview_library_templates
-       (id, organization_id, name, description, category, status, visibility, is_default, version, created_by, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, organization_id, name, description, category, status, visibility, template_scope, audience, estimated_time_minutes, runtime_mode_default, source_template_id, is_default, version, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         newTemplateId,
-        user.organizationId,
+        storagePolicy.organizationId,
         name || `${(source as any).name} (copy)`,
         (source as any).description || '',
         (source as any).category || 'CUSTOM',
         'draft', // cloned templates start as draft
-        'org', // cloned templates are org-scoped
+        storagePolicy.visibility,
+        clonedScope,
+        (source as any).audience || '',
+        (source as any).estimated_time_minutes ?? 10,
+        (source as any).runtime_mode_default || 'one_question_per_screen',
+        (source as any).id,
         0, // not default
         1,
         user.id,
@@ -2506,8 +2806,8 @@ export const InterviewController = {
       const newQuestionId = uuidv4();
       await queryHelpers.queryRun(
         `INSERT INTO interview_library_template_questions
-         (id, template_id, category, question_text, sort_order, answer_type, is_required, help_hint, answer_options, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, template_id, category, question_text, sort_order, answer_type, is_required, help_hint, answer_options, expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           newQuestionId,
           newTemplateId,
@@ -2518,6 +2818,11 @@ export const InterviewController = {
           q.is_required || 0,
           q.help_hint || '',
           q.answer_options || '[]',
+          q.expected_answer_shape || null,
+          q.allow_voice || 0,
+          q.allow_file_upload || 0,
+          q.allow_url || 0,
+          q.allow_context_note ?? 1,
           now,
         ]
       );
@@ -2537,17 +2842,16 @@ export const InterviewController = {
     const { id } = req.params;
 
     const existing = await queryHelpers.queryOne(
-      `SELECT * FROM interview_library_templates
-       WHERE id = ? AND organization_id = ?`,
-      [id, user.organizationId]
+      `SELECT * FROM interview_library_templates WHERE id = ?`,
+      [id]
     );
-    if (!existing) {
+    if (!existing || !canManageTemplate(existing, user)) {
       res.status(404).json({ error: 'Template not found or cannot be deleted' });
       return;
     }
 
-    // Don't allow deleting global templates
-    if (!(existing as any).organization_id) {
+    // Don't allow deleting system templates
+    if (resolveTemplateScopeFromRow(existing) === 'system') {
       res.status(403).json({ error: 'Cannot delete global templates' });
       return;
     }
@@ -2573,14 +2877,24 @@ export const InterviewController = {
   updateTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
-    const { name, description, category, status, visibility, isDefault } = req.body || {};
+    const {
+      name,
+      description,
+      category,
+      status,
+      visibility,
+      isDefault,
+      scope,
+      audience,
+      estimatedTimeMinutes,
+      runtimeModeDefault,
+    } = req.body || {};
 
     const existing = await queryHelpers.queryOne(
-      `SELECT * FROM interview_library_templates
-       WHERE id = ? AND (organization_id IS NULL OR organization_id = ?)`,
-      [id, user.organizationId]
+      `SELECT * FROM interview_library_templates WHERE id = ?`,
+      [id]
     );
-    if (!existing) {
+    if (!existing || !canManageTemplate(existing, user)) {
       res.status(404).json({ error: 'Template not found' });
       return;
     }
@@ -2608,9 +2922,43 @@ export const InterviewController = {
       updates.push('visibility = ?');
       params.push(visibility);
     }
+    if (scope !== undefined) {
+      const nextScope = resolveRequestedTemplateScope({
+        requestedScope: scope,
+        requestedVisibility: visibility ?? (existing as any).visibility,
+        userRole: user.role,
+      });
+      const storagePolicy = resolveTemplateStoragePolicy({
+        scope: nextScope,
+        organizationId: user.organizationId,
+        requestedVisibility: visibility ?? (existing as any).visibility,
+      });
+      updates.push('template_scope = ?');
+      params.push(nextScope);
+      updates.push('organization_id = ?');
+      params.push(storagePolicy.organizationId);
+      if (visibility === undefined) {
+        updates.push('visibility = ?');
+        params.push(storagePolicy.visibility);
+      }
+    }
     if (isDefault !== undefined) {
       updates.push('is_default = ?');
       params.push(isDefault ? 1 : 0);
+    }
+    if (audience !== undefined) {
+      updates.push('audience = ?');
+      params.push(audience);
+    }
+    if (estimatedTimeMinutes !== undefined) {
+      updates.push('estimated_time_minutes = ?');
+      params.push(
+        Number.isFinite(Number(estimatedTimeMinutes)) ? Number(estimatedTimeMinutes) : 10
+      );
+    }
+    if (runtimeModeDefault !== undefined) {
+      updates.push('runtime_mode_default = ?');
+      params.push(runtimeModeDefault || 'one_question_per_screen');
     }
 
     if (updates.length === 0) {
@@ -2646,14 +2994,26 @@ export const InterviewController = {
   addTemplateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params; // template id
-    const { category, questionText, sortOrder, answerType, isRequired, helpHint, answerOptions } =
-      req.body || {};
+    const {
+      category,
+      questionText,
+      sortOrder,
+      answerType,
+      isRequired,
+      helpHint,
+      answerOptions,
+      expectedAnswerShape,
+      allowVoice,
+      allowFileUpload,
+      allowUrl,
+      allowContextNote,
+    } = req.body || {};
 
     const template = await queryHelpers.queryOne(
-      `SELECT * FROM interview_library_templates WHERE id = ? AND (organization_id IS NULL OR organization_id = ?)`,
-      [id, user.organizationId]
+      `SELECT * FROM interview_library_templates WHERE id = ?`,
+      [id]
     );
-    if (!template) {
+    if (!template || !canManageTemplate(template, user)) {
       res.status(404).json({ error: 'Template not found' });
       return;
     }
@@ -2665,8 +3025,8 @@ export const InterviewController = {
     const qid = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO interview_library_template_questions
-       (id, template_id, category, question_text, sort_order, answer_type, is_required, help_hint, answer_options, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, template_id, category, question_text, sort_order, answer_type, is_required, help_hint, answer_options, expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         qid,
         id,
@@ -2677,6 +3037,11 @@ export const InterviewController = {
         isRequired ? 1 : 0,
         helpHint || null,
         JSON.stringify(Array.isArray(answerOptions) ? answerOptions : []),
+        expectedAnswerShape || null,
+        allowVoice ? 1 : 0,
+        allowFileUpload ? 1 : 0,
+        allowUrl ? 1 : 0,
+        allowContextNote === false ? 0 : 1,
         new Date().toISOString(),
       ]
     );
@@ -2696,8 +3061,29 @@ export const InterviewController = {
   updateTemplateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id, questionId } = req.params;
-    const { category, questionText, sortOrder, answerType, isRequired, helpHint, answerOptions } =
-      req.body || {};
+    const {
+      category,
+      questionText,
+      sortOrder,
+      answerType,
+      isRequired,
+      helpHint,
+      answerOptions,
+      expectedAnswerShape,
+      allowVoice,
+      allowFileUpload,
+      allowUrl,
+      allowContextNote,
+    } = req.body || {};
+
+    const template = await queryHelpers.queryOne(
+      `SELECT * FROM interview_library_templates WHERE id = ?`,
+      [id]
+    );
+    if (!template || !canManageTemplate(template, user)) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
 
     const existing = await queryHelpers.queryOne(
       `SELECT * FROM interview_library_template_questions WHERE id = ? AND template_id = ?`,
@@ -2738,6 +3124,26 @@ export const InterviewController = {
     if (answerOptions !== undefined) {
       updates.push('answer_options = ?');
       params.push(JSON.stringify(Array.isArray(answerOptions) ? answerOptions : []));
+    }
+    if (expectedAnswerShape !== undefined) {
+      updates.push('expected_answer_shape = ?');
+      params.push(expectedAnswerShape);
+    }
+    if (allowVoice !== undefined) {
+      updates.push('allow_voice = ?');
+      params.push(allowVoice ? 1 : 0);
+    }
+    if (allowFileUpload !== undefined) {
+      updates.push('allow_file_upload = ?');
+      params.push(allowFileUpload ? 1 : 0);
+    }
+    if (allowUrl !== undefined) {
+      updates.push('allow_url = ?');
+      params.push(allowUrl ? 1 : 0);
+    }
+    if (allowContextNote !== undefined) {
+      updates.push('allow_context_note = ?');
+      params.push(allowContextNote ? 1 : 0);
     }
 
     if (updates.length === 0) {
@@ -2950,6 +3356,7 @@ ${JSON.stringify(questions || [], null, 2)}
     const user = requireUser(req);
     const { sessionId } = req.params;
     const { category } = req.query;
+    await ensureInterviewQuestionV6Columns();
 
     try {
       await assertSessionAccessibleOrThrow({
@@ -2984,7 +3391,20 @@ ${JSON.stringify(questions || [], null, 2)}
   updateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { questionId } = req.params;
-    const { answerText, status, confidenceScore, tags } = req.body;
+    await ensureInterviewQuestionV6Columns();
+    const {
+      answerText,
+      status,
+      confidenceScore,
+      tags,
+      notes,
+      contextNote,
+      answerMode,
+      answerPayload,
+      voiceTranscript,
+      voiceTranscriptStatus,
+      voiceAudioEvidenceId,
+    } = req.body;
 
     // Lock edits when session is submitted/completed
     const qSession = await queryHelpers.queryOne(
@@ -3010,10 +3430,19 @@ ${JSON.stringify(questions || [], null, 2)}
 
     const updates: string[] = [];
     const params: unknown[] = [];
+    const normalizedContextNote = contextNote !== undefined ? contextNote : notes;
+    const shouldPromoteVoiceTranscriptToAnswer =
+      answerText === undefined &&
+      typeof voiceTranscript === 'string' &&
+      voiceTranscript.trim().length > 0 &&
+      (voiceTranscriptStatus === 'approved' || answerMode === 'voice_answer');
 
     if (answerText !== undefined) {
       updates.push('answer_text = ?');
       params.push(answerText);
+    } else if (shouldPromoteVoiceTranscriptToAnswer) {
+      updates.push('answer_text = ?');
+      params.push(voiceTranscript.trim());
     }
     if (status && QUESTION_STATUSES.includes(status)) {
       updates.push('status = ?');
@@ -3030,6 +3459,30 @@ ${JSON.stringify(questions || [], null, 2)}
     if (tags) {
       updates.push('tags = ?');
       params.push(JSON.stringify(tags));
+    }
+    if (normalizedContextNote !== undefined) {
+      updates.push('context_note = ?');
+      params.push(normalizedContextNote || null);
+    }
+    if (answerMode !== undefined) {
+      updates.push('answer_mode = ?');
+      params.push(answerMode || 'text');
+    }
+    if (answerPayload !== undefined) {
+      updates.push('answer_payload = ?');
+      params.push(JSON.stringify(answerPayload || {}));
+    }
+    if (voiceTranscript !== undefined) {
+      updates.push('voice_transcript = ?');
+      params.push(voiceTranscript || null);
+    }
+    if (voiceTranscriptStatus !== undefined) {
+      updates.push('voice_transcript_status = ?');
+      params.push(voiceTranscriptStatus || 'none');
+    }
+    if (voiceAudioEvidenceId !== undefined) {
+      updates.push('voice_audio_evidence_id = ?');
+      params.push(voiceAudioEvidenceId || null);
     }
 
     if (updates.length === 0) {
@@ -3059,13 +3512,86 @@ ${JSON.stringify(questions || [], null, 2)}
     const updated = await queryHelpers.queryOne(`SELECT * FROM interview_questions WHERE id = ?`, [
       questionId,
     ]);
-    res.json(buildQuestionResponse(updated));
+
+    const updatedQuestion = updated as any;
+    if (updatedQuestion?.session_id) {
+      const answerKnowledgeDocId = await ingestInterviewTextArtifact({
+        organizationId: user.organizationId,
+        sourceType: 'interview_answer',
+        title: `Interview answer ${questionId}`,
+        content: updatedQuestion.answer_text,
+        metadata: {
+          questionId,
+          sessionId: updatedQuestion.session_id,
+          category: updatedQuestion.category,
+          answerMode: updatedQuestion.answer_mode || 'text',
+        },
+      });
+      const contextNoteKnowledgeDocId = await ingestInterviewTextArtifact({
+        organizationId: user.organizationId,
+        sourceType: 'interview_context_note',
+        title: `Interview context note ${questionId}`,
+        content: updatedQuestion.context_note,
+        metadata: {
+          questionId,
+          sessionId: updatedQuestion.session_id,
+          category: updatedQuestion.category,
+        },
+      });
+
+      if (answerKnowledgeDocId || contextNoteKnowledgeDocId) {
+        await queryHelpers.queryRun(
+          `UPDATE interview_questions
+           SET answer_knowledge_doc_id = COALESCE(?, answer_knowledge_doc_id),
+               context_note_knowledge_doc_id = COALESCE(?, context_note_knowledge_doc_id)
+           WHERE id = ?`,
+          [answerKnowledgeDocId, contextNoteKnowledgeDocId, questionId]
+        );
+      }
+
+      if (
+        typeof voiceTranscript === 'string' &&
+        voiceTranscript.trim() &&
+        (voiceTranscriptStatus === 'approved' ||
+          updatedQuestion.voice_transcript_status === 'approved')
+      ) {
+        try {
+          const transcriptService = await import('../services/interviewTranscriptService.js');
+          await transcriptService.addMessage(
+            user.organizationId,
+            updatedQuestion.session_id,
+            'user',
+            voiceTranscript.trim(),
+            {
+              questionId,
+              source: 'interview_voice_answer',
+              category: updatedQuestion.category,
+              voiceAudioEvidenceId:
+                voiceAudioEvidenceId || updatedQuestion.voice_audio_evidence_id || null,
+            }
+          );
+        } catch (error) {
+          logger.warn(
+            `[InterviewController] Failed to append approved voice transcript: ${String(
+              (error as Error)?.message || error
+            )}`
+          );
+        }
+      }
+    }
+
+    const refreshed = await queryHelpers.queryOne(
+      `SELECT * FROM interview_questions WHERE id = ?`,
+      [questionId]
+    );
+    res.json(buildQuestionResponse(refreshed));
   }),
 
   addQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { sessionId } = req.params;
     const { category, questionText } = req.body;
+    await ensureInterviewQuestionV6Columns();
 
     try {
       await assertSessionEditable(sessionId, user.organizationId);
@@ -3425,6 +3951,9 @@ ${JSON.stringify(questions || [], null, 2)}
       mimeType, // frontend compatibility
       url,
       category,
+      transcriptText,
+      evidenceRole,
+      ingestToKnowledge,
     } = req.body;
     await ensureInterviewEvidenceColumns();
 
@@ -3477,8 +4006,8 @@ ${JSON.stringify(questions || [], null, 2)}
 
     await queryHelpers.queryRun(
       `INSERT INTO interview_evidence
-       (id, session_id, organization_id, question_id, category, evidence_type, title, description, file_name, file_size, file_type, url, uploaded_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, session_id, organization_id, question_id, category, evidence_type, evidence_role, title, description, file_name, file_size, file_type, url, transcript_text, ingest_to_knowledge, uploaded_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         sessionId,
@@ -3486,16 +4015,50 @@ ${JSON.stringify(questions || [], null, 2)}
         questionId || null,
         category || null,
         evidenceType,
+        evidenceRole || 'supporting',
         resolvedTitle,
         description || null,
         resolvedFileName,
         fileSize || null,
         resolvedFileType,
         url || null,
+        transcriptText || null,
+        ingestToKnowledge === false ? 0 : 1,
         user.id,
         now,
       ]
     );
+
+    const knowledgeDocumentId =
+      ingestToKnowledge === false
+        ? null
+        : await ingestInterviewTextArtifact({
+            organizationId: user.organizationId,
+            sourceType: 'interview_evidence',
+            title: resolvedTitle,
+            content:
+              transcriptText ||
+              description ||
+              (typeof url === 'string' && url.trim() ? `${resolvedTitle}\n${url.trim()}` : ''),
+            metadata: {
+              evidenceId: id,
+              sessionId,
+              questionId: questionId || null,
+              category: category || null,
+              evidenceType,
+              evidenceRole: evidenceRole || 'supporting',
+              fileName: resolvedFileName,
+              fileType: resolvedFileType,
+              url: url || null,
+            },
+          });
+
+    if (knowledgeDocumentId) {
+      await queryHelpers.queryRun(
+        `UPDATE interview_evidence SET knowledge_document_id = ? WHERE id = ?`,
+        [knowledgeDocumentId, id]
+      );
+    }
 
     const created = await queryHelpers.queryOne(`SELECT * FROM interview_evidence WHERE id = ?`, [
       id,

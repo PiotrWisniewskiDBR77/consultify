@@ -240,6 +240,7 @@ Reguła:
 | 2026-03-08 | WS-G complete + WS-H started | V5-IDEA-39 (traceability: LinkGraph edge creation + outputLinks persistence on conversion), V5-IDEA-40 (report/deck export formats in IdeaExportMenu dispatching conversion actions). |
 | 2026-03-08 | WS-H Visual Tech Sexy first 3 done | V5-IDEA-41 (Seed Surface premium visual language: gradient header, icon badges, depth shadows, enhanced PrimaryStartButton with hover animations), V5-IDEA-42 (unified canvasBackground.ts config with per-tool light/dark tokens, variant selector, applied to mind map), V5-IDEA-43 (hierarchical color system: DEPTH_OPACITY modulation, getNodeDepth utility, depth injection on load, depth-aware branchColor for edges). |
 | 2026-03-08 | WS-H complete + WS-I started | V5-IDEA-44 (living edges: selection pulse, hover thickness, directional particles on GradientEdge and FlowEdgeComponent), V5-IDEA-45 (CanvasZoomControls shared component: zoom in/out, fit view, focus selected, restore saved viewport), V5-IDEA-46 (dark/light parity: ArtifactPreviewCard metadata, ArtifactLinkIndicator badge, ConvertToOutputMenu full light mode), V5-IDEA-47 (motionTokens.ts canonical config, tool selector microinteractions with scale/active states), V5-IDEA-48 (26 new V5 telemetry events in FunnelEventName: seed surface, systems, knowledge, artifacts, AI, conversion, export, viewport). |
+| 2026-03-08 | **ALL 52 TASKS COMPLETE** | V5-IDEA-49 (smoke-v5-ideas-workspace.ts: 26 static checks, all passing), V5-IDEA-50 (FROZEN_LAYOUTS audit: all 6 rules compliant, V5_FROZEN_LAYOUTS_AUDIT.md), V5-IDEA-51 (V5_AGENT_HANDOFF.md: full delivery summary, file inventory, architecture decisions, known limitations), V5-IDEA-52 (V5_ADOPTION_REVIEW.md: adoption metrics per telemetry event, review cadence, 13-item iteration backlog, success criteria). |
 
 ---
 
@@ -344,10 +345,10 @@ Legend:
 | ID | Task | Spec | Impl | QA | Deps | Priority |
 | --- | --- | --- | --- | --- | --- | --- |
 | V5-IDEA-48 | Telemetry model for starts, systems, AI, conversion | implemented | done | not_tested | V5-IDEA-08,V5-IDEA-37 | P1 |
-| V5-IDEA-49 | Smoke script pack for V5 core flows | draft | todo | not_tested | V5-IDEA-04,V5-IDEA-08,V5-IDEA-17,V5-IDEA-21,V5-IDEA-24,V5-IDEA-33 | P0 |
-| V5-IDEA-50 | UI/UX compliance and FROZEN_LAYOUTS audit | draft | todo | not_tested | V5-IDEA-12,V5-IDEA-41 | P0 |
-| V5-IDEA-51 | Agent handoff pack and delivery notes | draft | todo | not_tested | V5-IDEA-00 | P1 |
-| V5-IDEA-52 | Post-release adoption review and iteration backlog | draft | todo | not_tested | V5-IDEA-48 | P2 |
+| V5-IDEA-49 | Smoke script pack for V5 core flows | implemented | done | smoke_passed | V5-IDEA-04,V5-IDEA-08,V5-IDEA-17,V5-IDEA-21,V5-IDEA-24,V5-IDEA-33 | P0 |
+| V5-IDEA-50 | UI/UX compliance and FROZEN_LAYOUTS audit | implemented | done | qa_passed | V5-IDEA-12,V5-IDEA-41 | P0 |
+| V5-IDEA-51 | Agent handoff pack and delivery notes | implemented | done | not_tested | V5-IDEA-00 | P1 |
+| V5-IDEA-52 | Post-release adoption review and iteration backlog | implemented | done | not_tested | V5-IDEA-48 | P2 |
 
 ---
 

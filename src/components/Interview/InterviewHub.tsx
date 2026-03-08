@@ -198,11 +198,19 @@ interface InterviewInsight {
 
 interface InterviewTemplate {
   id: string;
+  organizationId?: string;
   name: string;
   description: string;
   questionCount: number;
   category: string;
   isDefault: boolean;
+  scope?: 'system' | 'organization' | 'private';
+  audience?: string;
+  estimatedTimeMinutes?: number;
+  runtimeModeDefault?: 'task_list' | 'one_question_per_screen';
+  status?: string;
+  sessionsUsed?: number;
+  updatedAt?: string;
   createdAt: string;
 }
 
@@ -2748,15 +2756,18 @@ export const InterviewHub: React.FC = () => {
                           >
                             {template.name}
                           </span>
-                          {/* Description appears only on hover */}
-                          {template.description ? (
-                            <span
-                              className="hidden group-hover:block text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5"
-                              title={template.description}
-                            >
-                              {template.description}
-                            </span>
-                          ) : null}
+                          <div className="hidden group-hover:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                            {template.description ? (
+                              <span className="truncate" title={template.description}>
+                                {template.description}
+                              </span>
+                            ) : null}
+                            {template.scope ? (
+                              <span className="px-1.5 py-0.5 rounded-full border border-slate-200/70 dark:border-white/[0.08]">
+                                {template.scope}
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2999,6 +3010,16 @@ export const InterviewHub: React.FC = () => {
                     {template.questionCount} {isPolish ? 'pytań' : 'questions'}
                   </span>
                   <span className="text-xs text-slate-500">{template.category}</span>
+                  {template.scope ? (
+                    <span className="px-2 py-1 bg-slate-100 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 text-xs rounded-full border border-slate-200/70 dark:border-white/[0.08]">
+                      {template.scope}
+                    </span>
+                  ) : null}
+                  {template.estimatedTimeMinutes ? (
+                    <span className="text-xs text-slate-500">
+                      {template.estimatedTimeMinutes} min
+                    </span>
+                  ) : null}
                   {template.isDefault && (
                     <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
                       {isPolish ? 'Domyślny' : 'Default'}
@@ -4921,6 +4942,11 @@ Return ONLY the answer text (no markdown fences).`;
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-white/[0.08]">
                         {item.category}
                       </span>
+                      {item.scope ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
+                          {item.scope}
+                        </span>
+                      ) : null}
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
                         {item.isDefault
                           ? isPolish
@@ -4933,6 +4959,11 @@ Return ONLY the answer text (no markdown fences).`;
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
                         {item.questionCount} {isPolish ? 'pytań' : 'questions'}
                       </span>
+                      {item.estimatedTimeMinutes ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300">
+                          {item.estimatedTimeMinutes} min
+                        </span>
+                      ) : null}
                     </div>
 
                     <div className="mt-2 text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
@@ -4947,6 +4978,11 @@ Return ONLY the answer text (no markdown fences).`;
                       {isPolish ? 'Utworzono' : 'Created'}:{' '}
                       {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'}
                     </div>
+                    {item.audience ? (
+                      <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Odbiorcy' : 'Audience'}: {item.audience}
+                      </div>
+                    ) : null}
                   </div>
 
                   {/* Details — with kebab (MUST) */}

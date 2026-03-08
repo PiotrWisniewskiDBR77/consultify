@@ -47,7 +47,19 @@ export interface InterviewQuestion {
   category: InterviewCategory;
   questionText: string;
   answerText: string;
+  answerType?: string;
+  answerOptions?: string[];
+  expectedAnswerShape?: string;
+  answerMode?: string;
+  contextNote?: string;
   notes?: string; // E2.1: per-question notes field
+  voiceTranscript?: string;
+  voiceTranscriptStatus?: 'none' | 'draft' | 'approved';
+  voiceAudioEvidenceId?: string;
+  allowVoice?: boolean;
+  allowFileUpload?: boolean;
+  allowUrl?: boolean;
+  allowContextNote?: boolean;
   status: QuestionStatus;
   confidenceScore: number; // 1-5
   answeredBy?: string;

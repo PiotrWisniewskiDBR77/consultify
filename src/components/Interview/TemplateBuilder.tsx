@@ -21,7 +21,11 @@ import {
   ChevronUp,
   FileText,
   HelpCircle,
+  Link2,
   Loader2,
+  MessageSquare,
+  Mic,
+  Paperclip,
   Plus,
   Save,
   Send,
@@ -45,6 +49,11 @@ interface TemplateQuestion {
   isRequired: boolean;
   helpHint?: string;
   answerOptions: string[];
+  expectedAnswerShape?: string;
+  allowVoice?: boolean;
+  allowFileUpload?: boolean;
+  allowUrl?: boolean;
+  allowContextNote?: boolean;
   // UI state
   isNew?: boolean;
   isEditing?: boolean;
@@ -53,6 +62,7 @@ interface TemplateQuestion {
 interface Template {
   id: string;
   organizationId?: string;
+  scope?: TemplateScope;
   name: string;
   description: string;
   category: TemplateCategory;
@@ -60,6 +70,9 @@ interface Template {
   visibility: 'global' | 'org' | 'role_based' | 'admin_only';
   isDefault: boolean;
   version: number;
+  audience?: string;
+  estimatedTimeMinutes?: number;
+  runtimeModeDefault?: RuntimeModeDefault;
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -75,6 +88,8 @@ type TemplateCategory =
   | 'STANDARD'
   | 'QUICK'
   | 'CUSTOM';
+type TemplateScope = 'system' | 'organization' | 'private';
+type RuntimeModeDefault = 'task_list' | 'one_question_per_screen';
 
 // Constants
 const QUESTION_CATEGORIES: {
@@ -108,11 +123,18 @@ const TEMPLATE_CATEGORIES: { id: TemplateCategory; labelPl: string; labelEn: str
   { id: 'CUSTOM', labelPl: 'Własny', labelEn: 'Custom' },
 ];
 
-const VISIBILITY_OPTIONS: { id: string; labelPl: string; labelEn: string }[] = [
-  { id: 'global', labelPl: 'Globalny (wszyscy)', labelEn: 'Global (everyone)' },
-  { id: 'org', labelPl: 'Organizacja', labelEn: 'Organization only' },
-  { id: 'role_based', labelPl: 'Według roli', labelEn: 'Role-based' },
-  { id: 'admin_only', labelPl: 'Tylko admin', labelEn: 'Admin only' },
+const TEMPLATE_SCOPE_OPTIONS: { id: TemplateScope; labelPl: string; labelEn: string }[] = [
+  { id: 'organization', labelPl: 'Organizacyjny', labelEn: 'Organization' },
+  { id: 'private', labelPl: 'Prywatny', labelEn: 'Private' },
+];
+
+const RUNTIME_MODE_OPTIONS: { id: RuntimeModeDefault; labelPl: string; labelEn: string }[] = [
+  {
+    id: 'one_question_per_screen',
+    labelPl: 'Jedno pytanie na ekran',
+    labelEn: 'One question per screen',
+  },
+  { id: 'task_list', labelPl: 'Lista pytań', labelEn: 'Question list' },
 ];
 
 interface TemplateBuilderProps {
@@ -135,11 +157,15 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   const [template, setTemplate] = useState<Partial<Template>>({
     name: '',
     description: '',
+    scope: 'organization',
     category: 'CUSTOM',
     status: 'draft',
     visibility: 'org',
     isDefault: false,
     version: 1,
+    audience: '',
+    estimatedTimeMinutes: 10,
+    runtimeModeDefault: 'one_question_per_screen',
   });
 
   // Questions state
@@ -162,11 +188,15 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       setTemplate({
         name: '',
         description: '',
+        scope: 'organization',
         category: 'CUSTOM',
         status: 'draft',
         visibility: 'org',
         isDefault: false,
         version: 1,
+        audience: '',
+        estimatedTimeMinutes: 10,
+        runtimeModeDefault: 'one_question_per_screen',
       });
       setQuestions([]);
     }
@@ -197,6 +227,14 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
                 ? JSON.parse(q.answerOptions || q.answer_options)
                 : q.answerOptions || q.answer_options
               : [],
+          expectedAnswerShape: q.expectedAnswerShape || q.expected_answer_shape || '',
+          allowVoice: Boolean(q.allowVoice || q.allow_voice),
+          allowFileUpload: Boolean(q.allowFileUpload || q.allow_file_upload),
+          allowUrl: Boolean(q.allowUrl || q.allow_url),
+          allowContextNote:
+            q.allowContextNote !== undefined || q.allow_context_note !== undefined
+              ? Boolean(q.allowContextNote ?? q.allow_context_note)
+              : true,
         }))
       );
     } catch (error) {
@@ -286,6 +324,11 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       isRequired: false,
       helpHint: '',
       answerOptions: [],
+      expectedAnswerShape: '',
+      allowVoice: true,
+      allowFileUpload: false,
+      allowUrl: false,
+      allowContextNote: true,
       isNew: true,
       isEditing: true,
     };
@@ -345,6 +388,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         // Save template metadata
         const templateData = {
           ...template,
+          scope: template.scope || 'organization',
           status: publish ? 'approved' : 'draft',
         };
 
@@ -370,7 +414,12 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
               answerType: question.answerType,
               isRequired: question.isRequired,
               helpHint: question.helpHint || '',
-              answerOptions: JSON.stringify(question.answerOptions),
+              answerOptions: question.answerOptions,
+              expectedAnswerShape: question.expectedAnswerShape || '',
+              allowVoice: !!question.allowVoice,
+              allowFileUpload: !!question.allowFileUpload,
+              allowUrl: !!question.allowUrl,
+              allowContextNote: question.allowContextNote !== false,
             };
 
             if (question.isNew) {
@@ -505,24 +554,90 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
                 </select>
               </div>
 
-              {/* Visibility */}
+              {/* Scope */}
               <div className="mb-3">
                 <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-                  {isPolish ? 'Widoczność' : 'Visibility'}
+                  {isPolish ? 'Zakres' : 'Scope'}
                 </label>
                 <select
-                  value={template.visibility || 'org'}
+                  value={template.scope || 'organization'}
                   onChange={(e) =>
-                    setTemplate((prev) => ({ ...prev, visibility: e.target.value as any }))
+                    setTemplate((prev) => ({
+                      ...prev,
+                      scope: e.target.value as TemplateScope,
+                    }))
                   }
+                  disabled={template.scope === 'system'}
                   className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
                 >
-                  {VISIBILITY_OPTIONS.map((opt) => (
+                  {template.scope === 'system' ? (
+                    <option value="system">{isPolish ? 'Systemowy' : 'System'}</option>
+                  ) : null}
+                  {TEMPLATE_SCOPE_OPTIONS.map((opt) => (
                     <option key={opt.id} value={opt.id}>
                       {isPolish ? opt.labelPl : opt.labelEn}
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Audience */}
+              <div className="mb-3">
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                  {isPolish ? 'Odbiorcy' : 'Audience'}
+                </label>
+                <input
+                  type="text"
+                  value={template.audience || ''}
+                  onChange={(e) => setTemplate((prev) => ({ ...prev, audience: e.target.value }))}
+                  placeholder={
+                    isPolish ? 'np. Liderzy operacyjni / PMO' : 'e.g. Operations leaders / PMO'
+                  }
+                  className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="mb-3">
+                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                    {isPolish ? 'Czas (min)' : 'Time (min)'}
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={180}
+                    value={template.estimatedTimeMinutes || 10}
+                    onChange={(e) =>
+                      setTemplate((prev) => ({
+                        ...prev,
+                        estimatedTimeMinutes: Math.max(1, Number(e.target.value) || 10),
+                      }))
+                    }
+                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                    {isPolish ? 'Tryb runtime' : 'Runtime mode'}
+                  </label>
+                  <select
+                    value={template.runtimeModeDefault || 'one_question_per_screen'}
+                    onChange={(e) =>
+                      setTemplate((prev) => ({
+                        ...prev,
+                        runtimeModeDefault: e.target.value as RuntimeModeDefault,
+                      }))
+                    }
+                    className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+                  >
+                    {RUNTIME_MODE_OPTIONS.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {isPolish ? opt.labelPl : opt.labelEn}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Question Categories Summary */}
@@ -730,6 +845,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               ]
             }
           </span>
+          {question.allowVoice && <Mic size={12} className="text-slate-400" />}
+          {question.allowFileUpload && <Paperclip size={12} className="text-slate-400" />}
+          {question.allowUrl && <Link2 size={12} className="text-slate-400" />}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -891,6 +1009,76 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               }
               className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+              {isPolish ? 'Oczekiwana forma odpowiedzi' : 'Expected answer shape'}
+            </label>
+            <input
+              type="text"
+              value={question.expectedAnswerShape || ''}
+              onChange={(e) => onUpdate({ expectedAnswerShape: e.target.value })}
+              placeholder={
+                isPolish
+                  ? 'np. Krótka odpowiedź z przykładem i liczbą'
+                  : 'e.g. Short factual answer with one example and a number'
+              }
+              className="w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
+              {isPolish ? 'Dodatkowe modality odpowiedzi' : 'Additional answer modalities'}
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                {
+                  key: 'allowVoice',
+                  label: isPolish ? 'Nagranie głosowe' : 'Voice answer',
+                  icon: Mic,
+                  value: !!question.allowVoice,
+                },
+                {
+                  key: 'allowFileUpload',
+                  label: isPolish ? 'Załączniki' : 'Attachments',
+                  icon: Paperclip,
+                  value: !!question.allowFileUpload,
+                },
+                {
+                  key: 'allowUrl',
+                  label: isPolish ? 'Linki' : 'Links',
+                  icon: Link2,
+                  value: !!question.allowUrl,
+                },
+                {
+                  key: 'allowContextNote',
+                  label: isPolish ? 'Nota kontekstowa' : 'Context note',
+                  icon: MessageSquare,
+                  value: question.allowContextNote !== false,
+                },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() =>
+                      onUpdate({ [item.key]: !item.value } as Partial<TemplateQuestion>)
+                    }
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all ${
+                      item.value
+                        ? 'bg-primary-500/10 border-primary-500/30 text-primary-700 dark:text-primary-300'
+                        : 'bg-white dark:bg-navy-900 border-slate-300 dark:border-navy-600 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    <Icon size={14} />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

@@ -26,13 +26,15 @@ import type { InterviewCategory } from './CategorySidebar';
 import { CATEGORY_CONFIG } from './CategorySidebar';
 
 // Types
-export type EvidenceType = 'file' | 'link' | 'comment';
+export type EvidenceType = 'file' | 'link' | 'comment' | 'audio';
 
 export interface InterviewEvidence {
   id: string;
   sessionId: string;
+  questionId?: string;
   category?: InterviewCategory;
   evidenceType: EvidenceType;
+  evidenceRole?: string;
   title?: string;
   name: string;
   url?: string;
@@ -40,6 +42,9 @@ export interface InterviewEvidence {
   fileSize?: number;
   fileType?: string;
   mimeType?: string;
+  transcriptText?: string;
+  ingestToKnowledge?: boolean;
+  knowledgeDocumentId?: string;
   uploadedBy?: string;
   createdAt?: string;
   uploadedAt: string;
@@ -317,7 +322,9 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             onChange={(e) => setCommentText(e.target.value)}
             rows={4}
             className="w-full p-2 text-sm border border-slate-200 dark:border-navy-700 rounded-lg bg-slate-50 dark:bg-navy-950 text-navy-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder={isPolish ? 'Dodaj komentarz kontekstowy...' : 'Add a contextual comment...'}
+            placeholder={
+              isPolish ? 'Dodaj komentarz kontekstowy...' : 'Add a contextual comment...'
+            }
             autoFocus
           />
           <div className="flex justify-end gap-2">
@@ -367,7 +374,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     ? 'bg-blue-100 dark:bg-blue-900/30'
                     : item.evidenceType === 'comment'
                       ? 'bg-amber-100 dark:bg-amber-900/30'
-                    : 'bg-slate-100 dark:bg-navy-800'
+                      : 'bg-slate-100 dark:bg-navy-800'
                 }`}
               >
                 <FileIcon
@@ -377,7 +384,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                       ? 'text-blue-600 dark:text-blue-400'
                       : item.evidenceType === 'comment'
                         ? 'text-amber-600 dark:text-amber-400'
-                      : 'text-slate-500 dark:text-slate-400'
+                        : 'text-slate-500 dark:text-slate-400'
                   }
                 />
               </div>

@@ -551,6 +551,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       try {
         const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
           evidenceType: 'file',
+          evidenceRole: 'supporting',
           title: file.name,
           fileName: file.name,
           fileSize: file.size,
@@ -578,6 +579,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       try {
         const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
           evidenceType: 'link',
+          evidenceRole: 'supporting',
           title: name,
           url,
           description,
@@ -601,6 +603,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       try {
         const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
           evidenceType: 'comment',
+          evidenceRole: 'context',
           title: isPolish ? 'Komentarz kontekstowy' : 'Context comment',
           description: text,
           category,
