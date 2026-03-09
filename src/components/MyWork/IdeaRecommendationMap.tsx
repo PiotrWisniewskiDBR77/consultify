@@ -247,6 +247,308 @@ const BRANCH_COLORS: Record<
     ring: 'ring-purple-400',
     edge: '#a78bfa',
   },
+  // 5 Whys
+  why1: {
+    bg: 'bg-orange-100 dark:bg-orange-900/25',
+    border: 'border-orange-400/70',
+    text: 'text-orange-700 dark:text-orange-300',
+    ring: 'ring-orange-400',
+    edge: '#fb923c',
+  },
+  why2: {
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  why3: {
+    bg: 'bg-yellow-100 dark:bg-yellow-900/25',
+    border: 'border-yellow-400/70',
+    text: 'text-yellow-700 dark:text-yellow-300',
+    ring: 'ring-yellow-400',
+    edge: '#facc15',
+  },
+  why4: {
+    bg: 'bg-lime-100 dark:bg-lime-900/25',
+    border: 'border-lime-400/70',
+    text: 'text-lime-700 dark:text-lime-300',
+    ring: 'ring-lime-400',
+    edge: '#a3e635',
+  },
+  root_cause: {
+    bg: 'bg-red-100 dark:bg-red-900/25',
+    border: 'border-red-400/70',
+    text: 'text-red-700 dark:text-red-300',
+    ring: 'ring-red-400',
+    edge: '#f87171',
+  },
+  // Ishikawa (6M)
+  man: {
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
+    edge: '#60a5fa',
+  },
+  machine: {
+    bg: 'bg-indigo-100 dark:bg-indigo-900/25',
+    border: 'border-indigo-400/70',
+    text: 'text-indigo-700 dark:text-indigo-300',
+    ring: 'ring-indigo-400',
+    edge: '#818cf8',
+  },
+  material: {
+    bg: 'bg-teal-100 dark:bg-teal-900/25',
+    border: 'border-teal-400/70',
+    text: 'text-teal-700 dark:text-teal-300',
+    ring: 'ring-teal-400',
+    edge: '#2dd4bf',
+  },
+  method: {
+    bg: 'bg-violet-100 dark:bg-violet-900/25',
+    border: 'border-violet-400/70',
+    text: 'text-violet-700 dark:text-violet-300',
+    ring: 'ring-violet-400',
+    edge: '#8b5cf6',
+  },
+  measurement: {
+    bg: 'bg-fuchsia-100 dark:bg-fuchsia-900/25',
+    border: 'border-fuchsia-400/70',
+    text: 'text-fuchsia-700 dark:text-fuchsia-300',
+    ring: 'ring-fuchsia-400',
+    edge: '#d946ef',
+  },
+  environment: {
+    bg: 'bg-green-100 dark:bg-green-900/25',
+    border: 'border-green-400/70',
+    text: 'text-green-700 dark:text-green-300',
+    ring: 'ring-green-400',
+    edge: '#4ade80',
+  },
+  // Stakeholder map
+  high_influence: {
+    bg: 'bg-red-100 dark:bg-red-900/25',
+    border: 'border-red-400/70',
+    text: 'text-red-700 dark:text-red-300',
+    ring: 'ring-red-400',
+    edge: '#f87171',
+  },
+  medium_influence: {
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  low_influence: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/25',
+    border: 'border-emerald-400/70',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  // Porter's 5 Forces
+  rivalry: {
+    bg: 'bg-rose-100 dark:bg-rose-900/25',
+    border: 'border-rose-400/70',
+    text: 'text-rose-700 dark:text-rose-300',
+    ring: 'ring-rose-400',
+    edge: '#fb7185',
+  },
+  new_entrants: {
+    bg: 'bg-orange-100 dark:bg-orange-900/25',
+    border: 'border-orange-400/70',
+    text: 'text-orange-700 dark:text-orange-300',
+    ring: 'ring-orange-400',
+    edge: '#fb923c',
+  },
+  substitutes: {
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  buyer_power: {
+    bg: 'bg-sky-100 dark:bg-sky-900/25',
+    border: 'border-sky-400/70',
+    text: 'text-sky-700 dark:text-sky-300',
+    ring: 'ring-sky-400',
+    edge: '#38bdf8',
+  },
+  supplier_power: {
+    bg: 'bg-indigo-100 dark:bg-indigo-900/25',
+    border: 'border-indigo-400/70',
+    text: 'text-indigo-700 dark:text-indigo-300',
+    ring: 'ring-indigo-400',
+    edge: '#818cf8',
+  },
+  // Value Chain
+  inbound: {
+    bg: 'bg-cyan-100 dark:bg-cyan-900/25',
+    border: 'border-cyan-400/70',
+    text: 'text-cyan-700 dark:text-cyan-300',
+    ring: 'ring-cyan-400',
+    edge: '#22d3ee',
+  },
+  operations: {
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
+    edge: '#60a5fa',
+  },
+  outbound: {
+    bg: 'bg-violet-100 dark:bg-violet-900/25',
+    border: 'border-violet-400/70',
+    text: 'text-violet-700 dark:text-violet-300',
+    ring: 'ring-violet-400',
+    edge: '#8b5cf6',
+  },
+  marketing: {
+    bg: 'bg-pink-100 dark:bg-pink-900/25',
+    border: 'border-pink-400/70',
+    text: 'text-pink-700 dark:text-pink-300',
+    ring: 'ring-pink-400',
+    edge: '#f472b6',
+  },
+  service: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/25',
+    border: 'border-emerald-400/70',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  support: {
+    bg: 'bg-slate-200 dark:bg-slate-700/40',
+    border: 'border-slate-400/70',
+    text: 'text-slate-600 dark:text-slate-300',
+    ring: 'ring-slate-400',
+    edge: '#94a3b8',
+  },
+  // McKinsey 7S
+  strategy: {
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
+    edge: '#60a5fa',
+  },
+  structure: {
+    bg: 'bg-indigo-100 dark:bg-indigo-900/25',
+    border: 'border-indigo-400/70',
+    text: 'text-indigo-700 dark:text-indigo-300',
+    ring: 'ring-indigo-400',
+    edge: '#818cf8',
+  },
+  systems: {
+    bg: 'bg-violet-100 dark:bg-violet-900/25',
+    border: 'border-violet-400/70',
+    text: 'text-violet-700 dark:text-violet-300',
+    ring: 'ring-violet-400',
+    edge: '#8b5cf6',
+  },
+  shared_values: {
+    bg: 'bg-rose-100 dark:bg-rose-900/25',
+    border: 'border-rose-400/70',
+    text: 'text-rose-700 dark:text-rose-300',
+    ring: 'ring-rose-400',
+    edge: '#fb7185',
+  },
+  skills: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/25',
+    border: 'border-emerald-400/70',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  style: {
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  staff: {
+    bg: 'bg-cyan-100 dark:bg-cyan-900/25',
+    border: 'border-cyan-400/70',
+    text: 'text-cyan-700 dark:text-cyan-300',
+    ring: 'ring-cyan-400',
+    edge: '#22d3ee',
+  },
+  // OKR
+  obj1: {
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
+    edge: '#60a5fa',
+  },
+  obj2: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/25',
+    border: 'border-emerald-400/70',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  // Kotter's 8 Steps
+  urgency: {
+    bg: 'bg-red-100 dark:bg-red-900/25',
+    border: 'border-red-400/70',
+    text: 'text-red-700 dark:text-red-300',
+    ring: 'ring-red-400',
+    edge: '#f87171',
+  },
+  coalition: {
+    bg: 'bg-orange-100 dark:bg-orange-900/25',
+    border: 'border-orange-400/70',
+    text: 'text-orange-700 dark:text-orange-300',
+    ring: 'ring-orange-400',
+    edge: '#fb923c',
+  },
+  vision: {
+    bg: 'bg-amber-100 dark:bg-amber-900/25',
+    border: 'border-amber-400/70',
+    text: 'text-amber-700 dark:text-amber-300',
+    ring: 'ring-amber-400',
+    edge: '#fbbf24',
+  },
+  communicate: {
+    bg: 'bg-sky-100 dark:bg-sky-900/25',
+    border: 'border-sky-400/70',
+    text: 'text-sky-700 dark:text-sky-300',
+    ring: 'ring-sky-400',
+    edge: '#38bdf8',
+  },
+  obstacles: {
+    bg: 'bg-rose-100 dark:bg-rose-900/25',
+    border: 'border-rose-400/70',
+    text: 'text-rose-700 dark:text-rose-300',
+    ring: 'ring-rose-400',
+    edge: '#fb7185',
+  },
+  wins: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/25',
+    border: 'border-emerald-400/70',
+    text: 'text-emerald-700 dark:text-emerald-300',
+    ring: 'ring-emerald-400',
+    edge: '#34d399',
+  },
+  build: {
+    bg: 'bg-blue-100 dark:bg-blue-900/25',
+    border: 'border-blue-400/70',
+    text: 'text-blue-700 dark:text-blue-300',
+    ring: 'ring-blue-400',
+    edge: '#60a5fa',
+  },
+  anchor: {
+    bg: 'bg-purple-100 dark:bg-purple-900/25',
+    border: 'border-purple-400/70',
+    text: 'text-purple-700 dark:text-purple-300',
+    ring: 'ring-purple-400',
+    edge: '#a78bfa',
+  },
   uncategorized: {
     bg: 'bg-slate-100 dark:bg-slate-800/40',
     border: 'border-slate-300/70',
@@ -345,6 +647,8 @@ const handleTarget = `${handleBase} !bg-emerald-300 dark:!bg-emerald-600 !border
 const handleSource = `${handleBase} !bg-amber-300 dark:!bg-amber-600 !border-amber-500 hover:!bg-amber-400 hover:!scale-150`;
 
 const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, selected }) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
   const colors = branchColor(data.branchKey, data._depth);
   const isAI =
     data.sourceType === 'ai_chat' ||
@@ -442,9 +746,9 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
     <GlowWrapper isNew={isNew} isAI={isAI}>
       <div
         onDoubleClick={handleDoubleClick}
-        className={`group px-3 py-2 ${shapeClass} border-2 ${colors.border} bg-white dark:bg-navy-900 ${
+        className={`group px-3 py-2 ${shapeClass} border-2 ${colors.border} ${colors.bg} ${
           selected ? `ring-2 ${colors.ring}` : ''
-        } shadow-sm hover:shadow-lg cursor-pointer max-w-[210px] relative`}
+        } shadow-sm hover:shadow-lg cursor-pointer min-w-[120px] max-w-[210px] relative`}
       >
         <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
         <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
@@ -465,6 +769,29 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         {nodeStatus !== 'idea' && (
           <div className="absolute -top-1 -right-1">
             <StatusDot status={nodeStatus} size={8} />
+          </div>
+        )}
+
+        {/* Artifact link badge */}
+        {Array.isArray(data.artifactLinks) && data.artifactLinks.length > 0 && (
+          <div
+            className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-blue-500 text-white flex items-center justify-center text-[7px] font-bold shadow-sm cursor-pointer hover:bg-blue-600 transition-colors"
+            title={data.artifactLinks
+              .map((l: any) => l.label || l.title || `${l.artifactRef?.type || l.type}`)
+              .join(', ')}
+            onClick={(e) => {
+              e.stopPropagation();
+              const first = data.artifactLinks[0];
+              const artType = first?.artifactRef?.type || first?.type;
+              const artId = first?.artifactRef?.id || first?.id;
+              if (artType && artId) {
+                window.dispatchEvent(
+                  new CustomEvent('mywork-open-item', { detail: { type: artType, id: artId, name: first?.label || artType } })
+                );
+              }
+            }}
+          >
+            {data.artifactLinks.length}
           </div>
         )}
 
@@ -492,7 +819,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
               onKeyDown={handleKeyDown}
               rows={2}
               className="w-full text-[11px] font-semibold text-slate-800 dark:text-slate-200 bg-transparent border-none outline-none resize-none p-0 leading-tight nodrag"
-              placeholder="..."
+              placeholder={isPl ? 'Wpisz…' : 'Type…'}
             />
           ) : (
             <>
@@ -506,9 +833,9 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 </div>
                 <div className="min-w-0 flex-1">
                   <div
-                    className={`text-[11px] font-semibold ${colors.text} line-clamp-2 leading-tight`}
+                    className={`text-[11px] font-semibold ${data.label ? colors.text : 'text-slate-400 dark:text-slate-500 italic'} line-clamp-2 leading-tight`}
                   >
-                    {data.label || '...'}
+                    {data.label || (isPl ? 'Kliknij, aby wpisać…' : 'Click to type…')}
                   </div>
                   {data.nodeType && (
                     <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
@@ -575,6 +902,8 @@ type IdeaRecommendationMapProps = {
   locked?: boolean;
   onSelectionChange?: (sel: import('./ideaSelectionTypes').IdeaWorkspaceSelection) => void;
   onViewportReport?: (viewport: { x: number; y: number; zoom: number }) => void;
+  focusMode?: 'system' | 'object' | null;
+  focusObjectId?: string | null;
 };
 
 // ─────── Undo/Redo for map state ───────
@@ -594,6 +923,8 @@ function MindMapInner({
   locked = false,
   onSelectionChange,
   onViewportReport,
+  focusMode,
+  focusObjectId,
 }: IdeaRecommendationMapProps) {
   const { i18n } = useTranslation();
   const currentUser = useAppStore((state) => state.currentUser);
@@ -694,6 +1025,32 @@ function MindMapInner({
       hidden: hiddenNodeIds.has(e.source) || hiddenNodeIds.has(e.target),
     }));
   }, [edges, visibleNodes]);
+
+  // Focus filtering: when focusMode === 'object' and focusObjectId set, show only that node + direct connections
+  const focusFilteredNodes = useMemo(() => {
+    if (focusMode !== 'object' || !focusObjectId) return visibleNodes;
+    const allowedIds = new Set<string>([focusObjectId]);
+    for (const e of edges) {
+      if (e.source === focusObjectId) allowedIds.add(e.target);
+      if (e.target === focusObjectId) allowedIds.add(e.source);
+    }
+    return visibleNodes.map((n) => ({
+      ...n,
+      hidden: n.hidden || !allowedIds.has(n.id),
+    }));
+  }, [edges, focusMode, focusObjectId, visibleNodes]);
+
+  const focusFilteredEdges = useMemo(() => {
+    if (focusMode !== 'object' || !focusObjectId) return visibleEdges;
+    const hiddenNodeIds = new Set(
+      focusFilteredNodes.filter((n) => n.hidden).map((n) => n.id)
+    );
+    if (hiddenNodeIds.size === 0) return visibleEdges;
+    return visibleEdges.map((e) => ({
+      ...e,
+      hidden: hiddenNodeIds.has(e.source) || hiddenNodeIds.has(e.target),
+    }));
+  }, [focusFilteredNodes, focusMode, focusObjectId, visibleEdges]);
 
   // ── Undo/Redo ────────────────────────────────────────────────────────────
   const undoStackRef = useRef<MapSnapshot[]>([]);
@@ -913,10 +1270,31 @@ function MindMapInner({
       const savedViewport = viewState?.viewport;
 
       // V5-IDEA-43: Inject hierarchical depth into node data
-      const depthPatchedNodes = patchedNodes.map((n: any) => ({
-        ...n,
-        data: { ...n.data, _depth: getNodeDepth(n.id, nextEdges) },
-      }));
+      // V51-26: Normalize node types so all nodes render with custom components
+      const VALID_NODE_TYPES = ['center', 'branch', 'idea', 'knowledgeCard', 'noteCard', 'evidenceCard'];
+      const depthPatchedNodes = patchedNodes.map((n: any) => {
+        const inferredType = VALID_NODE_TYPES.includes(n?.type)
+          ? n.type
+          : n?.id === 'root'
+            ? 'center'
+            : n?.id?.startsWith?.('branch-')
+              ? 'branch'
+              : 'idea';
+        const mergedArtifactLinks = Array.isArray(n?.data?.artifactLinks)
+          ? n.data.artifactLinks
+          : Array.isArray(n?.artifactLinks) ? n.artifactLinks : undefined;
+        return {
+          ...n,
+          type: inferredType,
+          data: {
+            ...(n?.data || {}),
+            _depth: getNodeDepth(n.id, nextEdges),
+            branchKey: n?.data?.branchKey || 'uncategorized',
+            label: n?.data?.label ?? '',
+            ...(mergedArtifactLinks ? { artifactLinks: mergedArtifactLinks } : {}),
+          },
+        };
+      });
 
       isHydratingRef.current = true;
       setNodes(depthPatchedNodes);
@@ -2410,6 +2788,15 @@ function MindMapInner({
       if (action === 'ctx_comments') {
         if (ctxNode && ctxNode.type === 'idea') setCommentNodeId(ctxNode.id);
       }
+      if (action === 'ctx_attach_knowledge') {
+        if (ctxNode) {
+          window.dispatchEvent(
+            new CustomEvent('idea-workspace-attach-knowledge', {
+              detail: { nodeId: ctxNode.id, ideaId },
+            })
+          );
+        }
+      }
       if (action === 'ctx_dependencies') setShowDependencyDetector(true);
       if (action === 'ctx_priority') setShowPriorityRecommender(true);
       if (action === 'ctx_competitive') setShowCompetitiveLandscape(true);
@@ -2743,8 +3130,8 @@ function MindMapInner({
         </div>
       ) : (
         <ReactFlow
-          nodes={visibleNodes}
-          edges={visibleEdges}
+          nodes={focusFilteredNodes}
+          edges={focusFilteredEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
@@ -2788,10 +3175,10 @@ function MindMapInner({
           {/* Cluster Bubbles overlay */}
           {showClusterBubbles && (
             <ClusterBubbles
-              nodes={visibleNodes
+              nodes={focusFilteredNodes
                 .filter((n) => !n.hidden)
                 .map((n) => ({ id: n.id, position: n.position, data: n.data }))}
-              edges={visibleEdges
+              edges={focusFilteredEdges
                 .filter((e) => !e.hidden)
                 .map((e) => ({ source: e.source, target: e.target }))}
               enabled={showClusterBubbles}

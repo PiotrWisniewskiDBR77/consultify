@@ -1125,6 +1125,8 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
           title,
           body: text || '',
           sourceType: 'notebook',
+          sourceConversationId: activePage.id,
+          sourceMessageId: null,
         });
         const createdId = String(created?.id || '').trim();
         if (createdId) {

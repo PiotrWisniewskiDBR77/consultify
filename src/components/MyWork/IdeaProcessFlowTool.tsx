@@ -128,6 +128,9 @@ type FlowShape =
   | 'end'
   | 'action'
   | 'decision'
+  | 'auto_trigger'
+  | 'auto_api'
+  | 'auto_condition'
   | 'vsm_process'
   | 'vsm_inventory'
   | 'vsm_supplier'
@@ -146,6 +149,9 @@ const SHAPE_CONFIG: Record<
   end: { icon: StopCircle, label: 'End', labelPl: 'Koniec' },
   action: { icon: Square, label: 'Action', labelPl: 'Akcja' },
   decision: { icon: Diamond, label: 'Decision', labelPl: 'Decyzja' },
+  auto_trigger: { icon: Zap, label: 'Trigger', labelPl: 'Wyzwalacz' },
+  auto_api: { icon: GitMerge, label: 'API Call', labelPl: 'Wywołanie API' },
+  auto_condition: { icon: Diamond, label: 'Condition', labelPl: 'Warunek' },
   vsm_process: { icon: Box, label: 'VSM Process', labelPl: 'Proces VSM' },
   vsm_inventory: { icon: Triangle, label: 'Inventory', labelPl: 'Zapas' },
   vsm_supplier: { icon: Truck, label: 'Supplier', labelPl: 'Dostawca' },
@@ -158,7 +164,7 @@ const SHAPE_CONFIG: Record<
 };
 
 const CLASSIC_SHAPES: FlowShape[] = ['start', 'end', 'action', 'decision'];
-const AUTOMATION_SHAPES: FlowShape[] = ['start', 'end', 'action', 'decision'];
+const AUTOMATION_SHAPES: FlowShape[] = ['start', 'end', 'action', 'auto_trigger', 'auto_api', 'auto_condition'];
 const VSM_SHAPES: FlowShape[] = [
   'vsm_process',
   'vsm_inventory',
@@ -218,6 +224,12 @@ const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
     action: 'rounded-xl border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800',
     decision:
       'rotate-45 border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/30 dark:border-amber-400',
+    auto_trigger:
+      'rounded-xl border-2 border-dashed border-violet-500 bg-violet-50 dark:bg-violet-900/30 dark:border-violet-400',
+    auto_api:
+      'rounded-xl border-2 border-cyan-500 bg-cyan-50 dark:bg-cyan-900/30 dark:border-cyan-400',
+    auto_condition:
+      'rotate-45 border-2 border-dashed border-orange-500 bg-orange-50 dark:bg-orange-900/30 dark:border-orange-400',
     vsm_process:
       'rounded-lg border-2 border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400',
     vsm_inventory:
@@ -238,7 +250,7 @@ const FlowNodeComponent: React.FC<NodeProps> = ({ id, data, selected }) => {
       'rounded-lg border-2 border-violet-500 bg-violet-50 dark:bg-violet-900/30 dark:border-violet-400',
   };
 
-  const innerRotate = shape === 'decision' ? '-rotate-45' : '';
+  const innerRotate = shape === 'decision' || shape === 'auto_condition' ? '-rotate-45' : '';
 
   return (
     <div
@@ -867,6 +879,8 @@ interface IdeaProcessFlowToolProps {
   onSaved?: () => void;
   onSelectionChange?: (sel: IdeaWorkspaceSelection) => void;
   onNodeDetail?: (nodeId: string, data: any) => void;
+  focusMode?: 'system' | 'object' | null;
+  focusObjectId?: string | null;
 }
 
 export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
@@ -877,6 +891,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   onSaved,
   onSelectionChange,
   onNodeDetail,
+  focusMode,
+  focusObjectId,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -1039,6 +1055,52 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       }),
     [edges, nodeMap, handleEdgeLabelChange, handleEdgeConditionChange]
   );
+
+  // ── Focus mode: filter nodes/edges for display ──────────────────────────
+  const { filteredNodes, filteredEdgesWithHandlers, filteredGhostNodes } = useMemo(() => {
+    const noFilter =
+      !focusMode ||
+      focusMode === 'system' ||
+      (focusMode === 'object' && !focusObjectId);
+
+    if (noFilter) {
+      return {
+        filteredNodes: nodes,
+        filteredEdgesWithHandlers: edgesWithHandlers,
+        filteredGhostNodes: ghostNodes,
+      };
+    }
+
+    // focusMode === 'object' && focusObjectId is set
+    const focusNode = nodes.find((n) => n.id === focusObjectId);
+    const laneId = focusNode?.data?.laneId;
+    if (!laneId) {
+      return {
+        filteredNodes: nodes,
+        filteredEdgesWithHandlers: edgesWithHandlers,
+        filteredGhostNodes: ghostNodes,
+      };
+    }
+
+    const laneNodes = nodes.filter((n) => n.data?.laneId === laneId);
+    const filteredIds = new Set(laneNodes.map((n) => n.id));
+    const filteredEdges = edgesWithHandlers.filter(
+      (e) => filteredIds.has(e.source) && filteredIds.has(e.target)
+    );
+    const filteredGhosts = ghostNodes.filter((g) => g.data?.laneId === laneId);
+
+    return {
+      filteredNodes: laneNodes,
+      filteredEdgesWithHandlers: filteredEdges,
+      filteredGhostNodes: filteredGhosts,
+    };
+  }, [
+    nodes,
+    ghostNodes,
+    edgesWithHandlers,
+    focusMode,
+    focusObjectId,
+  ]);
 
   // ── Node/Edge change handlers ──────────────────────────────────────────
   const onNodesChange = useCallback(
@@ -2289,14 +2351,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           <ReactFlowProvider>
             <ReactFlow
               nodes={[
-                ...nodes,
-                ...ghostNodes.map((g) => ({
+                ...filteredNodes,
+                ...filteredGhostNodes.map((g) => ({
                   ...g,
                   style: { opacity: 0.4 },
                   data: { ...g.data, onAcceptGhost: acceptGhostNode },
                 })),
               ]}
-              edges={edgesWithHandlers}
+              edges={filteredEdgesWithHandlers}
               onNodesChange={locked ? undefined : onNodesChange}
               onEdgesChange={locked ? undefined : onEdgesChange}
               onConnect={onConnect}

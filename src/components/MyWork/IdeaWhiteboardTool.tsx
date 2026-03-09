@@ -32,6 +32,7 @@ import {
   Lock,
   Palette,
   Pen,
+  Plus,
   Redo2,
   Save,
   Shapes,
@@ -44,7 +45,7 @@ import {
   Ungroup,
   Workflow,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import ReactFlow, {
@@ -1076,6 +1077,8 @@ interface IdeaWhiteboardToolProps {
   onSelectionChange?: (sel: IdeaWorkspaceSelection) => void;
   onNodeDetail?: (nodeId: string, nodeData: any) => void;
   drillFocusNodeId?: string | null;
+  focusMode?: 'system' | 'object' | null;
+  focusObjectId?: string | null;
 }
 
 export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
@@ -1087,6 +1090,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   onSelectionChange,
   onNodeDetail,
   drillFocusNodeId,
+  focusMode,
+  focusObjectId,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -1770,6 +1775,45 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     return () => window.removeEventListener('keydown', handler);
   }, [handleSave, open]);
 
+  // ── Focus-mode filtering (nodes + edges) ───────────────────────────────────
+  const { nodes: displayNodes, edges: displayEdges } = useMemo(() => {
+    const effectiveFocusId =
+      focusMode === 'object' && focusObjectId
+        ? focusObjectId
+        : (focusMode == null && drillFocusNodeId ? drillFocusNodeId : null);
+
+    if (!effectiveFocusId || focusMode === 'system') {
+      return { nodes, edges };
+    }
+
+    const visibleIds = new Set<string>();
+    visibleIds.add(effectiveFocusId);
+
+    const focusNode = nodes.find((n) => n.id === effectiveFocusId);
+    const parentId = focusNode
+      ? (focusNode as any).parentNode || (focusNode as any).parentId || focusNode.data?.parentId
+      : undefined;
+
+    if (parentId) {
+      visibleIds.add(parentId);
+      for (const n of nodes) {
+        const pid = (n as any).parentNode || (n as any).parentId || n.data?.parentId;
+        if (pid === parentId) visibleIds.add(n.id);
+      }
+    } else {
+      for (const n of nodes) {
+        const pid = (n as any).parentNode || (n as any).parentId || n.data?.parentId;
+        if (pid === effectiveFocusId) visibleIds.add(n.id);
+      }
+    }
+
+    const filteredNodes = nodes.filter((n: Node) => visibleIds.has(n.id));
+    const filteredEdges = edges.filter(
+      (e: Edge) => visibleIds.has(e.source) && visibleIds.has(e.target)
+    );
+    return { nodes: filteredNodes, edges: filteredEdges };
+  }, [nodes, edges, focusMode, focusObjectId, drillFocusNodeId]);
+
   if (!open) return null;
 
   return (
@@ -2109,32 +2153,8 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         <div className="flex-1 relative">
           <ReactFlowProvider>
             <WhiteboardCanvas
-              nodes={
-                drillFocusNodeId
-                  ? nodes.filter((n: Node) => {
-                      if (n.id === drillFocusNodeId) return true;
-                      const pid = (n as any).parentNode || (n as any).parentId || n.data?.parentId;
-                      return pid === drillFocusNodeId;
-                    })
-                  : nodes
-              }
-              edges={
-                drillFocusNodeId
-                  ? edges.filter((e: Edge) => {
-                      const visibleIds = new Set(
-                        nodes
-                          .filter((n: Node) => {
-                            if (n.id === drillFocusNodeId) return true;
-                            const pid =
-                              (n as any).parentNode || (n as any).parentId || n.data?.parentId;
-                            return pid === drillFocusNodeId;
-                          })
-                          .map((n: Node) => n.id)
-                      );
-                      return visibleIds.has(e.source) && visibleIds.has(e.target);
-                    })
-                  : edges
-              }
+              nodes={displayNodes}
+              edges={displayEdges}
               locked={locked || drawingActive}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
@@ -2145,6 +2165,34 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               onViewportChange={setViewportTransform}
             />
           </ReactFlowProvider>
+
+          {/* V51-27: Empty state overlay */}
+          {nodes.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+              <div className="text-center pointer-events-auto">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-violet-500/10 flex items-center justify-center">
+                  <StickyNote size={24} className="text-violet-500" />
+                </div>
+                <div className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                  {isPl ? 'Pusta tablica' : 'Empty whiteboard'}
+                </div>
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 mb-3 max-w-[200px]">
+                  {isPl
+                    ? 'Dodaj notatki, kształty lub tekst z paska narzędzi'
+                    : 'Add sticky notes, shapes, or text from the toolbar'}
+                </div>
+                {!locked && (
+                  <button
+                    onClick={() => addElement('sticky')}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors"
+                  >
+                    <Plus size={14} />
+                    {isPl ? 'Dodaj notatkę' : 'Add sticky note'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Drawing layer overlay */}
           <IdeaDrawingLayer

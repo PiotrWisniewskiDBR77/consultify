@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   ChevronRight,
   Copy,
   Diamond,
@@ -204,6 +205,13 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
       labelEn: 'Comments',
       icon: MessageSquare,
       disabled: isProtected,
+    },
+    {
+      id: 'ctx_attach_knowledge',
+      labelPl: 'Dołącz wiedzę',
+      labelEn: 'Attach knowledge',
+      icon: BookOpen,
+      disabled: isLocked || isProtected,
     },
     {
       id: 'ctx_dependencies',

@@ -5,6 +5,7 @@
  * On empty space: Fill gap, Brainstorm here.
  */
 import {
+  BookOpen,
   Brain,
   GitBranch,
   Lightbulb,
@@ -49,6 +50,7 @@ export interface IdeaCanvasContextMenuProps {
   isAccepted: boolean;
   onGenerateProposal: (batch: AIProposalBatch) => void;
   onSendToChat?: (prompt: string) => void;
+  onAttachKnowledge?: (nodeId: string) => void;
 }
 
 interface MenuItem {
@@ -104,6 +106,13 @@ const NODE_ACTIONS: MenuItem[] = [
         ? `Zasugeruj połączenia między "${label}" a innymi elementami na mapie`
         : `Suggest connections between "${label}" and other map elements`,
   },
+  {
+    id: 'attach_knowledge',
+    icon: BookOpen,
+    labelPl: 'Dołącz wiedzę',
+    labelEn: 'Attach knowledge',
+    nodeOnly: true,
+  },
 ];
 
 const EMPTY_ACTIONS: MenuItem[] = [
@@ -141,6 +150,7 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   isAccepted,
   onGenerateProposal,
   onSendToChat,
+  onAttachKnowledge,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -166,6 +176,12 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
   const handleAction = useCallback(
     async (item: MenuItem) => {
       if (!isAccepted) return;
+
+      if (item.id === 'attach_knowledge' && target.nodeId && onAttachKnowledge) {
+        onAttachKnowledge(target.nodeId);
+        onClose();
+        return;
+      }
 
       if (item.chatPrompt && onSendToChat) {
         onSendToChat(item.chatPrompt(target.nodeLabel || '', isPl));
@@ -213,10 +229,12 @@ export const IdeaCanvasContextMenu: React.FC<IdeaCanvasContextMenuProps> = ({
       ideaId,
       isAccepted,
       isPl,
+      onAttachKnowledge,
       onClose,
       onGenerateProposal,
       onSendToChat,
       seedText,
+      target.nodeId,
       target.nodeLabel,
       title,
     ]

@@ -48,8 +48,6 @@ import {
   Trophy,
   Undo2,
   Upload,
-  Users,
-  Wand2,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -138,6 +136,8 @@ interface IdeaTableToolProps {
   ideaId: string;
   locked?: boolean;
   refreshToken?: number;
+  focusMode?: 'system' | 'object' | null;
+  focusObjectId?: string | null;
   onSaved?: () => void;
   onSelectionChange?: (sel: IdeaWorkspaceSelection) => void;
   onConvert?: (target: string) => void;
@@ -179,6 +179,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   ideaId,
   locked = false,
   refreshToken,
+  focusMode,
+  focusObjectId,
   onSaved,
   onSelectionChange,
   onConvert: onConvertProp,
@@ -340,7 +342,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
   // ── Quick action listener ──────────────────────────────────────────────────
   useEffect(() => {
-    const handler = (e: Event) => {
+    const handler = async (e: Event) => {
       const detail = (e as CustomEvent).detail;
       if (detail?.action === 'tbl_add_column') setShowAddColumn(true);
       if (detail?.action === 'tbl_sort') {
@@ -377,7 +379,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       if (detail?.action === 'tbl_voice') setShowVoiceInput(true);
       if (detail?.action === 'tbl_cross_relations') setShowCrossRelations(true);
       if (detail?.action === 'tbl_heatmap') setShowHeatmap(true);
-      // V5-IDEA-35: Table row artifact autofill and refresh
+      // V5-IDEA-35 + V51-20: Table row artifact autofill via AI generator
       if (detail?.action === 'tbl_autofill_from_artifact') {
         const selectedRows = nodes.filter((n) => n.data?._selected);
         if (selectedRows.length === 0) {
@@ -390,16 +392,43 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           ideaId,
           rowCount: selectedRows.length,
         });
-        window.dispatchEvent(
-          new CustomEvent('idea-workspace-chat-prompt', {
-            detail: {
-              prompt: isPl
-                ? `Autofill zaznaczonych ${selectedRows.length} wierszy z powiązanych artefaktów. Wypełnij pola: title, owner, status, stage, spend, budget, ROI. Pokaż preview zmian przed zastosowaniem.`
-                : `Autofill ${selectedRows.length} selected rows from linked artifacts. Fill fields: title, owner, status, stage, spend, budget, ROI. Show preview of changes before applying.`,
-              ideaId,
+        toast?.(isPl ? 'Generuję mapowania autofill...' : 'Generating autofill mappings...', {
+          icon: '🤖',
+          duration: 2000,
+        });
+        try {
+          const result = await Api.generateIdeaAI(ideaId, {
+            generatorType: 'ai_autofill_mappings',
+            tool: 'table',
+            context: {
+              seedText: `Autofill ${selectedRows.length} rows from linked artifacts`,
+              title: '',
+              existingNodes: selectedRows.map((r) => ({
+                id: r.id,
+                label: r.data?.label,
+                artifactLinks: r.data?.artifactLinks,
+              })),
+              existingEdges: [],
+              language: isPl ? 'pl' : 'en',
             },
-          })
-        );
+          });
+          const mappings = (result as any)?.view_patch?.autofillMappings;
+          if (Array.isArray(mappings) && mappings.length > 0) {
+            toast?.success(
+              isPl
+                ? `Znaleziono ${mappings.length} mapowań — zastosuj z panelu AI`
+                : `Found ${mappings.length} mappings — apply from AI panel`,
+              { duration: 3000 }
+            );
+          } else {
+            toast?.(
+              isPl ? 'Brak mapowań do zastosowania' : 'No mappings found to apply',
+              { icon: 'ℹ️' }
+            );
+          }
+        } catch {
+          toast?.error(isPl ? 'Autofill nie powiódł się' : 'Autofill failed');
+        }
       }
       if (detail?.action === 'tbl_refresh_artifact_data') {
         trackFunnelEvent('ideas_table_refresh_triggered', { ideaId });
@@ -419,12 +448,22 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         );
       }
       if (detail?.action === 'tbl_link_artifact_to_row') {
-        toast?.(
-          isPl
-            ? 'Zaznacz wiersz i użyj panelu kontekstu, aby dołączyć artefakt'
-            : 'Select a row and use context panel to attach an artifact',
-          { icon: '🔗', duration: 2500 }
-        );
+        const selectedIds = selectedRowIds;
+        if (selectedIds.size > 0) {
+          const firstId = Array.from(selectedIds)[0];
+          window.dispatchEvent(
+            new CustomEvent('idea-workspace-attach-knowledge', {
+              detail: { nodeId: firstId, ideaId },
+            })
+          );
+        } else {
+          toast?.(
+            isPl
+              ? 'Najpierw zaznacz wiersz'
+              : 'Select a row first',
+            { icon: '🔗', duration: 2000 }
+          );
+        }
       }
     };
     window.addEventListener('idea-workspace-quick-action', handler);
@@ -445,13 +484,26 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           ? (map.extensions as Record<string, unknown>)
           : {};
 
+      const VALID_NODE_TYPES = ['center', 'branch', 'idea', 'knowledgeCard', 'noteCard', 'evidenceCard'];
       const parsedNodes: TableNode[] = nextNodes
-        .map((n: any) => ({
-          id: String(n?.id || ''),
-          type: n?.type ? String(n.type) : undefined,
-          data: n?.data && typeof n.data === 'object' ? n.data : {},
-          position: n?.position || undefined,
-        }))
+        .map((n: any) => {
+          const rawType = n?.type ? String(n.type) : '';
+          const inferredType = VALID_NODE_TYPES.includes(rawType)
+            ? rawType
+            : n?.id === 'root'
+              ? 'center'
+              : String(n?.id || '').startsWith('branch-')
+                ? 'branch'
+                : 'idea';
+          const rawData = n?.data && typeof n.data === 'object' ? n.data : {};
+          const label = rawData.label || rawData.text || rawData.title || '';
+          return {
+            id: String(n?.id || ''),
+            type: inferredType,
+            data: { ...rawData, label },
+            position: n?.position || undefined,
+          };
+        })
         .filter((n) => n.id);
 
       const parsedEdges: TableEdge[] = nextEdges
@@ -535,6 +587,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const processedRows = useMemo(() => {
     let rows = (nodes || []).filter((n) => String(n?.type || '') !== 'frame');
 
+    // Focus filtering: object mode shows only the specified row; system mode or null shows all
+    if (focusMode === 'object' && focusObjectId) {
+      rows = rows.filter((r) => r.id === focusObjectId);
+    }
+
     // Advanced filters
     if (filters.rules.length > 0) {
       rows = rows.filter((r) => {
@@ -593,7 +650,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     }
 
     return rows;
-  }, [filters, filterInput, nodes, sort]);
+  }, [filters, filterInput, focusMode, focusObjectId, nodes, sort]);
 
   const groupedRows = useMemo(() => {
     if (!groupBy) return null;
@@ -643,7 +700,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     const newNode: TableNode = {
       id,
       type: 'idea',
-      data: { label: '' },
+      data: { label: '', status: 'To Do', priority: 'Medium' },
       position: { x: 0, y: 0 },
     };
     nodesUndo.push([...nodes, newNode]);
@@ -1017,6 +1074,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     if (view.sort?.[0]) setSort(view.sort[0]);
     if (view.filters) setFilters(view.filters);
     if (view.groupBy) setGroupBy(view.groupBy);
+    if ((view as any).layout) setViewLayout((view as any).layout);
     trackFunnelEvent('ideas_table_view_changed', { viewId: view.id, ideaId });
   };
 
@@ -1104,8 +1162,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               <div className="flex items-center gap-0.5">
                 <div className="flex-1 min-w-0" onClick={() => setDetailNodeId(row.id)}>
                   {col.key === 'type' ? (
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {row.type || 'node'}
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 capitalize">
+                      {(row.data?.nodeType || row.type || 'idea').replace(/_/g, ' ')}
                     </span>
                   ) : (
                     <CellRenderer

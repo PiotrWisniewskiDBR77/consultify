@@ -21,6 +21,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
+  IDEA_STAGES_V5,
   IDEA_STAGE_COLORS,
   IDEA_STAGE_LABELS,
   type IdeaStageV5,
@@ -45,8 +46,10 @@ interface IdeaPinnedCardProps {
   stage: string;
   data: IdeaPinnedCardData;
   evidenceCount?: number;
+  nodeCount?: number;
   onEdit?: () => void;
   onAISummarize?: () => void;
+  onStageChange?: (newStage: IdeaStageV5) => void;
   className?: string;
 }
 
@@ -54,8 +57,10 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
   stage,
   data,
   evidenceCount = 0,
+  nodeCount = 0,
   onEdit,
   onAISummarize,
+  onStageChange,
   className = '',
 }) => {
   const { i18n } = useTranslation();
@@ -81,6 +86,27 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
   );
 
   const toggleExpanded = useCallback(() => setExpanded((v) => !v), []);
+
+  const stageIdx = IDEA_STAGES_V5.indexOf(v5Stage);
+  const canAdvance = stageIdx >= 0 && stageIdx < IDEA_STAGES_V5.length - 1;
+  const canRevert = stageIdx > 0;
+
+  const advanceBlocked = useMemo(() => {
+    if (v5Stage === 'spark' && !data.title?.trim()) return isPl ? 'Dodaj tytuł' : 'Add a title';
+    if (v5Stage === 'exploring' && nodeCount < 2) return isPl ? 'Dodaj węzły' : 'Add nodes first';
+    if (v5Stage === 'validating' && evidenceCount < 1) return isPl ? 'Dodaj dowody' : 'Add evidence';
+    return null;
+  }, [v5Stage, data.title, nodeCount, evidenceCount, isPl]);
+
+  const handleAdvance = useCallback(() => {
+    if (!canAdvance || advanceBlocked || !onStageChange) return;
+    onStageChange(IDEA_STAGES_V5[stageIdx + 1]);
+  }, [canAdvance, advanceBlocked, onStageChange, stageIdx]);
+
+  const handleRevert = useCallback(() => {
+    if (!canRevert || !onStageChange) return;
+    onStageChange(IDEA_STAGES_V5[stageIdx - 1]);
+  }, [canRevert, onStageChange, stageIdx]);
 
   const DetailRow: React.FC<{ label: string; value?: string; icon?: React.ReactNode }> = ({
     label,
@@ -190,6 +216,35 @@ export const IdeaPinnedCard: React.FC<IdeaPinnedCardProps> = ({
             value={data.risks}
             icon={<AlertTriangle size={12} />}
           />
+        </div>
+      )}
+
+      {/* Stage transition */}
+      {onStageChange && v5Stage !== 'converted' && (
+        <div className="px-4 py-2 flex items-center gap-2 border-t border-slate-200/40 dark:border-white/[0.04]">
+          {canRevert && (
+            <button
+              onClick={handleRevert}
+              className="text-[10px] font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            >
+              ← {isPl ? IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx - 1]].pl : IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx - 1]].en}
+            </button>
+          )}
+          <div className="flex-1" />
+          {canAdvance && (
+            <button
+              onClick={handleAdvance}
+              disabled={!!advanceBlocked}
+              title={advanceBlocked || undefined}
+              className={`text-[10px] font-bold transition-colors ${
+                advanceBlocked
+                  ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                  : 'text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300'
+              }`}
+            >
+              {isPl ? IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].pl : IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].en} →
+            </button>
+          )}
         </div>
       )}
 

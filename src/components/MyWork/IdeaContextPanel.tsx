@@ -55,6 +55,8 @@ interface IdeaContextPanelProps {
   onClose: () => void;
   ideaId: string;
   title: string;
+  selectedNodeId?: string | null;
+  refreshToken?: number;
   onInsertToCanvas?: (item: { text: string; type: string; detail?: string }) => void;
 }
 
@@ -87,6 +89,7 @@ interface LinkedArtifact {
   type: string;
   title: string;
   moduleIcon?: string;
+  artifactId?: string;
 }
 
 export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
@@ -94,6 +97,8 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
   onClose,
   ideaId,
   title,
+  selectedNodeId,
+  refreshToken,
   onInsertToCanvas,
 }) => {
   const { i18n } = useTranslation();
@@ -111,7 +116,13 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
   const [linkedArtifacts, setLinkedArtifacts] = useState<LinkedArtifact[]>([]);
+  const [nodeArtifactMap, setNodeArtifactMap] = useState<(LinkedArtifact & { nodeId?: string })[]>([]);
   const [newNoteText, setNewNoteText] = useState('');
+
+  const displayedArtifacts = useMemo(() => {
+    if (!selectedNodeId) return linkedArtifacts;
+    return nodeArtifactMap.filter((a) => a.nodeId === selectedNodeId);
+  }, [linkedArtifacts, nodeArtifactMap, selectedNodeId]);
 
   const subtitle = useMemo(() => (isPl ? 'Kontekst firmy' : 'Company context'), [isPl]);
 
@@ -271,7 +282,32 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
               title: n.data?.label || '',
               moduleIcon: n.data?.moduleIcon,
             }));
-          setLinkedArtifacts(extractedArtifacts);
+          // V51-30: Also extract artifacts from node.data.artifactLinks (with fallback to node.artifactLinks)
+          const nodeArtifactLinks: (LinkedArtifact & { nodeId?: string })[] = nodes.flatMap((n: any) => {
+            const links = Array.isArray(n?.data?.artifactLinks)
+              ? n.data.artifactLinks
+              : Array.isArray(n?.artifactLinks) ? n.artifactLinks : null;
+            if (!Array.isArray(links)) return [];
+            return links.map((link: any) => {
+              const realType = link.artifactRef?.type || link.artifactType || link.type || 'unknown';
+              const realId = link.artifactRef?.id || link.artifactId || link.id || '';
+              return {
+                id: `${n.id}__${realType}:${realId}`,
+                type: realType,
+                title: link.label || link.title || `${realType}:${realId}`,
+                moduleIcon: link.moduleIcon,
+                artifactId: realId,
+                nodeId: String(n.id),
+              };
+            });
+          });
+          const seen = new Set(extractedArtifacts.map((a) => a.id));
+          const merged = [
+            ...extractedArtifacts,
+            ...nodeArtifactLinks.filter((a) => !seen.has(a.id)),
+          ];
+          setLinkedArtifacts(merged);
+          setNodeArtifactMap(nodeArtifactLinks);
         }
       } catch (err: any) {
         if (signal?.cancelled) return;
@@ -292,7 +328,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
     return () => {
       signal.cancelled = true;
     };
-  }, [fetchData, open]);
+  }, [fetchData, open, refreshToken]);
 
   const grouped = useMemo(() => {
     const map: Record<string, ContextItem[]> = {
@@ -645,7 +681,10 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
           >
             <Paperclip size={12} className="text-indigo-500" />
             <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex-1">
-              {isPl ? 'Powiązane artefakty' : 'Linked Artifacts'} ({linkedArtifacts.length})
+              {selectedNodeId
+                ? (isPl ? 'Artefakty węzła' : 'Node Artifacts')
+                : (isPl ? 'Powiązane artefakty' : 'Linked Artifacts')}{' '}
+              ({displayedArtifacts.length})
             </span>
             {expandedSections.has('artifacts') ? (
               <ChevronUp size={12} className="text-indigo-400" />
@@ -655,11 +694,11 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
           </button>
           {expandedSections.has('artifacts') && (
             <div className="mt-2 space-y-1.5">
-              {linkedArtifacts.map((art) => (
+              {displayedArtifacts.map((art) => (
                 <div
                   key={art.id}
                   className="flex items-center gap-2 bg-white/50 dark:bg-white/[0.03] rounded-lg p-2 border border-indigo-200/30 dark:border-indigo-800/20 cursor-pointer hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 transition-colors"
-                  onClick={() => openItem(art.type, art.id)}
+                  onClick={() => openItem(art.type, art.artifactId || art.id)}
                 >
                   <BookOpen size={10} className="text-indigo-500 shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -672,7 +711,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
                   </span>
                 </div>
               ))}
-              {linkedArtifacts.length === 0 && (
+              {displayedArtifacts.length === 0 && (
                 <div className="text-[10px] text-slate-400">
                   {isPl
                     ? 'Dodaj karty wiedzy na canvas, aby je tu zobaczyć'

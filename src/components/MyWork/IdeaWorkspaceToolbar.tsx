@@ -5,21 +5,18 @@
  * and AI features. Always visible at the bottom of the canvas.
  */
 import {
-  Bookmark,
   Brain,
+  Crosshair,
   Download,
   GitBranch,
-  LayoutGrid,
-  MessageSquare,
-  Network,
-  Pen,
+  Layers,
   Sparkles,
   StickyNote,
   Table2,
   ThumbsUp,
   Workflow,
 } from 'lucide-react';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { CanvasToolType } from './ideaSelectionTypes';
@@ -32,7 +29,9 @@ export interface IdeaWorkspaceToolbarProps {
   onToggleAI?: () => void;
   onToggleContext?: () => void;
   onExport?: () => void;
+  onToggleFocus?: () => void;
   votingActive?: boolean;
+  focusMode?: 'full' | 'system' | 'object';
   familyCounts?: Record<string, number>;
 }
 
@@ -56,7 +55,9 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
   onToggleAI,
   onToggleContext,
   onExport,
+  onToggleFocus,
   votingActive,
+  focusMode,
   familyCounts,
 }) => {
   const { i18n } = useTranslation();
@@ -90,6 +91,22 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
           );
         })}
 
+        {/* V51-08: Cross-family indicator */}
+        {(() => {
+          const otherFamilies = TOOL_CONFIG.filter(
+            (t) => t.id !== activeTool && (familyCounts?.[t.id] ?? 0) > 0
+          );
+          if (otherFamilies.length === 0) return null;
+          return (
+            <div className="flex items-center gap-0.5 ml-0.5">
+              <Layers size={10} className="text-slate-400" />
+              <span className="text-[8px] text-slate-400 font-medium">
+                +{otherFamilies.length}
+              </span>
+            </div>
+          );
+        })()}
+
         <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-1" />
 
         {/* Quick actions */}
@@ -101,6 +118,14 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
                 label={isPl ? 'Głosowanie' : 'Vote'}
                 onClick={onToggleVoting}
                 active={votingActive}
+              />
+            )}
+            {onToggleFocus && (
+              <ToolbarAction
+                icon={Crosshair}
+                label={isPl ? 'Fokus' : 'Focus'}
+                onClick={onToggleFocus}
+                active={focusMode === 'system'}
               />
             )}
             {onToggleAI && <ToolbarAction icon={Sparkles} label="AI" onClick={onToggleAI} />}

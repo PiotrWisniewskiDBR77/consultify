@@ -571,18 +571,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           return;
         }
 
-        const created = await Api.createMyIdea({
+        const created = await Api.createIdeaFromChat({
           title,
-          body: trimmed,
-          tags: [],
-          sourceType: 'chat',
-          sourceConversationId: activeConversationId,
+          seedText: trimmed,
+          sourceConversationId: activeConversationId || undefined,
           sourceMessageId: messageId,
+          startMode: 'describe_with_ai',
+          preferredSystem: 'mindmap',
         });
 
         trackFunnelEvent('my_idea_saved', {
           source: autoTriggered ? 'chat_auto' : 'chat',
-          ideaId: created?.id,
+          ideaId: created?.ideaId,
           messageId,
         });
         toast.success(
@@ -590,19 +590,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             ? t('myWork.ideas.savedFromChatToast', 'Saved from chat to My Ideas')
             : t('myWork.ideas.savedToast', 'Saved to My Ideas')
         );
-
-        if (navigateToMyWork) {
-          try {
-            const { setMyWorkIntent, setCurrentView } = useAppStore.getState() as any;
-            setMyWorkIntent?.({
-              tab: 'ideas',
-              open: { type: 'idea', id: created?.id, name: created?.title || title, data: created },
-            });
-            setCurrentView?.(AppView.MY_WORK);
-          } catch {
-            // ignore
-          }
-        }
       } catch (err) {
         console.error('[UnifiedChatPanel] Failed to save idea:', err);
         toast.error(t('myWork.errors.createFailed', 'Failed to create idea'));
