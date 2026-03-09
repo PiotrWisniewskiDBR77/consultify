@@ -4079,8 +4079,10 @@ router.put(
     );
     if (!ideaOk) return res.status(404).json({ error: 'Idea not found' });
 
+    const mapCols = await getTableColumns('my_idea_maps');
+    const extColSelect = mapCols.has('extensions_json') ? ', extensions_json' : '';
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, version, extensions_json, nodes_json, edges_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      `SELECT id, version, nodes_json, edges_json${extColSelect} FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
       [ideaId, userId, orgId]
     );
 
@@ -4100,8 +4102,6 @@ router.put(
         mergedExtensions = null;
       }
     }
-
-    const mapCols = await getTableColumns('my_idea_maps');
     const now = new Date().toISOString();
     const nextVersion = existing ? Number(existing.version || 1) + 1 : 1;
 
@@ -4628,6 +4628,27 @@ const IdeaAIGenerateBodySchema = z.object({
     'mm_branch_generator',
     'mm_expand',
     'mm_what_if',
+    // V51-01: Artifact linking
+    'ai_retrieve_artifacts',
+    'ai_propose_attachments',
+    'ai_build_linked_table',
+    'ai_autofill_mappings',
+    // V51-05: Whiteboard facilitation
+    'wb_find_themes',
+    'wb_name_clusters',
+    'wb_to_map_branches',
+    'wb_to_table',
+    'wb_extract_actions',
+    // V51-06: Table AI
+    'table_rows',
+    'table_simplify',
+    // Existing but missing from route schema
+    'node_expand',
+    'process_coach',
+    'next_step',
+    'process_summary',
+    'vsm_generator',
+    'vsm_future_state',
   ]),
   tool: z.enum(['process_flow', 'mindmap', 'table', 'whiteboard']),
   context: z.object({
@@ -4689,6 +4710,315 @@ router.post(
       logger.error('[IdeaAIGenerate] Failed:', err?.message);
       res.status(500).json({ error: err?.message || 'AI generation failed' });
     }
+  })
+);
+
+// ============================================================================
+// V51-04: Artifact attachment persistence API
+// ============================================================================
+
+const ArtifactAttachBodySchema = z.object({
+  artifactRef: z.object({ type: z.string().min(1), id: z.string().min(1) }),
+  artifactIndex: z.string().optional(),
+  label: z.string().optional(),
+  linkRole: z.enum(['context', 'source', 'output', 'evidence', 'related']).optional(),
+});
+
+router.post(
+  '/my-ideas/:id/objects/:objectId/artifacts',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const ideaId = req.params.id;
+    const objectId = req.params.objectId;
+    if (!ideaId || !objectId) return res.status(400).json({ error: 'Missing ideaId or objectId' });
+
+    const parsed = ArtifactAttachBodySchema.safeParse(req.body);
+    if (!parsed.success)
+      return res.status(400).json({ error: 'Invalid body', details: parsed.error.flatten() });
+
+    const { artifactRef, artifactIndex, label, linkRole } = parsed.data;
+
+    if (!(await requireTables(res, ['my_idea_maps']))) return;
+
+    const map = await queryHelpers.queryOne<any>(
+      `SELECT id, nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!map) return res.status(404).json({ error: 'Idea map not found' });
+
+    let nodes: any[];
+    try {
+      const parsed = JSON.parse(map.nodes_json || '[]');
+      nodes = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      nodes = [];
+    }
+
+    const nodeIdx = nodes.findIndex((n: any) => String(n.id) === String(objectId));
+    if (nodeIdx === -1) return res.status(404).json({ error: 'Object not found in workspace' });
+
+    const node = nodes[nodeIdx];
+    if (!node.data || typeof node.data !== 'object') node.data = {};
+    const existingLinks: any[] = Array.isArray(node.data.artifactLinks)
+      ? node.data.artifactLinks
+      : Array.isArray(node.artifactLinks) ? node.artifactLinks : [];
+    const duplicate = existingLinks.some(
+      (l: any) => l.artifactRef?.type === artifactRef.type && l.artifactRef?.id === artifactRef.id
+    );
+    if (duplicate) return res.status(409).json({ error: 'Artifact already attached' });
+
+    const newLink = {
+      artifactRef,
+      ...(artifactIndex ? { artifactIndex } : {}),
+      ...(label ? { label } : {}),
+      ...(linkRole ? { linkRole } : {}),
+    };
+    const updatedLinks = [...existingLinks, newLink];
+    node.data.artifactLinks = updatedLinks;
+    node.artifactLinks = updatedLinks;
+    nodes[nodeIdx] = node;
+
+    await queryHelpers.queryRun(
+      `UPDATE my_idea_maps SET nodes_json = ?, updated_at = ${nowSql()} WHERE id = ?`,
+      [JSON.stringify(nodes), map.id]
+    );
+
+    // Create LinkGraph edge for cross-platform traceability
+    try {
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'idea',
+        sourceId: ideaId,
+        targetType: artifactRef.type,
+        targetId: artifactRef.id,
+        relation: 'ref',
+        containerType: 'idea_workspace',
+        containerId: ideaId,
+        blockId: objectId,
+      });
+    } catch {
+      /* best-effort — link_graph_edges table may not exist */
+    }
+
+    res.status(201).json({ ok: true, artifactLink: newLink });
+  })
+);
+
+router.delete(
+  '/my-ideas/:id/objects/:objectId/artifacts/:artifactType/:artifactId',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const { id: ideaId, objectId, artifactType, artifactId } = req.params;
+    if (!ideaId || !objectId || !artifactType || !artifactId) {
+      return res.status(400).json({ error: 'Missing required params' });
+    }
+
+    if (!(await requireTables(res, ['my_idea_maps']))) return;
+
+    const map = await queryHelpers.queryOne<any>(
+      `SELECT id, nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!map) return res.status(404).json({ error: 'Idea map not found' });
+
+    let nodes: any[];
+    try {
+      const parsed = JSON.parse(map.nodes_json || '[]');
+      nodes = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      nodes = [];
+    }
+
+    const nodeIdx = nodes.findIndex((n: any) => String(n.id) === String(objectId));
+    if (nodeIdx === -1) return res.status(404).json({ error: 'Object not found' });
+
+    const node = nodes[nodeIdx];
+    if (!node.data || typeof node.data !== 'object') node.data = {};
+    const links: any[] = Array.isArray(node.data.artifactLinks)
+      ? node.data.artifactLinks
+      : Array.isArray(node.artifactLinks) ? node.artifactLinks : [];
+    const filtered = links.filter(
+      (l: any) => !(l.artifactRef?.type === artifactType && l.artifactRef?.id === artifactId)
+    );
+    if (filtered.length === links.length)
+      return res.status(404).json({ error: 'Artifact link not found' });
+
+    node.data.artifactLinks = filtered.length > 0 ? filtered : undefined;
+    node.artifactLinks = filtered.length > 0 ? filtered : undefined;
+    nodes[nodeIdx] = node;
+
+    await queryHelpers.queryRun(
+      `UPDATE my_idea_maps SET nodes_json = ?, updated_at = ${nowSql()} WHERE id = ?`,
+      [JSON.stringify(nodes), map.id]
+    );
+
+    // V51-04: Remove corresponding LinkGraph edge on detach (scoped to block_id)
+    try {
+      const lgCols = await getTableColumns('link_graph_edges');
+      if (lgCols && lgCols.size > 0) {
+        const hasBlockId = lgCols.has('block_id');
+        if (hasBlockId) {
+          await queryHelpers.queryRun(
+            `DELETE FROM link_graph_edges WHERE source_type = 'idea' AND source_id = ? AND target_type = ? AND target_id = ? AND block_id = ?`,
+            [ideaId, artifactType, artifactId, objectId]
+          );
+        } else {
+          await queryHelpers.queryRun(
+            `DELETE FROM link_graph_edges WHERE source_type = 'idea' AND source_id = ? AND target_type = ? AND target_id = ?`,
+            [ideaId, artifactType, artifactId]
+          );
+        }
+      }
+    } catch {
+      /* best-effort — link_graph_edges may not exist */
+    }
+
+    res.json({ ok: true });
+  })
+);
+
+router.get(
+  '/my-ideas/:id/objects/:objectId/artifacts',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const { id: ideaId, objectId } = req.params;
+    if (!ideaId || !objectId) return res.status(400).json({ error: 'Missing params' });
+
+    if (!(await requireTables(res, ['my_idea_maps']))) return;
+
+    const map = await queryHelpers.queryOne<any>(
+      `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!map) return res.status(404).json({ error: 'Idea map not found' });
+
+    let nodes: any[];
+    try {
+      const parsed = JSON.parse(map.nodes_json || '[]');
+      nodes = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      nodes = [];
+    }
+
+    const node = nodes.find((n: any) => String(n.id) === String(objectId));
+    if (!node) return res.status(404).json({ error: 'Object not found' });
+
+    const links = Array.isArray(node.data?.artifactLinks)
+      ? node.data.artifactLinks
+      : Array.isArray(node.artifactLinks) ? node.artifactLinks : [];
+    res.json({ artifactLinks: links });
+  })
+);
+
+// ============================================================================
+// V51-02: Chat-to-workspace handoff endpoint
+// ============================================================================
+
+const ChatHandoffBodySchema = z.object({
+  title: z.string().min(1).max(500),
+  seedText: z.string().default(''),
+  preferredSystem: z.enum(['mindmap', 'process_flow', 'table', 'whiteboard']).optional(),
+  templateId: z.string().optional(),
+  startMode: z.enum(['describe_with_ai', 'blank_canvas', 'use_template']).optional(),
+  structuredBrief: z
+    .object({
+      problem: z.string().optional(),
+      currentState: z.string().optional(),
+      desiredOutcome: z.string().optional(),
+      constraints: z.string().optional(),
+      evidence: z.string().optional(),
+    })
+    .optional(),
+  sourceConversationId: z.string().optional(),
+  sourceMessageId: z.string().optional(),
+});
+
+router.post(
+  '/my-ideas/from-chat',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const parsed = ChatHandoffBodySchema.safeParse(req.body);
+    if (!parsed.success)
+      return res.status(400).json({ error: 'Invalid body', details: parsed.error.flatten() });
+
+    const {
+      title,
+      seedText,
+      preferredSystem,
+      templateId,
+      startMode,
+      structuredBrief,
+      sourceConversationId,
+      sourceMessageId,
+    } = parsed.data;
+
+    if (!(await requireTables(res, ['my_ideas', 'my_idea_maps']))) return;
+
+    const ideaId = `idea-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const now = new Date().toISOString();
+
+    const briefJson = structuredBrief ? JSON.stringify(structuredBrief) : null;
+    const body =
+      seedText ||
+      (structuredBrief
+        ? [structuredBrief.problem, structuredBrief.currentState, structuredBrief.desiredOutcome]
+            .filter(Boolean)
+            .join('\n\n')
+        : '');
+
+    await queryHelpers.queryRun(
+      `INSERT INTO my_ideas (id, user_id, organization_id, title, body, seed_text, stage, source_type, source_conversation_id, source_message_id, area, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'spark', 'chat', ?, ?, ?, ?, ?)`,
+      [
+        ideaId,
+        userId,
+        orgId,
+        title,
+        body,
+        seedText,
+        sourceConversationId || null,
+        sourceMessageId || null,
+        null,
+        now,
+        now,
+      ]
+    );
+
+    const mapId = `map-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const extensions: Record<string, unknown> = {};
+    if (templateId) extensions.templateId = templateId;
+    if (startMode) extensions.startMode = startMode;
+    if (briefJson) extensions.structuredBrief = structuredBrief;
+
+    await queryHelpers.queryRun(
+      `INSERT INTO my_idea_maps (id, idea_id, user_id, organization_id, nodes_json, edges_json, preferred_tool, extensions_json, schema_version, created_at, updated_at)
+       VALUES (?, ?, ?, ?, '[]', '[]', ?, ?, 3, ?, ?)`,
+      [mapId, ideaId, userId, orgId, preferredSystem || null, JSON.stringify(extensions), now, now]
+    );
+
+    res.status(201).json({
+      ok: true,
+      ideaId,
+      mapId,
+      preferredSystem: preferredSystem || null,
+      startMode: startMode || 'blank_canvas',
+    });
   })
 );
 
@@ -5136,7 +5466,7 @@ router.post(
       : [];
 
     if (!ideaId) return res.status(400).json({ error: 'Missing idea id' });
-    if (!['initiative', 'task_set', 'decision', 'team_chat'].includes(target)) {
+    if (!['initiative', 'task_set', 'decision', 'team_chat', 'report', 'presentation'].includes(target)) {
       return res.status(400).json({ error: 'Invalid target' });
     }
 
@@ -5226,9 +5556,28 @@ router.post(
 
       add('organization_id', orgId);
       add('name', safeTitle.slice(0, 255));
-      add('summary', (safeExpansion || safeBody).slice(0, 5000) || null);
+
+      // V51-15: When nodeIds provided, enrich summary with selected node labels
+      let initSummary = (safeExpansion || safeBody).slice(0, 5000) || null;
+      if (nodeIds.length > 0) {
+        try {
+          const mapRow = await queryHelpers.queryOne<any>(
+            `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? LIMIT 1`,
+            [ideaId, userId]
+          );
+          const allNodes: any[] = mapRow?.nodes_json ? JSON.parse(mapRow.nodes_json) : [];
+          const nodeIdSet = new Set(nodeIds);
+          const selectedLabels = allNodes
+            .filter((n: any) => nodeIdSet.has(String(n?.id)))
+            .map((n: any) => String(n?.data?.label || n?.data?.text || '').trim())
+            .filter(Boolean);
+          if (selectedLabels.length > 0) {
+            initSummary = `Selected elements: ${selectedLabels.join(', ')}\n\n${initSummary || ''}`.slice(0, 5000);
+          }
+        } catch { /* best-effort */ }
+      }
+      add('summary', initSummary);
       add('area', idea?.area ? String(idea.area).slice(0, 120) : null);
-      // Optional: link as owner fields when present
       add('owner_execution_id', userId);
       add('owner_business_id', userId);
       add('sponsor_id', userId);
@@ -5277,7 +5626,27 @@ router.post(
         summary: safeExpansion || safeBody,
       });
 
-      const steps = nextSteps.length > 0 ? nextSteps.slice(0, 20) : [safeTitle];
+      // V51-15: When nodeIds provided, use selected nodes' labels as task titles
+      let steps: string[];
+      if (nodeIds.length > 0) {
+        try {
+          const mapRow = await queryHelpers.queryOne<any>(
+            `SELECT nodes_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? LIMIT 1`,
+            [ideaId, userId]
+          );
+          const allNodes: any[] = mapRow?.nodes_json ? JSON.parse(mapRow.nodes_json) : [];
+          const nodeIdSet = new Set(nodeIds);
+          const selectedLabels = allNodes
+            .filter((n: any) => nodeIdSet.has(String(n?.id)))
+            .map((n: any) => String(n?.data?.label || n?.data?.text || '').trim())
+            .filter(Boolean);
+          steps = selectedLabels.length > 0 ? selectedLabels.slice(0, 20) : [safeTitle];
+        } catch {
+          steps = nextSteps.length > 0 ? nextSteps.slice(0, 20) : [safeTitle];
+        }
+      } else {
+        steps = nextSteps.length > 0 ? nextSteps.slice(0, 20) : [safeTitle];
+      }
       const taskIds: string[] = [];
 
       const baseTags = Array.from(new Set([`idea:${ideaId}`, ...tags].filter(Boolean)));
@@ -5437,6 +5806,146 @@ router.post(
         promotedTo: 'decision',
         promotedEntityId: decisionId,
         created: { decisionId },
+        sourceSessionId: toolSessionId,
+      });
+    }
+
+    // ----- Convert: Report -----
+    if (target === 'report') {
+      const reportsTbl = await getTableColumns('reports');
+      if (!reportsTbl || reportsTbl.size === 0) {
+        return res.status(501).json({ error: 'Reports table not available' });
+      }
+      const toolSessionId = await createMyWorkToolSession({
+        userId,
+        orgId,
+        sourceType: 'idea',
+        sourceId: ideaId,
+        title: safeTitle,
+        summary: safeExpansion || safeBody,
+      });
+
+      const reportId = uuidv4();
+      const now = new Date().toISOString();
+      const insertCols: string[] = ['id'];
+      const insertVals: string[] = ['?'];
+      const insertParams: any[] = [reportId];
+      const add = (col: string, val: any) => {
+        if (!reportsTbl.has(col)) return;
+        insertCols.push(col);
+        insertVals.push('?');
+        insertParams.push(val);
+      };
+
+      add('organization_id', orgId);
+      add('user_id', userId);
+      add('created_by', userId);
+      add('title', safeTitle.slice(0, 255));
+      add('description', [
+        safeBody ? `Idea:\n${safeBody}` : null,
+        safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
+      ].filter(Boolean).join('\n').slice(0, 12000));
+      add('status', 'draft');
+      add('source_type', 'idea');
+      add('source_id', ideaId);
+      add('tags', JSON.stringify(tags));
+      add('created_at', now);
+      add('updated_at', now);
+
+      await queryHelpers.queryRun(
+        `INSERT INTO reports (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+        insertParams
+      );
+
+      await promote('report', reportId);
+
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'report',
+        sourceId: reportId,
+        targetType: 'idea',
+        targetId: ideaId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: toolSessionId,
+      });
+
+      return res.json({
+        promotedTo: 'report',
+        promotedEntityId: reportId,
+        outputId: reportId,
+        created: { reportId },
+        sourceSessionId: toolSessionId,
+      });
+    }
+
+    // ----- Convert: Presentation -----
+    if (target === 'presentation') {
+      const presTbl = await getTableColumns('presentations');
+      if (!presTbl || presTbl.size === 0) {
+        return res.status(501).json({ error: 'Presentations table not available' });
+      }
+      const toolSessionId = await createMyWorkToolSession({
+        userId,
+        orgId,
+        sourceType: 'idea',
+        sourceId: ideaId,
+        title: safeTitle,
+        summary: safeExpansion || safeBody,
+      });
+
+      const presId = uuidv4();
+      const now = new Date().toISOString();
+      const insertCols: string[] = ['id'];
+      const insertVals: string[] = ['?'];
+      const insertParams: any[] = [presId];
+      const add = (col: string, val: any) => {
+        if (!presTbl.has(col)) return;
+        insertCols.push(col);
+        insertVals.push('?');
+        insertParams.push(val);
+      };
+
+      add('organization_id', orgId);
+      add('user_id', userId);
+      add('created_by', userId);
+      add('title', safeTitle.slice(0, 255));
+      add('description', [
+        safeBody ? `Idea:\n${safeBody}` : null,
+        safeExpansion ? `\nAI expansion:\n${safeExpansion}` : null,
+      ].filter(Boolean).join('\n').slice(0, 12000));
+      add('status', 'draft');
+      add('source_type', 'idea');
+      add('source_id', ideaId);
+      add('tags', JSON.stringify(tags));
+      add('created_at', now);
+      add('updated_at', now);
+
+      await queryHelpers.queryRun(
+        `INSERT INTO presentations (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+        insertParams
+      );
+
+      await promote('presentation', presId);
+
+      await linkGraphAddEdge({
+        orgId,
+        userId,
+        sourceType: 'presentation',
+        sourceId: presId,
+        targetType: 'idea',
+        targetId: ideaId,
+        relation: 'ref',
+        containerType: 'mywork_convert',
+        containerId: toolSessionId,
+      });
+
+      return res.json({
+        promotedTo: 'presentation',
+        promotedEntityId: presId,
+        outputId: presId,
+        created: { presentationId: presId },
         sourceSessionId: toolSessionId,
       });
     }

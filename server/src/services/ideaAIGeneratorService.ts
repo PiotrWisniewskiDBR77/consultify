@@ -34,7 +34,21 @@ export type GeneratorType =
   | 'process_summary'
   | 'vsm_generator'
   | 'sticky_summarize'
-  | 'vsm_future_state';
+  | 'vsm_future_state'
+  // V51-01: Artifact linking AI handlers
+  | 'ai_retrieve_artifacts'
+  | 'ai_propose_attachments'
+  | 'ai_build_linked_table'
+  | 'ai_autofill_mappings'
+  // V51-05: Whiteboard facilitation handlers
+  | 'wb_find_themes'
+  | 'wb_name_clusters'
+  | 'wb_to_map_branches'
+  | 'wb_to_table'
+  | 'wb_extract_actions'
+  // V51-06: Table AI handlers
+  | 'table_rows'
+  | 'table_simplify';
 
 export type CanvasTool = 'process_flow' | 'mindmap' | 'table' | 'whiteboard';
 
@@ -211,12 +225,14 @@ const WhiteboardOrganizeSchema = z.object({
       nodeIds: z.array(z.string()),
     })
   ),
-  repositionedNodes: z.array(
-    z.object({
-      id: z.string(),
-      position: z.object({ x: z.number(), y: z.number() }),
-    })
-  ).optional(),
+  repositionedNodes: z
+    .array(
+      z.object({
+        id: z.string(),
+        position: z.object({ x: z.number(), y: z.number() }),
+      })
+    )
+    .optional(),
 });
 
 const SummarySchema = z.object({
@@ -229,9 +245,13 @@ const SummarySchema = z.object({
 const NodeContextSchema = z.object({
   summary: z.string(),
   relatedInitiatives: z.array(z.object({ title: z.string(), relevance: z.string() })),
-  relatedRisks: z.array(z.object({ text: z.string(), severity: z.enum(['low', 'medium', 'high']) })),
+  relatedRisks: z.array(
+    z.object({ text: z.string(), severity: z.enum(['low', 'medium', 'high']) })
+  ),
   relatedKPIs: z.array(z.object({ name: z.string(), value: z.string(), status: z.string() })),
-  suggestions: z.array(z.object({ text: z.string(), type: z.enum(['expand', 'connect', 'challenge', 'evidence']) })),
+  suggestions: z.array(
+    z.object({ text: z.string(), type: z.enum(['expand', 'connect', 'challenge', 'evidence']) })
+  ),
 });
 
 const AutoClusterSchema = z.object({
@@ -247,29 +267,46 @@ const AutoClusterSchema = z.object({
 });
 
 const NodeExpandSchema = z.object({
-  subSteps: z.array(z.object({ id: z.string(), label: z.string(), shape: z.string().optional(), description: z.string().optional() })),
+  subSteps: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      shape: z.string().optional(),
+      description: z.string().optional(),
+    })
+  ),
   risks: z.array(z.object({ text: z.string(), severity: z.enum(['low', 'medium', 'high']) })),
   metrics: z.array(z.object({ name: z.string(), value: z.string(), unit: z.string() })),
   optimizations: z.array(z.object({ text: z.string(), impact: z.enum(['low', 'medium', 'high']) })),
 });
 
 const ProcessCoachSchema = z.object({
-  insights: z.array(z.object({
-    type: z.enum(['missing_step', 'too_many_handoffs', 'parallel_opportunity', 'validation_gap', 'bottleneck']),
-    message: z.string(),
-    affectedNodeIds: z.array(z.string()).optional(),
-    suggestion: z.string(),
-    confidence: z.number().min(0).max(1),
-  })),
+  insights: z.array(
+    z.object({
+      type: z.enum([
+        'missing_step',
+        'too_many_handoffs',
+        'parallel_opportunity',
+        'validation_gap',
+        'bottleneck',
+      ]),
+      message: z.string(),
+      affectedNodeIds: z.array(z.string()).optional(),
+      suggestion: z.string(),
+      confidence: z.number().min(0).max(1),
+    })
+  ),
 });
 
 const NextStepSchema = z.object({
-  steps: z.array(z.object({
-    id: z.string(),
-    label: z.string(),
-    shape: z.enum(['action', 'decision', 'end']),
-    rationale: z.string().optional(),
-  })),
+  steps: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      shape: z.enum(['action', 'decision', 'end']),
+      rationale: z.string().optional(),
+    })
+  ),
 });
 
 const ProcessSummarySchema = z.object({
@@ -283,31 +320,39 @@ const ProcessSummarySchema = z.object({
 });
 
 const VSMGeneratorSchema = z.object({
-  addNodes: z.array(z.object({
-    id: z.string(),
-    label: z.string(),
-    shape: z.string(),
-    position: z.object({ x: z.number(), y: z.number() }).optional(),
-    data: z.object({
-      cycleTime: z.string().optional(),
-      changeoverTime: z.string().optional(),
-      uptimePercent: z.number().optional(),
-      batchSize: z.number().optional(),
-      operators: z.number().optional(),
-      inventory: z.number().optional(),
-    }).optional(),
-  })),
-  addEdges: z.array(z.object({
-    id: z.string(),
-    source: z.string(),
-    target: z.string(),
-    label: z.string().optional(),
-  })),
-  timeline: z.object({
-    leadTime: z.string(),
-    valueAddedTime: z.string(),
-    pce: z.number(),
-  }).optional(),
+  addNodes: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      shape: z.string(),
+      position: z.object({ x: z.number(), y: z.number() }).optional(),
+      data: z
+        .object({
+          cycleTime: z.string().optional(),
+          changeoverTime: z.string().optional(),
+          uptimePercent: z.number().optional(),
+          batchSize: z.number().optional(),
+          operators: z.number().optional(),
+          inventory: z.number().optional(),
+        })
+        .optional(),
+    })
+  ),
+  addEdges: z.array(
+    z.object({
+      id: z.string(),
+      source: z.string(),
+      target: z.string(),
+      label: z.string().optional(),
+    })
+  ),
+  timeline: z
+    .object({
+      leadTime: z.string(),
+      valueAddedTime: z.string(),
+      pce: z.number(),
+    })
+    .optional(),
 });
 
 const StickySummarizeSchema = z.object({
@@ -316,28 +361,183 @@ const StickySummarizeSchema = z.object({
 });
 
 const VSMFutureStateSchema = z.object({
-  addNodes: z.array(z.object({
-    id: z.string(),
-    label: z.string(),
-    shape: z.string(),
-    data: z.object({
-      cycleTime: z.string().optional(),
-      changeoverTime: z.string().optional(),
-      uptimePercent: z.number().optional(),
-      batchSize: z.number().optional(),
-      operators: z.number().optional(),
-    }).optional(),
-  })),
-  addEdges: z.array(z.object({
-    id: z.string(),
-    source: z.string(),
-    target: z.string(),
-  })),
-  improvements: z.array(z.object({
-    text: z.string(),
-    impact: z.string(),
-    affectedNodeIds: z.array(z.string()).optional(),
-  })),
+  addNodes: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      shape: z.string(),
+      data: z
+        .object({
+          cycleTime: z.string().optional(),
+          changeoverTime: z.string().optional(),
+          uptimePercent: z.number().optional(),
+          batchSize: z.number().optional(),
+          operators: z.number().optional(),
+        })
+        .optional(),
+    })
+  ),
+  addEdges: z.array(
+    z.object({
+      id: z.string(),
+      source: z.string(),
+      target: z.string(),
+    })
+  ),
+  improvements: z.array(
+    z.object({
+      text: z.string(),
+      impact: z.string(),
+      affectedNodeIds: z.array(z.string()).optional(),
+    })
+  ),
+});
+
+// V51-01: Artifact linking AI schemas
+const ArtifactRetrievalSchema = z.object({
+  artifacts: z.array(
+    z.object({
+      type: z.string(),
+      id: z.string(),
+      title: z.string(),
+      relevance: z.string(),
+      confidence: z.number().min(0).max(1),
+      rationale: z.string(),
+    })
+  ),
+});
+
+const AttachmentProposalSchema = z.object({
+  proposals: z.array(
+    z.object({
+      objectId: z.string(),
+      objectLabel: z.string(),
+      artifactType: z.string(),
+      artifactId: z.string(),
+      artifactTitle: z.string(),
+      linkRole: z.enum(['context', 'source', 'output', 'evidence', 'related']),
+      rationale: z.string(),
+      confidence: z.number().min(0).max(1),
+    })
+  ),
+});
+
+const LinkedTableSchema = z.object({
+  columns: z.array(
+    z.object({
+      key: z.string(),
+      header: z.string(),
+      sourceField: z.string().optional(),
+    })
+  ),
+  rows: z.array(
+    z.object({
+      artifactType: z.string(),
+      artifactId: z.string(),
+      artifactTitle: z.string(),
+      cells: z.record(z.string(), z.unknown()),
+    })
+  ),
+});
+
+const AutofillMappingsSchema = z.object({
+  mappings: z.array(
+    z.object({
+      columnKey: z.string(),
+      sourceField: z.string(),
+      transform: z.string().optional(),
+      rationale: z.string(),
+    })
+  ),
+});
+
+// V51-05: Whiteboard facilitation schemas
+const WbFindThemesSchema = z.object({
+  themes: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      description: z.string(),
+      nodeIds: z.array(z.string()),
+      confidence: z.number().min(0).max(1),
+    })
+  ),
+});
+
+const WbNameClustersSchema = z.object({
+  namedClusters: z.array(
+    z.object({
+      clusterId: z.string(),
+      name: z.string(),
+      rationale: z.string(),
+    })
+  ),
+});
+
+const WbToMapBranchesSchema = z.object({
+  rootLabel: z.string(),
+  branches: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      children: z.array(
+        z.object({
+          id: z.string(),
+          label: z.string(),
+        })
+      ),
+    })
+  ),
+});
+
+const WbToTableSchema = z.object({
+  columns: z.array(
+    z.object({
+      key: z.string(),
+      header: z.string(),
+    })
+  ),
+  rows: z.array(
+    z.object({
+      cells: z.record(z.string(), z.string()),
+      sourceNodeId: z.string().optional(),
+    })
+  ),
+});
+
+const WbExtractActionsSchema = z.object({
+  actions: z.array(
+    z.object({
+      id: z.string(),
+      text: z.string(),
+      owner: z.string().optional(),
+      priority: z.enum(['low', 'medium', 'high']).optional(),
+      sourceNodeId: z.string().optional(),
+    })
+  ),
+});
+
+// V51-06: Table AI schemas
+const TableRowsSchema = z.object({
+  rows: z.array(
+    z.object({
+      id: z.string(),
+      cells: z.record(z.string(), z.unknown()),
+      rationale: z.string().optional(),
+    })
+  ),
+});
+
+const TableSimplifySchema = z.object({
+  removedColumnKeys: z.array(z.string()),
+  mergedColumns: z.array(
+    z.object({
+      sourceKeys: z.array(z.string()),
+      targetKey: z.string(),
+      targetHeader: z.string(),
+    })
+  ),
+  rationale: z.string(),
 });
 
 const SCHEMA_MAP: Record<GeneratorType, z.ZodSchema<any>> = {
@@ -362,6 +562,20 @@ const SCHEMA_MAP: Record<GeneratorType, z.ZodSchema<any>> = {
   vsm_generator: VSMGeneratorSchema,
   sticky_summarize: StickySummarizeSchema,
   vsm_future_state: VSMFutureStateSchema,
+  // V51-01: Artifact linking
+  ai_retrieve_artifacts: ArtifactRetrievalSchema,
+  ai_propose_attachments: AttachmentProposalSchema,
+  ai_build_linked_table: LinkedTableSchema,
+  ai_autofill_mappings: AutofillMappingsSchema,
+  // V51-05: Whiteboard facilitation
+  wb_find_themes: WbFindThemesSchema,
+  wb_name_clusters: WbNameClustersSchema,
+  wb_to_map_branches: WbToMapBranchesSchema,
+  wb_to_table: WbToTableSchema,
+  wb_extract_actions: WbExtractActionsSchema,
+  // V51-06: Table AI
+  table_rows: TableRowsSchema,
+  table_simplify: TableSimplifySchema,
 };
 
 // ── Context builder ──────────────────────────────────────────────────────────
@@ -379,7 +593,9 @@ async function buildOrgContext(orgId: string): Promise<OrgContext> {
       ctx.size = org.size;
       ctx.country = org.country;
     }
-  } catch { /* table may not exist */ }
+  } catch {
+    /* table may not exist */
+  }
 
   try {
     const siri = await queryHelpers.queryOne<any>(
@@ -387,7 +603,9 @@ async function buildOrgContext(orgId: string): Promise<OrgContext> {
       [orgId]
     );
     if (siri?.overall_score != null) ctx.siriScore = Number(siri.overall_score);
-  } catch { /* optional */ }
+  } catch {
+    /* optional */
+  }
 
   try {
     const adma = await queryHelpers.queryOne<any>(
@@ -395,7 +613,9 @@ async function buildOrgContext(orgId: string): Promise<OrgContext> {
       [orgId]
     );
     if (adma?.overall_score != null) ctx.admaScore = Number(adma.overall_score);
-  } catch { /* optional */ }
+  } catch {
+    /* optional */
+  }
 
   try {
     const initiatives = await queryHelpers.queryAll<any>(
@@ -403,7 +623,9 @@ async function buildOrgContext(orgId: string): Promise<OrgContext> {
       [orgId]
     );
     if (initiatives?.length) ctx.activeInitiatives = initiatives.map((i: any) => String(i.title));
-  } catch { /* optional */ }
+  } catch {
+    /* optional */
+  }
 
   try {
     const kpis = await queryHelpers.queryAll<any>(
@@ -411,7 +633,9 @@ async function buildOrgContext(orgId: string): Promise<OrgContext> {
       [orgId]
     );
     if (kpis?.length) ctx.kpis = kpis.map((k: any) => String(k.name));
-  } catch { /* optional */ }
+  } catch {
+    /* optional */
+  }
 
   return ctx;
 }
@@ -616,6 +840,93 @@ Obecne elementy VSM: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?
       : `You are a Lean transformation expert. Analyze the current state VSM and propose a future state with optimizations: reduced cycle times, eliminated waste, improved flow. List specific improvements with impact. Respond ONLY in JSON.${orgBlock}
 
 Current VSM elements: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: ${l}`).join(', ') || 'none'}`,
+
+    // V51-01: Artifact linking prompts
+    ai_retrieve_artifacts: isPl
+      ? `Jesteś asystentem platformy konsultingowej. Na podstawie opisu pomysłu i kontekstu firmy, zaproponuj artefakty platformy (inicjatywy, zadania, decyzje, raporty, prezentacje, narzędzia, notatki, modele finansowe), które mogą być powiązane z tym pomysłem. Dla każdego artefaktu podaj typ, tytuł, relevance, confidence (0-1) i uzasadnienie. Odpowiedz TYLKO w JSON.${orgBlock}
+
+Elementy workspace: ${existingNodeLabels.join(', ') || 'brak'}`
+      : `You are a consulting platform assistant. Based on the idea description and company context, suggest platform artifacts (initiatives, tasks, decisions, reports, presentations, tools, notebooks, financial models) that may be relevant to this idea. For each artifact provide type, title, relevance, confidence (0-1), and rationale. Respond ONLY in JSON.${orgBlock}
+
+Workspace elements: ${existingNodeLabels.join(', ') || 'none'}`,
+
+    ai_propose_attachments: isPl
+      ? `Jesteś asystentem platformy konsultingowej. Przeanalizuj elementy workspace i zaproponuj, które artefakty platformy powinny być powiązane z konkretnymi obiektami (węzłami, krokami, wierszami). Dla każdego powiązania podaj: objectId, objectLabel, artifactType, artifactTitle, linkRole (context/source/output/evidence/related), rationale i confidence. Odpowiedz TYLKO w JSON.${orgBlock}
+
+Elementy workspace: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: ${l}`).join(', ') || 'brak'}`
+      : `You are a consulting platform assistant. Analyze workspace elements and propose which platform artifacts should be linked to specific objects (nodes, steps, rows). For each proposal provide: objectId, objectLabel, artifactType, artifactTitle, linkRole (context/source/output/evidence/related), rationale, and confidence. Respond ONLY in JSON.${orgBlock}
+
+Workspace elements: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: ${l}`).join(', ') || 'none'}`,
+
+    ai_build_linked_table: isPl
+      ? `Jesteś analitykiem biznesowym. Na podstawie powiązanych artefaktów i kontekstu pomysłu, zaproponuj strukturę tabeli porównawczej: kolumny (z opcjonalnym sourceField wskazującym pole artefaktu) i wiersze (każdy wiersz to jeden artefakt z wypełnionymi komórkami). Odpowiedz TYLKO w JSON.${orgBlock}
+
+Elementy workspace: ${existingNodeLabels.join(', ') || 'brak'}`
+      : `You are a business analyst. Based on linked artifacts and idea context, propose a comparison table structure: columns (with optional sourceField pointing to artifact field) and rows (each row is one artifact with populated cells). Respond ONLY in JSON.${orgBlock}
+
+Workspace elements: ${existingNodeLabels.join(', ') || 'none'}`,
+
+    ai_autofill_mappings: isPl
+      ? `Jesteś analitykiem danych. Przeanalizuj kolumny tabeli i dostępne pola artefaktów, a następnie zaproponuj mapowania autofill: która kolumna powinna być wypełniana z jakiego pola artefaktu, z opcjonalną transformacją. Odpowiedz TYLKO w JSON.${orgBlock}`
+      : `You are a data analyst. Analyze table columns and available artifact fields, then propose autofill mappings: which column should be populated from which artifact field, with optional transformation. Respond ONLY in JSON.${orgBlock}`,
+
+    // V51-05: Whiteboard facilitation prompts
+    wb_find_themes: isPl
+      ? `Jesteś facylitatorem warsztatów strategicznych. Przeanalizuj sticky notes na tablicy i zidentyfikuj 3-6 tematów przewodnich. Dla każdego tematu podaj nazwę, opis, listę nodeIds i confidence. Odpowiedz TYLKO w JSON.${orgBlock}
+
+Elementy: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: ${l}`).join(', ') || 'brak'}`
+      : `You are a strategic workshop facilitator. Analyze sticky notes on the whiteboard and identify 3-6 overarching themes. For each theme provide name, description, list of nodeIds, and confidence. Respond ONLY in JSON.${orgBlock}
+
+Elements: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: ${l}`).join(', ') || 'none'}`,
+
+    wb_name_clusters: isPl
+      ? `Jesteś facylitatorem warsztatów. Nadaj nazwy istniejącym klastrom na tablicy na podstawie ich zawartości. Odpowiedz TYLKO w JSON.${orgBlock}
+
+Elementy: ${existingNodeLabels.join(', ') || 'brak'}`
+      : `You are a workshop facilitator. Name existing clusters on the whiteboard based on their content. Respond ONLY in JSON.${orgBlock}
+
+Elements: ${existingNodeLabels.join(', ') || 'none'}`,
+
+    wb_to_map_branches: isPl
+      ? `Jesteś ekspertem od strukturyzacji myśli. Przekształć klastry sticky notes w strukturę mapy myśli: jeden root z gałęziami (branches), każda gałąź z dziećmi. Odpowiedz TYLKO w JSON.${orgBlock}
+
+Elementy: ${existingNodeLabels.join(', ') || 'brak'}`
+      : `You are a thought structuring expert. Transform sticky note clusters into a mind map structure: one root with branches, each branch with children. Respond ONLY in JSON.${orgBlock}
+
+Elements: ${existingNodeLabels.join(', ') || 'none'}`,
+
+    wb_to_table: isPl
+      ? `Jesteś analitykiem biznesowym. Przekształć sticky notes z tablicy w ustrukturyzowaną tabelę: zaproponuj kolumny i wypełnij wiersze danymi z notatek. Odpowiedz TYLKO w JSON.${orgBlock}
+
+Elementy: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: ${l}`).join(', ') || 'brak'}`
+      : `You are a business analyst. Transform whiteboard sticky notes into a structured table: propose columns and populate rows with data from notes. Respond ONLY in JSON.${orgBlock}
+
+Elements: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: ${l}`).join(', ') || 'none'}`,
+
+    wb_extract_actions: isPl
+      ? `Jesteś facylitatorem warsztatów. Przeanalizuj sticky notes i wyodrębnij konkretne akcje do wykonania. Dla każdej akcji podaj tekst, opcjonalnego właściciela i priorytet. Odpowiedz TYLKO w JSON.${orgBlock}
+
+Elementy: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: ${l}`).join(', ') || 'brak'}`
+      : `You are a workshop facilitator. Analyze sticky notes and extract concrete action items. For each action provide text, optional owner, and priority. Respond ONLY in JSON.${orgBlock}
+
+Elements: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: ${l}`).join(', ') || 'none'}`,
+
+    // V51-06: Table AI prompts
+    table_rows: isPl
+      ? `Jesteś analitykiem biznesowym. Na podstawie opisu wyzwania i istniejących kolumn tabeli, wygeneruj 5-10 wierszy z realistycznymi danymi. Każdy wiersz ma cells (klucz kolumny → wartość). Odpowiedz TYLKO w JSON.${orgBlock}
+
+Istniejące kolumny: ${(ctx as any).columns?.map?.((c: any) => c.header || c.key)?.join(', ') || existingNodeLabels.join(', ') || 'brak'}`
+      : `You are a business analyst. Based on the challenge description and existing table columns, generate 5-10 rows with realistic data. Each row has cells (column key → value). Respond ONLY in JSON.${orgBlock}
+
+Existing columns: ${(ctx as any).columns?.map?.((c: any) => c.header || c.key)?.join(', ') || existingNodeLabels.join(', ') || 'none'}`,
+
+    table_simplify: isPl
+      ? `Jesteś analitykiem danych. Przeanalizuj tabelę i zaproponuj uproszczenie: które kolumny usunąć (nieistotne, puste), które połączyć (redundantne). Podaj uzasadnienie. Odpowiedz TYLKO w JSON.${orgBlock}
+
+Istniejące kolumny: ${existingNodeLabels.join(', ') || 'brak'}`
+      : `You are a data analyst. Analyze the table and propose simplification: which columns to remove (irrelevant, empty), which to merge (redundant). Provide rationale. Respond ONLY in JSON.${orgBlock}
+
+Existing columns: ${existingNodeLabels.join(', ') || 'none'}`,
   };
 
   return prompts[generatorType] || prompts.suggestions;
@@ -626,11 +937,18 @@ function buildUserMessage(ctx: GeneratorContext): string {
   const parts: string[] = [];
 
   if (ctx.title) parts.push(isPl ? `Tytuł: ${ctx.title}` : `Title: ${ctx.title}`);
-  if (ctx.seedText) parts.push(isPl ? `Opis:\n${ctx.seedText.slice(0, 3000)}` : `Description:\n${ctx.seedText.slice(0, 3000)}`);
+  if (ctx.seedText)
+    parts.push(
+      isPl
+        ? `Opis:\n${ctx.seedText.slice(0, 3000)}`
+        : `Description:\n${ctx.seedText.slice(0, 3000)}`
+    );
   if (ctx.branch) parts.push(isPl ? `Gałąź: ${ctx.branch}` : `Branch: ${ctx.branch}`);
   if (ctx.area) parts.push(isPl ? `Obszar: ${ctx.area}` : `Area: ${ctx.area}`);
 
-  return parts.join('\n\n') || (isPl ? 'Brak opisu wyzwania.' : 'No challenge description provided.');
+  return (
+    parts.join('\n\n') || (isPl ? 'Brak opisu wyzwania.' : 'No challenge description provided.')
+  );
 }
 
 // ── Main generator function ──────────────────────────────────────────────────
@@ -708,7 +1026,9 @@ function formatAsProposalBatch(
                 lanes: lanes.map((l: any, i: number) => ({
                   id: l.id || `lane-${ts}-${i}`,
                   label: l.label,
-                  color: l.color || ['#e0e7ff', '#dbeafe', '#d1fae5', '#fef3c7', '#fce7f3', '#ede9fe'][i % 6],
+                  color:
+                    l.color ||
+                    ['#e0e7ff', '#dbeafe', '#d1fae5', '#fef3c7', '#fce7f3', '#ede9fe'][i % 6],
                 })),
               },
             },
@@ -891,7 +1211,10 @@ function formatAsProposalBatch(
         label: cluster.label,
         type: 'groupNode',
         position: { x: xOffset, y: 0 },
-        data: { label: cluster.label, color: cluster.color || CLUSTER_COLORS[ci % CLUSTER_COLORS.length] },
+        data: {
+          label: cluster.label,
+          color: cluster.color || CLUSTER_COLORS[ci % CLUSTER_COLORS.length],
+        },
       });
       const stickies = cluster.stickies || [];
       for (let si = 0; si < stickies.length; si++) {
@@ -902,7 +1225,11 @@ function formatAsProposalBatch(
           label: s.text,
           type: 'stickyNote',
           position: { x: xOffset + 20 + (si % 2) * 180, y: 60 + Math.floor(si / 2) * 160 },
-          data: { label: s.text, color: s.color || CLUSTER_COLORS[ci % CLUSTER_COLORS.length], parentId: groupId },
+          data: {
+            label: s.text,
+            color: s.color || CLUSTER_COLORS[ci % CLUSTER_COLORS.length],
+            parentId: groupId,
+          },
         });
       }
       xOffset += 420;
@@ -912,45 +1239,61 @@ function formatAsProposalBatch(
       id: batchId,
       tool,
       generatorType,
-      proposals: [{
-        id: `prop-${ts}-wb-clusters`,
-        type: 'graph_patch',
-        rationale: isPl
-          ? `Proponuję ${clusters.length} klastrów tematycznych`
-          : `Proposing ${clusters.length} thematic clusters`,
-        confidence: 0.8,
-        patch: { addNodes, addEdges },
-        status: 'pending',
-      }],
+      proposals: [
+        {
+          id: `prop-${ts}-wb-clusters`,
+          type: 'graph_patch',
+          rationale: isPl
+            ? `Proponuję ${clusters.length} klastrów tematycznych`
+            : `Proposing ${clusters.length} thematic clusters`,
+          confidence: 0.8,
+          patch: { addNodes, addEdges },
+          status: 'pending',
+        },
+      ],
       createdAt: ts,
     };
   }
 
   if (generatorType === 'whiteboard_brainstorm') {
     const stickies = output?.stickies || [];
-    const STICKY_COLORS = ['#fef3c7', '#dbeafe', '#d1fae5', '#fce7f3', '#ede9fe', '#fee2e2', '#e0e7ff'];
+    const STICKY_COLORS = [
+      '#fef3c7',
+      '#dbeafe',
+      '#d1fae5',
+      '#fce7f3',
+      '#ede9fe',
+      '#fee2e2',
+      '#e0e7ff',
+    ];
     const addNodes = stickies.map((s: any, i: number) => ({
       id: s.id || `bs-${ts}-${i}`,
       label: s.text,
       type: 'stickyNote',
       position: { x: 40 + (i % 3) * 200, y: 40 + Math.floor(i / 3) * 180 },
-      data: { label: s.text, color: s.color || STICKY_COLORS[i % STICKY_COLORS.length], rationale: s.rationale },
+      data: {
+        label: s.text,
+        color: s.color || STICKY_COLORS[i % STICKY_COLORS.length],
+        rationale: s.rationale,
+      },
     }));
 
     return {
       id: batchId,
       tool,
       generatorType,
-      proposals: [{
-        id: `prop-${ts}-wb-brainstorm`,
-        type: 'graph_patch',
-        rationale: isPl
-          ? `Proponuję ${addNodes.length} pomysłów`
-          : `Proposing ${addNodes.length} ideas`,
-        confidence: 0.75,
-        patch: { addNodes, addEdges: [] },
-        status: 'pending',
-      }],
+      proposals: [
+        {
+          id: `prop-${ts}-wb-brainstorm`,
+          type: 'graph_patch',
+          rationale: isPl
+            ? `Proponuję ${addNodes.length} pomysłów`
+            : `Proposing ${addNodes.length} ideas`,
+          confidence: 0.75,
+          patch: { addNodes, addEdges: [] },
+          status: 'pending',
+        },
+      ],
       createdAt: ts,
     };
   }
@@ -961,24 +1304,26 @@ function formatAsProposalBatch(
       id: batchId,
       tool,
       generatorType,
-      proposals: [{
-        id: `prop-${ts}-wb-organize`,
-        type: 'graph_patch',
-        rationale: isPl
-          ? `Proponuję ${groups.length} grup logicznych`
-          : `Proposing ${groups.length} logical groups`,
-        confidence: 0.7,
-        patch: {
-          addNodes: groups.map((g: any, i: number) => ({
-            id: g.id || `org-grp-${ts}-${i}`,
-            label: g.label,
-            type: 'groupNode',
-            data: { label: g.label, childIds: g.nodeIds },
-          })),
-          repositionedNodes: output?.repositionedNodes || [],
+      proposals: [
+        {
+          id: `prop-${ts}-wb-organize`,
+          type: 'graph_patch',
+          rationale: isPl
+            ? `Proponuję ${groups.length} grup logicznych`
+            : `Proposing ${groups.length} logical groups`,
+          confidence: 0.7,
+          patch: {
+            addNodes: groups.map((g: any, i: number) => ({
+              id: g.id || `org-grp-${ts}-${i}`,
+              label: g.label,
+              type: 'groupNode',
+              data: { label: g.label, childIds: g.nodeIds },
+            })),
+            repositionedNodes: output?.repositionedNodes || [],
+          },
+          status: 'pending',
         },
-        status: 'pending',
-      }],
+      ],
       createdAt: ts,
     };
   }
@@ -1051,16 +1396,18 @@ function formatAsProposalBatch(
       id: batchId,
       tool,
       generatorType,
-      proposals: [{
-        id: `prop-${ts}-auto-cluster`,
-        type: 'graph_patch',
-        rationale: isPl
-          ? `Proponuję ${clusters.length} klastrów tematycznych`
-          : `Proposing ${clusters.length} thematic clusters`,
-        confidence: 0.8,
-        patch: { addNodes, addEdges: [], moveNodes },
-        status: 'pending',
-      }],
+      proposals: [
+        {
+          id: `prop-${ts}-auto-cluster`,
+          type: 'graph_patch',
+          rationale: isPl
+            ? `Proponuję ${clusters.length} klastrów tematycznych`
+            : `Proposing ${clusters.length} thematic clusters`,
+          confidence: 0.8,
+          patch: { addNodes, addEdges: [], moveNodes },
+          status: 'pending',
+        },
+      ],
       createdAt: ts,
     };
   }
@@ -1070,21 +1417,23 @@ function formatAsProposalBatch(
       id: batchId,
       tool,
       generatorType,
-      proposals: [{
-        id: `prop-${ts}-node-expand`,
-        type: 'graph_patch',
-        rationale: isPl
-          ? `Analiza kroku: ${(output?.subSteps?.length || 0)} pod-kroków, ${(output?.risks?.length || 0)} ryzyk, ${(output?.optimizations?.length || 0)} optymalizacji`
-          : `Step analysis: ${(output?.subSteps?.length || 0)} sub-steps, ${(output?.risks?.length || 0)} risks, ${(output?.optimizations?.length || 0)} optimizations`,
-        confidence: 0.8,
-        patch: {
-          subSteps: output?.subSteps || [],
-          risks: output?.risks || [],
-          metrics: output?.metrics || [],
-          optimizations: output?.optimizations || [],
+      proposals: [
+        {
+          id: `prop-${ts}-node-expand`,
+          type: 'graph_patch',
+          rationale: isPl
+            ? `Analiza kroku: ${output?.subSteps?.length || 0} pod-kroków, ${output?.risks?.length || 0} ryzyk, ${output?.optimizations?.length || 0} optymalizacji`
+            : `Step analysis: ${output?.subSteps?.length || 0} sub-steps, ${output?.risks?.length || 0} risks, ${output?.optimizations?.length || 0} optimizations`,
+          confidence: 0.8,
+          patch: {
+            subSteps: output?.subSteps || [],
+            risks: output?.risks || [],
+            metrics: output?.metrics || [],
+            optimizations: output?.optimizations || [],
+          },
+          status: 'pending',
         },
-        status: 'pending',
-      }],
+      ],
       createdAt: ts,
     };
   }
@@ -1123,16 +1472,18 @@ function formatAsProposalBatch(
       id: batchId,
       tool,
       generatorType,
-      proposals: [{
-        id: `prop-${ts}-next-step`,
-        type: 'graph_patch',
-        rationale: isPl
-          ? `Proponuję ${addNodes.length} następnych kroków`
-          : `Proposing ${addNodes.length} next steps`,
-        confidence: 0.75,
-        patch: { addNodes, addEdges: [] },
-        status: 'pending',
-      }],
+      proposals: [
+        {
+          id: `prop-${ts}-next-step`,
+          type: 'graph_patch',
+          rationale: isPl
+            ? `Proponuję ${addNodes.length} następnych kroków`
+            : `Proposing ${addNodes.length} next steps`,
+          confidence: 0.75,
+          patch: { addNodes, addEdges: [] },
+          status: 'pending',
+        },
+      ],
       createdAt: ts,
     };
   }
@@ -1173,16 +1524,18 @@ function formatAsProposalBatch(
       id: batchId,
       tool,
       generatorType,
-      proposals: [{
-        id: `prop-${ts}-vsm`,
-        type: 'graph_patch',
-        rationale: isPl
-          ? `VSM stanu obecnego: ${addNodes.length} kroków, PCE: ${output?.timeline?.pce ?? '?'}%`
-          : `Current state VSM: ${addNodes.length} steps, PCE: ${output?.timeline?.pce ?? '?'}%`,
-        confidence: 0.8,
-        patch: { addNodes, addEdges, timeline: output?.timeline || null },
-        status: 'pending',
-      }],
+      proposals: [
+        {
+          id: `prop-${ts}-vsm`,
+          type: 'graph_patch',
+          rationale: isPl
+            ? `VSM stanu obecnego: ${addNodes.length} kroków, PCE: ${output?.timeline?.pce ?? '?'}%`
+            : `Current state VSM: ${addNodes.length} steps, PCE: ${output?.timeline?.pce ?? '?'}%`,
+          confidence: 0.8,
+          patch: { addNodes, addEdges, timeline: output?.timeline || null },
+          status: 'pending',
+        },
+      ],
       createdAt: ts,
     };
   }
@@ -1192,24 +1545,32 @@ function formatAsProposalBatch(
       id: batchId,
       tool,
       generatorType,
-      proposals: [{
-        id: `prop-${ts}-sticky-sum`,
-        type: 'graph_patch',
-        rationale: isPl
-          ? `Podsumowanie ${output?.keyThemes?.length || 0} tematów`
-          : `Summary of ${output?.keyThemes?.length || 0} themes`,
-        confidence: 0.8,
-        patch: {
-          addNodes: [{
-            id: `sum-${ts}`,
-            label: output?.summary || '',
-            type: 'stickyNote',
-            data: { label: output?.summary || '', color: '#dbeafe', keyThemes: output?.keyThemes || [] },
-          }],
-          addEdges: [],
+      proposals: [
+        {
+          id: `prop-${ts}-sticky-sum`,
+          type: 'graph_patch',
+          rationale: isPl
+            ? `Podsumowanie ${output?.keyThemes?.length || 0} tematów`
+            : `Summary of ${output?.keyThemes?.length || 0} themes`,
+          confidence: 0.8,
+          patch: {
+            addNodes: [
+              {
+                id: `sum-${ts}`,
+                label: output?.summary || '',
+                type: 'stickyNote',
+                data: {
+                  label: output?.summary || '',
+                  color: '#dbeafe',
+                  keyThemes: output?.keyThemes || [],
+                },
+              },
+            ],
+            addEdges: [],
+          },
+          status: 'pending',
         },
-        status: 'pending',
-      }],
+      ],
       createdAt: ts,
     };
   }
@@ -1231,16 +1592,321 @@ function formatAsProposalBatch(
       id: batchId,
       tool,
       generatorType,
-      proposals: [{
-        id: `prop-${ts}-vsm-future`,
+      proposals: [
+        {
+          id: `prop-${ts}-vsm-future`,
+          type: 'graph_patch',
+          rationale: isPl
+            ? `VSM stanu przyszłego: ${addNodes.length} kroków, ${output?.improvements?.length || 0} usprawnień`
+            : `Future state VSM: ${addNodes.length} steps, ${output?.improvements?.length || 0} improvements`,
+          confidence: 0.8,
+          patch: { addNodes, addEdges, improvements: output?.improvements || [] },
+          status: 'pending',
+        },
+      ],
+      createdAt: ts,
+    };
+  }
+
+  // V51-01: Artifact linking formatters — IDs are LLM-generated suggestions, not verified DB records
+  if (generatorType === 'ai_retrieve_artifacts') {
+    const artifacts = output?.artifacts || [];
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      artifacts,
+      proposals: artifacts.map((a: any, i: number) => ({
+        id: `prop-${ts}-art-${i}`,
         type: 'graph_patch',
-        rationale: isPl
-          ? `VSM stanu przyszłego: ${addNodes.length} kroków, ${(output?.improvements?.length || 0)} usprawnień`
-          : `Future state VSM: ${addNodes.length} steps, ${(output?.improvements?.length || 0)} improvements`,
-        confidence: 0.8,
-        patch: { addNodes, addEdges, improvements: output?.improvements || [] },
+        rationale: a.rationale || `${a.type}: ${a.title}`,
+        confidence: a.confidence || 0.7,
+        patch: {
+          artifactRef: { type: a.type, id: a.id },
+          title: a.title,
+          relevance: a.relevance,
+        },
         status: 'pending',
-      }],
+        needsVerification: true,
+      })),
+      createdAt: ts,
+    };
+  }
+
+  if (generatorType === 'ai_propose_attachments') {
+    const proposals = output?.proposals || [];
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      proposals: proposals.map((p: any, i: number) => ({
+        id: `prop-${ts}-attach-${i}`,
+        type: 'graph_patch',
+        rationale: p.rationale || `Attach ${p.artifactType} to ${p.objectLabel}`,
+        confidence: p.confidence || 0.7,
+        patch: {
+          objectId: p.objectId,
+          objectLabel: p.objectLabel,
+          artifactRef: { type: p.artifactType, id: p.artifactId },
+          artifactTitle: p.artifactTitle,
+          linkRole: p.linkRole || 'related',
+        },
+        status: 'pending',
+      })),
+      createdAt: ts,
+    };
+  }
+
+  if (generatorType === 'ai_build_linked_table') {
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      proposals: [
+        {
+          id: `prop-${ts}-linked-table`,
+          type: 'view_patch',
+          rationale: isPl
+            ? `Tabela z ${output?.rows?.length || 0} powiązanymi artefaktami`
+            : `Table with ${output?.rows?.length || 0} linked artifacts`,
+          confidence: 0.8,
+          patch: {
+            extensions: {
+              table: {
+                columns: output?.columns || [],
+                rows: output?.rows || [],
+              },
+            },
+          },
+          status: 'pending',
+        },
+      ],
+      createdAt: ts,
+    };
+  }
+
+  if (generatorType === 'ai_autofill_mappings') {
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      mappings: output?.mappings || [],
+      proposals: [
+        {
+          id: `prop-${ts}-autofill`,
+          type: 'view_patch',
+          rationale: isPl
+            ? `${output?.mappings?.length || 0} mapowań autofill`
+            : `${output?.mappings?.length || 0} autofill mappings`,
+          confidence: 0.8,
+          patch: { autofillMappings: output?.mappings || [] },
+          status: 'pending',
+        },
+      ],
+      createdAt: ts,
+    };
+  }
+
+  // V51-05: Whiteboard facilitation formatters
+  if (generatorType === 'wb_find_themes') {
+    const themes = output?.themes || [];
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      themes,
+      proposals: themes.map((t: any, i: number) => ({
+        id: `prop-${ts}-theme-${i}`,
+        type: 'graph_patch',
+        rationale: `${t.label}: ${t.description}`,
+        confidence: t.confidence || 0.7,
+        patch: {
+          addNodes: [
+            {
+              id: t.id || `theme-${ts}-${i}`,
+              label: t.label,
+              type: 'frameNode',
+              data: { label: t.label, description: t.description, childIds: t.nodeIds },
+            },
+          ],
+        },
+        status: 'pending',
+      })),
+      createdAt: ts,
+    };
+  }
+
+  if (generatorType === 'wb_name_clusters') {
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      proposals: [
+        {
+          id: `prop-${ts}-wb-names`,
+          type: 'graph_patch',
+          rationale: isPl
+            ? `Nazwy dla ${output?.namedClusters?.length || 0} klastrów`
+            : `Names for ${output?.namedClusters?.length || 0} clusters`,
+          confidence: 0.8,
+          patch: {
+            updateNodes: (output?.namedClusters || []).map((c: any) => ({
+              id: c.clusterId,
+              data: { label: c.name, _nameRationale: c.rationale },
+            })),
+          },
+          status: 'pending',
+        },
+      ],
+      createdAt: ts,
+    };
+  }
+
+  if (generatorType === 'wb_to_map_branches') {
+    const branches = output?.branches || [];
+    const addNodes: any[] = [];
+    const addEdges: any[] = [];
+    const rootId = `root-${ts}`;
+    addNodes.push({
+      id: rootId,
+      label: output?.rootLabel || 'Root',
+      type: 'branch',
+      data: { label: output?.rootLabel || 'Root' },
+    });
+    for (const branch of branches) {
+      const bId = branch.id || `br-${ts}-${addNodes.length}`;
+      addNodes.push({
+        id: bId,
+        label: branch.label,
+        type: 'branch',
+        data: { label: branch.label },
+      });
+      addEdges.push({ id: `e-${rootId}-${bId}`, source: rootId, target: bId });
+      for (const child of branch.children || []) {
+        const cId = child.id || `ch-${ts}-${addNodes.length}`;
+        addNodes.push({ id: cId, label: child.label, type: 'leaf', data: { label: child.label } });
+        addEdges.push({ id: `e-${bId}-${cId}`, source: bId, target: cId });
+      }
+    }
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      proposals: [
+        {
+          id: `prop-${ts}-wb-to-map`,
+          type: 'graph_patch',
+          rationale: isPl
+            ? `Mapa myśli z ${branches.length} gałęziami`
+            : `Mind map with ${branches.length} branches`,
+          confidence: 0.8,
+          patch: { addNodes, addEdges },
+          status: 'pending',
+        },
+      ],
+      createdAt: ts,
+    };
+  }
+
+  if (generatorType === 'wb_to_table') {
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      proposals: [
+        {
+          id: `prop-${ts}-wb-to-table`,
+          type: 'view_patch',
+          rationale: isPl
+            ? `Tabela z ${output?.rows?.length || 0} wierszami`
+            : `Table with ${output?.rows?.length || 0} rows`,
+          confidence: 0.8,
+          patch: {
+            extensions: { table: { columns: output?.columns || [], rows: output?.rows || [] } },
+          },
+          status: 'pending',
+        },
+      ],
+      createdAt: ts,
+    };
+  }
+
+  if (generatorType === 'wb_extract_actions') {
+    const actions = output?.actions || [];
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      actions,
+      proposals: [
+        {
+          id: `prop-${ts}-wb-actions`,
+          type: 'graph_patch',
+          rationale: isPl
+            ? `${actions.length} akcji do wykonania`
+            : `${actions.length} action items`,
+          confidence: 0.8,
+          patch: {
+            addNodes: actions.map((a: any, i: number) => ({
+              id: a.id || `act-${ts}-${i}`,
+              label: a.text,
+              type: 'stickyNote',
+              data: {
+                label: a.text,
+                color: '#d1fae5',
+                owner: a.owner,
+                priority: a.priority,
+                sourceNodeId: a.sourceNodeId,
+              },
+            })),
+            addEdges: [],
+          },
+          status: 'pending',
+        },
+      ],
+      createdAt: ts,
+    };
+  }
+
+  // V51-06: Table AI formatters
+  if (generatorType === 'table_rows') {
+    const rows = output?.rows || [];
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      proposals: [
+        {
+          id: `prop-${ts}-table-rows`,
+          type: 'view_patch',
+          rationale: isPl ? `${rows.length} nowych wierszy` : `${rows.length} new rows`,
+          confidence: 0.8,
+          patch: { extensions: { table: { addRows: rows } } },
+          status: 'pending',
+        },
+      ],
+      createdAt: ts,
+    };
+  }
+
+  if (generatorType === 'table_simplify') {
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      proposals: [
+        {
+          id: `prop-${ts}-table-simplify`,
+          type: 'view_patch',
+          rationale: output?.rationale || (isPl ? 'Uproszczenie tabeli' : 'Table simplification'),
+          confidence: 0.8,
+          patch: {
+            removedColumnKeys: output?.removedColumnKeys || [],
+            mergedColumns: output?.mergedColumns || [],
+          },
+          status: 'pending',
+        },
+      ],
       createdAt: ts,
     };
   }

@@ -199,6 +199,78 @@ function main(): void {
     pass: includesAll(validators, ['IdeaWorkspaceDocumentSchema', 'outputLinks', 'ObjectAttachmentSchema']),
   });
 
+  // ── V5.1 Backend depth checks ──────────────────────────────────────────────
+  const generatorService = read(root, 'server/src/services/ideaAIGeneratorService.ts');
+  checks.push({
+    name: 'V51-01 AI artifact retrieval handler exists',
+    pass: includesAll(generatorService, [
+      'ai_retrieve_artifacts',
+      'ai_propose_attachments',
+      'ai_build_linked_table',
+      'ai_autofill_mappings',
+      'ArtifactRetrievalSchema',
+    ]),
+  });
+
+  checks.push({
+    name: 'V51-05 Whiteboard facilitation handlers exist',
+    pass: includesAll(generatorService, [
+      'wb_find_themes',
+      'wb_name_clusters',
+      'wb_to_map_branches',
+      'wb_to_table',
+      'wb_extract_actions',
+      'WbFindThemesSchema',
+    ]),
+  });
+
+  checks.push({
+    name: 'V51-06 Table AI handlers exist',
+    pass: includesAll(generatorService, ['table_rows', 'table_simplify', 'TableRowsSchema', 'TableSimplifySchema']),
+  });
+
+  const routes = read(root, 'server/src/routes/my-work.routes.ts');
+  checks.push({
+    name: 'V51-04 Artifact attachment API routes exist',
+    pass: includesAll(routes, [
+      '/my-ideas/:id/objects/:objectId/artifacts',
+      'ArtifactAttachBodySchema',
+      'artifactType/:artifactId',
+    ]),
+    details: 'POST/DELETE/GET artifact attachment endpoints',
+  });
+
+  checks.push({
+    name: 'V51-02 Chat-to-workspace handoff endpoint exists',
+    pass: includesAll(routes, ['/my-ideas/from-chat', 'ChatHandoffBodySchema', 'preferredSystem']),
+  });
+
+  checks.push({
+    name: 'V51-01 Route schema includes new generator types',
+    pass: includesAll(routes, [
+      "'ai_retrieve_artifacts'",
+      "'wb_find_themes'",
+      "'table_rows'",
+      "'table_simplify'",
+    ]),
+  });
+
+  const apiTs = read(root, 'src/services/api.ts');
+  checks.push({
+    name: 'V51-04 Frontend API methods for artifact attachment',
+    pass: includesAll(apiTs, ['attachArtifactToObject', 'detachArtifactFromObject', 'getObjectArtifacts']),
+  });
+
+  checks.push({
+    name: 'V51-02 Frontend API method for chat handoff',
+    pass: includesAll(apiTs, ['createIdeaFromChat', '/my-ideas/from-chat']),
+  });
+
+  checks.push({
+    name: 'V51-03 Compatibility adapter V3→V5',
+    pass: includesAll(validators, ['upgradeGraphV2toV3', 'ensureLatestSchema', 'KIND_TO_SYSTEM']),
+  });
+
   // ── Report ────────────────────────────────────────────────────────────────
   const passed = checks.filter((c) => c.pass);
   const failed = checks.filter((c) => !c.pass);

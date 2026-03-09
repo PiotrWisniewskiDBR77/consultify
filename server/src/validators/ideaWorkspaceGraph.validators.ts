@@ -154,7 +154,7 @@ export const CanonicalNodeSchema = z.object({
   aiMeta: z.record(z.string(), z.unknown()).optional(),
   extensions: z.record(z.string(), z.unknown()).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
-});
+}).passthrough();
 
 // ── Edge schema ─────────────────────────────────────────────────────────────
 export const CanonicalEdgeSchema = z.object({
@@ -254,8 +254,13 @@ export function normalizeNodeForStorage(node: any): CanonicalNode {
   const system = node.system ?? node.data?.system;
   if (system && NodeSystemEnum.safeParse(system).success) result.system = system;
 
-  if (Array.isArray(node.artifactLinks) && node.artifactLinks.length > 0) {
-    result.artifactLinks = node.artifactLinks;
+  const resolvedArtifactLinks = Array.isArray(node.artifactLinks) && node.artifactLinks.length > 0
+    ? node.artifactLinks
+    : Array.isArray(node.data?.artifactLinks) && node.data.artifactLinks.length > 0
+      ? node.data.artifactLinks
+      : null;
+  if (resolvedArtifactLinks) {
+    result.artifactLinks = resolvedArtifactLinks;
   }
   // V5-IDEA-18: Preserve depth model fields in payload
   const DEPTH_FIELDS = [

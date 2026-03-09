@@ -19,7 +19,8 @@ export type ArtifactType =
   | 'financial_model'
   | 'budget'
   | 'valuation'
-  | 'analysis';
+  | 'analysis'
+  | 'knowledge';
 
 /**
  * Canonical artifact reference — the universal way to point to any artifact.
@@ -163,6 +164,13 @@ export const ARTIFACT_IDENTITY: Record<ArtifactType, ArtifactIdentity> = {
     labelEn: 'Analysis',
     labelPl: 'Analiza',
     prefix: 'ANL',
+  },
+  knowledge: {
+    icon: 'BookMarked',
+    accent: 'purple',
+    labelEn: 'Knowledge',
+    labelPl: 'Wiedza',
+    prefix: 'KNW',
   },
 };
 
