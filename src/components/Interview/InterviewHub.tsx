@@ -498,13 +498,11 @@ export const InterviewHub: React.FC = () => {
 
   // Modal state
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [showTemplateBuilder, setShowTemplateBuilder] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [showSendBackModal, setShowSendBackModal] = useState(false);
   const [showInsightModal, setShowInsightModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<InterviewAssignment | null>(null);
-  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [selectedSessionsForInsight, setSelectedSessionsForInsight] = useState<string[]>([]);
 
   // Interview Inbox preview (Outlook-style) — Assignments
@@ -1166,14 +1164,35 @@ export const InterviewHub: React.FC = () => {
 
   // Template actions
   const handleNewTemplate = useCallback(() => {
-    setEditingTemplateId(null);
-    setShowTemplateBuilder(true);
-  }, []);
+    handleOpenDocument({
+      id: `new-template:${Date.now()}`,
+      type: 'template',
+      name: isPolish ? 'Nowy template' : 'New template',
+      status: 'draft',
+      data: {
+        name: isPolish ? 'Nowy template' : 'New template',
+        status: 'draft',
+      },
+    });
+  }, [handleOpenDocument, isPolish]);
 
-  const handleEditTemplate = useCallback((templateId: string) => {
-    setEditingTemplateId(templateId);
-    setShowTemplateBuilder(true);
-  }, []);
+  const handleEditTemplate = useCallback(
+    (templateId: string) => {
+      const template = templates.find((item) => item.id === templateId);
+      handleOpenDocument({
+        id: templateId,
+        type: 'template',
+        name: template?.name || (isPolish ? 'Template' : 'Template'),
+        status: (template?.status as ItemStatus) || 'draft',
+        data: template || {
+          id: templateId,
+          name: isPolish ? 'Template' : 'Template',
+          status: 'draft',
+        },
+      });
+    },
+    [handleOpenDocument, isPolish, templates]
+  );
 
   const handleCloneTemplate = useCallback(
     async (template: InterviewTemplate) => {
@@ -1189,16 +1208,21 @@ export const InterviewHub: React.FC = () => {
         const templatesRes = await Api.get('/interview/templates').catch(() => []);
         setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
 
-        // Open the cloned template for editing
-        setEditingTemplateId((cloned as any).id);
-        setShowTemplateBuilder(true);
+        // Open the cloned template in the dynamic document area
+        handleOpenDocument({
+          id: (cloned as any).id,
+          type: 'template',
+          name: (cloned as any).name || `${template.name} (${isPolish ? 'kopia' : 'copy'})`,
+          status: ((cloned as any).status as ItemStatus) || 'draft',
+          data: cloned as InterviewTemplate,
+        });
       } catch (error) {
         toast.dismiss();
         toast.error(isPolish ? 'Nie udało się sklonować szablonu' : 'Failed to clone template');
         console.error('[InterviewHub] Failed to clone template:', error);
       }
     },
-    [isPolish]
+    [handleOpenDocument, isPolish]
   );
 
   const handleDeleteTemplate = useCallback(
@@ -2972,158 +2996,62 @@ export const InterviewHub: React.FC = () => {
 
     if (doc.type === 'template') {
       const template = doc.data as InterviewTemplate;
-      const templateQuestions = templateQuestionsById[template.id] || [];
-      const isTemplateQuestionsLoading = !!templateQuestionsLoading[template.id];
-      const categoryOrder = ['strategy', 'operations', 'digital', 'people', 'finance'] as const;
-      const categoryLabels = isPolish
-        ? {
-            strategy: 'Strategia',
-            operations: 'Operacje',
-            digital: 'Digital',
-            people: 'Ludzie',
-            finance: 'Finanse',
-          }
-        : {
-            strategy: 'Strategy',
-            operations: 'Operations',
-            digital: 'Digital',
-            people: 'People',
-            finance: 'Finance',
-          };
+      const isNewTemplateDocument = template.id.startsWith('new-template:');
 
       return (
-        <div className="p-6 max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <FileText size={24} className="text-blue-400" />
-              </div>
-              <div className="flex-1">
-                <h1 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-                  {template.name}
-                </h1>
-                <p className="text-slate-500 dark:text-slate-400 text-sm mb-3">
-                  {template.description}
-                </p>
-                <div className="flex items-center gap-3">
-                  <span className="px-2 py-1 bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 text-xs rounded-full">
-                    {template.questionCount} {isPolish ? 'pytań' : 'questions'}
-                  </span>
-                  <span className="text-xs text-slate-500">{template.category}</span>
-                  {template.scope ? (
-                    <span className="px-2 py-1 bg-slate-100 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 text-xs rounded-full border border-slate-200/70 dark:border-white/[0.08]">
-                      {template.scope}
-                    </span>
-                  ) : null}
-                  {template.estimatedTimeMinutes ? (
-                    <span className="text-xs text-slate-500">
-                      {template.estimatedTimeMinutes} min
-                    </span>
-                  ) : null}
-                  {template.isDefault && (
-                    <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
-                      {isPolish ? 'Domyślny' : 'Default'}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="border-t border-slate-200 dark:border-navy-700 pt-6 space-y-4">
-              {/* Questions Preview (read-only) */}
-              <div>
-                <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
-                  {isPolish ? 'Podgląd pytań' : 'Questions preview'}
-                </h2>
-                {isTemplateQuestionsLoading ? (
-                  <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {isPolish ? 'Ładowanie pytań...' : 'Loading questions...'}
-                  </div>
-                ) : templateQuestions.length > 0 ? (
-                  <div className="space-y-4">
-                    {categoryOrder.map((cat) => {
-                      const items = templateQuestions.filter((q: any) => q.category === cat);
-                      if (items.length === 0) return null;
-                      return (
-                        <div
-                          key={cat}
-                          className="bg-slate-100/40 dark:bg-navy-950/40 border border-slate-200 dark:border-navy-700 rounded-lg p-4"
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs font-semibold text-slate-200">
-                              {(categoryLabels as any)[cat]}
-                            </span>
-                            <span className="text-xs text-slate-500">{items.length}</span>
-                          </div>
-                          <ul className="space-y-2">
-                            {items.map((q: any) => (
-                              <li key={q.id} className="text-sm text-slate-300">
-                                {q.questionText}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-500">
-                    {isPolish ? 'Brak pytań w szablonie' : 'No questions in template'}
-                  </p>
-                )}
-              </div>
+        <TemplateBuilder
+          key={doc.id}
+          isOpen
+          presentation="document"
+          templateId={isNewTemplateDocument ? null : template.id}
+          onClose={() => handleCloseDocument(doc.id)}
+          onSuccess={async (savedTemplate) => {
+            const templatesRes = await Api.get('/interview/templates').catch(() => []);
+            const refreshedTemplates = Array.isArray(templatesRes) ? templatesRes : [];
+            setTemplates(refreshedTemplates);
 
-              <button
-                onClick={async () => {
-                  try {
-                    const projectId = await ensureProjectId();
-                    if (!projectId) {
-                      toast.error(
-                        isPolish
-                          ? 'Wybierz projekt przed utworzeniem sesji'
-                          : 'Select a project before creating a session'
-                      );
-                      return;
-                    }
-                    toast.loading(
-                      isPolish
-                        ? 'Tworzenie sesji z szablonu...'
-                        : 'Creating session from template...'
-                    );
-                    const created = await Api.post(`/interview/templates/${template.id}/use`, {
-                      projectId,
-                      name: `${template.name} ${new Date().toLocaleDateString()}`,
-                    });
+            if (!savedTemplate?.id) {
+              return;
+            }
 
-                    const newSession = created as InterviewSession;
-                    setSessions((prev) => [newSession, ...prev]);
+            const nextTemplate =
+              refreshedTemplates.find((item) => item.id === savedTemplate.id) ||
+              ({
+                ...template,
+                ...savedTemplate,
+                id: savedTemplate.id,
+                name: savedTemplate.name || template.name,
+              } as InterviewTemplate);
 
-                    handleOpenDocument({
-                      id: newSession.id,
-                      type: 'session',
-                      name: newSession.name || 'Interview Session',
-                      status: (newSession as any)?.status || 'in_progress',
-                      data: newSession,
-                    });
+            setOpenDocuments((prev) => {
+              const withoutOld = prev.filter((item) => item.id !== doc.id);
+              const existingIdx = withoutOld.findIndex((item) => item.id === savedTemplate.id);
 
-                    toast.dismiss();
-                    toast.success(isPolish ? 'Sesja utworzona' : 'Session created');
-                  } catch (error) {
-                    console.error('[InterviewHub] Failed to create session from template:', error);
-                    toast.dismiss();
-                    toast.error(
-                      isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session'
-                    );
-                  }
-                }}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                <Plus size={16} />
-                {isPolish ? 'Użyj szablonu' : 'Use Template'}
-              </button>
-            </div>
-          </div>
-        </div>
+              if (existingIdx >= 0) {
+                const next = [...withoutOld];
+                next[existingIdx] = {
+                  ...next[existingIdx],
+                  name: nextTemplate.name,
+                  status: (nextTemplate.status as ItemStatus) || 'draft',
+                  data: nextTemplate,
+                };
+                return next;
+              }
+
+              return [
+                ...withoutOld,
+                {
+                  id: savedTemplate.id,
+                  type: 'template',
+                  name: nextTemplate.name,
+                  status: (nextTemplate.status as ItemStatus) || 'draft',
+                  data: nextTemplate,
+                },
+              ];
+            });
+            setActiveDocumentId(savedTemplate.id);
+          }}
+        />
       );
     }
 
@@ -7057,21 +6985,6 @@ Return ONLY the answer text (no markdown fences).`;
           </div>
         </div>
       )}
-
-      {/* Template Builder */}
-      <TemplateBuilder
-        isOpen={showTemplateBuilder}
-        onClose={() => {
-          setShowTemplateBuilder(false);
-          setEditingTemplateId(null);
-        }}
-        templateId={editingTemplateId}
-        onSuccess={async () => {
-          // Refresh templates after save
-          const templatesRes = await Api.get('/interview/templates').catch(() => []);
-          setTemplates(Array.isArray(templatesRes) ? templatesRes : []);
-        }}
-      />
 
       {/* Generate Insight Modal - Advanced Creator */}
       <InsightCreatorModal

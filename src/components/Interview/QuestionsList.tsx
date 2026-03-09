@@ -47,10 +47,12 @@ export interface InterviewQuestion {
   category: InterviewCategory;
   questionText: string;
   answerText: string;
+  isRequired?: boolean;
   answerType?: string;
   answerOptions?: string[];
   expectedAnswerShape?: string;
   answerMode?: string;
+  answerPayload?: Record<string, unknown> | null;
   contextNote?: string;
   notes?: string; // E2.1: per-question notes field
   voiceTranscript?: string;

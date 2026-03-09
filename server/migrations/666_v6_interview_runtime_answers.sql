@@ -8,6 +8,12 @@ ALTER TABLE interview_questions
   ADD COLUMN IF NOT EXISTS answer_type TEXT DEFAULT 'open';
 
 ALTER TABLE interview_questions
+  ADD COLUMN IF NOT EXISTS is_required INTEGER DEFAULT 0;
+
+ALTER TABLE interview_sessions
+  ADD COLUMN IF NOT EXISTS runtime_mode_default TEXT DEFAULT 'single_question';
+
+ALTER TABLE interview_questions
   ADD COLUMN IF NOT EXISTS expected_answer_shape TEXT;
 
 ALTER TABLE interview_questions
@@ -87,3 +93,8 @@ WHERE evidence_role IS NULL
 UPDATE interview_evidence
 SET ingest_to_knowledge = 1
 WHERE ingest_to_knowledge IS NULL;
+
+UPDATE interview_sessions
+SET runtime_mode_default = 'single_question'
+WHERE runtime_mode_default IS NULL
+   OR runtime_mode_default = '';

@@ -68,6 +68,7 @@ import {
 } from './CategorySidebar';
 import { CompanyProfile, KeyMetric, OpenGap, Stakeholder } from './CompanyFactsPanel';
 import { EvidencePanel, InterviewEvidence } from './EvidencePanel';
+import { InterviewSingleQuestionRuntime } from './InterviewSingleQuestionRuntime';
 import { InterviewNote, NotesPanel } from './NotesPanel';
 import { InterviewQuestion, QuestionsList } from './QuestionsList';
 import { RuntimeMode, RuntimeModeSelector } from './RuntimeModeSelector';
@@ -93,6 +94,7 @@ interface InterviewSession {
   summaryGaps: string[];
   summaryConstraints: string[];
   summaryPainPoints: string[];
+  runtimeModeDefault?: RuntimeMode;
   startedAt: string;
   completedAt?: string;
   lastActivityAt?: string;
@@ -310,15 +312,23 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     const runtimeKey = `interview_runtime_mode:${session?.id || initialSessionId || 'new'}`;
     try {
       const saved = window.localStorage.getItem(runtimeKey);
-      if (saved === 'single_question' || saved === 'task_list') {
+      if (
+        session?.assignmentId ||
+        session?.runtimeModeDefault === 'single_question' ||
+        session?.runtimeModeDefault === 'task_list'
+      ) {
+        setRuntimeMode(
+          session?.assignmentId ? 'single_question' : (session?.runtimeModeDefault as RuntimeMode)
+        );
+      } else if (saved === 'single_question' || saved === 'task_list') {
         setRuntimeMode(saved);
       } else {
-        setRuntimeMode('task_list');
+        setRuntimeMode('single_question');
       }
     } catch {
-      setRuntimeMode('task_list');
+      setRuntimeMode(session?.assignmentId ? 'single_question' : session?.runtimeModeDefault || 'single_question');
     }
-  }, [initialSessionId, session?.id]);
+  }, [initialSessionId, session?.assignmentId, session?.id, session?.runtimeModeDefault]);
 
   useEffect(() => {
     const runtimeKey = `interview_runtime_mode:${session?.id || initialSessionId || 'new'}`;
@@ -544,7 +554,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // Upload file
   const handleUploadFile = useCallback(
-    async (file: File, category?: InterviewCategory) => {
+    async (file: File, category?: InterviewCategory, questionId?: string) => {
       if (!session) return;
       setIsSaving(true);
 
@@ -552,6 +562,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
           evidenceType: 'file',
           evidenceRole: 'supporting',
+          questionId,
           title: file.name,
           fileName: file.name,
           fileSize: file.size,
@@ -560,9 +571,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         });
         setEvidence((prev) => [...prev, created as InterviewEvidence]);
         toast.success(isPolish ? 'Plik dodany' : 'File added');
+        return created as InterviewEvidence;
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to upload file:', error);
         toast.error(isPolish ? 'Nie udało się dodać pliku' : 'Failed to upload file');
+        return undefined;
       } finally {
         setIsSaving(false);
       }
@@ -572,7 +585,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // Add link
   const handleAddLink = useCallback(
-    async (name: string, url: string, description?: string, category?: InterviewCategory) => {
+    async (
+      name: string,
+      url: string,
+      description?: string,
+      category?: InterviewCategory,
+      questionId?: string
+    ) => {
       if (!session) return;
       setIsSaving(true);
 
@@ -580,15 +599,18 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
           evidenceType: 'link',
           evidenceRole: 'supporting',
+          questionId,
           title: name,
           url,
           description,
           category,
         });
         setEvidence((prev) => [...prev, created as InterviewEvidence]);
+        return created as InterviewEvidence;
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to add link:', error);
         toast.error(isPolish ? 'Nie udało się dodać linku' : 'Failed to add link');
+        return undefined;
       } finally {
         setIsSaving(false);
       }
@@ -597,22 +619,60 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   );
 
   const handleAddEvidenceComment = useCallback(
-    async (text: string, category?: InterviewCategory) => {
+    async (text: string, category?: InterviewCategory, questionId?: string) => {
       if (!session) return;
       setIsSaving(true);
       try {
         const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
           evidenceType: 'comment',
           evidenceRole: 'context',
+          questionId,
           title: isPolish ? 'Komentarz kontekstowy' : 'Context comment',
           description: text,
           category,
         });
         setEvidence((prev) => [...prev, created as InterviewEvidence]);
         toast.success(isPolish ? 'Komentarz dodany' : 'Comment added');
+        return created as InterviewEvidence;
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to add comment evidence:', error);
         toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+        return undefined;
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [session, isPolish]
+  );
+
+  const handleAddVoiceEvidence = useCallback(
+    async (
+      file: File,
+      transcriptText: string,
+      category?: InterviewCategory,
+      questionId?: string
+    ) => {
+      if (!session) return;
+      setIsSaving(true);
+
+      try {
+        const created = await Api.post(`/interview/sessions/${session.id}/evidence`, {
+          evidenceType: 'audio',
+          evidenceRole: 'answer_audio',
+          questionId,
+          title: file.name,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          transcriptText,
+          category,
+        });
+        setEvidence((prev) => [...prev, created as InterviewEvidence]);
+        return created as InterviewEvidence;
+      } catch (error) {
+        console.error('[InterviewWorkspace] Failed to add voice evidence:', error);
+        toast.error(isPolish ? 'Nie udało się zapisać nagrania' : 'Failed to save recording');
+        return undefined;
       } finally {
         setIsSaving(false);
       }
@@ -1744,8 +1804,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden p-4">
               <RuntimeModeSelector
                 currentMode={runtimeMode}
-                recommendedMode="task_list"
+                recommendedMode="single_question"
                 onModeSelect={handleRuntimeModeSelect}
+                compact={runtimeMode === 'single_question'}
                 locked={isLocked}
               />
             </div>
@@ -1772,22 +1833,39 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                       {activeCategoryProgress?.totalQuestions || 0}
                     </div>
                   </div>
-                  <div className="mt-3 h-2 bg-slate-200/70 dark:bg-navy-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-primary-500 to-emerald-500 transition-all"
-                      style={{ width: `${activeCategoryPercent}%` }}
-                    />
-                  </div>
+                  {runtimeMode !== 'single_question' && (
+                    <div className="mt-3 h-2 bg-slate-200/70 dark:bg-navy-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-primary-500 to-emerald-500 transition-all"
+                        style={{ width: `${activeCategoryPercent}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="p-4">
-                  <QuestionsList
-                    questions={questions}
-                    category={activeCategory}
-                    runtimeMode={runtimeMode}
-                    onUpdateQuestion={handleUpdateQuestion}
-                    onAddQuestion={handleAddQuestion}
-                    readOnly={isLocked}
-                  />
+                  {runtimeMode === 'single_question' ? (
+                    <InterviewSingleQuestionRuntime
+                      questions={questions}
+                      evidence={evidence}
+                      activeCategory={activeCategory}
+                      onCategoryChange={setActiveCategory}
+                      onUpdateQuestion={handleUpdateQuestion}
+                      onUploadFile={handleUploadFile}
+                      onAddLink={handleAddLink}
+                      onAddVoiceEvidence={handleAddVoiceEvidence}
+                      onSubmitSession={handleSubmitSession}
+                      readOnly={isLocked}
+                    />
+                  ) : (
+                    <QuestionsList
+                      questions={questions}
+                      category={activeCategory}
+                      runtimeMode={runtimeMode}
+                      onUpdateQuestion={handleUpdateQuestion}
+                      onAddQuestion={handleAddQuestion}
+                      readOnly={isLocked}
+                    />
+                  )}
                 </div>
               </div>
             ) : (
@@ -1802,7 +1880,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             )}
 
             {/* Notes Section */}
-            {renderCollapsibleSection(
+            {runtimeMode !== 'single_question' &&
+              renderCollapsibleSection(
               'notes',
               <FileText size={18} className="text-amber-500 dark:text-amber-400" />,
               isPolish ? 'Notatki' : 'Notes',
@@ -1821,10 +1900,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   readOnly={isLocked}
                 />
               </div>
-            )}
+              )}
 
             {/* Evidence Section */}
-            {renderCollapsibleSection(
+            {runtimeMode !== 'single_question' &&
+              renderCollapsibleSection(
               'evidence',
               <Paperclip size={18} className="text-violet-500 dark:text-violet-400" />,
               isPolish ? 'Dowody' : 'Evidence',
@@ -1844,10 +1924,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                   readOnly={isLocked}
                 />
               </div>
-            )}
+              )}
 
             {/* Summary Section (hide in assignment-fill mode to keep the form focused) */}
             {!isAssignmentMode &&
+              runtimeMode !== 'single_question' &&
               renderCollapsibleSection(
                 'summary',
                 <Sparkles size={18} className="text-purple-500 dark:text-purple-400" />,

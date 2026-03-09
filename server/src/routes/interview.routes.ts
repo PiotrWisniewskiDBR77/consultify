@@ -7,6 +7,7 @@
  */
 
 import { Router } from 'express';
+import multer from 'multer';
 
 import { InterviewController } from '../controllers/InterviewController.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
@@ -15,6 +16,18 @@ import { requireAnyPermission, requirePermission } from '../middleware/permissio
 import { apiAuthRateLimiter } from '../middleware/rateLimiting.middleware.js';
 
 const router = Router();
+const templateSourceUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['application/pdf', 'text/plain', 'text/markdown'];
+    if (allowed.includes(file.mimetype) || file.mimetype.startsWith('text/')) {
+      cb(null, true);
+      return;
+    }
+    cb(new Error(`Unsupported file type: ${file.mimetype}`));
+  },
+});
 
 // Middleware
 router.use(apiAuthRateLimiter);
@@ -175,6 +188,14 @@ router.post(
   '/templates',
   requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
   InterviewController.createTemplate
+);
+
+/** POST /interview/templates/import-source - Extract TXT/PDF text for AI builder */
+router.post(
+  '/templates/import-source',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  templateSourceUpload.single('file'),
+  InterviewController.importTemplateSource
 );
 
 /** GET /interview/templates/:id - Get template metadata */

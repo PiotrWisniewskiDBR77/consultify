@@ -16,6 +16,7 @@ import { z } from 'zod';
 
 import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
+import PDFParserService from '../services/pdfParserService.js';
 import notificationService from '../services/notificationService.js';
 import { evaluateGatePolicy } from '../services/workflow/gatePolicy.js';
 import type { AuthenticatedRequest } from '../types/index.js';
@@ -182,6 +183,10 @@ async function ensureInterviewQuestionV6Columns(): Promise<void> {
       sql: `ALTER TABLE interview_questions ADD COLUMN answer_type TEXT DEFAULT 'open'`,
     },
     {
+      name: 'is_required',
+      sql: `ALTER TABLE interview_questions ADD COLUMN is_required INTEGER DEFAULT 0`,
+    },
+    {
       name: 'expected_answer_shape',
       sql: `ALTER TABLE interview_questions ADD COLUMN expected_answer_shape TEXT`,
     },
@@ -233,6 +238,95 @@ async function ensureInterviewQuestionV6Columns(): Promise<void> {
     {
       name: 'context_note_knowledge_doc_id',
       sql: `ALTER TABLE interview_questions ADD COLUMN context_note_knowledge_doc_id TEXT`,
+    },
+  ];
+
+  for (const column of missingColumns) {
+    if (!cols.has(column.name)) {
+      await queryHelpers.queryRun(column.sql);
+    }
+  }
+}
+
+async function ensureInterviewSessionV6Columns(): Promise<void> {
+  const cols = await getTableColumns('interview_sessions');
+  if (!cols.has('runtime_mode_default')) {
+    await queryHelpers.queryRun(
+      `ALTER TABLE interview_sessions ADD COLUMN runtime_mode_default TEXT DEFAULT 'single_question'`
+    );
+  }
+}
+
+async function ensureInterviewTemplateV6Columns(): Promise<void> {
+  const cols = await getTableColumns('interview_library_templates');
+  const missingColumns: Array<{ name: string; sql: string }> = [
+    {
+      name: 'template_scope',
+      sql: `ALTER TABLE interview_library_templates ADD COLUMN template_scope TEXT DEFAULT 'organization'`,
+    },
+    {
+      name: 'audience',
+      sql: `ALTER TABLE interview_library_templates ADD COLUMN audience TEXT`,
+    },
+    {
+      name: 'estimated_time_minutes',
+      sql: `ALTER TABLE interview_library_templates ADD COLUMN estimated_time_minutes INTEGER DEFAULT 10`,
+    },
+    {
+      name: 'runtime_mode_default',
+      sql: `ALTER TABLE interview_library_templates ADD COLUMN runtime_mode_default TEXT DEFAULT 'one_question_per_screen'`,
+    },
+    {
+      name: 'source_template_id',
+      sql: `ALTER TABLE interview_library_templates ADD COLUMN source_template_id TEXT`,
+    },
+  ];
+
+  for (const column of missingColumns) {
+    if (!cols.has(column.name)) {
+      await queryHelpers.queryRun(column.sql);
+    }
+  }
+}
+
+async function ensureInterviewTemplateQuestionV6Columns(): Promise<void> {
+  const cols = await getTableColumns('interview_library_template_questions');
+  const missingColumns: Array<{ name: string; sql: string }> = [
+    {
+      name: 'answer_type',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN answer_type TEXT DEFAULT 'open'`,
+    },
+    {
+      name: 'is_required',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN is_required INTEGER DEFAULT 0`,
+    },
+    {
+      name: 'help_hint',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN help_hint TEXT`,
+    },
+    {
+      name: 'answer_options',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN answer_options TEXT DEFAULT '[]'`,
+    },
+    {
+      name: 'expected_answer_shape',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN expected_answer_shape TEXT`,
+    },
+    {
+      name: 'allow_voice',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN allow_voice INTEGER DEFAULT 0`,
+    },
+    {
+      name: 'allow_file_upload',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN allow_file_upload INTEGER DEFAULT 0`,
+    },
+    {
+      name: 'allow_url',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN allow_url INTEGER DEFAULT 0`,
+    },
+    {
+      name: 'allow_context_note',
+      sql: `ALTER TABLE interview_library_template_questions ADD COLUMN allow_context_note INTEGER DEFAULT 1`,
     },
   ];
 
@@ -312,6 +406,9 @@ async function resolveLinkedArtifact(
 const buildSessionResponse = (row: any) => {
   if (!row) return null;
   const rawStatus = String(row.status || '').toLowerCase();
+  const runtimeModeDefaultRaw = String(row.runtime_mode_default || '').toLowerCase();
+  const runtimeModeDefault =
+    runtimeModeDefaultRaw === 'task_list' ? 'task_list' : 'single_question';
   // DB legacy constraint uses: active | completed | paused
   // API contract uses: in_progress | completed | paused (+ derived states at assignment level)
   const normalizedStatus = rawStatus === 'active' ? 'in_progress' : rawStatus;
@@ -332,6 +429,7 @@ const buildSessionResponse = (row: any) => {
     summaryGaps: parseJson(row.summary_gaps, []),
     summaryConstraints: parseJson(row.summary_constraints, []),
     summaryPainPoints: parseJson(row.summary_pain_points, []),
+    runtimeModeDefault,
     startedAt: row.started_at,
     completedAt: row.completed_at,
     lastActivityAt: row.last_activity_at,
@@ -346,6 +444,7 @@ const buildQuestionResponse = (row: any) => {
     category: row.category,
     questionText: row.question_text,
     answerText: row.answer_text || '',
+    isRequired: row.is_required === 1,
     answerType: row.answer_type || 'open',
     answerOptions: parseJson(row.answer_options, []),
     expectedAnswerShape: row.expected_answer_shape || '',
@@ -528,6 +627,7 @@ async function createSessionFromTemplate(params: {
 
   const id = uuidv4();
   const now = new Date().toISOString();
+  await ensureInterviewSessionV6Columns();
   await ensureInterviewQuestionV6Columns();
   const resolvedProjectId = await resolveValidProjectId({
     organizationId: user.organizationId,
@@ -542,10 +642,11 @@ async function createSessionFromTemplate(params: {
   await queryHelpers.queryRun(
     `INSERT INTO interview_sessions
      (id, organization_id, project_id, name, owner_id, status, progress_json,
+      runtime_mode_default,
       template_id, template_version,
       assignment_id,
       started_at, last_activity_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       user.organizationId,
@@ -554,6 +655,9 @@ async function createSessionFromTemplate(params: {
       user.id, // owner_id
       'active',
       JSON.stringify({ strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 }),
+      String(template.runtime_mode_default || '').toLowerCase() === 'task_list'
+        ? 'task_list'
+        : 'single_question',
       template.id,
       template.version || 1,
       assignmentId || null,
@@ -574,8 +678,8 @@ async function createSessionFromTemplate(params: {
     const questionId = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO interview_questions
-       (id, session_id, organization_id, category, question_text, status, sort_order, is_template, answer_type, answer_options, expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note, source_template_question_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, session_id, organization_id, category, question_text, status, sort_order, is_template, is_required, answer_type, answer_options, expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note, source_template_question_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         questionId,
         id,
@@ -585,6 +689,7 @@ async function createSessionFromTemplate(params: {
         'not_started',
         tq.sort_order,
         1,
+        tq.is_required || 0,
         tq.answer_type || 'open',
         tq.answer_options || '[]',
         tq.expected_answer_shape || null,
@@ -975,14 +1080,17 @@ export const InterviewController = {
 
     const id = uuidv4();
     const now = new Date().toISOString();
+    await ensureInterviewSessionV6Columns();
+    await ensureInterviewQuestionV6Columns();
 
     // Create session
     // Note: Schema uses owner_id (not user_id) and doesn't have topic column
     await queryHelpers.queryRun(
       `INSERT INTO interview_sessions
        (id, organization_id, project_id, name, owner_id, status, progress_json,
+        runtime_mode_default,
         started_at, last_activity_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         user.organizationId,
@@ -991,6 +1099,7 @@ export const InterviewController = {
         user.id, // owner_id
         'active',
         JSON.stringify({ strategy: 0, operations: 0, digital: 0, people: 0, finance: 0 }),
+        'single_question',
         now,
         now,
         now,
@@ -1008,8 +1117,8 @@ export const InterviewController = {
       const questionId = uuidv4();
       await queryHelpers.queryRun(
         `INSERT INTO interview_questions
-         (id, session_id, organization_id, category, question_text, status, sort_order, is_template, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, session_id, organization_id, category, question_text, status, sort_order, is_template, is_required, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           questionId,
           id,
@@ -1019,6 +1128,7 @@ export const InterviewController = {
           'not_started',
           template.sort_order,
           1,
+          template.is_required || 0,
           now,
           now,
         ]
@@ -2560,6 +2670,7 @@ export const InterviewController = {
 
   getTemplates: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    await ensureInterviewTemplateV6Columns();
 
     const rows = await queryHelpers.queryAll(
       `SELECT
@@ -2596,6 +2707,7 @@ export const InterviewController = {
   getTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
+    await ensureInterviewTemplateV6Columns();
 
     const row = await queryHelpers.queryOne(
       `SELECT
@@ -2617,6 +2729,8 @@ export const InterviewController = {
   getTemplateQuestions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
+    await ensureInterviewTemplateV6Columns();
+    await ensureInterviewTemplateQuestionV6Columns();
 
     const tpl = await queryHelpers.queryOne(
       `SELECT * FROM interview_library_templates WHERE id = ?`,
@@ -2677,6 +2791,8 @@ export const InterviewController = {
 
   createTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
+    await ensureInterviewTemplateV6Columns();
+    await ensureInterviewTemplateQuestionV6Columns();
     const {
       name,
       description,
@@ -2745,6 +2861,8 @@ export const InterviewController = {
     const user = requireUser(req);
     const { id } = req.params;
     const { name, scope } = req.body || {};
+    await ensureInterviewTemplateV6Columns();
+    await ensureInterviewTemplateQuestionV6Columns();
 
     // Get source template
     const source = await queryHelpers.queryOne(
@@ -2877,6 +2995,7 @@ export const InterviewController = {
   updateTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
+    await ensureInterviewTemplateV6Columns();
     const {
       name,
       description,
@@ -2994,6 +3113,8 @@ export const InterviewController = {
   addTemplateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params; // template id
+    await ensureInterviewTemplateV6Columns();
+    await ensureInterviewTemplateQuestionV6Columns();
     const {
       category,
       questionText,
@@ -3061,6 +3182,8 @@ export const InterviewController = {
   updateTemplateQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id, questionId } = req.params;
+    await ensureInterviewTemplateV6Columns();
+    await ensureInterviewTemplateQuestionV6Columns();
     const {
       category,
       questionText,
@@ -3191,6 +3314,55 @@ export const InterviewController = {
     );
 
     res.json({ success: true });
+  }),
+
+  importTemplateSource: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    requireUser(req);
+    const file = (req as AuthenticatedRequest & { file?: Express.Multer.File }).file;
+
+    if (!file) {
+      res.status(400).json({ error: 'No file uploaded' });
+      return;
+    }
+
+    const originalName = String(file.originalname || 'source');
+    const mimeType = String(file.mimetype || '').toLowerCase();
+    const isPdf = mimeType === 'application/pdf' || originalName.toLowerCase().endsWith('.pdf');
+    const isTxt =
+      mimeType.startsWith('text/') ||
+      originalName.toLowerCase().endsWith('.txt') ||
+      originalName.toLowerCase().endsWith('.md');
+
+    if (!isPdf && !isTxt) {
+      res.status(400).json({ error: 'Only TXT and PDF files are supported' });
+      return;
+    }
+
+    let extractedText = '';
+    if (isPdf) {
+      extractedText = await PDFParserService.extractTextFromBuffer(file.buffer);
+    } else {
+      extractedText = file.buffer.toString('utf-8');
+    }
+
+    const normalized = String(extractedText || '')
+      .replace(/\r\n/g, '\n')
+      .replace(/\u0000/g, '')
+      .trim();
+
+    if (!normalized) {
+      res.status(422).json({ error: 'Could not extract readable text from file' });
+      return;
+    }
+
+    const limitedText = normalized.slice(0, 50000);
+    res.json({
+      fileName: originalName,
+      mimeType: file.mimetype,
+      text: limitedText,
+      charCount: limitedText.length,
+      truncated: normalized.length > limitedText.length,
+    });
   }),
 
   // ==========================================
@@ -3633,8 +3805,8 @@ ${JSON.stringify(questions || [], null, 2)}
 
     await queryHelpers.queryRun(
       `INSERT INTO interview_questions
-       (id, session_id, organization_id, category, question_text, status, sort_order, is_template, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, session_id, organization_id, category, question_text, status, sort_order, is_template, is_required, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         sessionId,
@@ -3643,6 +3815,7 @@ ${JSON.stringify(questions || [], null, 2)}
         questionText,
         'not_started',
         (maxOrder?.max_order || 0) + 1,
+        0,
         0,
         now,
         now,

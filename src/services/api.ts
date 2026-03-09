@@ -2053,7 +2053,10 @@ export const Api = {
     return handleResponse(res, 'Failed to create meeting');
   },
 
-  updateMeetingStatus: async (meetingId: string, status: 'scheduled' | 'completed'): Promise<any> => {
+  updateMeetingStatus: async (
+    meetingId: string,
+    status: 'scheduled' | 'completed'
+  ): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/status`, {
       method: 'PATCH',
       headers: getHeaders(),
@@ -2062,7 +2065,10 @@ export const Api = {
     return handleResponse(res, 'Failed to update meeting status');
   },
 
-  addMeetingFollowUp: async (meetingId: string, data: { title: string; owner?: string }): Promise<any> => {
+  addMeetingFollowUp: async (
+    meetingId: string,
+    data: { title: string; owner?: string }
+  ): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/meeting/${meetingId}/follow-ups`, {
       method: 'POST',
       headers: getHeaders(),
@@ -3522,7 +3528,7 @@ export const Api = {
   convertMyIdea: async (
     ideaId: string,
     payload: {
-      target: 'initiative' | 'task_set' | 'decision' | 'team_chat';
+      target: 'initiative' | 'task_set' | 'decision' | 'team_chat' | 'report' | 'presentation';
       options?: Record<string, unknown>;
     }
   ): Promise<{ sourceSessionId?: string; [key: string]: any }> => {
@@ -3629,6 +3635,79 @@ export const Api = {
       body: JSON.stringify(payload),
     });
     return handleResponse(res, 'Failed to create link edge');
+  },
+
+  // V51-04: Artifact attachment API
+  attachArtifactToObject: async (
+    ideaId: string,
+    objectId: string,
+    payload: {
+      artifactRef: { type: string; id: string };
+      artifactIndex?: string;
+      label?: string;
+      linkRole?: string;
+    }
+  ): Promise<{ ok: boolean; artifactLink: any }> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${ideaId}/objects/${objectId}/artifacts`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to attach artifact');
+  },
+
+  detachArtifactFromObject: async (
+    ideaId: string,
+    objectId: string,
+    artifactType: string,
+    artifactId: string
+  ): Promise<{ ok: boolean }> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${ideaId}/objects/${objectId}/artifacts/${artifactType}/${artifactId}`,
+      { method: 'DELETE', headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to detach artifact');
+  },
+
+  getObjectArtifacts: async (
+    ideaId: string,
+    objectId: string
+  ): Promise<{ artifactLinks: any[] }> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${ideaId}/objects/${objectId}/artifacts`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to get object artifacts');
+  },
+
+  // V51-02: Chat-to-workspace handoff
+  createIdeaFromChat: async (payload: {
+    title: string;
+    seedText?: string;
+    preferredSystem?: string;
+    templateId?: string;
+    startMode?: string;
+    structuredBrief?: {
+      problem?: string;
+      currentState?: string;
+      desiredOutcome?: string;
+      constraints?: string;
+      evidence?: string;
+    };
+    sourceConversationId?: string;
+    sourceMessageId?: string;
+  }): Promise<{
+    ok: boolean;
+    ideaId: string;
+    mapId: string;
+    preferredSystem: string | null;
+    startMode: string;
+  }> => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/from-chat`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create idea from chat');
   },
 
   getTaskComments: async (taskId: string): Promise<any[]> => {
@@ -11776,7 +11855,11 @@ export const Api = {
   convertNotebookPage: async (
     id: string,
     target: 'task' | 'decision' | 'initiative' | 'report' | 'presentation' | 'assessment',
-    extra?: { title?: string; description?: string; assessmentType?: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN' }
+    extra?: {
+      title?: string;
+      description?: string;
+      assessmentType?: 'DRD' | 'SIRI' | 'ADMA' | 'CMMI' | 'LEAN';
+    }
   ): Promise<{ id: string; type: string; title: string; sourceSessionId?: string }> => {
     const res = await fetch(`${API_URL}/my-work/notebook/pages/${id}/convert`, {
       method: 'POST',

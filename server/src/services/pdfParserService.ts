@@ -35,12 +35,20 @@ const extractKeyValueScores = (text: string): Record<string, number> => {
 };
 
 const PDFParserService = {
-  async extractText(filePath: string): Promise<string> {
+  async extractTextFromBuffer(buffer: Buffer): Promise<string> {
     try {
       const pdfParse = (await import('pdf-parse')).default as any;
-      const buffer = fs.readFileSync(filePath);
       const pdfData = await pdfParse(buffer);
       return String(pdfData?.text || '');
+    } catch (err: unknown) {
+      throw new Error(`Failed to extract PDF text: ${(err as Error)?.message || String(err)}`);
+    }
+  },
+
+  async extractText(filePath: string): Promise<string> {
+    try {
+      const buffer = fs.readFileSync(filePath);
+      return await this.extractTextFromBuffer(buffer);
     } catch (err: unknown) {
       logger.warn('[PDFParserService] pdf-parse failed:', (err as Error)?.message);
       try {

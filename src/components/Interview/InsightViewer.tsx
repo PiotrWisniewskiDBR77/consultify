@@ -50,6 +50,7 @@ import {
   type DateFilter,
   type SortOrder,
 } from '@/components/shared/NModeSections';
+import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
@@ -99,6 +100,85 @@ interface SourceSession {
   completedAt?: string;
   respondentRole?: string;
   department?: string;
+}
+
+interface SourceSessionSummary {
+  facts: string[];
+  gaps: string[];
+  constraints: string[];
+  painPoints: string[];
+}
+
+interface ParsedInsightSection {
+  heading: string;
+  body: string;
+  bullets: string[];
+  paragraphs: string[];
+}
+
+const DEFAULT_SESSION_SUMMARY: SourceSessionSummary = {
+  facts: [],
+  gaps: [],
+  constraints: [],
+  painPoints: [],
+};
+
+function uniqueNonEmpty(items: Array<string | null | undefined>): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  items.forEach((item) => {
+    const normalized = String(item || '')
+      .replace(/^[-*]\s+/, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!normalized) return;
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    result.push(normalized);
+  });
+  return result;
+}
+
+function extractQuotedLines(content?: string): string[] {
+  if (!content) return [];
+  const blockQuotes = Array.from(content.matchAll(/(^>\s?.+$)/gm)).map((match) =>
+    String(match[1] || '')
+      .replace(/^>\s?/, '')
+      .trim()
+  );
+  const inlineQuotes = Array.from(content.matchAll(/"([^"\n]{16,220})"/g)).map((match) =>
+    String(match[1] || '').trim()
+  );
+  return uniqueNonEmpty([...blockQuotes, ...inlineQuotes]);
+}
+
+function parseInsightContent(content?: string): ParsedInsightSection[] {
+  if (!content) return [];
+
+  const chunks = content
+    .split(/^#{1,6}\s+/gm)
+    .map((chunk) => chunk.trim())
+    .filter(Boolean);
+
+  return chunks.map((chunk) => {
+    const [headingLine, ...rest] = chunk.split('\n');
+    const body = rest.join('\n').trim();
+    const paragraphs = body
+      .split(/\n{2,}/)
+      .map((part) => part.replace(/^[-*]\s+/gm, '').trim())
+      .filter(Boolean);
+    const bullets = Array.from(body.matchAll(/^(?:[-*]|\d+\.)\s+(.+)$/gm)).map((match) =>
+      String(match[1] || '').trim()
+    );
+
+    return {
+      heading: String(headingLine || '').trim(),
+      body,
+      bullets: uniqueNonEmpty(bullets),
+      paragraphs: uniqueNonEmpty(paragraphs),
+    };
+  });
 }
 
 interface InsightViewerProps {
@@ -197,6 +277,8 @@ const STATUS_CONFIG: Record<
 
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   { id: 'executive-summary', icon: Star, label: { en: 'Executive Summary', pl: 'Podsumowanie' } },
+  { id: 'consulting-readout', icon: Sparkles, label: { en: 'Consulting Readout', pl: 'Odczyt konsultingowy' } },
+  { id: 'traceability', icon: Target, label: { en: 'Traceability', pl: 'Traceability' } },
   { id: 'full-analysis', icon: FileText, label: { en: 'Full Analysis', pl: 'Pełna Analiza' } },
   {
     id: 'source-sessions',
@@ -235,7 +317,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // Editable fields
   const [title, setTitle] = useState('');
-  const [executiveSummary, setExecutiveSummary] = useState('');
 
   // AI generation states
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -246,6 +327,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   // Related data
   const [sourceSessions, setSourceSessions] = useState<SourceSession[]>([]);
+  const [sourceSessionSummaries, setSourceSessionSummaries] = useState<
+    Record<string, SourceSessionSummary>
+  >({});
   const [activityEntries, setActivityEntries] = useState<NModeActivityLogEntry[]>([]);
 
   // NMode shared section state — Comments
@@ -266,13 +350,6 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         setInsight(data);
         setTitle(data.title || '');
 
-        if (data.content) {
-          const firstParagraph = data.content.split('\n\n')[0] || '';
-          setExecutiveSummary(
-            firstParagraph.length > 200 ? firstParagraph.substring(0, 200) + '...' : firstParagraph
-          );
-        }
-
         if (data.sourceSessionIds?.length > 0) {
           try {
             const sessionsData = await Promise.all(
@@ -280,10 +357,37 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 .slice(0, 10)
                 .map((id: string) => Api.get(`/interview/sessions/${id}`).catch(() => null))
             );
-            setSourceSessions((sessionsData || []).filter(Boolean));
+            const validSessions = (sessionsData || []).filter(Boolean);
+            setSourceSessions(validSessions);
+
+            const summaryEntries = await Promise.all(
+              validSessions.map(async (session: SourceSession) => {
+                const summary = await Api.get(`/interview/sessions/${session.id}/summary`).catch(
+                  () => null
+                );
+                return [session.id, summary] as const;
+              })
+            );
+
+            setSourceSessionSummaries(
+              summaryEntries.reduce<Record<string, SourceSessionSummary>>((acc, [sessionId, summary]) => {
+                acc[sessionId] = summary
+                  ? {
+                      facts: Array.isArray(summary.facts) ? summary.facts : [],
+                      gaps: Array.isArray(summary.gaps) ? summary.gaps : [],
+                      constraints: Array.isArray(summary.constraints) ? summary.constraints : [],
+                      painPoints: Array.isArray(summary.painPoints) ? summary.painPoints : [],
+                    }
+                  : DEFAULT_SESSION_SUMMARY;
+                return acc;
+              }, {})
+            );
           } catch {
             // sessions are optional
           }
+        } else {
+          setSourceSessions([]);
+          setSourceSessionSummaries({});
         }
 
         const [activityRes, commentsRes] = await Promise.all([
@@ -335,6 +439,79 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const statusConfig = insight
     ? STATUS_CONFIG[insight.status] || STATUS_CONFIG.completed
     : STATUS_CONFIG.completed;
+
+  const parsedInsightSections = useMemo(
+    () => parseInsightContent(insight?.content),
+    [insight?.content]
+  );
+
+  const executiveSummary = useMemo(() => {
+    if (!insight?.content) return '';
+    const firstParagraph = insight.content
+      .split('\n\n')
+      .map((part) => part.replace(/^#+\s+/, '').trim())
+      .find(Boolean);
+    return firstParagraph || '';
+  }, [insight?.content]);
+
+  const officialAnswers = useMemo(
+    () =>
+      uniqueNonEmpty(
+        sourceSessions.flatMap((session) => sourceSessionSummaries[session.id]?.facts || [])
+      ).slice(0, 10),
+    [sourceSessionSummaries, sourceSessions]
+  );
+
+  const issuesReadout = useMemo(() => {
+    const fromSummaries = sourceSessions.flatMap((session) => {
+      const summary = sourceSessionSummaries[session.id] || DEFAULT_SESSION_SUMMARY;
+      return [...summary.constraints, ...summary.painPoints, ...summary.gaps];
+    });
+    const fromNarrative = parsedInsightSections
+      .filter((section) =>
+        /(issue|problem|risk|gap|constraint|challenge|pain|blocker|critical)/i.test(
+          section.heading
+        )
+      )
+      .flatMap((section) => [...section.bullets, ...section.paragraphs]);
+
+    return uniqueNonEmpty([...fromSummaries, ...fromNarrative]).slice(0, 10);
+  }, [parsedInsightSections, sourceSessionSummaries, sourceSessions]);
+
+  const opportunityReadout = useMemo(() => {
+    const fromNarrative = parsedInsightSections
+      .filter((section) =>
+        /(opportunit|strength|theme|trend|alignment|growth|efficiency|innovation|maturity)/i.test(
+          section.heading
+        )
+      )
+      .flatMap((section) => [...section.bullets, ...section.paragraphs]);
+
+    return uniqueNonEmpty(fromNarrative).slice(0, 10);
+  }, [parsedInsightSections]);
+
+  const hiddenSignals = useMemo(() => {
+    const fromNarrative = parsedInsightSections
+      .filter((section) =>
+        /(observation|between|pattern|divergent|root cause|implication|underlying|signal)/i.test(
+          section.heading
+        )
+      )
+      .flatMap((section) => [...section.bullets, ...section.paragraphs]);
+
+    return uniqueNonEmpty(fromNarrative).slice(0, 8);
+  }, [parsedInsightSections]);
+
+  const evidenceQuotes = useMemo(() => extractQuotedLines(insight?.content).slice(0, 6), [insight?.content]);
+
+  const traceabilityRows = useMemo(
+    () =>
+      sourceSessions.map((session) => ({
+        session,
+        summary: sourceSessionSummaries[session.id] || DEFAULT_SESSION_SUMMARY,
+      })),
+    [sourceSessionSummaries, sourceSessions]
+  );
 
   const isDirty = title !== (insight?.title || '');
 
@@ -757,36 +934,246 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         case 'executive-summary':
           component = (
             <div className="space-y-4">
-              <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                {executiveSummary || (isPolish ? 'Brak podsumowania' : 'No summary available')}
-              </p>
-              <div className="flex items-center gap-4 pt-3 border-t border-slate-200 dark:border-navy-700">
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <MessageSquare size={14} />
-                  <span>
-                    {insight?.sourceSessionCount || 0} {isPolish ? 'wywiadów' : 'interviews'}
-                  </span>
+              <Callout
+                variant="purple"
+                title={isPolish ? 'Czytaj jak brief konsultingowy' : 'Read this as a consulting brief'}
+              >
+                {executiveSummary || (isPolish ? 'Brak podsumowania.' : 'No summary available.')}
+              </Callout>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Official answers' : 'Official answers'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {officialAnswers.length}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <MessageSquare size={14} />
-                  <span>
-                    {nComments.length} {isPolish ? 'komentarzy' : 'comments'}
-                  </span>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Issues / Risks' : 'Issues / risks'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {issuesReadout.length}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <History size={14} />
-                  <span>
-                    {activityEntries.length} {isPolish ? 'zdarzeń' : 'events'}
-                  </span>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Signals / Opportunities' : 'Signals / opportunities'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {hiddenSignals.length + opportunityReadout.length}
+                  </div>
+                </div>
+              </div>
+
+              {evidenceQuotes.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {evidenceQuotes.slice(0, 2).map((quote) => (
+                    <div
+                      key={quote}
+                      className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3 text-sm italic text-slate-600 dark:text-slate-300"
+                    >
+                      "{quote}"
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+          break;
+
+        case 'consulting-readout':
+          component = (
+            <div className="space-y-5">
+              <Callout
+                variant="info"
+                title={isPolish ? 'Zakres interpretacji' : 'Interpretation scope'}
+              >
+                {isPolish
+                  ? 'To jest warstwa konsultingowa: issues, opportunities i sygnały ukryte w odpowiedziach. Bez automatycznych action planów.'
+                  : 'This is the consulting layer: issues, opportunities, and hidden signals from the answers. No automatic action plans.'}
+              </Callout>
+
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Official Answers' : 'Official Answers'}
+                  </div>
+                  {officialAnswers.length > 0 ? (
+                    officialAnswers.map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                      >
+                        {item}
+                      </div>
+                    ))
+                  ) : (
+                    <EmptyStateInline
+                      icon={FileText}
+                      message={isPolish ? 'Brak zebranych faktów źródłowych' : 'No source facts available'}
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Issues / Risks' : 'Issues / Risks'}
+                  </div>
+                  {issuesReadout.length > 0 ? (
+                    issuesReadout.map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-2xl bg-red-500/[0.04] dark:bg-red-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                      >
+                        {item}
+                      </div>
+                    ))
+                  ) : (
+                    <EmptyStateInline
+                      icon={AlertTriangle}
+                      message={isPolish ? 'Brak wyraźnych issue do pokazania' : 'No clear issues to surface'}
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Signals / Opportunities' : 'Signals / Opportunities'}
+                  </div>
+                  {uniqueNonEmpty([...hiddenSignals, ...opportunityReadout]).length > 0 ? (
+                    uniqueNonEmpty([...hiddenSignals, ...opportunityReadout]).map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-2xl bg-emerald-500/[0.04] dark:bg-emerald-500/10 px-4 py-3 text-sm text-slate-700 dark:text-slate-300"
+                      >
+                        {item}
+                      </div>
+                    ))
+                  ) : (
+                    <EmptyStateInline
+                      icon={Sparkles}
+                      message={
+                        isPolish ? 'Brak sygnałów i opportunities do pokazania' : 'No signals or opportunities yet'
+                      }
+                    />
+                  )}
                 </div>
               </div>
             </div>
           );
           break;
 
+        case 'traceability':
+          component = (
+            <div className="space-y-4">
+              <Callout
+                variant="success"
+                title={isPolish ? 'Traceability do odpowiedzi źródłowych' : 'Traceability to source answers'}
+              >
+                {isPolish
+                  ? 'Każda karta poniżej pokazuje, z których oficjalnych odpowiedzi i luk informacyjnych zbudowano insight.'
+                  : 'Each card below shows which official answers and information gaps feed this insight.'}
+              </Callout>
+
+              {traceabilityRows.length === 0 ? (
+                <EmptyStateInline
+                  icon={Target}
+                  message={isPolish ? 'Brak sesji źródłowych' : 'No source sessions'}
+                  hint={
+                    isPolish
+                      ? 'Dodaj lub dokończ sesje, aby zbudować evidence trail.'
+                      : 'Add or complete sessions to build the evidence trail.'
+                  }
+                />
+              ) : (
+                <div className="space-y-3">
+                  {traceabilityRows.map(({ session, summary }) => (
+                    <div
+                      key={session.id}
+                      className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-4 space-y-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {session.name}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {session.templateName || (isPolish ? 'Sesja źródłowa' : 'Source session')}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => openSourceSessionInInterviewHub(session)}
+                          className="p-1.5 rounded-lg hover:bg-slate-200/70 dark:hover:bg-white/[0.06] text-slate-500 dark:text-slate-400 transition-colors"
+                        >
+                          <ExternalLink size={14} />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                            {isPolish ? 'Official answers' : 'Official answers'}
+                          </div>
+                          {summary.facts.length > 0 ? (
+                            summary.facts.slice(0, 4).map((fact) => (
+                              <div key={fact} className="text-sm text-slate-700 dark:text-slate-300">
+                                {fact}
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-sm text-slate-400 dark:text-slate-500">
+                              {isPolish ? 'Brak zebranych faktów' : 'No facts captured'}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                            {isPolish ? 'Gaps / constraints' : 'Gaps / constraints'}
+                          </div>
+                          {uniqueNonEmpty([...summary.gaps, ...summary.constraints, ...summary.painPoints]).length >
+                          0 ? (
+                            uniqueNonEmpty([
+                              ...summary.gaps,
+                              ...summary.constraints,
+                              ...summary.painPoints,
+                            ])
+                              .slice(0, 4)
+                              .map((item) => (
+                                <div key={item} className="text-sm text-slate-700 dark:text-slate-300">
+                                  {item}
+                                </div>
+                              ))
+                          ) : (
+                            <div className="text-sm text-slate-400 dark:text-slate-500">
+                              {isPolish ? 'Brak luk lub ograniczeń' : 'No gaps or constraints'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+          break;
+
         case 'full-analysis':
           component = (
-            <div>
+            <div className="space-y-4">
+              <Callout
+                variant="warning"
+                title={isPolish ? 'Raw AI narrative' : 'Raw AI narrative'}
+                compact
+              >
+                {isPolish
+                  ? 'Ta sekcja pokazuje pełny output AI w markdownzie. Traktuj ją jako warstwę roboczą pod consulting readout.'
+                  : 'This section shows the full AI markdown output. Treat it as the working layer behind the consulting readout.'}
+              </Callout>
               {insight?.status === 'generating' ? (
                 <div className="flex flex-col items-center justify-center py-12">
                   <Sparkles size={48} className="text-amber-400 animate-pulse mb-6" />
@@ -1350,7 +1737,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     executiveSummary,
     insight,
     isPolish,
+    officialAnswers,
+    issuesReadout,
+    hiddenSignals,
+    opportunityReadout,
+    evidenceQuotes,
+    traceabilityRows,
     sourceSessions,
+    sourceSessionSummaries,
     nComments,
     commentDraft,
     commentDateFilter,

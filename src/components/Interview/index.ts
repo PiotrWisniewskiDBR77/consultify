@@ -32,6 +32,7 @@ export { InsightViewer } from './InsightViewer';
 export { CATEGORY_CONFIG, CATEGORY_ORDER, CategorySidebar } from './CategorySidebar';
 export { CompanyFactsPanel } from './CompanyFactsPanel';
 export { EvidencePanel } from './EvidencePanel';
+export { InterviewSingleQuestionRuntime } from './InterviewSingleQuestionRuntime';
 export { NotesPanel } from './NotesPanel';
 export { QuestionsList } from './QuestionsList';
 
