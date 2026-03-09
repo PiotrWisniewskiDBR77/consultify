@@ -10,6 +10,7 @@ import {
   File,
   FileText,
   Image,
+  Lightbulb,
   Link,
   MessageSquare,
   MoreVertical,
@@ -427,7 +428,24 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
 
               {/* Actions */}
               {!readOnly && (
-                <div className="relative shrink-0">
+                <div className="relative shrink-0 flex items-center gap-0.5">
+                  <button
+                    onClick={() => {
+                      window.dispatchEvent(
+                        new CustomEvent('interview-attach-to-idea', {
+                          detail: {
+                            type: 'insight',
+                            id: item.id,
+                            title: item.title || item.name,
+                          },
+                        })
+                      );
+                    }}
+                    className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"
+                    title={isPolish ? 'Dołącz do pomysłu' : 'Attach to Idea'}
+                  >
+                    <Lightbulb size={16} className="text-slate-400" />
+                  </button>
                   <button
                     onClick={() => setShowMenuId(showMenuId === item.id ? null : item.id)}
                     className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800"

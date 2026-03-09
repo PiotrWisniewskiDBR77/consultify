@@ -9,21 +9,30 @@ import {
   AlertCircle,
   AlertTriangle,
   BarChart3,
+  ChevronDown,
+  ChevronUp,
   Clock,
   Copy,
   Download,
   ExternalLink,
   FileText,
+  Flame,
   History,
+  Layers,
   Lightbulb,
   Loader2,
+  Map,
   MessageSquare,
   Plus,
+  Radio,
   RefreshCw,
   Send,
+  ShieldAlert,
   Sparkles,
   Star,
   Target,
+  TrendingUp,
+  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -50,7 +59,8 @@ import {
   type DateFilter,
   type SortOrder,
 } from '@/components/shared/NModeSections';
-import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
+import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
@@ -75,6 +85,41 @@ type InsightPromptType =
 
 type InsightStatus = 'generating' | 'completed' | 'failed';
 
+interface InsightTheme {
+  title: string;
+  description: string;
+  evidence_refs: string[];
+  strength: 'strong' | 'moderate' | 'weak';
+}
+
+interface InsightIssue {
+  title: string;
+  description: string;
+  severity: 'high' | 'medium' | 'low';
+  evidence_refs: string[];
+}
+
+interface InsightOpportunity {
+  title: string;
+  description: string;
+  impact: 'high' | 'medium' | 'low';
+  evidence_refs: string[];
+}
+
+interface InsightSignal {
+  title: string;
+  description: string;
+  type: 'tension' | 'gap' | 'contradiction' | 'emerging_pattern';
+}
+
+interface InsightEvidenceMapEntry {
+  answer_id: string;
+  question_text: string;
+  answer_snippet: string;
+  linked_themes: string[];
+  linked_issues: string[];
+}
+
 interface Insight {
   id: string;
   organizationId: string;
@@ -83,6 +128,13 @@ interface Insight {
   sourceSessionIds: string[];
   filters?: Record<string, any>;
   content?: string;
+  executiveSummary?: string;
+  themes?: InsightTheme[];
+  issues?: InsightIssue[];
+  opportunities?: InsightOpportunity[];
+  signals?: InsightSignal[];
+  evidenceMap?: InsightEvidenceMapEntry[];
+  missingData?: string[];
   status: InsightStatus;
   errorMessage?: string;
   sourceSessionCount: number;
@@ -278,6 +330,11 @@ const STATUS_CONFIG: Record<
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   { id: 'executive-summary', icon: Star, label: { en: 'Executive Summary', pl: 'Podsumowanie' } },
   { id: 'consulting-readout', icon: Sparkles, label: { en: 'Consulting Readout', pl: 'Odczyt konsultingowy' } },
+  { id: 'themes', icon: Layers, label: { en: 'Themes', pl: 'Tematy' } },
+  { id: 'issues-risks', icon: ShieldAlert, label: { en: 'Issues & Risks', pl: 'Problemy i ryzyka' } },
+  { id: 'opportunities', icon: TrendingUp, label: { en: 'Opportunities', pl: 'Szanse' } },
+  { id: 'signals', icon: Radio, label: { en: 'Signals', pl: 'Sygnały' } },
+  { id: 'evidence-map', icon: Map, label: { en: 'Evidence Map', pl: 'Mapa dowodów' } },
   { id: 'traceability', icon: Target, label: { en: 'Traceability', pl: 'Traceability' } },
   { id: 'full-analysis', icon: FileText, label: { en: 'Full Analysis', pl: 'Pełna Analiza' } },
   {
@@ -511,6 +568,29 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         summary: sourceSessionSummaries[session.id] || DEFAULT_SESSION_SUMMARY,
       })),
     [sourceSessionSummaries, sourceSessions]
+  );
+
+  // V6 three-layer structured data
+  const v6Themes = useMemo<InsightTheme[]>(() => insight?.themes ?? [], [insight?.themes]);
+  const v6Issues = useMemo<InsightIssue[]>(() => insight?.issues ?? [], [insight?.issues]);
+  const v6Opportunities = useMemo<InsightOpportunity[]>(() => insight?.opportunities ?? [], [insight?.opportunities]);
+  const v6Signals = useMemo<InsightSignal[]>(() => insight?.signals ?? [], [insight?.signals]);
+  const v6EvidenceMap = useMemo<InsightEvidenceMapEntry[]>(() => insight?.evidenceMap ?? [], [insight?.evidenceMap]);
+  const v6MissingData = useMemo<string[]>(() => insight?.missingData ?? [], [insight?.missingData]);
+
+  // Evidence drilldown state
+  const [expandedEvidenceRef, setExpandedEvidenceRef] = useState<string | null>(null);
+
+  const toggleEvidenceRef = useCallback((ref: string) => {
+    setExpandedEvidenceRef((prev) => (prev === ref ? null : ref));
+  }, []);
+
+  const findEvidenceForRef = useCallback(
+    (ref: string): InsightEvidenceMapEntry | undefined =>
+      v6EvidenceMap.find(
+        (entry) => entry.answer_id === ref || entry.question_text === ref
+      ),
+    [v6EvidenceMap]
   );
 
   const isDirty = title !== (insight?.title || '');
@@ -1062,6 +1142,372 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   )}
                 </div>
               </div>
+            </div>
+          );
+          break;
+
+        case 'themes':
+          component = (
+            <div className="space-y-4">
+              {v6MissingData.length > 0 && (
+                <Callout variant="warning" title={isPolish ? 'Brakujące dane' : 'Missing Data'} compact>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    {v6MissingData.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
+                  </ul>
+                </Callout>
+              )}
+              {v6Themes.length === 0 ? (
+                <EmptyStateInline
+                  icon={Layers}
+                  message={isPolish ? 'Brak zidentyfikowanych tematów' : 'No themes identified yet'}
+                  hint={isPolish ? 'Tematy pojawią się po wygenerowaniu analizy V6.' : 'Themes will appear after V6 analysis generation.'}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {v6Themes.map((theme, idx) => (
+                    <div key={idx} className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          {theme.title}
+                        </div>
+                        <span
+                          className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                            theme.strength === 'strong'
+                              ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                              : theme.strength === 'moderate'
+                                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                : 'bg-slate-500/15 text-slate-500 dark:text-slate-400'
+                          }`}
+                        >
+                          {theme.strength === 'strong'
+                            ? isPolish ? 'Silny' : 'Strong'
+                            : theme.strength === 'moderate'
+                              ? isPolish ? 'Umiarkowany' : 'Moderate'
+                              : isPolish ? 'Słaby' : 'Weak'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {theme.description}
+                      </p>
+                      {theme.evidence_refs?.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {theme.evidence_refs.map((ref) => {
+                            const evidence = findEvidenceForRef(ref);
+                            const isExpanded = expandedEvidenceRef === ref;
+                            return (
+                              <div key={ref} className="inline-flex flex-col">
+                                <button
+                                  onClick={() => toggleEvidenceRef(ref)}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                                >
+                                  <Zap size={10} />
+                                  {evidence?.question_text
+                                    ? evidence.question_text.slice(0, 40) + (evidence.question_text.length > 40 ? '…' : '')
+                                    : ref.slice(0, 20)}
+                                  {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                                </button>
+                                {isExpanded && evidence && (
+                                  <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
+                                    <div className="font-medium text-slate-700 dark:text-slate-200">
+                                      {evidence.question_text}
+                                    </div>
+                                    <div className="text-slate-500 dark:text-slate-400 italic">
+                                      "{evidence.answer_snippet}"
+                                    </div>
+                                    {evidence.linked_themes?.length > 0 && (
+                                      <div className="flex flex-wrap gap-1 pt-0.5">
+                                        {evidence.linked_themes.map((t) => (
+                                          <span key={t} className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-700 text-[10px] text-slate-500 dark:text-slate-400">
+                                            {t}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+          break;
+
+        case 'issues-risks':
+          component = (
+            <div className="space-y-4">
+              {v6Issues.length === 0 ? (
+                <EmptyStateInline
+                  icon={ShieldAlert}
+                  message={isPolish ? 'Brak zidentyfikowanych problemów' : 'No issues identified yet'}
+                  hint={isPolish ? 'Problemy pojawią się po analizie V6.' : 'Issues will appear after V6 analysis.'}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {v6Issues.map((issue, idx) => {
+                    const severityStyles =
+                      issue.severity === 'high'
+                        ? 'border-l-red-500 bg-red-500/[0.04] dark:bg-red-500/10'
+                        : issue.severity === 'medium'
+                          ? 'border-l-amber-500 bg-amber-500/[0.04] dark:bg-amber-500/10'
+                          : 'border-l-slate-400 bg-slate-50 dark:bg-navy-900/50';
+                    const severityBadge =
+                      issue.severity === 'high'
+                        ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                        : issue.severity === 'medium'
+                          ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                          : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
+                    return (
+                      <div key={idx} className={`rounded-xl border-l-4 ${severityStyles} px-4 py-4 space-y-2`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {issue.title}
+                          </div>
+                          <span className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${severityBadge}`}>
+                            {issue.severity === 'high'
+                              ? isPolish ? 'Wysoki' : 'High'
+                              : issue.severity === 'medium'
+                                ? isPolish ? 'Średni' : 'Medium'
+                                : isPolish ? 'Niski' : 'Low'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                          {issue.description}
+                        </p>
+                        {issue.evidence_refs?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {issue.evidence_refs.map((ref) => {
+                              const evidence = findEvidenceForRef(ref);
+                              const isExpanded = expandedEvidenceRef === ref;
+                              return (
+                                <div key={ref} className="inline-flex flex-col">
+                                  <button
+                                    onClick={() => toggleEvidenceRef(ref)}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                                  >
+                                    <Zap size={10} />
+                                    {evidence?.question_text
+                                      ? evidence.question_text.slice(0, 40) + (evidence.question_text.length > 40 ? '…' : '')
+                                      : ref.slice(0, 20)}
+                                    {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                                  </button>
+                                  {isExpanded && evidence && (
+                                    <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
+                                      <div className="font-medium text-slate-700 dark:text-slate-200">
+                                        {evidence.question_text}
+                                      </div>
+                                      <div className="text-slate-500 dark:text-slate-400 italic">
+                                        "{evidence.answer_snippet}"
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+          break;
+
+        case 'opportunities':
+          component = (
+            <div className="space-y-4">
+              {v6Opportunities.length === 0 ? (
+                <EmptyStateInline
+                  icon={TrendingUp}
+                  message={isPolish ? 'Brak zidentyfikowanych szans' : 'No opportunities identified yet'}
+                  hint={isPolish ? 'Szanse pojawią się po analizie V6.' : 'Opportunities will appear after V6 analysis.'}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {v6Opportunities.map((opp, idx) => {
+                    const impactBadge =
+                      opp.impact === 'high'
+                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                        : opp.impact === 'medium'
+                          ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
+                          : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
+                    return (
+                      <div key={idx} className="rounded-xl bg-emerald-500/[0.03] dark:bg-emerald-500/[0.06] px-4 py-4 space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {opp.title}
+                          </div>
+                          <span className={`flex-shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${impactBadge}`}>
+                            {opp.impact === 'high'
+                              ? isPolish ? 'Wysoki wpływ' : 'High impact'
+                              : opp.impact === 'medium'
+                                ? isPolish ? 'Średni wpływ' : 'Medium impact'
+                                : isPolish ? 'Niski wpływ' : 'Low impact'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                          {opp.description}
+                        </p>
+                        {opp.evidence_refs?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {opp.evidence_refs.map((ref) => {
+                              const evidence = findEvidenceForRef(ref);
+                              const isExpanded = expandedEvidenceRef === ref;
+                              return (
+                                <div key={ref} className="inline-flex flex-col">
+                                  <button
+                                    onClick={() => toggleEvidenceRef(ref)}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                                  >
+                                    <Zap size={10} />
+                                    {evidence?.question_text
+                                      ? evidence.question_text.slice(0, 40) + (evidence.question_text.length > 40 ? '…' : '')
+                                      : ref.slice(0, 20)}
+                                    {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                                  </button>
+                                  {isExpanded && evidence && (
+                                    <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
+                                      <div className="font-medium text-slate-700 dark:text-slate-200">
+                                        {evidence.question_text}
+                                      </div>
+                                      <div className="text-slate-500 dark:text-slate-400 italic">
+                                        "{evidence.answer_snippet}"
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+          break;
+
+        case 'signals':
+          component = (
+            <div className="space-y-4">
+              {v6Signals.length === 0 ? (
+                <EmptyStateInline
+                  icon={Radio}
+                  message={isPolish ? 'Brak wykrytych sygnałów' : 'No signals detected yet'}
+                  hint={isPolish ? 'Sygnały pojawią się po analizie V6.' : 'Signals will appear after V6 analysis.'}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {v6Signals.map((signal, idx) => {
+                    const typeConfig: Record<string, { bg: string; label: string; labelPl: string; icon: React.ReactNode }> = {
+                      tension: { bg: 'bg-red-500/10 text-red-600 dark:text-red-400', label: 'Tension', labelPl: 'Napięcie', icon: <Flame size={10} /> },
+                      gap: { bg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400', label: 'Gap', labelPl: 'Luka', icon: <Target size={10} /> },
+                      contradiction: { bg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400', label: 'Contradiction', labelPl: 'Sprzeczność', icon: <AlertCircle size={10} /> },
+                      emerging_pattern: { bg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400', label: 'Emerging Pattern', labelPl: 'Wzorzec', icon: <Sparkles size={10} /> },
+                    };
+                    const cfg = typeConfig[signal.type] || typeConfig.emerging_pattern;
+                    return (
+                      <div key={idx} className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {signal.title}
+                          </div>
+                          <span className={`flex-shrink-0 inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${cfg.bg}`}>
+                            {cfg.icon}
+                            {isPolish ? cfg.labelPl : cfg.label}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                          {signal.description}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+          break;
+
+        case 'evidence-map':
+          component = (
+            <div className="space-y-4">
+              <Callout
+                variant="purple"
+                title={isPolish ? 'Mapa dowodów' : 'Evidence Map'}
+                compact
+              >
+                {isPolish
+                  ? 'Tabela łączy odpowiedzi źródłowe z tematami i problemami. Kliknij wiersz, aby zobaczyć pełny cytat.'
+                  : 'This table links source answers to themes and issues. Click a row to see the full quote.'}
+              </Callout>
+              {v6EvidenceMap.length === 0 ? (
+                <EmptyStateInline
+                  icon={Map}
+                  message={isPolish ? 'Brak mapy dowodów' : 'No evidence map available'}
+                  hint={isPolish ? 'Mapa pojawi się po analizie V6.' : 'Map will appear after V6 analysis.'}
+                />
+              ) : (
+                <InlineTable<InsightEvidenceMapEntry & Record<string, unknown>>
+                  columns={[
+                    {
+                      key: 'question',
+                      header: isPolish ? 'Pytanie' : 'Question',
+                      width: 'w-1/3',
+                      render: (row) => (
+                        <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
+                          {row.question_text}
+                        </span>
+                      ),
+                    },
+                    {
+                      key: 'answer',
+                      header: isPolish ? 'Odpowiedź' : 'Answer',
+                      width: 'w-1/3',
+                      render: (row) => (
+                        <span className="text-xs text-slate-500 dark:text-slate-400 italic">
+                          {row.answer_snippet?.length > 120
+                            ? row.answer_snippet.slice(0, 120) + '…'
+                            : row.answer_snippet}
+                        </span>
+                      ),
+                    },
+                    {
+                      key: 'linked',
+                      header: isPolish ? 'Powiązania' : 'Links',
+                      render: (row) => (
+                        <div className="flex flex-wrap gap-1">
+                          {row.linked_themes?.map((t: string) => (
+                            <span key={`t-${t}`} className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px]">
+                              {t}
+                            </span>
+                          ))}
+                          {row.linked_issues?.map((i: string) => (
+                            <span key={`i-${i}`} className="px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[10px]">
+                              {i}
+                            </span>
+                          ))}
+                        </div>
+                      ),
+                    },
+                  ] as InlineTableColumn<InsightEvidenceMapEntry & Record<string, unknown>>[]}
+                  data={v6EvidenceMap as (InsightEvidenceMapEntry & Record<string, unknown>)[]}
+                  rowKey={(row, idx) => row.answer_id || String(idx)}
+                  emptyMessage={isPolish ? 'Brak danych.' : 'No data.'}
+                  striped
+                />
+              )}
             </div>
           );
           break;
@@ -1720,17 +2166,21 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           break;
       }
 
+      const badgeMap: Record<string, number | undefined> = {
+        comments: nComments.length,
+        'source-sessions': sourceSessions.length,
+        'activity-log': activityEntries.length,
+        themes: v6Themes.length || undefined,
+        'issues-risks': v6Issues.length || undefined,
+        opportunities: v6Opportunities.length || undefined,
+        signals: v6Signals.length || undefined,
+        'evidence-map': v6EvidenceMap.length || undefined,
+      };
+
       return {
         ...section,
         component,
-        badge:
-          section.id === 'comments'
-            ? nComments.length
-            : section.id === 'source-sessions'
-              ? sourceSessions.length
-              : section.id === 'activity-log'
-                ? activityEntries.length
-                : undefined,
+        badge: badgeMap[section.id],
       } as NModeSection;
     });
   }, [
@@ -1758,6 +2208,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     getPriorityDotClass,
     openSourceSessionInInterviewHub,
     activityEntries,
+    v6Themes,
+    v6Issues,
+    v6Opportunities,
+    v6Signals,
+    v6EvidenceMap,
+    v6MissingData,
+    expandedEvidenceRef,
+    toggleEvidenceRef,
+    findEvidenceForRef,
   ]);
 
   // ── Render ─────────────────────────────────────────────────────────────────

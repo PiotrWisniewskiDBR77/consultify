@@ -54,7 +54,9 @@ export interface InterviewQuestion {
   answerMode?: string;
   answerPayload?: Record<string, unknown> | null;
   contextNote?: string;
-  notes?: string; // E2.1: per-question notes field
+  notes?: string;
+  description?: string;
+  evidencePrompt?: string;
   voiceTranscript?: string;
   voiceTranscriptStatus?: 'none' | 'draft' | 'approved';
   voiceAudioEvidenceId?: string;
@@ -63,7 +65,7 @@ export interface InterviewQuestion {
   allowUrl?: boolean;
   allowContextNote?: boolean;
   status: QuestionStatus;
-  confidenceScore: number; // 1-5
+  confidenceScore: number;
   answeredBy?: string;
   answeredAt?: string;
   tags: string[];

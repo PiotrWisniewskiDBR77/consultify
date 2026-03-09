@@ -24,6 +24,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  CircleAlert,
   Clock,
   Copy,
   Download,
@@ -32,12 +33,15 @@ import {
   Link2,
   Loader2,
   MessageSquare,
+  Mic,
   Paperclip,
   RefreshCw,
   Save,
   Send,
+  Shield,
   Sparkles,
   Target,
+  ThumbsUp,
   Users,
   X,
 } from 'lucide-react';
@@ -173,6 +177,50 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   }, [assignmentStatus, session?.assignmentId, session?.status]);
 
   const isAssignmentMode = Boolean(session?.assignmentId);
+
+  // V6-C04: Reviewer mode — activates when the session is submitted and the
+  // current user is NOT the assignee (i.e. they are the reviewer/manager).
+  const isReviewerMode = useMemo(() => {
+    if (!isAssignmentMode) return false;
+    const asgStatus = (assignmentStatus || '').toLowerCase();
+    if (asgStatus !== 'submitted') return false;
+    const sessionOwnerId = session?.ownerId;
+    return Boolean(sessionOwnerId) && sessionOwnerId !== currentUser?.id;
+  }, [assignmentStatus, currentUser?.id, isAssignmentMode, session?.ownerId]);
+
+  const [sendBackReason, setSendBackReason] = useState('');
+  const [sendBackMissingItems, setSendBackMissingItems] = useState<
+    { key: string; label: string; checked: boolean }[]
+  >([]);
+  const [isSendingBack, setIsSendingBack] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [showSendBackForm, setShowSendBackForm] = useState(false);
+
+  // Populate send-back checklist when entering reviewer mode
+  useEffect(() => {
+    if (!isReviewerMode) return;
+    const items: { key: string; label: string; checked: boolean }[] = [];
+    const unansweredRequired = questions.filter(
+      (q) => q.isRequired && q.status !== 'answered'
+    );
+    for (const q of unansweredRequired) {
+      items.push({
+        key: `q_${q.id}`,
+        label: q.questionText.length > 80 ? q.questionText.slice(0, 77) + '…' : q.questionText,
+        checked: true,
+      });
+    }
+    if (items.length === 0) {
+      items.push({
+        key: 'quality_gaps',
+        label: isPolish
+          ? 'Doprecyzuj kluczowe odpowiedzi'
+          : 'Clarify key answers',
+        checked: false,
+      });
+    }
+    setSendBackMissingItems(items);
+  }, [isReviewerMode, questions, isPolish]);
 
   // Domyślnie nie wybieramy żadnej kategorii - użytkownik sam zdecyduje
   const [activeCategory, setActiveCategory] = useState<InterviewCategory | undefined>(undefined);
@@ -787,6 +835,47 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     }
   }, [session, isLocked, isPolish, onComplete, questions]);
 
+  // V6-C04: Reviewer actions
+  const handleSendBack = useCallback(async () => {
+    if (!session?.assignmentId || !sendBackReason.trim()) return;
+    setIsSendingBack(true);
+    try {
+      const missingItems = sendBackMissingItems
+        .filter((item) => item.checked)
+        .map((item) => ({ key: item.key, label: item.label }));
+      await Api.post(`/interview/assignments/${session.assignmentId}/send-back`, {
+        reason: sendBackReason.trim(),
+        missingItems,
+      });
+      setAssignmentStatus('sent_back');
+      setShowSendBackForm(false);
+      setSendBackReason('');
+      toast.success(isPolish ? 'Wywiad odesłany do poprawy.' : 'Interview sent back for revision.');
+    } catch (error) {
+      console.error('[InterviewWorkspace] Failed to send back:', error);
+      toast.error(isPolish ? 'Nie udało się odesłać.' : 'Failed to send back.');
+    } finally {
+      setIsSendingBack(false);
+    }
+  }, [session?.assignmentId, sendBackReason, sendBackMissingItems, isPolish]);
+
+  const handleApprove = useCallback(async () => {
+    if (!session?.assignmentId) return;
+    setIsApproving(true);
+    try {
+      const result = await Api.post(`/interview/assignments/${session.assignmentId}/approve`, {});
+      const updatedAssignment = (result as any)?.assignment;
+      if (updatedAssignment?.status) setAssignmentStatus(String(updatedAssignment.status));
+      else setAssignmentStatus('approved');
+      toast.success(isPolish ? 'Wywiad zatwierdzony.' : 'Interview approved.');
+    } catch (error) {
+      console.error('[InterviewWorkspace] Failed to approve:', error);
+      toast.error(isPolish ? 'Nie udało się zatwierdzić.' : 'Failed to approve.');
+    } finally {
+      setIsApproving(false);
+    }
+  }, [session?.assignmentId, isPolish]);
+
   // Open chat
   const handleOpenChat = useCallback(() => {
     if (!session) return;
@@ -1169,6 +1258,50 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     const questionsSection = (
       <NModeSectionWrapper heading={{ en: 'Questions', pl: 'Pytania' }}>
         <div ref={questionsTopRef} />
+
+        <div className="mb-4">
+          <RuntimeModeSelector
+            currentMode={runtimeMode}
+            recommendedMode="single_question"
+            onModeSelect={handleRuntimeModeSelect}
+            compact={runtimeMode === 'single_question'}
+            locked={isLocked}
+          />
+        </div>
+
+        {runtimeMode === 'single_question' ? (
+          activeCategory ? (
+            <InterviewSingleQuestionRuntime
+              questions={questions}
+              evidence={evidence}
+              activeCategory={activeCategory}
+              onCategoryChange={setActiveCategory}
+              onUpdateQuestion={handleUpdateQuestion}
+              onUploadFile={handleUploadFile}
+              onAddLink={handleAddLink}
+              onAddVoiceEvidence={handleAddVoiceEvidence}
+              onSubmitSession={handleSubmitSession}
+              onSaveAndExit={onClose}
+              sessionName={sessionName}
+              readOnly={isLocked}
+            />
+          ) : (
+            <Callout
+              variant="info"
+              title={isPolish ? 'Gotowy do startu' : 'Ready to start'}
+              compact
+              action={{
+                label: isPolish ? 'Rozpocznij' : 'Start',
+                onClick: handleNextMissing,
+              }}
+            >
+              {isPolish
+                ? 'Kliknij \u201eRozpocznij\u201d, aby przej\u015b\u0107 do pierwszego pytania.'
+                : 'Click "Start" to jump to the first question.'}
+            </Callout>
+          )
+        ) : (
+          <>
         <div className="mb-4 inline-flex items-center gap-2">
           <button
             onClick={handleNextMissing}
@@ -1226,6 +1359,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               ? 'Zacznij od pierwszej brakującej odpowiedzi — poprowadzę Cię przez flow.'
               : 'Start with the next missing answer — we’ll guide you through the flow.'}
           </Callout>
+        )}
+          </>
         )}
       </NModeSectionWrapper>
     );
@@ -1519,6 +1654,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     return base;
   })();
 
+  // NOTE: legacyRender below is dead code — NModeShell is the sole render path.
+  // InterviewSingleQuestionRuntime is now rendered inside questionsSection above.
+  // TODO: remove legacyRender in a cleanup pass.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const legacyRender = (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
       {/* ==========================================
@@ -1698,9 +1837,310 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       </motion.div>
 
       {/* ==========================================
-          TWO-COLUMN GRID
+          V6-C04: REVIEWER MODE PANEL
           ========================================== */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      {isReviewerMode && (
+        <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+          {/* Reviewer banner */}
+          <div className="flex items-center gap-3 rounded-2xl border border-indigo-200/60 dark:border-indigo-500/20 bg-indigo-50/70 dark:bg-indigo-500/10 px-5 py-4">
+            <Shield size={20} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                {isPolish ? 'Tryb recenzenta' : 'Reviewer mode'}
+              </p>
+              <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 mt-0.5">
+                {isPolish
+                  ? 'Przeglądasz złożony wywiad. Możesz zatwierdzić lub odesłać do poprawy.'
+                  : 'You are reviewing a submitted interview. You can approve or send back.'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowSendBackForm((prev) => !prev)}
+                className="inline-flex items-center gap-2 rounded-xl border border-amber-300 dark:border-amber-500/30 bg-white dark:bg-navy-900 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
+                aria-label={isPolish ? 'Odeślij do poprawy' : 'Send back for revision'}
+              >
+                <Send size={14} className="rotate-180" />
+                {isPolish ? 'Odeślij' : 'Send back'}
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleApprove}
+                disabled={isApproving}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 disabled:opacity-60 transition-all"
+                aria-label={isPolish ? 'Zatwierdź wywiad' : 'Approve interview'}
+              >
+                {isApproving ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <ThumbsUp size={14} />
+                )}
+                {isPolish ? 'Zatwierdź' : 'Approve'}
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Send-back form (collapsible) */}
+          <AnimatePresence>
+            {showSendBackForm && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="rounded-2xl border border-amber-200/60 dark:border-amber-500/20 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl p-5 space-y-4">
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    {isPolish ? 'Formularz odesłania' : 'Send-back form'}
+                  </h3>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                      {isPolish ? 'Powód odesłania' : 'Reason for sending back'}
+                    </label>
+                    <textarea
+                      value={sendBackReason}
+                      onChange={(e) => setSendBackReason(e.target.value)}
+                      rows={3}
+                      className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+                      placeholder={
+                        isPolish
+                          ? 'Opisz, co wymaga poprawy lub uzupełnienia...'
+                          : 'Describe what needs to be improved or completed...'
+                      }
+                      aria-label={isPolish ? 'Powód odesłania' : 'Reason for sending back'}
+                    />
+                  </div>
+
+                  {sendBackMissingItems.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Brakujące elementy' : 'Missing items'}
+                      </label>
+                      <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                        {sendBackMissingItems.map((item, idx) => (
+                          <label
+                            key={item.key}
+                            className="flex items-start gap-2.5 rounded-lg px-3 py-2 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={item.checked}
+                              onChange={() =>
+                                setSendBackMissingItems((prev) =>
+                                  prev.map((it, i) =>
+                                    i === idx ? { ...it, checked: !it.checked } : it
+                                  )
+                                )
+                              }
+                              className="mt-0.5 rounded border-slate-300 dark:border-navy-600 text-amber-500 focus:ring-amber-400"
+                              aria-label={item.label}
+                            />
+                            <span className="text-sm text-slate-700 dark:text-slate-300">
+                              {item.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowSendBackForm(false)}
+                      className="px-4 py-2 rounded-xl border border-slate-200 dark:border-navy-700 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                    >
+                      {isPolish ? 'Anuluj' : 'Cancel'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSendBack}
+                      disabled={isSendingBack || !sendBackReason.trim()}
+                      className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 transition-colors"
+                      aria-label={isPolish ? 'Potwierdź odesłanie' : 'Confirm send back'}
+                    >
+                      {isSendingBack ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Send size={14} className="rotate-180" />
+                      )}
+                      {isPolish ? 'Odeślij do poprawy' : 'Send back'}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Reviewer: full question list with answers (read-only) */}
+          <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl shadow-lg overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60 flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">
+                  {isPolish ? 'Odpowiedzi respondenta' : 'Respondent answers'}
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {answeredQuestions}/{totalQuestions}{' '}
+                  {isPolish ? 'odpowiedzi' : 'answered'} · {overallPercent}%
+                </p>
+              </div>
+              {/* Gaps indicator */}
+              {(() => {
+                const unansweredRequired = questions.filter(
+                  (q) => q.isRequired && q.status !== 'answered'
+                );
+                if (unansweredRequired.length === 0) return null;
+                return (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400">
+                    <CircleAlert size={12} />
+                    {unansweredRequired.length}{' '}
+                    {isPolish ? 'wymaganych brakuje' : 'required missing'}
+                  </span>
+                );
+              })()}
+            </div>
+
+            <div className="divide-y divide-slate-100 dark:divide-navy-800">
+              {CATEGORY_ORDER.map((cat) => {
+                const cfg = CATEGORY_CONFIG[cat];
+                const catQuestions = questions.filter((q) => q.category === cat);
+                if (catQuestions.length === 0) return null;
+                const catAnswered = catQuestions.filter((q) => q.status === 'answered').length;
+
+                return (
+                  <div key={cat}>
+                    <div className="flex items-center gap-3 px-5 py-3 bg-slate-50/60 dark:bg-navy-950/40">
+                      <cfg.icon size={14} className={cfg.color} />
+                      <span className={`text-xs font-semibold ${cfg.color}`}>
+                        {isPolish ? cfg.labelPl : cfg.labelEn}
+                      </span>
+                      <span className="text-[10px] tabular-nums text-slate-400 dark:text-slate-500">
+                        {catAnswered}/{catQuestions.length}
+                      </span>
+                    </div>
+                    <div className="divide-y divide-slate-50 dark:divide-navy-800/50">
+                      {catQuestions.map((q) => {
+                        const answered = q.status === 'answered';
+                        const qEvidence = evidence.filter((e) => e.questionId === q.id);
+                        const hasFile = qEvidence.some(
+                          (e) => e.evidenceType === 'file' || e.evidenceType === 'document'
+                        );
+                        const hasLink = qEvidence.some((e) => e.evidenceType === 'link');
+                        const hasVoice = qEvidence.some(
+                          (e) =>
+                            e.evidenceType === 'voice' ||
+                            e.evidenceType === 'audio' ||
+                            (e.evidenceType === 'file' &&
+                              (e.name || '').match(/\.(webm|mp3|wav|ogg|m4a)$/i))
+                        );
+
+                        return (
+                          <div key={q.id} className="px-5 py-3 space-y-1.5">
+                            <div className="flex items-start gap-2">
+                              <div className="mt-0.5 shrink-0">
+                                {answered ? (
+                                  <Check size={14} className="text-emerald-500" />
+                                ) : q.isRequired ? (
+                                  <CircleAlert size={14} className="text-rose-400" />
+                                ) : (
+                                  <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 dark:border-navy-600" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                  {q.questionText}
+                                  {q.isRequired && (
+                                    <span className="ml-1.5 text-[10px] text-rose-500">*</span>
+                                  )}
+                                </p>
+                                {q.answerText ? (
+                                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
+                                    {q.answerText}
+                                  </p>
+                                ) : (
+                                  <p className="mt-1 text-xs italic text-slate-400 dark:text-slate-500">
+                                    {isPolish ? 'Brak odpowiedzi' : 'No answer'}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            {/* Evidence completeness indicators */}
+                            {(hasFile || hasLink || hasVoice) && (
+                              <div className="flex items-center gap-2 ml-6">
+                                {hasFile && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-navy-800 px-2 py-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                                    <Paperclip size={10} />
+                                    {isPolish ? 'Plik' : 'File'}
+                                  </span>
+                                )}
+                                {hasLink && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-navy-800 px-2 py-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                                    <Link2 size={10} />
+                                    {isPolish ? 'Link' : 'Link'}
+                                  </span>
+                                )}
+                                {hasVoice && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-navy-800 px-2 py-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                                    <Mic size={10} />
+                                    {isPolish ? 'Głos' : 'Voice'}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Bottom reviewer actions (sticky-ish) */}
+          <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl p-4 flex items-center justify-between">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {isPolish
+                ? 'Sprawdź kompletność odpowiedzi i dowodów przed podjęciem decyzji.'
+                : 'Review answer completeness and evidence before making a decision.'}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSendBackForm(true)}
+                className="inline-flex items-center gap-2 rounded-xl border border-amber-300 dark:border-amber-500/30 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
+                aria-label={isPolish ? 'Odeślij do poprawy' : 'Send back for revision'}
+              >
+                <Send size={14} className="rotate-180" />
+                {isPolish ? 'Odeślij' : 'Send back'}
+              </button>
+              <button
+                type="button"
+                onClick={handleApprove}
+                disabled={isApproving}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 disabled:opacity-60 transition-all"
+                aria-label={isPolish ? 'Zatwierdź wywiad' : 'Approve interview'}
+              >
+                {isApproving ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <ThumbsUp size={14} />
+                )}
+                {isPolish ? 'Zatwierdź' : 'Approve'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          TWO-COLUMN GRID (hidden in reviewer mode)
+          ========================================== */}
+      {!isReviewerMode && <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* ==========================================
               LEFT COLUMN - Category Navigation
@@ -1854,6 +2294,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                       onAddLink={handleAddLink}
                       onAddVoiceEvidence={handleAddVoiceEvidence}
                       onSubmitSession={handleSubmitSession}
+                      onSaveAndExit={onClose}
+                      sessionName={sessionName}
                       readOnly={isLocked}
                     />
                   ) : (
@@ -2458,7 +2900,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             />
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 

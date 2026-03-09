@@ -15,12 +15,31 @@
  */
 
 import {
+  closestCenter,
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   AlertCircle,
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  Copy,
   FileText,
   HelpCircle,
+  GripVertical,
   Link2,
   Loader2,
   MessageSquare,
@@ -41,6 +60,13 @@ import { useTranslation } from 'react-i18next';
 
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
+
+import {
+  getTemplateAreaTagLabel,
+  INTERVIEW_TEMPLATE_AREA_TAG_OPTIONS,
+  normalizeInterviewTemplateAreaTags,
+  type TemplateScope,
+} from './templateLibraryMeta';
 
 // Types
 interface TemplateQuestion {
@@ -77,6 +103,8 @@ interface Template {
   audience?: string;
   estimatedTimeMinutes?: number;
   runtimeModeDefault?: RuntimeModeDefault;
+  answerDesignGuide?: string;
+  areaTags?: string[];
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -92,11 +120,22 @@ type TemplateCategory =
   | 'STANDARD'
   | 'QUICK'
   | 'CUSTOM';
-type TemplateScope = 'system' | 'organization' | 'private';
 type RuntimeModeDefault = 'task_list' | 'one_question_per_screen';
 type AiDraftPayload = {
   template?: Partial<Template>;
   questions?: Array<Partial<TemplateQuestion>>;
+};
+type AiQuestionProposal = {
+  summary?: string;
+  add?: Array<Partial<TemplateQuestion> & { rationale?: string }>;
+  update?: Array<
+    Partial<TemplateQuestion> & {
+      questionId: string;
+      rationale?: string;
+    }
+  >;
+  remove?: Array<{ questionId: string; reason: string }>;
+  reorder?: { order: string[]; note?: string };
 };
 
 // Constants
@@ -116,6 +155,51 @@ const RUNTIME_MODE_OPTIONS: { id: RuntimeModeDefault; labelPl: string; labelEn: 
   },
   { id: 'task_list', labelPl: 'Lista pytań', labelEn: 'Question list' },
 ];
+
+const normalizeAnswerType = (value: unknown): AnswerType => {
+  const raw = String(value || 'open').trim().toLowerCase();
+  return ['open', 'select', 'scale', 'boolean', 'number'].includes(raw)
+    ? (raw as AnswerType)
+    : 'open';
+};
+
+const parseAiJsonPayload = (raw: string): any | null => {
+  const text = String(raw || '').trim();
+  if (!text) return null;
+  const jsonMatch = text.match(/```json\s*([\s\S]*?)```/i) || text.match(/```([\s\S]*?)```/);
+  const payload = (jsonMatch?.[1] || text).trim();
+  try {
+    return JSON.parse(payload);
+  } catch {
+    return null;
+  }
+};
+
+const DEFAULT_ALLOWED_ANSWER_TYPES: AnswerType[] = ANSWER_TYPES.map((item) => item.id);
+
+const parseAllowedAnswerTypes = (value?: string): AnswerType[] => {
+  const raw = String(value || '').trim();
+  if (!raw) return DEFAULT_ALLOWED_ANSWER_TYPES;
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      const normalized = parsed
+        .map((item) => normalizeAnswerType(item))
+        .filter((item, index, array) => array.indexOf(item) === index);
+      return normalized.length > 0 ? normalized : DEFAULT_ALLOWED_ANSWER_TYPES;
+    }
+  } catch {
+    // Ignore legacy non-JSON values and fall back to default.
+  }
+  return DEFAULT_ALLOWED_ANSWER_TYPES;
+};
+
+const serializeAllowedAnswerTypes = (types: AnswerType[]): string =>
+  JSON.stringify(
+    types.filter((item, index, array) => array.indexOf(item) === index).sort((a, b) =>
+      DEFAULT_ALLOWED_ANSWER_TYPES.indexOf(a) - DEFAULT_ALLOWED_ANSWER_TYPES.indexOf(b)
+    )
+  );
 
 interface TemplateBuilderProps {
   isOpen: boolean;
@@ -139,7 +223,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   const [template, setTemplate] = useState<Partial<Template>>({
     name: '',
     description: '',
-    scope: 'organization',
+    scope: 'private',
     category: 'CUSTOM',
     status: 'draft',
     visibility: 'org',
@@ -148,6 +232,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     audience: '',
     estimatedTimeMinutes: 10,
     runtimeModeDefault: 'one_question_per_screen',
+    answerDesignGuide: '',
+    areaTags: [],
   });
 
   // Questions state
@@ -160,14 +246,21 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isImportingSource, setIsImportingSource] = useState(false);
-  const [aiBrief, setAiBrief] = useState('');
   const [importedSourceName, setImportedSourceName] = useState('');
   const [importedSourceText, setImportedSourceText] = useState('');
+  const [aiProposal, setAiProposal] = useState<AiQuestionProposal | null>(null);
+  const [showAiProposalModal, setShowAiProposalModal] = useState(false);
+  const [selectedAddIdx, setSelectedAddIdx] = useState<Record<number, boolean>>({});
+  const [selectedUpdateIds, setSelectedUpdateIds] = useState<Record<string, boolean>>({});
+  const [selectedRemoveIds, setSelectedRemoveIds] = useState<Record<string, boolean>>({});
+  const [applySuggestedOrder, setApplySuggestedOrder] = useState(false);
+  const [isAnswerTypeMenuOpen, setIsAnswerTypeMenuOpen] = useState(false);
+  const [isAreaTagsMenuOpen, setIsAreaTagsMenuOpen] = useState(false);
+  const [isCloning, setIsCloning] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const reviewImportInputRef = useRef<HTMLInputElement | null>(null);
 
   // Load existing template
   useEffect(() => {
@@ -180,7 +273,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       setTemplate({
         name: '',
         description: '',
-        scope: 'organization',
+        scope: 'private',
         category: 'CUSTOM',
         status: 'draft',
         visibility: 'org',
@@ -189,6 +282,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         audience: '',
         estimatedTimeMinutes: 10,
         runtimeModeDefault: 'one_question_per_screen',
+        answerDesignGuide: '',
+        areaTags: [],
       });
       setQuestions([]);
       setDeletedQuestionIds([]);
@@ -196,6 +291,10 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       setQuestionCountTolerance(2);
       setImportedSourceName('');
       setImportedSourceText('');
+      setAiProposal(null);
+      setShowAiProposalModal(false);
+      setIsAnswerTypeMenuOpen(false);
+      setIsAreaTagsMenuOpen(false);
     }
   }, [isOpen, templateId]);
 
@@ -207,13 +306,21 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
         Api.get(`/interview/templates/${id}/questions`),
       ]);
 
-      setTemplate(templateRes as Template);
+      setTemplate({
+        ...(templateRes as Template),
+        scope: ((templateRes as Template)?.scope || 'private') as TemplateScope,
+        areaTags: normalizeInterviewTemplateAreaTags((templateRes as Template)?.areaTags),
+      });
       setDeletedQuestionIds([]);
       const loadedQuestions = Array.isArray(questionsRes) ? questionsRes : [];
       setTargetQuestionCount(Math.max(loadedQuestions.length || 0, 1));
       setQuestionCountTolerance(2);
       setImportedSourceName('');
       setImportedSourceText('');
+      setAiProposal(null);
+      setShowAiProposalModal(false);
+      setIsAnswerTypeMenuOpen(false);
+      setIsAreaTagsMenuOpen(false);
       setQuestions(
         loadedQuestions.map((q: any) => ({
           id: q.id,
@@ -261,6 +368,112 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
     () => [...questions].sort((a, b) => a.sortOrder - b.sortOrder),
     [questions]
   );
+  const dragSensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 6,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const allowedAnswerTypes = useMemo(
+    () => parseAllowedAnswerTypes(template.answerDesignGuide),
+    [template.answerDesignGuide]
+  );
+  const areaTags = useMemo(
+    () => normalizeInterviewTemplateAreaTags(template.areaTags),
+    [template.areaTags]
+  );
+  const isApplicationTemplate = Boolean(templateId) && template.scope === 'system';
+
+  const handleCloneTemplate = useCallback(async () => {
+    if (!templateId || isCloning) return;
+    setIsCloning(true);
+    try {
+      const cloned = await Api.post(`/interview/templates/${templateId}/clone`, {
+        scope: 'private',
+      });
+      toast.success(
+        isPolish
+          ? 'Szablon sklonowany — otwieramy kopię do edycji'
+          : 'Template cloned — opening copy for editing'
+      );
+      if (onSuccess && cloned?.id) {
+        onSuccess({ ...cloned, id: cloned.id } as Partial<Template> & { id: string });
+      }
+    } catch (error) {
+      console.error('[TemplateBuilder] Clone failed:', error);
+      toast.error(isPolish ? 'Nie udało się sklonować szablonu' : 'Failed to clone template');
+    } finally {
+      setIsCloning(false);
+    }
+  }, [templateId, isCloning, isPolish, onSuccess]);
+
+  const allowedAnswerTypesLabel = useMemo(() => {
+    if (allowedAnswerTypes.length === ANSWER_TYPES.length) {
+      return isPolish ? 'Wszystkie formy odpowiedzi' : 'All answer types';
+    }
+    return allowedAnswerTypes
+      .map(
+        (type) =>
+          ANSWER_TYPES.find((item) => item.id === type)?.[isPolish ? 'labelPl' : 'labelEn'] || type
+      )
+      .join(', ');
+  }, [allowedAnswerTypes, isPolish]);
+
+  const areaTagsLabel = useMemo(() => {
+    if (areaTags.length === 0) {
+      return isPolish ? 'Wybierz obszary' : 'Select areas';
+    }
+    return areaTags.map((tag) => getTemplateAreaTagLabel(tag, isPolish)).join(', ');
+  }, [areaTags, isPolish]);
+
+  const toggleAllowedAnswerType = useCallback((type: AnswerType) => {
+    setTemplate((prev) => {
+      const current = parseAllowedAnswerTypes(prev.answerDesignGuide);
+      const next = current.includes(type)
+        ? current.filter((item) => item !== type)
+        : [...current, type];
+      const normalized = next.length > 0 ? next : DEFAULT_ALLOWED_ANSWER_TYPES;
+      return {
+        ...prev,
+        answerDesignGuide: serializeAllowedAnswerTypes(normalized),
+      };
+    });
+  }, []);
+
+  const toggleAreaTag = useCallback((tag: string) => {
+    setTemplate((prev) => {
+      const current = normalizeInterviewTemplateAreaTags(prev.areaTags);
+      const next = current.includes(tag as any)
+        ? current.filter((item) => item !== tag)
+        : [...current, tag as any];
+      return {
+        ...prev,
+        areaTags: normalizeInterviewTemplateAreaTags(next),
+      };
+    });
+  }, []);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setQuestions((prev) => {
+      const ordered = [...prev].sort((a, b) => a.sortOrder - b.sortOrder);
+      const oldIndex = ordered.findIndex((question) => question.id === String(active.id));
+      const newIndex = ordered.findIndex((question) => question.id === String(over.id));
+      if (oldIndex === -1 || newIndex === -1) return prev;
+
+      return arrayMove(ordered, oldIndex, newIndex).map((question, index) => ({
+        ...question,
+        sortOrder: (index + 1) * 10,
+      }));
+    });
+  }, []);
 
   // Validation
   const validate = useCallback(() => {
@@ -512,11 +725,11 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   );
 
   const handleGenerateWithAI = useCallback(async () => {
-    if (!aiBrief.trim() && !importedSourceText.trim()) {
+    if (!template.description?.trim() && !importedSourceText.trim()) {
       toast.error(
         isPolish
-          ? 'Dodaj brief albo zaimportuj plik TXT/PDF'
-          : 'Add a brief or import a TXT/PDF file'
+          ? 'Dodaj opis briefu albo zaimportuj plik TXT/PDF'
+          : 'Add a brief description or import a TXT/PDF file'
       );
       return;
     }
@@ -565,17 +778,20 @@ Rules:
 - Build a practical executive-quality interview sheet.
 - Prefer concise, clear, answerable questions.
 - Default all modalities to true unless there is a strong reason not to.
+- Use only the allowed answer types provided in context unless there is a compelling reason to stay within a smaller subset.
 - For select or scale questions, provide answerOptions.
 - Return ${Math.max(1, targetQuestionCount - questionCountTolerance)} to ${targetQuestionCount + questionCountTolerance} questions.`;
 
     const userPrompt = `Language: ${isPolish ? 'Polish' : 'English'}
 Topic: ${template.name || ''}
 Description: ${template.description || ''}
+Area tags: ${areaTags.join(', ') || '(none)'}
+Allowed answer types: ${allowedAnswerTypes.join(', ')}
 Target question count: ${targetQuestionCount}
 Allowed tolerance: +/- ${questionCountTolerance}
 
 Create an interview template draft from this brief:
-${aiBrief.trim()}
+${template.description || ''}
 
 Imported source material:
 ${importedSourceText.trim() || '(none)'}`;
@@ -583,9 +799,10 @@ ${importedSourceText.trim() || '(none)'}`;
     setIsAiGenerating(true);
     try {
       const response = await sendMessageToAI([], userPrompt, systemPrompt, 'interview_template_builder');
-      const jsonMatch = response.match(/```json\s*([\s\S]*?)```/i) || response.match(/```([\s\S]*?)```/);
-      const rawJson = (jsonMatch?.[1] || response).trim();
-      const parsed = JSON.parse(rawJson) as AiDraftPayload;
+      const parsed = parseAiJsonPayload(response) as AiDraftPayload | null;
+      if (!parsed) {
+        throw new Error('AI returned invalid JSON');
+      }
       const nextTemplate = parsed.template || {};
       const nextQuestionsRaw = Array.isArray(parsed.questions) ? parsed.questions : [];
 
@@ -610,20 +827,13 @@ ${importedSourceText.trim() || '(none)'}`;
       }));
 
       const normalizedQuestions: TemplateQuestion[] = nextQuestionsRaw.map((item, index) => {
-        const rawAnswerType = String(item.answerType || 'open').trim().toLowerCase();
-        const answerType = (
-          ['open', 'select', 'scale', 'boolean', 'number'].includes(rawAnswerType)
-            ? rawAnswerType
-            : 'open'
-        ) as AnswerType;
-
         return {
           id: `ai_${Date.now()}_${index}`,
           templateId: templateId || '',
           category: 'strategy',
           questionText: String(item.questionText || '').trim(),
           sortOrder: (index + 1) * 10,
-          answerType,
+          answerType: normalizeAnswerType(item.answerType),
           isRequired: item.isRequired !== false,
           helpHint: String(item.helpHint || '').trim(),
           answerOptions: Array.isArray(item.answerOptions)
@@ -648,7 +858,6 @@ ${importedSourceText.trim() || '(none)'}`;
         )
       );
       setQuestions(normalizedQuestions);
-      setIsAiPanelOpen(false);
       toast.success(
         isPolish ? 'AI przygotowało draft arkusza pytań' : 'AI prepared a template draft'
       );
@@ -661,7 +870,6 @@ ${importedSourceText.trim() || '(none)'}`;
       setIsAiGenerating(false);
     }
   }, [
-    aiBrief,
     importedSourceText,
     isPolish,
     questionCountTolerance,
@@ -671,8 +879,17 @@ ${importedSourceText.trim() || '(none)'}`;
     templateId,
   ]);
 
-  const handleImportSource = useCallback(
-    async (file: File) => {
+  const closeAiProposalModal = useCallback(() => {
+    setShowAiProposalModal(false);
+    setAiProposal(null);
+    setSelectedAddIdx({});
+    setSelectedUpdateIds({});
+    setSelectedRemoveIds({});
+    setApplySuggestedOrder(false);
+  }, []);
+
+  const importSourceFile = useCallback(
+    async (file: File): Promise<{ fileName: string; text: string } | null> => {
       const lowerName = file.name.toLowerCase();
       const isPdf = file.type === 'application/pdf' || lowerName.endsWith('.pdf');
       const isTxt =
@@ -682,7 +899,7 @@ ${importedSourceText.trim() || '(none)'}`;
 
       if (!isPdf && !isTxt) {
         toast.error(isPolish ? 'Obsługiwane są tylko pliki TXT i PDF' : 'Only TXT and PDF are supported');
-        return;
+        return null;
       }
 
       const formData = new FormData();
@@ -696,25 +913,468 @@ ${importedSourceText.trim() || '(none)'}`;
         if (!text) {
           throw new Error('No text extracted');
         }
-        setImportedSourceName(String(payload?.fileName || file.name));
-        setImportedSourceText(text);
-        toast.success(
-          isPolish ? 'Plik został zaimportowany do buildera AI' : 'File imported into AI builder'
-        );
+        return {
+          fileName: String(payload?.fileName || file.name),
+          text,
+        };
       } catch (error) {
         console.error('[TemplateBuilder] Failed to import source:', error);
-        toast.error(
-          isPolish ? 'Nie udało się zaimportować pliku' : 'Failed to import file'
-        );
+        toast.error(isPolish ? 'Nie udało się zaimportować pliku' : 'Failed to import file');
+        return null;
       } finally {
         setIsImportingSource(false);
-        if (importInputRef.current) {
-          importInputRef.current.value = '';
-        }
       }
     },
     [isPolish]
   );
+
+  const proposeQuestionImprovementsWithAI = useCallback(
+    async (importedSurveyText?: string) => {
+      const sourceText = String(importedSurveyText ?? importedSourceText ?? '').trim();
+      if (orderedQuestions.length === 0 && !sourceText) {
+        toast.error(
+          isPolish
+            ? 'Dodaj pytania albo wrzuć ankietę do analizy'
+            : 'Add questions or upload a survey to review'
+        );
+        return;
+      }
+
+      setIsAiGenerating(true);
+      try {
+        const existingIds = new Set(orderedQuestions.map((question) => String(question.id)));
+        const existingQuestionsCompact = orderedQuestions.map((question) => ({
+          id: String(question.id),
+          questionText: String(question.questionText || ''),
+          answerType: question.answerType,
+          isRequired: !!question.isRequired,
+          helpHint: String(question.helpHint || ''),
+          expectedAnswerShape: String(question.expectedAnswerShape || ''),
+          answerOptions: Array.isArray(question.answerOptions) ? question.answerOptions : [],
+          modalities: {
+            voice: question.allowVoice !== false,
+            attachments: question.allowFileUpload !== false,
+            links: question.allowUrl !== false,
+            contextNote: question.allowContextNote !== false,
+          },
+        }));
+
+        const removalCandidates = orderedQuestions
+          .filter((question) => {
+            const text = String(question.questionText || '').trim();
+            return !text || text.length < 8 || /^(test|tmp|sample)/i.test(text);
+          })
+          .map((question) => ({
+            questionId: String(question.id),
+            questionText: String(question.questionText || ''),
+            reason: isPolish
+              ? 'Krótka / testowa / potencjalnie niskiej jakości pozycja'
+              : 'Short / test / potentially low-quality entry',
+          }))
+          .slice(0, 8);
+
+        const systemPrompt = `You are a senior management consultant and survey methodologist.
+
+Return JSON only. No prose, no markdown fences.
+
+Your goal is to review an interview template and propose targeted improvements so it becomes a world-class executive survey.
+
+Rules:
+- Keep the survey lean, clear, non-duplicative, and high signal.
+- Respect the template topic, description, target question count, allowed answer types, and imported source material.
+- "add" should include only missing high-value questions.
+- "update" should use existing questionId values only and propose better wording, better answer type, better help, better expected answer shape, or better answer options.
+- "remove" should use existing questionId values only and focus on duplicates, weak wording, placeholders, or low-value questions.
+- It is OK to return no add/remove/update if the questionnaire is already strong; in that case return reorder only or an empty response.
+- Do not invent business facts not present in the brief/source.
+- Default all modalities to true unless there is a strong reason not to.
+- For select or scale questions, provide answerOptions.
+
+Schema:
+{
+  "summary": "string",
+  "add": [
+    {
+      "questionText": "string",
+      "answerType": "open|select|scale|boolean|number",
+      "isRequired": true,
+      "helpHint": "string",
+      "expectedAnswerShape": "string",
+      "answerOptions": ["string"],
+      "allowVoice": true,
+      "allowFileUpload": true,
+      "allowUrl": true,
+      "allowContextNote": true,
+      "rationale": "string"
+    }
+  ],
+  "update": [
+    {
+      "questionId": "string",
+      "questionText": "string",
+      "answerType": "open|select|scale|boolean|number",
+      "isRequired": true,
+      "helpHint": "string",
+      "expectedAnswerShape": "string",
+      "answerOptions": ["string"],
+      "allowVoice": true,
+      "allowFileUpload": true,
+      "allowUrl": true,
+      "allowContextNote": true,
+      "rationale": "string"
+    }
+  ],
+  "remove": [
+    {
+      "questionId": "string",
+      "reason": "string"
+    }
+  ],
+  "reorder": {
+    "order": ["string"],
+    "note": "string"
+  }
+}`;
+
+        const userPrompt = `Language: ${isPolish ? 'Polish' : 'English'}
+Topic: ${template.name || ''}
+Description: ${template.description || ''}
+Area tags: ${areaTags.join(', ') || '(none)'}
+Allowed answer types: ${allowedAnswerTypes.join(', ')}
+Target question count: ${targetQuestionCount}
+Allowed tolerance: +/- ${questionCountTolerance}
+
+[CURRENT QUESTIONS]
+${JSON.stringify(existingQuestionsCompact, null, 2)}
+
+[REMOVAL CANDIDATES]
+${JSON.stringify(removalCandidates, null, 2)}
+
+[IMPORTED SURVEY SOURCE]
+${sourceText || '(none)'}`;
+
+        const response = await sendMessageToAI(
+          [],
+          userPrompt,
+          systemPrompt,
+          'interview_template_review'
+        );
+        const parsed = parseAiJsonPayload(response) as AiQuestionProposal | null;
+        if (!parsed) {
+          throw new Error('AI returned invalid JSON');
+        }
+
+        const existingQuestionTexts = new Set(
+          orderedQuestions
+            .map((question) => String(question.questionText || '').trim().toLowerCase())
+            .filter(Boolean)
+        );
+
+        const normalizedAdd = (Array.isArray(parsed.add) ? parsed.add : [])
+          .map((item) => ({
+            questionText: String(item.questionText || '').trim(),
+            answerType: normalizeAnswerType(item.answerType),
+            isRequired: item.isRequired !== false,
+            helpHint: String(item.helpHint || '').trim(),
+            expectedAnswerShape: String(item.expectedAnswerShape || '').trim(),
+            answerOptions: Array.isArray(item.answerOptions)
+              ? item.answerOptions.map((option) => String(option).trim()).filter(Boolean)
+              : [],
+            allowVoice: item.allowVoice !== false,
+            allowFileUpload: item.allowFileUpload !== false,
+            allowUrl: item.allowUrl !== false,
+            allowContextNote: item.allowContextNote !== false,
+            rationale: String(item.rationale || '').trim(),
+          }))
+          .filter((item) => item.questionText.length > 0)
+          .filter((item, index, array) => {
+            const key = item.questionText.toLowerCase();
+            if (existingQuestionTexts.has(key)) return false;
+            return array.findIndex((candidate) => candidate.questionText.toLowerCase() === key) === index;
+          })
+          .slice(0, 10);
+
+        const normalizedUpdate = (Array.isArray(parsed.update) ? parsed.update : [])
+          .map((item) => {
+            const answerOptions = Array.isArray(item.answerOptions)
+              ? item.answerOptions.map((option) => String(option).trim()).filter(Boolean)
+              : undefined;
+            return {
+              questionId: String(item.questionId || '').trim(),
+              questionText: item.questionText !== undefined ? String(item.questionText || '').trim() : undefined,
+              answerType: item.answerType !== undefined ? normalizeAnswerType(item.answerType) : undefined,
+              isRequired: item.isRequired !== undefined ? item.isRequired !== false : undefined,
+              helpHint: item.helpHint !== undefined ? String(item.helpHint || '').trim() : undefined,
+              expectedAnswerShape:
+                item.expectedAnswerShape !== undefined
+                  ? String(item.expectedAnswerShape || '').trim()
+                  : undefined,
+              answerOptions,
+              allowVoice: item.allowVoice !== undefined ? item.allowVoice !== false : undefined,
+              allowFileUpload:
+                item.allowFileUpload !== undefined ? item.allowFileUpload !== false : undefined,
+              allowUrl: item.allowUrl !== undefined ? item.allowUrl !== false : undefined,
+              allowContextNote:
+                item.allowContextNote !== undefined ? item.allowContextNote !== false : undefined,
+              rationale: String(item.rationale || '').trim(),
+            };
+          })
+          .filter((item) => existingIds.has(item.questionId))
+          .filter((item) =>
+            [
+              item.questionText,
+              item.answerType,
+              item.isRequired,
+              item.helpHint,
+              item.expectedAnswerShape,
+              item.answerOptions,
+              item.allowVoice,
+              item.allowFileUpload,
+              item.allowUrl,
+              item.allowContextNote,
+            ].some((value) => value !== undefined)
+          )
+          .slice(0, 12);
+
+        const normalizedRemove = (Array.isArray(parsed.remove) ? parsed.remove : [])
+          .map((item) => ({
+            questionId: String(item.questionId || '').trim(),
+            reason: String(item.reason || '').trim(),
+          }))
+          .filter((item) => item.questionId.length > 0 && item.reason.length > 0 && existingIds.has(item.questionId))
+          .slice(0, 10);
+
+        let normalizedReorder: AiQuestionProposal['reorder'];
+        if (parsed.reorder?.order?.length) {
+          const uniqueOrder: string[] = [];
+          const seen = new Set<string>();
+          for (const id of parsed.reorder.order) {
+            const normalizedId = String(id || '').trim();
+            if (!existingIds.has(normalizedId) || seen.has(normalizedId)) continue;
+            seen.add(normalizedId);
+            uniqueOrder.push(normalizedId);
+          }
+          if (uniqueOrder.length > 0) {
+            normalizedReorder = {
+              order: uniqueOrder,
+              note: String(parsed.reorder.note || '').trim(),
+            };
+          }
+        }
+
+        const proposal: AiQuestionProposal = {
+          summary: String(parsed.summary || '').trim(),
+          add: normalizedAdd,
+          update: normalizedUpdate,
+          remove: normalizedRemove,
+          reorder: normalizedReorder,
+        };
+
+        const hasAny =
+          (proposal.add?.length || 0) > 0 ||
+          (proposal.update?.length || 0) > 0 ||
+          (proposal.remove?.length || 0) > 0 ||
+          (proposal.reorder?.order?.length || 0) > 0;
+
+        if (!hasAny) {
+          toast.success(
+            isPolish
+              ? 'AI uznało, że ankieta wygląda już bardzo dobrze'
+              : 'AI believes the survey already looks strong'
+          );
+          return;
+        }
+
+        setAiProposal(proposal);
+        setSelectedAddIdx(
+          Object.fromEntries((proposal.add || []).map((_, index) => [index, true])) as Record<
+            number,
+            boolean
+          >
+        );
+        setSelectedUpdateIds(
+          Object.fromEntries(
+            (proposal.update || []).map((item) => [String(item.questionId), true])
+          ) as Record<string, boolean>
+        );
+        setSelectedRemoveIds(
+          Object.fromEntries(
+            (proposal.remove || []).map((item) => [String(item.questionId), false])
+          ) as Record<string, boolean>
+        );
+        setApplySuggestedOrder(
+          !!proposal.reorder?.order?.length &&
+            (proposal.add?.length || 0) === 0 &&
+            (proposal.update?.length || 0) === 0 &&
+            (proposal.remove?.length || 0) === 0
+        );
+        setShowAiProposalModal(true);
+      } catch (error) {
+        console.error('[TemplateBuilder] AI proposal failed:', error);
+        toast.error(
+          isPolish ? 'Nie udało się przygotować sugestii AI' : 'Failed to prepare AI suggestions'
+        );
+      } finally {
+        setIsAiGenerating(false);
+      }
+    },
+    [
+      importedSourceText,
+      isPolish,
+      orderedQuestions,
+      areaTags,
+      questionCountTolerance,
+      targetQuestionCount,
+      allowedAnswerTypes,
+      template.description,
+      template.name,
+    ]
+  );
+
+  const handleUploadAndReview = useCallback(
+    async (file: File) => {
+      const imported = await importSourceFile(file);
+      if (reviewImportInputRef.current) {
+        reviewImportInputRef.current.value = '';
+      }
+      if (!imported) return;
+      setImportedSourceName(imported.fileName);
+      setImportedSourceText(imported.text);
+      await proposeQuestionImprovementsWithAI(imported.text);
+    },
+    [importSourceFile, proposeQuestionImprovementsWithAI]
+  );
+
+  const applyAIProposal = useCallback(() => {
+    if (!aiProposal) return;
+
+    const removeIds = new Set(
+      (aiProposal.remove || [])
+        .filter((item) => !!selectedRemoveIds[String(item.questionId)])
+        .map((item) => String(item.questionId))
+    );
+    const updateMap = new Map(
+      (aiProposal.update || [])
+        .filter((item) => !!selectedUpdateIds[String(item.questionId)])
+        .map((item) => [String(item.questionId), item] as const)
+    );
+    const additions = (aiProposal.add || []).filter((_, index) => !!selectedAddIdx[index]);
+
+    if (removeIds.size > 0) {
+      const shouldContinue = window.confirm(
+        isPolish
+          ? `Usunąć ${removeIds.size} pytanie/pytania z ankiety?`
+          : `Remove ${removeIds.size} question(s) from the survey?`
+      );
+      if (!shouldContinue) return;
+    }
+
+    setQuestions((prev) => {
+      const removedExistingIds = prev
+        .filter((question) => removeIds.has(question.id) && !question.isNew)
+        .map((question) => question.id);
+      if (removedExistingIds.length > 0) {
+        setDeletedQuestionIds((current) => Array.from(new Set([...current, ...removedExistingIds])));
+      }
+
+      let next = prev
+        .filter((question) => !removeIds.has(question.id))
+        .map((question) => {
+          const proposedUpdate = updateMap.get(question.id);
+          if (!proposedUpdate) return question;
+          return {
+            ...question,
+            ...(proposedUpdate.questionText !== undefined
+              ? { questionText: proposedUpdate.questionText }
+              : {}),
+            ...(proposedUpdate.answerType !== undefined
+              ? { answerType: normalizeAnswerType(proposedUpdate.answerType) }
+              : {}),
+            ...(proposedUpdate.isRequired !== undefined
+              ? { isRequired: proposedUpdate.isRequired !== false }
+              : {}),
+            ...(proposedUpdate.helpHint !== undefined ? { helpHint: proposedUpdate.helpHint } : {}),
+            ...(proposedUpdate.expectedAnswerShape !== undefined
+              ? { expectedAnswerShape: proposedUpdate.expectedAnswerShape }
+              : {}),
+            ...(proposedUpdate.answerOptions !== undefined
+              ? {
+                  answerOptions: Array.isArray(proposedUpdate.answerOptions)
+                    ? proposedUpdate.answerOptions
+                    : question.answerOptions,
+                }
+              : {}),
+            ...(proposedUpdate.allowVoice !== undefined
+              ? { allowVoice: proposedUpdate.allowVoice !== false }
+              : {}),
+            ...(proposedUpdate.allowFileUpload !== undefined
+              ? { allowFileUpload: proposedUpdate.allowFileUpload !== false }
+              : {}),
+            ...(proposedUpdate.allowUrl !== undefined
+              ? { allowUrl: proposedUpdate.allowUrl !== false }
+              : {}),
+            ...(proposedUpdate.allowContextNote !== undefined
+              ? { allowContextNote: proposedUpdate.allowContextNote !== false }
+              : {}),
+          };
+        });
+
+      let maxOrder = next.length > 0 ? Math.max(...next.map((question) => question.sortOrder)) : 0;
+      const createdQuestions: TemplateQuestion[] = additions.map((item, index) => ({
+        id: `ai_add_${Date.now()}_${index}`,
+        templateId: templateId || '',
+        category: 'strategy',
+        questionText: String(item.questionText || '').trim(),
+        sortOrder: (maxOrder += 10),
+        answerType: normalizeAnswerType(item.answerType),
+        isRequired: item.isRequired !== false,
+        helpHint: String(item.helpHint || '').trim(),
+        answerOptions: Array.isArray(item.answerOptions)
+          ? item.answerOptions.map((option) => String(option).trim()).filter(Boolean)
+          : [],
+        expectedAnswerShape: String(item.expectedAnswerShape || '').trim(),
+        allowVoice: item.allowVoice !== false,
+        allowFileUpload: item.allowFileUpload !== false,
+        allowUrl: item.allowUrl !== false,
+        allowContextNote: item.allowContextNote !== false,
+        isNew: true,
+        isEditing: false,
+      }));
+
+      next = [...next, ...createdQuestions];
+
+      if (applySuggestedOrder && aiProposal.reorder?.order?.length) {
+        const orderIndex = new Map<string, number>();
+        aiProposal.reorder.order.forEach((id, index) => {
+          orderIndex.set(String(id), index);
+        });
+        const missingIds = next
+          .filter((question) => !orderIndex.has(String(question.id)))
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+          .map((question) => String(question.id));
+        missingIds.forEach((id, index) => {
+          orderIndex.set(id, aiProposal.reorder!.order.length + index);
+        });
+        next = [...next]
+          .sort((a, b) => (orderIndex.get(String(a.id)) || 0) - (orderIndex.get(String(b.id)) || 0))
+          .map((question, index) => ({ ...question, sortOrder: (index + 1) * 10 }));
+      }
+
+      return next;
+    });
+
+    closeAiProposalModal();
+    toast.success(isPolish ? 'Zastosowano sugestie AI' : 'Applied AI suggestions');
+  }, [
+    aiProposal,
+    applySuggestedOrder,
+    closeAiProposalModal,
+    isPolish,
+    selectedAddIdx,
+    selectedRemoveIds,
+    selectedUpdateIds,
+    templateId,
+  ]);
 
   if (!isOpen) return null;
 
@@ -731,8 +1391,8 @@ ${importedSourceText.trim() || '(none)'}`;
       <div
         className={
           isDocumentMode
-            ? 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl w-full h-full overflow-hidden flex flex-col'
-            : 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-[1080px] mx-4 max-h-[90vh] overflow-hidden flex flex-col'
+            ? 'relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl w-full h-full overflow-hidden flex flex-col'
+            : 'relative bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-[1080px] mx-4 max-h-[90vh] overflow-hidden flex flex-col'
         }
       >
         {/* Header */}
@@ -776,6 +1436,7 @@ ${importedSourceText.trim() || '(none)'}`;
                   type="text"
                   value={template.name || ''}
                   onChange={(e) => setTemplate((prev) => ({ ...prev, name: e.target.value }))}
+                  disabled={isApplicationTemplate}
                   placeholder={
                     isPolish ? 'np. Digital maturity w produkcji' : 'e.g. Digital maturity in manufacturing'
                   }
@@ -798,6 +1459,7 @@ ${importedSourceText.trim() || '(none)'}`;
                   onChange={(e) =>
                     setTemplate((prev) => ({ ...prev, description: e.target.value }))
                   }
+                  disabled={isApplicationTemplate}
                   placeholder={
                     isPolish
                       ? 'Opisz cel ankiety, kontekst biznesowy, dokładność odpowiedzi i czego AI ma pilnować przy budowie pytań...'
@@ -806,6 +1468,149 @@ ${importedSourceText.trim() || '(none)'}`;
                   rows={6}
                   className="w-full px-3 py-2 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
                 />
+              </div>
+
+              {isApplicationTemplate ? (
+                <div className="mb-3 rounded-lg border border-violet-500/20 bg-violet-500/8 px-3 py-2.5">
+                  <p className="text-[11px] leading-relaxed text-violet-200 mb-2">
+                    {isPolish
+                      ? 'To jest szablon systemowy (tylko do odczytu). Sklonuj go, aby edytować własną kopię.'
+                      : 'This is a system template (read-only). Clone it to edit your own copy.'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleCloneTemplate}
+                    disabled={isCloning}
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-xs font-semibold bg-violet-500 text-white hover:bg-violet-600 transition-colors disabled:opacity-50"
+                  >
+                    {isCloning ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Copy size={13} />
+                    )}
+                    {isPolish ? 'Klonuj do edycji' : 'Clone to edit'}
+                  </button>
+                </div>
+              ) : null}
+
+              <div className="mb-3">
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                  {isPolish ? 'Biblioteka' : 'Library'}
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    {
+                      id: 'private',
+                      label: isPolish ? 'Personal' : 'Personal',
+                    },
+                    {
+                      id: 'organization',
+                      label: isPolish ? 'Organization' : 'Organization',
+                    },
+                  ].map((option) => {
+                    const isActive = (template.scope || 'private') === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        disabled={isApplicationTemplate}
+                        onClick={() =>
+                          setTemplate((prev) => ({
+                            ...prev,
+                            scope: option.id as TemplateScope,
+                          }))
+                        }
+                        className={`inline-flex items-center justify-center h-9 rounded-full text-xs font-medium border transition-colors ${
+                          isActive
+                            ? 'border-primary-500/40 bg-primary-600 text-white'
+                            : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
+                        } disabled:opacity-50 disabled:pointer-events-none`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mb-3 relative">
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                  {isPolish ? 'Dostępne formy odpowiedzi' : 'Available answer types'}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsAnswerTypeMenuOpen((prev) => !prev)}
+                  disabled={isApplicationTemplate}
+                  className="w-full h-10 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all flex items-center justify-between gap-3"
+                >
+                  <span className="truncate text-left text-sm">{allowedAnswerTypesLabel}</span>
+                  <ChevronDown
+                    size={15}
+                    className={`shrink-0 transition-transform ${isAnswerTypeMenuOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {isAnswerTypeMenuOpen ? (
+                  <div className="absolute z-10 mt-2 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-xl p-2 space-y-1">
+                    {ANSWER_TYPES.map((type) => {
+                      const checked = allowedAnswerTypes.includes(type.id);
+                      return (
+                        <label
+                          key={type.id}
+                          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleAllowedAnswerType(type.id)}
+                            disabled={isApplicationTemplate}
+                            className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                          />
+                          <span>{isPolish ? type.labelPl : type.labelEn}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="mb-3 relative">
+                <label className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+                  {isPolish ? 'Obszary' : 'Area tags'}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsAreaTagsMenuOpen((prev) => !prev)}
+                  disabled={isApplicationTemplate}
+                  className="w-full h-10 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all flex items-center justify-between gap-3"
+                >
+                  <span className="truncate text-left text-sm">{areaTagsLabel}</span>
+                  <ChevronDown
+                    size={15}
+                    className={`shrink-0 transition-transform ${isAreaTagsMenuOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {isAreaTagsMenuOpen ? (
+                  <div className="absolute z-10 mt-2 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-xl p-2 space-y-1 max-h-64 overflow-auto">
+                    {INTERVIEW_TEMPLATE_AREA_TAG_OPTIONS.map((tag) => {
+                      const checked = areaTags.includes(tag);
+                      return (
+                        <label
+                          key={tag}
+                          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleAreaTag(tag)}
+                            disabled={isApplicationTemplate}
+                            className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                          />
+                          <span>{getTemplateAreaTagLabel(tag, isPolish)}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
 
               <div className="grid grid-cols-2 gap-3 mb-3">
@@ -819,6 +1624,7 @@ ${importedSourceText.trim() || '(none)'}`;
                     max={50}
                     value={targetQuestionCount}
                     onChange={(e) => setTargetQuestionCount(Math.max(1, Number(e.target.value) || 1))}
+                    disabled={isApplicationTemplate}
                     className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
                   />
                 </div>
@@ -834,16 +1640,11 @@ ${importedSourceText.trim() || '(none)'}`;
                     onChange={(e) =>
                       setQuestionCountTolerance(Math.max(0, Number(e.target.value) || 0))
                     }
+                    disabled={isApplicationTemplate}
                     className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
                   />
                 </div>
               </div>
-
-              <p className="mb-4 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-                {isPolish
-                  ? `AI przygotuje około ${targetQuestionCount} pytań z tolerancją +/- ${questionCountTolerance}.`
-                  : `AI will prepare around ${targetQuestionCount} questions with a tolerance of +/- ${questionCountTolerance}.`}
-              </p>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="mb-3">
@@ -861,6 +1662,7 @@ ${importedSourceText.trim() || '(none)'}`;
                         estimatedTimeMinutes: Math.max(1, Number(e.target.value) || 10),
                       }))
                     }
+                    disabled={isApplicationTemplate}
                     className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
                   />
                 </div>
@@ -877,6 +1679,7 @@ ${importedSourceText.trim() || '(none)'}`;
                         runtimeModeDefault: e.target.value as RuntimeModeDefault,
                       }))
                     }
+                    disabled={isApplicationTemplate}
                     className="w-full h-9 px-3 rounded-md bg-white dark:bg-navy-800 border border-slate-300 dark:border-navy-600 text-slate-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all"
                   >
                     {RUNTIME_MODE_OPTIONS.map((opt) => (
@@ -887,6 +1690,20 @@ ${importedSourceText.trim() || '(none)'}`;
                   </select>
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={handleGenerateWithAI}
+                disabled={isAiGenerating || isApplicationTemplate}
+                className="w-full inline-flex items-center justify-center gap-2 h-10 px-4 rounded-full text-sm font-semibold border border-primary-500/40 dark:border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              >
+                {isAiGenerating ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : (
+                  <Sparkles size={15} />
+                )}
+                {isPolish ? 'Stwórz ankietę z AI' : 'Create survey with AI'}
+              </button>
 
               {errors.questions && (
                 <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
@@ -910,130 +1727,44 @@ ${importedSourceText.trim() || '(none)'}`;
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setIsAiPanelOpen((prev) => !prev)}
-                    className={`inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-colors ${
-                      isAiPanelOpen
-                        ? 'border-primary-500/30 bg-primary-500/10 text-primary-600 dark:text-primary-300'
-                        : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
-                    }`}
-                    title={isPolish ? 'AI przygotuje draft arkusza' : 'AI drafts the sheet'}
+                    type="button"
+                    onClick={() => reviewImportInputRef.current?.click()}
+                    disabled={isImportingSource || isApplicationTemplate}
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-50 disabled:pointer-events-none"
                   >
-                    <Sparkles size={13} />
-                    AI
+                    {isImportingSource ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                    {isPolish ? 'Upload' : 'Upload'}
                   </button>
                   <button
                     onClick={handleAddQuestion}
-                    className="flex items-center gap-1.5 h-8 px-3 rounded-md border border-primary-500/20 bg-white dark:bg-navy-900 text-primary-500 hover:bg-primary-500/5 transition-colors text-xs"
+                    disabled={isApplicationTemplate}
+                    className="flex items-center gap-1.5 h-8 px-3 rounded-md border border-primary-500/20 bg-primary-600 dark:bg-primary-600 text-white hover:bg-primary-700 transition-colors text-xs"
                   >
                     <Plus size={14} />
                     {isPolish ? 'Dodaj pytanie' : 'Add Question'}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => void proposeQuestionImprovementsWithAI()}
+                    disabled={isAiGenerating || isApplicationTemplate}
+                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-primary-500/25 dark:border-primary-500/20 bg-white/70 dark:bg-white/[0.04] text-violet-500 dark:text-violet-300 hover:bg-violet-500/5 dark:hover:bg-violet-400/10 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                  >
+                    {isAiGenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+                    {isPolish ? 'AI' : 'AI'}
+                  </button>
                 </div>
               </div>
 
-              {isAiPanelOpen ? (
-                <div className="px-4 py-3 border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-white/[0.02]">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary-500/20 bg-primary-500/10 text-primary-600 dark:text-primary-300">
-                      <Sparkles size={14} />
-                    </div>
-                    <div className="min-w-0 flex-1 space-y-3">
-                      <div>
-                        <div className="text-sm font-medium text-slate-900 dark:text-white">
-                          {isPolish ? 'AI Builder' : 'AI Builder'}
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          {isPolish
-                            ? 'Opisz cel audytu, odbiorców i oczekiwane odpowiedzi. AI przygotuje draft całego arkusza.'
-                            : 'Describe the audit goal, audience, and expected answers. AI will draft the whole sheet.'}
-                        </p>
-                      </div>
-                      <textarea
-                        value={aiBrief}
-                        onChange={(event) => setAiBrief(event.target.value)}
-                        rows={3}
-                        placeholder={
-                          isPolish
-                            ? 'Np. Przygotuj arkusz do audytu transformacji cyfrowej dla COO i liderów operacyjnych. Pytania mają być krótkie, konkretne i częściowo skalowane.'
-                            : 'E.g. Build a digital transformation interview sheet for COO and operations leaders. Keep questions concise, concrete, and partly scaled.'
-                        }
-                        className="w-full rounded-lg border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
-                      />
-                      <input
-                        ref={importInputRef}
-                        type="file"
-                        accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf"
-                        className="hidden"
-                        onChange={(event) => {
-                          const file = event.target.files?.[0];
-                          if (file) void handleImportSource(file);
-                        }}
-                      />
-                      <div className="rounded-lg border border-slate-200/80 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.03] px-3 py-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="text-xs font-medium text-slate-700 dark:text-slate-200">
-                              {isPolish ? 'Import listy pytań / formularza' : 'Import question list / form'}
-                            </div>
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                              {importedSourceName
-                                ? `${importedSourceName} • ${importedSourceText.length} ${isPolish ? 'znaków' : 'chars'}`
-                                : isPolish
-                                  ? 'Wrzuć TXT albo PDF, a AI użyje treści jako materiału źródłowego.'
-                                  : 'Drop a TXT or PDF and AI will use it as source material.'}
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => importInputRef.current?.click()}
-                            disabled={isImportingSource}
-                            className="inline-flex items-center justify-center gap-2 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors disabled:opacity-50 disabled:pointer-events-none"
-                          >
-                            {isImportingSource ? (
-                              <Loader2 size={13} className="animate-spin" />
-                            ) : (
-                              <Upload size={13} />
-                            )}
-                            {isPolish ? 'Import TXT/PDF' : 'Import TXT/PDF'}
-                          </button>
-                        </div>
-                        {importedSourceText ? (
-                          <div className="mt-3 rounded-lg border border-slate-200/70 dark:border-white/[0.06] bg-slate-50 dark:bg-navy-950/60 px-3 py-2">
-                            <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-1">
-                              {isPolish ? 'Podgląd źródła' : 'Source preview'}
-                            </div>
-                            <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-200 whitespace-pre-wrap line-clamp-6">
-                              {importedSourceText.slice(0, 800)}
-                            </p>
-                          </div>
-                        ) : null}
-                      </div>
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setIsAiPanelOpen(false)}
-                          className="inline-flex items-center justify-center h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                        >
-                          {isPolish ? 'Zamknij' : 'Close'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleGenerateWithAI}
-                          disabled={isAiGenerating}
-                          className="inline-flex items-center justify-center gap-2 h-8 px-3 rounded-full text-xs font-medium border border-primary-500/40 dark:border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:pointer-events-none"
-                        >
-                          {isAiGenerating ? (
-                            <Loader2 size={13} className="animate-spin" />
-                          ) : (
-                            <Sparkles size={13} />
-                          )}
-                          {isPolish ? 'Wygeneruj draft' : 'Generate draft'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
+              <input
+                ref={reviewImportInputRef}
+                type="file"
+                accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void handleUploadAndReview(file);
+                }}
+              />
 
               {/* Questions List */}
               <div className="flex-1 overflow-auto p-3 space-y-2">
@@ -1052,26 +1783,244 @@ ${importedSourceText.trim() || '(none)'}`;
                     </button>
                   </div>
                 ) : (
-                  orderedQuestions.map((question, idx) => (
-                    <QuestionCard
-                      key={question.id}
-                      question={question}
-                      index={idx}
-                      totalCount={orderedQuestions.length}
-                      isPolish={isPolish}
-                      error={errors[`question_${question.id}`] || errors[`options_${question.id}`]}
-                      forceExpand={focusedQuestionId === question.id}
-                      onUpdate={(updates) => handleUpdateQuestion(question.id, updates)}
-                      onDelete={() => handleDeleteQuestion(question.id)}
-                      onMoveUp={() => handleMoveQuestion(question.id, 'up')}
-                      onMoveDown={() => handleMoveQuestion(question.id, 'down')}
-                    />
-                  ))
+                  <DndContext
+                    sensors={dragSensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={orderedQuestions.map((question) => question.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {orderedQuestions.map((question, idx) => (
+                        <SortableQuestionCard
+                          key={question.id}
+                          question={question}
+                          index={idx}
+                          totalCount={orderedQuestions.length}
+                          isPolish={isPolish}
+                          error={errors[`question_${question.id}`] || errors[`options_${question.id}`]}
+                          forceExpand={focusedQuestionId === question.id}
+                          readOnly={isApplicationTemplate}
+                          onUpdate={(updates) => handleUpdateQuestion(question.id, updates)}
+                          onDelete={() => handleDeleteQuestion(question.id)}
+                          onMoveUp={() => handleMoveQuestion(question.id, 'up')}
+                          onMoveDown={() => handleMoveQuestion(question.id, 'down')}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
                 )}
               </div>
             </div>
           </div>
         )}
+
+        {showAiProposalModal && aiProposal ? (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm p-6">
+            <div className="w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-2xl flex flex-col">
+              <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+                <div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {isPolish ? 'Propozycje zmian od AI' : 'AI change proposal'}
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {aiProposal.summary ||
+                      (isPolish
+                        ? 'AI przejrzało ankietę i przygotowało zmiany do zatwierdzenia.'
+                        : 'AI reviewed the survey and prepared changes for approval.')}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeAiProposalModal}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.08] transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-auto px-5 py-4 space-y-4">
+                {(aiProposal.update || []).length > 0 ? (
+                  <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-4 space-y-3">
+                    <div className="text-sm font-medium text-slate-900 dark:text-white">
+                      {isPolish ? 'Zmiany w istniejących pytaniach' : 'Updates to existing questions'}
+                    </div>
+                    {(aiProposal.update || []).map((item) => {
+                      const current = orderedQuestions.find((question) => question.id === item.questionId);
+                      if (!current) return null;
+                      return (
+                        <label
+                          key={item.questionId}
+                          className="block rounded-lg border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-navy-950/40 p-3"
+                        >
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={!!selectedUpdateIds[String(item.questionId)]}
+                              onChange={(event) =>
+                                setSelectedUpdateIds((prev) => ({
+                                  ...prev,
+                                  [String(item.questionId)]: event.target.checked,
+                                }))
+                              }
+                              className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                            />
+                            <div className="min-w-0 flex-1 space-y-2">
+                              <div className="text-xs text-slate-500 dark:text-slate-400">
+                                {isPolish ? 'Teraz' : 'Current'}
+                              </div>
+                              <p className="text-sm text-slate-700 dark:text-slate-200">{current.questionText}</p>
+                              <div className="text-xs text-slate-500 dark:text-slate-400">
+                                {isPolish ? 'Propozycja AI' : 'AI proposal'}
+                              </div>
+                              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                {item.questionText || current.questionText}
+                              </p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {(item.answerType
+                                  ? ANSWER_TYPES.find((type) => type.id === normalizeAnswerType(item.answerType))
+                                  : ANSWER_TYPES.find((type) => type.id === current.answerType))?.[
+                                  isPolish ? 'labelPl' : 'labelEn'
+                                ] || '-'}
+                              </p>
+                              {item.rationale ? (
+                                <p className="text-xs text-slate-500 dark:text-slate-400">{item.rationale}</p>
+                              ) : null}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
+                {(aiProposal.add || []).length > 0 ? (
+                  <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-4 space-y-3">
+                    <div className="text-sm font-medium text-slate-900 dark:text-white">
+                      {isPolish ? 'Nowe pytania do dodania' : 'New questions to add'}
+                    </div>
+                    {(aiProposal.add || []).map((item, index) => (
+                      <label
+                        key={`${item.questionText}-${index}`}
+                        className="block rounded-lg border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-navy-950/40 p-3"
+                      >
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={!!selectedAddIdx[index]}
+                            onChange={(event) =>
+                              setSelectedAddIdx((prev) => ({ ...prev, [index]: event.target.checked }))
+                            }
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                          />
+                          <div className="min-w-0 flex-1 space-y-1.5">
+                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                              {item.questionText}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {ANSWER_TYPES.find((type) => type.id === normalizeAnswerType(item.answerType))?.[
+                                isPolish ? 'labelPl' : 'labelEn'
+                              ] || '-'}
+                            </p>
+                            {item.rationale ? (
+                              <p className="text-xs text-slate-500 dark:text-slate-400">{item.rationale}</p>
+                            ) : null}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                ) : null}
+
+                {(aiProposal.remove || []).length > 0 ? (
+                  <div className="rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-4 space-y-3">
+                    <div className="text-sm font-medium text-slate-900 dark:text-white">
+                      {isPolish ? 'Pytania do usunięcia' : 'Questions to remove'}
+                    </div>
+                    {(aiProposal.remove || []).map((item) => {
+                      const current = orderedQuestions.find((question) => question.id === item.questionId);
+                      if (!current) return null;
+                      return (
+                        <label
+                          key={item.questionId}
+                          className="block rounded-lg border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-navy-950/40 p-3"
+                        >
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={!!selectedRemoveIds[String(item.questionId)]}
+                              onChange={(event) =>
+                                setSelectedRemoveIds((prev) => ({
+                                  ...prev,
+                                  [String(item.questionId)]: event.target.checked,
+                                }))
+                              }
+                              className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                            />
+                            <div className="min-w-0 flex-1 space-y-1.5">
+                              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                {current.questionText}
+                              </p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">{item.reason}</p>
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
+                {aiProposal.reorder?.order?.length ? (
+                  <label className="flex items-start gap-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-4">
+                    <input
+                      type="checkbox"
+                      checked={applySuggestedOrder}
+                      onChange={(event) => setApplySuggestedOrder(event.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium text-slate-900 dark:text-white">
+                        {isPolish ? 'Zastosuj sugerowaną kolejność' : 'Apply suggested order'}
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {aiProposal.reorder.note ||
+                          (isPolish
+                            ? 'AI proponuje lepszą sekwencję pytań.'
+                            : 'AI suggests a better question sequence.')}
+                      </p>
+                    </div>
+                  </label>
+                ) : null}
+              </div>
+
+              <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-slate-200 dark:border-navy-700">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Usunięcia są domyślnie odznaczone.'
+                    : 'Removals are unchecked by default.'}
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={closeAiProposalModal}
+                    className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                  >
+                    {isPolish ? 'Zamknij' : 'Close'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={applyAIProposal}
+                    className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-primary-500/40 dark:border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+                  >
+                    <Sparkles size={14} />
+                    {isPolish ? 'Zastosuj sugestie AI' : 'Apply AI suggestions'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-200 dark:border-navy-700 flex items-center justify-between shrink-0">
@@ -1087,7 +2036,7 @@ ${importedSourceText.trim() || '(none)'}`;
             </button>
             <button
               onClick={() => handleSave(false)}
-              disabled={isSaving}
+              disabled={isSaving || isApplicationTemplate}
               className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-50 disabled:pointer-events-none"
             >
               {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -1095,7 +2044,7 @@ ${importedSourceText.trim() || '(none)'}`;
             </button>
             <button
               onClick={() => handleSave(true)}
-              disabled={isSaving}
+              disabled={isSaving || isApplicationTemplate}
               className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-primary-500/40 dark:border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 disabled:opacity-50 disabled:pointer-events-none"
             >
               {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
@@ -1116,11 +2065,50 @@ interface QuestionCardProps {
   isPolish: boolean;
   error?: string;
   forceExpand?: boolean;
+  dragHandle?: React.ReactNode;
+  isDragging?: boolean;
+  readOnly?: boolean;
   onUpdate: (updates: Partial<TemplateQuestion>) => void;
   onDelete: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
 }
+
+const SortableQuestionCard: React.FC<QuestionCardProps> = (props) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: props.question.id,
+    disabled: props.readOnly,
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.55 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={isDragging ? 'z-10 relative' : undefined}>
+      <QuestionCard
+        {...props}
+        isDragging={isDragging}
+        dragHandle={
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            onClick={(event) => event.stopPropagation()}
+            className={`p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-white/10 transition-colors touch-none ${
+              props.readOnly ? 'opacity-40 cursor-not-allowed' : 'cursor-grab active:cursor-grabbing'
+            }`}
+            title={props.isPolish ? 'Przeciągnij aby zmienić kolejność' : 'Drag to reorder'}
+          >
+            <GripVertical size={12} />
+          </button>
+        }
+      />
+    </div>
+  );
+};
 
 const QuestionCard: React.FC<QuestionCardProps> = ({
   question,
@@ -1129,6 +2117,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   isPolish,
   error,
   forceExpand = false,
+  dragHandle,
+  isDragging = false,
+  readOnly = false,
   onUpdate,
   onDelete,
   onMoveUp,
@@ -1169,7 +2160,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     <div
       className={`rounded-lg overflow-hidden transition-all ${
         error ? 'ring-1 ring-red-500/40' : ''
-      }`}
+      } ${isDragging ? 'shadow-lg' : ''}`}
     >
       {/* Header */}
       <div
@@ -1177,6 +2168,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-1.5 text-slate-400 shrink-0">
+          {dragHandle}
           <ChevronRight
             size={12}
             className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`}
@@ -1219,9 +2211,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           <button
             onClick={(e) => {
               e.stopPropagation();
+              if (readOnly) return;
               onDelete();
             }}
-            className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-colors"
+            disabled={readOnly}
+            className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-40 disabled:pointer-events-none"
           >
             <Trash2 size={12} />
           </button>
@@ -1234,14 +2228,14 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           <div className="flex items-center justify-end gap-2">
             <button
               onClick={onMoveUp}
-              disabled={index === 0}
+              disabled={readOnly || index === 0}
               className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <ChevronUp size={14} />
             </button>
             <button
               onClick={onMoveDown}
-              disabled={index === totalCount - 1}
+              disabled={readOnly || index === totalCount - 1}
               className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 dark:border-navy-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <ChevronDown size={14} />
@@ -1257,6 +2251,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               ref={questionTextRef}
               value={question.questionText}
               onChange={(e) => onUpdate({ questionText: e.target.value })}
+              disabled={readOnly}
               placeholder={
                 isPolish ? 'Wpisz nazwę i treść pytania...' : 'Enter the question title and text...'
               }
@@ -1278,6 +2273,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               <select
                 value={question.answerType}
                 onChange={(e) => onUpdate({ answerType: e.target.value as AnswerType })}
+                disabled={readOnly}
                 className={fieldClassName}
               >
                 {ANSWER_TYPES.map((type) => (
@@ -1295,11 +2291,12 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               </label>
               <button
                 onClick={() => onUpdate({ isRequired: !question.isRequired })}
+                disabled={readOnly}
                 className={`w-full h-10 px-3 rounded-lg border text-sm font-medium transition-all ${
                   question.isRequired
                     ? 'bg-red-500/20 border-red-500 text-red-400'
                     : 'bg-white dark:bg-navy-900 border-navy-600 text-slate-400 hover:border-slate-500'
-                }`}
+                } disabled:opacity-50 disabled:pointer-events-none`}
               >
                 {question.isRequired
                   ? isPolish
@@ -1330,11 +2327,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                         newOptions[idx] = e.target.value;
                         onUpdate({ answerOptions: newOptions });
                       }}
+                      disabled={readOnly}
                       className={`flex-1 ${fieldClassName}`}
                     />
                     <button
                       onClick={() => handleRemoveOption(idx)}
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors"
+                      disabled={readOnly}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                     >
                       <X size={14} />
                     </button>
@@ -1347,12 +2346,14 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     value={newOption}
                     onChange={(e) => setNewOption(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddOption()}
+                    disabled={readOnly}
                     placeholder={isPolish ? 'Dodaj opcję...' : 'Add option...'}
                     className={`flex-1 ${fieldClassName}`}
                   />
                   <button
                     onClick={handleAddOption}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-colors"
+                    disabled={readOnly}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-colors disabled:opacity-40 disabled:pointer-events-none"
                   >
                     <Plus size={14} />
                   </button>
@@ -1373,6 +2374,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               type="text"
               value={question.helpHint || ''}
               onChange={(e) => onUpdate({ helpHint: e.target.value })}
+              disabled={readOnly}
               placeholder={
                 isPolish
                   ? 'Dodatkowe wskazówki dla respondenta...'
@@ -1390,6 +2392,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               type="text"
               value={question.expectedAnswerShape || ''}
               onChange={(e) => onUpdate({ expectedAnswerShape: e.target.value })}
+              disabled={readOnly}
               placeholder={
                 isPolish
                   ? 'np. Krótka odpowiedź z przykładem i liczbą'
@@ -1438,11 +2441,12 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                     onClick={() =>
                       onUpdate({ [item.key]: !item.value } as Partial<TemplateQuestion>)
                     }
+                    disabled={readOnly}
                     className={`inline-flex h-9 shrink-0 items-center gap-2 rounded-full px-3 text-sm transition-all ${
                       item.value
                         ? 'bg-primary-500/12 border border-primary-500/25 text-primary-700 dark:text-primary-300'
                         : 'bg-slate-100/80 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06]'
-                    }`}
+                    } disabled:opacity-50 disabled:pointer-events-none`}
                   >
                     <Icon size={14} />
                     <span className="whitespace-nowrap">{item.label}</span>

@@ -29,12 +29,21 @@ import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
+import {
+  getTemplateAreaTagLabel,
+  getTemplateSourceLabel,
+  normalizeInterviewTemplateAreaTags,
+  type TemplateScope,
+} from './templateLibraryMeta';
+
 interface InterviewTemplate {
   id: string;
   name: string;
   description?: string;
   category?: string;
   questionCount?: number;
+  scope?: TemplateScope;
+  areaTags?: string[];
 }
 
 interface User {
@@ -177,7 +186,13 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
           usersCount: usersRes.length,
         });
 
-        setTemplates(templatesRes);
+        setTemplates(
+          templatesRes.map((template) => ({
+            ...template,
+            scope: ((template?.scope || 'private') as TemplateScope) || 'private',
+            areaTags: normalizeInterviewTemplateAreaTags(template?.areaTags),
+          }))
+        );
 
         // Map users and filter based on assignment scope
         const allUsers = usersRes.map((u: any) => ({
@@ -251,9 +266,11 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
       (t) =>
         t.name.toLowerCase().includes(query) ||
         t.description?.toLowerCase().includes(query) ||
-        t.category?.toLowerCase().includes(query)
+        t.category?.toLowerCase().includes(query) ||
+        getTemplateSourceLabel(t.scope, isPolish).toLowerCase().includes(query) ||
+        (t.areaTags || []).join(' ').toLowerCase().includes(query)
     );
-  }, [templates, templateSearchQuery]);
+  }, [templates, templateSearchQuery, isPolish]);
 
   // Filter users
   const filteredUsers = useMemo(() => {
@@ -431,14 +448,27 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                       <div className="flex items-center gap-3">
                         <FileText size={18} className="text-blue-400" />
                         <div>
-                          <span className="text-slate-900 dark:text-white">
+                          <span className="text-slate-900 dark:text-white block">
                             {selectedTemplate.name}
                           </span>
-                          {selectedTemplate.category && (
-                            <span className="text-xs text-slate-500 ml-2">
-                              ({selectedTemplate.category})
+                          <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                            {selectedTemplate.category ? (
+                              <span className="text-xs text-slate-500">
+                                ({selectedTemplate.category})
+                              </span>
+                            ) : null}
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-300">
+                              {getTemplateSourceLabel(selectedTemplate.scope, isPolish)}
                             </span>
-                          )}
+                            {(selectedTemplate.areaTags || []).slice(0, 2).map((tag) => (
+                              <span
+                                key={tag}
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-300"
+                              >
+                                {getTemplateAreaTagLabel(tag, isPolish)}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     ) : (
@@ -494,6 +524,19 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
                                     {template.description}
                                   </span>
                                 )}
+                                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-300">
+                                    {getTemplateSourceLabel(template.scope, isPolish)}
+                                  </span>
+                                  {(template.areaTags || []).slice(0, 3).map((tag) => (
+                                    <span
+                                      key={tag}
+                                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] border border-slate-200 dark:border-navy-600 text-slate-500 dark:text-slate-300"
+                                    >
+                                      {getTemplateAreaTagLabel(tag, isPolish)}
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
                               {template.id === selectedTemplateId && (
                                 <Check size={16} className="text-blue-400 flex-shrink-0" />

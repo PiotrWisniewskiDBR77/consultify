@@ -1,172 +1,197 @@
 /**
- * InterviewInsightPreview — Preview pane for Insights tab (App Table Standard)
+ * InterviewInsightPreview — Preview pane building blocks for Insights tab
  *
- * Wraps PreviewPaneShell with insight-specific content:
- * - Kicker: "Insight"
- * - Title: insight title
- * - Body: key fields (type, source interview, date, confidence)
- * - Footer: quick actions (Open full, Mark reviewed)
- *
- * @see docs/ui-standards/03-modules/table-preview-pane-standard.md
+ * Extracted from InterviewHub renderPreview/renderPreviewFooter.
+ * Uses shared building blocks from @/components/shared/PreviewPane.
  */
 
-import { Check, ExternalLink } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Send, Sparkles } from 'lucide-react';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 
-import { PreviewPaneShell } from '@/components/ui/ResizableTable';
+import {
+  PreviewActionBar,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  type ActionRow,
+  type MetaPill,
+} from '@/components/shared/PreviewPane';
 
-export interface InterviewInsight {
-  id: string;
-  sessionId?: string;
-  title: string;
-  content?: string;
-  type?: string;
-  insightType?: string;
-  promptType?: string;
-  confidence?: string;
-  status?: string;
-  sourceSessionCount?: number;
-  createdAt?: string;
-  createdBy?: string;
+// ── Body ───────────────────────────────────────────────────────────────────
+
+export interface InterviewInsightPreviewBodyProps {
+  insight: {
+    id: string;
+    title?: string;
+    promptType?: string;
+    insightType?: string;
+    type?: string;
+    status?: string;
+    confidence?: string;
+    content?: string;
+    description?: string;
+    sourceQuote?: string;
+    createdAt?: string;
+    sessionId?: string;
+    sourceSessionCount?: number;
+  };
+  isPolish: boolean;
+  typeLabel: string;
+  typeConfig: { bgColor: string; textColor: string };
+  statusConfig: { label: { en: string; pl: string }; bg: string; text: string };
+  sourceLabel: string;
+  dateStr: string;
+  detailsText: string;
+  detailsExpanded: boolean;
+  onToggleDetailsExpanded: () => void;
+  onDetailsAction: (action: string) => void;
 }
 
-export interface InterviewInsightPreviewProps {
-  insight: InterviewInsight | null;
-  onClose: () => void;
-  onOpenFull: (id: string) => void;
-  onMarkReviewed?: (id: string) => void;
-}
-
-const getInsightTypeLabel = (type?: string, isPolish?: boolean) => {
-  const t = (en: string, pl: string) => (isPolish ? pl : en);
-  switch ((type || 'summary').toLowerCase()) {
-    case 'summary':
-      return t('Summary', 'Podsumowanie');
-    case 'trends':
-      return t('Trends', 'Trendy');
-    case 'problems':
-      return t('Problems', 'Problemy');
-    case 'opportunities':
-      return t('Opportunities', 'Szanse');
-    case 'recommendations':
-      return t('Recommendations', 'Rekomendacje');
-    default:
-      return type || '—';
-  }
-};
-
-export const InterviewInsightPreview: React.FC<InterviewInsightPreviewProps> = ({
+export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyProps> = ({
   insight,
-  onClose,
-  onOpenFull,
-  onMarkReviewed,
+  isPolish,
+  typeLabel,
+  typeConfig,
+  statusConfig,
+  sourceLabel,
+  dateStr,
+  detailsText,
+  detailsExpanded,
+  onToggleDetailsExpanded,
+  onDetailsAction,
 }) => {
-  const { t, i18n } = useTranslation();
-  const isPolish = i18n.language === 'pl';
-
-  if (!insight) {
-    return (
-      <PreviewPaneShell
-        kicker={isPolish ? 'Wnioski' : 'Insight'}
-        title={isPolish ? 'Wybierz wniosek' : 'Select an insight'}
-        onClose={onClose}
-      >
-        <div className="h-full flex items-center justify-center p-6 text-center">
-          <div className="text-sm text-slate-500 dark:text-slate-400">
-            {isPolish
-              ? 'Kliknij wiersz w tabeli, aby zobaczyć podgląd.'
-              : 'Click a row to preview.'}
-          </div>
-        </div>
-      </PreviewPaneShell>
-    );
-  }
-
-  const type = (insight.promptType || insight.insightType || insight.type || 'summary') as string;
-  const sourceLabel = insight.sourceSessionCount
-    ? `${insight.sourceSessionCount} ${isPolish ? 'sesji' : 'sessions'}`
-    : insight.sessionId
-      ? `${isPolish ? 'Sesja' : 'Session'} ${insight.sessionId.slice(0, 8)}…`
-      : '—';
-
-  const dateStr = insight.createdAt
-    ? new Date(insight.createdAt).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      })
-    : '—';
+  const pills: MetaPill[] = [
+    {
+      label: isPolish ? 'Wniosek' : 'Insight',
+      className: 'bg-slate-200/60 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200',
+    },
+    {
+      label: typeLabel,
+      className: `${typeConfig.bgColor} ${typeConfig.textColor}`,
+    },
+    {
+      label: isPolish ? statusConfig.label.pl : statusConfig.label.en,
+      className: `${statusConfig.bg} ${statusConfig.text}`,
+    },
+    ...(insight.confidence
+      ? [
+          {
+            label: `${isPolish ? 'Pewność' : 'Confidence'}: ${insight.confidence}`,
+            className: 'bg-slate-200/40 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300',
+          },
+        ]
+      : []),
+    {
+      label: sourceLabel,
+      className: 'bg-slate-200/40 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300',
+    },
+    {
+      label: dateStr,
+      className: 'bg-slate-200/40 dark:bg-white/[0.05] text-slate-600 dark:text-slate-300',
+    },
+  ];
 
   return (
-    <PreviewPaneShell
-      kicker={isPolish ? 'Wnioski' : 'Insight'}
-      title={insight.title}
-      onClose={onClose}
-      actions={
-        <button
-          onClick={() => onOpenFull(insight.id)}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
-          title={isPolish ? 'Otwórz pełny widok' : 'Open full detail'}
-        >
-          <ExternalLink size={13} />
-          {isPolish ? 'Otwórz' : 'Open'}
-        </button>
-      }
-      footer={
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onOpenFull(insight.id)}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-primary-500/15 text-primary-600 dark:text-primary-400 hover:bg-primary-500/25 transition-colors"
-          >
-            <ExternalLink size={14} />
-            {isPolish ? 'Otwórz pełny' : 'Open full'}
-          </button>
-          {onMarkReviewed && (
-            <button
-              onClick={() => onMarkReviewed(insight.id)}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
-            >
-              <Check size={14} />
-              {isPolish ? 'Oznacz jako przejrzany' : 'Mark reviewed'}
-            </button>
-          )}
-        </div>
-      }
-    >
-      <div className="space-y-3 text-sm">
-        <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-          <span className="text-slate-500 dark:text-slate-400">{isPolish ? 'Typ' : 'Type'}</span>
-          <span className="text-slate-900 dark:text-white">
-            {getInsightTypeLabel(type, isPolish)}
-          </span>
-
-          <span className="text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Źródło' : 'Source'}
-          </span>
-          <span className="text-slate-900 dark:text-white">{sourceLabel}</span>
-
-          <span className="text-slate-500 dark:text-slate-400">{isPolish ? 'Data' : 'Date'}</span>
-          <span className="text-slate-900 dark:text-white">{dateStr}</span>
-
-          {insight.confidence && (
-            <>
-              <span className="text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Pewność' : 'Confidence'}
-              </span>
-              <span className="text-slate-900 dark:text-white">{insight.confidence}</span>
-            </>
-          )}
-        </div>
-        {insight.content && (
-          <p className="text-slate-600 dark:text-slate-400 line-clamp-4 pt-2 border-t border-slate-200 dark:border-navy-700">
-            {insight.content.slice(0, 200)}
-            {insight.content.length > 200 ? '…' : ''}
-          </p>
-        )}
-      </div>
-    </PreviewPaneShell>
+    <div className="space-y-4">
+      <PreviewMetaCard pills={pills} />
+      <PreviewDetailsSection
+        text={detailsText}
+        expanded={detailsExpanded}
+        onToggleExpanded={onToggleDetailsExpanded}
+        label={isPolish ? 'Szczegóły' : 'Details'}
+        customActions={[
+          {
+            id: 'toggle-expand',
+            label: detailsExpanded
+              ? isPolish
+                ? 'Zwiń'
+                : 'Collapse'
+              : isPolish
+                ? 'Rozwiń'
+                : 'Expand',
+            icon: ChevronDown,
+            onClick: onToggleDetailsExpanded,
+          },
+          {
+            id: 'copy',
+            label: isPolish ? 'Kopiuj' : 'Copy',
+            icon: Copy,
+            onClick: () => onDetailsAction('copy'),
+          },
+          {
+            id: 'copy-summarize-prompt',
+            label: isPolish ? 'Kopiuj prompt: podsumuj' : 'Copy prompt: summarize',
+            icon: Sparkles,
+            onClick: () => onDetailsAction('copy-summarize-prompt'),
+          },
+        ]}
+      />
+    </div>
   );
 };
 
-export default InterviewInsightPreview;
+// ── Footer ──────────────────────────────────────────────────────────────────
+
+export interface InterviewInsightPreviewFooterProps {
+  insight: {
+    exportedToTools?: boolean;
+    exportedToAssessment?: boolean;
+    title?: string;
+    [key: string]: unknown;
+  };
+  isPolish: boolean;
+  onOpenFull: () => void;
+  onExportToTools?: () => void;
+  onCopyLink?: () => void;
+}
+
+export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFooterProps> = ({
+  insight,
+  isPolish,
+  onOpenFull,
+  onExportToTools,
+  onCopyLink,
+}) => {
+  const buttons: ActionRow['buttons'] = [
+    {
+      label: isPolish ? 'Otwórz' : 'Open',
+      icon: ChevronRight,
+      onClick: onOpenFull,
+      colorScheme: 'primary',
+    },
+  ];
+
+  if (onExportToTools) {
+    buttons.push({
+      label: insight?.exportedToTools
+        ? isPolish
+          ? 'W Tools'
+          : 'In Tools'
+        : isPolish
+          ? 'Eksport: Tools'
+          : 'Export: Tools',
+      icon: Send,
+      onClick: onExportToTools,
+      colorScheme: 'neutral',
+      disabled: !!insight?.exportedToTools,
+    });
+  }
+
+  if (onCopyLink) {
+    buttons.push({
+      label: isPolish ? 'Kopiuj link' : 'Copy link',
+      icon: Copy,
+      onClick: onCopyLink,
+      colorScheme: 'neutral',
+    });
+  }
+
+  return (
+    <PreviewActionBar
+      rows={[
+        {
+          buttons,
+        },
+      ]}
+    />
+  );
+};
