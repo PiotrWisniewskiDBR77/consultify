@@ -17,7 +17,6 @@ import {
   Inbox,
   Loader2,
   Minus,
-  MoreVertical,
   Pause,
   Plus,
   Settings2,
@@ -30,6 +29,16 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  PreviewMetaCard,
+  PreviewDetailsSection,
+  PreviewAIHintStrip,
+  PreviewRelations,
+  PreviewActionBar,
+  type MetaPill,
+  type RelationItem,
+  type ActionRow,
+} from '@/components/shared/PreviewPane';
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { Modal } from '@/components/ui/primitives/Modal';
@@ -798,10 +807,8 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const [previewTaskId, setPreviewTaskId] = useState<string | null>(null);
 
   // Preview — details kebab + AI zone (Inbox parity)
-  const [detailsMenuOpen, setDetailsMenuOpen] = useState(false);
   const [detailsOverride, setDetailsOverride] = useState<string | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
-  const [aiMenuOpen, setAiMenuOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiText, setAiText] = useState<string | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -1527,8 +1534,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   }, [previewTaskId, previewTask]);
 
   useEffect(() => {
-    setDetailsMenuOpen(false);
-    setAiMenuOpen(false);
     setAiLoading(false);
     setAiError(null);
     setAiText(null);
@@ -1633,40 +1638,27 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             const desc = String(task.description || '').trim();
             const detailsText = detailsOverride ?? desc;
 
-            const metaPillBase =
-              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium';
+            const pills: MetaPill[] = [
+              { label: statusCfg.label, className: `${statusCfg.bg} ${statusCfg.color}`, dot: statusCfg.dot },
+              { label: priCfg.label, dot: priCfg.dot },
+              ...(task.projectName ? [{ label: task.projectName, className: 'text-slate-500 dark:text-slate-400 truncate max-w-[120px]' }] : []),
+            ];
+
+            const trailing = (
+              <span
+                className={`text-[11px] font-semibold ${
+                  due === 'No due date'
+                    ? 'text-slate-400 dark:text-slate-500 italic'
+                    : 'text-slate-600 dark:text-slate-300'
+                }`}
+              >
+                {due}
+              </span>
+            );
 
             return (
               <div className="space-y-4">
-                <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className={`${metaPillBase} ${statusCfg.bg} ${statusCfg.color}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${statusCfg.dot}`} />
-                        {statusCfg.label}
-                      </span>
-                      <span
-                        className={`${metaPillBase} bg-slate-500/10 text-slate-600 dark:text-slate-300`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full ${priCfg.dot}`} />
-                        {priCfg.label}
-                      </span>
-                      {task.projectName ? (
-                        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">
-                          {task.projectName}
-                        </span>
-                      ) : null}
-                    </div>
-                    <span
-                      className={`text-[11px] font-semibold ${
-                        due === 'No due date'
-                          ? 'text-slate-400 dark:text-slate-500 italic'
-                          : 'text-slate-600 dark:text-slate-300'
-                      }`}
-                    >
-                      {due}
-                    </span>
-                  </div>
+                <PreviewMetaCard pills={pills} trailing={trailing}>
                   <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white leading-snug">
                     {task.title}
                     {isCompleted ? (
@@ -1675,265 +1667,132 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                       </span>
                     ) : null}
                   </div>
-                </div>
+                </PreviewMetaCard>
 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      {isPolish ? 'Szczegóły' : 'Details'}
-                    </div>
-                    <div className="relative">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDetailsMenuOpen((v) => !v);
-                        }}
-                        className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                        aria-label={isPolish ? 'Opcje szczegółów' : 'Details options'}
-                        title={isPolish ? 'Opcje' : 'Options'}
-                      >
-                        <MoreVertical size={14} />
-                      </button>
-                      {detailsMenuOpen && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-40"
-                            onClick={() => setDetailsMenuOpen(false)}
-                          />
-                          <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDetailsMenuOpen(false);
-                                void handleDetailsAction('expand', task);
-                              }}
-                              className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                            >
-                              {isPolish ? 'Rozwiń' : 'Expand'}
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDetailsMenuOpen(false);
-                                void handleDetailsAction('summarize', task);
-                              }}
-                              className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                            >
-                              {isPolish ? 'Podsumuj' : 'Summarize'}
-                            </button>
-                            <div className="border-t border-slate-200/70 dark:border-white/[0.08]" />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDetailsMenuOpen(false);
-                                void handleDetailsAction('copy', task);
-                              }}
-                              className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                            >
-                              {isPolish ? 'Kopiuj' : 'Copy'}
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
-                    {detailsLoading ? (
-                      <span className="text-slate-400 dark:text-slate-500">
-                        {isPolish ? 'Generowanie…' : 'Generating…'}
-                      </span>
-                    ) : detailsText ? (
-                      detailsText
-                    ) : isPolish ? (
-                      'Brak opisu.'
-                    ) : (
-                      'No description.'
-                    )}
-                  </div>
-                </div>
+                <PreviewDetailsSection
+                  text={detailsText}
+                  loading={detailsLoading}
+                  onExpand={() => void handleDetailsAction('expand', task)}
+                  onSummarize={() => void handleDetailsAction('summarize', task)}
+                  onCopy={() => void handleDetailsAction('copy', task)}
+                />
               </div>
             );
           }}
           renderPreviewFooter={(task) => {
-            const footerPillBase =
-              'inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
             const isCompleted = ['done', 'completed', 'validated'].includes(
               task.status?.toLowerCase() || ''
             );
-            const hintChip =
-              'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer active:scale-[0.98]';
 
-            const relations: Array<{ label: string; tone: string }> = [];
+            const hints = [
+              isPolish ? 'Dlaczego pilne?' : 'Why urgent?',
+              isPolish ? 'Plan działania' : 'Action plan',
+              isPolish ? 'Kto może pomóc?' : 'Who can help?',
+            ];
+            const hintToIntent: Record<string, 'why_urgent' | 'plan' | 'who_can_help'> = {
+              [isPolish ? 'Dlaczego pilne?' : 'Why urgent?']: 'why_urgent',
+              [isPolish ? 'Plan działania' : 'Action plan']: 'plan',
+              [isPolish ? 'Kto może pomóc?' : 'Who can help?']: 'who_can_help',
+            };
+
+            const relationItems: RelationItem[] = [];
             if (task.initiativeName)
-              relations.push({
+              relationItems.push({
                 label: task.initiativeName,
                 tone: 'text-blue-600 dark:text-blue-300',
               });
             if (Array.isArray(task.dependencies) && task.dependencies.length > 0)
-              relations.push({
+              relationItems.push({
                 label: isPolish
                   ? `Zależności: ${task.dependencies.length}`
                   : `Dependencies: ${task.dependencies.length}`,
                 tone: 'text-amber-700 dark:text-amber-300',
               });
             if (Array.isArray(task.attachments) && task.attachments.length > 0)
-              relations.push({
+              relationItems.push({
                 label: isPolish
                   ? `Załączniki: ${task.attachments.length}`
                   : `Attachments: ${task.attachments.length}`,
                 tone: 'text-slate-700 dark:text-slate-200',
               });
 
+            const actionRows: ActionRow[] = [
+              {
+                buttons: [
+                  {
+                    label: isPolish ? 'Dziś' : 'Today',
+                    icon: Zap,
+                    onClick: () => handleTriageAcceptToday(task.id),
+                    colorScheme: 'emerald',
+                    flex: true,
+                  },
+                  {
+                    label: isPolish ? 'Odłóż' : 'Snooze',
+                    icon: Pause,
+                    onClick: () => handleTriageSnooze(task.id),
+                    colorScheme: 'amber',
+                    flex: true,
+                  },
+                ],
+              },
+              {
+                buttons: [
+                  {
+                    label: isCompleted ? (isPolish ? 'Wznów' : 'Reopen') : isPolish ? 'Gotowe' : 'Done',
+                    icon: CheckCircle2,
+                    onClick: () => handleToggleComplete(task.id, !isCompleted),
+                    colorScheme: 'green',
+                    flex: true,
+                  },
+                  {
+                    label: isPolish ? 'Otwórz' : 'Open',
+                    icon: Eye,
+                    onClick: () => onTaskClick(task.id, task),
+                    colorScheme: 'neutral',
+                    flex: true,
+                  },
+                ],
+              },
+            ];
+
             return (
               <div className="space-y-0">
-                {/* AI hints */}
                 <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      AI
-                    </div>
-                    <div className="relative">
-                      <button
-                        onClick={() => setAiMenuOpen((v) => !v)}
-                        className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                        aria-label={isPolish ? 'Opcje AI' : 'AI options'}
-                        title={isPolish ? 'Opcje' : 'Options'}
-                      >
-                        <MoreVertical size={14} />
-                      </button>
-                      {aiMenuOpen && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-40"
-                            onClick={() => setAiMenuOpen(false)}
-                          />
-                          <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1 overflow-hidden">
-                            <button
-                              onClick={async () => {
-                                setAiMenuOpen(false);
-                                if (!aiText) return;
-                                try {
-                                  await navigator.clipboard.writeText(aiText);
-                                  toast.success(isPolish ? 'Skopiowano' : 'Copied');
-                                } catch {
-                                  toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
-                                }
-                              }}
-                              className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                            >
-                              {isPolish ? 'Kopiuj' : 'Copy'}
-                            </button>
-                            <button
-                              onClick={() => {
-                                setAiMenuOpen(false);
-                                setAiText(null);
-                                setAiError(null);
-                              }}
-                              className="w-full px-3 py-1.5 text-left text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
-                            >
-                              {isPolish ? 'Wyczyść' : 'Clear'}
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <button
-                      className={hintChip}
-                      onClick={() => runTaskAi('why_urgent', task)}
-                      disabled={aiLoading}
-                    >
-                      {isPolish ? 'Dlaczego pilne?' : 'Why urgent?'}
-                    </button>
-                    <button
-                      className={hintChip}
-                      onClick={() => runTaskAi('plan', task)}
-                      disabled={aiLoading}
-                    >
-                      {isPolish ? 'Plan działania' : 'Action plan'}
-                    </button>
-                    <button
-                      className={hintChip}
-                      onClick={() => runTaskAi('who_can_help', task)}
-                      disabled={aiLoading}
-                    >
-                      {isPolish ? 'Kto może pomóc?' : 'Who can help?'}
-                    </button>
-                  </div>
-
-                  {aiLoading ? (
-                    <div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-                      {isPolish ? 'Analiza…' : 'Thinking…'}
-                    </div>
-                  ) : aiError ? (
-                    <div className="mt-2 text-xs text-red-600 dark:text-red-400">{aiError}</div>
-                  ) : aiText ? (
-                    <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
-                      {aiText}
-                    </div>
-                  ) : null}
+                  <PreviewAIHintStrip
+                    hints={hints}
+                    loading={aiLoading}
+                    result={aiLoading ? (isPolish ? 'Analiza…' : 'Thinking…') : aiText}
+                    error={aiError}
+                    onRunHint={(hint) => {
+                      const intent = hintToIntent[hint];
+                      if (intent) runTaskAi(intent, task);
+                    }}
+                    onCopy={async () => {
+                      if (!aiText) return;
+                      try {
+                        await navigator.clipboard.writeText(aiText);
+                        toast.success(isPolish ? 'Skopiowano' : 'Copied');
+                      } catch {
+                        toast.error(isPolish ? 'Nie udało się skopiować' : 'Copy failed');
+                      }
+                    }}
+                    onClear={() => {
+                      setAiText(null);
+                      setAiError(null);
+                    }}
+                  />
                 </div>
 
                 <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
-                {/* Relations (2 rows) */}
-                <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
-                  {relations.length > 0 ? (
-                    relations.map((r) => (
-                      <span
-                        key={r.label}
-                        className={`inline-flex items-center h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent ${r.tone}`}
-                        title={r.label}
-                      >
-                        {r.label}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-xs text-slate-400 dark:text-slate-500 italic py-1.5">
-                      {isPolish ? 'Brak powiązań' : 'No relations'}
-                    </span>
-                  )}
-                </div>
+                <PreviewRelations
+                  items={relationItems}
+                  emptyLabel={isPolish ? 'Brak powiązań' : 'No relations'}
+                />
 
                 <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
-                {/* Actions */}
-                <div className="space-y-2.5 py-1">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleTriageAcceptToday(task.id)}
-                      className={`${footerPillBase} flex-1 border-emerald-300/40 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-500/15`}
-                    >
-                      <Zap size={14} />
-                      {isPolish ? 'Dziś' : 'Today'}
-                    </button>
-                    <button
-                      onClick={() => handleTriageSnooze(task.id)}
-                      className={`${footerPillBase} flex-1 border-amber-300/40 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-500/15`}
-                    >
-                      <Pause size={14} />
-                      {isPolish ? 'Odłóż' : 'Snooze'}
-                    </button>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleToggleComplete(task.id, !isCompleted)}
-                      className={`${footerPillBase} flex-1 border-green-300/40 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-200 hover:bg-green-100/70 dark:hover:bg-green-500/15`}
-                    >
-                      <CheckCircle2 size={14} />
-                      {isCompleted ? (isPolish ? 'Wznów' : 'Reopen') : isPolish ? 'Gotowe' : 'Done'}
-                    </button>
-                    <button
-                      onClick={() => onTaskClick(task.id, task)}
-                      className={`${footerPillBase} flex-1 border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-                    >
-                      <Eye size={14} />
-                      {isPolish ? 'Otwórz' : 'Open'}
-                    </button>
-                  </div>
-                </div>
+                <PreviewActionBar rows={actionRows} />
               </div>
             );
           }}

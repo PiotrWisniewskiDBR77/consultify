@@ -35,6 +35,7 @@ import { useTranslation } from 'react-i18next';
 import { getAxisColor, getPriorityClasses, getStatusClasses } from '../../config/portfolioColors';
 import { Api } from '../../services/api';
 import { InitiativeStatus, PortfolioInitiative, Task, User as UserType } from '../../types';
+import { getSourceDisplayLabel } from '../Initiatives/InitiativeSourceLink';
 import { DecisionDetailModal } from '../MyWork/DecisionDetailModal';
 import { TaskDetailModal } from '../TaskDetailModal';
 
@@ -115,7 +116,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
 
   // Tasks state
   const [tasks, setTasks] = useState<Task[]>([]);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [tasksLoading, setTasksLoading] = useState(false);
   const [taskFilter, setTaskFilter] = useState<'all' | 'todo' | 'in_progress' | 'completed'>('all');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -393,7 +394,7 @@ export const InitiativeSidePanel: React.FC<InitiativeSidePanelProps> = ({
               <div className="flex items-center justify-between py-2 border-t border-slate-100 dark:border-navy-700">
                 <span className="text-sm text-slate-500 dark:text-slate-400">Source</span>
                 <span className="text-sm font-medium text-navy-900 dark:text-white">
-                  {(initiative as any).sourceType}
+                  {getSourceDisplayLabel((initiative as any).sourceType, i18n.language === 'pl')}
                 </span>
               </div>
             )}

@@ -42,6 +42,7 @@ const QUICK_TYPES: ArtifactType[] = [
   'report',
   'tool',
   'notebook',
+  'knowledge',
   'financial_model',
   'budget',
 ];

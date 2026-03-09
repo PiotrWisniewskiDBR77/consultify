@@ -62,6 +62,16 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  PreviewActionBar,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  actionPillClass,
+  type ActionRow,
+  type MetaPill,
+  type RelationItem,
+} from '@/components/shared/PreviewPane';
 import { Modal } from '@/components/ui/primitives/Modal';
 import {
   type ColumnDef,
@@ -821,6 +831,18 @@ const PreviewPane: React.FC<{
 
   const descriptionTrimmed = (item.description || '').trim();
 
+  const detailsDisplayText = detailsOverride
+    ? detailsOverride
+    : aiResult
+      ? [
+          aiResult.brief,
+          ...(aiResult.bullets || []).map((b) => `• ${b}`),
+          aiResult.recommendedReason ? `\n${aiResult.recommendedReason}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : descriptionTrimmed + (aiError ? `\n\n${aiError}` : '');
+
   const handleDetailsAction = useCallback(
     async (action: 'expand' | 'summarize' | 'copy') => {
       if (action === 'copy') {
@@ -887,10 +909,110 @@ const PreviewPane: React.FC<{
     [isPolish, item, descriptionTrimmed, detailsOverride, aiResult]
   );
 
-  const metaPillBase =
-    'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium';
-  const footerPillBase =
-    'inline-flex items-center justify-center gap-1.5 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+  const metaPills: MetaPill[] = [
+    { label: isPolish ? kindCfg.labelPl : kindCfg.labelEn, className: kindCfg.pill, icon: KindIcon },
+    { label: u.label, className: u.pill, icon: UIcon },
+  ];
+
+  const metaTrailing = (
+    <div className="flex flex-wrap items-center justify-end gap-1.5">
+      <span className={`text-[11px] font-medium ${AGING_STYLES[agingLevel]}`}>
+        {receivedText}
+      </span>
+      {item.sla && sla.label !== '-' ? (
+        <>
+          <span className="text-slate-300 dark:text-navy-600">·</span>
+          <span
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${sla.className}`}
+          >
+            SLA {sla.label}
+          </span>
+        </>
+      ) : null}
+    </div>
+  );
+
+  const relationItems: RelationItem[] = [
+    ...(item.linkedTaskId
+      ? [
+          {
+            label: `Task ${item.linkedTaskId.slice(0, 8)}…`,
+            icon: CheckSquare,
+            tone: 'text-emerald-600 dark:text-emerald-400',
+          } as RelationItem,
+        ]
+      : []),
+    ...(item.linkedDecisionId
+      ? [
+          {
+            label: `${isPolish ? 'Decyzja' : 'Decision'} ${item.linkedDecisionId.slice(0, 8)}…`,
+            icon: Scale,
+            tone: 'text-amber-600 dark:text-amber-400',
+          } as RelationItem,
+        ]
+      : []),
+  ];
+
+  const actionRows: ActionRow[] = [
+    {
+      buttons: [
+        {
+          label: isPolish ? 'Dziś' : 'Today',
+          icon: Zap,
+          onClick: () => onTriage('accept_today'),
+          colorScheme: 'emerald',
+          flex: true,
+        },
+        {
+          label: isPolish ? 'Tydzień' : 'Week',
+          icon: CalendarClock,
+          onClick: () => onTriage('accept_week'),
+          colorScheme: 'blue',
+          flex: true,
+        },
+        {
+          label: isPolish ? 'Później' : 'Later',
+          icon: Calendar,
+          onClick: () => onTriage('accept_later'),
+          colorScheme: 'neutral',
+          flex: true,
+        },
+      ],
+    },
+    {
+      columns: onSaveAsNote ? 4 : 3,
+      buttons: [
+        {
+          label: isPolish ? 'Gotowe' : 'Done',
+          icon: CheckCircle2,
+          onClick: () => onTriage('done'),
+          colorScheme: 'green',
+        },
+        {
+          label: isPolish ? 'Zapisz' : 'Save',
+          icon: Bookmark,
+          onClick: () => onTriage('save'),
+          colorScheme: 'amber',
+        },
+        ...(onSaveAsNote
+          ? [
+              {
+                label: isPolish ? 'Notatka' : 'Note',
+                icon: FileText,
+                onClick: () => onSaveAsNote(item),
+                colorScheme: 'neutral' as const,
+              },
+            ]
+          : []),
+        {
+          label: isPolish ? 'Odłóż' : 'Dismiss',
+          icon: Archive,
+          onClick: () => onTriage('dismiss'),
+          colorScheme: 'neutral',
+        },
+      ],
+    },
+  ];
 
   return (
     <PreviewPaneShell
@@ -924,88 +1046,13 @@ const PreviewPane: React.FC<{
 
           <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
-          {/* ── Linked documents (room for 2 rows) ── */}
-          <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1">
-            {item.linkedTaskId ? (
-              <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-emerald-600 dark:text-emerald-400">
-                <CheckSquare size={13} />
-                Task {item.linkedTaskId.slice(0, 8)}…
-              </span>
-            ) : null}
-            {item.linkedDecisionId ? (
-              <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-amber-600 dark:text-amber-400">
-                <Scale size={13} />
-                {isPolish ? 'Decyzja' : 'Decision'} {item.linkedDecisionId.slice(0, 8)}…
-              </span>
-            ) : null}
-            {!item.linkedTaskId && !item.linkedDecisionId ? (
-              <span className="text-xs text-slate-400 dark:text-slate-500 italic py-1.5">
-                {isPolish ? 'Brak powiązań' : 'No linked documents'}
-              </span>
-            ) : null}
-          </div>
+          {/* ── Linked documents ── */}
+          <PreviewRelations items={relationItems} />
 
           <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
           {/* ── Action buttons ── */}
-          <div className="space-y-2.5 py-1">
-            <div className="flex gap-2">
-              <button
-                onClick={() => onTriage('accept_today')}
-                className={`${footerPillBase} flex-1 border-emerald-300/40 dark:border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-500/15`}
-              >
-                <Zap size={14} />
-                {isPolish ? 'Dziś' : 'Today'}
-              </button>
-              <button
-                onClick={() => onTriage('accept_week')}
-                className={`${footerPillBase} flex-1 border-blue-300/40 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-200 hover:bg-blue-100/70 dark:hover:bg-blue-500/15`}
-              >
-                <CalendarClock size={14} />
-                {isPolish ? 'Tydzień' : 'Week'}
-              </button>
-              <button
-                onClick={() => onTriage('accept_later')}
-                className={`${footerPillBase} flex-1 border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-              >
-                <Calendar size={14} />
-                {isPolish ? 'Później' : 'Later'}
-              </button>
-            </div>
-
-            <div className={`grid ${onSaveAsNote ? 'grid-cols-4' : 'grid-cols-3'} gap-2`}>
-              <button
-                onClick={() => onTriage('done')}
-                className={`${footerPillBase} border-green-300/40 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-200 hover:bg-green-100/70 dark:hover:bg-green-500/15`}
-              >
-                <CheckCircle2 size={14} />
-                {isPolish ? 'Gotowe' : 'Done'}
-              </button>
-              <button
-                onClick={() => onTriage('save')}
-                className={`${footerPillBase} border-amber-300/40 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-500/15`}
-              >
-                <Bookmark size={14} />
-                {isPolish ? 'Zapisz' : 'Save'}
-              </button>
-              {onSaveAsNote ? (
-                <button
-                  onClick={() => onSaveAsNote(item)}
-                  className={`${footerPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-                >
-                  <FileText size={14} />
-                  {isPolish ? 'Notatka' : 'Note'}
-                </button>
-              ) : null}
-              <button
-                onClick={() => onTriage('dismiss')}
-                className={`${footerPillBase} border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`}
-              >
-                <Archive size={14} />
-                {isPolish ? 'Odłóż' : 'Dismiss'}
-              </button>
-            </div>
-          </div>
+          <PreviewActionBar rows={actionRows} />
 
           <div className="pt-1.5">
             <button
@@ -1025,7 +1072,7 @@ const PreviewPane: React.FC<{
                   <button
                     key={p.id}
                     onClick={() => onSnooze(p.id)}
-                    className={`${footerPillBase} h-8 px-3 border-amber-300/40 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-800 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-500/15`}
+                    className={`${actionPillClass('amber', 'h-8 px-3')}`}
                   >
                     <Clock size={13} />
                     {isPolish ? p.labelPl : p.labelEn}
@@ -1049,137 +1096,15 @@ const PreviewPane: React.FC<{
       }
     >
       <div className="space-y-4">
-        {/* Brief card — type pill + meta + short title context */}
-        <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-          <div className="flex items-center justify-between gap-2">
-            <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${kindCfg.pill}`}
-            >
-              <KindIcon size={11} />
-              {isPolish ? kindCfg.labelPl : kindCfg.labelEn}
-            </span>
-            <div className="flex flex-wrap items-center justify-end gap-1.5">
-              <span className={`${metaPillBase} ${u.pill}`}>
-                <UIcon size={11} />
-                {u.label}
-              </span>
-              <span className="text-slate-300 dark:text-navy-600">·</span>
-              <span className={`text-[11px] font-medium ${AGING_STYLES[agingLevel]}`}>
-                {receivedText}
-              </span>
-              {item.sla && sla.label !== '-' ? (
-                <>
-                  <span className="text-slate-300 dark:text-navy-600">·</span>
-                  <span className={`${metaPillBase} ${sla.className}`}>SLA {sla.label}</span>
-                </>
-              ) : null}
-            </div>
-          </div>
-        </div>
+        <PreviewMetaCard pills={metaPills} trailing={metaTrailing} />
 
-        {/* Details — AI contextual brief (auto-generated) with raw text as fallback */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              {isPolish ? 'Szczegóły' : 'Details'}
-            </div>
-
-            <div className="relative">
-              <button
-                onClick={() => setDetailsMenuOpen(!detailsMenuOpen)}
-                className="p-1 rounded-md text-slate-400 dark:text-slate-500 hover:bg-slate-200/50 dark:hover:bg-white/[0.06] transition-colors"
-              >
-                <MoreVertical size={13} />
-              </button>
-              {detailsMenuOpen ? (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setDetailsMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 min-w-[170px] rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-lg py-1">
-                    <button
-                      onClick={() => {
-                        setDetailsMenuOpen(false);
-                        handleDetailsAction('expand');
-                      }}
-                      disabled={detailsLoading}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
-                    >
-                      <ChevronDown size={12} className="text-purple-500" />
-                      {isPolish ? 'Rozwiń' : 'Expand'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setDetailsMenuOpen(false);
-                        handleDetailsAction('summarize');
-                      }}
-                      disabled={detailsLoading}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-40 transition-colors"
-                    >
-                      <Sparkles size={12} className="text-purple-500" />
-                      {isPolish ? 'Podsumuj' : 'Summarize'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setDetailsMenuOpen(false);
-                        handleDetailsAction('copy');
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
-                    >
-                      <Copy size={12} />
-                      {isPolish ? 'Kopiuj' : 'Copy'}
-                    </button>
-                  </div>
-                </>
-              ) : null}
-            </div>
-          </div>
-
-          {detailsLoading ? (
-            <div className="space-y-2 animate-pulse">
-              <div className="h-3.5 w-full rounded bg-slate-200/60 dark:bg-white/[0.06]" />
-              <div className="h-3.5 w-5/6 rounded bg-slate-200/50 dark:bg-white/[0.05]" />
-              <div className="h-3 w-3/4 rounded bg-slate-200/40 dark:bg-white/[0.04]" />
-            </div>
-          ) : detailsOverride ? (
-            <div className="text-sm text-slate-800 dark:text-slate-100 leading-relaxed whitespace-pre-wrap">
-              {detailsOverride}
-            </div>
-          ) : aiLoading ? (
-            <div className="space-y-2 animate-pulse">
-              <div className="h-3.5 w-full rounded bg-slate-200/60 dark:bg-white/[0.06]" />
-              <div className="h-3.5 w-5/6 rounded bg-slate-200/50 dark:bg-white/[0.05]" />
-              <div className="h-3 w-3/4 rounded bg-slate-200/40 dark:bg-white/[0.04]" />
-              <div className="h-3 w-2/3 rounded bg-slate-200/30 dark:bg-white/[0.03]" />
-            </div>
-          ) : aiResult ? (
-            <div>
-              <p className="text-sm text-slate-800 dark:text-slate-100 leading-relaxed">
-                {aiResult.brief}
-              </p>
-              {aiResult.bullets?.length ? (
-                <ul className="mt-2 space-y-1.5 text-sm text-slate-700 dark:text-slate-200">
-                  {aiResult.bullets.slice(0, 4).map((b, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="mt-2 h-1 w-1 rounded-full bg-purple-400/50 shrink-0" />
-                      <span className="min-w-0 leading-relaxed">{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              {aiResult.recommendedReason ? (
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {aiResult.recommendedReason}
-                </p>
-              ) : null}
-            </div>
-          ) : (
-            <div className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
-              {descriptionTrimmed || (isPolish ? 'Brak opisu.' : 'No description.')}
-              {aiError ? (
-                <p className="mt-2 text-xs text-red-500 dark:text-red-400">{aiError}</p>
-              ) : null}
-            </div>
-          )}
-        </div>
+        <PreviewDetailsSection
+          text={detailsDisplayText}
+          loading={detailsLoading || aiLoading}
+          onExpand={() => handleDetailsAction('expand')}
+          onSummarize={() => handleDetailsAction('summarize')}
+          onCopy={() => handleDetailsAction('copy')}
+        />
       </div>
     </PreviewPaneShell>
   );

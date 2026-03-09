@@ -1,8 +1,18 @@
-import { Clock, MoreVertical, Sparkles } from 'lucide-react';
+import { BarChart3, Calculator, Clock, MoreVertical, Target, TrendingUp } from 'lucide-react';
 import React, { useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import {
+  PreviewActionBar,
+  PreviewAIHintStrip,
+  PreviewDetailsSection,
+  PreviewMetaCard,
+  PreviewRelations,
+  type ActionRow,
+  type MetaPill,
+  type RelationItem,
+} from '@/components/shared/PreviewPane';
 import { Api } from '@/services/api';
 
 import {
@@ -12,9 +22,17 @@ import {
   type FinanceValuationRow,
   formatAge,
   getTypeCode,
-  KIND_ICONS,
+  type FinanceKind,
   type PreviewDataState,
 } from './financeTypes';
+
+const KIND_ICON_MAP: Record<FinanceKind, typeof Calculator> = {
+  models: Calculator,
+  analysis: BarChart3,
+  investment: Target,
+  prediction: TrendingUp,
+  valuation: Target,
+};
 
 interface FinancePreviewPanelProps {
   predictionValidations: PreviewDataState['predictionValidations'];
@@ -116,86 +134,83 @@ export function useFinancePreview({
         );
       }
 
+      const metaPillsForCard: MetaPill[] = [
+        {
+          label: getTypeCode(row.kind),
+          icon: KIND_ICON_MAP[row.kind],
+          className:
+            'border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200',
+        },
+        {
+          label: row.status,
+          dot:
+            row.status === 'APPROVED'
+              ? 'bg-emerald-500'
+              : row.status === 'REVIEW'
+                ? 'bg-amber-500'
+                : 'bg-slate-400',
+          className:
+            row.status === 'APPROVED'
+              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+              : row.status === 'REVIEW'
+                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+        },
+        ...metaPills.map((mp) => ({
+          label: mp.value,
+          className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+        })) as MetaPill[],
+      ];
+
+      let detailsText = '';
+      if (row.kind === 'models') {
+        detailsText = isPl
+          ? `Model finansowy P&L / Bilans / CF.\nScenariusz: ${row.scenario}\nWaluta: ${row.currency}\nHoryzont: ${row.horizonMonths} miesięcy\nStart: ${row.startDate || '—'}`
+          : `Financial model P&L / BS / CF.\nScenario: ${row.scenario}\nCurrency: ${row.currency}\nHorizon: ${row.horizonMonths} months\nStart: ${row.startDate || '—'}`;
+      } else if (row.kind === 'analysis' || row.kind === 'investment') {
+        detailsText = isPl
+          ? `${row.kind === 'investment' ? 'Case inwestycyjny' : 'Analiza finansowa'}: ${row.analysisType}\nWaluta: ${row.currency}\nLiczba okresów: ${row.periodCount}`
+          : `${row.kind === 'investment' ? 'Investment case' : 'Financial analysis'}: ${row.analysisType}\nCurrency: ${row.currency}\nPeriods: ${row.periodCount}`;
+      } else if (row.kind === 'prediction') {
+        const pRow = row as FinanceModelRow;
+        detailsText =
+          pRow.predictionType === 'budget'
+            ? isPl
+              ? `Budżet / Prognoza\nOkres: ${pRow.periodStart || '—'} → ${pRow.periodEnd || '—'}\nWaluta: ${pRow.currency}\nScenarze: base / optimistic / conservative`
+              : `Budget / Forecast\nPeriod: ${pRow.periodStart || '—'} → ${pRow.periodEnd || '—'}\nCurrency: ${pRow.currency}\nScenarios: base / optimistic / conservative`
+            : isPl
+              ? `Predykcja / scenariusz: ${pRow.scenario}\nWaluta: ${pRow.currency}\nHoryzont: ${pRow.horizonMonths} miesięcy`
+              : `Forecast / scenario: ${pRow.scenario}\nCurrency: ${pRow.currency}\nHorizon: ${pRow.horizonMonths} months`;
+      } else if (row.kind === 'valuation') {
+        const vRow = row as FinanceValuationRow;
+        detailsText = isPl
+          ? `Wycena przedsiębiorstwa\nMetoda: ${vRow.method}\nŹródło: ${vRow.sourceType}\nWaluta: ${row.currency}\nHoryzont: ${vRow.horizonYears} lat`
+          : `Enterprise valuation\nMethod: ${vRow.method}\nSource: ${vRow.sourceType}\nCurrency: ${row.currency}\nHorizon: ${vRow.horizonYears} years`;
+      }
+
       return (
         <div className="space-y-4">
-          {/* Entity Meta Bar */}
-          <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] p-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-slate-700 dark:text-slate-200">
-                  {KIND_ICONS[row.kind]}
-                  {getTypeCode(row.kind)}
-                </span>
-                <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium ${
-                    row.status === 'APPROVED'
-                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                      : row.status === 'REVIEW'
-                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                        : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300'
-                  }`}
-                >
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${row.status === 'APPROVED' ? 'bg-emerald-500' : row.status === 'REVIEW' ? 'bg-amber-500' : 'bg-slate-400'}`}
-                  />
-                  {row.status}
-                </span>
-                {metaPills.map((mp) => (
-                  <span
-                    key={mp.label}
-                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300"
-                  >
-                    {mp.value}
-                  </span>
-                ))}
-              </div>
-              <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 shrink-0 inline-flex items-center gap-1.5">
+          <PreviewMetaCard
+            pills={metaPillsForCard}
+            trailing={
+              <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 inline-flex items-center gap-1.5">
                 <Clock size={14} className="text-slate-400" />
-                <span>{formatAge(row.updatedAt, isPl)}</span>
-              </div>
-            </div>
-          </div>
+                {formatAge(row.updatedAt, isPl)}
+              </span>
+            }
+          />
 
-          {/* Details section */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-                {t('common.details', 'Details')}
-              </div>
-              <button
-                className="p-1.5 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                title={t('common.more', 'More')}
-                onClick={() => handleOpenFull(row)}
-              >
-                <MoreVertical size={14} />
-              </button>
-            </div>
-            <div className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
-              {row.kind === 'models' &&
-                (isPl
-                  ? `Model finansowy P&L / Bilans / CF.\nScenariusz: ${row.scenario}\nWaluta: ${row.currency}\nHoryzont: ${row.horizonMonths} miesięcy\nStart: ${row.startDate || '—'}`
-                  : `Financial model P&L / BS / CF.\nScenario: ${row.scenario}\nCurrency: ${row.currency}\nHorizon: ${row.horizonMonths} months\nStart: ${row.startDate || '—'}`)}
-              {(row.kind === 'analysis' || row.kind === 'investment') &&
-                (isPl
-                  ? `${row.kind === 'investment' ? 'Case inwestycyjny' : 'Analiza finansowa'}: ${row.analysisType}\nWaluta: ${row.currency}\nLiczba okresów: ${row.periodCount}`
-                  : `${row.kind === 'investment' ? 'Investment case' : 'Financial analysis'}: ${row.analysisType}\nCurrency: ${row.currency}\nPeriods: ${row.periodCount}`)}
-              {row.kind === 'prediction' &&
-                (() => {
-                  const pRow = row as FinanceModelRow;
-                  if (pRow.predictionType === 'budget')
-                    return isPl
-                      ? `Budżet / Prognoza\nOkres: ${pRow.periodStart || '—'} → ${pRow.periodEnd || '—'}\nWaluta: ${pRow.currency}\nScenarze: base / optimistic / conservative`
-                      : `Budget / Forecast\nPeriod: ${pRow.periodStart || '—'} → ${pRow.periodEnd || '—'}\nCurrency: ${pRow.currency}\nScenarios: base / optimistic / conservative`;
-                  return isPl
-                    ? `Predykcja / scenariusz: ${pRow.scenario}\nWaluta: ${pRow.currency}\nHoryzont: ${pRow.horizonMonths} miesięcy`
-                    : `Forecast / scenario: ${pRow.scenario}\nCurrency: ${pRow.currency}\nHorizon: ${pRow.horizonMonths} months`;
-                })()}
-              {row.kind === 'valuation' &&
-                (isPl
-                  ? `Wycena przedsiębiorstwa\nMetoda: ${(row as FinanceValuationRow).method}\nŹródło: ${(row as FinanceValuationRow).sourceType}\nWaluta: ${row.currency}\nHoryzont: ${(row as FinanceValuationRow).horizonYears} lat`
-                  : `Enterprise valuation\nMethod: ${(row as FinanceValuationRow).method}\nSource: ${(row as FinanceValuationRow).sourceType}\nCurrency: ${row.currency}\nHorizon: ${(row as FinanceValuationRow).horizonYears} years`)}
-            </div>
-          </div>
+          <PreviewDetailsSection
+            text={detailsText}
+            customActions={[
+              {
+                id: 'more',
+                label: t('common.more', 'More'),
+                icon: MoreVertical,
+                onClick: () => handleOpenFull(row),
+              },
+            ]}
+          />
 
           {/* Prediction: validation summary */}
           {row.kind === 'prediction' &&
@@ -527,37 +542,6 @@ export function useFinancePreview({
 
   const renderPreviewFooter = useCallback(
     (row: FinanceRow) => {
-      const divider = <div className="h-px bg-slate-200/70 dark:bg-white/[0.06]" />;
-
-      const hintChip = (label: string) => (
-        <button
-          className="h-7 px-2.5 rounded-full border border-slate-200/70 dark:border-white/[0.08] text-[11px] font-medium text-slate-500 dark:text-slate-300 bg-transparent hover:bg-slate-100/50 dark:hover:bg-white/[0.04] transition-colors active:scale-[0.98]"
-          onClick={() =>
-            window.location.assign(`/chat?context=finance&prompt=${encodeURIComponent(label)}`)
-          }
-        >
-          {label}
-        </button>
-      );
-
-      const primaryPill = (label: string, onClick: () => void) => (
-        <button
-          onClick={onClick}
-          className="inline-flex items-center justify-center h-9 px-4 rounded-full text-xs font-medium border border-primary-500/30 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/15 transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-        >
-          {label}
-        </button>
-      );
-
-      const secondaryPill = (label: string, onClick: () => void) => (
-        <button
-          onClick={onClick}
-          className="inline-flex items-center justify-center h-9 px-4 rounded-full text-xs font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-        >
-          {label}
-        </button>
-      );
-
       const aiHints: string[] = (() => {
         switch (row.kind) {
           case 'models':
@@ -593,196 +577,227 @@ export function useFinancePreview({
         }
       })();
 
+      const relationItems: RelationItem[] = [];
+
+      const actionButtons: ActionRow['buttons'] = [];
+
+      if (row.kind === 'models' && row.status !== 'APPROVED') {
+        actionButtons.push({
+          label: t('finance.actions.approve', 'Zatwierdź'),
+          onClick: async () => {
+            try {
+              await Api.post(`/api/financial-modeling/models/${row.id}/approve`, {});
+              await loadModels();
+              toast.success(t('finance.toast.modelApproved', 'Model zatwierdzony'));
+            } catch (e: any) {
+              toast.error(
+                e?.response?.data?.error ||
+                  t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+              );
+            }
+          },
+          colorScheme: 'primary',
+        });
+      }
+
+      if (row.kind === 'analysis' || row.kind === 'investment') {
+        actionButtons.push({
+          label: t('finance.actions.reanalyze', 'Przelicz ponownie'),
+          onClick: async () => {
+            try {
+              await Api.post(`/api/economics/financial-analyses/${row.id}/run`, {});
+              await loadAnalyses();
+              await loadAnalysisPreviewRatios(row.id);
+              toast.success(t('finance.toast.reanalyzed', 'Analiza przeliczona'));
+            } catch (e: any) {
+              toast.error(
+                e?.response?.data?.error ||
+                  t('finance.toast.reanalyzeFailed', 'Nie udało się przeliczyć')
+              );
+            }
+          },
+          colorScheme: 'primary',
+        });
+        if (row.status !== 'APPROVED') {
+          actionButtons.push({
+            label: t('finance.actions.approve', 'Zatwierdź'),
+            onClick: async () => {
+              try {
+                await Api.post(`/api/economics/financial-analyses/${row.id}/approve`, {});
+                await loadAnalyses();
+                toast.success(t('finance.toast.analysisApproved', 'Analiza zatwierdzona'));
+              } catch (e: any) {
+                toast.error(
+                  e?.response?.data?.error ||
+                    t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                );
+              }
+            },
+            colorScheme: 'primary',
+          });
+        }
+      }
+
+      if (row.kind === 'prediction') {
+        const pRow = row as FinanceModelRow;
+        if (pRow.predictionType === 'budget') {
+          const rawId = getBudgetRawId(row.id);
+          actionButtons.push({
+            label: t('finance.actions.generateProjections', 'Generuj prognozy'),
+            onClick: async () => {
+              try {
+                const detail = await Api.get(`/api/economics/budgets/${rawId}`);
+                const scens = (detail as any)?.scenarios || [];
+                for (const sc of scens)
+                  await Api.post(
+                    `/api/economics/budgets/${rawId}/scenarios/${sc.id}/project`,
+                    {}
+                  );
+                await loadBudgetPreviewScenarios(rawId);
+                toast.success(t('finance.toast.projected', 'Prognozy wygenerowane'));
+              } catch (e: any) {
+                toast.error(
+                  e?.response?.data?.error ||
+                    t('finance.toast.projectionFailed', 'Nie udało się wygenerować')
+                );
+              }
+            },
+            colorScheme: 'primary',
+          });
+          if (pRow.status !== 'APPROVED') {
+            actionButtons.push({
+              label: t('finance.actions.approve', 'Zatwierdź'),
+              onClick: async () => {
+                try {
+                  await Api.post(`/api/economics/budgets/${rawId}/approve`, {});
+                  await loadBudgets();
+                  toast.success(t('finance.toast.budgetApproved', 'Budżet zatwierdzony'));
+                } catch (e: any) {
+                  toast.error(
+                    e?.response?.data?.error ||
+                      t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                  );
+                }
+              },
+              colorScheme: 'primary',
+            });
+          }
+        } else {
+          actionButtons.push({
+            label: t('finance.actions.compute', 'Przelicz'),
+            onClick: async () => {
+              try {
+                await Api.post(`/api/financial-modeling/models/${row.id}/compute`, {});
+                await loadPredictionPreview(row.id);
+                toast.success(t('finance.toast.computed', 'Prognoza przeliczona'));
+              } catch (e: any) {
+                toast.error(
+                  e?.response?.data?.error ||
+                    t('finance.toast.computeFailed', 'Nie udało się przeliczyć')
+                );
+              }
+            },
+            colorScheme: 'primary',
+          });
+        }
+      }
+
+      if (row.kind === 'valuation') {
+        actionButtons.push({
+          label: t('finance.actions.computeDcf', 'Oblicz DCF'),
+          onClick: async () => {
+            try {
+              await Api.post(`/api/economics/valuations/${row.id}/compute`, {});
+              await loadValuations();
+              await loadValuationPreviewResults(row.id);
+              toast.success(t('finance.toast.valuationComputed', 'Wycena obliczona'));
+            } catch (e: any) {
+              toast.error(
+                e?.response?.data?.error ||
+                  t('finance.toast.computeFailed', 'Nie udało się obliczyć')
+              );
+            }
+          },
+          colorScheme: 'primary',
+        });
+        if (row.status !== 'APPROVED') {
+          actionButtons.push({
+            label: t('finance.actions.approve', 'Zatwierdź'),
+            onClick: async () => {
+              try {
+                await Api.post(`/api/economics/valuations/${row.id}/approve`, {});
+                await loadValuations();
+                toast.success(t('finance.toast.valuationApproved', 'Wycena zatwierdzona'));
+              } catch (e: any) {
+                toast.error(
+                  e?.response?.data?.error ||
+                    t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                );
+              }
+            },
+            colorScheme: 'primary',
+          });
+        }
+        actionButtons.push({
+          label: t('finance.actions.exportPptx', 'Eksportuj PPTX'),
+          onClick: async () => {
+            try {
+              const result = await Api.post(
+                `/api/economics/valuations/${row.id}/export/pptx`,
+                {
+                  language: isPl ? 'pl' : 'en',
+                  theme: 'corporate',
+                  confidentiality: 'confidential',
+                }
+              );
+              toast.success(t('finance.toast.pptxExported', 'PPTX wygenerowany'));
+              const downloadUrl = (result as any)?.downloadUrl;
+              if (downloadUrl) window.open(downloadUrl, '_blank');
+            } catch (e: any) {
+              toast.error(
+                e?.response?.data?.error ||
+                  t('finance.toast.exportFailed', 'Nie udało się wyeksportować')
+              );
+            }
+          },
+          colorScheme: 'neutral',
+        });
+      }
+
+      if (
+        row.kind !== 'prediction' ||
+        (row as FinanceModelRow).predictionType === 'model'
+      ) {
+        actionButtons.push({
+          label: t('finance.actions.export', 'Eksportuj'),
+          onClick: () => handleExport(row),
+          colorScheme: 'neutral',
+        });
+      }
+
+      actionButtons.push({
+        label: t('common.open', 'Otwórz'),
+        onClick: () => handleOpenFull(row),
+        colorScheme: 'neutral',
+      });
+
       return (
         <div className="space-y-0">
-          <div className="py-1.5">
-            <div className="flex items-center justify-between gap-2 mb-1.5">
-              <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
-                <Sparkles size={12} />
-                <span className="text-[10px] font-medium uppercase tracking-wider">AI</span>
-              </div>
-              <button
-                className="p-1.5 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                title={t('common.more', 'More')}
-                onClick={() => window.location.assign('/chat?context=finance')}
-              >
-                <MoreVertical size={14} />
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {aiHints.map((hint) => (
-                <React.Fragment key={hint}>{hintChip(hint)}</React.Fragment>
-              ))}
-            </div>
-          </div>
-          {divider}
-          <div className="min-h-[4.5rem] flex flex-wrap items-start content-start gap-2 py-1.5">
-            <span className="text-xs text-slate-400 dark:text-slate-500">
-              {t('common.noRelations', 'No relations')}
-            </span>
-          </div>
-          {divider}
-          <div className="space-y-2.5 py-1.5">
-            <div className="flex flex-wrap gap-2">
-              {row.kind === 'models' &&
-                row.status !== 'APPROVED' &&
-                primaryPill(t('finance.actions.approve', 'Zatwierdź'), async () => {
-                  try {
-                    await Api.post(`/api/financial-modeling/models/${row.id}/approve`, {});
-                    await loadModels();
-                    toast.success(t('finance.toast.modelApproved', 'Model zatwierdzony'));
-                  } catch (e: any) {
-                    toast.error(
-                      e?.response?.data?.error ||
-                        t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
-                    );
-                  }
-                })}
-              {(row.kind === 'analysis' || row.kind === 'investment') && (
-                <>
-                  {primaryPill(t('finance.actions.reanalyze', 'Przelicz ponownie'), async () => {
-                    try {
-                      await Api.post(`/api/economics/financial-analyses/${row.id}/run`, {});
-                      await loadAnalyses();
-                      await loadAnalysisPreviewRatios(row.id);
-                      toast.success(t('finance.toast.reanalyzed', 'Analiza przeliczona'));
-                    } catch (e: any) {
-                      toast.error(
-                        e?.response?.data?.error ||
-                          t('finance.toast.reanalyzeFailed', 'Nie udało się przeliczyć')
-                      );
-                    }
-                  })}
-                  {row.status !== 'APPROVED' &&
-                    primaryPill(t('finance.actions.approve', 'Zatwierdź'), async () => {
-                      try {
-                        await Api.post(`/api/economics/financial-analyses/${row.id}/approve`, {});
-                        await loadAnalyses();
-                        toast.success(t('finance.toast.analysisApproved', 'Analiza zatwierdzona'));
-                      } catch (e: any) {
-                        toast.error(
-                          e?.response?.data?.error ||
-                            t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
-                        );
-                      }
-                    })}
-                </>
-              )}
-              {row.kind === 'prediction' &&
-                (() => {
-                  const pRow = row as FinanceModelRow;
-                  if (pRow.predictionType === 'budget') {
-                    const rawId = getBudgetRawId(row.id);
-                    return (
-                      <>
-                        {primaryPill(
-                          t('finance.actions.generateProjections', 'Generuj prognozy'),
-                          async () => {
-                            try {
-                              const detail = await Api.get(`/api/economics/budgets/${rawId}`);
-                              const scens = (detail as any)?.scenarios || [];
-                              for (const sc of scens)
-                                await Api.post(
-                                  `/api/economics/budgets/${rawId}/scenarios/${sc.id}/project`,
-                                  {}
-                                );
-                              await loadBudgetPreviewScenarios(rawId);
-                              toast.success(t('finance.toast.projected', 'Prognozy wygenerowane'));
-                            } catch (e: any) {
-                              toast.error(
-                                e?.response?.data?.error ||
-                                  t('finance.toast.projectionFailed', 'Nie udało się wygenerować')
-                              );
-                            }
-                          }
-                        )}
-                        {pRow.status !== 'APPROVED' &&
-                          primaryPill(t('finance.actions.approve', 'Zatwierdź'), async () => {
-                            try {
-                              await Api.post(`/api/economics/budgets/${rawId}/approve`, {});
-                              await loadBudgets();
-                              toast.success(
-                                t('finance.toast.budgetApproved', 'Budżet zatwierdzony')
-                              );
-                            } catch (e: any) {
-                              toast.error(
-                                e?.response?.data?.error ||
-                                  t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
-                              );
-                            }
-                          })}
-                      </>
-                    );
-                  }
-                  return primaryPill(t('finance.actions.compute', 'Przelicz'), async () => {
-                    try {
-                      await Api.post(`/api/financial-modeling/models/${row.id}/compute`, {});
-                      await loadPredictionPreview(row.id);
-                      toast.success(t('finance.toast.computed', 'Prognoza przeliczona'));
-                    } catch (e: any) {
-                      toast.error(
-                        e?.response?.data?.error ||
-                          t('finance.toast.computeFailed', 'Nie udało się przeliczyć')
-                      );
-                    }
-                  });
-                })()}
-              {row.kind === 'valuation' && (
-                <>
-                  {primaryPill(t('finance.actions.computeDcf', 'Oblicz DCF'), async () => {
-                    try {
-                      await Api.post(`/api/economics/valuations/${row.id}/compute`, {});
-                      await loadValuations();
-                      await loadValuationPreviewResults(row.id);
-                      toast.success(t('finance.toast.valuationComputed', 'Wycena obliczona'));
-                    } catch (e: any) {
-                      toast.error(
-                        e?.response?.data?.error ||
-                          t('finance.toast.computeFailed', 'Nie udało się obliczyć')
-                      );
-                    }
-                  })}
-                  {row.status !== 'APPROVED' &&
-                    primaryPill(t('finance.actions.approve', 'Zatwierdź'), async () => {
-                      try {
-                        await Api.post(`/api/economics/valuations/${row.id}/approve`, {});
-                        await loadValuations();
-                        toast.success(t('finance.toast.valuationApproved', 'Wycena zatwierdzona'));
-                      } catch (e: any) {
-                        toast.error(
-                          e?.response?.data?.error ||
-                            t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
-                        );
-                      }
-                    })}
-                  {secondaryPill(t('finance.actions.exportPptx', 'Eksportuj PPTX'), async () => {
-                    try {
-                      const result = await Api.post(
-                        `/api/economics/valuations/${row.id}/export/pptx`,
-                        {
-                          language: isPl ? 'pl' : 'en',
-                          theme: 'corporate',
-                          confidentiality: 'confidential',
-                        }
-                      );
-                      toast.success(t('finance.toast.pptxExported', 'PPTX wygenerowany'));
-                      const downloadUrl = (result as any)?.downloadUrl;
-                      if (downloadUrl) window.open(downloadUrl, '_blank');
-                    } catch (e: any) {
-                      toast.error(
-                        e?.response?.data?.error ||
-                          t('finance.toast.exportFailed', 'Nie udało się wyeksportować')
-                      );
-                    }
-                  })}
-                </>
-              )}
-              {row.kind !== 'prediction' || (row as FinanceModelRow).predictionType === 'model'
-                ? secondaryPill(t('finance.actions.export', 'Eksportuj'), () => handleExport(row))
-                : null}
-              {secondaryPill(t('common.open', 'Otwórz'), () => handleOpenFull(row))}
-            </div>
-          </div>
+          <PreviewAIHintStrip
+            hints={aiHints}
+            onRunHint={(hint) =>
+              window.location.assign(
+                `/chat?context=finance&prompt=${encodeURIComponent(hint)}`
+              )
+            }
+          />
+          <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+          <PreviewRelations
+            items={relationItems}
+            emptyLabel={t('common.noRelations', 'No relations')}
+          />
+          <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+          <PreviewActionBar rows={[{ buttons: actionButtons }]} />
         </div>
       );
     },
