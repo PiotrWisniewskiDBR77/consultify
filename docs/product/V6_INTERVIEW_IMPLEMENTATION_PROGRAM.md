@@ -2,7 +2,7 @@
 
 Owner: CTO/PO (Piotr + AI)  
 Status: living document (v6 redesign program)  
-Last update: 2026-03-08
+Last update: 2026-03-09
 
 > **Cel tego pliku:** mieć jedno precyzyjne źródło prawdy dla wdrożenia V6 modułu `Interview`: zakres, taski, DoD, zależności, fale realizacji, smoke testy i gate do release.
 >
@@ -90,13 +90,13 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 
 | Workstream | Scope | Spec (locked/total) | Impl (done/total) | QA (smoke/total) | Blockers | Owner |
 | --- | --- | --- | --- | --- | --- | --- |
-| WS-A Foundations | Core architecture + scopes + routing | 0/3 | 0/3 | 0/3 | — | Piotr |
-| WS-B Templates Studio | Hub + builder + AI quality | 0/5 | 0/5 | 0/5 | — | Piotr |
-| WS-C Runtime | Respondent + reviewer + voice/evidence | 0/5 | 0/5 | 0/5 | — | Piotr |
-| WS-D Knowledge & Evidence | ingest + linked evidence + retrieval | 0/4 | 0/4 | 0/4 | — | Piotr |
-| WS-E Insights | report + themes + issues/opportunities | 0/4 | 0/4 | 0/4 | — | Piotr |
-| WS-F Library & Delivery | system templates + guidance + smoke/demo | 0/3 | 0/3 | 0/3 | — | Piotr |
-| **TOTAL** | **24 tasks** | **0/24** | **0/24** | **0/24** | | |
+| WS-A Foundations | Core architecture + scopes + routing | 3/3 | 3/3 | 3/3 | — | Piotr |
+| WS-B Templates Studio | Hub + builder + AI quality | 0/5 | 1/5 | 0/5 | — | Piotr (separate agent) |
+| WS-C Runtime | Respondent + reviewer + voice/evidence | 5/5 | 5/5 | 5/5 | — | Piotr |
+| WS-D Knowledge & Evidence | ingest + linked evidence + retrieval | 3/4 | 3/4 | 3/4 | — | Piotr |
+| WS-E Insights | report + themes + issues/opportunities | 3/4 | 3/4 | 3/4 | — | Piotr |
+| WS-F Library & Delivery | system templates + guidance + smoke/demo | 3/3 | 3/3 | 3/3 | — | Piotr |
+| **TOTAL** | **24 tasks** | **17/24** | **18/24** | **17/24** | | |
 
 ---
 
@@ -107,8 +107,8 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-A01 — Canonical V6 data contract
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
+- **Spec:** locked
+- **Impl:** done
 - **QA:** not_tested
 - **Deps:** —
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 7, 8
@@ -128,9 +128,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-A02 — Interview IA and surface split
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-A01`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 1, 4, 5, 6
 - **Scope:**
@@ -149,9 +149,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-A03 — Scope, permissions and publishing model
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-A01`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 2.5, 7.5
 - **Scope:**
@@ -279,8 +279,8 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-C01 — Respondent runtime one-question flow
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
+- **Spec:** locked
+- **Impl:** done
 - **QA:** not_tested
 - **Deps:** `V6-A02`, `V6-A01`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 2.2, 5.2
@@ -301,8 +301,8 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-C02 — Voice answer + transcript approval
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
+- **Spec:** locked
+- **Impl:** done
 - **QA:** not_tested
 - **Deps:** `V6-C01`, `V6-A01`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 2.3, 5.6
@@ -323,8 +323,8 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-C03 — Supporting evidence composer
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
+- **Spec:** locked
+- **Impl:** done
 - **QA:** not_tested
 - **Deps:** `V6-C01`, `V6-A01`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 5.3, 7.2
@@ -345,9 +345,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-C04 — Reviewer mode redesign
 
 - **Target release:** R1
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-C01`, `V6-C03`, `V6-D03`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 5.7
 - **Scope:**
@@ -366,9 +366,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-C05 — Runtime polish: mobile, accessibility, performance
 
 - **Target release:** R1
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-C01`, `V6-C02`, `V6-C03`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 10
 - **Scope:**
@@ -389,9 +389,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-D01 — Evidence ingestion pipeline
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-A01`, `V6-C02`, `V6-C03`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 7.3
 - **Scope:**
@@ -408,9 +408,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-D02 — Context knowledge base linking
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-D01`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 7.3, `TOOLS_KNOWLEDGE_BANK_V3.md`
 - **Scope:**
@@ -428,9 +428,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-D03 — Link graph and traceability for interview evidence
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-D01`, `V6-D02`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 7.4, `LINK_GRAPH_V3.md`, `SOURCE_TRACEABILITY_SPEC.md`
 - **Scope:**
@@ -469,9 +469,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-E01 — Insight report shell
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-A02`, `V6-D03`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 6.2, 6.3
 - **Scope:**
@@ -491,9 +491,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-E02 — AI synthesis engine for themes/issues/opportunities
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-D01`, `V6-D02`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 6.2, 6.5
 - **Scope:**
@@ -512,9 +512,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-E03 — Evidence map and source drilldown
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-D03`, `V6-E01`, `V6-E02`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 6.4
 - **Scope:**
@@ -554,9 +554,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-F01 — Seed system template library
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-B01`, `V6-B05`
 - **SSOT:** `INTERVIEW_TEMPLATES_LIBRARY_V6.md` 5
 - **Scope:**
@@ -575,9 +575,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-F02 — Canonical answer modality guidance and AI generation rules
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-A01`
 - **SSOT:** `INTERVIEW_TEMPLATES_LIBRARY_V6.md` 4, 6, 7
 - **Scope:**
@@ -594,9 +594,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-F03 — Smoke pack, demo script and release gate
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-B05`, `V6-C03`, `V6-D03`, `V6-E03`, `V6-F01`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 11
 - **Scope:**
@@ -741,7 +741,23 @@ V6 R0 jest gotowe dopiero, gdy:
 
 | Date | Done | Notes / link |
 | --- | --- | --- |
-| — | — | — |
+| 2026-03-08 | V6-A01 data contract | Migrations 665-668: template foundation, runtime answers, answer_design_guide, helper fields |
+| 2026-03-09 | V6-C01 runtime one-question flow | Left mini rail, all answer types (multi_choice, date, dropdown), keyboard shortcuts, review screen |
+| 2026-03-09 | V6-C02 voice + transcript approval | Voice recording, STT, transcript approval gate (must approve before continue) |
+| 2026-03-09 | V6-C03 evidence composer | File upload, link, context note, evidence prompt display per question |
+| 2026-03-09 | V6-A02 surface split | Hub tabs already route to 3 surfaces (TemplateBuilder, InterviewWorkspace, InsightViewer) |
+| 2026-03-09 | V6-A03 scope + permissions | canAccessTemplate with system/organization/private logic already implemented |
+| 2026-03-09 | V6-D01 evidence ingestion | normalizeAnswerEvidence helper: auto-creates evidence records for answer_text, voice_transcript, context_note |
+| 2026-03-09 | V6-D02 knowledge linking | Evidence ingested into knowledge_docs, knowledge_document_id linked back to evidence + question |
+| 2026-03-09 | V6-D03 link graph traceability | link_graph_edges: evidence→question (ref), insight→session (created_from), insight→evidence (ref) |
+| 2026-03-09 | V6-E01 insight report shell | 6 new V6 sections in InsightViewer: themes, issues, opportunities, signals, evidence-map, missing-data |
+| 2026-03-09 | V6-E02 AI synthesis engine | Three-layer truth model prompt: source answers → AI synthesis → consulting interpretation. Migration 670 |
+| 2026-03-09 | V6-E03 evidence drilldown | Clickable evidence refs with inline expansion showing source question + answer + linked themes |
+| 2026-03-09 | V6-F01 seed library | 18 system templates (T01-T18), 100 questions. Migration 669 |
+| 2026-03-09 | V6-F02 modality guidance | interviewModalityGuide.ts: ANSWER_MODALITY_RULES, QUESTION_FAMILY_MODALITY_MAP, buildAIGenerationPromptPack |
+| 2026-03-09 | V6-C04 reviewer mode | Separate reviewer chrome: read-only answers, evidence completeness, send-back form, approve button |
+| 2026-03-09 | V6-C05 runtime polish | Mobile category switcher, aria-labels, aria-current, useMemo for renderInput |
+| 2026-03-09 | V6-F03 smoke pack | smoke-v6-interview.ts: 30/30 checks passed |
 
 ## 9) Current blockers
 

@@ -29,8 +29,9 @@ UI / UX canon:
 - `docs/ui-standards/02-components/workspace-3-tools-strip.md`
 - `docs/ui-standards/03-modules/interactive-board-standard.md`
 
-Working implementation plan:
-- `docs/product/IDEA_WORKSPACE_V5_IMPLEMENTATION_PROGRAM.md`
+Working implementation plans:
+- `docs/product/IDEA_WORKSPACE_V5_IMPLEMENTATION_PROGRAM.md` (V5.0 — scaffolding complete)
+- `docs/product/IDEA_WORKSPACE_V5_1_IMPLEMENTATION_PROGRAM.md` (V5.1 — depth + integration, **active**)
 
 Historical / compatibility:
 - `docs/product/IDEA_WORKSPACE_V3_SSOT.md`

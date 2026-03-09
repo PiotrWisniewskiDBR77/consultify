@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
+import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import { Api } from '@/services/api';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
@@ -718,7 +719,7 @@ export const DeckBuilder: React.FC = () => {
                     }
                     className="rounded-full border border-slate-200 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:border-blue-400 dark:hover:border-blue-500/50"
                   >
-                    {bl.sourceType}: {bl.sourceId}
+                    {getSourceDisplayLabel(bl.sourceType, i18n.language === 'pl')}: {bl.sourceId}
                   </button>
                 ))}
               </div>

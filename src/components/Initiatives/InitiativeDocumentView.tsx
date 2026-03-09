@@ -111,6 +111,7 @@ import {
 } from '../shared/NModeSections';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
+import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import { InitiativeScrollView } from './InitiativeScrollView';
 import {
   DEFAULT_SECTION_ORDER,
@@ -6930,7 +6931,7 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                     >
                       <div className="min-w-0">
                         <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
-                          {bl.sourceType}
+                          {getSourceDisplayLabel(bl.sourceType, isPolish)}
                         </div>
                         <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                           {bl.sourceId}

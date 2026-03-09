@@ -45,6 +45,7 @@ import ReactMarkdown from 'react-markdown';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 
 import { Api } from '../../../services/api';
+import { getSourceDisplayLabel } from '../../Initiatives/InitiativeSourceLink';
 import { SmartBlockRenderer } from '../blocks/SmartBlockRenderer';
 import { ExportSharePanel } from '../ExportSharePanel';
 import { QualityGatesPanel } from '../QualityGatesPanel';
@@ -930,7 +931,7 @@ export const ReportEditor: React.FC<ReportEditorProps> = ({
               >
                 <div className="min-w-0">
                   <div className="truncate text-xs font-medium text-slate-800 dark:text-slate-200">
-                    {bl.sourceType}
+                    {getSourceDisplayLabel(bl.sourceType, isPl)}
                   </div>
                   <div className="truncate text-[11px] text-slate-500 dark:text-slate-400">
                     {bl.sourceId}

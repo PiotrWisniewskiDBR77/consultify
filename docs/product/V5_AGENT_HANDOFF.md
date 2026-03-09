@@ -2,11 +2,23 @@
 
 > **Task:** V5-IDEA-51  
 > **Date:** 2026-03-08  
-> **Status:** COMPLETE — all 52 tasks implemented
+> **Status:** SUPERSEDED / INVALIDATED BY REVIEW (2026-03-09)
+>
+> Use these documents instead for current execution truth:
+> - `docs/product/IDEA_WORKSPACE_V5_REMEDIATION_PLAN.md`
+> - `docs/product/IDEA_WORKSPACE_V5_1_IMPLEMENTATION_PROGRAM.md`
+> - `docs/product/V5_REMEDIATION_AGENT_EXECUTION_PACK.md`
 
 ---
 
 ## 1. Delivery summary
+
+> **Warning:** the completion narrative below is historical and no longer reliable as operational truth.
+> It overstates the real product state.
+> Before doing any work, read:
+> - `docs/product/IDEA_WORKSPACE_V5_REMEDIATION_PLAN.md`
+> - `docs/product/IDEA_WORKSPACE_V5_1_IMPLEMENTATION_PROGRAM.md`
+> - `docs/product/V5_REMEDIATION_AGENT_EXECUTION_PACK.md`
 
 **Ideas V5** is a complete rewrite of the Ideas Workspace module, implementing:
 - **Seed Surface** — calm entry experience with hero input, popular starts, templates, structured brief
@@ -91,11 +103,23 @@
 
 ## 4. Known limitations and future work
 
-1. **AI generators** — types are defined but backend handlers need implementation for `ai_retrieve_artifacts`, `ai_propose_attachments`, `ai_build_linked_table`
-2. **Real-time collaboration** — workspace collab gateway exists but V5-specific multi-user features are not yet tested
-3. **Offline mode** — workspace persistence falls back to local state but offline-first sync is not implemented
-4. **Performance** — large canvases (>500 nodes) may need virtualization; not yet profiled
-5. **Accessibility** — keyboard navigation exists for mind map; whiteboard and process flow need ARIA improvements
+> **V5.1 continuation program:** `docs/product/IDEA_WORKSPACE_V5_1_IMPLEMENTATION_PROGRAM.md`
+> Defines 24 tasks across 3 waves to close the gaps listed below.
+
+1. **AI generators** — types are defined but backend handlers need implementation for `ai_retrieve_artifacts`, `ai_propose_attachments`, `ai_build_linked_table` → **V51-01, V51-05, V51-06**
+2. **Chat-to-workspace handoff** — type contract exists but no working endpoint → **V51-02**
+3. **Compatibility adapter** — V3→V5 schema migration not implemented → **V51-03**
+4. **Artifact attachment API** — frontend components exist but no persistence endpoint → **V51-04**
+5. **Object-family coexistence** — types defined but no multi-family rendering → **V51-08**
+6. **Idea Card state machine** — pinned summary only, no stage transitions → **V51-09**
+7. **Node depth model** — visual depth works, structured fields not persisted → **V51-10**
+8. **Process Flow modes** — labels exist, modes functionally identical → **V51-11**
+9. **System templates** — 16 templates specified in SSOT, none implemented → **V51-13**
+10. **V3 integration** — no Notebook→Idea, Interview→Idea, Finance→Table flows → **V51-17..V51-22**
+11. **Real-time collaboration** — workspace collab gateway exists but V5-specific multi-user features are not yet tested
+12. **Offline mode** — workspace persistence falls back to local state but offline-first sync is not implemented
+13. **Performance** — large canvases (>500 nodes) may need virtualization; not yet profiled → **V51-24**
+14. **Accessibility** — keyboard navigation exists for mind map; whiteboard and process flow need ARIA improvements
 
 ---
 

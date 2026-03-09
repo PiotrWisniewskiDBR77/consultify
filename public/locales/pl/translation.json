@@ -786,6 +786,30 @@
         "pros": "Szybszy, self-service, przyjazny dla async",
         "cons": "Płytsze odpowiedzi, mniej prowadzenia"
       }
+    },
+    "reviewer": {
+      "mode": "Tryb recenzenta",
+      "modeDescription": "Przeglądasz złożony wywiad. Możesz zatwierdzić lub odesłać do poprawy.",
+      "respondentAnswers": "Odpowiedzi respondenta",
+      "answered": "odpowiedzi",
+      "requiredMissing": "wymaganych brakuje",
+      "noAnswer": "Brak odpowiedzi",
+      "file": "Plik",
+      "link": "Link",
+      "voice": "Głos",
+      "sendBack": "Odeślij",
+      "sendBackForm": "Formularz odesłania",
+      "sendBackReason": "Powód odesłania",
+      "sendBackReasonPlaceholder": "Opisz, co wymaga poprawy lub uzupełnienia...",
+      "missingItems": "Brakujące elementy",
+      "confirmSendBack": "Odeślij do poprawy",
+      "approve": "Zatwierdź",
+      "reviewHint": "Sprawdź kompletność odpowiedzi i dowodów przed podjęciem decyzji.",
+      "sentBack": "Wywiad odesłany do poprawy.",
+      "approved": "Wywiad zatwierdzony.",
+      "failedSendBack": "Nie udało się odesłać.",
+      "failedApprove": "Nie udało się zatwierdzić.",
+      "clarifyKeyAnswers": "Doprecyzuj kluczowe odpowiedzi"
     }
   },
   "assessment": {
@@ -5968,7 +5992,7 @@
     "noSource": "Brak źródła",
     "openSource": "Otwórz źródło",
     "sourceType": {
-      "tool_session": "Sesja narzędzia",
+      "tool_session": "Workspace pomysłu",
       "mywork": "MyWork",
       "assessment": "Assessment",
       "financial_analysis": "Analiza finansowa",

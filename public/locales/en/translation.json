@@ -1431,6 +1431,30 @@
         "pros": "Faster, self-service, async-friendly",
         "cons": "Shallower answers, less guidance"
       }
+    },
+    "reviewer": {
+      "mode": "Reviewer mode",
+      "modeDescription": "You are reviewing a submitted interview. You can approve or send back.",
+      "respondentAnswers": "Respondent answers",
+      "answered": "answered",
+      "requiredMissing": "required missing",
+      "noAnswer": "No answer",
+      "file": "File",
+      "link": "Link",
+      "voice": "Voice",
+      "sendBack": "Send back",
+      "sendBackForm": "Send-back form",
+      "sendBackReason": "Reason for sending back",
+      "sendBackReasonPlaceholder": "Describe what needs to be improved or completed...",
+      "missingItems": "Missing items",
+      "confirmSendBack": "Send back",
+      "approve": "Approve",
+      "reviewHint": "Review answer completeness and evidence before making a decision.",
+      "sentBack": "Interview sent back for revision.",
+      "approved": "Interview approved.",
+      "failedSendBack": "Failed to send back.",
+      "failedApprove": "Failed to approve.",
+      "clarifyKeyAnswers": "Clarify key answers"
     }
   },
   "assessment": {
@@ -5968,7 +5992,7 @@
     "noSource": "No source",
     "openSource": "Open source",
     "sourceType": {
-      "tool_session": "Tool session",
+      "tool_session": "Idea Workspace",
       "mywork": "MyWork",
       "assessment": "Assessment",
       "financial_analysis": "Financial analysis",

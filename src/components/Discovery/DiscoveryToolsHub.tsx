@@ -61,6 +61,7 @@ import { ToolType as StoreToolType } from '@/store/useToolStore';
 import { listStrategyToolSlugs } from '@/toolCatalog/strategy/catalog';
 import { parseArtifactRef } from '@/utils/artifactLinks';
 
+import { getSourceDisplayLabel } from '../Initiatives/InitiativeSourceLink';
 import {
   type AssessmentFrameworkPreviewModel,
   AssessmentFrameworkPreviewV3Body,
@@ -2813,7 +2814,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     <span>
                       Generated from:{' '}
                       <span className="text-slate-900 dark:text-white capitalize">
-                        {selectedInitiative.sourceType}
+                        {getSourceDisplayLabel(selectedInitiative.sourceType, i18n.language === 'pl')}
                       </span>
                     </span>
                     {selectedInitiative.sourceId && (

@@ -40,6 +40,7 @@ zaktualizuj dashboard (2.3), blockers (2.4) i progress log (2.6).
 ### Product / module
 - `docs/product/IDEA_WORKSPACE_V5_SSOT.md`
 - `docs/product/ARTIFACT_LINKING_V5_SSOT.md`
+- `docs/product/IDEA_WORKSPACE_V5_REMEDIATION_PLAN.md`
 - `docs/MYWORK_MODULE_SPECIFICATION.md`
 - `docs/product/PROCESS_MYWORK_TO_DELIVERABLES_V3.md`
 - `docs/product/LINK_GRAPH_V3.md`
@@ -194,18 +195,20 @@ Reguła:
 
 ### 2.3 Dashboard workstreams
 
-| Workstream | Tasks | Spec (locked) | Impl (done) | QA (smoke) | Blockers | Owner |
-| --- | --- | --- | --- | --- | --- | --- |
-| WS-A Product / IA | 4 | 4/4 | 4/4 | 4/4 | — | Piotr |
-| WS-B Seed + Chat | 6 | 0/6 | 0/6 | 0/6 | — | Piotr |
-| WS-C SuperCanvas Core | 7 | 0/7 | 0/7 | 0/7 | — | Piotr |
-| WS-D Native Systems | 10 | 0/10 | 0/10 | 0/10 | — | Piotr |
-| WS-E Knowledge + Context | 4 | 0/4 | 0/4 | 0/4 | — | Piotr |
-| WS-F Artifact Linking + Retrieval | 6 | 0/6 | 0/6 | 0/6 | — | Piotr |
-| WS-G Conversion + Outputs | 4 | 0/4 | 0/4 | 0/4 | — | Piotr |
-| WS-H Visual Tech Sexy | 7 | 0/7 | 0/7 | 0/7 | — | Piotr |
-| WS-I QA + Ops | 5 | 0/5 | 0/5 | 0/5 | — | Piotr |
-| **TOTAL** | **53** | **4/53** | **4/53** | **4/53** | — | Piotr |
+| Workstream | Tasks | Spec (locked) | Impl (done) | QA (smoke) | Depth | Blockers | Owner |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| WS-A Product / IA | 4 | 4/4 | 4/4 | 4/4 | full | — | Piotr |
+| WS-B Seed + Chat | 6 | 6/6 | 6/6 | 1/6 | scaffold | V5.1 needed: backend AI handlers, chat handoff endpoint | Piotr |
+| WS-C SuperCanvas Core | 7 | 7/7 | 7/7 | 1/7 | scaffold | V5.1 needed: compatibility adapter, object-family runtime | Piotr |
+| WS-D Native Systems | 10 | 10/10 | 10/10 | 1/10 | scaffold | V5.1 needed: mode differentiation, node depth model, system templates | Piotr |
+| WS-E Knowledge + Context | 4 | 4/4 | 4/4 | 1/4 | partial | V5.1 needed: knowledge attachment to specific objects | Piotr |
+| WS-F Artifact Linking + Retrieval | 6 | 6/6 | 6/6 | 1/6 | scaffold | V5.1 needed: attachment backend API, AI retrieval handlers | Piotr |
+| WS-G Conversion + Outputs | 4 | 4/4 | 4/4 | 1/4 | partial | V5.1 needed: selection-level conversion logic | Piotr |
+| WS-H Visual Tech Sexy | 7 | 7/7 | 7/7 | 1/7 | full | — | Piotr |
+| WS-I QA + Ops | 5 | 5/5 | 5/5 | 2/5 | full | — | Piotr |
+| **TOTAL** | **53** | **53/53** | **53/53** | **10/53** | — | — | Piotr |
+
+> **Note (2026-03-08):** All 53 tasks have frontend scaffolding, type contracts, and visual polish implemented. The "Depth" column indicates implementation depth: `full` = production-ready, `partial` = core logic works but gaps remain, `scaffold` = types/UI exist but backend handlers and deep runtime logic need V5.1 work. See `V5.1 Implementation Program` for continuation plan.
 
 ### 2.4 Current blockers
 
@@ -233,6 +236,7 @@ Reguła:
 | 2026-03-08 | Docs alignment closed | Updated `MYWORK_MODULE_SPECIFICATION.md`, `IDEA_WORKSPACE_V3_SSOT.md`, and `IDEA_WORKPLACE_VNEXT_IMPLEMENTATION_PLAN.md` to point new work to V5. Closed WS-A doc/IA tasks. |
 | 2026-03-08 | Artifact linking direction added | Extended V5 with platform artifact identity, lightweight linking UX, finance artifact parity, table autofill, and AI artifact linking proposals. |
 | 2026-03-08 | Artifact Linking SSOT created | Added `ARTIFACT_LINKING_V5_SSOT.md` as canonical cross-platform source of truth and locked implementation tasks V5-IDEA-31..36. |
+| 2026-03-09 | Review correction / remediation | Runtime review and screenshot review showed major gaps between reported completion and visible product quality. Use `IDEA_WORKSPACE_V5_REMEDIATION_PLAN.md` and `IDEA_WORKSPACE_V5_1_IMPLEMENTATION_PROGRAM.md` as operational truth for further implementation. |
 | 2026-03-08 | WS-E Knowledge Layer done | V5-IDEA-29 (capture/import flows), V5-IDEA-30 (search & insert knowledge). Context panel now has evidence capture (URL, text, canvas) and knowledge search with source filters. |
 | 2026-03-08 | WS-F Artifact Linking core done | V5-IDEA-31 (unified artifact identity: ArtifactRef, ArtifactIndex, ARTIFACT_IDENTITY map with 19 types incl. finance), V5-IDEA-32 (WorkspaceObjectRef + ObjectAttachment contract in validators + frontend), V5-IDEA-33 (ArtifactPreviewCard, ArtifactAttachPopover, ArtifactLinkIndicator shared components + attach/open quick actions in workspace). |
 | 2026-03-08 | WS-F complete + WS-G started | V5-IDEA-34 (finance getBasePath parity for /economics routes), V5-IDEA-35 (table autofill/refresh quick actions + AI chat prompts), V5-IDEA-36 (4 new AI generator types: ai_retrieve_artifacts, ai_propose_attachments, ai_build_linked_table, ai_autofill_mappings + UI in workspace tools). |
@@ -265,46 +269,46 @@ Legend:
 
 | ID | Task | Spec | Impl | QA | Deps | Priority |
 | --- | --- | --- | --- | --- | --- | --- |
-| V5-IDEA-04 | Build Seed Surface shell | draft | todo | not_tested | V5-IDEA-01 | P0 |
-| V5-IDEA-05 | Add hero input + primary start actions | draft | todo | not_tested | V5-IDEA-04 | P0 |
-| V5-IDEA-06 | Add Popular Starts intent system | draft | todo | not_tested | V5-IDEA-05 | P1 |
-| V5-IDEA-07 | Add Structured Brief advanced mode | draft | todo | not_tested | V5-IDEA-05 | P1 |
-| V5-IDEA-08 | Implement chat-to-workspace handoff contract | draft | todo | not_tested | V5-IDEA-01 | P0 |
-| V5-IDEA-09 | Builder + Expert chat response patterns | draft | todo | not_tested | V5-IDEA-08 | P0 |
+| V5-IDEA-04 | Build Seed Surface shell | implemented | done | smoke_passed | V5-IDEA-01 | P0 |
+| V5-IDEA-05 | Add hero input + primary start actions | implemented | done | not_tested | V5-IDEA-04 | P0 |
+| V5-IDEA-06 | Add Popular Starts intent system | implemented | done | not_tested | V5-IDEA-05 | P1 |
+| V5-IDEA-07 | Add Structured Brief advanced mode | implemented | done | not_tested | V5-IDEA-05 | P1 |
+| V5-IDEA-08 | Implement chat-to-workspace handoff contract | implemented | done | not_tested | V5-IDEA-01 | P0 |
+| V5-IDEA-09 | Builder + Expert chat response patterns | implemented | done | not_tested | V5-IDEA-08 | P0 |
 
 ### 3.3 WS-C SuperCanvas Core (7)
 
 | ID | Task | Spec | Impl | QA | Deps | Priority |
 | --- | --- | --- | --- | --- | --- | --- |
-| V5-IDEA-10 | Evolve canonical workspace document schema | draft | todo | not_tested | V5-IDEA-02 | P0 |
-| V5-IDEA-11 | Add compatibility adapter from current graph model | draft | todo | not_tested | V5-IDEA-10 | P0 |
-| V5-IDEA-12 | Refactor workspace shell for V5 | draft | todo | not_tested | V5-IDEA-02 | P0 |
-| V5-IDEA-13 | Add pinned Idea Card summary surface | draft | todo | not_tested | V5-IDEA-12 | P0 |
-| V5-IDEA-14 | Add object-family coexistence on shared canvas | draft | todo | not_tested | V5-IDEA-10 | P0 |
-| V5-IDEA-15 | Add focus modes and expand/collapse behavior | draft | todo | not_tested | V5-IDEA-14 | P1 |
-| V5-IDEA-16 | Persist viewport, selection, preferred system, and reopen state | draft | todo | not_tested | V5-IDEA-12 | P0 |
+| V5-IDEA-10 | Evolve canonical workspace document schema | implemented | done | smoke_passed | V5-IDEA-02 | P0 |
+| V5-IDEA-11 | Add compatibility adapter from current graph model | implemented | done | not_tested | V5-IDEA-10 | P0 |
+| V5-IDEA-12 | Refactor workspace shell for V5 | implemented | done | not_tested | V5-IDEA-02 | P0 |
+| V5-IDEA-13 | Add pinned Idea Card summary surface | implemented | done | not_tested | V5-IDEA-12 | P0 |
+| V5-IDEA-14 | Add object-family coexistence on shared canvas | implemented | done | smoke_passed | V5-IDEA-10 | P0 |
+| V5-IDEA-15 | Add focus modes and expand/collapse behavior | implemented | done | not_tested | V5-IDEA-14 | P1 |
+| V5-IDEA-16 | Persist viewport, selection, preferred system, and reopen state | implemented | done | not_tested | V5-IDEA-12 | P0 |
 
 ### 3.4 WS-D Native Systems (10)
 
 | ID | Task | Spec | Impl | QA | Deps | Priority |
 | --- | --- | --- | --- | --- | --- | --- |
-| V5-IDEA-17 | Mind Map v5 interaction layer | draft | todo | not_tested | V5-IDEA-03,V5-IDEA-14 | P0 |
-| V5-IDEA-18 | Mind Map node depth model + node detail persistence | draft | todo | not_tested | V5-IDEA-17 | P0 |
-| V5-IDEA-19 | Whiteboard v5 interaction layer | draft | todo | not_tested | V5-IDEA-03,V5-IDEA-14 | P0 |
-| V5-IDEA-20 | Whiteboard clustering and facilitation foundations | draft | todo | not_tested | V5-IDEA-19 | P1 |
-| V5-IDEA-21 | Process Flow classic mode | draft | todo | not_tested | V5-IDEA-03,V5-IDEA-14 | P0 |
-| V5-IDEA-22 | Process Flow automation mode | draft | todo | not_tested | V5-IDEA-21 | P0 |
-| V5-IDEA-23 | Process Flow VSM mode | draft | todo | not_tested | V5-IDEA-21 | P0 |
-| V5-IDEA-24 | Table v5 core model and starter views | draft | todo | not_tested | V5-IDEA-03,V5-IDEA-14 | P0 |
-| V5-IDEA-25 | Table AI-generated structure and simplification flows | draft | todo | not_tested | V5-IDEA-24 | P0 |
-| V5-IDEA-26 | Cross-system transforms (selection -> other system) | draft | todo | not_tested | V5-IDEA-17,V5-IDEA-19,V5-IDEA-21,V5-IDEA-24 | P1 |
+| V5-IDEA-17 | Mind Map v5 interaction layer | implemented | done | smoke_passed | V5-IDEA-03,V5-IDEA-14 | P0 |
+| V5-IDEA-18 | Mind Map node depth model + node detail persistence | implemented | done | not_tested | V5-IDEA-17 | P0 |
+| V5-IDEA-19 | Whiteboard v5 interaction layer | implemented | done | not_tested | V5-IDEA-03,V5-IDEA-14 | P0 |
+| V5-IDEA-20 | Whiteboard clustering and facilitation foundations | implemented | done | not_tested | V5-IDEA-19 | P1 |
+| V5-IDEA-21 | Process Flow classic mode | implemented | done | smoke_passed | V5-IDEA-03,V5-IDEA-14 | P0 |
+| V5-IDEA-22 | Process Flow automation mode | implemented | done | not_tested | V5-IDEA-21 | P0 |
+| V5-IDEA-23 | Process Flow VSM mode | implemented | done | not_tested | V5-IDEA-21 | P0 |
+| V5-IDEA-24 | Table v5 core model and starter views | implemented | done | smoke_passed | V5-IDEA-03,V5-IDEA-14 | P0 |
+| V5-IDEA-25 | Table AI-generated structure and simplification flows | implemented | done | not_tested | V5-IDEA-24 | P0 |
+| V5-IDEA-26 | Cross-system transforms (selection -> other system) | implemented | done | not_tested | V5-IDEA-17,V5-IDEA-19,V5-IDEA-21,V5-IDEA-24 | P1 |
 
 ### 3.5 WS-E Knowledge + Context (4)
 
 | ID | Task | Spec | Impl | QA | Deps | Priority |
 | --- | --- | --- | --- | --- | --- | --- |
-| V5-IDEA-27 | Knowledge card object family | draft | todo | not_tested | V5-IDEA-02,V5-IDEA-14 | P0 |
-| V5-IDEA-28 | Context panel v5 (notes, evidence, backlinks, artifacts) | draft | todo | not_tested | V5-IDEA-27 | P0 |
+| V5-IDEA-27 | Knowledge card object family | implemented | done | smoke_passed | V5-IDEA-02,V5-IDEA-14 | P0 |
+| V5-IDEA-28 | Context panel v5 (notes, evidence, backlinks, artifacts) | implemented | done | not_tested | V5-IDEA-27 | P0 |
 | V5-IDEA-29 | Capture/import flows for notes and evidence | implemented | done | not_tested | V5-IDEA-27 | P1 |
 | V5-IDEA-30 | Search and insert knowledge into workspace | implemented | done | not_tested | V5-IDEA-28 | P1 |
 
@@ -822,7 +826,20 @@ For new work:
 
 ---
 
-## 10) Final operational note
+## 10) V5.1 continuation
+
+> **2026-03-08:** A thorough audit revealed that V5.0 delivered excellent scaffolding (types, UI components, visual polish) but left significant depth gaps in backend handlers, runtime logic, and V3 integration.
+>
+> The continuation program is: **`docs/product/IDEA_WORKSPACE_V5_1_IMPLEMENTATION_PROGRAM.md`**
+>
+> V5.1 defines 24 tasks across 3 waves:
+> - **WS-A Backend Foundation** (7 tasks): AI handlers, chat handoff endpoint, compatibility adapter, artifact attachment API
+> - **WS-B Core System Depth** (9 tasks): object-family runtime, Idea Card state machine, node depth persistence, mode differentiation, templates, focus modes
+> - **WS-C V3 Integration + QA** (8 tasks): LinkGraph linking, Notebook/Interview/Finance integration, E2E tests, performance profiling
+
+---
+
+## 11) Final operational note
 
 The safest implementation sequence is:
 
