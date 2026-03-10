@@ -252,6 +252,18 @@ function getBasePath(type: ArtifactType, id: string): string {
   }
 }
 
+export function getArtifactPath(type: ArtifactType, id: string): string {
+  const safeId = String(id);
+  const code = buildArtifactCode(type, safeId);
+  const ref = buildArtifactRef(type, safeId);
+  const basePath = getBasePath(type, safeId);
+  const params = new URLSearchParams({
+    artifact: ref,
+    code,
+  });
+  return `${basePath}?${params.toString()}`;
+}
+
 export function buildArtifactCode(type: ArtifactType, id: string): string {
   const prefix = ARTIFACT_PREFIX[type] || 'ART';
   return `${prefix}-${normalizeId(id).toUpperCase()}`;
@@ -311,6 +323,11 @@ export type ObjectAttachment = {
   attachedBy?: string;
 };
 
+type NodeLikeWithArtifacts = {
+  artifactLinks?: ArtifactLink[];
+  data?: Record<string, unknown> & { artifactLinks?: ArtifactLink[] };
+};
+
 export function buildWorkspaceObjectRef(
   workspaceId: string,
   objectType: WorkspaceObjectType,
@@ -348,15 +365,29 @@ export function attachArtifactToObject(
   };
 }
 
+export function getNodeArtifactLinks(
+  node: NodeLikeWithArtifacts | null | undefined
+): ArtifactLink[] {
+  if (!node) return [];
+  if (Array.isArray(node.data?.artifactLinks)) return node.data.artifactLinks;
+  if (Array.isArray(node.artifactLinks)) return node.artifactLinks;
+  return [];
+}
+
+export function withNormalizedArtifactLinks<T extends NodeLikeWithArtifacts>(node: T): T {
+  const links = getNodeArtifactLinks(node);
+  if (links.length === 0) return node;
+  return {
+    ...node,
+    artifactLinks: links,
+    data: {
+      ...(node.data || {}),
+      artifactLinks: links,
+    },
+  };
+}
+
 export function buildArtifactPermalink(type: ArtifactType, id: string): string {
-  const safeId = String(id);
-  const code = buildArtifactCode(type, safeId);
-  const ref = buildArtifactRef(type, safeId);
-  const basePath = getBasePath(type, safeId);
   const origin = window.location.origin;
-  const params = new URLSearchParams({
-    artifact: ref,
-    code,
-  });
-  return `${origin}${basePath}?${params.toString()}`;
+  return `${origin}${getArtifactPath(type, id)}`;
 }

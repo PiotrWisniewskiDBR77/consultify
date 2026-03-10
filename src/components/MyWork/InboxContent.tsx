@@ -54,6 +54,7 @@ import {
   Sparkles,
   Square,
   Star,
+  type LucideIcon,
   X,
   Zap,
 } from 'lucide-react';
@@ -129,7 +130,7 @@ type InboxEntityKind = 'task' | 'initiative' | 'survey' | 'decision' | 'notifica
 
 const ENTITY_KIND_CONFIG: Record<
   InboxEntityKind,
-  { icon: React.ElementType; labelEn: string; labelPl: string; pill: string; borderLeft: string }
+  { icon: LucideIcon; labelEn: string; labelPl: string; pill: string; borderLeft: string }
 > = {
   task: {
     icon: CheckSquare,
@@ -348,7 +349,7 @@ const groupItems = (items: InboxItem[]): InboxGroup[] => {
 // ── Urgency config ──
 const urgencyConfig: Record<
   InboxUrgency,
-  { icon: React.ElementType; pill: string; label: string; heatColor: string }
+  { icon: LucideIcon; pill: string; label: string; heatColor: string }
 > = {
   critical: {
     icon: AlertTriangle,

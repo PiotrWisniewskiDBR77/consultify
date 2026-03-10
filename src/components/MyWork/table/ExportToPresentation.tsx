@@ -26,7 +26,7 @@ interface ExportToPresentationProps {
   nodes: TableNode[];
   columns: ColumnDef[];
   ideaTitle: string;
-  viewLayout: 'table' | 'kanban' | 'matrix' | 'sticky' | 'timeline';
+  viewLayout: 'table' | 'kanban' | 'matrix' | 'sticky' | 'timeline' | 'calendar' | 'grid';
   onExportComplete?: (deckId: string) => void;
 }
 

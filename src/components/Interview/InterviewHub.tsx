@@ -431,6 +431,7 @@ export const InterviewHub: React.FC = () => {
   const [templatePreviewDetailsMenuOpen, setTemplatePreviewDetailsMenuOpen] = useState(false);
   const [templatePreviewAiMenuOpen, setTemplatePreviewAiMenuOpen] = useState(false);
   const [isTemplatesViewSettingsOpen, setIsTemplatesViewSettingsOpen] = useState(false);
+  const [templatesViewMode, setTemplatesViewMode] = useState<'cards' | 'table'>('cards');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [selectedTemplateForAssign, setSelectedTemplateForAssign] =
     useState<InterviewTemplate | null>(null);
@@ -502,8 +503,9 @@ export const InterviewHub: React.FC = () => {
   const [previewAiMenuOpen, setPreviewAiMenuOpen] = useState(false);
   const [previewAiText, setPreviewAiText] = useState<string | null>(null);
   const [previewAiError, setPreviewAiError] = useState<string | null>(null);
+  type AssignmentAiIntent = 'summary' | 'risks' | 'next_steps';
   const [previewAiLastIntent, setPreviewAiLastIntent] = useState<
-    'summary' | 'risks' | 'next_steps'
+    AssignmentAiIntent
   >('summary');
 
   // Sessions preview (Outlook-style)
@@ -1183,7 +1185,7 @@ export const InterviewHub: React.FC = () => {
       data: {
         name: isPolish ? 'Nowy template' : 'New template',
         status: 'draft',
-      },
+      } as unknown as InterviewTemplate,
     });
   }, [handleOpenDocument, isPolish]);
 
@@ -1195,11 +1197,11 @@ export const InterviewHub: React.FC = () => {
         type: 'template',
         name: template?.name || (isPolish ? 'Template' : 'Template'),
         status: (template?.status as ItemStatus) || 'draft',
-        data: template || {
+        data: template || ({
           id: templateId,
           name: isPolish ? 'Template' : 'Template',
           status: 'draft',
-        },
+        } as unknown as InterviewTemplate),
       });
     },
     [handleOpenDocument, isPolish, templates]
@@ -2982,6 +2984,128 @@ export const InterviewHub: React.FC = () => {
     );
   };
 
+  const renderTemplatesCards = (opts?: {
+    onSelectRow?: (id: string) => void;
+    onOpenFull?: (id: string) => void;
+  }) => {
+    if (filteredTemplates.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <FileText size={40} className="text-slate-300 dark:text-navy-600 mb-3" />
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Brak szablonów' : 'No templates found'}
+          </p>
+          {canAssign && (
+            <button
+              onClick={handleNewTemplate}
+              className="mt-4 inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 transition-colors active:scale-[0.98]"
+            >
+              <FilePlus size={16} />
+              {isPolish ? 'Nowy szablon' : 'New template'}
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+        {filteredTemplates.map((template) => {
+          const isSystem = template.scope === 'system';
+          const isOrg = template.scope === 'organization';
+          const scopeLabel = isSystem
+            ? (isPolish ? 'Systemowy' : 'System')
+            : isOrg
+              ? (isPolish ? 'Organizacja' : 'Organization')
+              : (isPolish ? 'Prywatny' : 'Private');
+          const scopeColor = isSystem
+            ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+            : isOrg
+              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+              : 'bg-slate-500/10 text-slate-600 dark:text-slate-400';
+          const statusLabel = template.status === 'approved'
+            ? (isPolish ? 'Opublikowany' : 'Published')
+            : (isPolish ? 'Wersja robocza' : 'Draft');
+          const statusColor = template.status === 'approved'
+            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+            : 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
+          const areaTags = normalizeInterviewTemplateAreaTags(template.areaTags);
+
+          return (
+            <button
+              key={template.id}
+              type="button"
+              onClick={() => {
+                setSelectedTemplateId(template.id);
+                opts?.onSelectRow?.(template.id);
+              }}
+              onDoubleClick={() => {
+                opts?.onOpenFull?.(template.id);
+              }}
+              className={`group relative flex flex-col text-left rounded-2xl border transition-all hover:shadow-lg ${
+                selectedTemplateId === template.id
+                  ? 'border-primary-500/40 bg-primary-500/5 dark:bg-primary-500/10 shadow-md'
+                  : 'border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900 hover:border-slate-300 dark:hover:border-navy-600'
+              }`}
+            >
+              <div className="p-4 flex-1 space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${scopeColor}`}>
+                    {scopeLabel}
+                  </span>
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusColor}`}>
+                    {statusLabel}
+                  </span>
+                  {template.isDefault && (
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400">
+                      Default
+                    </span>
+                  )}
+                </div>
+
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-2 leading-snug">
+                  {template.name}
+                </h3>
+
+                {template.description && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                    {template.description}
+                  </p>
+                )}
+
+                {areaTags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {areaTags.slice(0, 4).map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400"
+                      >
+                        {getTemplateAreaTagLabel(tag, isPolish)}
+                      </span>
+                    ))}
+                    {areaTags.length > 4 && (
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                        +{areaTags.length - 4}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="px-4 py-3 border-t border-slate-100 dark:border-navy-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+                <span>{template.questionCount} {isPolish ? 'pytań' : 'questions'}</span>
+                {template.estimatedTimeMinutes && (
+                  <span>{template.estimatedTimeMinutes} min</span>
+                )}
+                <span>{template.category}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
   // Render document content (full view)
   const renderDocumentContent = () => {
     const doc = openDocuments.find((d) => d.id === activeDocumentId);
@@ -3039,18 +3163,20 @@ export const InterviewHub: React.FC = () => {
               return;
             }
 
+            const savedId: string = savedTemplate.id;
+
             const nextTemplate =
-              refreshedTemplates.find((item) => item.id === savedTemplate.id) ||
+              refreshedTemplates.find((item) => item.id === savedId) ||
               ({
                 ...template,
                 ...savedTemplate,
-                id: savedTemplate.id,
+                id: savedId,
                 name: savedTemplate.name || template.name,
               } as InterviewTemplate);
 
             setOpenDocuments((prev) => {
               const withoutOld = prev.filter((item) => item.id !== doc.id);
-              const existingIdx = withoutOld.findIndex((item) => item.id === savedTemplate.id);
+              const existingIdx = withoutOld.findIndex((item) => item.id === savedId);
 
               if (existingIdx >= 0) {
                 const next = [...withoutOld];
@@ -3066,15 +3192,15 @@ export const InterviewHub: React.FC = () => {
               return [
                 ...withoutOld,
                 {
-                  id: savedTemplate.id,
-                  type: 'template',
+                  id: savedId,
+                  type: 'template' as const,
                   name: nextTemplate.name,
                   status: (nextTemplate.status as ItemStatus) || 'draft',
                   data: nextTemplate,
                 },
               ];
             });
-            setActiveDocumentId(savedTemplate.id);
+            setActiveDocumentId(savedId);
           }}
         />
       );
@@ -4088,7 +4214,7 @@ Return ONLY the answer text (no markdown fences).`;
                 const aiHints = isPolish
                   ? ['Podsumuj', 'Ryzyka', 'Następne kroki']
                   : ['Summarize', 'Risks', 'Next steps'];
-                const hintToType: Record<string, string> = {
+                const hintToType: Record<string, InsightPromptType> = {
                   Podsumuj: 'summary',
                   Summarize: 'summary',
                   Ryzyka: 'risk_assessment',
@@ -4119,7 +4245,7 @@ Return ONLY the answer text (no markdown fences).`;
                     }}
                     relations={relations}
                     onOpenFull={() => handleViewSession(s)}
-                    onGenerateInsight={canRunAi ? (type) => handleGenerateInsight(s, type) : undefined}
+                    onGenerateInsight={canRunAi ? (type) => handleGenerateInsight(s, type as InsightPromptType) : undefined}
                     onCopyId={() => copyToClipboard(s.id)}
                   />
                 );
@@ -4447,6 +4573,17 @@ Return ONLY the answer text (no markdown fences).`;
         }
       };
 
+      if (templatesViewMode === 'cards') {
+        return (
+          <div className="h-full flex flex-col overflow-auto">
+            {renderTemplatesCards({
+              onSelectRow: (id) => setSelectedTemplateId(id),
+              onOpenFull: (id) => onOpenFull(id),
+            })}
+          </div>
+        );
+      }
+
       return (
         <div className="h-full flex flex-col">
           <TableWithPreviewLayout<InterviewTemplate & { title: string }>
@@ -4496,7 +4633,8 @@ Return ONLY the answer text (no markdown fences).`;
                       : ['Summarize', 'Improve', 'Find gaps']
                   }
                   onRunAiHint={(hint) => {
-                    const hintMap: Record<string, string> = {
+                    type TemplatePromptKind = 'summary' | 'improvements' | 'gaps';
+                    const hintMap: Record<string, TemplatePromptKind> = {
                       Podsumuj: 'summary',
                       Summarize: 'summary',
                       Usprawnienia: 'improvements',
@@ -4504,7 +4642,8 @@ Return ONLY the answer text (no markdown fences).`;
                       Luki: 'gaps',
                       'Find gaps': 'gaps',
                     };
-                    copyToClipboard(buildPrompt(hintMap[hint] || 'summary', item.id));
+                    const promptKind = (hintMap[hint] ?? 'summary') as TemplatePromptKind;
+                    copyToClipboard(buildPrompt(promptKind, item.id));
                   }}
                 />
               );
@@ -4648,7 +4787,7 @@ Return ONLY the answer text (no markdown fences).`;
                     aiMenuOpen={previewAiMenuOpen}
                     onToggleAiMenu={() => setPreviewAiMenuOpen((v) => !v)}
                     onRunAiHint={async (hint) => {
-                      const hintMap: Record<string, string> = {
+                      const hintMap: Record<string, AssignmentAiIntent> = {
                         Podsumuj: 'summary',
                         Summarize: 'summary',
                         Ryzyka: 'risks',
@@ -4656,7 +4795,7 @@ Return ONLY the answer text (no markdown fences).`;
                         'Następne kroki': 'next_steps',
                         'Next steps': 'next_steps',
                       };
-                      const intent = hintMap[hint] || 'summary';
+                      const intent = (hintMap[hint] ?? 'summary') as AssignmentAiIntent;
                       setPreviewAiLastIntent(intent);
                       const text = await runAssignmentAi(intent, a);
                       if (!text)
@@ -4852,7 +4991,7 @@ Return ONLY the answer text (no markdown fences).`;
                     aiMenuOpen={previewAiMenuOpen}
                     onToggleAiMenu={() => setPreviewAiMenuOpen((v) => !v)}
                     onRunAiHint={async (hint) => {
-                      const hintMap: Record<string, string> = {
+                      const hintMap: Record<string, AssignmentAiIntent> = {
                         Podsumuj: 'summary',
                         Summarize: 'summary',
                         Ryzyka: 'risks',
@@ -4860,7 +4999,7 @@ Return ONLY the answer text (no markdown fences).`;
                         'Następne kroki': 'next_steps',
                         'Next steps': 'next_steps',
                       };
-                      const intent = hintMap[hint] || 'summary';
+                      const intent = (hintMap[hint] ?? 'summary') as AssignmentAiIntent;
                       setPreviewAiLastIntent(intent);
                       const text = await runAssignmentAi(intent, a);
                       if (!text)
@@ -5067,6 +5206,44 @@ Return ONLY the answer text (no markdown fences).`;
                   size={14}
                   className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                 />
+              </div>
+            )}
+
+            {activeTab === 'templates' && !activeDocumentId && (
+              <div
+                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku szablonów' : 'Templates view mode'}
+                title={isPolish ? 'Widok' : 'View'}
+              >
+                <button
+                  type="button"
+                  onClick={() => setTemplatesViewMode('cards')}
+                  className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                    templatesViewMode === 'cards'
+                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                  }`}
+                  title={isPolish ? 'Karty' : 'Cards'}
+                  role="radio"
+                  aria-checked={templatesViewMode === 'cards'}
+                >
+                  <LayoutGrid size={15} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTemplatesViewMode('table')}
+                  className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+                    templatesViewMode === 'table'
+                      ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                  }`}
+                  title={isPolish ? 'Tabela' : 'Table'}
+                  role="radio"
+                  aria-checked={templatesViewMode === 'table'}
+                >
+                  <List size={15} />
+                </button>
               </div>
             )}
 

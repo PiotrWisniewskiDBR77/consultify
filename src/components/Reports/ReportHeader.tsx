@@ -151,6 +151,11 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
         label: t('reports.openSourceInitiative', 'Open Initiative'),
         url: `/initiatives?id=${sourceId}`,
       };
+    if (st === 'TOOL' || st === 'TOOL_SESSION')
+      return {
+        label: t('reports.openSourceSession', 'Open Idea Workspace'),
+        url: `/my-work?tab=ideas&sessionId=${sourceId}`,
+      };
     return null;
   }, [sourceType, sourceId, t]);
 

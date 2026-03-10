@@ -22,6 +22,10 @@ import {
 } from '@/components/shared/ModuleHub';
 import { FilterableTable, type TableColumn } from '@/components/shared/ModuleHub';
 import { useModuleOpenDocuments } from '@/components/shared/ModuleHub/useModuleOpenDocuments';
+import {
+  PreviewMetaCard,
+  type MetaPill,
+} from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { Api } from '@/services/api';
 
@@ -947,29 +951,30 @@ const MeetingPreview: React.FC<{
   isPolish,
   operatorBrief,
   operatorBriefLoading,
-}) => (
-  <div className="space-y-4">
-    <div className="flex items-center gap-2 flex-wrap">
-      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400">
-        {meeting.status === 'completed'
-          ? isPolish
-            ? 'Zamknięte'
-            : 'Completed'
-          : isPolish
-            ? 'Zaplanowane'
-            : 'Scheduled'}
-      </span>
-      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300">
-        {formatDateTime(meeting.startAt, isPolish)}
-      </span>
-    </div>
+}) => {
+  const pills: MetaPill[] = [
+    {
+      label: meeting.status === 'completed'
+        ? isPolish ? 'Zamknięte' : 'Completed'
+        : isPolish ? 'Zaplanowane' : 'Scheduled',
+      className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    },
+    {
+      label: formatDateTime(meeting.startAt, isPolish),
+      className: 'bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300',
+    },
+  ];
 
-    <div className="space-y-2">
+  return (
+    <div className="space-y-4 text-sm">
+      <PreviewMetaCard pills={pills} />
+
       <MeetingOperatorBriefCard
         isPolish={isPolish}
         brief={operatorBrief}
         loading={operatorBriefLoading}
       />
+
       <PreviewSection
         icon={<Users size={14} />}
         title={isPolish ? 'Uczestnicy' : 'Attendees'}
@@ -1001,8 +1006,8 @@ const MeetingPreview: React.FC<{
         emptyLabel={isPolish ? 'Brak follow-upów' : 'No follow-ups yet'}
       />
     </div>
-  </div>
-);
+  );
+};
 
 const MeetingOperatorBriefCard: React.FC<{
   isPolish: boolean;

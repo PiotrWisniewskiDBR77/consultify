@@ -231,7 +231,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       labelEn: 'Attachments',
       labelPl: 'Załączniki',
       icon: Paperclip,
-      count: attachments.length,
+      count: attachments.length + (Array.isArray(node?.data?.artifactLinks) ? node.data.artifactLinks.length : 0),
     },
     {
       id: 'activity',
@@ -505,7 +505,48 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
           {/* Attachments tab */}
           {activeTab === 'attachments' && (
             <div className="space-y-2">
-              {attachments.length === 0 && (
+              {/* Linked Artifacts (from artifact linking API) */}
+              {Array.isArray(node.data?.artifactLinks) && node.data.artifactLinks.length > 0 && (
+                <div className="mb-3">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                    <Link2 size={10} className="inline mr-1" />
+                    {isPl ? 'Powiązane artefakty' : 'Linked artifacts'} ({node.data.artifactLinks.length})
+                  </label>
+                  <div className="space-y-1">
+                    {node.data.artifactLinks.map((link: any, idx: number) => {
+                      const artType = link.artifactRef?.type || link.artifactType || link.type || 'unknown';
+                      const artId = link.artifactRef?.id || link.artifactId || link.id || '';
+                      const artLabel = link.label || link.title || `${artType}:${artId}`;
+                      return (
+                        <button
+                          key={`art-${idx}`}
+                          onClick={() => {
+                            if (artType && artId) {
+                              window.dispatchEvent(
+                                new CustomEvent('mywork-open-item', { detail: { type: artType, id: artId, name: artLabel } })
+                              );
+                            }
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-left"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                            <Paperclip size={14} className="text-blue-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400 truncate block">
+                              {artLabel}
+                            </span>
+                            <span className="text-[9px] text-slate-400 uppercase">{artType}</span>
+                          </div>
+                          <ArrowRight size={10} className="text-blue-400 flex-shrink-0" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {attachments.length === 0 && !(Array.isArray(node.data?.artifactLinks) && node.data.artifactLinks.length > 0) && (
                 <p className="text-[11px] text-slate-400 text-center py-6">
                   {isPl ? 'Brak załączników' : 'No attachments'}
                 </p>

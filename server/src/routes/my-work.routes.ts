@@ -5006,10 +5006,21 @@ router.post(
     if (startMode) extensions.startMode = startMode;
     if (briefJson) extensions.structuredBrief = structuredBrief;
 
+    const chatMapCols = await getTableColumns('my_idea_maps');
+    const hasSchemaVer = chatMapCols.has('schema_version');
+    const hasPrefTool = chatMapCols.has('preferred_tool');
+    const hasExtJson = chatMapCols.has('extensions_json');
+
+    const insertCols = ['id', 'idea_id', 'user_id', 'organization_id', 'nodes_json', 'edges_json', 'created_at', 'updated_at'];
+    const insertVals: unknown[] = [mapId, ideaId, userId, orgId, '[]', '[]', now, now];
+
+    if (hasPrefTool) { insertCols.push('preferred_tool'); insertVals.push(preferredSystem || null); }
+    if (hasExtJson) { insertCols.push('extensions_json'); insertVals.push(JSON.stringify(extensions)); }
+    if (hasSchemaVer) { insertCols.push('schema_version'); insertVals.push(3); }
+
     await queryHelpers.queryRun(
-      `INSERT INTO my_idea_maps (id, idea_id, user_id, organization_id, nodes_json, edges_json, preferred_tool, extensions_json, schema_version, created_at, updated_at)
-       VALUES (?, ?, ?, ?, '[]', '[]', ?, ?, 3, ?, ?)`,
-      [mapId, ideaId, userId, orgId, preferredSystem || null, JSON.stringify(extensions), now, now]
+      `INSERT INTO my_idea_maps (${insertCols.join(', ')}) VALUES (${insertCols.map(() => '?').join(', ')})`,
+      insertVals
     );
 
     res.status(201).json({

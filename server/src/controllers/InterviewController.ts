@@ -3209,6 +3209,62 @@ export const InterviewController = {
     res.json({ success: true, deletedId: id });
   }),
 
+  archiveTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT * FROM interview_library_templates WHERE id = ?`,
+      [id]
+    );
+    if (!existing || !canManageTemplate(existing, user)) {
+      res.status(404).json({ error: 'Template not found or cannot be archived' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `UPDATE interview_library_templates SET status = 'archived', updated_at = ? WHERE id = ?`,
+      [now, id]
+    );
+
+    const updated = await queryHelpers.queryOne(
+      `SELECT t.*, (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count
+       FROM interview_library_templates t WHERE t.id = ?`,
+      [id]
+    );
+
+    res.json(buildTemplateResponse(updated));
+  }),
+
+  restoreTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { id } = req.params;
+
+    const existing = await queryHelpers.queryOne(
+      `SELECT * FROM interview_library_templates WHERE id = ?`,
+      [id]
+    );
+    if (!existing || !canManageTemplate(existing, user)) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `UPDATE interview_library_templates SET status = 'draft', updated_at = ? WHERE id = ?`,
+      [now, id]
+    );
+
+    const updated = await queryHelpers.queryOne(
+      `SELECT t.*, (SELECT COUNT(1) FROM interview_library_template_questions q WHERE q.template_id = t.id) as question_count
+       FROM interview_library_templates t WHERE t.id = ?`,
+      [id]
+    );
+
+    res.json(buildTemplateResponse(updated));
+  }),
+
   updateTemplate: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
@@ -3669,6 +3725,127 @@ ${JSON.stringify(answered || [], null, 2)}
     });
 
     res.json((result as any).object || { answerText: '', tags: [], confidenceScore: 3 });
+  }),
+
+  aiImproveAnswer: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { questionId } = req.params;
+    const { answerText, language } = req.body || {};
+
+    if (!answerText || typeof answerText !== 'string' || answerText.trim().length < 3) {
+      res.status(400).json({ error: 'answerText is required (min 3 chars)' });
+      return;
+    }
+
+    const question = await queryHelpers.queryOne(
+      `SELECT q.*, s.owner_id as session_owner_id
+       FROM interview_questions q
+       JOIN interview_sessions s ON s.id = q.session_id
+       WHERE q.id = ? AND q.organization_id = ? AND s.organization_id = ?`,
+      [questionId, user.organizationId, user.organizationId]
+    );
+    if (!question) { res.status(404).json({ error: 'Question not found' }); return; }
+    if (String((question as any).session_owner_id) !== String(user.id)) {
+      res.status(403).json({ error: 'Forbidden' }); return;
+    }
+
+    const lang = language === 'pl' ? 'Polish' : 'English';
+    const ImproveSchema = z.object({
+      improvedText: z.string().min(1),
+      changesSummary: z.string(),
+    });
+
+    const systemPrompt = `You are a professional writing assistant improving interview answers.
+Your job:
+1. Fix grammar, spelling, and punctuation errors.
+2. Improve clarity and readability — make the answer more structured if it's rambling.
+3. Expand overly brief answers with reasonable elaboration based on context.
+4. Keep the original meaning and intent intact — do NOT add new facts the user didn't mention.
+5. If the answer comes from voice transcription, clean up speech artifacts (filler words, repetitions, incomplete sentences).
+6. Write in ${lang}.
+7. Return JSON: { "improvedText": "...", "changesSummary": "..." }.
+   changesSummary = 1-2 sentence description of what you changed (in ${lang}).`;
+
+    const userPrompt = `Question: ${(question as any).question_text}
+${(question as any).description ? `Helper text: ${(question as any).description}` : ''}
+${(question as any).expected_answer_shape ? `Expected format: ${(question as any).expected_answer_shape}` : ''}
+
+User's answer to improve:
+"""
+${answerText.trim()}
+"""`;
+
+    const result = await llmService.call({
+      type: 'structured',
+      modelConfig: { id: 'standard' },
+      systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+      schema: ImproveSchema,
+      maxTokens: 800,
+      temperature: 0.3,
+      cache: false,
+    });
+
+    res.json((result as any).object || { improvedText: answerText, changesSummary: '' });
+  }),
+
+  aiExplainQuestion: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { questionId } = req.params;
+    const { language } = req.body || {};
+
+    const question = await queryHelpers.queryOne(
+      `SELECT q.*, s.owner_id as session_owner_id
+       FROM interview_questions q
+       JOIN interview_sessions s ON s.id = q.session_id
+       WHERE q.id = ? AND q.organization_id = ? AND s.organization_id = ?`,
+      [questionId, user.organizationId, user.organizationId]
+    );
+    if (!question) { res.status(404).json({ error: 'Question not found' }); return; }
+    if (String((question as any).session_owner_id) !== String(user.id)) {
+      res.status(403).json({ error: 'Forbidden' }); return;
+    }
+
+    const lang = language === 'pl' ? 'Polish' : 'English';
+    const ExplainSchema = z.object({
+      explanation: z.string().min(1),
+      exampleAnswers: z.array(z.string()).min(1).max(3),
+      whyItMatters: z.string(),
+    });
+
+    const systemPrompt = `You are a helpful survey guide explaining interview questions to respondents.
+Your job:
+1. Explain what the question is really asking in simple, plain language.
+2. Provide 1-3 short example answers showing different possible response styles (brief, detailed, specific).
+3. Explain why this question matters — what insight does the interviewer hope to get.
+4. Be encouraging, not condescending. Assume the respondent is smart but may not understand the domain jargon.
+5. Write everything in ${lang}.
+6. Return JSON: { "explanation": "...", "exampleAnswers": ["...", "..."], "whyItMatters": "..." }.`;
+
+    const userPrompt = `Question: ${(question as any).question_text}
+${(question as any).category ? `Category: ${(question as any).category}` : ''}
+${(question as any).description ? `Helper text: ${(question as any).description}` : ''}
+${(question as any).expected_answer_shape ? `Expected format: ${(question as any).expected_answer_shape}` : ''}
+Answer type: ${(question as any).answer_type || 'open'}`;
+
+    const result = await llmService.call({
+      type: 'structured',
+      modelConfig: { id: 'standard' },
+      systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+      schema: ExplainSchema,
+      maxTokens: 600,
+      temperature: 0.4,
+      cache: false,
+    });
+
+    res.json(
+      (result as any).object || {
+        explanation: '',
+        exampleAnswers: [],
+        whyItMatters: '',
+      }
+    );
   }),
 
   aiParseSessionAnswers: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -4518,6 +4695,117 @@ ${JSON.stringify(questions || [], null, 2)}
     );
 
     res.json({ success: true });
+  }),
+
+  // ==========================================
+  // KNOWLEDGE SEARCH
+  // ==========================================
+
+  searchInterviewKnowledge: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { query, templateId, projectId, category, sessionId, limit: rawLimit } = req.query;
+
+    if (!query || typeof query !== 'string' || query.trim().length < 2) {
+      res.status(400).json({ error: 'Query is required (min 2 chars)' });
+      return;
+    }
+
+    const searchLimit = Math.min(Math.max(Number(rawLimit) || 20, 1), 100);
+    const searchTerm = `%${String(query).trim()}%`;
+
+    const conditions: string[] = [
+      's.organization_id = ?',
+    ];
+    const params: unknown[] = [user.organizationId];
+
+    if (templateId) {
+      conditions.push('s.template_id = ?');
+      params.push(templateId);
+    }
+    if (projectId) {
+      conditions.push('s.project_id = ?');
+      params.push(projectId);
+    }
+    if (sessionId) {
+      conditions.push('s.id = ?');
+      params.push(sessionId);
+    }
+    if (category) {
+      conditions.push('q.category = ?');
+      params.push(category);
+    }
+
+    const whereClause = conditions.join(' AND ');
+
+    const rows = await queryHelpers.queryAll(
+      `SELECT
+         q.id as questionId,
+         q.session_id as sessionId,
+         q.category,
+         q.question_text as questionText,
+         q.answer_text as answerText,
+         q.voice_transcript as voiceTranscript,
+         q.context_note as contextNote,
+         q.answer_knowledge_doc_id as answerKnowledgeDocId,
+         q.context_note_knowledge_doc_id as contextNoteKnowledgeDocId,
+         q.status,
+         q.confidence_score as confidenceScore,
+         s.name as sessionName,
+         s.template_id as templateId,
+         s.project_id as projectId,
+         t.name as templateName
+       FROM interview_questions q
+       JOIN interview_sessions s ON s.id = q.session_id
+       LEFT JOIN interview_library_templates t ON t.id = s.template_id
+       WHERE ${whereClause}
+         AND q.status = 'answered'
+         AND (
+           q.answer_text LIKE ? OR
+           q.voice_transcript LIKE ? OR
+           q.context_note LIKE ? OR
+           q.question_text LIKE ?
+         )
+       ORDER BY s.last_activity_at DESC, q.sort_order ASC
+       LIMIT ?`,
+      [...params, searchTerm, searchTerm, searchTerm, searchTerm, searchLimit]
+    );
+
+    const evidenceRows = await queryHelpers.queryAll(
+      `SELECT
+         e.id as evidenceId,
+         e.session_id as sessionId,
+         e.question_id as questionId,
+         e.title,
+         e.description,
+         e.evidence_type as evidenceType,
+         e.knowledge_document_id as knowledgeDocumentId,
+         s.name as sessionName,
+         s.template_id as templateId
+       FROM interview_evidence e
+       JOIN interview_sessions s ON s.id = e.session_id
+       WHERE s.organization_id = ?
+         ${templateId ? 'AND s.template_id = ?' : ''}
+         ${projectId ? 'AND s.project_id = ?' : ''}
+         ${sessionId ? 'AND s.id = ?' : ''}
+         AND (e.title LIKE ? OR e.description LIKE ?)
+       ORDER BY e.created_at DESC
+       LIMIT ?`,
+      [
+        user.organizationId,
+        ...(templateId ? [templateId] : []),
+        ...(projectId ? [projectId] : []),
+        ...(sessionId ? [sessionId] : []),
+        searchTerm, searchTerm, searchLimit,
+      ]
+    );
+
+    res.json({
+      answers: rows || [],
+      evidence: evidenceRows || [],
+      query: String(query).trim(),
+      totalAnswers: (rows || []).length,
+      totalEvidence: (evidenceRows || []).length,
+    });
   }),
 
   getLinkedItems: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -5907,6 +6195,50 @@ ${JSON.stringify(questions || [], null, 2)}
       metadata
     );
     res.status(201).json(msg);
+  }),
+
+  // ==========================================
+  // TEMPLATE QUALITY (V6-B04)
+  // ==========================================
+
+  evaluateTemplateQuality: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    requireUser(req);
+    const { questions } = req.body;
+
+    if (!Array.isArray(questions)) {
+      res.status(400).json({ error: 'questions array required' });
+      return;
+    }
+
+    const { evaluateQuestionQuality, calculateQuestionScore } = await import(
+      '../services/interviewQuestionQualityRules.js'
+    );
+
+    const results = questions.map((q: any) => {
+      const warnings = evaluateQuestionQuality({
+        questionText: q.questionText || q.question_text || '',
+        answerType: q.answerType || q.answer_type || 'open',
+        answerOptions: q.answerOptions || q.answer_options || [],
+        isRequired: q.isRequired ?? q.is_required ?? false,
+        helpHint: q.helpHint || q.help_hint || '',
+      });
+      return {
+        questionId: q.id,
+        score: calculateQuestionScore(warnings),
+        warnings,
+      };
+    });
+
+    const avgScore =
+      results.length > 0
+        ? Math.round(results.reduce((sum: number, r: any) => sum + r.score, 0) / results.length)
+        : 100;
+
+    res.json({
+      results,
+      averageScore: avgScore,
+      totalWarnings: results.reduce((sum: number, r: any) => sum + r.warnings.length, 0),
+    });
   }),
 
   // ==========================================

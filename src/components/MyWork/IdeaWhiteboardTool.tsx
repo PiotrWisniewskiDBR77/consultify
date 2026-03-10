@@ -71,6 +71,7 @@ import ReactFlow, {
 } from 'reactflow';
 
 import { Api } from '@/services/api';
+import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
 import { type DrawingPath, IdeaDrawingLayer } from './IdeaDrawingLayer';
 import { KPIBadgeNode, ProgressNode, ScoreNode } from './IdeaMetricNodes';
@@ -330,17 +331,19 @@ const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
 
   const isDiamond = shape === 'diamond';
   const isCircle = shape === 'circle';
+  const isHexagon = shape === 'hexagon';
 
   return (
     <div
       className={`relative flex items-center justify-center transition-shadow ${selected ? 'ring-2 ring-primary-500/60 shadow-lg' : 'shadow-sm'}`}
       style={{
-        width: isCircle ? 120 : isDiamond ? 100 : 160,
-        height: isCircle ? 120 : isDiamond ? 100 : 80,
+        width: isCircle ? 120 : isDiamond ? 100 : isHexagon ? 140 : 160,
+        height: isCircle ? 120 : isDiamond ? 100 : isHexagon ? 120 : 80,
         backgroundColor: bgColor,
-        borderRadius: isCircle ? '50%' : isDiamond ? 8 : 12,
+        borderRadius: isCircle ? '50%' : isDiamond ? 8 : isHexagon ? 0 : 12,
         transform: isDiamond ? 'rotate(45deg)' : undefined,
-        border: '2px solid rgba(0,0,0,0.1)',
+        border: isHexagon ? 'none' : '2px solid rgba(0,0,0,0.1)',
+        clipPath: isHexagon ? 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)' : undefined,
       }}
       onDoubleClick={() => {
         if (!data?.locked) {
@@ -1209,9 +1212,10 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       const hydratedNodes = rawNodes
         .filter((n: any) => n?.id)
         .map((n: any) => {
-          const nid = String(n.id);
+          const normalizedNode = withNormalizedArtifactLinks(n);
+          const nid = String(normalizedNode.id);
           const nodeData: Record<string, unknown> = {
-            ...(n?.data || { label: '' }),
+            ...(normalizedNode?.data || { label: '' }),
             locked,
             onLabelChange: (next: string) => {
               setNodes((nds: Node[]) =>
@@ -1221,7 +1225,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               );
             },
           };
-          if (n?.type === 'frameNode') {
+          if (normalizedNode?.type === 'frameNode') {
             nodeData.onCollapseToggle = (next: boolean) => {
               setNodes((nds: Node[]) =>
                 nds.map((nd: Node) =>
@@ -1232,10 +1236,10 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           }
           return {
             id: nid,
-            type: n?.type || 'stickyNote',
-            position: n?.position || { x: 100, y: 100 },
+            type: normalizedNode?.type || 'stickyNote',
+            position: normalizedNode?.position || { x: 100, y: 100 },
             data: nodeData,
-            ...(n?.style ? { style: n.style } : {}),
+            ...(normalizedNode?.style ? { style: normalizedNode.style } : {}),
           };
         });
       setNodes(hydratedNodes);
@@ -1314,7 +1318,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       const typeMap: Record<WbNodeKind, string> = {
         sticky: 'stickyNote',
         text: 'textBlock',
-        group: 'groupNode',
+        group: 'frameNode',
         shape_rectangle: 'shapeNode',
         shape_circle: 'shapeNode',
         shape_diamond: 'shapeNode',
@@ -1390,8 +1394,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         type: typeMap[kind],
         position: explicitPosition || { x: 100 + offset, y: 100 + offset },
         data: nodeData,
-        ...(kind === 'group' ? { style: { width: 300, height: 200 } } : {}),
-        ...(kind === 'frame' ? { style: { width: 400, height: 300 } } : {}),
+        ...(kind === 'group' || kind === 'frame' ? { style: { width: 400, height: 300 } } : {}),
       };
       setNodes((prev: Node[]) => [...prev, newNode]);
     },
@@ -1780,7 +1783,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     const effectiveFocusId =
       focusMode === 'object' && focusObjectId
         ? focusObjectId
-        : (focusMode == null && drillFocusNodeId ? drillFocusNodeId : null);
+        : focusMode == null && drillFocusNodeId
+          ? drillFocusNodeId
+          : null;
 
     if (!effectiveFocusId || focusMode === 'system') {
       return { nodes, edges };

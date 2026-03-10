@@ -77,6 +77,7 @@ import ReactFlow, {
 
 import { Api } from '@/services/api';
 import { generateProcessSummary, runProcessCoach } from '@/services/ideaAIGenerator';
+import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
 import {
   type CanvasToolType,
@@ -110,7 +111,7 @@ const LANE_COLORS = [
 
 const LANE_HEIGHT = 140;
 
-const DEFAULT_LANES: Lane[] = [{ id: 'lane-1', label: 'Lane 1', color: LANE_COLORS[0] }];
+const DEFAULT_LANES: Lane[] = [{ id: 'lane-1', label: 'Main Process', color: LANE_COLORS[0] }];
 
 // ── V5-IDEA-21: Process Flow modes ──────────────────────────────────────────
 export type ProcessFlowMode = 'classic' | 'automation' | 'vsm';
@@ -164,7 +165,14 @@ const SHAPE_CONFIG: Record<
 };
 
 const CLASSIC_SHAPES: FlowShape[] = ['start', 'end', 'action', 'decision'];
-const AUTOMATION_SHAPES: FlowShape[] = ['start', 'end', 'action', 'auto_trigger', 'auto_api', 'auto_condition'];
+const AUTOMATION_SHAPES: FlowShape[] = [
+  'start',
+  'end',
+  'action',
+  'auto_trigger',
+  'auto_api',
+  'auto_condition',
+];
 const VSM_SHAPES: FlowShape[] = [
   'vsm_process',
   'vsm_inventory',
@@ -1059,9 +1067,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   // ── Focus mode: filter nodes/edges for display ──────────────────────────
   const { filteredNodes, filteredEdgesWithHandlers, filteredGhostNodes } = useMemo(() => {
     const noFilter =
-      !focusMode ||
-      focusMode === 'system' ||
-      (focusMode === 'object' && !focusObjectId);
+      !focusMode || focusMode === 'system' || (focusMode === 'object' && !focusObjectId);
 
     if (noFilter) {
       return {
@@ -1094,13 +1100,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       filteredEdgesWithHandlers: filteredEdges,
       filteredGhostNodes: filteredGhosts,
     };
-  }, [
-    nodes,
-    ghostNodes,
-    edgesWithHandlers,
-    focusMode,
-    focusObjectId,
-  ]);
+  }, [nodes, ghostNodes, edgesWithHandlers, focusMode, focusObjectId]);
 
   // ── Node/Edge change handlers ──────────────────────────────────────────
   const onNodesChange = useCallback(
@@ -1190,13 +1190,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       const hydratedNodes = rawNodes
         .filter((n: any) => n?.id)
         .map((n: any) => {
-          const nid = String(n.id);
+          const normalizedNode = withNormalizedArtifactLinks(n);
+          const nid = String(normalizedNode.id);
           return {
             id: nid,
-            type: n?.type || 'flowNode',
-            position: n?.position || { x: 100, y: 100 },
+            type: normalizedNode?.type || 'flowNode',
+            position: normalizedNode?.position || { x: 100, y: 100 },
             data: {
-              ...(n?.data || { label: '', shape: 'action' }),
+              ...(normalizedNode?.data || { label: '', shape: 'action' }),
               locked,
               onLabelChange: (next: string) => {
                 setNodes((nds: Node[]) =>
@@ -1380,13 +1381,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     const lane =
       lanes.find((l) => l.id === sourceNode.data?.laneId) || lanes[0] || DEFAULT_LANES[0];
 
+    const insertShape: FlowShape = flowMode === 'automation' ? 'auto_api' : flowMode === 'vsm' ? 'vsm_process' : 'action';
     const newNode: Node = {
       id: newId,
-      type: 'flowNode',
+      type: flowMode === 'vsm' ? 'vsmNode' : 'flowNode',
       position: { x: midX, y: midY },
       data: {
         label: isPl ? 'Nowy krok' : 'New step',
-        shape: 'action' as FlowShape,
+        shape: insertShape,
         laneId: lane.id,
         laneColor: lane.color,
         locked,
@@ -1415,7 +1417,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       ];
     });
     toast.success(isPl ? 'Wstawiono krok' : 'Step inserted', { duration: 800 });
-  }, [edges, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
+  }, [edges, flowMode, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
 
   // ── V5-IDEA-21: Split path (add parallel decision branch) ─────────────
   const splitPath = useCallback(() => {
@@ -1431,13 +1433,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     const newId = `pf-split-${Date.now()}`;
     const lane = lanes.find((l) => l.id === selected.data?.laneId) || lanes[0] || DEFAULT_LANES[0];
 
+    const splitShape: FlowShape = flowMode === 'automation' ? 'auto_api' : flowMode === 'vsm' ? 'vsm_process' : 'action';
     const newNode: Node = {
       id: newId,
-      type: 'flowNode',
+      type: flowMode === 'vsm' ? 'vsmNode' : 'flowNode',
       position: { x: selected.position.x + 250, y: selected.position.y + 80 },
       data: {
         label: isPl ? 'Alternatywna ścieżka' : 'Alternative path',
-        shape: 'action' as FlowShape,
+        shape: splitShape,
         laneId: lane.id,
         laneColor: lane.color,
         locked,
@@ -1463,7 +1466,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       },
     ]);
     toast.success(isPl ? 'Ścieżka rozdzielona' : 'Path split', { duration: 800 });
-  }, [isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
+  }, [flowMode, isPl, lanes, locked, nodes, onNodeDetail, pushUndo, setEdges, setNodes]);
 
   // ── Add lane ───────────────────────────────────────────────────────────
 
@@ -1908,19 +1911,21 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        addNode('action');
+        const defaultShape: FlowShape = flowMode === 'automation' ? 'auto_trigger' : flowMode === 'vsm' ? 'vsm_process' : 'action';
+        addNode(defaultShape);
         return;
       }
 
       if (e.key === 'Enter' && e.shiftKey) {
         e.preventDefault();
-        addNode('decision');
+        const altShape: FlowShape = flowMode === 'automation' ? 'auto_condition' : flowMode === 'vsm' ? 'vsm_inventory' : 'decision';
+        addNode(altShape);
         return;
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [addNode, duplicateSelected, handleSave, onSelectionChange, open, redo, undo]);
+  }, [addNode, duplicateSelected, flowMode, handleSave, onSelectionChange, open, redo, undo]);
 
   // ── Graph update listener (from workspace proposals) ───────────────────
   useEffect(() => {
@@ -2348,6 +2353,34 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
               />
             )}
           </div>
+          {/* V51-28: Empty state overlay */}
+          {filteredNodes.length === 0 && filteredGhostNodes.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+              <div className="text-center pointer-events-auto">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
+                  <GitMerge size={24} className="text-indigo-500" />
+                </div>
+                <div className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                  {isPl ? 'Pusty przepływ' : 'Empty process flow'}
+                </div>
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 mb-3 max-w-[220px]">
+                  {isPl
+                    ? 'Dodaj kroki z paska narzędzi lub naciśnij Enter'
+                    : 'Add steps from the toolbar or press Enter'}
+                </div>
+                {!locked && (
+                  <button
+                    onClick={() => addNode(flowMode === 'vsm' ? 'vsm_process' : 'start')}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+                  >
+                    <Plus size={14} />
+                    {isPl ? 'Dodaj start' : 'Add start'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           <ReactFlowProvider>
             <ReactFlow
               nodes={[

@@ -59,13 +59,13 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
       case 'tool':
       case 'tool_session':
       case 'idea':
-        navigate(`/discovery/tools/${sourceId}`);
+        navigate(`/my-work?tab=ideas&sessionId=${sourceId}`);
         break;
       case 'assessment':
-        navigate(`/discovery/assessment/${sourceId}`);
+        navigate(`/interview?assessmentId=${sourceId}`);
         break;
       case 'interview':
-        navigate(`/discovery/interview/${sourceId}`);
+        navigate(`/interview?interviewId=${sourceId}`);
         break;
       default:
         break;

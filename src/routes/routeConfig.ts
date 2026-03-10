@@ -472,6 +472,7 @@ export function getAppViewFromPath(path: string): AppView | null {
 
   // /chat/:conversationId → AI_CHAT
   if (normalized.startsWith('/chat/')) return AppView.AI_CHAT;
+  if (normalized.startsWith(ROUTES.MY_WORK)) return AppView.MY_WORK;
 
   if (normalized.startsWith(ROUTES.SETTINGS.ROOT)) return AppView.SETTINGS_PROFILE_MODULE;
   if (normalized.startsWith(ROUTES.ADMIN.ROOT)) return AppView.ADMIN_DASHBOARD;

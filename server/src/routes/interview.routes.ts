@@ -35,6 +35,13 @@ router.use(verifyToken);
 router.use(demoContextMiddleware);
 
 // ==========================================
+// KNOWLEDGE SEARCH
+// ==========================================
+
+/** GET /interview/knowledge/search - Search across interview knowledge */
+router.get('/knowledge/search', InterviewController.searchInterviewKnowledge);
+
+// ==========================================
 // SESSION ROUTES
 // ==========================================
 
@@ -198,6 +205,13 @@ router.post(
   InterviewController.importTemplateSource
 );
 
+/** POST /interview/templates/evaluate-quality - Evaluate template question quality (V6-B04) */
+router.post(
+  '/templates/evaluate-quality',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.evaluateTemplateQuality
+);
+
 /** GET /interview/templates/:id - Get template metadata */
 router.get(
   '/templates/:id',
@@ -240,6 +254,20 @@ router.delete(
   InterviewController.deleteTemplate
 );
 
+/** POST /interview/templates/:id/archive - Archive template */
+router.post(
+  '/templates/:id/archive',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.archiveTemplate
+);
+
+/** POST /interview/templates/:id/restore - Restore archived template to draft */
+router.post(
+  '/templates/:id/restore',
+  requirePermission('INTERVIEW_TEMPLATE_MANAGE'),
+  InterviewController.restoreTemplate
+);
+
 /** POST /interview/templates/:id/questions - Add template question */
 router.post(
   '/templates/:id/questions',
@@ -280,6 +308,12 @@ router.patch('/questions/:questionId', InterviewController.updateQuestion);
 
 /** POST /interview/questions/:questionId/ai-suggest - Suggest answer draft for a question */
 router.post('/questions/:questionId/ai-suggest', InterviewController.aiSuggestQuestion);
+
+/** POST /interview/questions/:questionId/ai-improve - Improve/clean up user's answer */
+router.post('/questions/:questionId/ai-improve', InterviewController.aiImproveAnswer);
+
+/** POST /interview/questions/:questionId/ai-explain - Explain question in plain language */
+router.post('/questions/:questionId/ai-explain', InterviewController.aiExplainQuestion);
 
 /** POST /interview/sessions/:sessionId/ai-parse - Map chat transcript to answers */
 router.post('/sessions/:sessionId/ai-parse', InterviewController.aiParseSessionAnswers);

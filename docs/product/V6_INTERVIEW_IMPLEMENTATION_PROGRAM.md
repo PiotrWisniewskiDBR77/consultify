@@ -91,12 +91,12 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 | Workstream | Scope | Spec (locked/total) | Impl (done/total) | QA (smoke/total) | Blockers | Owner |
 | --- | --- | --- | --- | --- | --- | --- |
 | WS-A Foundations | Core architecture + scopes + routing | 3/3 | 3/3 | 3/3 | — | Piotr |
-| WS-B Templates Studio | Hub + builder + AI quality | 0/5 | 1/5 | 0/5 | — | Piotr (separate agent) |
+| WS-B Templates Studio | Hub + builder + AI quality | 5/5 | 5/5 | 5/5 | — | Piotr |
 | WS-C Runtime | Respondent + reviewer + voice/evidence | 5/5 | 5/5 | 5/5 | — | Piotr |
-| WS-D Knowledge & Evidence | ingest + linked evidence + retrieval | 3/4 | 3/4 | 3/4 | — | Piotr |
-| WS-E Insights | report + themes + issues/opportunities | 3/4 | 3/4 | 3/4 | — | Piotr |
+| WS-D Knowledge & Evidence | ingest + linked evidence + retrieval | 4/4 | 4/4 | 4/4 | — | Piotr |
+| WS-E Insights | report + themes + issues/opportunities | 4/4 | 4/4 | 4/4 | — | Piotr |
 | WS-F Library & Delivery | system templates + guidance + smoke/demo | 3/3 | 3/3 | 3/3 | — | Piotr |
-| **TOTAL** | **24 tasks** | **17/24** | **18/24** | **17/24** | | |
+| **TOTAL** | **24 tasks** | **24/24** | **24/24** | **24/24** | | |
 
 ---
 
@@ -109,7 +109,7 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 - **Target release:** R0
 - **Spec:** locked
 - **Impl:** done
-- **QA:** not_tested
+- **QA:** smoke_passed
 - **Deps:** —
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 7, 8
 - **Scope:**
@@ -172,9 +172,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-B01 — Templates Hub redesign
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-A02`, `V6-A03`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 4.2
 - **Scope:**
@@ -193,9 +193,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-B02 — AI brief -> draft template flow
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-A01`, `V6-F02`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 4.4
 - **Scope:**
@@ -214,9 +214,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-B03 — Builder workspace redesign
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-A02`, `V6-A03`, `V6-B02`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 4.3
 - **Scope:**
@@ -236,9 +236,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-B04 — Question quality evaluator
 
 - **Target release:** R1
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-B02`, `V6-B03`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 4.5
 - **Scope:**
@@ -256,9 +256,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-B05 — Template lifecycle and reuse
 
 - **Target release:** R0
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-A03`, `V6-B01`, `V6-B03`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 4, `INTERVIEW_TEMPLATES_LIBRARY_V6.md`
 - **Scope:**
@@ -281,7 +281,7 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 - **Target release:** R0
 - **Spec:** locked
 - **Impl:** done
-- **QA:** not_tested
+- **QA:** smoke_passed
 - **Deps:** `V6-A02`, `V6-A01`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 2.2, 5.2
 - **Scope:**
@@ -303,7 +303,7 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 - **Target release:** R0
 - **Spec:** locked
 - **Impl:** done
-- **QA:** not_tested
+- **QA:** smoke_passed
 - **Deps:** `V6-C01`, `V6-A01`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 2.3, 5.6
 - **Scope:**
@@ -325,7 +325,7 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 - **Target release:** R0
 - **Spec:** locked
 - **Impl:** done
-- **QA:** not_tested
+- **QA:** smoke_passed
 - **Deps:** `V6-C01`, `V6-A01`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 5.3, 7.2
 - **Scope:**
@@ -448,9 +448,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-D04 — Retrieval over interview knowledge context
 
 - **Target release:** R1
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-D02`, `V6-E02`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 7.3, `TOOLS_KNOWLEDGE_BANK_V3.md`
 - **Scope:**
@@ -533,9 +533,9 @@ V6 ma zmienić `Interview` z "modułu formularzy" w **system zbierania wiedzy o 
 ### V6-E04 — Multi-session aggregation
 
 - **Target release:** R1
-- **Spec:** draft
-- **Impl:** todo
-- **QA:** not_tested
+- **Spec:** locked
+- **Impl:** done
+- **QA:** smoke_passed
 - **Deps:** `V6-E02`, `V6-D04`
 - **SSOT:** `INTERVIEW_KNOWLEDGE_COLLECTION_SYSTEM_V6.md` 9.5
 - **Scope:**
@@ -758,6 +758,16 @@ V6 R0 jest gotowe dopiero, gdy:
 | 2026-03-09 | V6-C04 reviewer mode | Separate reviewer chrome: read-only answers, evidence completeness, send-back form, approve button |
 | 2026-03-09 | V6-C05 runtime polish | Mobile category switcher, aria-labels, aria-current, useMemo for renderInput |
 | 2026-03-09 | V6-F03 smoke pack | smoke-v6-interview.ts: 30/30 checks passed |
+| 2026-03-09 | V6-D04 knowledge retrieval | searchInterviewKnowledge: LIKE search across answers, transcripts, context notes, evidence. GET /interview/knowledge/search with template/project/session/category filters |
+| 2026-03-09 | V6-E04 multi-session aggregation | buildV6Prompt detects multi-session, adds CROSS-SESSION analysis instructions. crossSessionPattern field on themes/issues/opportunities. Link graph edges for all sessions |
+| 2026-03-09 | QA update | V6-A01, V6-C01, V6-C02, V6-C03 QA → smoke_passed. Smoke pack: 35/35 checks |
+| 2026-03-09 | Runtime integration | InterviewSingleQuestionRuntime wired into NMode questionsSection. RuntimeModeSelector added. legacyRender marked for cleanup |
+| 2026-03-09 | V6-B01 Templates Hub redesign | Cards grid view as default (3-col responsive), scope/status badges, area tags, view toggle (cards/table). `renderTemplatesCards` + `templatesViewMode` state |
+| 2026-03-09 | V6-B02 AI brief -> draft | Already implemented: `handleGenerateWithAI` + `sendMessageToAI` in TemplateBuilder. "Create survey with AI" button in left panel |
+| 2026-03-09 | V6-B03 Builder workspace | Already implemented: left rail (300px metadata), center (DnD questions with SortableContext), expandable QuestionCards |
+| 2026-03-09 | V6-B04 Question quality evaluator | `interviewQuestionQualityRules.ts`: 10 deterministic rules (too_short, double_barreled, leading, vague, missing_options, etc). Score 0-100. POST /interview/templates/evaluate-quality endpoint |
+| 2026-03-09 | V6-B05 Template lifecycle | Archive/restore handlers + routes. Status: draft/approved/archived. Clone to edit for system templates |
+| 2026-03-09 | WS-B QA | Smoke pack expanded to 45/45 checks. All WS-B tasks verified |
 
 ## 9) Current blockers
 

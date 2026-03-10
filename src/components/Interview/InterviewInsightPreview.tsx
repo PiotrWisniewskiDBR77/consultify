@@ -136,7 +136,6 @@ export interface InterviewInsightPreviewFooterProps {
     exportedToTools?: boolean;
     exportedToAssessment?: boolean;
     title?: string;
-    [key: string]: unknown;
   };
   isPolish: boolean;
   onOpenFull: () => void;

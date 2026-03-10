@@ -53,6 +53,7 @@ export interface InsightTheme {
   description: string;
   evidence_refs: string[];
   strength: 'strong' | 'moderate' | 'weak';
+  crossSessionPattern?: boolean;
 }
 
 export interface InsightIssue {
@@ -60,6 +61,7 @@ export interface InsightIssue {
   description: string;
   severity: 'high' | 'medium' | 'low';
   evidence_refs: string[];
+  crossSessionPattern?: boolean;
 }
 
 export interface InsightOpportunity {
@@ -67,6 +69,7 @@ export interface InsightOpportunity {
   description: string;
   impact: 'high' | 'medium' | 'low';
   evidence_refs: string[];
+  crossSessionPattern?: boolean;
 }
 
 export interface InsightSignal {
@@ -424,8 +427,23 @@ class InterviewInsightService {
    * V6 three-layer truth model prompt.
    * Replaces all per-promptType templates with a single structured JSON output contract.
    */
-  private buildV6Prompt(promptType: InsightPromptType, formattedData: string, customPrompt?: string): string {
+  private buildV6Prompt(promptType: InsightPromptType, formattedData: string, customPrompt?: string, sessionCount = 1): string {
     const focusHint = PROMPT_TEMPLATES[promptType]?.split('\n')[0] || '';
+    const isMultiSession = sessionCount > 1;
+
+    const crossSessionBlock = isMultiSession ? `
+      "cross_session_pattern": true or false (boolean indicating if this spans multiple sessions)` : '';
+
+    const crossSessionInstructions = isMultiSession ? `
+
+CROSS-SESSION ANALYSIS (${sessionCount} respondents):
+- Identify RECURRING themes that appear across multiple respondents
+- Flag CONTRADICTIONS where respondents disagree
+- Note CONSENSUS areas where all respondents align
+- Distinguish single-respondent observations from cross-session patterns
+- In each theme/issue/opportunity, note which sessions support it (by respondent name or session name)
+- Add a "cross_session_pattern" boolean to each theme/issue/opportunity indicating if it spans multiple sessions
+` : '';
 
     let prompt = `You are analyzing interview data. Your analysis focus: ${focusHint}
 
@@ -443,7 +461,7 @@ Return ONLY a valid JSON object (no markdown fences, no commentary outside the J
       "title": "Theme title",
       "description": "What this theme means, grounded in the data",
       "evidence_refs": ["answer_id_1", "answer_id_2"],
-      "strength": "strong|moderate|weak"
+      "strength": "strong|moderate|weak"${crossSessionBlock}
     }
   ],
   "issues": [
@@ -451,7 +469,7 @@ Return ONLY a valid JSON object (no markdown fences, no commentary outside the J
       "title": "Issue title",
       "description": "What the problem is and why it matters",
       "severity": "high|medium|low",
-      "evidence_refs": ["answer_id_1"]
+      "evidence_refs": ["answer_id_1"]${crossSessionBlock}
     }
   ],
   "opportunities": [
@@ -459,7 +477,7 @@ Return ONLY a valid JSON object (no markdown fences, no commentary outside the J
       "title": "Opportunity title",
       "description": "What the opportunity is and its potential value",
       "impact": "high|medium|low",
-      "evidence_refs": ["answer_id_1"]
+      "evidence_refs": ["answer_id_1"]${crossSessionBlock}
     }
   ],
   "signals": [
@@ -480,7 +498,7 @@ Return ONLY a valid JSON object (no markdown fences, no commentary outside the J
   ],
   "missing_data": ["Description of what data is missing or what follow-up questions would help"]
 }
-
+${crossSessionInstructions}
 Rules:
 - Ground every theme, issue, and opportunity in specific answer_ids from the data.
 - "signals" capture tensions, gaps, contradictions, or emerging patterns that don't fit neatly into themes/issues.
@@ -517,11 +535,20 @@ Rules:
     }
     const parsed = JSON.parse(cleaned);
 
+    const mapCrossSession = <T extends Record<string, any>>(items: T[]): T[] =>
+      items.map((item) => {
+        if ('cross_session_pattern' in item) {
+          const { cross_session_pattern, ...rest } = item;
+          return { ...rest, crossSessionPattern: Boolean(cross_session_pattern) } as T;
+        }
+        return item;
+      });
+
     return {
       executive_summary: String(parsed.executive_summary || ''),
-      themes: Array.isArray(parsed.themes) ? parsed.themes : [],
-      issues: Array.isArray(parsed.issues) ? parsed.issues : [],
-      opportunities: Array.isArray(parsed.opportunities) ? parsed.opportunities : [],
+      themes: Array.isArray(parsed.themes) ? mapCrossSession(parsed.themes) : [],
+      issues: Array.isArray(parsed.issues) ? mapCrossSession(parsed.issues) : [],
+      opportunities: Array.isArray(parsed.opportunities) ? mapCrossSession(parsed.opportunities) : [],
       signals: Array.isArray(parsed.signals) ? parsed.signals : [],
       evidence_map: Array.isArray(parsed.evidence_map) ? parsed.evidence_map : [],
       missing_data: Array.isArray(parsed.missing_data) ? parsed.missing_data : [],
@@ -596,7 +623,7 @@ Rules:
       }
 
       const formattedData = this.formatSessionDataForPrompt(sessionData);
-      const prompt = this.buildV6Prompt(promptType, formattedData, customPrompt);
+      const prompt = this.buildV6Prompt(promptType, formattedData, customPrompt, sessionData.length);
 
       const systemPrompt =
         'You are a senior management consultant performing structured interview analysis. ' +

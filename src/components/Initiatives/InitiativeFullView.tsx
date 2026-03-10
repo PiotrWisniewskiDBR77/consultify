@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   Clock,
   DollarSign,
+  ExternalLink,
   Eye,
   FileText,
   Flag,
@@ -870,7 +871,19 @@ export const InitiativeFullView: React.FC<InitiativeFullViewProps> = ({
                       </span>
                     </span>
                     {initiative.sourceId && (
-                      <span className="text-slate-500">({initiative.sourceId.slice(0, 8)}...)</span>
+                      <a
+                        href={
+                          ['tool', 'tool_session', 'idea'].includes(initiative.sourceType.toLowerCase())
+                            ? `/my-work?tab=ideas&sessionId=${initiative.sourceId}`
+                            : initiative.sourceType.toLowerCase() === 'assessment'
+                              ? `/interview?assessmentId=${initiative.sourceId}`
+                              : '#'
+                        }
+                        className="inline-flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:underline ml-1"
+                      >
+                        <ExternalLink size={10} />
+                        {i18n.language === 'pl' ? 'Otwórz źródło' : 'View source'}
+                      </a>
                     )}
                   </div>
                 </div>

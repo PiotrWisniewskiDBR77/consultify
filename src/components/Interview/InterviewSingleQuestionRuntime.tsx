@@ -8,6 +8,7 @@ import {
   CircleAlert,
   ClipboardList,
   FileText,
+  Hash,
   HelpCircle,
   Link2,
   Loader2,
@@ -16,12 +17,21 @@ import {
   Paperclip,
   PauseCircle,
   Sparkles,
+  Type,
+  Waypoints,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { API_URL, getHeaders } from '@/services/api';
+import { Api, API_URL, getHeaders } from '@/services/api';
+import type { ArtifactType } from '@/utils/artifactLinks';
+import { buildArtifactCode, getArtifactLabel } from '@/utils/artifactLinks';
+
+import {
+  ArtifactAttachPopover,
+  type ArtifactSearchResult,
+} from '../shared/NModeBlocks/ArtifactAttachPopover';
 
 import { CATEGORY_CONFIG, CATEGORY_ORDER, type InterviewCategory } from './CategorySidebar';
 import type { InterviewEvidence } from './EvidencePanel';
@@ -55,6 +65,7 @@ interface InterviewSingleQuestionRuntimeProps {
   onSaveAndExit?: () => void;
   sessionName?: string;
   readOnly?: boolean;
+  immersive?: boolean;
 }
 
 type DraftInputMode = 'text_answer' | 'voice_answer';
@@ -93,6 +104,20 @@ function buildDefaultOptions(question: InterviewQuestion, isPolish: boolean): st
   return [];
 }
 
+function getAnswerTypeLabel(answerType?: string, isPolish = false): { label: string; icon: 'text' | 'hash' | 'check' | 'calendar' } {
+  const normalized = normalizeAnswerType(answerType);
+  if (QUESTION_INPUT_TYPES.longText.has(normalized)) return { label: isPolish ? 'Tekst' : 'Text', icon: 'text' };
+  if (QUESTION_INPUT_TYPES.shortText.has(normalized)) return { label: isPolish ? 'Krótki tekst' : 'Short text', icon: 'text' };
+  if (QUESTION_INPUT_TYPES.number.has(normalized)) return { label: isPolish ? 'Liczba' : 'Number', icon: 'hash' };
+  if (QUESTION_INPUT_TYPES.singleChoice.has(normalized)) return { label: isPolish ? 'Wybór' : 'Choice', icon: 'check' };
+  if (QUESTION_INPUT_TYPES.multiChoice.has(normalized)) return { label: isPolish ? 'Wielokrotny' : 'Multi', icon: 'check' };
+  if (QUESTION_INPUT_TYPES.yesNo.has(normalized)) return { label: isPolish ? 'Tak/Nie' : 'Yes/No', icon: 'check' };
+  if (QUESTION_INPUT_TYPES.rating.has(normalized)) return { label: isPolish ? 'Skala' : 'Scale', icon: 'hash' };
+  if (QUESTION_INPUT_TYPES.dropdown.has(normalized)) return { label: isPolish ? 'Lista' : 'Dropdown', icon: 'check' };
+  if (QUESTION_INPUT_TYPES.date.has(normalized)) return { label: isPolish ? 'Data' : 'Date', icon: 'calendar' };
+  return { label: isPolish ? 'Tekst' : 'Text', icon: 'text' };
+}
+
 function parseMultiChoiceValue(answerDraft: string): Set<string> {
   try {
     const parsed = JSON.parse(answerDraft);
@@ -119,6 +144,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   onSaveAndExit,
   sessionName,
   readOnly = false,
+  immersive = false,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -165,6 +191,13 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   const [linkDescription, setLinkDescription] = useState('');
   const [runtimeView, setRuntimeView] = useState<RuntimeView>('answering');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [artifactPopoverOpen, setArtifactPopoverOpen] = useState(false);
+  const [artifactSearchResults, setArtifactSearchResults] = useState<ArtifactSearchResult[]>([]);
+  const [aiImproving, setAiImproving] = useState(false);
+  const [aiImproveResult, setAiImproveResult] = useState<{ improvedText: string; changesSummary: string } | null>(null);
+  const [aiExplaining, setAiExplaining] = useState(false);
+  const [aiExplainResult, setAiExplainResult] = useState<{ explanation: string; exampleAnswers: string[]; whyItMatters: string } | null>(null);
+  const artifactCacheRef = useRef<ArtifactSearchResult[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -186,18 +219,19 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
       : null;
 
   useEffect(() => {
-    if (!categoryQuestions.length) {
+    const pool = immersive ? orderedQuestions : categoryQuestions;
+    if (!pool.length) {
       setCurrentQuestionId(null);
       return;
     }
 
-    const stillVisible = categoryQuestions.some((question) => question.id === currentQuestionId);
+    const stillVisible = pool.some((question) => question.id === currentQuestionId);
     if (stillVisible) return;
 
     const preferred =
-      categoryQuestions.find((question) => question.status !== 'answered') || categoryQuestions[0];
+      pool.find((question) => question.status !== 'answered') || pool[0];
     setCurrentQuestionId(preferred?.id || null);
-  }, [categoryQuestions, currentQuestionId]);
+  }, [categoryQuestions, currentQuestionId, immersive, orderedQuestions]);
 
   useEffect(() => {
     if (!currentQuestion) {
@@ -324,6 +358,8 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
         onCategoryChange(question.category);
       }
       setCurrentQuestionId(question.id);
+      setAiImproveResult(null);
+      setAiExplainResult(null);
     },
     [activeCategory, isPolish, onCategoryChange, persistCurrentQuestion, voiceNeedsApproval]
   );
@@ -410,6 +446,115 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     setLinkDescription('');
     setShowLinkForm(false);
   }, [currentQuestion, linkDescription, linkName, linkUrl, onAddLink]);
+
+  const handleArtifactSearch = useCallback(async (query: string) => {
+    if (!query || query.length < 2) {
+      setArtifactSearchResults([]);
+      return;
+    }
+    let cache = artifactCacheRef.current;
+    if (!cache) {
+      const all: ArtifactSearchResult[] = [];
+      const [tasks, initiatives, decisions, assessments] = await Promise.allSettled([
+        Api.get('/tasks?limit=50').catch(() => []),
+        Api.get('/initiatives?limit=50').catch(() => []),
+        Api.get('/decisions?limit=50').catch(() => []),
+        Api.get('/assessments?limit=50').catch(() => []),
+      ]);
+      const push = (type: ArtifactType, id: unknown, title: unknown, status?: unknown) => {
+        const sid = String(id || '').trim();
+        const stitle = String(title || '').trim();
+        if (!sid || !stitle) return;
+        all.push({ type, id: sid, title: stitle, status: status ? String(status) : undefined });
+      };
+      if (tasks.status === 'fulfilled') {
+        const arr = Array.isArray(tasks.value) ? tasks.value : (tasks.value as any)?.tasks || [];
+        arr.forEach((t: any) => push('task', t.id, t.title || t.name, t.status));
+      }
+      if (initiatives.status === 'fulfilled' && Array.isArray(initiatives.value)) {
+        initiatives.value.forEach((i: any) => push('initiative', i.id, i.title || i.name, i.status));
+      }
+      if (decisions.status === 'fulfilled' && Array.isArray(decisions.value)) {
+        decisions.value.forEach((d: any) => push('decision', d.id, d.title || d.name, d.status));
+      }
+      if (assessments.status === 'fulfilled' && Array.isArray(assessments.value)) {
+        assessments.value.forEach((a: any) => push('assessment', a.id, a.name || a.title, a.status));
+      }
+      artifactCacheRef.current = all;
+      cache = all;
+    }
+    const q = query.toLowerCase();
+    setArtifactSearchResults(
+      cache.filter(
+        (r) =>
+          r.title.toLowerCase().includes(q) ||
+          r.type.toLowerCase().includes(q) ||
+          buildArtifactCode(r.type, r.id).toLowerCase().includes(q)
+      ).slice(0, 12)
+    );
+  }, []);
+
+  const handleArtifactAttach = useCallback(
+    async (ref: { type: ArtifactType; id: string; title: string }) => {
+      if (!currentQuestion) return;
+      const label = getArtifactLabel(ref.type, isPolish ? 'pl' : 'en');
+      const code = buildArtifactCode(ref.type, ref.id);
+      await onAddLink(
+        `${label}: ${ref.title}`,
+        `artifact://${ref.type}/${ref.id}`,
+        `${code} — ${ref.title}`,
+        currentQuestion.category,
+        currentQuestion.id
+      );
+      setArtifactPopoverOpen(false);
+      toast.success(isPolish ? `Powiązano: ${ref.title}` : `Linked: ${ref.title}`);
+    },
+    [currentQuestion, isPolish, onAddLink]
+  );
+
+  const handleAiImprove = useCallback(async () => {
+    if (!currentQuestion || !answerDraft.trim() || aiImproving) return;
+    setAiImproving(true);
+    setAiImproveResult(null);
+    try {
+      const res = await fetch(`${API_URL}/interview/questions/${currentQuestion.id}/ai-improve`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ answerText: answerDraft.trim(), language: isPolish ? 'pl' : 'en' }),
+      });
+      if (!res.ok) throw new Error('AI improve failed');
+      const data = await res.json();
+      if (data.improvedText) {
+        setAiImproveResult(data);
+      }
+    } catch {
+      toast.error(isPolish ? 'Nie udało się ulepszyć odpowiedzi' : 'Failed to improve answer');
+    } finally {
+      setAiImproving(false);
+    }
+  }, [currentQuestion, answerDraft, aiImproving, isPolish]);
+
+  const handleAiExplain = useCallback(async () => {
+    if (!currentQuestion || aiExplaining) return;
+    if (aiExplainResult) { setAiExplainResult(null); return; }
+    setAiExplaining(true);
+    try {
+      const res = await fetch(`${API_URL}/interview/questions/${currentQuestion.id}/ai-explain`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ language: isPolish ? 'pl' : 'en' }),
+      });
+      if (!res.ok) throw new Error('AI explain failed');
+      const data = await res.json();
+      if (data.explanation) {
+        setAiExplainResult(data);
+      }
+    } catch {
+      toast.error(isPolish ? 'Nie udało się wyjaśnić pytania' : 'Failed to explain question');
+    } finally {
+      setAiExplaining(false);
+    }
+  }, [currentQuestion, aiExplaining, aiExplainResult, isPolish]);
 
   const stopRecording = useCallback(() => {
     mediaRecorderRef.current?.stop();
@@ -734,19 +879,26 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
   // ---- Review screen ----
   if (runtimeView === 'review') {
+    const completionPct = orderedQuestions.length > 0 ? Math.round((answeredCount / orderedQuestions.length) * 100) : 0;
     return (
-      <div className="space-y-4">
+      <div className={`space-y-4 ${immersive ? 'max-w-3xl mx-auto px-6 py-8' : ''}`}>
         <div className="rounded-[28px] border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl p-6 shadow-lg">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                 {isPolish ? 'Przegląd przed wysłaniem' : 'Review before submitting'}
               </h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {isPolish
-                  ? `${answeredCount} z ${orderedQuestions.length} pytań odpowiedzianych`
-                  : `${answeredCount} of ${orderedQuestions.length} questions answered`}
-              </p>
+              <div className="flex items-center gap-3 mt-2">
+                <div className="w-32 h-1.5 rounded-full bg-slate-200 dark:bg-navy-800 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${completionPct === 100 ? 'bg-emerald-500' : 'bg-primary-500'}`}
+                    style={{ width: `${completionPct}%` }}
+                  />
+                </div>
+                <span className="text-sm tabular-nums text-slate-500 dark:text-slate-400">
+                  {answeredCount}/{orderedQuestions.length} ({completionPct}%)
+                </span>
+              </div>
             </div>
             <button
               type="button"
@@ -770,65 +922,112 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           )}
 
           <div className="space-y-1">
-            {CATEGORY_ORDER.map((cat) => {
-              const catInfo = categorySummary.get(cat);
-              if (!catInfo) return null;
-              const catConfig = CATEGORY_CONFIG[cat];
-              const catQuestions = orderedQuestions.filter((q) => q.category === cat);
-
-              return (
-                <div key={cat} className="rounded-2xl border border-slate-100 dark:border-navy-800 overflow-hidden">
-                  <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 dark:bg-navy-950/40">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${catConfig.bgColor} ${catConfig.color}`}>
-                      {isPolish ? catConfig.labelPl : catConfig.labelEn}
-                    </span>
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
-                      {catInfo.answered}/{catInfo.total}
-                    </span>
-                  </div>
-                  <div className="divide-y divide-slate-100 dark:divide-navy-800">
-                    {catQuestions.map((q) => {
-                      const answered = q.status === 'answered';
-                      const snippet = q.answerText
-                        ? q.answerText.length > 80 ? q.answerText.slice(0, 80) + '…' : q.answerText
-                        : '';
-                      return (
-                        <button
-                          key={q.id}
-                          type="button"
-                          onClick={() => {
-                            setRuntimeView('answering');
-                            if (q.category !== activeCategory) onCategoryChange(q.category);
-                            setCurrentQuestionId(q.id);
-                          }}
-                          className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-navy-900/50 transition-colors"
-                        >
-                          <div className="mt-0.5 shrink-0">
-                            {answered ? (
-                              <Check size={14} className="text-emerald-500" />
-                            ) : q.isRequired ? (
-                              <CircleAlert size={14} className="text-rose-400" />
-                            ) : (
-                              <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 dark:border-navy-600" />
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm text-slate-800 dark:text-slate-200 truncate">
-                              {q.questionText}
-                            </p>
-                            {snippet && (
-                              <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                                {snippet}
+            {immersive ? (
+              /* Flat question list for immersive mode */
+              <div className="rounded-2xl border border-slate-100 dark:border-navy-800 overflow-hidden divide-y divide-slate-100 dark:divide-navy-800">
+                {orderedQuestions.map((q, idx) => {
+                  const answered = q.status === 'answered';
+                  const snippet = q.answerText
+                    ? q.answerText.length > 80 ? q.answerText.slice(0, 80) + '…' : q.answerText
+                    : '';
+                  return (
+                    <button
+                      key={q.id}
+                      type="button"
+                      onClick={() => {
+                        setRuntimeView('answering');
+                        setCurrentQuestionId(q.id);
+                      }}
+                      className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-navy-900/50 transition-colors"
+                    >
+                      <span className={`shrink-0 mt-0.5 flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold ${
+                        answered
+                          ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                          : q.isRequired
+                            ? 'bg-rose-500/10 text-rose-500'
+                            : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500'
+                      }`}>
+                        {answered ? <Check size={10} /> : idx + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-slate-800 dark:text-slate-200 truncate">
+                          {q.questionText}
+                        </p>
+                        {snippet && (
+                          <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                            {snippet}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Category-grouped list for non-immersive mode */
+              CATEGORY_ORDER.map((cat) => {
+                const catInfo = categorySummary.get(cat);
+                if (!catInfo) return null;
+                const catConfig = CATEGORY_CONFIG[cat];
+                const catQs = orderedQuestions.filter((q) => q.category === cat);
+                return (
+                  <div key={cat} className="rounded-2xl border border-slate-100 dark:border-navy-800 overflow-hidden">
+                    <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 dark:bg-navy-950/40">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${catConfig.bgColor} ${catConfig.color}`}>
+                        <catConfig.icon size={11} />
+                        {isPolish ? catConfig.labelPl : catConfig.labelEn}
+                      </span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                        {catInfo.answered}/{catInfo.total}
+                      </span>
+                      {catInfo.answered === catInfo.total && catInfo.total > 0 && (
+                        <Check size={12} className="text-emerald-500" />
+                      )}
+                    </div>
+                    <div className="divide-y divide-slate-100 dark:divide-navy-800">
+                      {catQs.map((q) => {
+                        const answered = q.status === 'answered';
+                        const snippet = q.answerText
+                          ? q.answerText.length > 80 ? q.answerText.slice(0, 80) + '…' : q.answerText
+                          : '';
+                        return (
+                          <button
+                            key={q.id}
+                            type="button"
+                            onClick={() => {
+                              setRuntimeView('answering');
+                              if (q.category !== activeCategory) onCategoryChange(q.category);
+                              setCurrentQuestionId(q.id);
+                            }}
+                            className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-navy-900/50 transition-colors"
+                          >
+                            <div className="mt-0.5 shrink-0">
+                              {answered ? (
+                                <Check size={14} className="text-emerald-500" />
+                              ) : q.isRequired ? (
+                                <CircleAlert size={14} className="text-rose-400" />
+                              ) : (
+                                <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-300 dark:border-navy-600" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm text-slate-800 dark:text-slate-200 truncate">
+                                {q.questionText}
                               </p>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
+                              {snippet && (
+                                <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                                  {snippet}
+                                </p>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -859,377 +1058,598 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
 
   if (!currentQuestion) return null;
 
-  // ---- Main answering view with left mini rail ----
-  return (
-    <div className="flex gap-4" ref={mainContentRef}>
-      {/* Left mini rail (desktop) */}
-      <nav
-        className="hidden md:flex flex-col w-48 shrink-0 space-y-1"
-        role="navigation"
-        aria-label={isPolish ? 'Nawigacja kategorii' : 'Category navigation'}
-      >
-        {sessionName && (
-          <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500 truncate">
-            {sessionName}
-          </p>
-        )}
-        {CATEGORY_ORDER.map((cat) => {
-          const catInfo = categorySummary.get(cat);
-          if (!catInfo) return null;
-          const catConfig = CATEGORY_CONFIG[cat];
-          const isActive = cat === activeCategory;
-          return (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => onCategoryChange(cat)}
-              aria-current={isActive ? 'step' : undefined}
-              aria-label={`${isPolish ? catConfig.labelPl : catConfig.labelEn} — ${catInfo.answered}/${catInfo.total}`}
-              className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-xs transition-all ${
-                isActive
-                  ? 'bg-slate-100 dark:bg-navy-800 text-slate-900 dark:text-white font-medium'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50'
-              }`}
-            >
-              <span className="truncate">{isPolish ? catConfig.labelPl : catConfig.labelEn}</span>
-              <span className={`text-[10px] tabular-nums shrink-0 ${
-                catInfo.answered === catInfo.total && catInfo.total > 0
-                  ? 'text-emerald-500'
-                  : ''
-              }`}>
-                {catInfo.answered}/{catInfo.total}
-              </span>
-            </button>
-          );
-        })}
+  // ---- Main answering view ----
+  const navRef = useRef<HTMLDivElement | null>(null);
 
-        <div className="!mt-3 border-t border-slate-100 dark:border-navy-800 pt-3">
-          <button
-            type="button"
-            onClick={() => {
-              void persistCurrentQuestion();
-              setRuntimeView('review');
-            }}
-            aria-label={isPolish ? 'Przejdź do przeglądu' : 'Go to review'}
-            className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
-          >
-            <ClipboardList size={13} />
-            {isPolish ? 'Przegląd' : 'Review'}
-          </button>
-          {onSaveAndExit && (
+  // Auto-scroll active question into view in nav
+  useEffect(() => {
+    if (!immersive || !navRef.current || !currentQuestionId) return;
+    const el = navRef.current.querySelector(`[data-qid="${currentQuestionId}"]`);
+    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [currentQuestionId, immersive]);
+
+  return (
+    <div className={`flex ${immersive ? 'h-full' : 'gap-4'}`} ref={mainContentRef}>
+      {/* Left navigation */}
+      {immersive ? (
+        /* ── Immersive: flat question list nav ── */
+        <nav
+          ref={navRef}
+          className="hidden md:flex flex-col w-56 shrink-0 border-r border-slate-200/60 dark:border-navy-800/60 bg-white/60 dark:bg-navy-900/40"
+          role="navigation"
+          aria-label={isPolish ? 'Nawigacja pytań' : 'Question navigation'}
+        >
+          <div className="px-3 py-3 border-b border-slate-100 dark:border-navy-800">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+              {isPolish ? 'Pytania' : 'Questions'}
+            </p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <div className="flex-1 h-1 rounded-full bg-slate-200/60 dark:bg-navy-700/60 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${answeredCount === orderedQuestions.length ? 'bg-emerald-500' : 'bg-primary-500'}`}
+                  style={{ width: `${orderedQuestions.length > 0 ? (answeredCount / orderedQuestions.length) * 100 : 0}%` }}
+                />
+              </div>
+              <span className="text-[10px] tabular-nums text-slate-400 dark:text-slate-500">
+                {answeredCount}/{orderedQuestions.length}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-1.5 py-1.5 space-y-0.5">
+            {orderedQuestions.map((q, idx) => {
+              const isCurrent = q.id === currentQuestionId;
+              const isAnswered = q.status === 'answered';
+              return (
+                <button
+                  key={q.id}
+                  type="button"
+                  data-qid={q.id}
+                  onClick={() => navigateToQuestion(q)}
+                  className={`w-full flex items-start gap-2 rounded-lg px-2.5 py-2 text-left transition-all ${
+                    isCurrent
+                      ? 'bg-primary-500/10 dark:bg-primary-500/15'
+                      : 'hover:bg-slate-50 dark:hover:bg-navy-900/50'
+                  }`}
+                >
+                  <span className={`shrink-0 mt-0.5 flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-semibold ${
+                    isCurrent
+                      ? 'bg-primary-500 text-white'
+                      : isAnswered
+                        ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500'
+                  }`}>
+                    {isAnswered ? <Check size={10} /> : idx + 1}
+                  </span>
+                  <span className={`text-[11px] leading-snug line-clamp-2 ${
+                    isCurrent
+                      ? 'text-primary-700 dark:text-primary-300 font-medium'
+                      : isAnswered
+                        ? 'text-slate-500 dark:text-slate-400'
+                        : 'text-slate-600 dark:text-slate-300'
+                  }`}>
+                    {q.questionText}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="shrink-0 border-t border-slate-100 dark:border-navy-800 px-3 py-2 space-y-0.5">
             <button
               type="button"
               onClick={() => {
-                void persistCurrentQuestion().then(() => onSaveAndExit?.());
+                void persistCurrentQuestion();
+                setRuntimeView('review');
               }}
-              aria-label={isPolish ? 'Zapisz i wyjdź' : 'Save and exit'}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
+              aria-label={isPolish ? 'Przejdź do przeglądu' : 'Go to review'}
+              className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
             >
-              <LogOut size={13} />
-              {isPolish ? 'Zapisz i wyjdź' : 'Save & Exit'}
+              <ClipboardList size={13} />
+              {isPolish ? 'Przegląd' : 'Review'}
             </button>
-          )}
-        </div>
-      </nav>
-
-      {/* Mobile category switcher (horizontal scroll pills) */}
-      <div className="md:hidden absolute left-0 right-0 -mt-2 mb-2" style={{ position: 'relative' }}>
-        <div
-          className="flex gap-2 overflow-x-auto pb-2 px-1 scrollbar-hide"
+            {onSaveAndExit && (
+              <button
+                type="button"
+                onClick={() => {
+                  void persistCurrentQuestion().then(() => onSaveAndExit?.());
+                }}
+                aria-label={isPolish ? 'Zapisz i wyjdź' : 'Save and exit'}
+                className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
+              >
+                <LogOut size={13} />
+                {isPolish ? 'Zapisz i wyjdź' : 'Save & Exit'}
+              </button>
+            )}
+          </div>
+        </nav>
+      ) : (
+        /* ── Non-immersive: category-based nav (legacy) ── */
+        <nav
+          className="hidden md:flex flex-col w-48 shrink-0 space-y-1"
           role="navigation"
           aria-label={isPolish ? 'Nawigacja kategorii' : 'Category navigation'}
         >
+          {sessionName && (
+            <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500 truncate">
+              {sessionName}
+            </p>
+          )}
           {CATEGORY_ORDER.map((cat) => {
             const catInfo = categorySummary.get(cat);
             if (!catInfo) return null;
             const catConfig = CATEGORY_CONFIG[cat];
             const isActive = cat === activeCategory;
+            const isDone = catInfo.answered === catInfo.total && catInfo.total > 0;
             return (
               <button
                 key={cat}
                 type="button"
                 onClick={() => onCategoryChange(cat)}
                 aria-current={isActive ? 'step' : undefined}
-                aria-label={`${isPolish ? catConfig.labelPl : catConfig.labelEn} — ${catInfo.answered}/${catInfo.total}`}
-                className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all shrink-0 ${
+                className={`flex items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-xs transition-all ${
                   isActive
-                    ? `${catConfig.bgColor} ${catConfig.color} ring-1 ring-current/20`
-                    : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
+                    ? 'bg-primary-500/10 dark:bg-primary-500/15 text-primary-700 dark:text-primary-300 font-medium'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50'
                 }`}
               >
-                {isPolish ? catConfig.labelPl : catConfig.labelEn}
-                <span className={`text-[10px] tabular-nums ${
-                  catInfo.answered === catInfo.total && catInfo.total > 0
-                    ? 'text-emerald-500'
-                    : ''
-                }`}>
+                <span className="truncate">{isPolish ? catConfig.labelPl : catConfig.labelEn}</span>
+                <span className={`text-[10px] tabular-nums shrink-0 ${isDone ? 'text-emerald-500' : ''}`}>
                   {catInfo.answered}/{catInfo.total}
                 </span>
               </button>
             );
           })}
+          <div className="!mt-auto border-t border-slate-100 dark:border-navy-800 pt-3">
+            <button
+              type="button"
+              onClick={() => { void persistCurrentQuestion(); setRuntimeView('review'); }}
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
+            >
+              <ClipboardList size={13} />
+              {isPolish ? 'Przegląd' : 'Review'}
+            </button>
+            {onSaveAndExit && (
+              <button
+                type="button"
+                onClick={() => { void persistCurrentQuestion().then(() => onSaveAndExit?.()); }}
+                className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900/50 w-full text-left transition-colors"
+              >
+                <LogOut size={13} />
+                {isPolish ? 'Zapisz i wyjdź' : 'Save & Exit'}
+              </button>
+            )}
+          </div>
+        </nav>
+      )}
+
+      {/* Mobile: horizontal question pills (immersive) or category pills (legacy) */}
+      {!immersive && (
+        <div className="md:hidden absolute left-0 right-0 -mt-2 mb-2" style={{ position: 'relative' }}>
+          <div className="flex gap-2 overflow-x-auto pb-2 px-1 scrollbar-hide" role="navigation">
+            {CATEGORY_ORDER.map((cat) => {
+              const catInfo = categorySummary.get(cat);
+              if (!catInfo) return null;
+              const catConfig = CATEGORY_CONFIG[cat];
+              const isActive = cat === activeCategory;
+              return (
+                <button key={cat} type="button" onClick={() => onCategoryChange(cat)} aria-current={isActive ? 'step' : undefined}
+                  className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all shrink-0 ${
+                    isActive ? `${catConfig.bgColor} ${catConfig.color} ring-1 ring-current/20` : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  {isPolish ? catConfig.labelPl : catConfig.labelEn}
+                  <span className={`text-[10px] tabular-nums ${catInfo.answered === catInfo.total && catInfo.total > 0 ? 'text-emerald-500' : ''}`}>
+                    {catInfo.answered}/{catInfo.total}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Center content */}
-      <div className="flex-1 min-w-0 space-y-4">
-        {/* Progress bar - lightweight */}
-        <div className="flex items-center gap-3">
-          {activeCategoryConfig && (
-            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${activeCategoryConfig.bgColor} ${activeCategoryConfig.color}`}>
-              {isPolish ? activeCategoryConfig.labelPl : activeCategoryConfig.labelEn}
+      <div className={`flex-1 min-w-0 flex flex-col ${immersive ? 'overflow-y-auto' : 'space-y-4'}`}>
+        {/* Progress indicator */}
+        {!immersive && (
+          <div className="flex items-center gap-3">
+            {activeCategoryConfig && (
+              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${activeCategoryConfig.bgColor} ${activeCategoryConfig.color}`}>
+                {isPolish ? activeCategoryConfig.labelPl : activeCategoryConfig.labelEn}
+              </span>
+            )}
+            <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+              {currentIndex + 1} / {orderedQuestions.length}
             </span>
-          )}
-          <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
-            {currentIndex + 1} / {orderedQuestions.length}
-          </span>
-          <div className="flex-1 h-1 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-primary-500/60 transition-all duration-300"
-              style={{ width: `${orderedQuestions.length > 0 ? (answeredCount / orderedQuestions.length) * 100 : 0}%` }}
-            />
+            <div className="flex-1 h-1 rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary-500/60 transition-all duration-300"
+                style={{ width: `${orderedQuestions.length > 0 ? (answeredCount / orderedQuestions.length) * 100 : 0}%` }}
+              />
+            </div>
+            <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
+              {answeredCount}/{orderedQuestions.length}
+            </span>
           </div>
-          <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
-            {answeredCount}/{orderedQuestions.length}
-          </span>
-        </div>
+        )}
 
-        {/* Question card — key forces clean re-mount on question switch */}
-        <div
-          key={currentQuestion.id}
-          className="rounded-[32px] border border-slate-200/70 dark:border-navy-700/70 bg-gradient-to-br from-white via-white to-slate-50 dark:from-navy-900 dark:via-navy-900 dark:to-navy-950 p-6 md:p-8 shadow-xl shadow-slate-200/50 dark:shadow-navy-950/50"
-        >
-          <div className="max-w-3xl mx-auto space-y-6">
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                {currentQuestion.isRequired && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400">
-                    <CircleAlert size={12} />
-                    {isPolish ? 'Wymagane' : 'Required'}
-                  </span>
+        {/* Question card — vertically centered in immersive mode */}
+        <div className={immersive ? 'flex-1 flex items-start justify-center px-6 py-8 md:px-12 md:py-12' : ''}>
+          <div
+            key={currentQuestion.id}
+            className={`w-full ${immersive ? 'max-w-2xl' : ''} rounded-[32px] border border-slate-200/70 dark:border-navy-700/70 bg-gradient-to-br from-white via-white to-slate-50 dark:from-navy-900 dark:via-navy-900 dark:to-navy-950 ${
+              immersive ? 'p-8 md:p-10' : 'p-6 md:p-8'
+            } shadow-xl shadow-slate-200/50 dark:shadow-navy-950/50`}
+          >
+            <div className="max-w-3xl mx-auto space-y-6">
+              {/* Question header */}
+              <div className="space-y-4">
+                {/* Top meta row */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-primary-500/10 dark:bg-primary-500/15 text-xs font-bold text-primary-600 dark:text-primary-400 tabular-nums">
+                      {currentIndex + 1}
+                    </span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'z' : 'of'} {orderedQuestions.length}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const typeInfo = getAnswerTypeLabel(currentQuestion.answerType, isPolish);
+                      const TypeIcon = typeInfo.icon === 'hash' ? Hash : typeInfo.icon === 'check' ? Check : typeInfo.icon === 'calendar' ? Calendar : Type;
+                      return (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-navy-800 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                          <TypeIcon size={10} />
+                          {typeInfo.label}
+                        </span>
+                      );
+                    })()}
+                    {currentQuestion.isRequired && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:text-rose-400">
+                        <CircleAlert size={10} />
+                        {isPolish ? 'Wymagane' : 'Required'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Question text */}
+                <h2 className={`font-semibold leading-tight text-slate-900 dark:text-white ${
+                  immersive ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl'
+                }`}>
+                  {currentQuestion.questionText}
+                </h2>
+
+                {/* Helper text / description (with helpHint fallback) */}
+                {(currentQuestion.description || (currentQuestion as any).helpHint) && (
+                  <p className="flex items-start gap-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                    <HelpCircle size={14} className="mt-0.5 shrink-0 text-slate-400 dark:text-slate-500" />
+                    {currentQuestion.description || (currentQuestion as any).helpHint}
+                  </p>
                 )}
+
+                {/* Expected answer shape */}
                 {currentQuestion.expectedAnswerShape && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-navy-800 px-3 py-1 text-xs text-slate-500 dark:text-slate-400">
-                    <Sparkles size={12} />
-                    {currentQuestion.expectedAnswerShape}
-                  </span>
+                  <div className="flex items-center gap-2 rounded-xl bg-primary-500/5 dark:bg-primary-500/10 px-3 py-2 border border-primary-500/10 dark:border-primary-500/15">
+                    <Sparkles size={13} className="text-primary-500 shrink-0" />
+                    <span className="text-xs text-primary-700 dark:text-primary-300">
+                      {isPolish ? 'Oczekiwany format:' : 'Expected format:'}{' '}
+                      <span className="font-medium">{currentQuestion.expectedAnswerShape}</span>
+                    </span>
+                  </div>
+                )}
+
+                {/* AI Explain question */}
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={handleAiExplain}
+                    disabled={aiExplaining}
+                    className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors ${
+                      aiExplainResult
+                        ? 'text-violet-600 dark:text-violet-400'
+                        : 'text-slate-400 dark:text-slate-500 hover:text-violet-600 dark:hover:text-violet-400'
+                    }`}
+                  >
+                    {aiExplaining ? <Loader2 size={12} className="animate-spin" /> : <HelpCircle size={12} />}
+                    {aiExplaining
+                      ? isPolish ? 'Analizuję...' : 'Analyzing...'
+                      : aiExplainResult
+                        ? isPolish ? 'Ukryj wyjaśnienie' : 'Hide explanation'
+                        : isPolish ? 'Wyjaśnij to pytanie' : 'Explain this question'}
+                  </button>
+                )}
+
+                {/* AI Explain result */}
+                {aiExplainResult && (
+                  <div className="rounded-xl border border-violet-200/50 dark:border-violet-500/15 bg-violet-50/50 dark:bg-violet-500/5 p-4 space-y-3">
+                    <p className="text-sm text-violet-800 dark:text-violet-200 leading-relaxed">
+                      {aiExplainResult.explanation}
+                    </p>
+                    {aiExplainResult.exampleAnswers.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-500 dark:text-violet-400">
+                          {isPolish ? 'Przykładowe odpowiedzi' : 'Example answers'}
+                        </p>
+                        {aiExplainResult.exampleAnswers.map((ex, i) => (
+                          <div key={i} className="flex items-start gap-2 text-xs text-violet-700 dark:text-violet-300">
+                            <span className="shrink-0 mt-0.5 w-4 h-4 rounded-full bg-violet-500/10 flex items-center justify-center text-[9px] font-semibold text-violet-500">
+                              {i + 1}
+                            </span>
+                            <span className="leading-relaxed italic">&ldquo;{ex}&rdquo;</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-[11px] text-violet-600/70 dark:text-violet-400/70 leading-relaxed">
+                      <Sparkles size={10} className="inline mr-1 -mt-0.5" />
+                      {aiExplainResult.whyItMatters}
+                    </p>
+                  </div>
                 )}
               </div>
 
-              <h2 className="text-2xl md:text-3xl font-semibold leading-tight text-slate-900 dark:text-white">
-                {currentQuestion.questionText}
-              </h2>
+              <div className="space-y-4">
+                {renderedInput}
 
-              {/* Helper text / description */}
-              {currentQuestion.description && (
-                <p className="flex items-start gap-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                  <HelpCircle size={14} className="mt-0.5 shrink-0 text-slate-400 dark:text-slate-500" />
-                  {currentQuestion.description}
-                </p>
-              )}
-            </div>
+                {/* AI Improve answer */}
+                {!readOnly && answerDraft.trim().length >= 3 && !aiImproveResult && (
+                  <button
+                    type="button"
+                    onClick={handleAiImprove}
+                    disabled={aiImproving}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors disabled:opacity-50"
+                  >
+                    {aiImproving ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                    {aiImproving
+                      ? isPolish ? 'Ulepszam...' : 'Improving...'
+                      : isPolish ? 'Ulepsz z AI' : 'Improve with AI'}
+                  </button>
+                )}
 
-            <div className="space-y-4">
-              {renderedInput}
-
-              {/* Voice transcript approval gate */}
-              {voiceNeedsApproval && (
-                <div className="rounded-2xl border border-amber-200/70 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 px-4 py-3 space-y-2">
-                  <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                    {isPolish
-                      ? 'Sprawdź transkrypcję i zatwierdź przed kontynuacją:'
-                      : 'Review the transcript and approve before continuing:'}
-                  </p>
-                  <textarea
-                    value={voiceTranscriptDraft}
-                    onChange={(e) => setVoiceTranscriptDraft(e.target.value)}
-                    rows={3}
-                    className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
-                  />
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleApproveTranscript}
-                      aria-label={isPolish ? 'Zatwierdź transkrypcję' : 'Approve transcript'}
-                      className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-medium text-white"
-                    >
-                      <Check size={14} />
-                      {isPolish ? 'Zatwierdź transkrypcję' : 'Approve transcript'}
-                    </button>
+                {/* AI Improve result */}
+                {aiImproveResult && (
+                  <div className="rounded-xl border border-emerald-200/50 dark:border-emerald-500/15 bg-emerald-50/50 dark:bg-emerald-500/5 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
+                        {isPolish ? 'Ulepszona wersja' : 'Improved version'}
+                      </p>
+                      <span className="text-[10px] text-emerald-500/70 dark:text-emerald-400/60">
+                        <Sparkles size={9} className="inline mr-0.5 -mt-0.5" />
+                        AI
+                      </span>
+                    </div>
+                    <p className="text-sm text-emerald-800 dark:text-emerald-200 leading-relaxed whitespace-pre-wrap">
+                      {aiImproveResult.improvedText}
+                    </p>
+                    <p className="text-[11px] text-emerald-600/70 dark:text-emerald-400/60 italic">
+                      {aiImproveResult.changesSummary}
+                    </p>
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAnswerDraft(aiImproveResult.improvedText);
+                          setAiImproveResult(null);
+                          toast.success(isPolish ? 'Zastosowano ulepszoną wersję' : 'Applied improved version');
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600 transition-colors"
+                      >
+                        <Check size={12} />
+                        {isPolish ? 'Zastosuj' : 'Apply'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAiImproveResult(null)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-navy-900 transition-colors"
+                      >
+                        {isPolish ? 'Odrzuć' : 'Dismiss'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {(inputMode === 'voice_answer' || isTranscribing) && !voiceNeedsApproval && (
-                <div className="rounded-2xl border border-violet-200/70 dark:border-violet-500/20 bg-violet-50/70 dark:bg-violet-500/10 px-4 py-3 text-sm text-violet-700 dark:text-violet-300">
-                  {isTranscribing ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 size={14} className="animate-spin" />
-                      {isPolish ? 'Trwa transkrypcja nagrania...' : 'Transcribing recording...'}
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5">
-                      <Check size={14} className="text-emerald-500" />
+                {voiceNeedsApproval && (
+                  <div className="rounded-2xl border border-amber-200/70 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 px-4 py-3 space-y-2">
+                    <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
                       {isPolish
-                        ? 'Transkrypcja zatwierdzona.'
-                        : 'Transcript approved.'}
-                    </span>
-                  )}
-                </div>
-              )}
+                        ? 'Sprawdź transkrypcję i zatwierdź przed kontynuacją:'
+                        : 'Review the transcript and approve before continuing:'}
+                    </p>
+                    <textarea
+                      value={voiceTranscriptDraft}
+                      onChange={(e) => setVoiceTranscriptDraft(e.target.value)}
+                      rows={3}
+                      className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleApproveTranscript}
+                        aria-label={isPolish ? 'Zatwierdź transkrypcję' : 'Approve transcript'}
+                        className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-medium text-white"
+                      >
+                        <Check size={14} />
+                        {isPolish ? 'Zatwierdź transkrypcję' : 'Approve transcript'}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-              {currentQuestion.allowContextNote && (
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
-                    {isPolish ? 'Kontekst dodatkowy' : 'Context note'}
-                  </label>
-                  <textarea
-                    value={contextDraft}
-                    onChange={(event) => setContextDraft(event.target.value)}
-                    disabled={readOnly}
-                    rows={3}
-                    className="w-full rounded-2xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder={
-                      isPolish
-                        ? 'Dodatkowy komentarz, niuans albo wyjaśnienie do odpowiedzi'
-                        : 'Optional nuance, comment, or clarification'
-                    }
-                  />
-                </div>
-              )}
+                {(inputMode === 'voice_answer' || isTranscribing) && !voiceNeedsApproval && (
+                  <div className="rounded-2xl border border-violet-200/70 dark:border-violet-500/20 bg-violet-50/70 dark:bg-violet-500/10 px-4 py-3 text-sm text-violet-700 dark:text-violet-300">
+                    {isTranscribing ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 size={14} className="animate-spin" />
+                        {isPolish ? 'Trwa transkrypcja nagrania...' : 'Transcribing recording...'}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Check size={14} className="text-emerald-500" />
+                        {isPolish ? 'Transkrypcja zatwierdzona.' : 'Transcript approved.'}
+                      </span>
+                    )}
+                  </div>
+                )}
 
-              {/* Evidence prompt */}
-              {currentQuestion.evidencePrompt && (
-                <div className="rounded-2xl border border-sky-200/50 dark:border-sky-500/15 bg-sky-50/50 dark:bg-sky-500/5 px-4 py-3 text-sm text-sky-700 dark:text-sky-300">
-                  <Paperclip size={13} className="inline mr-1.5 -mt-0.5" />
-                  {currentQuestion.evidencePrompt}
-                </div>
-              )}
-            </div>
+                {/* Evidence prompt */}
+                {currentQuestion.evidencePrompt && (
+                  <div className="rounded-2xl border border-sky-200/50 dark:border-sky-500/15 bg-sky-50/50 dark:bg-sky-500/5 px-4 py-3 text-sm text-sky-700 dark:text-sky-300">
+                    <Paperclip size={13} className="inline mr-1.5 -mt-0.5" />
+                    {currentQuestion.evidencePrompt}
+                  </div>
+                )}
+              </div>
 
-            {/* Supporting materials */}
-            {!readOnly && (
-              <div className="space-y-3 rounded-3xl border border-slate-200/70 dark:border-navy-700/70 bg-slate-50/70 dark:bg-navy-950/40 p-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  {currentQuestion.allowVoice && (
+              {/* ── Context capture section (always visible) ── */}
+              <div className="space-y-3 rounded-2xl border border-slate-200/50 dark:border-navy-700/50 bg-slate-50/50 dark:bg-navy-950/30 p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                  {isPolish ? 'Dodatkowy kontekst' : 'Additional context'}
+                </p>
+
+                {/* Context note (always visible) */}
+                <textarea
+                  value={contextDraft}
+                  onChange={(event) => setContextDraft(event.target.value)}
+                  disabled={readOnly}
+                  rows={2}
+                  className="w-full rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-950 px-3 py-2.5 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-primary-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                  placeholder={
+                    isPolish
+                      ? 'Komentarz, niuans, wyjaśnienie do odpowiedzi...'
+                      : 'Comment, nuance, clarification for this answer...'
+                  }
+                />
+
+                {/* Action buttons row */}
+                {!readOnly && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {/* Voice recording */}
                     <button
                       type="button"
                       onClick={isRecording ? stopRecording : startRecording}
                       disabled={isTranscribing}
-                      aria-label={
+                      className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-all ${
                         isRecording
-                          ? isPolish ? 'Zakończ nagranie' : 'Stop recording'
-                          : isPolish ? 'Nagraj odpowiedź' : 'Record answer'
-                      }
-                      className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all ${
-                        isRecording
-                          ? 'bg-rose-500 text-white'
-                          : 'bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200'
+                          ? 'bg-rose-500 text-white animate-pulse'
+                          : 'border border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 hover:border-primary-300 dark:hover:border-primary-500/30'
                       }`}
                     >
-                      {isRecording ? <PauseCircle size={16} /> : <Mic size={16} />}
+                      {isRecording ? <PauseCircle size={13} /> : <Mic size={13} />}
                       {isRecording
-                        ? isPolish ? 'Zakończ nagranie' : 'Stop recording'
-                        : isPolish ? 'Nagraj odpowiedź' : 'Record answer'}
+                        ? isPolish ? 'Stop' : 'Stop'
+                        : isPolish ? 'Nagraj' : 'Record'}
                     </button>
-                  )}
 
-                  {currentQuestion.allowFileUpload && (
-                    <>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        className="hidden"
-                        onChange={handleFilePicked}
-                        aria-label={isPolish ? 'Wybierz plik' : 'Choose file'}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        aria-label={isPolish ? 'Dodaj załącznik' : 'Add attachment'}
-                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200"
-                      >
-                        <Paperclip size={16} />
-                        {isPolish ? 'Dodaj załącznik' : 'Add attachment'}
-                      </button>
-                    </>
-                  )}
+                    {/* File upload */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      onChange={handleFilePicked}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-900 px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-primary-300 dark:hover:border-primary-500/30 transition-colors"
+                    >
+                      <Paperclip size={13} />
+                      {isPolish ? 'Plik' : 'File'}
+                    </button>
 
-                  {currentQuestion.allowUrl && (
+                    {/* Link */}
                     <button
                       type="button"
                       onClick={() => setShowLinkForm((prev) => !prev)}
-                      aria-label={isPolish ? 'Dodaj link' : 'Add link'}
-                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200"
+                      className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
+                        showLinkForm
+                          ? 'border-primary-500/30 bg-primary-500/5 text-primary-600 dark:text-primary-400'
+                          : 'border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-900 text-slate-600 dark:text-slate-300 hover:border-primary-300 dark:hover:border-primary-500/30'
+                      }`}
                     >
-                      <Link2 size={16} />
-                      {isPolish ? 'Dodaj link' : 'Add link'}
+                      <Link2 size={13} />
+                      {isPolish ? 'Link' : 'Link'}
                     </button>
-                  )}
-                </div>
 
-                {showLinkForm && (
-                  <div className="grid gap-3 md:grid-cols-2">
+                    {/* Link artifact from platform */}
+                    <button
+                      type="button"
+                      onClick={() => setArtifactPopoverOpen(true)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white dark:bg-navy-900 px-3 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-violet-300 dark:hover:border-violet-500/30 transition-colors"
+                    >
+                      <Waypoints size={13} />
+                      {isPolish ? 'Artefakt' : 'Artifact'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Link form (expandable) */}
+                {showLinkForm && !readOnly && (
+                  <div className="grid gap-2 md:grid-cols-2 pt-1">
                     <input
                       type="text"
                       value={linkName}
                       onChange={(event) => setLinkName(event.target.value)}
-                      aria-label={isPolish ? 'Nazwa linku' : 'Link title'}
-                      className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
                       placeholder={isPolish ? 'Nazwa linku' : 'Link title'}
                     />
                     <input
                       type="url"
                       value={linkUrl}
                       onChange={(event) => setLinkUrl(event.target.value)}
-                      aria-label={isPolish ? 'Adres URL' : 'URL address'}
-                      className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
                       placeholder="https://"
-                    />
-                    <input
-                      type="text"
-                      value={linkDescription}
-                      onChange={(event) => setLinkDescription(event.target.value)}
-                      aria-label={isPolish ? 'Opis linku' : 'Link description'}
-                      className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3 text-sm text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary-500 md:col-span-2"
-                      placeholder={isPolish ? 'Opis opcjonalny' : 'Optional description'}
                     />
                     <div className="md:col-span-2 flex justify-end">
                       <button
                         type="button"
                         onClick={handleAddLink}
                         disabled={!linkName.trim() || !linkUrl.trim()}
-                        aria-label={isPolish ? 'Zapisz link' : 'Save link'}
-                        className="inline-flex items-center gap-2 rounded-2xl bg-primary-500 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-primary-500 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
                       >
-                        <Check size={16} />
-                        {isPolish ? 'Zapisz link' : 'Save link'}
+                        <Check size={12} />
+                        {isPolish ? 'Dodaj' : 'Add'}
                       </button>
                     </div>
                   </div>
                 )}
 
+                {/* Attached evidence chips */}
                 {currentEvidence.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {currentEvidence.slice(0, 6).map((item) => (
-                      <span
-                        key={item.id}
-                        className="inline-flex items-center gap-2 rounded-full border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300"
-                      >
-                        {item.evidenceType === 'link' ? <Link2 size={12} /> : <Paperclip size={12} />}
-                        {item.title || item.name}
-                      </span>
-                    ))}
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {currentEvidence.map((item) => {
+                      const isArtifact = item.evidenceType === 'link' && (item.url || '').startsWith('artifact://');
+                      const EvidIcon = isArtifact ? Waypoints : item.evidenceType === 'link' ? Link2 : item.evidenceType === 'voice' ? Mic : Paperclip;
+                      return (
+                        <span
+                          key={item.id}
+                          className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] ${
+                            isArtifact
+                              ? 'border-violet-200/70 dark:border-violet-500/20 bg-violet-50/50 dark:bg-violet-500/5 text-violet-600 dark:text-violet-300'
+                              : 'border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 text-slate-600 dark:text-slate-300'
+                          }`}
+                        >
+                          <EvidIcon size={10} />
+                          <span className="truncate max-w-[140px]">{item.title || item.name}</span>
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </div>
-            )}
+            </div>
           </div>
         </div>
 
         {/* Bottom action row */}
-        <div className="rounded-[28px] border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl p-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className={`shrink-0 ${
+          immersive
+            ? 'border-t border-slate-200/60 dark:border-navy-800/60 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl px-6 py-3'
+            : 'rounded-[28px] border border-slate-200/70 dark:border-navy-700/70 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl p-4'
+        }`}>
+          <div className={`flex flex-col gap-3 md:flex-row md:items-center md:justify-between ${immersive ? 'max-w-2xl mx-auto' : ''}`}>
             <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
               {hasUnsavedChanges ? (
                 <>
@@ -1292,7 +1712,11 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   onClick={() => navigateToQuestion(nextQuestion)}
                   disabled={!nextQuestion || isPersisting}
                   aria-label={isPolish ? 'Następne pytanie' : 'Next question'}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-slate-900 disabled:opacity-50"
+                  className={`inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-semibold disabled:opacity-50 ${
+                    immersive
+                      ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20 hover:bg-primary-600'
+                      : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                  }`}
                 >
                   {isPolish ? 'Następne' : 'Next'}
                   <ArrowRight size={16} />
@@ -1302,6 +1726,15 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
           </div>
         </div>
       </div>
+
+      <ArtifactAttachPopover
+        open={artifactPopoverOpen}
+        onClose={() => setArtifactPopoverOpen(false)}
+        onAttach={handleArtifactAttach}
+        searchResults={artifactSearchResults}
+        onSearch={handleArtifactSearch}
+        isPl={isPolish}
+      />
     </div>
   );
 };

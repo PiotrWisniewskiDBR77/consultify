@@ -56,6 +56,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { getNodeArtifactLinks, withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
 import {
   type CanvasToolType,
@@ -414,17 +415,31 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           });
           const mappings = (result as any)?.view_patch?.autofillMappings;
           if (Array.isArray(mappings) && mappings.length > 0) {
+            let appliedCount = 0;
+            nodesUndo.push(
+              nodes.map((n) => {
+                const mapping = mappings.find((m: any) => m.nodeId === n.id || m.rowId === n.id);
+                if (!mapping?.fields) return n;
+                const updatedData = { ...n.data };
+                for (const [key, val] of Object.entries(mapping.fields)) {
+                  if (val !== undefined && val !== null && val !== '') {
+                    updatedData[key] = val;
+                    appliedCount++;
+                  }
+                }
+                return { ...n, data: updatedData };
+              })
+            );
             toast?.success(
               isPl
-                ? `Znaleziono ${mappings.length} mapowań — zastosuj z panelu AI`
-                : `Found ${mappings.length} mappings — apply from AI panel`,
+                ? `Zastosowano ${appliedCount} pól z ${mappings.length} mapowań`
+                : `Applied ${appliedCount} fields from ${mappings.length} mappings`,
               { duration: 3000 }
             );
           } else {
-            toast?.(
-              isPl ? 'Brak mapowań do zastosowania' : 'No mappings found to apply',
-              { icon: 'ℹ️' }
-            );
+            toast?.(isPl ? 'Brak mapowań do zastosowania' : 'No mappings found to apply', {
+              icon: 'ℹ️',
+            });
           }
         } catch {
           toast?.error(isPl ? 'Autofill nie powiódł się' : 'Autofill failed');
@@ -434,18 +449,60 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         trackFunnelEvent('ideas_table_refresh_triggered', { ideaId });
         toast?.(isPl ? 'Odświeżanie danych z artefaktów...' : 'Refreshing data from artifacts...', {
           icon: '🔄',
-          duration: 1500,
+          duration: 2000,
         });
-        window.dispatchEvent(
-          new CustomEvent('idea-workspace-chat-prompt', {
-            detail: {
-              prompt: isPl
-                ? 'Odśwież dane w tabeli z powiązanych artefaktów. Pokaż co się zmieniło.'
-                : 'Refresh table data from linked artifacts. Show what changed.',
-              ideaId,
-            },
-          })
-        );
+        try {
+          const rowsWithArtifacts = nodes.filter(
+            (n) => Array.isArray(n.data?.artifactLinks) && n.data.artifactLinks.length > 0
+          );
+          if (rowsWithArtifacts.length === 0) {
+            toast?.(isPl ? 'Brak wierszy z artefaktami' : 'No rows with linked artifacts', { icon: 'ℹ️' });
+          } else {
+            const refreshResult = await Api.generateIdeaAI(ideaId, {
+              generatorType: 'ai_autofill_mappings',
+              tool: 'table',
+              context: {
+                seedText: `Refresh ${rowsWithArtifacts.length} rows from their linked artifacts`,
+                title: '',
+                existingNodes: rowsWithArtifacts.map((r) => ({
+                  id: r.id,
+                  label: r.data?.label,
+                  artifactLinks: r.data?.artifactLinks,
+                })),
+                existingEdges: [],
+                language: isPl ? 'pl' : 'en',
+              },
+            });
+            const refreshMappings = (refreshResult as any)?.view_patch?.autofillMappings;
+            if (Array.isArray(refreshMappings) && refreshMappings.length > 0) {
+              let refreshedCount = 0;
+              nodesUndo.push(
+                nodes.map((n) => {
+                  const mapping = refreshMappings.find((m: any) => m.nodeId === n.id || m.rowId === n.id);
+                  if (!mapping?.fields) return n;
+                  const updatedData = { ...n.data };
+                  for (const [key, val] of Object.entries(mapping.fields)) {
+                    if (val !== undefined && val !== null && val !== '') {
+                      updatedData[key] = val;
+                      refreshedCount++;
+                    }
+                  }
+                  return { ...n, data: updatedData };
+                })
+              );
+              toast?.success(
+                isPl
+                  ? `Odświeżono ${refreshedCount} pól`
+                  : `Refreshed ${refreshedCount} fields`,
+                { duration: 3000 }
+              );
+            } else {
+              toast?.(isPl ? 'Brak zmian do zastosowania' : 'No changes to apply', { icon: 'ℹ️' });
+            }
+          }
+        } catch {
+          toast?.error(isPl ? 'Odświeżanie nie powiodło się' : 'Refresh failed');
+        }
       }
       if (detail?.action === 'tbl_link_artifact_to_row') {
         const selectedIds = selectedRowIds;
@@ -457,12 +514,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             })
           );
         } else {
-          toast?.(
-            isPl
-              ? 'Najpierw zaznacz wiersz'
-              : 'Select a row first',
-            { icon: '🔗', duration: 2000 }
-          );
+          toast?.(isPl ? 'Najpierw zaznacz wiersz' : 'Select a row first', {
+            icon: '🔗',
+            duration: 2000,
+          });
         }
       }
     };
@@ -484,9 +539,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           ? (map.extensions as Record<string, unknown>)
           : {};
 
-      const VALID_NODE_TYPES = ['center', 'branch', 'idea', 'knowledgeCard', 'noteCard', 'evidenceCard'];
+      const VALID_NODE_TYPES = [
+        'center',
+        'branch',
+        'idea',
+        'knowledgeCard',
+        'noteCard',
+        'evidenceCard',
+      ];
       const parsedNodes: TableNode[] = nextNodes
         .map((n: any) => {
+          const normalizedNode = withNormalizedArtifactLinks(n);
           const rawType = n?.type ? String(n.type) : '';
           const inferredType = VALID_NODE_TYPES.includes(rawType)
             ? rawType
@@ -495,13 +558,22 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               : String(n?.id || '').startsWith('branch-')
                 ? 'branch'
                 : 'idea';
-          const rawData = n?.data && typeof n.data === 'object' ? n.data : {};
+          const rawData =
+            normalizedNode?.data && typeof normalizedNode.data === 'object'
+              ? normalizedNode.data
+              : {};
           const label = rawData.label || rawData.text || rawData.title || '';
           return {
-            id: String(n?.id || ''),
+            id: String(normalizedNode?.id || ''),
             type: inferredType,
-            data: { ...rawData, label },
-            position: n?.position || undefined,
+            data: {
+              ...rawData,
+              label,
+              ...(getNodeArtifactLinks(normalizedNode).length > 0
+                ? { artifactLinks: getNodeArtifactLinks(normalizedNode) }
+                : {}),
+            },
+            position: normalizedNode?.position || undefined,
           };
         })
         .filter((n) => n.id);

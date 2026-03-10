@@ -32,6 +32,12 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  PreviewActionBar,
+  PreviewMetaCard,
+  type ActionRow,
+  type MetaPill,
+} from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { sendMessageToAI } from '@/services/ai/gemini';
 import { Api } from '@/services/api';
@@ -630,73 +636,66 @@ Rules:
               const StatusIcon = statusConfig.icon;
               const isEditing = editingId === item.id;
 
+              const metaPills: MetaPill[] = [
+                {
+                  label: isPolish ? statusConfig.labelPl : statusConfig.labelEn,
+                  className: `${statusConfig.bgColor} ${statusConfig.color}`,
+                  icon: StatusIcon,
+                },
+                {
+                  label: `${item.confidenceScore || 0}/5`,
+                  className: 'border border-slate-200/70 dark:border-white/[0.08] text-slate-600 dark:text-slate-300',
+                  icon: Star,
+                },
+                ...item.tags.map((tag) => {
+                  const tagConfig = TAG_OPTIONS.find((t) => t.value === tag);
+                  return {
+                    label: tagConfig ? (isPolish ? tagConfig.labelPl : tagConfig.labelEn) : tag,
+                    className: tagConfig?.color || 'bg-slate-100 text-slate-600',
+                  };
+                }),
+              ];
+
               return (
                 <div className="space-y-4">
-                  <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.03] p-3 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="relative">
-                          <button
-                            onClick={() =>
-                              !readOnly &&
-                              setShowStatusMenu(showStatusMenu === item.id ? null : item.id)
-                            }
-                            disabled={readOnly}
-                            className={`inline-flex items-center gap-2 h-8 px-3 rounded-full ${statusConfig.bgColor} ${statusConfig.color} text-xs font-medium ${readOnly ? 'cursor-default' : 'hover:opacity-80'}`}
-                          >
-                            <StatusIcon size={13} />
-                            {isPolish ? statusConfig.labelPl : statusConfig.labelEn}
-                          </button>
-                          {renderStatusMenu(item)}
-                        </div>
-
-                        <span className="inline-flex items-center gap-1 h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.08] text-xs text-slate-600 dark:text-slate-300">
-                          <Star size={12} className="text-amber-400" />
-                          {item.confidenceScore || 0}/5
-                        </span>
-                      </div>
-
-                      {!readOnly && (
-                        <div className="relative">
-                          <button
-                            onClick={() => setShowTagMenu(showTagMenu === item.id ? null : item.id)}
-                            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-slate-200/70 dark:border-white/[0.08] text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
-                          >
-                            <Tag size={12} />
-                            {isPolish ? 'Tagi' : 'Tags'}
-                          </button>
-                          {renderTagMenu(item)}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        {isPolish ? 'Poziom pewności' : 'Confidence level'}
-                      </span>
-                      {renderConfidenceSelector(item.id, item.confidenceScore)}
-                    </div>
-
-                    {item.tags.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {item.tags.map((tag) => {
-                          const tagConfig = TAG_OPTIONS.find((t) => t.value === tag);
-                          return tagConfig ? (
-                            <span
-                              key={tag}
-                              className={`px-2 py-1 rounded-full text-xs ${tagConfig.color}`}
+                  <PreviewMetaCard pills={metaPills}>
+                    <div className="mt-2 space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        {!readOnly && (
+                          <div className="relative">
+                            <button
+                              onClick={() =>
+                                !readOnly &&
+                                setShowStatusMenu(showStatusMenu === item.id ? null : item.id)
+                              }
+                              className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                             >
-                              {isPolish ? tagConfig.labelPl : tagConfig.labelEn}
-                            </span>
-                          ) : null;
-                        })}
+                              {isPolish ? 'Zmień status' : 'Change status'}
+                            </button>
+                            {renderStatusMenu(item)}
+                          </div>
+                        )}
+                        {!readOnly && (
+                          <div className="relative">
+                            <button
+                              onClick={() => setShowTagMenu(showTagMenu === item.id ? null : item.id)}
+                              className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                            >
+                              <Tag size={12} />
+                              {isPolish ? 'Tagi' : 'Tags'}
+                            </button>
+                            {renderTagMenu(item)}
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="text-xs text-slate-400 dark:text-slate-500">
-                        {isPolish ? 'Brak tagów' : 'No tags yet'}
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                          {isPolish ? 'Poziom pewności' : 'Confidence level'}
+                        </span>
+                        {renderConfidenceSelector(item.id, item.confidenceScore)}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  </PreviewMetaCard>
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -832,62 +831,55 @@ Rules:
               }
 
               if (isEditing) {
-                return (
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      onClick={handleCancelEdit}
-                      className="px-3 py-2 text-sm text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                    >
-                      {isPolish ? 'Anuluj' : 'Cancel'}
-                    </button>
-                    <button
-                      onClick={() => handleSaveAnswer(item.id)}
-                      disabled={savingId === item.id}
-                      className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-500 disabled:bg-blue-400 disabled:cursor-wait text-white rounded-lg font-medium transition-colors flex items-center gap-2"
-                    >
-                      {savingId === item.id ? (
-                        <RefreshCw size={14} className="animate-spin" />
-                      ) : (
-                        <Check size={14} />
-                      )}
-                      {isPolish ? 'Zapisz' : 'Save'}
-                    </button>
-                  </div>
-                );
+                const editRows: ActionRow[] = [
+                  {
+                    buttons: [
+                      {
+                        label: isPolish ? 'Anuluj' : 'Cancel',
+                        onClick: handleCancelEdit,
+                        colorScheme: 'neutral',
+                      },
+                      {
+                        label: isPolish ? 'Zapisz' : 'Save',
+                        icon: savingId === item.id ? RefreshCw : Check,
+                        onClick: () => handleSaveAnswer(item.id),
+                        colorScheme: 'primary',
+                        disabled: savingId === item.id,
+                      },
+                    ],
+                  },
+                ];
+                return <PreviewActionBar rows={editRows} />;
               }
 
-              return (
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={() => handleStartEdit(item)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200/70 dark:border-white/[0.08] text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
-                  >
-                    <Edit3 size={14} />
-                    {item.answerText
-                      ? isPolish
-                        ? 'Edytuj odpowiedź'
-                        : 'Edit answer'
-                      : isPolish
-                        ? 'Dodaj odpowiedź'
-                        : 'Add answer'}
-                  </button>
-                  <button
-                    onClick={() => openChatForQuestion(item)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200/70 dark:border-white/[0.08] text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.05] transition-colors"
-                  >
-                    <MessageSquare size={14} />
-                    {isPolish ? 'Czat AI' : 'AI chat'}
-                  </button>
-                  <button
-                    onClick={() => handleAISuggest(item)}
-                    disabled={aiLoadingId === item.id}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-purple-500 text-white text-sm hover:bg-purple-600 disabled:opacity-50 transition-colors"
-                  >
-                    <Sparkles size={14} />
-                    {isPolish ? 'Wstępna propozycja AI' : 'Draft with AI'}
-                  </button>
-                </div>
-              );
+              const defaultRows: ActionRow[] = [
+                {
+                  buttons: [
+                    {
+                      label: item.answerText
+                        ? isPolish ? 'Edytuj odpowiedź' : 'Edit answer'
+                        : isPolish ? 'Dodaj odpowiedź' : 'Add answer',
+                      icon: Edit3,
+                      onClick: () => handleStartEdit(item),
+                      colorScheme: 'neutral',
+                    },
+                    {
+                      label: isPolish ? 'Czat AI' : 'AI chat',
+                      icon: MessageSquare,
+                      onClick: () => openChatForQuestion(item),
+                      colorScheme: 'neutral',
+                    },
+                    {
+                      label: isPolish ? 'Wstępna propozycja AI' : 'Draft with AI',
+                      icon: Sparkles,
+                      onClick: () => handleAISuggest(item),
+                      colorScheme: 'purple',
+                      disabled: aiLoadingId === item.id,
+                    },
+                  ],
+                },
+              ];
+              return <PreviewActionBar rows={defaultRows} />;
             }}
           >
             <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/50 bg-white/60 dark:bg-navy-900/35 overflow-hidden">

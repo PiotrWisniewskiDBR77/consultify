@@ -884,7 +884,7 @@ export const AppRoutes: React.FC = () => {
 
         {/* My Work */}
         <Route
-          path={ROUTES.MY_WORK}
+          path={`${ROUTES.MY_WORK}/*`}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['My Work']}>
               <RouteErrorBoundary>

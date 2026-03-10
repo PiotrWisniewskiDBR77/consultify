@@ -15,6 +15,14 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 
+import {
+  type ArtifactLinkRole,
+  type ArtifactType,
+  buildArtifactCode,
+  buildArtifactRef,
+  getArtifactLabel,
+} from '../../utils/artifactLinks';
+import { ArtifactAttachPopover } from '../shared/NModeBlocks/ArtifactAttachPopover';
 import { CommandPalette, useCommandPalette } from './CommandPalette';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';
@@ -22,13 +30,14 @@ import { IdeaContextPanel } from './IdeaContextPanel';
 import {
   composeIdeaBodyFromSeedIntent,
   deriveIdeaTitleFromSeedIntent,
+  IDEA_STAGE_LABELS,
   type IdeaWorkspaceCreationPayload,
   type IdeaWorkspaceSeedIntent,
-  IDEA_STAGE_LABELS,
   normalizePreferredSystem,
   normalizeStageToV5,
 } from './ideaEntryTypes';
 import { IdeaGhostCards } from './IdeaGhostCards';
+import { IdeaExportMenu } from './IdeaExportMenu';
 import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDrawer';
 import { IdeaPinnedCard, type IdeaPinnedCardData } from './IdeaPinnedCard';
 import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
@@ -49,8 +58,6 @@ import { IdeaWhiteboardTool } from './IdeaWhiteboardTool';
 import { IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
 import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
 import type { MyIdea } from './MyIdeasListContent';
-import { ArtifactAttachPopover } from '../shared/NModeBlocks/ArtifactAttachPopover';
-import type { ArtifactLinkRole, ArtifactType } from '../../utils/artifactLinks';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { countNodesByFamily, type ObjectFamily } from './superCanvasTypes';
@@ -207,6 +214,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [graphNodes, setGraphNodes] = useState<any[]>([]);
   const [graphEdges, setGraphEdges] = useState<any[]>([]);
   const [graphLanes, setGraphLanes] = useState<any[]>([]);
+  const graphNodesRef = useRef<any[]>([]);
+  const graphEdgesRef = useRef<any[]>([]);
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
   const [nodeDetailOpen, setNodeDetailOpen] = useState(false);
   const [nodeDetailId, setNodeDetailId] = useState<string>('');
@@ -229,8 +238,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   // V51-30: Artifact attach popover state
   const [artifactPopoverOpen, setArtifactPopoverOpen] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [artifactSearchResults, setArtifactSearchResults] = useState<
-    Array<{ type: ArtifactType; id: string; title: string; status?: string; owner?: string }>
+    Array<{
+      type: ArtifactType;
+      id: string;
+      title: string;
+      status?: string;
+      owner?: string;
+      artifactIndex?: string;
+      ref?: string;
+    }>
   >([]);
 
   const [internalActiveTool, setInternalActiveTool] = useState<CanvasToolType>(
@@ -840,31 +858,46 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   // ── V5-IDEA-16: Persist surface state on unmount ───────────────────────────
   const lastViewportRef = React.useRef<{ x: number; y: number; zoom: number } | null>(null);
+  const latestSurfaceStateRef = useRef<Record<string, unknown>>({});
   const handleViewportReport = useCallback((vp: { x: number; y: number; zoom: number }) => {
     lastViewportRef.current = vp;
   }, []);
 
   useEffect(() => {
+    graphNodesRef.current = graphNodes;
+  }, [graphNodes]);
+
+  useEffect(() => {
+    graphEdgesRef.current = graphEdges;
+  }, [graphEdges]);
+
+  useEffect(() => {
+    latestSurfaceStateRef.current = {
+      focusMode,
+      focusObjectId: focusObjectId || null,
+      activeTool,
+      selectedNodeIds: selection.ids || [],
+    };
+  }, [activeTool, focusMode, focusObjectId, selection.ids]);
+
+  useEffect(() => {
     return () => {
       if (!realId || isDraft) return;
-      const surfaceState: Record<string, unknown> = {
-        focusMode,
-        focusObjectId: focusObjectId || null,
-        activeTool,
-        selectedNodeIds: selection.ids || [],
-      };
+      const surfaceState: Record<string, unknown> = { ...latestSurfaceStateRef.current };
       if (lastViewportRef.current) {
         surfaceState.viewport = lastViewportRef.current;
       }
       try {
         Api.saveMyIdeaMap(realId, {
+          nodes: graphNodesRef.current,
+          edges: graphEdgesRef.current,
           extensions: { surfaceState },
         }).catch(() => {});
       } catch {
         /* best-effort */
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isDraft, realId]);
 
   // ── Chat ────────────────────────────────────────────────────────────────────
   const openChat = useCallback(
@@ -1097,7 +1130,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   handleConvertRef.current = handleConvert;
 
   // ── V51-30: Artifact attach handlers ──────────────────────────────────────
-  const artifactCacheRef = useRef<Array<{ type: ArtifactType; id: string; title: string; status?: string }> | null>(null);
+  const artifactCacheRef = useRef<Array<{
+    type: ArtifactType;
+    id: string;
+    title: string;
+    status?: string;
+    owner?: string;
+    artifactIndex?: string;
+    ref?: string;
+  }> | null>(null);
 
   const handleArtifactSearch = useCallback(
     async (query: string) => {
@@ -1108,26 +1149,115 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       let cache = artifactCacheRef.current;
       if (!cache) {
         try {
-          const all: Array<{ type: ArtifactType; id: string; title: string; status?: string }> = [];
-          const [initiatives, tasks, decisions] = await Promise.allSettled([
-            Api.getInitiatives?.(),
-            Api.getMyTasks?.(),
-            Api.getDecisions?.(),
-          ]);
+          const all: Array<{
+            type: ArtifactType;
+            id: string;
+            title: string;
+            status?: string;
+            owner?: string;
+            artifactIndex?: string;
+            ref?: string;
+          }> = [];
+          const [initiatives, tasks, decisions, notebookPages, analyses, meetings, tools] =
+            await Promise.allSettled([
+              Api.getInitiatives?.(),
+              Api.getTasks?.(),
+              Api.getDecisions?.(),
+              Api.getNotebookPages?.({ limit: 100 }),
+              Api.getDigitizationAnalyses?.({ pageSize: 100 }),
+              Api.getMeetings?.(),
+              Api.listToolSessions?.({ limit: 100 }),
+            ]);
+          const pushArtifact = (
+            type: ArtifactType,
+            id: unknown,
+            title: unknown,
+            extra?: { status?: unknown; owner?: unknown }
+          ) => {
+            const safeId = String(id || '').trim();
+            const safeTitle = String(title || '').trim();
+            if (!safeId || !safeTitle) return;
+            all.push({
+              type,
+              id: safeId,
+              title: safeTitle,
+              status: extra?.status ? String(extra.status) : undefined,
+              owner: extra?.owner ? String(extra.owner) : undefined,
+              artifactIndex: buildArtifactCode(type, safeId),
+              ref: buildArtifactRef(type, safeId),
+            });
+          };
           if (initiatives.status === 'fulfilled' && Array.isArray(initiatives.value)) {
             initiatives.value.forEach((i: any) =>
-              all.push({ type: 'initiative' as ArtifactType, id: i.id, title: i.title || i.name || '', status: i.status })
+              pushArtifact('initiative', i.id, i.title || i.name, {
+                status: i.status,
+                owner: i.ownerName || i.owner,
+              })
             );
           }
           if (tasks.status === 'fulfilled') {
-            const arr = Array.isArray(tasks.value) ? tasks.value : (tasks.value as any)?.tasks || [];
+            const arr = Array.isArray(tasks.value)
+              ? tasks.value
+              : (tasks.value as any)?.tasks || [];
             arr.forEach((t: any) =>
-              all.push({ type: 'task' as ArtifactType, id: t.id, title: t.title || t.name || '', status: t.status })
+              pushArtifact('task', t.id, t.title || t.name, {
+                status: t.status,
+                owner: t.ownerName || t.assigneeName || t.owner,
+              })
             );
           }
           if (decisions.status === 'fulfilled' && Array.isArray(decisions.value)) {
             decisions.value.forEach((d: any) =>
-              all.push({ type: 'decision' as ArtifactType, id: d.id, title: d.title || d.name || '', status: d.status })
+              pushArtifact('decision', d.id, d.title || d.name, {
+                status: d.status,
+                owner: d.ownerName || d.owner,
+              })
+            );
+          }
+          if (notebookPages.status === 'fulfilled' && Array.isArray(notebookPages.value)) {
+            notebookPages.value.forEach((page: any) =>
+              pushArtifact('notebook', page.id, page.title || page.name, {
+                status: page.status,
+                owner: page.ownerName || page.authorName,
+              })
+            );
+          }
+          if (analyses.status === 'fulfilled') {
+            const arr = Array.isArray(analyses.value)
+              ? analyses.value
+              : (analyses.value as any)?.items || [];
+            arr.forEach((analysis: any) =>
+              pushArtifact('analysis', analysis.id, analysis.name || analysis.title, {
+                status: analysis.status,
+                owner: analysis.ownerName || analysis.owner,
+              })
+            );
+          }
+          if (meetings.status === 'fulfilled') {
+            const arr = Array.isArray(meetings.value)
+              ? meetings.value
+              : (meetings.value as any)?.meetings || [];
+            arr.forEach((meeting: any) =>
+              pushArtifact(
+                'meeting',
+                meeting.id,
+                meeting.title || meeting.name || meeting.subject,
+                {
+                  status: meeting.status,
+                  owner: meeting.ownerName || meeting.organizerName || meeting.owner,
+                }
+              )
+            );
+          }
+          if (tools.status === 'fulfilled') {
+            const arr = Array.isArray((tools.value as any)?.items)
+              ? (tools.value as any).items
+              : [];
+            arr.forEach((tool: any) =>
+              pushArtifact('tool', tool.id, tool.name || tool.title || tool.toolType, {
+                status: tool.status,
+                owner: tool.createdBy,
+              })
             );
           }
           cache = all;
@@ -1139,31 +1269,35 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       }
       const q = query.toLowerCase();
       setArtifactSearchResults(
-        cache.filter((a) => a.title.toLowerCase().includes(q) || a.type.includes(q)).slice(0, 15)
+        cache
+          .filter((a) => {
+            const code = a.artifactIndex || buildArtifactCode(a.type, a.id);
+            const ref = a.ref || buildArtifactRef(a.type, a.id);
+            const typeLabel = getArtifactLabel(a.type, i18n.language);
+            const haystack = [a.title, a.type, typeLabel, code, ref, a.status || '', a.owner || '']
+              .join(' ')
+              .toLowerCase();
+            return haystack.includes(q);
+          })
+          .slice(0, 15)
       );
     },
-    []
+    [i18n.language]
   );
 
   const handleArtifactAttach = useCallback(
-    async (
-      ref: { type: ArtifactType; id: string; title: string },
-      role: ArtifactLinkRole
-    ) => {
+    async (ref: { type: ArtifactType; id: string; title: string }, role: ArtifactLinkRole) => {
       const objectId = selection.ids?.[0];
       if (!objectId || isDraft) return;
       try {
         await Api.attachArtifactToObject(realId, objectId, {
           artifactRef: { type: ref.type, id: ref.id },
+          artifactIndex: buildArtifactCode(ref.type, ref.id),
           label: ref.title,
           linkRole: role,
         });
         setMapRefreshToken((v) => v + 1);
-        toast.success(
-          isPolish
-            ? `Dołączono: ${ref.title}`
-            : `Attached: ${ref.title}`
-        );
+        toast.success(isPolish ? `Dołączono: ${ref.title}` : `Attached: ${ref.title}`);
         trackFunnelEvent('ideas_artifact_attached', {
           ideaId: realId,
           objectId,
@@ -1276,6 +1410,30 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     window.addEventListener('idea-workspace-attach-knowledge', handler);
     return () => window.removeEventListener('idea-workspace-attach-knowledge', handler);
   }, [realId]);
+
+  // V51-19: Interview insight -> Idea evidence listener
+  useEffect(() => {
+    const handler = async (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail?.id || !detail?.type || isDraft || !realId) return;
+      const objectId = selection.ids?.[0] || graphNodes?.[0]?.id;
+      if (!objectId) return;
+      try {
+        await Api.attachArtifactToObject(realId, objectId, {
+          artifactRef: { type: detail.type === 'insight' ? 'interview' : detail.type, id: detail.id },
+          artifactIndex: `INT-${detail.id}`,
+          label: detail.title || 'Interview insight',
+          linkRole: 'evidence',
+        });
+        setMapRefreshToken((v) => v + 1);
+        toast.success(isPolish ? 'Dodano dowód z wywiadu' : 'Interview evidence attached');
+      } catch {
+        toast.error(isPolish ? 'Nie udało się dołączyć' : 'Failed to attach');
+      }
+    };
+    window.addEventListener('interview-attach-to-idea', handler);
+    return () => window.removeEventListener('interview-attach-to-idea', handler);
+  }, [isDraft, isPolish, realId, selection.ids, graphNodes]);
 
   const handleDrillUp = useCallback((toIndex: number) => {
     setDrillDownStack((prev) => prev.slice(0, toIndex));
@@ -1460,13 +1618,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           }}
           focusMode={focusMode}
           familyCounts={familyCounts}
-          onExport={() => {
-            window.dispatchEvent(
-              new CustomEvent('idea-workspace-export', {
-                detail: { ideaId: realId, tool: activeTool },
-              })
-            );
-          }}
+          onExport={() => setShowExportMenu(true)}
         />
 
         {/* Proposal review overlay */}
@@ -1722,6 +1874,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       <KeyboardShortcutsHelp
         isOpen={shortcutsHelpOpen}
         onClose={() => setShortcutsHelpOpen(false)}
+      />
+
+      <IdeaExportMenu
+        open={showExportMenu}
+        onClose={() => setShowExportMenu(false)}
+        ideaId={realId}
+        title={title || ''}
+        graphNodes={graphNodes || []}
+        graphEdges={graphEdges || []}
       />
     </div>
   );

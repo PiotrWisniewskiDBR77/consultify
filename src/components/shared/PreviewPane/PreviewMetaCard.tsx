@@ -1,4 +1,3 @@
-import type { LucideIcon } from 'lucide-react';
 import React from 'react';
 
 import { PREVIEW_META_PILL } from './previewStyles';
@@ -6,7 +5,7 @@ import { PREVIEW_META_PILL } from './previewStyles';
 export interface MetaPill {
   label: string;
   className?: string;
-  icon?: LucideIcon;
+  icon?: React.ElementType;
   dot?: string;
 }
 

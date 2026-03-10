@@ -10,6 +10,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import type { ArtifactLinkRole, ArtifactType } from '../../../utils/artifactLinks';
 import {
   ARTIFACT_IDENTITY,
+  buildArtifactCode,
   getArtifactLabel,
   parseArtifactRef,
 } from '../../../utils/artifactLinks';
@@ -221,7 +222,8 @@ export const ArtifactAttachPopover: React.FC<ArtifactAttachPopoverProps> = ({
                     {result.title}
                   </div>
                   <div className="text-[8px] text-slate-400">
-                    {getArtifactLabel(result.type, isPl ? 'pl' : 'en')}
+                    {getArtifactLabel(result.type, isPl ? 'pl' : 'en')} ·{' '}
+                    {buildArtifactCode(result.type, result.id)}
                     {result.status ? ` · ${result.status}` : ''}
                     {result.owner ? ` · ${result.owner}` : ''}
                   </div>

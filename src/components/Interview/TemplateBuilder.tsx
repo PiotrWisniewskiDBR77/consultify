@@ -84,6 +84,8 @@ interface TemplateQuestion {
   allowFileUpload?: boolean;
   allowUrl?: boolean;
   allowContextNote?: boolean;
+  description?: string;
+  evidencePrompt?: string;
   // UI state
   isNew?: boolean;
   isEditing?: boolean;
@@ -111,7 +113,7 @@ interface Template {
 }
 
 type QuestionCategory = 'strategy' | 'operations' | 'digital' | 'people' | 'finance';
-type AnswerType = 'open' | 'select' | 'scale' | 'boolean' | 'number';
+type AnswerType = 'open' | 'select' | 'scale' | 'boolean' | 'number' | 'date' | 'dropdown';
 type TemplateCategory =
   | 'DIGITAL'
   | 'OPERATIONAL'
@@ -145,6 +147,8 @@ const ANSWER_TYPES: { id: AnswerType; labelPl: string; labelEn: string }[] = [
   { id: 'scale', labelPl: 'Skala', labelEn: 'Scale' },
   { id: 'boolean', labelPl: 'Tak/Nie', labelEn: 'Yes/No' },
   { id: 'number', labelPl: 'Liczba', labelEn: 'Number' },
+  { id: 'date', labelPl: 'Data', labelEn: 'Date' },
+  { id: 'dropdown', labelPl: 'Lista rozwijana', labelEn: 'Dropdown' },
 ];
 
 const RUNTIME_MODE_OPTIONS: { id: RuntimeModeDefault; labelPl: string; labelEn: string }[] = [
@@ -158,7 +162,7 @@ const RUNTIME_MODE_OPTIONS: { id: RuntimeModeDefault; labelPl: string; labelEn: 
 
 const normalizeAnswerType = (value: unknown): AnswerType => {
   const raw = String(value || 'open').trim().toLowerCase();
-  return ['open', 'select', 'scale', 'boolean', 'number'].includes(raw)
+  return ['open', 'select', 'scale', 'boolean', 'number', 'date', 'dropdown'].includes(raw)
     ? (raw as AnswerType)
     : 'open';
 };
@@ -354,6 +358,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
             q.allowContextNote !== undefined || q.allow_context_note !== undefined
               ? Boolean(q.allowContextNote ?? q.allow_context_note)
               : true,
+          description: q.description || '',
+          evidencePrompt: q.evidencePrompt || q.evidence_prompt || '',
         }))
       );
     } catch (error) {
@@ -476,7 +482,12 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   }, []);
 
   // Validation
-  const validate = useCallback(() => {
+  const validate = useCallback((): {
+    isValid: boolean;
+    errors: Record<string, string>;
+    firstInvalidQuestion: { id: string; message: string } | null;
+    firstMessage: string;
+  } => {
     const newErrors: Record<string, string> = {};
     let firstInvalidQuestion:
       | { id: string; message: string }
@@ -526,7 +537,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       errors: newErrors,
       firstInvalidQuestion,
       firstMessage:
-        firstInvalidQuestion?.message ||
+        (firstInvalidQuestion as { id: string; message: string } | null)?.message ||
         newErrors.name ||
         newErrors.questions ||
         (isPolish ? 'Popraw błędy w formularzu' : 'Fix form errors'),
@@ -552,6 +563,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
       allowFileUpload: true,
       allowUrl: true,
       allowContextNote: true,
+      description: '',
+      evidencePrompt: '',
       isNew: true,
       isEditing: true,
     };
@@ -668,6 +681,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
               allowFileUpload: !!question.allowFileUpload,
               allowUrl: !!question.allowUrl,
               allowContextNote: question.allowContextNote !== false,
+              description: question.description || '',
+              evidencePrompt: question.evidencePrompt || '',
             };
 
             if (question.isNew) {
@@ -761,7 +776,7 @@ JSON schema:
     {
       "category": "strategy|operations|digital|people|finance",
       "questionText": "string",
-      "answerType": "open|select|scale|boolean|number",
+      "answerType": "open|select|scale|boolean|number|date|dropdown",
       "isRequired": true,
       "helpHint": "string",
       "expectedAnswerShape": "string",
@@ -769,7 +784,9 @@ JSON schema:
       "allowVoice": true,
       "allowFileUpload": true,
       "allowUrl": true,
-      "allowContextNote": true
+      "allowContextNote": true,
+      "description": "string",
+      "evidencePrompt": "string"
     }
   ]
 }
@@ -844,6 +861,8 @@ ${importedSourceText.trim() || '(none)'}`;
           allowFileUpload: item.allowFileUpload !== false,
           allowUrl: item.allowUrl !== false,
           allowContextNote: item.allowContextNote !== false,
+          description: String(item.description || '').trim(),
+          evidencePrompt: String(item.evidencePrompt || '').trim(),
           isNew: true,
           isEditing: false,
         };
@@ -951,6 +970,8 @@ ${importedSourceText.trim() || '(none)'}`;
           helpHint: String(question.helpHint || ''),
           expectedAnswerShape: String(question.expectedAnswerShape || ''),
           answerOptions: Array.isArray(question.answerOptions) ? question.answerOptions : [],
+          description: String(question.description || ''),
+          evidencePrompt: String(question.evidencePrompt || ''),
           modalities: {
             voice: question.allowVoice !== false,
             attachments: question.allowFileUpload !== false,
@@ -996,7 +1017,7 @@ Schema:
   "add": [
     {
       "questionText": "string",
-      "answerType": "open|select|scale|boolean|number",
+      "answerType": "open|select|scale|boolean|number|date|dropdown",
       "isRequired": true,
       "helpHint": "string",
       "expectedAnswerShape": "string",
@@ -1005,6 +1026,8 @@ Schema:
       "allowFileUpload": true,
       "allowUrl": true,
       "allowContextNote": true,
+      "description": "string",
+      "evidencePrompt": "string",
       "rationale": "string"
     }
   ],
@@ -1012,7 +1035,7 @@ Schema:
     {
       "questionId": "string",
       "questionText": "string",
-      "answerType": "open|select|scale|boolean|number",
+      "answerType": "open|select|scale|boolean|number|date|dropdown",
       "isRequired": true,
       "helpHint": "string",
       "expectedAnswerShape": "string",
@@ -1021,6 +1044,8 @@ Schema:
       "allowFileUpload": true,
       "allowUrl": true,
       "allowContextNote": true,
+      "description": "string",
+      "evidencePrompt": "string",
       "rationale": "string"
     }
   ],
@@ -1084,6 +1109,8 @@ ${sourceText || '(none)'}`;
             allowFileUpload: item.allowFileUpload !== false,
             allowUrl: item.allowUrl !== false,
             allowContextNote: item.allowContextNote !== false,
+            description: String(item.description || '').trim(),
+            evidencePrompt: String(item.evidencePrompt || '').trim(),
             rationale: String(item.rationale || '').trim(),
           }))
           .filter((item) => item.questionText.length > 0)
@@ -1116,6 +1143,8 @@ ${sourceText || '(none)'}`;
               allowUrl: item.allowUrl !== undefined ? item.allowUrl !== false : undefined,
               allowContextNote:
                 item.allowContextNote !== undefined ? item.allowContextNote !== false : undefined,
+              description: item.description !== undefined ? String(item.description || '').trim() : undefined,
+              evidencePrompt: item.evidencePrompt !== undefined ? String(item.evidencePrompt || '').trim() : undefined,
               rationale: String(item.rationale || '').trim(),
             };
           })
@@ -1132,6 +1161,8 @@ ${sourceText || '(none)'}`;
               item.allowFileUpload,
               item.allowUrl,
               item.allowContextNote,
+              item.description,
+              item.evidencePrompt,
             ].some((value) => value !== undefined)
           )
           .slice(0, 12);
@@ -1316,6 +1347,12 @@ ${sourceText || '(none)'}`;
             ...(proposedUpdate.allowContextNote !== undefined
               ? { allowContextNote: proposedUpdate.allowContextNote !== false }
               : {}),
+            ...(proposedUpdate.description !== undefined
+              ? { description: proposedUpdate.description }
+              : {}),
+            ...(proposedUpdate.evidencePrompt !== undefined
+              ? { evidencePrompt: proposedUpdate.evidencePrompt }
+              : {}),
           };
         });
 
@@ -1337,6 +1374,8 @@ ${sourceText || '(none)'}`;
         allowFileUpload: item.allowFileUpload !== false,
         allowUrl: item.allowUrl !== false,
         allowContextNote: item.allowContextNote !== false,
+        description: String(item.description || '').trim(),
+        evidencePrompt: String(item.evidencePrompt || '').trim(),
         isNew: true,
         isEditing: false,
       }));
@@ -2381,6 +2420,36 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                   : 'Additional guidance for respondent...'
               }
               className={fieldClassName}
+            />
+          </div>
+
+          {/* Description / helper text */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              {isPolish ? 'Opis / tekst pomocniczy' : 'Description / helper text'}
+            </label>
+            <textarea
+              value={question.description || ''}
+              onChange={(e) => onUpdate({ description: e.target.value })}
+              disabled={readOnly}
+              rows={2}
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 resize-none focus:outline-none focus:ring-1 focus:ring-primary-500"
+              placeholder={isPolish ? 'Dodatkowy kontekst wyświetlany pod pytaniem...' : 'Additional context shown below the question...'}
+            />
+          </div>
+
+          {/* Evidence prompt */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+              {isPolish ? 'Zachęta do dowodów' : 'Evidence prompt'}
+            </label>
+            <input
+              type="text"
+              value={question.evidencePrompt || ''}
+              onChange={(e) => onUpdate({ evidencePrompt: e.target.value })}
+              disabled={readOnly}
+              className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              placeholder={isPolish ? 'np. Załącz raport lub link do dokumentacji' : 'e.g. Attach a report or link to documentation'}
             />
           </div>
 

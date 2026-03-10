@@ -97,7 +97,7 @@ function main(): void {
   // C03: Evidence composer
   checks.push({
     name: 'V6-C03 File/link/context note support',
-    pass: includesAll(runtime, ['allowFileUpload', 'allowUrl', 'allowContextNote', 'handleFilePicked', 'handleAddLink']),
+    pass: includesAll(runtime, ['handleFilePicked', 'handleAddLink', 'contextDraft', 'fileInputRef', 'showLinkForm']),
   });
   checks.push({
     name: 'V6-C03 Evidence prompt display',
@@ -106,6 +106,26 @@ function main(): void {
   checks.push({
     name: 'V6-C03 Helper text display',
     pass: includesAll(runtime, ['description', 'HelpCircle']),
+  });
+
+  // C03b: AI Improve + AI Explain in runtime
+  checks.push({
+    name: 'V6-C03 AI Improve answer in runtime',
+    pass: includesAll(runtime, ['handleAiImprove', 'aiImproveResult', 'ai-improve']),
+  });
+  checks.push({
+    name: 'V6-C03 AI Explain question in runtime',
+    pass: includesAll(runtime, ['handleAiExplain', 'aiExplainResult', 'ai-explain']),
+  });
+
+  // C03c: AI Improve + AI Explain backend endpoints
+  checks.push({
+    name: 'V6-C03 AI Improve endpoint exists',
+    pass: controller.includes('aiImproveAnswer') && read(root, 'server/src/routes/interview.routes.ts').includes('ai-improve'),
+  });
+  checks.push({
+    name: 'V6-C03 AI Explain endpoint exists',
+    pass: controller.includes('aiExplainQuestion') && read(root, 'server/src/routes/interview.routes.ts').includes('ai-explain'),
   });
 
   // C04: Reviewer mode
@@ -148,6 +168,17 @@ function main(): void {
     pass: includesAll(controller, ['link_graph_edges', 'interview_evidence', 'created_from']),
   });
 
+  // D04: Retrieval over interview knowledge
+  checks.push({
+    name: 'V6-D04 searchInterviewKnowledge handler',
+    pass: controller.includes('searchInterviewKnowledge'),
+  });
+  const interviewRoutes = read(root, 'server/src/routes/interview.routes.ts');
+  checks.push({
+    name: 'V6-D04 knowledge/search route registered',
+    pass: interviewRoutes.includes('/knowledge/search'),
+  });
+
   // ── WS-E: Insights ────────────────────────────────────────────────────────
 
   const insightViewer = read(root, 'src/components/Interview/InsightViewer.tsx');
@@ -173,6 +204,20 @@ function main(): void {
     name: 'V6-E03 Evidence map with drilldown',
     pass: includesAll(insightViewer, ['evidenceMap', 'evidence_refs']),
     details: insightViewer.includes('evidenceMap') ? undefined : 'evidenceMap not found',
+  });
+
+  // E04: Multi-session aggregation
+  checks.push({
+    name: 'V6-E04 buildV6Prompt handles multi-session',
+    pass: insightService.includes('CROSS-SESSION') || insightService.includes('cross_session_pattern'),
+  });
+  checks.push({
+    name: 'V6-E04 crossSessionPattern in types/parsing',
+    pass: insightService.includes('crossSessionPattern'),
+  });
+  checks.push({
+    name: 'V6-E04 multi-session link graph edges',
+    pass: controller.includes('sessionIds') && controller.includes('created_from'),
   });
 
   // ── WS-F: Library & Delivery ──────────────────────────────────────────────
@@ -203,6 +248,66 @@ function main(): void {
       pass: includesAll(guide, ['ANSWER_MODALITY_RULES', 'buildAIGenerationPromptPack', 'QUESTION_FAMILY_MODALITY_MAP']),
     });
   }
+
+  // ── WS-B: Template Lifecycle ────────────────────────────────────────────
+
+  // B05: Archive / restore
+  checks.push({
+    name: 'V6-B05 Archive template handler exists',
+    pass: controller.includes('archiveTemplate'),
+  });
+  checks.push({
+    name: 'V6-B05 Restore template handler exists',
+    pass: controller.includes('restoreTemplate'),
+  });
+  const routesFile = read(root, 'server/src/routes/interview.routes.ts');
+  checks.push({
+    name: 'V6-B05 Archive/restore routes registered',
+    pass: routesFile.includes('/archive') && routesFile.includes('/restore'),
+  });
+
+  // ── WS-B: Templates Studio ────────────────────────────────────────────────
+
+  // B04: Question quality evaluator
+  const qualityRules = read(root, 'server/src/services/interviewQuestionQualityRules.ts');
+  checks.push({
+    name: 'V6-B04 Question quality evaluator service exists',
+    pass: qualityRules.includes('evaluateQuestionQuality') && qualityRules.includes('calculateQuestionScore'),
+  });
+  checks.push({
+    name: 'V6-B04 Quality rules cover key patterns',
+    pass: includesAll(qualityRules, ['too_short', 'double_barreled', 'leading', 'missing_options', 'vague']),
+  });
+
+  // V6-B01: Templates Hub redesign — cards view
+  const hubSrc = read(root, 'src/components/Interview/InterviewHub.tsx');
+  checks.push({
+    name: 'V6-B01 Templates cards view exists',
+    pass: hubSrc.includes('renderTemplatesCards') && hubSrc.includes('templatesViewMode'),
+  });
+  checks.push({
+    name: 'V6-B01 View toggle (cards/table)',
+    pass: hubSrc.includes('LayoutGrid') || hubSrc.includes("'cards'"),
+  });
+
+  // V6-B02: AI brief -> draft template flow
+  const builderSrc = read(root, 'src/components/Interview/TemplateBuilder.tsx');
+  checks.push({
+    name: 'V6-B02 AI generate template from brief',
+    pass: builderSrc.includes('handleGenerateWithAI') && builderSrc.includes('sendMessageToAI'),
+  });
+
+  // V6-B03: Builder workspace layout
+  checks.push({
+    name: 'V6-B03 Builder has left panel + questions DnD',
+    pass: builderSrc.includes('DndContext') && builderSrc.includes('SortableContext') && builderSrc.includes('w-[300px]'),
+  });
+
+  // V6-B05: Lifecycle — evaluate-quality route
+  checks.push({
+    name: 'V6-B05 evaluate-quality route registered',
+    pass: interviewRoutes.includes('evaluate-quality'),
+  });
 
   // ── Migration integrity ───────────────────────────────────────────────────
   checks.push({

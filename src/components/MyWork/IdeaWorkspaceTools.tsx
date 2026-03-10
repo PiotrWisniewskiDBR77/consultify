@@ -1822,20 +1822,13 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
             </div>
           )}
           <div className="grid grid-cols-1 gap-1.5">
-            {convertActions.map(
+            {convertActions.filter(({ id }) => supportedConvertTargets.has(id)).map(
               ({ id, icon: Icon, labelPl, labelEn, descPl, descEn, gradient, textColor }) => (
                 <button
                   key={id}
                   onClick={() => onConvert(id)}
-                  disabled={isDraft || !supportedConvertTargets.has(id)}
+                  disabled={isDraft}
                   className="group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md disabled:opacity-40"
-                  title={
-                    supportedConvertTargets.has(id)
-                      ? undefined
-                      : isPl
-                        ? 'Jeszcze niedostępne w mapie idei'
-                        : 'Not yet available for idea maps'
-                  }
                 >
                   <div
                     className={`absolute inset-0 bg-gradient-to-br ${gradient} group-hover:opacity-150 transition-opacity`}
@@ -1851,13 +1844,7 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
                       {isPl ? labelPl : labelEn}
                     </div>
                     <div className="text-[9px] text-slate-400 dark:text-slate-500">
-                      {supportedConvertTargets.has(id)
-                        ? isPl
-                          ? descPl
-                          : descEn
-                        : isPl
-                          ? 'Wkrótce. Ukryte do czasu realnego wsparcia end-to-end.'
-                          : 'Coming soon. Hidden until end-to-end support is real.'}
+                      {isPl ? descPl : descEn}
                     </div>
                   </div>
                 </button>

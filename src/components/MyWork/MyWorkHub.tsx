@@ -54,7 +54,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   type WorkspacePanelKey,
@@ -62,6 +62,7 @@ import {
 } from '@/components/shared/WorkspacePanelStrip';
 import { useUserCan } from '@/hooks/useUserCan';
 import { useAppStore } from '@/store/useAppStore';
+import { getArtifactPath } from '@/utils/artifactLinks';
 
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
 import type { FocusFilter, FocusItem, FocusSort } from './Focus/FocusView';
@@ -269,6 +270,62 @@ function getInitialMyWorkTab(searchParams: URLSearchParams, canViewExecutive: bo
   return canViewExecutive ? 'executive' : 'focus';
 }
 
+function parseMyWorkPathIntent(
+  pathname: string,
+  isPolish: boolean
+): { tab: ModuleTab; doc?: OpenDocument } | null {
+  const normalized = pathname.replace(/\/+$/, '');
+  if (!normalized.startsWith('/my-work')) return null;
+  const segments = normalized.split('/').filter(Boolean);
+  if (segments.length < 2) return null;
+
+  if (segments[1] === 'ideas' && segments[2]) {
+    const ideaId = decodeURIComponent(segments[2]);
+    return {
+      tab: 'ideas',
+      doc: {
+        id: ideaId,
+        type: 'idea',
+        name: isPolish ? 'Pomysł' : 'Idea',
+        status: 'idea',
+        data: { openMap: segments[3] === 'workspace' },
+      },
+    };
+  }
+
+  if (segments[1] === 'tasks' && segments[2]) {
+    return {
+      tab: 'tasks',
+      doc: {
+        id: decodeURIComponent(segments[2]),
+        type: 'task',
+        name: isPolish ? 'Zadanie' : 'Task',
+        status: 'todo',
+      },
+    };
+  }
+
+  if (segments[1] === 'decisions' && segments[2]) {
+    return {
+      tab: 'decisions',
+      doc: {
+        id: decodeURIComponent(segments[2]),
+        type: 'decision',
+        name: isPolish ? 'Decyzja' : 'Decision',
+        status: 'pending',
+      },
+    };
+  }
+
+  if (segments[1] === 'ideas') return { tab: 'ideas' };
+  if (segments[1] === 'tasks') return { tab: 'tasks' };
+  if (segments[1] === 'decisions') return { tab: 'decisions' };
+  if (segments[1] === 'notebook') return { tab: 'notebook' };
+  if (segments[1] === 'inbox') return { tab: 'inbox' };
+
+  return null;
+}
+
 // Shared button styles (KANON v3): pill buttons, h-9, hover = bg-only.
 // SSOT: docs/ui-standards/00-foundation/visual-language.md (8.3) + UI_UX_CANON_V3.md (buttons).
 const BUTTON_BASE = `
@@ -348,6 +405,7 @@ interface MyWorkHubProps {
 export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     currentUser,
@@ -754,16 +812,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     const handler = (e: Event) => {
       const { type, id, name } = (e as CustomEvent).detail || {};
       if (!type || !id) return;
-      if (type === 'initiative') {
-        navigate(`/initiatives?open=${encodeURIComponent(id)}&mode=doc`);
-        return;
-      }
-      if (type === 'report') {
-        navigate(`/reports/builder/${encodeURIComponent(id)}`);
-        return;
-      }
-      if (type === 'presentation') {
-        navigate(`/presentations/builder/${encodeURIComponent(id)}`);
+      if (
+        [
+          'initiative',
+          'report',
+          'presentation',
+          'meeting',
+          'financial_model',
+          'budget',
+          'valuation',
+          'analysis',
+          'tool',
+        ].includes(type)
+      ) {
+        navigate(getArtifactPath(type as any, String(id)));
         return;
       }
       const tabMap: Record<string, ModuleTab> = {
@@ -812,38 +874,65 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     if (!taskId && !decisionId && !ideaId) return;
 
     if (taskId) {
-      setActiveTab('tasks');
-      setPendingDocument({
+      const nextDoc: OpenDocument = {
         id: taskId,
         type: 'task',
         name: isPolish ? 'Zadanie' : 'Task',
         status: 'todo',
-      });
+      };
+      setActiveTab('tasks');
+      if (activeTab === 'tasks') handleOpenDocument(nextDoc);
+      else setPendingDocument(nextDoc);
       setPendingUrlCleanup({ documentId: taskId, keys: ['taskId', 'task'] });
     }
 
     if (decisionId) {
-      setActiveTab('decisions');
-      setPendingDocument({
+      const nextDoc: OpenDocument = {
         id: decisionId,
         type: 'decision',
         name: isPolish ? 'Decyzja' : 'Decision',
         status: 'pending',
-      });
+      };
+      setActiveTab('decisions');
+      if (activeTab === 'decisions') handleOpenDocument(nextDoc);
+      else setPendingDocument(nextDoc);
       setPendingUrlCleanup({ documentId: decisionId, keys: ['decisionId', 'decision'] });
     }
 
     if (ideaId) {
-      setActiveTab('ideas');
-      setPendingDocument({
+      const nextDoc: OpenDocument = {
         id: ideaId,
         type: 'idea',
         name: isPolish ? 'Pomysł' : 'Idea',
         status: 'idea',
-      });
+      };
+      setActiveTab('ideas');
+      if (activeTab === 'ideas') handleOpenDocument(nextDoc);
+      else setPendingDocument(nextDoc);
       setPendingUrlCleanup({ documentId: ideaId, keys: ['ideaId', 'idea'] });
     }
-  }, [searchParams, isPolish]);
+  }, [activeTab, handleOpenDocument, searchParams, isPolish]);
+
+  useEffect(() => {
+    const intent = parseMyWorkPathIntent(location.pathname, isPolish);
+    if (!intent) return;
+    setActiveTab(intent.tab);
+    if (!intent.doc) return;
+    if (activeTab === intent.tab) {
+      handleOpenDocument(intent.doc);
+      return;
+    }
+    setPendingDocument((prev) => {
+      if (
+        prev?.id === intent.doc?.id &&
+        prev?.type === intent.doc?.type &&
+        prev?.data?.openMap === intent.doc?.data?.openMap
+      ) {
+        return prev;
+      }
+      return intent.doc;
+    });
+  }, [activeTab, handleOpenDocument, location.pathname, isPolish]);
 
   // Tab configuration
   // A1.2: Executive tab only visible to admin/manager/superadmin roles
@@ -1160,6 +1249,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           )
         );
       }
+      setRefreshTrigger((prev) => prev + 1);
     }
     // Optionally close after save
     // handleCloseDocument(docId);

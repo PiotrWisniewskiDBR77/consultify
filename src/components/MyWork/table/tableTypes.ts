@@ -74,7 +74,7 @@ export interface SavedView {
   filters?: FilterGroup;
   groupBy?: string;
   columns?: { key: string; visible: boolean; width: number }[];
-  layout?: 'table' | 'kanban' | 'matrix';
+  layout?: 'table' | 'kanban' | 'timeline' | 'calendar' | 'matrix' | 'grid' | 'sticky';
 }
 
 export interface NodeAttachment {

@@ -742,11 +742,16 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
 
   const innerRotate = shape === 'diamond' ? '-rotate-45' : '';
 
+  const depth = data._depth ?? 0;
+  const depthScale = depth <= 1 ? 1 : depth === 2 ? 0.95 : 0.9;
+  const depthOpacity = depth <= 1 ? '' : depth === 2 ? 'opacity-90' : 'opacity-80';
+
   return (
     <GlowWrapper isNew={isNew} isAI={isAI}>
       <div
         onDoubleClick={handleDoubleClick}
-        className={`group px-3 py-2 ${shapeClass} border-2 ${colors.border} ${colors.bg} ${
+        style={depthScale < 1 ? { transform: `scale(${depthScale})` } : undefined}
+        className={`group px-3 py-2 ${shapeClass} border-2 ${colors.border} ${colors.bg} ${depthOpacity} ${
           selected ? `ring-2 ${colors.ring}` : ''
         } shadow-sm hover:shadow-lg cursor-pointer min-w-[120px] max-w-[210px] relative`}
       >
@@ -850,6 +855,12 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   </div>
                 )}
               </div>
+              {/* Depth context snippet */}
+              {(data.context || data.goal) && (
+                <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1 italic">
+                  {data.goal ? `🎯 ${data.goal}` : data.context}
+                </div>
+              )}
               <div className="mt-1.5 flex items-center gap-1.5">
                 <div className="w-8 h-0.5 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
                   <div
@@ -864,6 +875,11 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                     title={data.assignee}
                   >
                     {String(data.assignee).charAt(0).toUpperCase()}
+                  </div>
+                )}
+                {depth > 0 && (
+                  <div className="text-[8px] text-slate-400 dark:text-slate-500 ml-auto" title={`Depth ${depth}`}>
+                    L{depth}
                   </div>
                 )}
               </div>
@@ -1113,6 +1129,12 @@ function MindMapInner({
       status: meta.status || node.data?.status || 'idea',
       childNodeIds: edges.filter((e) => e.source === node.id).map((e) => e.target),
       parentNodeId: edges.find((e) => e.target === node.id)?.source,
+      context: node.data?.context || '',
+      goal: node.data?.goal || '',
+      rationale: node.data?.rationale || '',
+      riskNote: node.data?.riskNote || '',
+      evidenceLinks: node.data?.evidenceLinks || [],
+      semanticType: node.data?.semanticType || '',
     };
   }, [drawerNodeId, edges, nodeMetaMap, nodes]);
 
@@ -1124,10 +1146,17 @@ function MindMapInner({
           [nodeId]: { ...prev[nodeId], ...patch },
         }));
       }
-      if (patch.status) {
+      const depthFields: (keyof NodeDetailData)[] = ['context', 'goal', 'rationale', 'riskNote', 'semanticType', 'evidenceLinks'];
+      const dataPatch: Record<string, unknown> = {};
+      if (patch.status) dataPatch.status = patch.status;
+      if (patch.notes !== undefined) dataPatch.notes = patch.notes;
+      for (const f of depthFields) {
+        if (patch[f] !== undefined) dataPatch[f] = patch[f];
+      }
+      if (Object.keys(dataPatch).length > 0) {
         setNodes((prev: Node[]) =>
           prev.map((n) =>
-            n.id === nodeId ? { ...n, data: { ...n.data, status: patch.status } } : n
+            n.id === nodeId ? { ...n, data: { ...n.data, ...dataPatch } } : n
           )
         );
       }
@@ -1139,7 +1168,7 @@ function MindMapInner({
     (nodeId: string, target: 'initiative' | 'decision') => {
       const action = target === 'initiative' ? 'convert_initiative' : 'convert_decision';
       setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: n.id === nodeId })));
-      window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action } }));
+      window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action, nodeIds: [nodeId] } }));
       setDrawerNodeId(null);
     },
     [setNodes]
@@ -2850,15 +2879,17 @@ function MindMapInner({
       if (action === 'ctx_duplicate') duplicateSelected();
       if (action === 'ctx_delete') deleteSelected();
       if (action === 'ctx_convert_initiative') {
+        const ctxIds = ctxNode ? [ctxNode.id] : nodes.filter((n) => n.selected).map((n) => n.id);
         window.dispatchEvent(
           new CustomEvent('idea-workspace-quick-action', {
-            detail: { action: 'convert_initiative' },
+            detail: { action: 'convert_initiative', nodeIds: ctxIds },
           })
         );
       }
       if (action === 'ctx_convert_decision') {
+        const ctxIds = ctxNode ? [ctxNode.id] : nodes.filter((n) => n.selected).map((n) => n.id);
         window.dispatchEvent(
-          new CustomEvent('idea-workspace-quick-action', { detail: { action: 'convert_decision' } })
+          new CustomEvent('idea-workspace-quick-action', { detail: { action: 'convert_decision', nodeIds: ctxIds } })
         );
       }
     },
@@ -3171,6 +3202,25 @@ function MindMapInner({
             pannable
             className="rounded-xl border border-slate-200/40 dark:border-navy-700/40"
           />
+
+          {/* V51-26: Empty state when no idea nodes */}
+          {focusFilteredNodes.filter((n) => n.type === 'idea' && !n.hidden).length === 0 && (
+            <Panel position="top-center">
+              <div className="mt-16 text-center pointer-events-auto">
+                <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+                  <Lightbulb size={24} className="text-amber-500" />
+                </div>
+                <div className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                  {isPolish ? 'Zacznij budować mapę' : 'Start building your map'}
+                </div>
+                <div className="text-[11px] text-slate-400 dark:text-slate-500 mb-3 max-w-[240px]">
+                  {isPolish
+                    ? 'Wybierz gałąź i naciśnij Tab aby dodać pomysł, lub użyj AI aby wygenerować strukturę'
+                    : 'Select a branch and press Tab to add an idea, or use AI to generate structure'}
+                </div>
+              </div>
+            </Panel>
+          )}
 
           {/* Cluster Bubbles overlay */}
           {showClusterBubbles && (
