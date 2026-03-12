@@ -23,6 +23,18 @@ CREATE TABLE IF NOT EXISTS financial_model_versions (
   merged_by TEXT
 );
 
+ALTER TABLE financial_model_versions ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE financial_model_versions ADD COLUMN IF NOT EXISTS version_number INTEGER DEFAULT 1;
+ALTER TABLE financial_model_versions ADD COLUMN IF NOT EXISTS parent_version_id TEXT;
+ALTER TABLE financial_model_versions ADD COLUMN IF NOT EXISTS scenario_label TEXT DEFAULT 'base';
+ALTER TABLE financial_model_versions ADD COLUMN IF NOT EXISTS assumptions_snapshot TEXT DEFAULT '{}';
+ALTER TABLE financial_model_versions ADD COLUMN IF NOT EXISTS events_snapshot TEXT DEFAULT '[]';
+ALTER TABLE financial_model_versions ADD COLUMN IF NOT EXISTS outputs_snapshot TEXT DEFAULT '{}';
+ALTER TABLE financial_model_versions ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft';
+ALTER TABLE financial_model_versions ADD COLUMN IF NOT EXISTS created_by TEXT;
+ALTER TABLE financial_model_versions ADD COLUMN IF NOT EXISTS merged_at TIMESTAMP;
+ALTER TABLE financial_model_versions ADD COLUMN IF NOT EXISTS merged_by TEXT;
+
 CREATE INDEX IF NOT EXISTS idx_fmv_model ON financial_model_versions(organization_id, model_id);
 CREATE INDEX IF NOT EXISTS idx_fmv_parent ON financial_model_versions(parent_version_id);
 

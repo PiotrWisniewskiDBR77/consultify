@@ -6,6 +6,7 @@
 import crypto from 'crypto';
 
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
+import organizationContextService from './organizationContext/OrganizationContextService.js';
 import logger from '../utils/Logger.js';
 
 // Mutable dependencies for injection
@@ -518,14 +519,30 @@ export const AIContextBuilder = {
       // ignore
     }
 
+    const resolvedContext = await organizationContextService
+      .buildResolvedContext(organizationId)
+      .catch(() => null);
+
     return {
       organizationId,
-      organizationName: org.name || 'Unknown',
-      industry: org.industry || null,
+      organizationName:
+        resolvedContext?.profile.companyName || org.name || 'Unknown',
+      industry: resolvedContext?.profile.industry || org.industry || null,
       locations: [],
       activeProjectIds: projects.map((p: any) => p.id),
       activeProjectCount: projects.length,
       pmoMaturityLevel: memory.pmo_maturity || 'BASIC',
+      profile: resolvedContext?.profile,
+      strategic: resolvedContext?.strategic,
+      operations: resolvedContext?.operations,
+      systems: resolvedContext?.systems,
+      stakeholders: resolvedContext?.stakeholders,
+      notes: resolvedContext?.notes,
+      metadata: resolvedContext?.metadata,
+      evidence: resolvedContext?.evidence,
+      signals: resolvedContext?.signals,
+      contextConflicts: resolvedContext?.conflicts,
+      contextTimeline: resolvedContext?.timeline?.slice(0, 10),
       // Organization Memory: patterns and terminology for AI context
       orgPatterns: orgPatterns.length > 0 ? orgPatterns : undefined,
       terminology: Object.keys(terminology).length > 0 ? terminology : undefined,

@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS task_allocations (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE task_allocations ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE task_allocations ADD COLUMN IF NOT EXISTS task_id TEXT;
+ALTER TABLE task_allocations ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE task_allocations ADD COLUMN IF NOT EXISTS week_start DATE;
 CREATE INDEX IF NOT EXISTS idx_task_alloc_task ON task_allocations(task_id);
 CREATE INDEX IF NOT EXISTS idx_task_alloc_user ON task_allocations(user_id);
 CREATE INDEX IF NOT EXISTS idx_task_alloc_week ON task_allocations(week_start);
@@ -24,6 +28,8 @@ CREATE TABLE IF NOT EXISTS user_skills (
   proficiency_level TEXT DEFAULT 'intermediate',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE user_skills ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE user_skills ADD COLUMN IF NOT EXISTS skill_name TEXT;
 CREATE INDEX IF NOT EXISTS idx_user_skills_user ON user_skills(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_skills_org ON user_skills(organization_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_skills_unique ON user_skills(user_id, skill_name);
@@ -38,6 +44,10 @@ CREATE TABLE IF NOT EXISTS time_entries (
   description TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE time_entries ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE time_entries ADD COLUMN IF NOT EXISTS task_id TEXT;
+ALTER TABLE time_entries ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE time_entries ADD COLUMN IF NOT EXISTS date DATE;
 CREATE INDEX IF NOT EXISTS idx_time_entries_task ON time_entries(task_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_user ON time_entries(user_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_date ON time_entries(date);

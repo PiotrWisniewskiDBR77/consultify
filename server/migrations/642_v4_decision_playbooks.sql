@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS decision_playbooks (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE decision_playbooks ADD COLUMN IF NOT EXISTS organization_id TEXT;
+ALTER TABLE decision_playbooks ADD COLUMN IF NOT EXISTS decision_type TEXT;
+
 CREATE INDEX IF NOT EXISTS idx_decision_playbooks_org ON decision_playbooks(organization_id);
 CREATE INDEX IF NOT EXISTS idx_decision_playbooks_type ON decision_playbooks(decision_type);
 

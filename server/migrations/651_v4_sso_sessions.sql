@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS sso_auth_states (
     provider_type TEXT NOT NULL,
     redirect_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP DEFAULT (datetime('now', '+10 minutes'))
+    expires_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP + INTERVAL '10 minutes')
 );
 
 CREATE INDEX IF NOT EXISTS idx_sso_auth_states_state ON sso_auth_states(state);

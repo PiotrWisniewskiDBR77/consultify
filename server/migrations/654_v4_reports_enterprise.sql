@@ -78,6 +78,12 @@ CREATE TABLE IF NOT EXISTS report_templates (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE report_templates ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'general';
+ALTER TABLE report_templates ADD COLUMN IF NOT EXISTS variables TEXT DEFAULT '[]';
+ALTER TABLE report_templates ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1;
+ALTER TABLE report_templates ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft';
+ALTER TABLE report_templates ADD COLUMN IF NOT EXISTS governance_level TEXT DEFAULT 'org';
+
 CREATE INDEX IF NOT EXISTS idx_rtpl_org ON report_templates(organization_id, status);
 
 CREATE TABLE IF NOT EXISTS report_template_versions (

@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS programs (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE programs
+  ADD COLUMN IF NOT EXISTS parent_program_id TEXT REFERENCES programs(id) ON DELETE SET NULL;
+
 CREATE INDEX IF NOT EXISTS idx_programs_org ON programs(organization_id);
 CREATE INDEX IF NOT EXISTS idx_programs_parent ON programs(parent_program_id);
 CREATE INDEX IF NOT EXISTS idx_programs_status ON programs(status);
