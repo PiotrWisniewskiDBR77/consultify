@@ -1,0 +1,17 @@
+{
+  "name": "polish-manufacturing-balance-sheet-spreadsheet",
+  "fileName": "seed-bs-manufacturing-q4-2025.xlsx",
+  "expectedStatementType": "BS",
+  "expectedDocumentClass": "spreadsheet",
+  "expectedMinExtracted": 6,
+  "expectedMinMapped": 5,
+  "entityName": "Fabryka Test Sp. z o.o.",
+  "periodStart": "2025-01-01",
+  "periodEnd": "2025-12-31",
+  "periodLabel": "FY 2025",
+  "seedOutcome": "recoverable",
+  "forceUnmappedContains": [
+    "Kapitał własny ogółem"
+  ],
+  "text": "Bilans\nStan na 31.12.2025\nAktywa razem 2025 5200 2024 4870\nAktywa obrotowe 2025 2100 2024 1940\nŚrodki pieniężne i ich ekwiwalenty 2025 680 2024 590\nNależności handlowe 2025 740 2024 700\nPozostałe aktywa operacyjne 2025 320 2024 220\nZobowiązania razem 2025 2860 2024 2710\nZobowiązania krótkoterminowe 2025 1180 2024 1040\nKapitał własny ogółem 2025 2340 2024 2160"
+}

@@ -259,6 +259,15 @@ export const FinanceHub: React.FC = () => {
     setActiveDocument(row);
   }, []);
 
+  const handleOpenStatementFromWorkspace = useCallback(
+    (id: string) => {
+      const row = statementRows.find((statement) => statement.id === id);
+      if (!row) return;
+      handleOpenFull(row);
+    },
+    [handleOpenFull, statementRows]
+  );
+
   const handleCloseDocument = useCallback(
     (id: string) => {
       setOpenDocuments((prev) => prev.filter((d) => d.id !== id));
@@ -1447,6 +1456,7 @@ export const FinanceHub: React.FC = () => {
                 onStatementChanged={handleStatementChanged}
                 onCreateModelFromStatement={handleCreateModelFromStatement}
                 onCreateAnalysisFromStatements={handleCreateAnalysisFromStatements}
+                onOpenStatement={handleOpenStatementFromWorkspace}
               />
             ) : isModelWorkspace ? (
               <FinancialModelWorkspace
@@ -1488,6 +1498,7 @@ export const FinanceHub: React.FC = () => {
     handleShowList,
     handleCreateModelFromStatement,
     handleCreateAnalysisFromStatements,
+    handleOpenStatementFromWorkspace,
   ]);
 
   const content = useMemo(() => {

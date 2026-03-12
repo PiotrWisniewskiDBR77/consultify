@@ -1,4 +1,15 @@
-import { AlertTriangle, BarChart3, CheckCircle2, FileText, Play, Search, TrendingUp } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart3,
+  CheckCircle2,
+  Database,
+  ExternalLink,
+  FileText,
+  Link2,
+  Play,
+  Search,
+  TrendingUp,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -119,11 +130,26 @@ interface DocumentIntelMatch {
   metadata?: Record<string, unknown>;
 }
 
+interface RelatedStatementItem {
+  id: string;
+  statement_type: string;
+  period_label?: string;
+  period_end?: string;
+  source_file_name?: string;
+  status?: string;
+  readiness_status?: string;
+  validation_status?: string;
+  mapped_line_count?: number;
+  unmapped_line_count?: number;
+  total_line_count?: number;
+}
+
 interface Props {
   statementId: string;
   onStatementChanged?: () => Promise<void> | void;
   onCreateModelFromStatement?: (row: FinanceStatementRow) => void;
   onCreateAnalysisFromStatements?: (statementIds: string[]) => void;
+  onOpenStatement?: (statementId: string) => void;
 }
 
 function mapStatementToRow(detail: StatementDetail): FinanceStatementRow {
@@ -208,6 +234,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
   onStatementChanged,
   onCreateModelFromStatement,
   onCreateAnalysisFromStatements,
+  onOpenStatement,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -215,6 +242,7 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
   const [ratios, setRatios] = useState<RatioResult | null>(null);
   const [canonicalLines, setCanonicalLines] = useState<FinancialStatementCanonicalLineOption[]>([]);
   const [editableValues, setEditableValues] = useState<FinancialStatementMappedValue[]>([]);
+  const [allStatements, setAllStatements] = useState<RelatedStatementItem[]>([]);
   const [docQuery, setDocQuery] = useState('');
   const [docMatches, setDocMatches] = useState<DocumentIntelMatch[]>([]);
   const [loading, setLoading] = useState(false);
@@ -225,14 +253,16 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
     setLoading(true);
     setError(null);
     try {
-      const [statement, ratioData, canonicalLineData] = await Promise.all([
+      const [statement, ratioData, canonicalLineData, statementList] = await Promise.all([
         Api.get(`/api/finance-statements/${statementId}`),
         Api.get(`/api/finance-statements/${statementId}/ratios`).catch(() => null),
         Api.get('/api/finance-statements/canonical-lines').catch(() => []),
+        Api.get('/api/finance-statements').catch(() => []),
       ]);
       setDetail(statement as StatementDetail);
       setRatios((ratioData as RatioResult) || null);
       setCanonicalLines(((canonicalLineData as FinancialStatementCanonicalLineOption[]) || []).filter(Boolean));
+      setAllStatements(Array.isArray(statementList) ? (statementList as RelatedStatementItem[]) : []);
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || String(e));
     } finally {
@@ -275,6 +305,103 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
     [detail]
   );
   const isWorkable = statementRow?.isWorkable ?? false;
+
+  const relatedStatements = useMemo(() => {
+    if (!detail) return [];
+    const currentPeriod = String(detail.period_label || detail.period_end || '').trim();
+    const currentPeriodYear = String(detail.period_end || '').slice(0, 4);
+    const currentRow: RelatedStatementItem = {
+      id: detail.id,
+      statement_type: detail.statement_type,
+      period_label: detail.period_label,
+      period_end: detail.period_end,
+      source_file_name: detail.source_file_name,
+      status: detail.status,
+      readiness_status: detail.readinessStatus,
+      validation_status: detail.validation_status,
+      mapped_line_count: detail.mappedLineCount,
+      unmapped_line_count: detail.unmappedLineCount,
+      total_line_count: detail.totalLineCount,
+    };
+
+    const merged = [
+      currentRow,
+      ...allStatements.filter((statement) => String(statement.id) !== detail.id),
+    ];
+    const unique = Array.from(new Map(merged.map((statement) => [String(statement.id), statement])).values());
+
+    return unique
+      .sort((a, b) => {
+        if (a.id === detail.id) return -1;
+        if (b.id === detail.id) return 1;
+        const aPeriod = String(a.period_label || a.period_end || '').trim();
+        const bPeriod = String(b.period_label || b.period_end || '').trim();
+        const aScore =
+          (aPeriod === currentPeriod ? 4 : 0) +
+          (String(a.period_end || '').slice(0, 4) === currentPeriodYear ? 2 : 0) +
+          (a.statement_type !== detail.statement_type ? 1 : 0);
+        const bScore =
+          (bPeriod === currentPeriod ? 4 : 0) +
+          (String(b.period_end || '').slice(0, 4) === currentPeriodYear ? 2 : 0) +
+          (b.statement_type !== detail.statement_type ? 1 : 0);
+        if (bScore !== aScore) return bScore - aScore;
+        return String(b.period_end || '').localeCompare(String(a.period_end || ''));
+      })
+      .slice(0, 3);
+  }, [allStatements, detail]);
+
+  const dataSections = useMemo(
+    () => [
+      {
+        id: 'statement-source-documents',
+        icon: FileText,
+        label: t('finance.statements.sourceDocuments', isPl ? 'Dokumenty źródłowe' : 'Source documents'),
+        helper: t(
+          'finance.statements.sourceDocumentsHelper',
+          isPl ? '3 dokumenty do porównania z tym, czego użytkownik szukał.' : '3 documents to compare with what the user expected.'
+        ),
+      },
+      {
+        id: 'statement-lines-table',
+        icon: Database,
+        label: t('finance.statements.loadedDataTable', isPl ? 'Tabela danych' : 'Data table'),
+        helper: `${isWorkable ? mappedValues.length : editableValues.length} ${t(
+          'finance.statements.rows',
+          isPl ? 'wierszy' : 'rows'
+        )}`,
+      },
+      {
+        id: 'statement-ratios-table',
+        icon: BarChart3,
+        label: t('finance.statements.ratiosSection', isPl ? 'Tabela ratios' : 'Ratios table'),
+        helper: `${Number(ratios?.coverageSummary?.coveragePct || 0).toFixed(0)}%`,
+      },
+      {
+        id: 'statement-validation-table',
+        icon: AlertTriangle,
+        label: t('finance.statements.validationSection', isPl ? 'Walidacja' : 'Validation'),
+        helper: `${(detail?.validationMessages || []).length}`,
+      },
+      {
+        id: 'statement-quality-runs-table',
+        icon: Link2,
+        label: t('finance.statements.qualityRunsSection', isPl ? 'Quality runs' : 'Quality runs'),
+        helper: `${(detail?.qualityRuns || []).length}`,
+      },
+      {
+        id: 'statement-ingest-runs-table',
+        icon: ExternalLink,
+        label: t('finance.statements.ingestRunsSection', isPl ? 'Import audit' : 'Import audit'),
+        helper: `${(detail?.ingestRuns || []).length}`,
+      },
+    ],
+    [detail, editableValues.length, isPl, isWorkable, mappedValues.length, ratios?.coverageSummary?.coveragePct, t]
+  );
+
+  const scrollToSection = useCallback((sectionId: string) => {
+    if (typeof document === 'undefined') return;
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   const handleConfirm = useCallback(async () => {
     if (!detail) return;
@@ -549,6 +676,115 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
               </div>
             )}
           </div>
+
+          <div className="mt-4 grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+            <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/70 p-4">
+              <div className="flex items-center gap-2">
+                <Database size={16} className="text-cyan-500" />
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {t('finance.statements.systemTables', isPl ? 'Tabele danych w systemie' : 'System data tables')}
+                </h4>
+              </div>
+              <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                {t(
+                  'finance.statements.systemTablesHint',
+                  isPl
+                    ? 'Tutaj użytkownik może szybko otworzyć sekcje z danymi i porównać, czy system ma dokładnie to, czego szukał.'
+                    : 'Use these quick links to open loaded data sections and compare what the system already contains.'
+                )}
+              </div>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {dataSections.map((section) => {
+                  const Icon = section.icon;
+                  return (
+                    <button
+                      key={section.id}
+                      type="button"
+                      onClick={() => scrollToSection(section.id)}
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:border-cyan-300 hover:bg-cyan-50/50 dark:border-navy-700 dark:bg-navy-900 dark:hover:border-cyan-700/60 dark:hover:bg-cyan-900/10"
+                    >
+                      <div className="flex items-center gap-2 text-sm font-medium text-slate-900 dark:text-white">
+                        <Icon size={14} className="text-cyan-500" />
+                        {section.label}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{section.helper}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div
+              id="statement-source-documents"
+              className="rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-800/70 p-4"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <FileText size={16} className="text-cyan-500" />
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {t('finance.statements.documentsLoaded', isPl ? 'Dokumenty załadowane do systemu' : 'Documents loaded into the system')}
+                  </h4>
+                </div>
+                <span className="text-xs text-slate-500 dark:text-slate-400">{relatedStatements.length}/3</span>
+              </div>
+              <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                {t(
+                  'finance.statements.documentsLoadedHint',
+                  isPl
+                    ? 'To jest miejsce ładowania danych, ale też szybka kontrola, czy w systemie są właściwe sprawozdania i właściwe tabele.'
+                    : 'This is both the loading area and a quick check that the expected statements and tables are present in the system.'
+                )}
+              </div>
+              <div className="mt-4 space-y-2">
+                {relatedStatements.map((statement) => {
+                  const isCurrent = statement.id === detail.id;
+                  return (
+                    <button
+                      key={statement.id}
+                      type="button"
+                      onClick={() => !isCurrent && onOpenStatement?.(statement.id)}
+                      className={`w-full rounded-xl border px-3 py-3 text-left transition ${
+                        isCurrent
+                          ? 'border-cyan-300 bg-cyan-50 dark:border-cyan-700/60 dark:bg-cyan-900/20'
+                          : 'border-slate-200 bg-white hover:border-cyan-300 hover:bg-cyan-50/40 dark:border-navy-700 dark:bg-navy-900 dark:hover:border-cyan-700/60 dark:hover:bg-cyan-900/10'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                              {statement.statement_type}
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                              {statement.period_label || statement.period_end || '—'}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">
+                            {statement.source_file_name || statement.period_label || statement.id}
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {t('finance.statements.readiness', 'Readiness')}: {statement.readiness_status || 'pending'} •{' '}
+                            {t('finance.statements.mappedLines', 'Mapped lines')}: {statement.mapped_line_count || 0} •{' '}
+                            {t('finance.statements.unmappedLines', 'Unmapped lines')}: {statement.unmapped_line_count || 0}
+                          </div>
+                        </div>
+                        <span className="text-xs font-medium text-cyan-600 dark:text-cyan-300">
+                          {isCurrent
+                            ? t('finance.statements.currentDocument', isPl ? 'Aktualny' : 'Current')
+                            : t('finance.statements.openDocument', isPl ? 'Otwórz' : 'Open')}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+                {relatedStatements.length === 0 && (
+                  <div className="text-sm text-slate-400">
+                    {t('finance.statements.noRelatedDocuments', isPl ? 'Brak załadowanych dokumentów do porównania' : 'No loaded documents to compare yet')}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {error && (
@@ -558,7 +794,10 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
         )}
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5">
+          <div
+            id="statement-lines-table"
+            className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5"
+          >
             <div className="flex items-center justify-between">
               <h4 className="font-semibold text-slate-900 dark:text-white">
                 {isWorkable
@@ -631,7 +870,10 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5">
+            <div
+              id="statement-ratios-table"
+              className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5"
+            >
               <h4 className="font-semibold text-slate-900 dark:text-white">
                 {t('finance.statements.ratioCoverage', 'Ratio coverage')}
               </h4>
@@ -659,7 +901,10 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5">
+            <div
+              id="statement-validation-table"
+              className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5"
+            >
               <h4 className="font-semibold text-slate-900 dark:text-white">
                 {t('finance.statements.validationMessages', 'Validation messages')}
               </h4>
@@ -704,7 +949,10 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5">
+            <div
+              id="statement-quality-runs-table"
+              className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5"
+            >
               <h4 className="font-semibold text-slate-900 dark:text-white">
                 {t('finance.statements.qualityRuns', 'Quality runs')}
               </h4>
@@ -728,7 +976,10 @@ export const FinancialStatementWorkspace: React.FC<Props> = ({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5">
+            <div
+              id="statement-ingest-runs-table"
+              className="rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-5"
+            >
               <h4 className="font-semibold text-slate-900 dark:text-white">
                 {t('finance.statements.ingestRuns', 'Ingest runs')}
               </h4>

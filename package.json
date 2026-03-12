@@ -61,6 +61,7 @@
     "smoke:agent3": "npm run -s smoke:demo:script-a && npm run -s smoke:interview:d01d02 && npm run -s smoke:j03g01 && npm run -s smoke:e04e06e07l01 && npm run -s smoke:b02-chat-actions && npm run -s smoke:a06-model-registry",
     "db:seed:mywork-demo": "DB_TYPE=postgres tsx server/scripts/seed-mywork-demo.ts",
     "db:seed:implementation": "DB_TYPE=postgres tsx server/scripts/seed-implementation-sample.ts",
+    "db:seed:statement-test-data": "DB_TYPE=postgres tsx server/scripts/seed-statement-test-data.ts",
     "benchmark:statement-ready": "tsx server/scripts/benchmark-statement-ready.ts",
     "fix:credentials": "./server/scripts/fix-dbr77-credentials.sh",
     "seed:notifications": "./server/scripts/seed-notifications.sh",

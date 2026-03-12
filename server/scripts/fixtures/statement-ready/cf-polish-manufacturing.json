@@ -1,0 +1,14 @@
+{
+  "name": "polish-manufacturing-cash-flow",
+  "fileName": "seed-cf-manufacturing-2025.pdf",
+  "expectedStatementType": "CF",
+  "expectedDocumentClass": "native_pdf",
+  "expectedMinExtracted": 5,
+  "expectedMinMapped": 2,
+  "entityName": "Fabryka Test Sp. z o.o.",
+  "periodStart": "2025-01-01",
+  "periodEnd": "2025-12-31",
+  "periodLabel": "FY 2025",
+  "seedOutcome": "recoverable",
+  "text": "Rachunek przepływów pieniężnych\nZa rok obrotowy 2025\nPrzepływy pieniężne netto z działalności operacyjnej 2025 880 2024 760\nNakłady inwestycyjne 2025 (260) 2024 (240)\nPrzepływy pieniężne netto z działalności inwestycyjnej 2025 (310) 2024 (285)\nPrzepływy pieniężne netto z działalności finansowej 2025 (180) 2024 (160)\nWolne przepływy pieniężne 2025 620 2024 520"
+}
