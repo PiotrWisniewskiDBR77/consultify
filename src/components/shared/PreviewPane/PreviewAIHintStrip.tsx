@@ -1,5 +1,5 @@
-import { Check, Copy, MoreVertical, Sparkles, X } from 'lucide-react';
-import React, { useState } from 'react';
+import { Check, Copy, MessageCircle, MoreVertical, Send, Sparkles, Zap, X } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -7,12 +7,14 @@ import { KEBAB_BACKDROP, KEBAB_ITEM, PREVIEW_HINT_CHIP } from './previewStyles';
 
 export interface PreviewAIHintStripProps {
   hints: string[];
+  /** Context-aware hints generated dynamically by the backend (rendered first with a Zap icon) */
+  dynamicHints?: string[];
   loading?: boolean;
   /** Plain text result from AI (displayed below chips) */
   result?: string | null;
   error?: string | null;
   /** Called when a hint chip is clicked; receives the hint label */
-  onRunHint: (hint: string) => void;
+  onRunHint?: (hint: string) => void;
   onRegenerate?: () => void;
   onCopy?: () => void;
   onClear?: () => void;
@@ -21,10 +23,18 @@ export interface PreviewAIHintStripProps {
   /** Disable all hint chips (e.g. session not completed) */
   disabled?: boolean;
   disabledTooltip?: string;
+  /** Enable inline "Ask about this..." input below hint chips */
+  inlineChat?: boolean;
+  /** Called when user submits a free-form question via inline chat */
+  onAskQuestion?: (question: string) => void;
+  /** Response to the inline chat question */
+  chatAnswer?: string | null;
+  chatLoading?: boolean;
 }
 
 export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
   hints,
+  dynamicHints,
   loading,
   result,
   error,
@@ -35,10 +45,22 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
   applyButton,
   disabled,
   disabledTooltip,
+  inlineChat,
+  onAskQuestion,
+  chatAnswer,
+  chatLoading,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [menuOpen, setMenuOpen] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+
+  const handleChatSubmit = useCallback(() => {
+    const q = chatInput.trim();
+    if (!q || !onAskQuestion) return;
+    onAskQuestion(q);
+    setChatInput('');
+  }, [chatInput, onAskQuestion]);
 
   const hasKebab = onRegenerate || onCopy || onClear;
 
@@ -128,15 +150,32 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        {hints.map((hint, idx) => (
+        {(dynamicHints ?? []).map((hint, idx) => (
           <button
-            key={idx}
+            key={`dyn-${idx}`}
             onClick={() => {
               if (disabled && disabledTooltip) {
                 toast(disabledTooltip, { duration: 2500 });
                 return;
               }
-              onRunHint(hint);
+              onRunHint?.(hint);
+            }}
+            disabled={loading}
+            className={`${PREVIEW_HINT_CHIP} border-purple-300/40 dark:border-purple-500/20${disabled ? ' opacity-50' : ''}`}
+          >
+            <Zap size={10} className="text-purple-500 dark:text-purple-400" />
+            {hint}
+          </button>
+        ))}
+        {hints.map((hint, idx) => (
+          <button
+            key={`static-${idx}`}
+            onClick={() => {
+              if (disabled && disabledTooltip) {
+                toast(disabledTooltip, { duration: 2500 });
+                return;
+              }
+              onRunHint?.(hint);
             }}
             disabled={loading}
             className={`${PREVIEW_HINT_CHIP}${disabled ? ' opacity-50' : ''}`}
@@ -152,6 +191,37 @@ export const PreviewAIHintStrip: React.FC<PreviewAIHintStripProps> = ({
       ) : result ? (
         <div className="mt-2 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">
           {result}
+        </div>
+      ) : null}
+
+      {chatAnswer ? (
+        <div className="mt-2 flex items-start gap-1.5 text-xs text-slate-700 dark:text-slate-200">
+          <MessageCircle size={11} className="text-purple-400 shrink-0 mt-0.5" />
+          <span className="whitespace-pre-wrap">{chatAnswer}</span>
+        </div>
+      ) : null}
+
+      {inlineChat && onAskQuestion ? (
+        <div className="mt-2 flex items-center gap-1.5">
+          <input
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleChatSubmit(); } }}
+            placeholder={isPolish ? 'Zapytaj o to...' : 'Ask about this...'}
+            disabled={chatLoading}
+            className="flex-1 h-7 px-2.5 rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-transparent text-xs text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-purple-400/40"
+          />
+          <button
+            onClick={handleChatSubmit}
+            disabled={!chatInput.trim() || chatLoading}
+            className="inline-flex items-center justify-center h-7 w-7 rounded-lg text-purple-500 dark:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-500/10 transition-colors disabled:opacity-40"
+          >
+            {chatLoading ? (
+              <span className="h-3 w-3 rounded-full border-2 border-purple-400 border-t-transparent animate-spin" />
+            ) : (
+              <Send size={12} />
+            )}
+          </button>
         </div>
       ) : null}
     </div>

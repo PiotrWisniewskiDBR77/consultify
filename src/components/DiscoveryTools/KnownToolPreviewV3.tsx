@@ -11,7 +11,9 @@ import {
   type MetaPill,
   type RelationItem,
   type ActionRow,
+  type ExtraCopyFormat,
 } from '@/components/shared/PreviewPane';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { Api } from '@/services/api';
 
 type KnownToolListItem = {
@@ -289,6 +291,24 @@ export const KnownToolPreviewV3Body: React.FC<{
         onExpand={() => void handleRefineDetails('expand')}
         onSummarize={() => void handleRefineDetails('shorten')}
         onCopy={() => void handleCopyDetails()}
+        extraCopyFormats={[
+          {
+            label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+            onClick: () =>
+              void copyAsMarkdown(
+                { title: tool.name, description: detailsText },
+                isPolish ? 'pl' : 'en'
+              ),
+          },
+          {
+            label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+            onClick: () =>
+              void copyForSlack(
+                { title: tool.name, description: detailsText },
+                isPolish ? 'pl' : 'en'
+              ),
+          },
+        ]}
       />
     </div>
   );
@@ -385,13 +405,15 @@ export const KnownToolPreviewV3Footer: React.FC<{
         {
           label: isPolish ? 'Start sesji' : 'Start session',
           onClick: onStartSession,
-          colorScheme: 'neutral',
+          colorScheme: 'primary',
           disabled: tool.isComingSoon,
+          shortcut: 'S',
         },
         {
           label: t('common.open', 'Open'),
           onClick: onOpenFull,
           colorScheme: 'primary',
+          shortcut: 'O',
         },
       ],
       columns: 2,
@@ -402,6 +424,7 @@ export const KnownToolPreviewV3Footer: React.FC<{
           label: isPolish ? 'Czat' : 'Chat',
           onClick: onChat,
           colorScheme: 'neutral',
+          shortcut: 'C',
         },
       ],
     },
@@ -409,16 +432,18 @@ export const KnownToolPreviewV3Footer: React.FC<{
 
   return (
     <div className="space-y-0">
-      <PreviewAIHintStrip
-        hints={aiHints}
-        loading={aiLoading || fullLoading}
-        result={aiText}
-        error={aiError}
-        onRunHint={(hint) => void runAi(hintToIntent[hint] ?? 'when_to_use')}
-        onRegenerate={handleRegenerateAi}
-        onCopy={handleCopyAi}
-        onClear={handleClearAi}
-      />
+      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+        <PreviewAIHintStrip
+          hints={aiHints}
+          loading={aiLoading || fullLoading}
+          result={aiText}
+          error={aiError}
+          onRunHint={(hint) => void runAi(hintToIntent[hint] ?? 'when_to_use')}
+          onRegenerate={handleRegenerateAi}
+          onCopy={handleCopyAi}
+          onClear={handleClearAi}
+        />
+      </div>
 
       <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 

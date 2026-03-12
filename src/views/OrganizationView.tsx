@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { KnowledgeGraphExplorer } from '../components/Organization/KnowledgeGraphExplorer';
 import { OrganizationAdminPanel } from '../components/Organization/OrganizationAdminPanel';
 import OrganizationSidebar, {
   type OrganizationSection,
@@ -102,6 +103,12 @@ const sectionMeta: Record<
     subtitleKey: 'organization.sections.branding.subtitle',
     subtitle: 'Logo, colors, timezone, language and currency',
   },
+  'knowledge-graph': {
+    titleKey: 'organization.sections.knowledgeGraph.title',
+    title: 'Knowledge Graph',
+    subtitleKey: 'organization.sections.knowledgeGraph.subtitle',
+    subtitle: 'Explore entities, relations, provenance and governance',
+  },
 };
 
 export const OrganizationView: React.FC = () => {
@@ -158,6 +165,8 @@ export const OrganizationView: React.FC = () => {
         return <ChallengeMapModule />;
       case 'strategy':
         return <StrategicSynthesisModule />;
+      case 'knowledge-graph':
+        return <KnowledgeGraphExplorer />;
       default:
         return <CompanyProfileModule />;
     }

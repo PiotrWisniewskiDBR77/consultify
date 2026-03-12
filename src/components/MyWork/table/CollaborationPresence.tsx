@@ -77,7 +77,7 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
       if (!enabled) return;
       try {
         const { Api } = await import('@/services/api');
-        await (Api as any).broadcastIdeaPresence?.(ideaId, {
+        await Api.broadcastIdeaPresence(ideaId, {
           userId: currentUserId,
           userName: currentUserName,
           color: myColor,
@@ -95,7 +95,7 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
     if (!enabled) return;
     try {
       const { Api } = await import('@/services/api');
-      const result = await (Api as any).getIdeaPresence?.(ideaId);
+      const result = await Api.getIdeaPresence(ideaId);
       if (Array.isArray(result?.users)) {
         const now = Date.now();
         const active = (result.users as PresenceUser[]).filter(

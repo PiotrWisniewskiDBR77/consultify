@@ -74,7 +74,6 @@ import {
 } from './ideaEntryTypes';
 import type { CanvasToolType } from './ideaSelectionTypes';
 import { EMPTY_SELECTION, type IdeaWorkspaceSelection } from './ideaSelectionTypes';
-import { IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
 import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './InboxContent';
 import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './MyIdeasListContent';
 import { MyIdeasListContent } from './MyIdeasListContent';
@@ -274,6 +273,23 @@ function parseMyWorkPathIntent(
   pathname: string,
   isPolish: boolean
 ): { tab: ModuleTab; doc?: OpenDocument } | null {
+  const parseIdeaTool = (segment?: string): CanvasToolType | undefined => {
+    switch (segment) {
+      case 'mind-map':
+      case 'mindmap':
+        return 'mindmap';
+      case 'whiteboard':
+        return 'whiteboard';
+      case 'process-flow':
+      case 'process_flow':
+      case 'flow':
+        return 'process_flow';
+      case 'table':
+        return 'table';
+      default:
+        return undefined;
+    }
+  };
   const normalized = pathname.replace(/\/+$/, '');
   if (!normalized.startsWith('/my-work')) return null;
   const segments = normalized.split('/').filter(Boolean);
@@ -281,6 +297,8 @@ function parseMyWorkPathIntent(
 
   if (segments[1] === 'ideas' && segments[2]) {
     const ideaId = decodeURIComponent(segments[2]);
+    const openMap = segments[3] === 'workspace';
+    const initialTool = openMap ? parseIdeaTool(segments[4]) : undefined;
     return {
       tab: 'ideas',
       doc: {
@@ -288,7 +306,7 @@ function parseMyWorkPathIntent(
         type: 'idea',
         name: isPolish ? 'Pomysł' : 'Idea',
         status: 'idea',
-        data: { openMap: segments[3] === 'workspace' },
+        data: { openMap, initialTool },
       },
     };
   }
@@ -444,7 +462,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
   const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
   const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('list');
-  const [ideaToolsOpen, setIdeaToolsOpen] = useState(false);
   const [ideaActiveTool, setIdeaActiveTool] = useState<CanvasToolType>('mindmap');
   const [ideaActivePanel, setIdeaActivePanel] = useState<WorkspacePanelKey>(null);
   const [ideaSelection, setIdeaSelection] = useState<IdeaWorkspaceSelection>(EMPTY_SELECTION);
@@ -471,8 +488,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
   const handleIdeaPanelChange = useCallback((panel: WorkspacePanelKey) => {
     setIdeaActivePanel(panel);
-    setIdeaToolsOpen(panel === 'tools');
   }, []);
+
   const [decisionsViewMode, setDecisionsViewMode] = useState<DecisionsViewMode>('table');
   const [inboxViewMode, setInboxViewMode] = useState<InboxViewMode>('flat');
   const [inboxStatusTab, setInboxStatusTab] = useState<'open' | 'done' | 'saved' | 'all'>('open');
@@ -594,6 +611,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       /* ignore */
     }
   }, [openDocuments, activeDocumentId]);
+
+  // Auto-open Tools panel for new/unaccepted ideas so the user can fill in title & description
+  const prevDocIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (activeTab !== 'ideas' || !activeDocumentId) return;
+    if (activeDocumentId === prevDocIdRef.current) return;
+    prevDocIdRef.current = activeDocumentId;
+    setIdeaActivePanel('tools');
+  }, [activeTab, activeDocumentId]);
 
   // EventBus refresh counter — incremented when cross-tab events fire.
   // Child tab components include this in their fetch dependency arrays.
@@ -917,20 +943,25 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     const intent = parseMyWorkPathIntent(location.pathname, isPolish);
     if (!intent) return;
     setActiveTab(intent.tab);
-    if (!intent.doc) return;
+    const nextDoc = intent.doc;
+    if (!nextDoc) return;
+    if (nextDoc.type === 'idea' && nextDoc.data?.initialTool) {
+      setIdeaActiveTool(nextDoc.data.initialTool as CanvasToolType);
+    }
     if (activeTab === intent.tab) {
-      handleOpenDocument(intent.doc);
+      handleOpenDocument(nextDoc);
       return;
     }
     setPendingDocument((prev) => {
       if (
-        prev?.id === intent.doc?.id &&
-        prev?.type === intent.doc?.type &&
-        prev?.data?.openMap === intent.doc?.data?.openMap
+        prev?.id === nextDoc.id &&
+        prev?.type === nextDoc.type &&
+        prev?.data?.openMap === nextDoc.data?.openMap &&
+        prev?.data?.initialTool === nextDoc.data?.initialTool
       ) {
         return prev;
       }
-      return intent.doc;
+      return nextDoc;
     });
   }, [activeTab, handleOpenDocument, location.pathname, isPolish]);
 
@@ -1164,13 +1195,24 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   );
 
   const handleIdeaClick = useCallback(
-    (ideaId: string, ideaData?: MyIdea) => {
+    (
+      ideaId: string,
+      ideaData?: MyIdea,
+      options?: { openMap?: boolean; initialTool?: CanvasToolType }
+    ) => {
+      if (options?.initialTool) {
+        setIdeaActiveTool(options.initialTool);
+      }
       handleOpenDocument({
         id: ideaId,
         type: 'idea',
         name: ideaData?.title || (isPolish ? 'Pomysł' : 'Idea'),
         status: 'idea',
-        data: ideaData,
+        data: {
+          ...ideaData,
+          openMap: options?.openMap ?? ideaData?.openMap,
+          initialTool: options?.initialTool,
+        },
       });
     },
     [handleOpenDocument, isPolish]
@@ -2368,12 +2410,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             <IdeaMapWorkspace
               ideaId={activeDoc.id}
               initialOpenMap={Boolean((activeDoc as any)?.data?.openMap)}
+              initialTool={(activeDoc as any)?.data?.initialTool}
               creationPayload={(activeDoc as any)?.data?.creationPayload}
               seedIntent={(activeDoc as any)?.data?.seedIntent}
               onClose={() => handleCloseDocument(activeDoc.id)}
               onSaved={(data) => handleDocumentSaved(activeDoc.id, data)}
-              toolsOpen={ideaToolsOpen}
-              onToolsOpenChange={setIdeaToolsOpen}
               activeTool={ideaActiveTool}
               onActiveToolChange={setIdeaActiveTool}
               activePanel={ideaActivePanel}
@@ -2938,18 +2979,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 <Sparkles size={16} />
                 <span>{isPolish ? 'AI Plan' : 'AI Plan'}</span>
               </button>
-            )}
-
-            {/* Ideas workspace — canvas tools (block 1) */}
-            {activeTab === 'ideas' && activeDocumentId && (
-              <IdeaWorkspaceToolbar
-                activeTool={ideaActiveTool}
-                onToolChange={(next) => {
-                  setIdeaActiveTool(next);
-                  setIdeaSelection(EMPTY_SELECTION);
-                }}
-                isAccepted={!ideaLocked}
-              />
             )}
 
             {/* Ideas workspace — panel strip (block 2: Tools / Context / AI) */}

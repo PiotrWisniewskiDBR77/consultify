@@ -1,0 +1,9 @@
+{
+  "name": "basic-balance-sheet",
+  "fileName": "sample-balance-sheet.pdf",
+  "expectedStatementType": "BS",
+  "expectedDocumentClass": "native_pdf",
+  "expectedMinExtracted": 3,
+  "expectedMinMapped": 2,
+  "text": "Balance Sheet\nFor the year ended 2025\nTotal Assets 2025 1200 2024 1050\nCurrent Assets 2025 450 2024 420\nCash and cash equivalents 2025 210 2024 180\nAccounts Receivable 2025 160 2024 155\nTotal Liabilities 2025 700 2024 640\nCurrent Liabilities 2025 240 2024 220\nEquity 2025 500 2024 410"
+}

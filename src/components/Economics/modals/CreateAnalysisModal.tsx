@@ -1,25 +1,50 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
-import { type FinanceAnalysisRow, normalizeStatus } from '../financeTypes';
+import {
+  type FinanceAnalysisRow,
+  type FinanceStatementRow,
+  normalizeStatus,
+} from '../financeTypes';
 
 interface CreateAnalysisModalProps {
   onCreated: (row: FinanceAnalysisRow) => void;
   onClose: () => void;
   defaultAnalysisType?: string;
+  availableStatements?: FinanceStatementRow[];
+  initialStatementIds?: string[];
+  initialTitle?: string;
 }
 
 export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
   onCreated,
   onClose,
   defaultAnalysisType = 'comprehensive',
+  availableStatements = [],
+  initialStatementIds = [],
+  initialTitle = '',
 }) => {
   const { t } = useTranslation();
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(initialTitle);
   const [creating, setCreating] = useState(false);
+  const [selectedStatementIds, setSelectedStatementIds] = useState<string[]>(initialStatementIds);
+
+  const selectedStatements = useMemo(
+    () =>
+      availableStatements.filter((statement) =>
+        selectedStatementIds.includes(statement.id)
+      ),
+    [availableStatements, selectedStatementIds]
+  );
+
+  const toggleStatement = useCallback((statementId: string) => {
+    setSelectedStatementIds((prev) =>
+      prev.includes(statementId) ? prev.filter((id) => id !== statementId) : [...prev, statementId]
+    );
+  }, []);
 
   const handleCreate = useCallback(async () => {
     if (!title.trim()) return;
@@ -28,7 +53,8 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
       const result = await Api.post('/api/economics/financial-analyses', {
         title: title.trim(),
         analysisType: defaultAnalysisType,
-        currency: 'PLN',
+        currency: selectedStatements[0]?.currency || 'PLN',
+        sourceStatementIds: selectedStatementIds,
       });
       const created = result as any;
       const analysis = created?.analysis || created;
@@ -41,8 +67,9 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
         analysisType: String(
           analysis?.analysisType || analysis?.analysis_type || defaultAnalysisType
         ),
-        currency: String(analysis?.currency || 'PLN'),
+        currency: String(analysis?.currency || selectedStatements[0]?.currency || 'PLN'),
         periodCount: Array.isArray(analysis?.periods) ? analysis.periods.length : 0,
+        sourceStatementIds: selectedStatementIds,
         updatedAt: String(analysis?.updated_at || new Date().toISOString()),
       });
     } catch (e: any) {
@@ -52,7 +79,7 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
     } finally {
       setCreating(false);
     }
-  }, [defaultAnalysisType, title, onCreated, t]);
+  }, [defaultAnalysisType, selectedStatementIds, selectedStatements, title, onCreated, t]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
@@ -72,6 +99,44 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
             }
             className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
           />
+        </div>
+        <div className="space-y-2 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-slate-500">
+              {t('finance.analysis.sourceStatements', 'Source statements')}
+            </label>
+            <span className="text-[11px] text-slate-400">
+              {selectedStatementIds.length} {t('finance.analysis.selected', 'selected')}
+            </span>
+          </div>
+          <div className="max-h-48 overflow-y-auto space-y-2">
+            {availableStatements.map((statement) => (
+              <label
+                key={statement.id}
+                className="flex items-start gap-3 rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-sm"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedStatementIds.includes(statement.id)}
+                  onChange={() => toggleStatement(statement.id)}
+                  className="mt-0.5"
+                />
+                <div className="min-w-0">
+                  <div className="font-medium text-slate-900 dark:text-white">
+                    {statement.periodLabel || statement.title}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {statement.statementType} • {statement.currency} • {statement.rawStatus}
+                  </div>
+                </div>
+              </label>
+            ))}
+            {availableStatements.length === 0 && (
+              <div className="text-xs text-slate-400">
+                {t('finance.analysis.noStatements', 'No statements available')}
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <button

@@ -3391,6 +3391,58 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch idea map metrics');
   },
 
+  // --- Snapshots ---
+  getMyIdeaMapSnapshots: async (ideaId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/snapshots`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to fetch snapshots');
+  },
+
+  createMyIdeaMapSnapshot: async (
+    ideaId: string,
+    payload: { label: string; nodes: any[]; edges: any[] }
+  ): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/snapshots`,
+      { method: 'POST', headers: getHeaders(), body: JSON.stringify(payload) }
+    );
+    return handleResponse(res, 'Failed to create snapshot');
+  },
+
+  deleteMyIdeaMapSnapshot: async (ideaId: string, snapshotId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/snapshots/${encodeURIComponent(snapshotId)}`,
+      { method: 'DELETE', headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to delete snapshot');
+  },
+
+  // --- Activity Feed ---
+  getMyIdeaActivity: async (ideaId: string, opts?: { limit?: number; offset?: number }): Promise<any> => {
+    const params = new URLSearchParams();
+    if (opts?.limit) params.set('limit', String(opts.limit));
+    if (opts?.offset) params.set('offset', String(opts.offset));
+    const qs = params.toString();
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/activity${qs ? `?${qs}` : ''}`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to fetch activity');
+  },
+
+  createMyIdeaActivity: async (
+    ideaId: string,
+    payload: { type: string; actor: string; nodeId?: string; nodeLabel?: string; detail?: string }
+  ): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/activity`,
+      { method: 'POST', headers: getHeaders(), body: JSON.stringify(payload) }
+    );
+    return handleResponse(res, 'Failed to create activity entry');
+  },
+
   getMyIdeaAISuggestions: async (
     ideaId: string,
     payload: {
@@ -9759,11 +9811,27 @@ export const Api = {
     ];
     return { dashboards: sampleDashboards };
   },
-  // Audit Logs
-  getAuditEvents: async (filters?: any) => ({
-    events: [],
-    pagination: { page: 1, pageSize: 50, total: 0, totalPages: 0 },
-  }),
+  // V4-ENT-03: Unified Audit Events
+  getAuditEvents: async (filters?: {
+    resourceType?: string;
+    resourceId?: string;
+    actorId?: string;
+    actorType?: string;
+    from?: string;
+    to?: string;
+    limit?: number;
+    offset?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([k, v]) => {
+        if (v !== undefined && v !== '') params.set(k, String(v));
+      });
+    }
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_URL}/audit/events${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to fetch audit events');
+  },
   // SuperAdmin IAM
   getAdminAuditStats: async () => {
     const res = await fetchWithRetry(`${API_URL}/superadmin/admin/audit-logs/stats`, {
@@ -12202,6 +12270,219 @@ export const Api = {
     return handleResponse(res, 'Failed to get KG audit log');
   },
 
+  kgApplyRetentionPolicy: async (retentionDays: number) => {
+    const res = await fetch(`${API_URL}/knowledge-graph/governance/retention`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ retentionDays }),
+    });
+    return handleResponse(res, 'Failed to apply KG retention policy');
+  },
+
+  kgGetFreshnessJobs: async () => {
+    const res = await fetch(`${API_URL}/knowledge-graph/freshness/jobs`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get KG freshness jobs');
+  },
+
+  // ──────────────────────────────────────────────
+  // V4-ORG-01 / V4-ASMT-01: Benchmark Compare
+  // ──────────────────────────────────────────────
+
+  benchmarkCompare: async (params: {
+    framework?: string;
+    score?: number;
+    industry?: string;
+    region?: string;
+    size?: string;
+    assessmentId?: string;
+    categories?: Record<string, number>;
+  }) => {
+    const qs = new URLSearchParams();
+    if (params.framework) qs.set('framework', params.framework);
+    if (params.score !== undefined) qs.set('score', String(params.score));
+    if (params.industry) qs.set('industry', params.industry);
+    if (params.region) qs.set('region', params.region);
+    if (params.size) qs.set('size', params.size);
+    if (params.assessmentId) qs.set('assessmentId', params.assessmentId);
+    if (params.categories) qs.set('categories', JSON.stringify(params.categories));
+    const res = await fetch(`${API_URL}/benchmark/compare?${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to compare benchmarks');
+  },
+
+  // ──────────────────────────────────────────────
+  // V4-IDEA-06 / V4-ORG-04: V4 Final batch
+  // ──────────────────────────────────────────────
+
+  exportComplete: async (exportId: string, data: { fileUrl: string; fileSizeBytes?: number }) => {
+    const res = await fetch(`${API_URL}/v4-final/exports/${encodeURIComponent(exportId)}/complete`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to complete export');
+  },
+
+  gapAnalysisUpdateStatus: async (
+    gapId: string,
+    data: { status: string; autoInitiativesCreated?: number }
+  ) => {
+    const res = await fetch(`${API_URL}/v4-final/gap-analyses/${encodeURIComponent(gapId)}/status`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to update gap analysis status');
+  },
+
+  // ──────────────────────────────────────────────
+  // V4-NOTE-01: Notebook Capture Upload
+  // ──────────────────────────────────────────────
+
+  notebookCaptureUpload: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers = getHeaders();
+    delete (headers as any)['Content-Type'];
+    const res = await fetch(`${API_URL}/notebook/capture/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    return handleResponse(res, 'Failed to upload notebook capture');
+  },
+
+  // ──────────────────────────────────────────────
+  // V4-FINC: Finance Enterprise
+  // ──────────────────────────────────────────────
+
+  financeCreateForecastCycle: async (
+    modelId: string,
+    data: { cycleName: string; cycleType?: string; forecastHorizonMonths?: number }
+  ) => {
+    const res = await fetch(
+      `${API_URL}/finance-v4/models/${encodeURIComponent(modelId)}/forecast-cycles`,
+      { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) }
+    );
+    return handleResponse(res, 'Failed to create forecast cycle');
+  },
+
+  financeLogSync: async (
+    connectorId: string,
+    data: { syncType?: string; recordsProcessed?: number; recordsCreated?: number }
+  ) => {
+    const res = await fetch(
+      `${API_URL}/finance-v4/connectors/${encodeURIComponent(connectorId)}/sync-log`,
+      { method: 'POST', headers: getHeaders(), body: JSON.stringify(data) }
+    );
+    return handleResponse(res, 'Failed to log finance sync');
+  },
+
+  // ──────────────────────────────────────────────
+  // V4-AI: AI Governance — Privacy & Memory
+  // ──────────────────────────────────────────────
+
+  aiGovernanceGetPrivacy: async () => {
+    const res = await fetch(`${API_URL}/ai-governance/privacy`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get AI privacy settings');
+  },
+
+  aiGovernanceUpdatePrivacy: async (data: Record<string, unknown>) => {
+    const res = await fetch(`${API_URL}/ai-governance/privacy`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to update AI privacy settings');
+  },
+
+  aiGovernanceGetMemoryPreview: async () => {
+    const res = await fetch(`${API_URL}/ai-governance/memory/preview`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get AI memory preview');
+  },
+
+  aiGovernanceExportMemory: async () => {
+    const res = await fetch(`${API_URL}/ai-governance/memory/export`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to export AI memory');
+  },
+
+  aiGovernanceDeleteMemory: async () => {
+    const res = await fetch(`${API_URL}/ai-governance/memory`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to delete AI memory');
+  },
+
+  // ──────────────────────────────────────────────
+  // V4-RAID: RAID Log
+  // ──────────────────────────────────────────────
+
+  raidList: async (filters?: { initiativeId?: string; type?: string; status?: string }) => {
+    const params = new URLSearchParams();
+    if (filters) Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, v); });
+    const qs = params.toString() ? `?${params}` : '';
+    const res = await fetch(`${API_URL}/raid${qs}`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to list RAID items');
+  },
+
+  raidCreate: async (data: Record<string, unknown>) => {
+    const res = await fetch(`${API_URL}/raid`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to create RAID item');
+  },
+
+  raidUpdate: async (id: string, data: Record<string, unknown>) => {
+    const res = await fetch(`${API_URL}/raid/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to update RAID item');
+  },
+
+  raidDelete: async (id: string) => {
+    const res = await fetch(`${API_URL}/raid/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to delete RAID item');
+  },
+
+  raidGetSummary: async () => {
+    const res = await fetch(`${API_URL}/raid/summary`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get RAID summary');
+  },
+
+  raidGetScoringHeatmap: async () => {
+    const res = await fetch(`${API_URL}/raid/scoring/heatmap`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get RAID heatmap');
+  },
+
+  raidGetScoringThresholds: async () => {
+    const res = await fetch(`${API_URL}/raid/scoring/thresholds`, { headers: getHeaders() });
+    return handleResponse(res, 'Failed to get RAID thresholds');
+  },
+
+  raidUpdateScoringThresholds: async (data: Record<string, unknown>) => {
+    const res = await fetch(`${API_URL}/raid/scoring/thresholds`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to update RAID thresholds');
+  },
+
+  raidRecalculate: async () => {
+    const res = await fetch(`${API_URL}/raid/scoring/recalculate`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to recalculate RAID scores');
+  },
+
   // ──────────────────────────────────────────────
   // V4-INTV: Interview Enterprise API
   // ──────────────────────────────────────────────
@@ -12394,6 +12675,33 @@ export const Api = {
       { headers: getHeaders() }
     );
     return handleResponse(res, 'Failed to diff context versions');
+  },
+  organizationContextGet: async () => {
+    const res = await fetch(`${API_URL}/organization-context`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load organization context');
+  },
+  organizationContextGetTimeline: async (limit?: number) => {
+    const params = limit ? `?limit=${limit}` : '';
+    const res = await fetch(`${API_URL}/organization-context/timeline${params}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load organization context timeline');
+  },
+  organizationContextGetClaims: async (limit?: number) => {
+    const params = limit ? `?limit=${limit}` : '';
+    const res = await fetch(`${API_URL}/organization-context/claims${params}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to load organization context claims');
+  },
+  organizationContextRebuild: async () => {
+    const res = await fetch(`${API_URL}/organization-context/rebuild`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to rebuild organization context snapshot');
   },
 
   // ──────────────────────────────────────────────
@@ -14700,6 +15008,65 @@ export const Api = {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to get playbook executions');
+  },
+
+  // ──────────────────────────────────────────────
+  // Idea Table Presence (collaboration cursors)
+  // ──────────────────────────────────────────────
+
+  broadcastIdeaPresence: async (
+    ideaId: string,
+    data: {
+      userId: string;
+      userName: string;
+      color: string;
+      activeCell?: { nodeId: string; colKey: string };
+      timestamp: number;
+    }
+  ) => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${ideaId}/presence`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to broadcast presence');
+  },
+
+  getIdeaPresence: async (ideaId: string) => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${ideaId}/presence`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to get idea presence');
+  },
+
+  // ──────────────────────────────────────────────
+  // Presentation Deck Creation (from table export)
+  // ──────────────────────────────────────────────
+
+  createPresentationDeck: async (data: {
+    title: string;
+    theme?: string;
+    slides: Array<{ type: string; content: unknown }>;
+    source?: string;
+  }) => {
+    const res = await fetch(`${API_URL}/presentations/decks`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to create presentation deck');
+  },
+
+  // ──────────────────────────────────────────────
+  // Idea Table CSV Export (server-side)
+  // ──────────────────────────────────────────────
+
+  exportIdeaTableCSV: async (ideaId: string) => {
+    const res = await fetch(`${API_URL}/my-work/my-ideas/${ideaId}/export-csv`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to export CSV');
+    return res.text();
   },
 };
 

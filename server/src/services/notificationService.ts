@@ -15,11 +15,6 @@
 import logger from '../utils/Logger.js';
 import * as DbPromise from '../utils/DbPromise.js';
 
-function orgScopeClause(organizationId?: string): { clause: string; params: string[] } {
-  if (!organizationId) return { clause: '', params: [] };
-  return { clause: ' AND organization_id = ?', params: [organizationId] };
-}
-
 export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent' | 'critical';
 
 export interface SendNotificationInput {
@@ -152,7 +147,6 @@ export async function getNotifications(
   const limit = Math.min(normalized.limit ?? 50, 200);
   const offset = Math.max(normalized.offset ?? 0, 0);
   const readTruthy = "('1','true','t','TRUE','T')";
-  const orgScope = orgScopeClause(normalized.organizationId);
 
   try {
     const rows = await DbPromise.all<any>(
@@ -177,12 +171,12 @@ export async function getNotifications(
           read_at as readAt,
           dismissed_at as dismissedAt
         FROM notifications
-        WHERE user_id = ?${orgScope.clause}
+        WHERE user_id = ? AND (? IS NULL OR organization_id = ?)
           ${normalized.unreadOnly ? `AND COALESCE(is_read::text, '0') NOT IN ${readTruthy}` : ''}
         ORDER BY created_at DESC
         LIMIT ? OFFSET ?
       `,
-      [normalized.userId, ...orgScope.params, limit, offset]
+      [normalized.userId, normalized.organizationId || null, normalized.organizationId || null, limit, offset]
     );
     return rows || [];
   } catch (err) {
@@ -230,18 +224,17 @@ export async function markAsRead(
       : params;
   try {
     const now = new Date().toISOString();
-    const orgScope = orgScopeClause(normalized.organizationId);
     try {
       // Preferred: boolean schema
       await DbPromise.run(
-        `UPDATE notifications SET is_read = true, read_at = ? WHERE id = ? AND user_id = ?${orgScope.clause}`,
-        [now, normalized.id, normalized.userId, ...orgScope.params]
+        `UPDATE notifications SET is_read = true, read_at = ? WHERE id = ? AND user_id = ? AND (? IS NULL OR organization_id = ?)`,
+        [now, normalized.id, normalized.userId, normalized.organizationId || null, normalized.organizationId || null]
       );
     } catch {
       // Back-compat: integer schema (0/1)
       await DbPromise.run(
-        `UPDATE notifications SET is_read = 1, read_at = ? WHERE id = ? AND user_id = ?${orgScope.clause}`,
-        [now, normalized.id, normalized.userId, ...orgScope.params]
+        `UPDATE notifications SET is_read = 1, read_at = ? WHERE id = ? AND user_id = ? AND (? IS NULL OR organization_id = ?)`,
+        [now, normalized.id, normalized.userId, normalized.organizationId || null, normalized.organizationId || null]
       );
     }
     return true;
@@ -266,16 +259,15 @@ export async function markAllAsRead(
       : params;
   try {
     const now = new Date().toISOString();
-    const orgScope = orgScopeClause(normalized.organizationId);
     try {
       await DbPromise.run(
-        `UPDATE notifications SET is_read = true, read_at = ? WHERE user_id = ?${orgScope.clause}`,
-        [now, normalized.userId, ...orgScope.params]
+        `UPDATE notifications SET is_read = true, read_at = ? WHERE user_id = ? AND (? IS NULL OR organization_id = ?)`,
+        [now, normalized.userId, normalized.organizationId || null, normalized.organizationId || null]
       );
     } catch {
       await DbPromise.run(
-        `UPDATE notifications SET is_read = 1, read_at = ? WHERE user_id = ?${orgScope.clause}`,
-        [now, normalized.userId, ...orgScope.params]
+        `UPDATE notifications SET is_read = 1, read_at = ? WHERE user_id = ? AND (? IS NULL OR organization_id = ?)`,
+        [now, normalized.userId, normalized.organizationId || null, normalized.organizationId || null]
       );
     }
     return true;
@@ -301,10 +293,15 @@ export async function dismiss(
       ? { id: params, userId: userIdArg || '', organizationId: organizationIdArg }
       : params;
   try {
-    const orgScope = orgScopeClause(normalized.organizationId);
     await DbPromise.run(
-      `UPDATE notifications SET dismissed_at = ? WHERE id = ? AND user_id = ?${orgScope.clause}`,
-      [new Date().toISOString(), normalized.id, normalized.userId, ...orgScope.params]
+      `UPDATE notifications SET dismissed_at = ? WHERE id = ? AND user_id = ? AND (? IS NULL OR organization_id = ?)`,
+      [
+        new Date().toISOString(),
+        normalized.id,
+        normalized.userId,
+        normalized.organizationId || null,
+        normalized.organizationId || null,
+      ]
     );
     return true;
   } catch (err) {
@@ -344,10 +341,9 @@ export async function getCounts(
       ? { userId: params, organizationId: organizationIdArg }
       : params;
   try {
-    const orgScope = orgScopeClause(normalized.organizationId);
     const totalRow = await DbPromise.get<{ count: number }>(
-      `SELECT COUNT(*)::int as count FROM notifications WHERE user_id = ?${orgScope.clause}`,
-      [normalized.userId, ...orgScope.params]
+      `SELECT COUNT(*)::int as count FROM notifications WHERE user_id = ? AND (? IS NULL OR organization_id = ?)`,
+      [normalized.userId, normalized.organizationId || null, normalized.organizationId || null]
     );
     const unread = normalized.organizationId
       ? await getUnreadCount({

@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { llmService } from './ai/llmService.js';
+import organizationContextService from './organizationContext/OrganizationContextService.js';
 
 const INSIGHT_CATEGORIES = [
   'risk',
@@ -88,23 +89,23 @@ export async function executeInference(organizationId: string, runId: string): P
 
     const placeholders = sessionIds.map(() => '?').join(', ');
     const answeredQuestions = await dbAll(
-      `SELECT q.id, q.session_id, q.category, q.question_text, q.answer_text, q.confidence, q.needs_follow_up
+      `SELECT q.id, q.session_id, q.category, q.question_text, q.answer_text, q.confidence_score, q.status
        FROM interview_questions q
        WHERE q.session_id IN (${placeholders})
          AND q.organization_id = ?
-         AND q.status = 'answered'
+         AND q.status IN ('answered', 'needs_follow_up')
        ORDER BY q.category, q.sort_order`,
       [...sessionIds, organizationId]
     );
 
-    const primaryEvidence = (answeredQuestions || []).filter((q: any) => (q.confidence || 0) >= 3);
+    const primaryEvidence = (answeredQuestions || []).filter((q: any) => (q.confidence_score || 0) >= 3);
     const gaps = (answeredQuestions || []).filter(
-      (q: any) => q.needs_follow_up === 1 || q.needs_follow_up === true
+      (q: any) => q.status === 'needs_follow_up'
     );
 
-    const orgContext = await dbGet(`SELECT * FROM organization_context WHERE organization_id = ?`, [
-      organizationId,
-    ]);
+    const orgContext = await organizationContextService.buildResolvedContext(organizationId).catch(
+      () => null
+    );
 
     const systemPrompt = `You are a senior management consultant performing structured analysis of interview data.
 Your task is to generate categorized insights from interview responses.
@@ -128,7 +129,7 @@ ${JSON.stringify(
     category: q.category,
     question: q.question_text,
     answer: q.answer_text,
-    confidence: q.confidence,
+    confidence: q.confidence_score,
   })),
   null,
   2

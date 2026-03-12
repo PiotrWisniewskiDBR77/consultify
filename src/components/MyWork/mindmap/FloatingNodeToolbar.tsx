@@ -1,0 +1,261 @@
+import {
+  Bold,
+  CircleDot,
+  Link2,
+  Lock,
+  MoreVertical,
+  Sparkles,
+  ToggleRight,
+  Unlock,
+  Waypoints,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { BranchThemeDropdown } from './floating-toolbar/BranchThemeDropdown';
+import { ColorPickerPopover } from './floating-toolbar/ColorPickerPopover';
+import { FloatingAIPopover } from './floating-toolbar/FloatingAIPopover';
+import { FontSizeDropdown } from './floating-toolbar/FontSizeDropdown';
+import { SemanticTypeDropdown } from './floating-toolbar/SemanticTypeDropdown';
+
+type DropdownId = 'semanticType' | 'branchTheme' | 'color' | 'fontSize' | 'ai' | null;
+
+export interface FloatingNodeToolbarProps {
+  nodeId: string;
+  nodeData?: Record<string, any>;
+  style?: {
+    color?: string;
+    fillOpacity?: number;
+    lineStyle?: 'solid' | 'dashed' | 'dotted';
+    fontSize?: number;
+    bold?: boolean;
+    semanticType?: string;
+    branchTheme?: string;
+    autoLayout?: boolean;
+    locked?: boolean;
+  };
+  position: { x: number; y: number };
+  onUpdate: (patch: Record<string, any>) => void;
+  onOpenContextMenu: (pos: { x: number; y: number }) => void;
+  onOpenArtifactModal: () => void;
+  onOpenChatAboutNode: () => void;
+  onAction: (action: string) => void;
+}
+
+export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
+  nodeId,
+  style = {},
+  position,
+  onUpdate,
+  onOpenContextMenu,
+  onOpenArtifactModal,
+  onOpenChatAboutNode,
+  onAction,
+}) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+  const [openDropdown, setOpenDropdown] = useState<DropdownId>(null);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  useEffect(() => {
+    setOpenDropdown(null);
+  }, [nodeId]);
+
+  const toggle = useCallback((id: DropdownId) => {
+    setOpenDropdown((cur) => (cur === id ? null : id));
+  }, []);
+
+  const closeDD = useCallback(() => setOpenDropdown(null), []);
+
+  const btnClass = (active: boolean) =>
+    `flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-150 ${
+      active
+        ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
+    }`;
+
+  return (
+    <div
+      ref={ref}
+      className="floating-node-toolbar absolute z-[80] pointer-events-auto"
+      style={{
+        left: position.x,
+        top: position.y - 48,
+        transform: 'translateX(-50%)',
+      }}
+    >
+      <div className="flex items-center gap-0.5 rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-xl px-1 py-0.5">
+        {/* 1. Semantic Type */}
+        <div className="relative">
+          <button
+            onClick={() => toggle('semanticType')}
+            title={isPl ? 'Typ węzła' : 'Node type'}
+            className={btnClass(openDropdown === 'semanticType')}
+          >
+            <CircleDot size={13} />
+          </button>
+          {openDropdown === 'semanticType' && (
+            <div className="absolute top-full left-0 mt-1 z-[100]">
+              <SemanticTypeDropdown
+                isPl={!!isPl}
+                current={style.semanticType}
+                onSelect={(type) => onUpdate({ semanticType: type })}
+                onClose={closeDD}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 2. Branch theme / line style */}
+        <div className="relative">
+          <button
+            onClick={() => toggle('branchTheme')}
+            title={isPl ? 'Styl linii' : 'Line style'}
+            className={btnClass(openDropdown === 'branchTheme')}
+          >
+            <Waypoints size={13} />
+          </button>
+          {openDropdown === 'branchTheme' && (
+            <div className="absolute top-full left-0 mt-1 z-[100]">
+              <BranchThemeDropdown
+                isPl={!!isPl}
+                current={style.branchTheme}
+                onSelect={(theme) => onUpdate({ branchTheme: theme })}
+                onClose={closeDD}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 3. Auto-layout toggle */}
+        <button
+          onClick={() => onUpdate({ autoLayout: !style.autoLayout })}
+          title={isPl ? 'Auto-układ gałęzi' : 'Auto-layout branch'}
+          className={btnClass(!!style.autoLayout)}
+        >
+          <ToggleRight size={13} />
+        </button>
+
+        {/* 4. Color */}
+        <div className="relative">
+          <button
+            onClick={() => toggle('color')}
+            title={isPl ? 'Kolor' : 'Color'}
+            className={btnClass(openDropdown === 'color')}
+          >
+            <div
+              className="w-3.5 h-3.5 rounded-full border border-slate-300 dark:border-white/20"
+              style={{ backgroundColor: style.color || '#3b82f6' }}
+            />
+          </button>
+          {openDropdown === 'color' && (
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-[100]">
+              <ColorPickerPopover
+                isPl={!!isPl}
+                currentColor={style.color}
+                currentFillOpacity={style.fillOpacity}
+                currentLineStyle={style.lineStyle}
+                onUpdate={(patch) => onUpdate(patch)}
+                onClose={closeDD}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 5. Font size */}
+        <div className="relative">
+          <button
+            onClick={() => toggle('fontSize')}
+            title={isPl ? 'Rozmiar czcionki' : 'Font size'}
+            className={`${btnClass(openDropdown === 'fontSize')} text-[10px] font-bold`}
+          >
+            {style.fontSize || 14}
+          </button>
+          {openDropdown === 'fontSize' && (
+            <div className="absolute top-full left-0 mt-1 z-[100]">
+              <FontSizeDropdown
+                current={style.fontSize || 14}
+                onSelect={(size) => onUpdate({ fontSize: size })}
+                onClose={closeDD}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 6. Bold */}
+        <button
+          onClick={() => onUpdate({ bold: !style.bold })}
+          title={isPl ? 'Pogrubienie' : 'Bold'}
+          className={btnClass(!!style.bold)}
+        >
+          <Bold size={13} />
+        </button>
+
+        <div className="w-px h-4 bg-slate-200/50 dark:bg-white/[0.06] mx-0.5" />
+
+        {/* 7. Link / Artifact */}
+        <button
+          onClick={onOpenArtifactModal}
+          title={isPl ? 'Powiąż artefakt' : 'Link artifact'}
+          className={btnClass(false)}
+        >
+          <Link2 size={13} />
+        </button>
+
+        {/* 8. Lock */}
+        <button
+          onClick={() => onUpdate({ locked: !style.locked })}
+          title={isPl ? (style.locked ? 'Odblokuj' : 'Zablokuj') : (style.locked ? 'Unlock' : 'Lock')}
+          className={btnClass(!!style.locked)}
+        >
+          {style.locked ? <Lock size={13} /> : <Unlock size={13} />}
+        </button>
+
+        <div className="w-px h-4 bg-slate-200/50 dark:bg-white/[0.06] mx-0.5" />
+
+        {/* 9. AI */}
+        <div className="relative">
+          <button
+            onClick={() => toggle('ai')}
+            title="AI"
+            className={btnClass(openDropdown === 'ai')}
+          >
+            <Sparkles size={13} />
+          </button>
+          {openDropdown === 'ai' && (
+            <div className="absolute top-full right-0 mt-1 z-[100]">
+              <FloatingAIPopover
+                isPl={!!isPl}
+                nodeId={nodeId}
+                onAction={onAction}
+                onOpenChatAboutNode={onOpenChatAboutNode}
+                onClose={closeDD}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 10. More (opens context menu) */}
+        <button
+          onClick={(e) => onOpenContextMenu({ x: e.clientX, y: e.clientY })}
+          title={isPl ? 'Więcej opcji' : 'More options'}
+          className={btnClass(false)}
+        >
+          <MoreVertical size={13} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default FloatingNodeToolbar;

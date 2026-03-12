@@ -432,6 +432,22 @@ This is especially important for:
 - large tables
 - complex branch exploration
 
+## 7.6 Navigation contract
+
+The workspace navigation must remain split into two clearly different layers:
+
+- **work system switcher** — `Mind Map | Whiteboard | Process / System Flow | Table`
+- **right-side workspace strip** — `Tools | Context | AI Suggestions`
+
+Rules:
+
+- the 4-system switcher changes how the user works on the same idea
+- the right strip never changes the active work system
+- the right strip remains the only workspace-side panel switcher
+- the module topbar must not duplicate the 4-system switcher for an already open idea document
+- contextual CTA buttons inside the canvas may open `Tools`, but must delegate to the strip contract instead of creating parallel navigation
+- visual weight must make the distinction obvious: system navigation is local to the canvas, panel navigation is local to the right rail
+
 ---
 
 ## 8) Knowledge layer

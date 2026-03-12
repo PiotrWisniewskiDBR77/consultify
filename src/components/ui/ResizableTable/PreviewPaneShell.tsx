@@ -15,6 +15,8 @@ export interface PreviewPaneShellProps {
   children: React.ReactNode;
   className?: string;
   bodyClassName?: string;
+  /** Unread changes count — displayed as a badge next to the title */
+  unreadCount?: number;
 }
 
 export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
@@ -25,6 +27,7 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
   children,
   className = '',
   bodyClassName = '',
+  unreadCount,
 }) => {
   const { t } = useTranslation();
 
@@ -40,13 +43,18 @@ export const PreviewPaneShell: React.FC<PreviewPaneShellProps> = ({
     >
       {/* Panel Header (KANON v3 / Golden Standard §6.10a) */}
       <div className="shrink-0 flex items-center justify-between gap-3 px-4 py-3 min-h-[64px] border-b border-slate-200/70 dark:border-white/[0.06] bg-white/80 dark:bg-navy-900/80 backdrop-blur">
-        <div className="min-w-0">
+        <div className="min-w-0 flex items-center gap-2">
           <div
             className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate"
             title={title}
           >
             {title}
           </div>
+          {unreadCount && unreadCount > 0 ? (
+            <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 rounded-full text-[10px] font-bold leading-none bg-red-500 text-white shrink-0">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          ) : null}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {actions}

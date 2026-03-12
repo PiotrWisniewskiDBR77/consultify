@@ -9,11 +9,16 @@ import { type FinanceModelRow, normalizeStatus } from '../financeTypes';
 interface CreateBudgetModalProps {
   onCreated: (row: FinanceModelRow) => void;
   onClose: () => void;
+  initialTitle?: string;
 }
 
-export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({ onCreated, onClose }) => {
+export const CreateBudgetModal: React.FC<CreateBudgetModalProps> = ({
+  onCreated,
+  onClose,
+  initialTitle = '',
+}) => {
   const { t } = useTranslation();
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState(initialTitle);
   const [periodStart, setPeriodStart] = useState('2026-01');
   const [periodEnd, setPeriodEnd] = useState('2026-12');
   const [granularity, setGranularity] = useState<'monthly' | 'quarterly' | 'annual'>('monthly');

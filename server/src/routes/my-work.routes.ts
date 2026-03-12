@@ -26,6 +26,7 @@ import type { OutcomeType } from '../services/ideaClusterService.js';
 import { createOutcomeFromCluster, materializeClusters } from '../services/ideaClusterService.js';
 import inboxService from '../services/inboxService.js';
 import NotificationService from '../services/notificationService.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
@@ -616,6 +617,7 @@ router.get(
 
 router.post(
   '/link-graph/edges',
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
@@ -653,6 +655,12 @@ router.post(
       containerType: parsed.data.context?.containerType ?? null,
       containerId: parsed.data.context?.containerId ?? null,
       blockId: parsed.data.context?.blockId ?? null,
+    });
+
+    await req.emitAuditEvent?.({
+      action: 'LINK_GRAPH_EDGE_CREATE',
+      resourceType: 'LINK_GRAPH_EDGE',
+      resourceId: created?.id || 'unknown',
     });
 
     res.status(201).json({ ok: true, edgeId: created?.id || null });
@@ -3416,6 +3424,20 @@ router.post(
       })
       .catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
 
+    await organizationContextService.recordMyWorkIdea({
+      organizationId: orgId,
+      userId,
+      payload: {
+        ideaId: id,
+        title,
+        body,
+        tags,
+        sourceType,
+        sourceConversationId,
+        sourceMessageId,
+      },
+    });
+
     res.status(201).json({ ...row, tags: parseTagsArray((row as any)?.tags) });
   })
 );
@@ -3579,6 +3601,18 @@ router.put(
         metadata: { fromAI: Boolean(req.body?.fromAI) },
       })
       .catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
+
+    await organizationContextService.recordMyWorkIdea({
+      organizationId: orgId,
+      userId,
+      payload: {
+        ideaId: id,
+        title: (row as any)?.title,
+        body: (row as any)?.body,
+        tags: parseTagsArray((row as any)?.tags),
+        stage: (row as any)?.stage,
+      },
+    });
 
     res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
   })
@@ -3804,55 +3838,21 @@ router.delete(
 type IdeaMapPayload = { nodes: any[]; edges: any[]; version?: number };
 
 function buildDefaultIdeaMap(idea: { id: string; title: string }, isPl: boolean): IdeaMapPayload {
-  const centerId = 'root';
-  const branchRadius = 320;
-  const branches = [
-    { key: 'problem', label: isPl ? 'Problem' : 'Problem', angle: -Math.PI / 2 },
-    { key: 'goal', label: isPl ? 'Cel / KPI' : 'Goal / KPI', angle: -Math.PI / 6 },
-    { key: 'options', label: isPl ? 'Opcje' : 'Options', angle: Math.PI / 6 },
-    { key: 'evidence', label: isPl ? 'Dowody' : 'Evidence', angle: Math.PI / 2 },
-    { key: 'risks', label: isPl ? 'Ryzyka' : 'Risks', angle: (5 * Math.PI) / 6 },
-    { key: 'experiments', label: isPl ? 'Eksperymenty' : 'Experiments', angle: (7 * Math.PI) / 6 },
-  ];
-
-  const nodes: any[] = [
-    {
-      id: centerId,
-      type: 'center',
-      position: { x: 0, y: 0 },
-      data: {
-        label: idea.title || (isPl ? 'Mój pomysł' : 'My idea'),
-        ideaId: idea.id,
+  return {
+    nodes: [
+      {
+        id: 'root',
+        type: 'center',
+        position: { x: 0, y: 0 },
+        data: {
+          label: idea.title || (isPl ? 'Mój pomysł' : 'My idea'),
+          ideaId: idea.id,
+        },
       },
-      draggable: false,
-    },
-  ];
-
-  const edges: any[] = [];
-
-  for (const b of branches) {
-    const bx = Math.cos(b.angle) * branchRadius;
-    const by = Math.sin(b.angle) * branchRadius;
-    const branchId = `branch-${b.key}`;
-    nodes.push({
-      id: branchId,
-      type: 'branch',
-      position: { x: bx - 50, y: by - 20 },
-      data: { label: b.label, branchKey: b.key, count: 0 },
-      draggable: false,
-    });
-    edges.push({
-      id: `edge-${centerId}-${branchId}`,
-      source: centerId,
-      target: branchId,
-      type: 'smoothstep',
-      animated: true,
-      style: { stroke: '#94a3b8', strokeWidth: 2.5, opacity: 0.35 },
-      data: { system: true, kind: 'frames' },
-    });
-  }
-
-  return { nodes, edges, version: 1 };
+    ],
+    edges: [],
+    version: 1,
+  };
 }
 
 /**
@@ -4200,6 +4200,7 @@ router.put(
  */
 router.post(
   '/my-ideas/:id/map/expand',
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
@@ -4385,6 +4386,13 @@ No markdown, no extra text.`;
     }
 
     const proposeOnly = String(req.body?.proposeOnly ?? 'false') === 'true';
+
+    await req.emitAuditEvent?.({
+      action: 'IDEA_MAP_AI_EXPAND',
+      resourceType: 'IDEA_MAP',
+      resourceId: ideaId,
+    });
+
     if (proposeOnly) {
       return res.json({
         proposal: {
@@ -4407,6 +4415,7 @@ No markdown, no extra text.`;
  */
 router.post(
   '/my-ideas/:id/map/ai-suggestions',
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
@@ -4485,6 +4494,12 @@ Return ONLY JSON array: [{"id":"s1","category":"topics|findings|next_steps","tex
       logger.warn('[IdeaMapAISuggestions] LLM failed:', err?.message);
     }
 
+    await req.emitAuditEvent?.({
+      action: 'IDEA_MAP_AI_SUGGESTIONS',
+      resourceType: 'IDEA_MAP',
+      resourceId: ideaId,
+    });
+
     res.json({ suggestions });
   })
 );
@@ -4496,6 +4511,7 @@ Return ONLY JSON array: [{"id":"s1","category":"topics|findings|next_steps","tex
  */
 router.post(
   '/my-ideas/:id/map/gap-analysis',
+  requireAudit,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
@@ -4595,12 +4611,236 @@ Return ONLY JSON: {"rationale":"...","gaps":[{"title":"...","branchKey":"risks|g
       logger.warn('[IdeaMapGapAnalysis] LLM failed:', err?.message);
     }
 
+    await req.emitAuditEvent?.({
+      action: 'IDEA_MAP_GAP_ANALYSIS',
+      resourceType: 'IDEA_MAP',
+      resourceId: ideaId,
+    });
+
     res.json({
       proposal: {
         add: { nodes: gapNodes, edges: gapEdges },
         rationale,
       },
     });
+  })
+);
+
+// ============================================================================
+// Snapshots — server-persisted map version history
+// ============================================================================
+
+/**
+ * GET /api/my-work/my-ideas/:id/map/snapshots
+ */
+router.get(
+  '/my-ideas/:id/map/snapshots',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const hasTables = await requireTables(res, ['my_idea_map_snapshots']);
+    if (!hasTables) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
+
+    const rows = await queryHelpers.query<any>(
+      `SELECT id, label, node_count as "nodeCount", edge_count as "edgeCount", data_json as "dataJson", created_at as "createdAt"
+       FROM my_idea_map_snapshots
+       WHERE idea_id = ? AND user_id = ? AND organization_id = ?
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [ideaId, userId, orgId]
+    );
+
+    const snapshots = rows.map((r: any) => {
+      let data: any = {};
+      try { data = JSON.parse(String(r.dataJson || '{}')); } catch { /* ignore */ }
+      return {
+        id: r.id,
+        label: r.label,
+        nodeCount: r.nodeCount,
+        edgeCount: r.edgeCount,
+        timestamp: new Date(r.createdAt).getTime(),
+        nodes: data.nodes || [],
+        edges: data.edges || [],
+      };
+    });
+
+    res.json({ snapshots });
+  })
+);
+
+/**
+ * POST /api/my-work/my-ideas/:id/map/snapshots
+ */
+router.post(
+  '/my-ideas/:id/map/snapshots',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const hasTables = await requireTables(res, ['my_idea_map_snapshots']);
+    if (!hasTables) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
+
+    const schema = z.object({
+      label: z.string().min(1).max(200),
+      nodes: z.array(z.any()),
+      edges: z.array(z.any()),
+    });
+
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
+
+    const id = uuidv4();
+    const dataJson = JSON.stringify({ nodes: parsed.data.nodes, edges: parsed.data.edges });
+
+    await queryHelpers.run(
+      `INSERT INTO my_idea_map_snapshots (id, idea_id, user_id, organization_id, label, node_count, edge_count, data_json, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+      [id, ideaId, userId, orgId, parsed.data.label, parsed.data.nodes.length, parsed.data.edges.length, dataJson]
+    );
+
+    await req.emitAuditEvent?.({
+      action: 'IDEA_MAP_SNAPSHOT_CREATE',
+      resourceType: 'IDEA_MAP_SNAPSHOT',
+      resourceId: id,
+    });
+
+    res.status(201).json({
+      ok: true,
+      snapshot: {
+        id,
+        label: parsed.data.label,
+        nodeCount: parsed.data.nodes.length,
+        edgeCount: parsed.data.edges.length,
+        timestamp: Date.now(),
+      },
+    });
+  })
+);
+
+/**
+ * DELETE /api/my-work/my-ideas/:id/map/snapshots/:snapshotId
+ */
+router.delete(
+  '/my-ideas/:id/map/snapshots/:snapshotId',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const hasTables = await requireTables(res, ['my_idea_map_snapshots']);
+    if (!hasTables) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    const snapshotId = String(req.params.snapshotId || '').trim();
+    if (!ideaId || !snapshotId) return res.status(400).json({ error: 'Invalid id' });
+
+    await queryHelpers.run(
+      `DELETE FROM my_idea_map_snapshots WHERE id = ? AND idea_id = ? AND user_id = ? AND organization_id = ?`,
+      [snapshotId, ideaId, userId, orgId]
+    );
+
+    await req.emitAuditEvent?.({
+      action: 'IDEA_MAP_SNAPSHOT_DELETE',
+      resourceType: 'IDEA_MAP_SNAPSHOT',
+      resourceId: snapshotId,
+    });
+
+    res.json({ ok: true });
+  })
+);
+
+// ============================================================================
+// Activity Feed — server-persisted map activity log
+// ============================================================================
+
+/**
+ * GET /api/my-work/my-ideas/:id/activity
+ */
+router.get(
+  '/my-ideas/:id/activity',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const hasTables = await requireTables(res, ['my_idea_activity']);
+    if (!hasTables) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
+
+    const limit = Math.min(Number(req.query.limit) || 100, 500);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
+
+    const rows = await queryHelpers.query<any>(
+      `SELECT id, type, actor, node_id as "nodeId", node_label as "nodeLabel", detail, created_at as "createdAt"
+       FROM my_idea_activity
+       WHERE idea_id = ? AND user_id = ? AND organization_id = ?
+       ORDER BY created_at DESC
+       LIMIT ? OFFSET ?`,
+      [ideaId, userId, orgId, limit, offset]
+    );
+
+    const entries = rows.map((r: any) => ({
+      id: r.id,
+      type: r.type,
+      actor: r.actor,
+      nodeId: r.nodeId,
+      nodeLabel: r.nodeLabel,
+      detail: r.detail,
+      timestamp: new Date(r.createdAt).getTime(),
+    }));
+
+    res.json({ entries });
+  })
+);
+
+/**
+ * POST /api/my-work/my-ideas/:id/activity
+ */
+router.post(
+  '/my-ideas/:id/activity',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const hasTables = await requireTables(res, ['my_idea_activity']);
+    if (!hasTables) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
+
+    const schema = z.object({
+      type: z.string().min(1).max(100),
+      actor: z.string().min(1).max(200),
+      nodeId: z.string().optional(),
+      nodeLabel: z.string().optional(),
+      detail: z.string().optional(),
+    });
+
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
+
+    const id = uuidv4();
+    await queryHelpers.run(
+      `INSERT INTO my_idea_activity (id, idea_id, user_id, organization_id, type, actor, node_id, node_label, detail, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+      [id, ideaId, userId, orgId, parsed.data.type, parsed.data.actor, parsed.data.nodeId || null, parsed.data.nodeLabel || null, parsed.data.detail || null]
+    );
+
+    res.status(201).json({ ok: true, entryId: id });
   })
 );
 
@@ -4660,6 +4900,14 @@ const IdeaAIGenerateBodySchema = z.object({
     existingEdges: z.array(z.any()).default([]),
     existingLanes: z.array(z.any()).optional(),
     language: z.string().default('en'),
+    selection: z
+      .object({
+        type: z.string().optional(),
+        count: z.number().optional(),
+        ids: z.array(z.string()).optional(),
+        primaryId: z.string().optional(),
+      })
+      .optional(),
   }),
 });
 
@@ -4701,6 +4949,7 @@ router.post(
           existingEdges: context.existingEdges,
           existingLanes: context.existingLanes,
           language: context.language,
+          selection: context.selection,
         },
         userId,
         orgId,
@@ -9903,6 +10152,138 @@ router.post(
     } catch (err: any) {
       logger.error('[ai-fill]', err);
       res.status(500).json({ error: err?.message || 'Failed to generate fill' });
+    }
+  })
+);
+
+// ═══════════════════════════════════════════
+// Idea Table CSV Export (server-side)
+// ═══════════════════════════════════════════
+
+/**
+ * GET /api/my-work/my-ideas/:id/export-csv
+ * Server-side CSV export of the idea table data.
+ */
+router.get(
+  '/my-ideas/:id/export-csv',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId) return res.status(400).json({ error: 'Invalid idea id' });
+
+    try {
+      const mapRow = await queryHelpers.queryOne<any>(
+        `SELECT nodes_json, extensions_json FROM my_idea_maps WHERE idea_id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+        [ideaId, userId, orgId]
+      );
+      if (!mapRow) return res.status(404).json({ error: 'Idea map not found' });
+
+      let nodes: any[] = [];
+      let extensions: any = {};
+      try { nodes = JSON.parse(String(mapRow.nodes_json || '[]')); } catch { nodes = []; }
+      try { extensions = JSON.parse(String(mapRow.extensions_json || '{}')); } catch { extensions = {}; }
+
+      const columns: Array<{ key: string; header: string; visible?: boolean }> =
+        extensions?.table?.columns || [{ key: 'label', header: 'Name' }];
+      const visibleCols = columns.filter((c: any) => c.visible !== false);
+
+      const escapeCSV = (val: string): string => {
+        if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+          return `"${val.replace(/"/g, '""')}"`;
+        }
+        return val;
+      };
+
+      const headerLine = visibleCols.map((c: any) => escapeCSV(c.header || c.key)).join(',');
+      const dataLines = nodes.map((node: any) =>
+        visibleCols.map((col: any) => {
+          const val = col.key === 'type' ? (node.type || '') : (node.data?.[col.key] ?? '');
+          if (Array.isArray(val)) return escapeCSV(val.join('; '));
+          return escapeCSV(String(val));
+        }).join(',')
+      );
+
+      const csv = '\uFEFF' + [headerLine, ...dataLines].join('\n');
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="idea-table-${ideaId}.csv"`);
+      res.send(csv);
+    } catch (err: any) {
+      logger.error('[export-csv]', err);
+      res.status(500).json({ error: err?.message || 'Failed to export CSV' });
+    }
+  })
+);
+
+// ═══════════════════════════════════════════
+// Idea Table Presence (collaboration cursors)
+// ═══════════════════════════════════════════
+
+/**
+ * POST /api/my-work/my-ideas/:id/presence
+ * Broadcast current user's presence (cursor, active cell) for real-time collaboration.
+ */
+router.post(
+  '/my-ideas/:id/presence',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+
+    const ideaId = String(req.params.id);
+    const channelId = `idea-table-${ideaId}`;
+    const { userId, userName, color, activeCell, timestamp } = req.body || {};
+
+    try {
+      const realtimePlatformService = (await import('../services/realtimePlatformService.js')).default;
+      await realtimePlatformService.upsertPresence(channelId, {
+        userId: userId || identity.userId,
+        userName: userName || identity.userId,
+        userColor: color,
+        cursorState: activeCell ? { activeCell, timestamp } : undefined,
+        activeElement: activeCell ? `${activeCell.nodeId}:${activeCell.colKey}` : undefined,
+      });
+      res.json({ ok: true });
+    } catch (err: any) {
+      logger.error('[idea-presence-broadcast]', err);
+      res.status(500).json({ error: err?.message || 'Failed to broadcast presence' });
+    }
+  })
+);
+
+/**
+ * GET /api/my-work/my-ideas/:id/presence
+ * Poll active users editing this idea table.
+ */
+router.get(
+  '/my-ideas/:id/presence',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+
+    const ideaId = String(req.params.id);
+    const channelId = `idea-table-${ideaId}`;
+
+    try {
+      const realtimePlatformService = (await import('../services/realtimePlatformService.js')).default;
+      const rows = await realtimePlatformService.listPresence(channelId);
+      const users = (Array.isArray(rows) ? rows : []).map((r: any) => {
+        const cursor = r.cursor_state ? (typeof r.cursor_state === 'string' ? JSON.parse(r.cursor_state) : r.cursor_state) : {};
+        return {
+          id: r.user_id,
+          name: r.user_name || r.user_id,
+          color: r.user_color || '#6366f1',
+          activeCell: cursor?.activeCell || null,
+          lastSeen: r.last_heartbeat_at ? new Date(r.last_heartbeat_at).getTime() : Date.now(),
+          isTyping: false,
+        };
+      });
+      res.json({ users });
+    } catch (err: any) {
+      logger.error('[idea-presence-poll]', err);
+      res.json({ users: [] });
     }
   })
 );

@@ -631,6 +631,7 @@ Rules:
             }
             onSelect={(id) => setExpandedId(id)}
             itemIds={visibleQuestions.map((q) => q.id)}
+            getItemById={(id) => { const q = visibleQuestions.find((x) => x.id === id); return q ? { ...q, title: q.questionText } : null; }}
             renderPreview={(item) => {
               const statusConfig = STATUS_CONFIG[item.status];
               const StatusIcon = statusConfig.icon;
@@ -838,6 +839,7 @@ Rules:
                         label: isPolish ? 'Anuluj' : 'Cancel',
                         onClick: handleCancelEdit,
                         colorScheme: 'neutral',
+                        shortcut: 'Esc',
                       },
                       {
                         label: isPolish ? 'Zapisz' : 'Save',
@@ -845,6 +847,7 @@ Rules:
                         onClick: () => handleSaveAnswer(item.id),
                         colorScheme: 'primary',
                         disabled: savingId === item.id,
+                        shortcut: '⌘S',
                       },
                     ],
                   },
@@ -862,12 +865,14 @@ Rules:
                       icon: Edit3,
                       onClick: () => handleStartEdit(item),
                       colorScheme: 'neutral',
+                      shortcut: 'E',
                     },
                     {
                       label: isPolish ? 'Czat AI' : 'AI chat',
                       icon: MessageSquare,
                       onClick: () => openChatForQuestion(item),
                       colorScheme: 'neutral',
+                      shortcut: 'C',
                     },
                     {
                       label: isPolish ? 'Wstępna propozycja AI' : 'Draft with AI',
@@ -875,6 +880,7 @@ Rules:
                       onClick: () => handleAISuggest(item),
                       colorScheme: 'purple',
                       disabled: aiLoadingId === item.id,
+                      shortcut: 'A',
                     },
                   ],
                 },

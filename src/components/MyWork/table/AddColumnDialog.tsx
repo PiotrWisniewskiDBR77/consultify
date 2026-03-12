@@ -1,12 +1,13 @@
 /**
- * AddColumnDialog — Column creation dialog with type selector.
- * Supports all ColumnTypes with type-specific configuration.
+ * AddColumnDialog — Column creation dialog with grouped type selector
+ * and type-specific configuration panels driven by PropertyRegistry.
  */
 import {
   Calculator,
   Calendar,
-  Check,
   CheckSquare,
+  CircleDot,
+  Clock,
   DollarSign,
   File,
   Hash,
@@ -23,19 +24,23 @@ import {
   Star,
   Type,
   User,
+  UserCheck,
+  UserPlus,
   X,
 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { getPropertyGroups, getPropertySpec } from './PropertyRegistry';
 import type { ColumnDef, ColumnType } from './tableTypes';
-import { COLUMN_TYPE_LABELS, DEFAULT_COLUMN_WIDTH, SELECT_COLORS } from './tableTypes';
+import { SELECT_COLORS } from './tableTypes';
 
 const TYPE_ICONS: Record<ColumnType, React.ComponentType<{ size?: number; className?: string }>> = {
   text: Type,
   number: Hash,
   select: List,
   multiselect: ListChecks,
+  status: CircleDot,
   date: Calendar,
   checkbox: CheckSquare,
   rating: Star,
@@ -52,6 +57,10 @@ const TYPE_ICONS: Record<ColumnType, React.ComponentType<{ size?: number; classN
   currency: DollarSign,
   phone: Phone,
   email: Mail,
+  created_time: Clock,
+  created_by: UserPlus,
+  last_edited_time: Clock,
+  last_edited_by: UserCheck,
 };
 
 interface AddColumnDialogProps {
@@ -75,6 +84,11 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
   const [options, setOptions] = useState('');
   const [formula, setFormula] = useState('');
   const [aiPrompt, setAiPrompt] = useState('');
+  const [currencyCode, setCurrencyCode] = useState('USD');
+  const [dateFormat, setDateFormat] = useState('YYYY-MM-DD');
+  const [relationTarget, setRelationTarget] = useState('');
+  const [rollupSource, setRollupSource] = useState('');
+  const [rollupFunction, setRollupFunction] = useState<string>('count');
 
   const reset = useCallback(() => {
     setName('');
@@ -82,7 +96,14 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
     setOptions('');
     setFormula('');
     setAiPrompt('');
+    setCurrencyCode('USD');
+    setDateFormat('YYYY-MM-DD');
+    setRelationTarget('');
+    setRollupSource('');
+    setRollupFunction('count');
   }, []);
+
+  const spec = getPropertySpec(type);
 
   const handleAdd = useCallback(() => {
     const key =
@@ -103,7 +124,7 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
       header: name.trim() || key,
       type,
       visible: true,
-      width: DEFAULT_COLUMN_WIDTH,
+      width: spec.defaultWidth,
       ...(type === 'select' || type === 'multiselect'
         ? {
             options: optionsList.length > 0 ? optionsList : ['Option 1', 'Option 2', 'Option 3'],
@@ -116,18 +137,36 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
         : {}),
       ...(type === 'formula' ? { formula: formula || '{col1} + {col2}' } : {}),
       ...(type === 'ai_generated' ? { aiPrompt: aiPrompt || 'Analyze this row' } : {}),
+      ...(type === 'relation' && relationTarget ? { relationTarget } : {}),
+      ...(type === 'rollup' ? { rollupSource: rollupSource || undefined, rollupFunction: (rollupFunction as ColumnDef['rollupFunction']) || 'count' } : {}),
     };
 
     onAdd(col);
     reset();
     onClose();
-  }, [aiPrompt, existingKeys, formula, name, onAdd, onClose, options, reset, type]);
+  }, [
+    aiPrompt,
+    existingKeys,
+    formula,
+    name,
+    onAdd,
+    onClose,
+    options,
+    relationTarget,
+    rollupSource,
+    rollupFunction,
+    reset,
+    spec.defaultWidth,
+    type,
+  ]);
 
   if (!open) return null;
 
+  const groups = getPropertyGroups();
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-[440px] max-h-[80vh] overflow-auto rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
+      <div className="w-[480px] max-h-[85vh] overflow-auto rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
           <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
@@ -156,31 +195,41 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
             />
           </div>
 
-          {/* Type selector */}
+          {/* Grouped type selector */}
           <div>
             <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1.5">
               {isPl ? 'Typ' : 'Type'}
             </label>
-            <div className="grid grid-cols-4 gap-1.5">
-              {(Object.keys(COLUMN_TYPE_LABELS) as ColumnType[]).map((t) => {
-                const Icon = TYPE_ICONS[t];
-                const label = isPl ? COLUMN_TYPE_LABELS[t].pl : COLUMN_TYPE_LABELS[t].en;
-                const isActive = type === t;
-                return (
-                  <button
-                    key={t}
-                    onClick={() => setType(t)}
-                    className={`flex flex-col items-center gap-1 px-2 py-2 rounded-xl text-[10px] font-medium transition-all ${
-                      isActive
-                        ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400 ring-1 ring-violet-500/30'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
-                    }`}
-                  >
-                    <Icon size={16} />
-                    {label}
-                  </button>
-                );
-              })}
+            <div className="space-y-3">
+              {groups.map((group) => (
+                <div key={group.key}>
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                    {isPl ? group.label.pl : group.label.en}
+                  </div>
+                  <div className="grid grid-cols-5 gap-1">
+                    {group.types.map((t) => {
+                      const Icon = TYPE_ICONS[t];
+                      const tSpec = getPropertySpec(t);
+                      const label = isPl ? tSpec.label.pl : tSpec.label.en;
+                      const isActive = type === t;
+                      return (
+                        <button
+                          key={t}
+                          onClick={() => setType(t)}
+                          className={`flex flex-col items-center gap-0.5 px-1.5 py-1.5 rounded-xl text-[9px] font-medium transition-all ${
+                            isActive
+                              ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400 ring-1 ring-violet-500/30'
+                              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+                          }`}
+                        >
+                          <Icon size={14} />
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -234,6 +283,97 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
                 rows={3}
                 className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30 resize-none"
               />
+            </div>
+          )}
+
+          {type === 'currency' && (
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                {isPl ? 'Waluta' : 'Currency'}
+              </label>
+              <select
+                value={currencyCode}
+                onChange={(e) => setCurrencyCode(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+              >
+                {['USD', 'EUR', 'PLN', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD'].map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {type === 'date' && (
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                {isPl ? 'Format daty' : 'Date format'}
+              </label>
+              <select
+                value={dateFormat}
+                onChange={(e) => setDateFormat(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+              >
+                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                <option value="relative">
+                  {isPl ? 'Relatywny (2 dni temu)' : 'Relative (2 days ago)'}
+                </option>
+              </select>
+            </div>
+          )}
+
+          {type === 'relation' && (
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                {isPl ? 'Cel relacji' : 'Relation target'}
+              </label>
+              <input
+                value={relationTarget}
+                onChange={(e) => setRelationTarget(e.target.value)}
+                placeholder={isPl ? 'np. Inicjatywy, Zadania...' : 'e.g. Initiatives, Tasks...'}
+                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+              />
+              <p className="mt-1 text-[9px] text-slate-400">
+                {isPl
+                  ? 'Wskaż tabelę lub moduł, z którego chcesz linkować wiersze'
+                  : 'Point to the table or module to link rows from'}
+              </p>
+            </div>
+          )}
+
+          {type === 'rollup' && (
+            <div className="space-y-2">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  {isPl ? 'Źródło (kolumna relacji)' : 'Source (relation column)'}
+                </label>
+                <input
+                  value={rollupSource}
+                  onChange={(e) => setRollupSource(e.target.value)}
+                  placeholder={isPl ? 'np. tasks_relation' : 'e.g. tasks_relation'}
+                  className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                  {isPl ? 'Funkcja' : 'Function'}
+                </label>
+                <select
+                  value={rollupFunction}
+                  onChange={(e) => setRollupFunction(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                >
+                  <option value="count">Count</option>
+                  <option value="sum">Sum</option>
+                  <option value="avg">Average</option>
+                  <option value="min">Min</option>
+                  <option value="max">Max</option>
+                  <option value="percent_checked">{isPl ? '% zaznaczonych' : '% checked'}</option>
+                </select>
+              </div>
             </div>
           )}
         </div>

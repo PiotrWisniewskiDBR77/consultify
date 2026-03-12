@@ -1,0 +1,114 @@
+import {
+  Brain,
+  GitMerge,
+  Lightbulb,
+  MessageCircle,
+  Search,
+  Sparkles,
+  Target,
+  Wand2,
+  Zap,
+} from 'lucide-react';
+import React from 'react';
+
+import type { IdeaWorkspaceSelection } from '../../ideaSelectionTypes';
+
+interface AIActionsPopoverProps {
+  isPl: boolean;
+  selection: IdeaWorkspaceSelection;
+  onAction: (action: string) => void;
+  onOpenChat: () => void;
+  onClose: () => void;
+}
+
+const GENERAL_GENERATORS = [
+  { action: 'mm_ai_expand', iconEl: Zap, labelPl: 'Rozwiń mapę (AI)', labelEn: 'Expand map (AI)' },
+  { action: 'mm_ai_suggest', iconEl: Lightbulb, labelPl: 'Zasugeruj gałęzie', labelEn: 'Suggest branches' },
+  { action: 'mm_ai_gap_analysis', iconEl: Search, labelPl: 'Analiza luk', labelEn: 'Gap analysis' },
+  { action: 'mm_ai_cluster', iconEl: GitMerge, labelPl: 'Auto-klasteryzacja', labelEn: 'Auto-clustering' },
+  { action: 'mm_ai_summarize', iconEl: Brain, labelPl: 'Podsumowanie mapy', labelEn: 'Map summary' },
+  { action: 'mm_ai_auto_connect', iconEl: Target, labelPl: 'Auto-linki między gałęziami', labelEn: 'Auto cross-links' },
+];
+
+const NODE_SPECIFIC_GENERATORS = [
+  { action: 'mm_ai_expand_node', iconEl: Zap, labelPl: 'Rozwiń ten węzeł', labelEn: 'Expand this node' },
+  { action: 'mm_ai_deepen', iconEl: Wand2, labelPl: 'Pogłęb temat', labelEn: 'Deepen topic' },
+  { action: 'mm_ai_summarize_branch', iconEl: Brain, labelPl: 'Podsumuj gałąź', labelEn: 'Summarize branch' },
+  { action: 'mm_ai_what_if', iconEl: Lightbulb, labelPl: 'What-if analiza', labelEn: 'What-if analysis' },
+];
+
+export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
+  isPl,
+  selection,
+  onAction,
+  onOpenChat,
+  onClose,
+}) => {
+  const hasNodeSelected = selection.type === 'node' && selection.count >= 1;
+
+  const dispatch = (action: string) => {
+    onAction(action);
+    onClose();
+  };
+
+  return (
+    <div className="w-60 max-h-[420px] overflow-y-auto rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl">
+      <div className="px-1 py-1">
+        <button
+          onClick={() => {
+            onOpenChat();
+            onClose();
+          }}
+          className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/5 transition-colors"
+        >
+          <MessageCircle size={14} className="shrink-0" />
+          {hasNodeSelected
+            ? (isPl ? 'Zapytaj AI o ten węzeł' : 'Ask AI about this node')
+            : (isPl ? 'Nowa rozmowa AI' : 'New AI conversation')
+          }
+        </button>
+      </div>
+
+      {hasNodeSelected && (
+        <div className="border-t border-slate-200/30 dark:border-white/[0.04] px-1 py-1">
+          <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+            {isPl ? 'Dla wybranego węzła' : 'For selected node'}
+          </div>
+          {NODE_SPECIFIC_GENERATORS.map((a) => {
+            const Icon = a.iconEl;
+            return (
+              <button
+                key={a.action}
+                onClick={() => dispatch(a.action)}
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+              >
+                <Icon size={12} className="text-purple-400 shrink-0" />
+                {isPl ? a.labelPl : a.labelEn}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="border-t border-slate-200/30 dark:border-white/[0.04] px-1 py-1">
+        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+          <Sparkles size={10} className="inline mr-1" />
+          {isPl ? 'Generatory AI' : 'AI generators'}
+        </div>
+        {GENERAL_GENERATORS.map((a) => {
+          const Icon = a.iconEl;
+          return (
+            <button
+              key={a.action}
+              onClick={() => dispatch(a.action)}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+            >
+              <Icon size={12} className="text-slate-400 shrink-0" />
+              {isPl ? a.labelPl : a.labelEn}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};

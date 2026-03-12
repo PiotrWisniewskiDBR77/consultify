@@ -698,6 +698,22 @@ export const InterviewHub: React.FC = () => {
     }
   }, [sessionIdFromUrl, sessions]);
 
+  // Open assignment from URL (deep link from notifications)
+  useEffect(() => {
+    if (!assignmentIdFromUrl) return;
+    const allAssignments = [...myAssignments, ...managedAssignments];
+    if (allAssignments.length === 0) return;
+    const assignment = allAssignments.find((a) => a.id === assignmentIdFromUrl);
+    if (!assignment) return;
+    const isManagerView = managedAssignments.some((a) => a.id === assignmentIdFromUrl);
+    setActiveTab(isManagerView ? 'managed' : 'my-assignments');
+    void openInterviewAssignmentFull(assignment, isManagerView);
+    const next = new URLSearchParams(searchParams);
+    next.delete('assignmentId');
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignmentIdFromUrl, myAssignments, managedAssignments, searchParams, setSearchParams]);
+
   // Open insight from URL
   useEffect(() => {
     if (!insightIdFromUrl) return;
@@ -4176,6 +4192,7 @@ Return ONLY the answer text (no markdown fences).`;
                 if (s) handleViewSession(s);
               }}
               itemIds={rows.map((r) => r.id)}
+              getItemById={(id) => { const x = rows.find((i) => i.id === id); return x ? { ...x, title: x.name || 'Interview Session' } as any : null; }}
               renderPreview={(item) => {
                 const s = item as InterviewSession;
                 const progress =
@@ -4460,6 +4477,7 @@ Return ONLY the answer text (no markdown fences).`;
             );
           }}
           itemIds={insightsForTable.map((i) => i.id)}
+          getItemById={(id) => insightsForTable.find((x) => x.id === id) ?? null}
         >
           <div className="pl-4 pr-1.5 pt-3 pb-4">
             <div className="space-y-4">
@@ -4592,6 +4610,7 @@ Return ONLY the answer text (no markdown fences).`;
             onSelect={(id) => setSelectedTemplateId(id)}
             onOpenFull={onOpenFull}
             itemIds={rows.map((t) => t.id)}
+            getItemById={(id) => { const x = rows.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
             renderPreview={(item) => {
               const itemQuestions = templateQuestionsById[item.id] || [];
               const isLoadingQuestions = !!templateQuestionsLoading[item.id];
@@ -4720,6 +4739,7 @@ Return ONLY the answer text (no markdown fences).`;
                 if (a) void openInterviewAssignmentFull(a, false);
               }}
               itemIds={rows.map((r) => r.id)}
+              getItemById={(id) => { const x = rows.find((i) => i.id === id); return x ? { ...x, title: getAssignmentTitle(x) } as any : null; }}
               renderPreview={(item) => {
                 const a = item as InterviewAssignment;
                 const progress = a.session?.completenessPercent ?? 0;
@@ -4924,6 +4944,7 @@ Return ONLY the answer text (no markdown fences).`;
                 if (a) void openInterviewAssignmentFull(a, true);
               }}
               itemIds={rows.map((r) => r.id)}
+              getItemById={(id) => { const x = rows.find((i) => i.id === id); return x ? { ...x, title: getAssignmentTitle(x) } as any : null; }}
               renderPreview={(item) => {
                 const a = item as InterviewAssignment;
                 const progress = a.session?.completenessPercent ?? 0;

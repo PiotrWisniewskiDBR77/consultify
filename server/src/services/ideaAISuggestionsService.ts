@@ -5,6 +5,8 @@
  * and generates contextual suggestions via LLM structured output.
  */
 
+import organizationContextService from './organizationContext/OrganizationContextService.js';
+
 interface CompanyContext {
   initiatives: Array<{ id: string; title: string; status: string; level: string }>;
   assessmentScores: Array<{ framework: string; dimension: string; score: number; maxScore: number }>;
@@ -47,6 +49,26 @@ export async function buildCompanyContext(
     interviewInsights: [],
     kpiHighlights: [],
   };
+
+  try {
+    const resolved = await organizationContextService.buildResolvedContext(orgId);
+    ctx.interviewInsights = resolved.signals.interviewInsights.map((insight) => ({
+      topic: 'organization_context',
+      insight,
+      frequency: 1,
+    }));
+    resolved.operations.gaps.forEach((gap) => {
+      const description = String(gap.description || gap.category || '').trim();
+      if (!description) return;
+      ctx.interviewInsights.push({
+        topic: 'open_gap',
+        insight: description,
+        frequency: 1,
+      });
+    });
+  } catch {
+    /* context resolver may be unavailable during rollout */
+  }
 
   try {
     const initiatives = await queryHelpers.query(
@@ -99,11 +121,14 @@ export async function buildCompanyContext(
        LIMIT 15`,
       [orgId]
     );
-    ctx.interviewInsights = (insights || []).map((i: any) => ({
-      topic: String(i.topic || ''),
-      insight: String(i.insightText || ''),
-      frequency: Number(i.frequency) || 1,
-    }));
+    ctx.interviewInsights = [
+      ...ctx.interviewInsights,
+      ...(insights || []).map((i: any) => ({
+        topic: String(i.topic || ''),
+        insight: String(i.insightText || ''),
+        frequency: Number(i.frequency) || 1,
+      })),
+    ];
   } catch { /* table may not exist */ }
 
   try {

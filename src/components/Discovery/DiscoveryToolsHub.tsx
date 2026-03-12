@@ -3139,6 +3139,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               selectedItem={selectedItem}
               onSelect={setPreviewItemId}
               itemIds={itemIds}
+              getItemById={(id) => { const x = filteredLibraryItems.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
               onOpenFull={(id) => {
                 const row = filteredLibraryItems.find((d) => d.id === id);
                 if (row) handleRowAction('library_open_full', row as any);
@@ -3168,6 +3169,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             selectedItem={selectedItem}
             onSelect={setPreviewItemId}
             itemIds={itemIds}
+            getItemById={(id) => { const x = filteredLibraryItems.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
             onOpenFull={(id) => {
               const row = filteredLibraryItems.find((d) => d.id === id);
               if (row) handleRowAction('library_open_full', row as any);
@@ -3251,6 +3253,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             selectedItem={selectedItem}
             onSelect={setPreviewItemId}
             itemIds={itemIds}
+            getItemById={(id) => { const x = unifiedSessionsData.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
             onOpenFull={(id) => {
               const row = unifiedSessionsData.find((d) => d.id === id);
               if (row) openFull(row as any);
@@ -3417,6 +3420,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           selectedItem={selectedItem}
           onSelect={setPreviewItemId}
           itemIds={itemIds}
+          getItemById={(id) => { const x = currentData.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
           onOpenFull={(id) => {
             const row = currentData.find((d) => d.id === id);
             if (!row) return;

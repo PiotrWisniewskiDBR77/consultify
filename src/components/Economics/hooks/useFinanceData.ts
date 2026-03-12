@@ -6,10 +6,13 @@ import { Api } from '@/services/api';
 
 import { type FilterChip, type ModuleTab } from '../../shared/ModuleHub';
 import {
+  deriveStatementReadinessStatus,
   type FinanceKind,
+  type FinanceStatementRow,
   type FinanceModelRow,
   type FinanceRow,
   type FinanceStatus,
+  isWorkableStatement,
   normalizeModelStatus,
   normalizeStatus,
   type PredictionType,
@@ -37,10 +40,16 @@ export function useFinanceData(
   const { t } = useTranslation();
 
   const [models, setModels] = useState<any[]>([]);
+  const [statements, setStatements] = useState<any[]>([]);
   const [analyses, setAnalyses] = useState<any[]>([]);
   const [valuations, setValuations] = useState<any[]>([]);
   const [budgets, setBudgets] = useState<any[]>([]);
   const [loadingTab, setLoadingTab] = useState<FinanceKind | null>('models');
+
+  const loadStatements = useCallback(async () => {
+    const data = await Api.get('/api/finance-statements');
+    setStatements(Array.isArray(data) ? data : []);
+  }, []);
 
   const loadModels = useCallback(async () => {
     const data = await Api.get('/api/financial-modeling/models');
@@ -64,7 +73,9 @@ export function useFinanceData(
 
   useEffect(() => {
     const kind: FinanceKind =
-      activeTab === 'models'
+      activeTab === 'statements'
+        ? 'statements'
+        : activeTab === 'models'
         ? 'models'
         : activeTab === 'analysis'
           ? 'analysis'
@@ -78,7 +89,8 @@ export function useFinanceData(
     const run = async () => {
       setLoadingTab(kind);
       try {
-        if (kind === 'models') await loadModels();
+        if (kind === 'statements') await loadStatements();
+        else if (kind === 'models') await loadModels();
         else if (kind === 'prediction') await Promise.all([loadModels(), loadBudgets()]);
         else if (kind === 'analysis' || kind === 'investment') await loadAnalyses();
         else if (kind === 'valuation') await loadValuations();
@@ -93,9 +105,83 @@ export function useFinanceData(
     return () => {
       cancelled = true;
     };
-  }, [activeTab, loadModels, loadAnalyses, loadValuations, loadBudgets, t]);
+  }, [activeTab, loadStatements, loadModels, loadAnalyses, loadValuations, loadBudgets, t]);
 
   const rowsForActiveTab: FinanceRow[] = useMemo(() => {
+    if (activeTab === 'statements') {
+      return (statements || [])
+        .map((s: any): FinanceStatementRow => {
+          const rawStatus = String(s.status || 'draft');
+          const validationStatus = String(s.validation_status || 'pending');
+          const readinessStatus = String(s.readiness_status || 'pending');
+          const mappedLineCount = Number(s.mapped_line_count ?? 0);
+          const unmappedLineCount = Number(s.unmapped_line_count ?? 0);
+          const totalLineCount = Number(s.total_line_count ?? mappedLineCount + unmappedLineCount);
+          const effectiveReadiness = deriveStatementReadinessStatus(
+            readinessStatus,
+            rawStatus,
+            validationStatus,
+            mappedLineCount,
+            unmappedLineCount,
+            totalLineCount
+          );
+          let readinessReasonCodes: string[] = [];
+          try {
+            readinessReasonCodes = Array.isArray(s.quality_reason_codes)
+              ? s.quality_reason_codes.map((code: unknown) => String(code))
+              : typeof s.quality_reason_codes === 'string' && s.quality_reason_codes.trim().startsWith('[')
+                ? JSON.parse(s.quality_reason_codes).map((code: unknown) => String(code))
+                : [];
+          } catch {
+            readinessReasonCodes = [];
+          }
+          return {
+            id: String(s.id),
+            title: String(
+              s.period_label ||
+                s.source_file_name ||
+                `${s.statement_type || 'Statement'} ${s.period_end || ''}`
+            ),
+            kind: 'statements',
+            status:
+              effectiveReadiness === 'ready'
+                ? 'APPROVED'
+                : effectiveReadiness === 'recoverable'
+                  ? 'REVIEW'
+                  : 'DRAFT',
+            statementType: String(s.statement_type || ''),
+            periodStart: String(s.period_start || ''),
+            periodEnd: String(s.period_end || ''),
+            periodLabel: String(s.period_label || ''),
+            currency: String(s.currency || 'PLN'),
+            scaling: String(s.scaling || 'units'),
+            sourceFileName: String(s.source_file_name || ''),
+            validationStatus,
+            mappedLineCount,
+            totalLineCount,
+            unmappedLineCount,
+            nonFinancialLineCount: Number(s.non_financial_line_count ?? 0),
+            overallConfidence: Number(s.overall_confidence ?? 0),
+            rawStatus,
+            readinessStatus: effectiveReadiness,
+            readinessScore: Number(s.readiness_score ?? 0),
+            readinessSummary: String(s.quality_summary || ''),
+            readinessReasonCodes,
+            documentClass: String(s.document_class || ''),
+            extractionStrategy: String(s.extraction_strategy || ''),
+            templateFamily: s.template_family ? String(s.template_family) : null,
+            valuesVersion: Number(s.values_version ?? 0),
+            isWorkable: isWorkableStatement(
+              effectiveReadiness,
+              rawStatus,
+              validationStatus,
+              mappedLineCount,
+              unmappedLineCount
+            ),
+            updatedAt: String(s.updated_at || s.created_at || new Date().toISOString()),
+          };
+        });
+    }
     if (activeTab === 'models') {
       return (models || []).map((m: any) => ({
         id: String(m.id),
@@ -107,6 +193,8 @@ export function useFinanceData(
         currency: String(m.currency || 'PLN'),
         horizonMonths: Number(m.horizon_months || 0),
         startDate: String(m.start_date || ''),
+        sourceStatementId: m.source_statement_id ? String(m.source_statement_id) : undefined,
+        seedSourceType: m.source_statement_id ? 'statement' : 'manual',
         updatedAt: String(m.updated_at || m.created_at || new Date().toISOString()),
       }));
     }
@@ -121,6 +209,8 @@ export function useFinanceData(
         currency: String(m.currency || 'PLN'),
         horizonMonths: Number(m.horizon_months || 0),
         startDate: String(m.start_date || ''),
+        sourceStatementId: m.source_statement_id ? String(m.source_statement_id) : undefined,
+        seedSourceType: m.source_statement_id ? 'statement' : 'manual',
         updatedAt: String(m.updated_at || m.created_at || new Date().toISOString()),
       }));
       const budgetRows: FinanceModelRow[] = (budgets || []).map((b: any) => ({
@@ -157,6 +247,9 @@ export function useFinanceData(
         analysisType: String(a.analysisType || a.analysis_type || 'comprehensive'),
         currency: String(a.currency || 'PLN'),
         periodCount: Array.isArray(a.periods) ? a.periods.length : 0,
+        sourceStatementIds: Array.isArray(a.sourceStatementIds || a.source_statement_ids)
+          ? (a.sourceStatementIds || a.source_statement_ids).map((id: unknown) => String(id))
+          : [],
         updatedAt: String(
           a.updatedAt || a.updated_at || a.createdAt || a.created_at || new Date().toISOString()
         ),
@@ -173,7 +266,7 @@ export function useFinanceData(
       horizonYears: Number(v.horizonYears ?? v.horizon_years ?? 5),
       updatedAt: String(v.updatedAt || v.updated_at || new Date().toISOString()),
     }));
-  }, [activeTab, models, analyses, valuations, budgets, t]);
+  }, [activeTab, statements, models, analyses, valuations, budgets, t]);
 
   const filteredRows = useMemo(() => {
     let rows = rowsForActiveTab;
@@ -200,10 +293,12 @@ export function useFinanceData(
 
   return {
     models,
+    statements,
     analyses,
     valuations,
     budgets,
     loadingTab,
+    loadStatements,
     loadModels,
     loadAnalyses,
     loadValuations,

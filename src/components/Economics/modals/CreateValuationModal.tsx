@@ -7,8 +7,9 @@ import { Api } from '@/services/api';
 import { type FinanceValuationRow, normalizeStatus } from '../financeTypes';
 
 interface CreateValuationModalProps {
-  initialSourceType?: 'financial_model' | 'budget' | 'manual';
+  initialSourceType?: 'financial_model' | 'financial_analysis' | 'budget' | 'manual';
   initialSourceId?: string;
+  initialTitle?: string;
   onCreated: (row: FinanceValuationRow) => void;
   onClose: () => void;
 }
@@ -16,31 +17,43 @@ interface CreateValuationModalProps {
 export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
   initialSourceType,
   initialSourceId,
+  initialTitle = '',
   onCreated,
   onClose,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
-  const [title, setTitle] = useState('');
-  const [sourceType, setSourceType] = useState<'financial_model' | 'budget' | 'manual'>(
+  const [title, setTitle] = useState(initialTitle);
+  const [sourceType, setSourceType] = useState<
+    'financial_model' | 'financial_analysis' | 'budget' | 'manual'
+  >(
     initialSourceType || 'manual'
   );
   const [sourceId, setSourceId] = useState(initialSourceId || '');
   const [horizonYears, setHorizonYears] = useState(5);
   const [creating, setCreating] = useState(false);
-  const [sources, setSources] = useState<{ budgets: any[]; financialModels: any[] }>({
+  const [sources, setSources] = useState<{
+    budgets: any[];
+    financialModels: any[];
+    financialAnalyses: any[];
+  }>({
     budgets: [],
     financialModels: [],
+    financialAnalyses: [],
   });
 
   useEffect(() => {
     Api.get('/api/economics/valuations/sources')
       .then((data) => {
         const s = (data as any)?.sources;
-        setSources({ budgets: s?.budgets || [], financialModels: s?.financialModels || [] });
+        setSources({
+          budgets: s?.budgets || [],
+          financialModels: s?.financialModels || [],
+          financialAnalyses: s?.financialAnalyses || [],
+        });
       })
-      .catch(() => setSources({ budgets: [], financialModels: [] }));
+      .catch(() => setSources({ budgets: [], financialModels: [], financialAnalyses: [] }));
   }, []);
 
   const handleCreate = useCallback(async () => {
@@ -111,6 +124,7 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
           >
             <option value="manual">{isPl ? 'Ręczne dane' : 'Manual data'}</option>
             <option value="financial_model">{isPl ? 'Model finansowy' : 'Financial model'}</option>
+            <option value="financial_analysis">{isPl ? 'Analiza finansowa' : 'Financial analysis'}</option>
             <option value="budget">{isPl ? 'Budżet' : 'Budget'}</option>
           </select>
         </div>
@@ -121,6 +135,10 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
                 ? isPl
                   ? 'Wybierz model'
                   : 'Select model'
+                : sourceType === 'financial_analysis'
+                  ? isPl
+                    ? 'Wybierz analizę'
+                    : 'Select analysis'
                 : isPl
                   ? 'Wybierz budżet'
                   : 'Select budget'}
@@ -137,6 +155,12 @@ export const CreateValuationModal: React.FC<CreateValuationModalProps> = ({
                       {m.name || m.title || m.id}
                     </option>
                   ))
+                : sourceType === 'financial_analysis'
+                  ? sources.financialAnalyses.map((analysis: any) => (
+                      <option key={analysis.id} value={analysis.id}>
+                        {analysis.title || analysis.id}
+                      </option>
+                    ))
                 : sources.budgets.map((b: any) => (
                     <option key={b.id} value={b.id}>
                       {b.title || b.name || b.id}

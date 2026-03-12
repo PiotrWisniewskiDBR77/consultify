@@ -19,7 +19,7 @@ import {
 } from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-import { PresentationPreview } from './previews/PresentationPreview';
+import { PresentationPreviewBody, PresentationPreviewFooter } from './previews/PresentationPreview';
 import { PRESENTATION_STATUS_META, type PresentationItem, SOURCE_TYPE_META } from './types';
 import type { useRapActions } from './useRapData';
 
@@ -273,8 +273,14 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         selectedItem={previewItem}
         onSelect={setSelectedId}
         itemIds={itemIds}
+        getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
         renderPreview={(item) => (
-          <PresentationPreview
+          <PresentationPreviewBody
+            presentation={item}
+          />
+        )}
+        renderPreviewFooter={(item) => (
+          <PresentationPreviewFooter
             presentation={item}
             onOpen={() => navigate(`/presentations/builder/${item.id}`)}
             onExport={() => {

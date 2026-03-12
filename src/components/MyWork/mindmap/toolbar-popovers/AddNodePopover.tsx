@@ -1,0 +1,88 @@
+import {
+  AlertTriangle,
+  CheckSquare,
+  CircleDot,
+  Diamond,
+  GitBranch,
+  Lightbulb,
+  Plus,
+  Star,
+} from 'lucide-react';
+import React from 'react';
+
+interface AddNodePopoverProps {
+  isPl: boolean;
+  hasSelection: boolean;
+  onAction: (action: string) => void;
+  onClose: () => void;
+}
+
+const STRUCTURE_ACTIONS = [
+  { action: 'mm_add_child', iconEl: Plus, labelPl: 'Gałąź dziecko (Tab)', labelEn: 'Add child (Tab)' },
+  { action: 'mm_add_sibling', iconEl: Plus, labelPl: 'Gałąź sąsiad (Enter)', labelEn: 'Add sibling (Enter)' },
+  { action: 'mm_add_root', iconEl: GitBranch, labelPl: 'Nowy root topic', labelEn: 'New root topic' },
+];
+
+const SEMANTIC_TYPES = [
+  { action: 'mm_insert_topic', iconEl: CircleDot, labelPl: 'Temat', labelEn: 'Topic' },
+  { action: 'mm_insert_hypothesis', iconEl: Lightbulb, labelPl: 'Hipoteza', labelEn: 'Hypothesis' },
+  { action: 'mm_insert_risk', iconEl: AlertTriangle, labelPl: 'Ryzyko', labelEn: 'Risk' },
+  { action: 'mm_insert_action', iconEl: CheckSquare, labelPl: 'Akcja', labelEn: 'Action' },
+  { action: 'mm_insert_decision', iconEl: Diamond, labelPl: 'Punkt decyzyjny', labelEn: 'Decision point' },
+  { action: 'mm_insert_option', iconEl: Star, labelPl: 'Opcja', labelEn: 'Option' },
+];
+
+export const AddNodePopover: React.FC<AddNodePopoverProps> = ({
+  isPl,
+  hasSelection,
+  onAction,
+  onClose,
+}) => {
+  const dispatch = (action: string) => {
+    onAction(action);
+    onClose();
+  };
+
+  return (
+    <div className="w-56 rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl">
+      <div className="px-1 py-1">
+        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+          {isPl ? 'Dodaj' : 'Add'}
+        </div>
+        {STRUCTURE_ACTIONS.map((a) => {
+          const Icon = a.iconEl;
+          const disabled = (a.action === 'mm_add_child' || a.action === 'mm_add_sibling') && !hasSelection;
+          return (
+            <button
+              key={a.action}
+              onClick={() => dispatch(a.action)}
+              disabled={disabled}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors disabled:opacity-40"
+            >
+              <Icon size={12} className="text-slate-400 shrink-0" />
+              {isPl ? a.labelPl : a.labelEn}
+            </button>
+          );
+        })}
+      </div>
+      <div className="border-t border-slate-200/30 dark:border-white/[0.04] px-1 py-1">
+        <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
+          {isPl ? 'Wstaw specjalny' : 'Insert special'}
+        </div>
+        {SEMANTIC_TYPES.map((a) => {
+          const Icon = a.iconEl;
+          return (
+            <button
+              key={a.action}
+              onClick={() => dispatch(a.action)}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+            >
+              <Icon size={12} className="text-slate-400 shrink-0" />
+              {isPl ? a.labelPl : a.labelEn}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};

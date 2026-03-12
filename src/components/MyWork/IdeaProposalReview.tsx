@@ -21,6 +21,26 @@ interface IdeaProposalReviewProps {
   onDismiss: () => void;
 }
 
+function getProposalStatusLabel(proposal: AIProposal, isPl: boolean): string | null {
+  if (proposal.generatorStatus === 'cross-tool') {
+    return isPl ? 'cross-tool' : 'cross-tool';
+  }
+  if (proposal.generatorStatus) {
+    return proposal.generatorStatus;
+  }
+  return proposal.maturity || null;
+}
+
+function getProposalStatusTone(proposal: AIProposal): string {
+  if (proposal.generatorStatus === 'cross-tool') {
+    return 'bg-sky-500/10 text-sky-700 dark:text-sky-300';
+  }
+  if (proposal.generatorStatus === 'partial' || proposal.maturity === 'partial') {
+    return 'bg-amber-500/10 text-amber-700 dark:text-amber-300';
+  }
+  return 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
+}
+
 export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
   batch,
   onAccept,
@@ -36,6 +56,10 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
   const pending = useMemo(
     () => (batch?.proposals || []).filter((p) => p.status === 'pending'),
     [batch]
+  );
+  const rolloutGateBlocked = useMemo(
+    () => pending.some((p) => p.confidence < 0.35 && (!p.citations || p.citations.length === 0)),
+    [pending]
   );
 
   const handleAccept = useCallback(
@@ -89,6 +113,7 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
                 batch: true,
               });
             }}
+            disabled={rolloutGateBlocked}
             className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
           >
             <Check size={10} />
@@ -117,6 +142,13 @@ export const IdeaProposalReview: React.FC<IdeaProposalReviewProps> = ({
           </button>
         </div>
       </div>
+      {rolloutGateBlocked && (
+        <div className="px-3 py-2 text-[10px] text-amber-600 dark:text-amber-300 bg-amber-500/5 border-b border-amber-500/10">
+          {isPl
+            ? 'Rollout gate: co najmniej jedna propozycja ma niską pewność i brak cytowań. Przejrzyj ją ręcznie.'
+            : 'Rollout gate: at least one proposal has low confidence and no citations. Review it manually.'}
+        </div>
+      )}
 
       {/* Proposals list */}
       <div className="max-h-[320px] overflow-y-auto">
@@ -164,8 +196,21 @@ const ProposalItem: React.FC<{
     if (p.removeEdgeIds?.length)
       parts.push(`-${p.removeEdgeIds.length} ${isPl ? 'połączeń' : 'edges'}`);
     if (p.updateNodes?.length) parts.push(`~${p.updateNodes.length} ${isPl ? 'zmian' : 'updates'}`);
+    if (p.moveNodes?.length) parts.push(`↔${p.moveNodes.length} ${isPl ? 'przesunięć' : 'moves'}`);
+    if ((p.extensions as any)?.table?.columns?.length) {
+      parts.push(
+        `${(p.extensions as any).table.columns.length} ${isPl ? 'kolumn tabeli' : 'table columns'}`
+      );
+    }
+    if ((p.extensions as any)?.table?.rows?.length) {
+      parts.push(`${(p.extensions as any).table.rows.length} ${isPl ? 'wierszy' : 'rows'}`);
+    }
+    if (proposal.targetTool) {
+      parts.push(isPl ? `→ ${proposal.targetTool}` : `→ ${proposal.targetTool}`);
+    }
     return parts.join(', ') || (isPl ? 'Zmiana konfiguracji' : 'Config change');
-  }, [isPl, proposal.patch]);
+  }, [isPl, proposal.patch, proposal.targetTool]);
+  const statusLabel = getProposalStatusLabel(proposal, isPl);
 
   return (
     <div className="border-b border-slate-200/20 dark:border-white/[0.04] last:border-b-0">
@@ -221,7 +266,64 @@ const ProposalItem: React.FC<{
                 ~ {u.id}
               </div>
             ))}
+            {proposal.patch.moveNodes?.map((move) => (
+              <div key={`${move.nodeId}-${move.parentId || 'free'}`} className="text-sky-600 dark:text-sky-400">
+                ↔ {move.nodeId}
+                {move.parentId ? ` → ${move.parentId}` : ''}
+              </div>
+            ))}
+            {(proposal.patch.extensions as any)?.table?.rows?.length ? (
+              <div className="text-sky-600 dark:text-sky-400">
+                table.rows: {(proposal.patch.extensions as any).table.rows.length}
+              </div>
+            ) : null}
+            {(proposal.patch.extensions as any)?.table?.columns?.length ? (
+              <div className="text-sky-600 dark:text-sky-400">
+                table.columns: {(proposal.patch.extensions as any).table.columns.length}
+              </div>
+            ) : null}
+            {proposal.targetTool ? (
+              <div className="text-sky-600 dark:text-sky-400">
+                {isPl ? 'tool switch' : 'tool switch'}: {proposal.targetTool}
+              </div>
+            ) : null}
           </div>
+
+          {(proposal.citations?.length || proposal.maturity || statusLabel || proposal.resultSummary) && (
+            <div className="mb-2 space-y-1">
+              {statusLabel ? (
+                <div className="flex flex-wrap gap-1">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${getProposalStatusTone(proposal)}`}
+                  >
+                    {statusLabel}
+                  </span>
+                  {proposal.maturity ? (
+                    <span className="rounded-full bg-slate-500/10 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:text-slate-300">
+                      {isPl ? 'maturity' : 'maturity'}: {proposal.maturity}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+              {proposal.resultSummary ? (
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                  {proposal.resultSummary}
+                </div>
+              ) : null}
+              {proposal.citations?.length ? (
+                <div className="flex flex-wrap gap-1">
+                  {proposal.citations.slice(0, 4).map((citation, idx) => (
+                    <span
+                      key={`${citation.label}-${idx}`}
+                      className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[9px] font-semibold text-violet-600 dark:text-violet-300"
+                    >
+                      {citation.label}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex items-center gap-1.5">

@@ -12,7 +12,7 @@ import {
 } from './financialModelingService.js';
 
 export type ValuationStatus = 'DRAFT' | 'REVIEW' | 'APPROVED';
-export type ValuationSourceType = 'financial_model' | 'budget' | 'manual';
+export type ValuationSourceType = 'financial_model' | 'financial_analysis' | 'budget' | 'manual';
 
 export type TerminalMethod = 'gordon' | 'exit_multiple';
 export type ExitMultipleMetric = 'EV/EBITDA' | 'EV/Revenue';
@@ -77,6 +77,56 @@ function normalizeStatus(raw: any): ValuationStatus {
   if (s === 'REVIEW') return 'REVIEW';
   if (s === 'APPROVED') return 'APPROVED';
   return 'DRAFT';
+}
+
+function normalizeAnalysisStatus(raw: any): 'DRAFT' | 'REVIEW' | 'APPROVED' {
+  const s = String(raw || '').trim().toUpperCase();
+  if (s === 'APPROVED' || s === 'COMPLETED') return 'APPROVED';
+  if (s === 'REVIEW' || s === 'IN_PROGRESS') return 'REVIEW';
+  return 'DRAFT';
+}
+
+async function assertValuationSourceEligible(
+  orgId: string,
+  data: { sourceType: ValuationSourceType; sourceId?: string | null }
+): Promise<void> {
+  const sourceId = String(data.sourceId || '').trim();
+  if (data.sourceType === 'manual') return;
+  if (!sourceId) throw new Error('Missing sourceId');
+
+  if (data.sourceType === 'budget') {
+    const budget = await dbGet<any>(
+      `SELECT id, status FROM budgets WHERE id = ? AND organization_id = ?`,
+      [sourceId, orgId]
+    );
+    if (!budget) throw new Error('Source budget not found');
+    if (String(budget.status || '').trim().toUpperCase() !== 'APPROVED') {
+      throw new Error('Budget must be approved before it can seed a valuation');
+    }
+    return;
+  }
+
+  if (data.sourceType === 'financial_model') {
+    const model = await getModel(sourceId);
+    if (!model || String(model.organization_id || '') !== orgId) {
+      throw new Error('Source financial model not found');
+    }
+    if (normalizeStatus(model.status) !== 'APPROVED') {
+      throw new Error('Financial model must be approved before it can seed a valuation');
+    }
+    return;
+  }
+
+  if (data.sourceType === 'financial_analysis') {
+    const analysis = await dbGet<any>(
+      `SELECT id, status FROM financial_analyses WHERE id = ? AND organization_id = ?`,
+      [sourceId, orgId]
+    );
+    if (!analysis) throw new Error('Source financial analysis not found');
+    if (normalizeAnalysisStatus(analysis.status) !== 'APPROVED') {
+      throw new Error('Financial analysis must be approved before it can seed a valuation');
+    }
+  }
 }
 
 export async function getOrgDefaultWacc(orgId: string): Promise<number> {
@@ -158,6 +208,11 @@ export async function createValuation(
   const horizonYears = clamp(Number(data.horizonYears ?? 5), 1, 20);
   const orgWacc = await getOrgDefaultWacc(orgId);
   const assumptions = defaultAssumptions(horizonYears, orgWacc);
+
+  await assertValuationSourceEligible(orgId, {
+    sourceType: data.sourceType,
+    sourceId: data.sourceId,
+  });
 
   await dbRun(
     `INSERT INTO valuations (id, organization_id, project_id, initiative_id, title, description, status, source_type, source_id, horizon_years, currency, assumptions, peers, results, created_by)
@@ -347,6 +402,9 @@ async function loadForecastFromBudget(
     [budgetId, orgId]
   );
   if (!budget) throw new Error('Source budget not found');
+  if (String(budget.status || '').trim().toUpperCase() !== 'APPROVED') {
+    throw new Error('Budget must be approved before valuation can use it');
+  }
 
   const scenarios = await dbAll<any>(
     `SELECT scenario_type, projections FROM budget_scenarios WHERE budget_id = ? ORDER BY scenario_type`,
@@ -413,6 +471,9 @@ async function loadForecastFromFinancialModel(
   const model = await getModel(modelId);
   if (!model || String(model.organization_id || '') !== orgId) {
     throw new Error('Source financial model not found');
+  }
+  if (normalizeStatus(model.status) !== 'APPROVED') {
+    throw new Error('Financial model must be approved before valuation can use it');
   }
 
   let periods: PeriodOutput[] =
@@ -494,6 +555,69 @@ async function loadForecastFromFinancialModel(
       sourceType: 'financial_model',
       sourceId: modelId,
       sourceStatus: String(model.status || ''),
+    },
+  };
+}
+
+async function loadForecastFromFinancialAnalysis(
+  orgId: string,
+  analysisId: string,
+  horizonYears: number
+): Promise<ForecastBundle> {
+  const analysis = await dbGet<any>(
+    `SELECT id, status, periods, statement_data
+     FROM financial_analyses
+     WHERE id = ? AND organization_id = ?`,
+    [analysisId, orgId]
+  );
+  if (!analysis) throw new Error('Source financial analysis not found');
+  if (normalizeAnalysisStatus(analysis.status) !== 'APPROVED') {
+    throw new Error('Financial analysis must be approved before valuation can use it');
+  }
+
+  const periods = safeJsonParse<string[]>(analysis.periods, []).slice(0, horizonYears);
+  const statementData = safeJsonParse<any>(analysis.statement_data, {});
+  if (!periods.length) throw new Error('Financial analysis periods not found');
+
+  const getLineValue = (bucket: any[] | undefined, codes: string[], period: string): number => {
+    if (!Array.isArray(bucket)) return 0;
+    for (const code of codes) {
+      const line = bucket.find((item: any) => String(item.code || '').toUpperCase() === code);
+      const value = Number(line?.values?.[period] ?? 0);
+      if (value !== 0) return value;
+    }
+    return 0;
+  };
+
+  const years = periods.map((period, index) => {
+    const revenue = getLineValue(statementData.pl, ['REVENUE'], period);
+    const ebitda =
+      getLineValue(statementData.pl, ['EBITDA'], period) ||
+      (revenue -
+        Math.abs(getLineValue(statementData.pl, ['COGS'], period)) -
+        Math.abs(getLineValue(statementData.pl, ['OPEX'], period)));
+    const operatingCf =
+      getLineValue(statementData.cf, ['OPERATING_CF', 'OPERATING_CASH_FLOW'], period) ||
+      (getLineValue(statementData.pl, ['NET_INCOME'], period) +
+        Math.abs(getLineValue(statementData.pl, ['DEPRECIATION'], period)));
+    const capex =
+      Math.abs(getLineValue(statementData.cf, ['CAPEX_CF', 'CAPEX', 'CFI'], period)) || 0;
+    return {
+      year: index + 1,
+      fcff: round(operatingCf - capex, 2),
+      revenue: round(revenue, 2),
+      ebitda: round(ebitda, 2),
+    };
+  });
+
+  const last = years[years.length - 1];
+  return {
+    years,
+    companyMetric: { revenueLastYear: last?.revenue, ebitdaLastYear: last?.ebitda },
+    sourceQuality: {
+      sourceType: 'financial_analysis',
+      sourceId: analysisId,
+      sourceStatus: String(analysis.status || ''),
     },
   };
 }
@@ -729,6 +853,9 @@ export async function computeValuation(orgId: string, valuationId: string): Prom
   if (val.source_type === 'financial_model') {
     if (!val.source_id) throw new Error('Missing sourceId');
     forecast = await loadForecastFromFinancialModel(orgId, val.source_id, horizonYears);
+  } else if (val.source_type === 'financial_analysis') {
+    if (!val.source_id) throw new Error('Missing sourceId');
+    forecast = await loadForecastFromFinancialAnalysis(orgId, val.source_id, horizonYears);
   } else if (val.source_type === 'budget') {
     if (!val.source_id) throw new Error('Missing sourceId');
     forecast = await loadForecastFromBudget(orgId, val.source_id, horizonYears);

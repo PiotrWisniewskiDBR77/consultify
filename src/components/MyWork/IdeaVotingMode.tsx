@@ -19,7 +19,13 @@ export interface IdeaVotingModeProps {
   onClose: () => void;
   maxVotes: number;
   timerSeconds?: number;
+  timerEndsAt?: number | null;
+  ideaId?: string;
+  currentUserId?: string;
   nodes: Array<{ id: string; data?: { label?: string } }>;
+  voteCounts?: Record<string, number>;
+  myVoteCounts?: Record<string, number>;
+  persistent?: boolean;
   onVotesChange?: (votes: Record<string, number>) => void;
 }
 
@@ -28,24 +34,42 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
   onClose,
   maxVotes,
   timerSeconds,
+  timerEndsAt,
+  ideaId,
+  currentUserId,
   nodes,
+  voteCounts: externalVoteCounts,
+  myVoteCounts: externalMyVoteCounts,
+  persistent = false,
   onVotesChange,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const [votes, setVotes] = useState<Vote[]>([]);
-  const [timeLeft, setTimeLeft] = useState(timerSeconds || 0);
-  const [timerActive, setTimerActive] = useState(Boolean(timerSeconds));
+  const [timeLeft, setTimeLeft] = useState(
+    timerEndsAt ? Math.max(0, Math.ceil((timerEndsAt - Date.now()) / 1000)) : timerSeconds || 0
+  );
+  const [timerActive, setTimerActive] = useState(Boolean(timerEndsAt || timerSeconds));
   const [nodeReactions, setNodeReactions] = useState<Record<string, Record<string, number>>>({});
-  const userId = 'current-user';
+  const userId = currentUserId || 'current-user';
 
   useEffect(() => {
     if (!active) {
-      setVotes([]);
-      setTimeLeft(timerSeconds || 0);
-      setTimerActive(Boolean(timerSeconds));
+      if (!persistent) setVotes([]);
+      setTimeLeft(
+        timerEndsAt ? Math.max(0, Math.ceil((timerEndsAt - Date.now()) / 1000)) : timerSeconds || 0
+      );
+      setTimerActive(Boolean(timerEndsAt || timerSeconds));
     }
-  }, [active, timerSeconds]);
+  }, [active, persistent, timerEndsAt, timerSeconds]);
+
+  useEffect(() => {
+    if (!active) return;
+    setTimeLeft(
+      timerEndsAt ? Math.max(0, Math.ceil((timerEndsAt - Date.now()) / 1000)) : timerSeconds || 0
+    );
+    setTimerActive(Boolean(timerEndsAt || timerSeconds));
+  }, [active, timerEndsAt, timerSeconds]);
 
   useEffect(() => {
     if (!timerActive || timeLeft <= 0) return;
@@ -61,15 +85,21 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
     return () => clearInterval(interval);
   }, [timerActive, timeLeft]);
 
-  const myVoteCount = useMemo(() => votes.filter((v) => v.userId === userId).length, [votes]);
+  const myVoteCount = useMemo(() => {
+    if (externalMyVoteCounts) {
+      return Object.values(externalMyVoteCounts).reduce((sum, count) => sum + Number(count || 0), 0);
+    }
+    return votes.filter((v) => v.userId === userId).length;
+  }, [externalMyVoteCounts, userId, votes]);
 
   const voteCounts = useMemo(() => {
+    if (externalVoteCounts) return externalVoteCounts;
     const counts: Record<string, number> = {};
     for (const v of votes) {
       counts[v.nodeId] = (counts[v.nodeId] || 0) + 1;
     }
     return counts;
-  }, [votes]);
+  }, [externalVoteCounts, votes]);
 
   useEffect(() => {
     onVotesChange?.(voteCounts);
@@ -78,25 +108,34 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
   const handleVote = useCallback(
     (nodeId: string) => {
       if (myVoteCount >= maxVotes) return;
-      if (timerSeconds && timeLeft <= 0) return;
+      if ((timerEndsAt || timerSeconds) && timeLeft <= 0) return;
+      if (persistent) {
+        window.dispatchEvent(
+          new CustomEvent('idea-whiteboard-cast-vote', {
+            detail: { nodeId, voteTargetId: nodeId, ideaId },
+          })
+        );
+        return;
+      }
       setVotes((prev) => [...prev, { nodeId, userId, timestamp: Date.now() }]);
     },
-    [maxVotes, myVoteCount, timeLeft, timerSeconds]
+    [ideaId, maxVotes, myVoteCount, persistent, timeLeft, timerEndsAt, timerSeconds, userId]
   );
 
   const handleUnvote = useCallback((nodeId: string) => {
+    if (persistent) return;
     setVotes((prev) => {
       const idx = prev.findIndex((v) => v.nodeId === nodeId && v.userId === userId);
       if (idx === -1) return prev;
       return [...prev.slice(0, idx), ...prev.slice(idx + 1)];
     });
-  }, []);
+  }, [persistent, userId]);
 
   const sortedNodes = useMemo(() => {
     return [...nodes].sort((a, b) => (voteCounts[b.id] || 0) - (voteCounts[a.id] || 0));
   }, [nodes, voteCounts]);
 
-  const timerExpired = timerSeconds != null && timerSeconds > 0 && timeLeft <= 0;
+  const timerExpired = (timerEndsAt != null || (timerSeconds != null && timerSeconds > 0)) && timeLeft <= 0;
 
   const handleReact = useCallback((nodeId: string, emojiKey: string) => {
     setNodeReactions((prev) => {
@@ -163,7 +202,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
         <div className="max-h-[200px] overflow-y-auto p-2 space-y-1">
           {sortedNodes.map((node, rank) => {
             const count = voteCounts[node.id] || 0;
-            const myVotes = votes.filter((v) => v.nodeId === node.id && v.userId === userId).length;
+            const myVotes = externalMyVoteCounts?.[node.id] || votes.filter((v) => v.nodeId === node.id && v.userId === userId).length;
             return (
               <div
                 key={node.id}
@@ -188,7 +227,7 @@ export const IdeaVotingMode: React.FC<IdeaVotingModeProps> = ({
                         <ThumbsUp size={10} />
                       </button>
                     )}
-                    {myVotes > 0 && (
+                    {!persistent && myVotes > 0 && (
                       <button
                         onClick={() => handleUnvote(node.id)}
                         className="p-1 rounded text-primary-500 hover:text-red-500"

@@ -322,6 +322,55 @@ function main(): void {
     pass: includesAll(questionsList, ['description?', 'evidencePrompt?', 'voiceTranscript?', 'voiceTranscriptStatus?', 'allowVoice?']),
   });
 
+  // ── WS-G: Gap Closure Features ──────────────────────────────────────────
+
+  // GAP-1: buildTemplateQuestionResponse returns description + evidencePrompt
+  checks.push({
+    name: 'V6-GAP1 buildTemplateQuestionResponse includes description & evidencePrompt',
+    pass: includesAll(controller, ['buildTemplateQuestionResponse', "description: row.description", "evidencePrompt: row.evidence_prompt"]),
+  });
+
+  // GAP-2: evaluateSessionAnswers handler + route
+  checks.push({
+    name: 'V6-GAP2 evaluateSessionAnswers handler exists',
+    pass: controller.includes('evaluateSessionAnswers'),
+  });
+  checks.push({
+    name: 'V6-GAP2 evaluate-answers route registered',
+    pass: interviewRoutes.includes('evaluate-answers'),
+  });
+
+  // GAP-3: Reviewer approve/send-back actions wired in InterviewWorkspace
+  checks.push({
+    name: 'V6-GAP3 Reviewer approve & send-back actions in workspace',
+    pass: includesAll(workspace, ['handleApprove', 'handleSendBack', 'isReviewerMode', 'showSendBackForm']),
+  });
+
+  // GAP-4: Assignment deep link in InterviewHub
+  checks.push({
+    name: 'V6-GAP4 assignmentIdFromUrl deep link in InterviewHub',
+    pass: includesAll(hub, ['assignmentIdFromUrl', 'openInterviewAssignmentFull']),
+  });
+
+  // GAP-5: confidence_score (not confidence) in interviewInferenceService
+  const inferenceService = read(root, 'server/src/services/interviewInferenceService.ts');
+  checks.push({
+    name: 'V6-GAP5 interviewInferenceService uses confidence_score',
+    pass: inferenceService.includes('confidence_score') && !inferenceService.includes('q.confidence,'),
+  });
+
+  // GAP-6: Auto-save timer in InterviewSingleQuestionRuntime
+  checks.push({
+    name: 'V6-GAP6 Auto-save timer ref and effect in runtime',
+    pass: includesAll(runtime, ['autoSaveTimerRef', 'autoSaved', 'persistCurrentQuestion']),
+  });
+
+  // GAP-7: Voice transcript discard button in runtime
+  checks.push({
+    name: 'V6-GAP7 Voice transcript discard button exists',
+    pass: includesAll(runtime, ['Discard', 'voiceTranscriptDraft']),
+  });
+
   // ── Report ────────────────────────────────────────────────────────────────
   const passed = checks.filter((c) => c.pass).length;
   const failed = checks.filter((c) => !c.pass).length;

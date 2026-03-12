@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../../database/Database.js';
 import type { IDatabase } from '../../database/IDatabase.js';
+import organizationContextService from '../organizationContext/OrganizationContextService.js';
 import logger from '../../utils/Logger.js';
 
 // ==========================================
@@ -332,14 +333,16 @@ class ProactiveSuggestionsService {
     if (!request.projectId) return suggestions;
 
     try {
-      // Check if organization context (goals) was updated recently
+      // Check if organization context was updated recently
       // but initiatives haven't been re-evaluated
-      const contextUpdate = (await db.get(
-        `SELECT updated_at FROM organization_context
-         WHERE organization_id = ? AND updated_at > datetime('now', '-30 days')
-         ORDER BY updated_at DESC LIMIT 1`,
-        [request.organizationId]
-      )) as any;
+      const contextUpdate = await organizationContextService
+        .buildResolvedContext(request.organizationId)
+        .then((context) =>
+          context.snapshotUpdatedAt
+            ? { updated_at: context.snapshotUpdatedAt, counts: context.counts }
+            : null
+        )
+        .catch(() => null);
 
       if (contextUpdate) {
         const lastContextUpdate = new Date(contextUpdate.updated_at);

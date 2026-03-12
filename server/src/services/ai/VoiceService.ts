@@ -8,6 +8,7 @@ import { llmConfigService } from './llmConfigService.js';
 export class VoiceService {
   private static instance: VoiceService;
   private openai: OpenAI | null = null;
+  private groq: OpenAI | null = null;
 
   private constructor() {}
 
@@ -18,35 +19,60 @@ export class VoiceService {
     return VoiceService.instance;
   }
 
-  private async getClient(): Promise<OpenAI> {
-    if (this.openai) return this.openai;
+  private async getClient(): Promise<{ client: OpenAI; model: string }> {
+    if (this.openai) return { client: this.openai, model: 'whisper-1' };
+    if (this.groq) return { client: this.groq, model: 'whisper-large-v3' };
 
-    const config = await llmConfigService.getProviderConfig('openai');
-    const apiKey = config?.api_key || '';
-    // Prevent accidental real network calls in test/dev environments where
-    // we intentionally stub keys (e.g. `sk-test-*`).
-    if (!config || !apiKey || String(apiKey).startsWith('sk-test')) {
-      throw new Error('OpenAI API key not configured in llmConfigService');
+    let openaiKey = process.env.OPENAI_API_KEY || '';
+    if (!openaiKey || openaiKey.startsWith('sk-or-') || openaiKey.startsWith('sk-test')) {
+      const config = await llmConfigService.getProviderConfig('openai');
+      const configKey = config?.api_key || '';
+      if (configKey && !configKey.startsWith('sk-or-') && !configKey.startsWith('sk-test')) {
+        openaiKey = configKey;
+      } else {
+        openaiKey = '';
+      }
     }
 
-    this.openai = new OpenAI({
-      apiKey,
-    });
+    if (openaiKey) {
+      this.openai = new OpenAI({ apiKey: openaiKey });
+      return { client: this.openai, model: 'whisper-1' };
+    }
 
-    return this.openai;
+    const groqKey = process.env.GROQ_API_KEY || '';
+    if (groqKey) {
+      this.groq = new OpenAI({ apiKey: groqKey, baseURL: 'https://api.groq.com/openai/v1' });
+      logger.info('[VoiceService] Using Groq Whisper as STT provider');
+      return { client: this.groq, model: 'whisper-large-v3' };
+    }
+
+    const allProviders = await llmConfigService.getActiveProviders();
+    for (const p of allProviders) {
+      const key = p.api_key || '';
+      const endpoint = (p as any).endpoint || '';
+      if (key && !key.startsWith('sk-or-') && !key.startsWith('sk-test') && !endpoint.includes('openrouter')) {
+        this.openai = new OpenAI({ apiKey: key, ...(endpoint ? { baseURL: endpoint } : {}) });
+        logger.info(`[VoiceService] Using provider ${p.provider || p.name} for STT`);
+        return { client: this.openai, model: 'whisper-1' };
+      }
+    }
+
+    throw new Error(
+      'No STT provider available. Set OPENAI_API_KEY (native OpenAI) or GROQ_API_KEY for Whisper transcription.'
+    );
   }
 
   /**
-   * Transcribe audio using Whisper
+   * Transcribe audio using Whisper (OpenAI or Groq)
    */
   public async transcribe(audioFilePath: string, language?: string): Promise<string> {
     try {
-      const client = await this.getClient();
+      const { client, model } = await this.getClient();
 
       const transcription = await client.audio.transcriptions.create({
         file: fs.createReadStream(audioFilePath),
-        model: 'whisper-1',
-        language: language || undefined, // Allow auto-detection if null
+        model,
+        language: language || undefined,
       });
 
       return transcription.text;
@@ -54,6 +80,8 @@ export class VoiceService {
       if (error instanceof Error) {
         logger.error(`[VoiceService] Transcription failed: ${error.message}`);
       }
+      this.openai = null;
+      this.groq = null;
       throw error;
     }
   }

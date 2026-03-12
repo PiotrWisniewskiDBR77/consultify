@@ -8,6 +8,7 @@ export type ColumnType =
   | 'number'
   | 'select'
   | 'multiselect'
+  | 'status'
   | 'date'
   | 'checkbox'
   | 'rating'
@@ -23,7 +24,11 @@ export type ColumnType =
   | 'color'
   | 'currency'
   | 'phone'
-  | 'email';
+  | 'email'
+  | 'created_time'
+  | 'created_by'
+  | 'last_edited_time'
+  | 'last_edited_by';
 
 export interface ColumnDef {
   key: string;
@@ -37,6 +42,9 @@ export interface ColumnDef {
   aiPrompt?: string;
   frozen?: boolean;
   aggregation?: 'sum' | 'avg' | 'count' | 'min' | 'max' | 'none';
+  relationTarget?: string;
+  rollupSource?: string;
+  rollupFunction?: 'count' | 'sum' | 'avg' | 'min' | 'max' | 'percent_empty' | 'percent_not_empty';
 }
 
 export type FilterOperator =
@@ -125,11 +133,19 @@ export const DEFAULT_COLUMN_WIDTH = 160;
 export const MIN_COLUMN_WIDTH = 60;
 export const MAX_COLUMN_WIDTH = 600;
 
+export const STATUS_OPTIONS = [
+  { value: 'todo', en: 'To Do', pl: 'Do zrobienia', color: '#e0e7ff' },
+  { value: 'in_progress', en: 'In Progress', pl: 'W toku', color: '#fef3c7' },
+  { value: 'done', en: 'Done', pl: 'Gotowe', color: '#d1fae5' },
+  { value: 'blocked', en: 'Blocked', pl: 'Zablokowane', color: '#fee2e2' },
+] as const;
+
 export const COLUMN_TYPE_LABELS: Record<ColumnType, { en: string; pl: string }> = {
   text: { en: 'Text', pl: 'Tekst' },
   number: { en: 'Number', pl: 'Liczba' },
   select: { en: 'Select', pl: 'Wybór' },
   multiselect: { en: 'Multi-select', pl: 'Wielokrotny wybór' },
+  status: { en: 'Status', pl: 'Status' },
   date: { en: 'Date', pl: 'Data' },
   checkbox: { en: 'Checkbox', pl: 'Checkbox' },
   rating: { en: 'Rating', pl: 'Ocena' },
@@ -146,6 +162,10 @@ export const COLUMN_TYPE_LABELS: Record<ColumnType, { en: string; pl: string }> 
   currency: { en: 'Currency', pl: 'Waluta' },
   phone: { en: 'Phone', pl: 'Telefon' },
   email: { en: 'Email', pl: 'Email' },
+  created_time: { en: 'Created time', pl: 'Czas utworzenia' },
+  created_by: { en: 'Created by', pl: 'Utworzono przez' },
+  last_edited_time: { en: 'Last edited', pl: 'Ostatnia edycja' },
+  last_edited_by: { en: 'Edited by', pl: 'Edytowano przez' },
 };
 
 export const ROW_ACCENT_COLORS = [
@@ -238,6 +258,7 @@ export const COLUMN_TYPE_COLORS: Partial<Record<ColumnType, string>> = {
   number: '#10b981',
   select: '#8b5cf6',
   multiselect: '#6366f1',
+  status: '#f59e0b',
   date: '#f59e0b',
   checkbox: '#14b8a6',
   rating: '#eab308',
@@ -254,6 +275,10 @@ export const COLUMN_TYPE_COLORS: Partial<Record<ColumnType, string>> = {
   currency: '#10b981',
   phone: '#3b82f6',
   email: '#06b6d4',
+  created_time: '#94a3b8',
+  created_by: '#94a3b8',
+  last_edited_time: '#94a3b8',
+  last_edited_by: '#94a3b8',
 };
 
 export const SELECT_COLORS = [

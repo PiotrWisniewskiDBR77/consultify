@@ -1194,7 +1194,24 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const actions: NModeAction[] = (() => {
     const out: NModeAction[] = [];
 
-    if (!isLocked) {
+    if (isReviewerMode) {
+      out.push({
+        id: 'approve',
+        label: { en: 'Approve', pl: 'Zatwierdź' },
+        icon: ThumbsUp,
+        variant: 'success',
+        onClick: handleApprove,
+        disabled: isApproving || isSendingBack,
+      });
+      out.push({
+        id: 'send-back',
+        label: { en: 'Send back', pl: 'Odeślij' },
+        icon: AlertTriangle,
+        variant: 'danger',
+        onClick: () => setShowSendBackForm(true),
+        disabled: isApproving || isSendingBack,
+      });
+    } else if (!isLocked) {
       if (isAssignmentMode) {
         out.push({
           id: 'submit',
@@ -1228,16 +1245,81 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   const sections: NModeSection[] = (() => {
     const overview = (
       <NModeSectionWrapper heading={{ en: 'Overview', pl: 'Podgląd' }}>
+        {isReviewerMode && (
+          <Callout variant="warning" title={isPolish ? 'Tryb recenzenta' : 'Reviewer mode'} compact>
+            {isPolish
+              ? 'Przeglądasz odpowiedzi do zatwierdzenia. Użyj przycisków "Zatwierdź" lub "Odeślij" w pasku akcji.'
+              : 'You are reviewing answers for approval. Use "Approve" or "Send back" in the action bar.'}
+          </Callout>
+        )}
+        {showSendBackForm && isReviewerMode && (
+          <div className="rounded-xl border border-amber-200/70 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 p-4 space-y-3 mt-2">
+            <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+              {isPolish ? 'Powód odesłania:' : 'Reason for sending back:'}
+            </p>
+            <textarea
+              value={sendBackReason}
+              onChange={(e) => setSendBackReason(e.target.value)}
+              rows={3}
+              className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+              placeholder={isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs improvement...'}
+            />
+            {sendBackMissingItems.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                  {isPolish ? 'Brakujące elementy:' : 'Missing items:'}
+                </p>
+                {sendBackMissingItems.map((item, idx) => (
+                  <label key={item.key} className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-300">
+                    <input
+                      type="checkbox"
+                      checked={item.checked}
+                      onChange={() => {
+                        setSendBackMissingItems((prev) =>
+                          prev.map((it, i) => (i === idx ? { ...it, checked: !it.checked } : it))
+                        );
+                      }}
+                      className="rounded"
+                    />
+                    {item.label}
+                  </label>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleSendBack}
+                disabled={!sendBackReason.trim() || isSendingBack}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
+              >
+                {isSendingBack ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                {isPolish ? 'Odeślij' : 'Send back'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowSendBackForm(false); setSendBackReason(''); }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 dark:border-navy-700/70 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 transition-colors"
+              >
+                {isPolish ? 'Anuluj' : 'Cancel'}
+              </button>
+            </div>
+          </div>
+        )}
         <Callout
-          variant={isLocked ? 'info' : 'purple'}
+          variant={isReviewerMode ? 'info' : isLocked ? 'info' : 'purple'}
           title={
-            isLocked
+            isReviewerMode
               ? isPolish
-                ? 'Tryb tylko do odczytu'
-                : 'Read-only'
-              : isPolish
-                ? 'Następny krok'
-                : 'Next action'
+                ? 'Status przeglądu'
+                : 'Review status'
+              : isLocked
+                ? isPolish
+                  ? 'Tryb tylko do odczytu'
+                  : 'Read-only'
+                : isPolish
+                  ? 'Następny krok'
+                  : 'Next action'
           }
           action={
             isLocked
@@ -1670,9 +1752,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     };
 
     return (
-      <div className="flex flex-col h-full bg-slate-50/50 dark:bg-navy-950">
+      <div className="flex flex-col h-full bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-navy-950 dark:via-[#0a0f1e] dark:to-navy-950">
         {/* Minimal top bar */}
-        <div className="shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-slate-200/60 dark:border-navy-800/60 bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl">
+        <div className="shrink-0 flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.04] dark:bg-white/[0.02] backdrop-blur-xl">
           <button
             type="button"
             onClick={onClose || (() => {})}
@@ -1681,7 +1763,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             <ChevronLeft size={16} />
             {isPolish ? 'Wróć' : 'Back'}
           </button>
-          <div className="h-4 w-px bg-slate-200 dark:bg-navy-700" />
+          <div className="h-4 w-px bg-white/[0.08]" />
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate max-w-[300px]">
             {sessionName || (isPolish ? 'Sesja wywiadu' : 'Interview session')}
           </span>
@@ -1690,23 +1772,50 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">
             {answeredCount}/{totalCount}
           </span>
-          <div className="w-24 h-1.5 rounded-full bg-slate-200 dark:bg-navy-800 overflow-hidden">
+          <div className="w-24 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
             <div
               className="h-full rounded-full bg-primary-500 transition-all duration-500"
               style={{ width: `${progressPct}%` }}
             />
           </div>
           <span className="text-xs tabular-nums text-slate-400 dark:text-slate-500">{progressPct}%</span>
-          <div className="h-4 w-px bg-slate-200 dark:bg-navy-700" />
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors disabled:opacity-50"
-          >
-            {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-            {isPolish ? 'Zapisz' : 'Save'}
-          </button>
+          <div className="h-4 w-px bg-white/[0.08]" />
+          {isReviewerMode ? (
+            <>
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-500">
+                <Shield size={10} />
+                {isPolish ? 'Recenzja' : 'Review'}
+              </span>
+              <button
+                type="button"
+                onClick={handleApprove}
+                disabled={isApproving}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500 hover:text-emerald-400 transition-colors disabled:opacity-50"
+              >
+                {isApproving ? <Loader2 size={13} className="animate-spin" /> : <ThumbsUp size={13} />}
+                {isPolish ? 'Zatwierdź' : 'Approve'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSendBackForm(true)}
+                disabled={isSendingBack}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-500 hover:text-amber-400 transition-colors disabled:opacity-50"
+              >
+                <AlertTriangle size={13} />
+                {isPolish ? 'Odeślij' : 'Send back'}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors disabled:opacity-50"
+            >
+              {isSaving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+              {isPolish ? 'Zapisz' : 'Save'}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => handleRuntimeModeSelect('task_list')}
@@ -1717,6 +1826,61 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             {isPolish ? 'Lista' : 'List'}
           </button>
         </div>
+
+        {/* Send-back form (immersive mode) */}
+        {showSendBackForm && isReviewerMode && (
+          <div className="shrink-0 px-6 py-3 border-b border-white/[0.06] bg-amber-500/[0.04]">
+            <div className="max-w-2xl mx-auto space-y-3">
+              <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+                {isPolish ? 'Powód odesłania:' : 'Reason for sending back:'}
+              </p>
+              <textarea
+                value={sendBackReason}
+                onChange={(e) => setSendBackReason(e.target.value)}
+                rows={2}
+                className="w-full rounded-xl border border-amber-200 dark:border-amber-500/30 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+                placeholder={isPolish ? 'Opisz co wymaga poprawy...' : 'Describe what needs improvement...'}
+              />
+              {sendBackMissingItems.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {sendBackMissingItems.map((item, idx) => (
+                    <label key={item.key} className="inline-flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-300">
+                      <input
+                        type="checkbox"
+                        checked={item.checked}
+                        onChange={() => {
+                          setSendBackMissingItems((prev) =>
+                            prev.map((it, i) => (i === idx ? { ...it, checked: !it.checked } : it))
+                          );
+                        }}
+                        className="rounded"
+                      />
+                      {item.label}
+                    </label>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSendBack}
+                  disabled={!sendBackReason.trim() || isSendingBack}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600 transition-colors disabled:opacity-50"
+                >
+                  {isSendingBack ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                  {isPolish ? 'Odeślij' : 'Send back'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowSendBackForm(false); setSendBackReason(''); }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors"
+                >
+                  {isPolish ? 'Anuluj' : 'Cancel'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Immersive runtime -- no category gate, flat question list */}
         <div className="flex-1 min-h-0">

@@ -17,6 +17,7 @@ import {
   Loader2,
   MessageSquare,
   Paperclip,
+  Plus,
   Rocket,
   Sparkles,
   Star,
@@ -30,6 +31,9 @@ import { useTranslation } from 'react-i18next';
 
 import { Callout, EmptyStateInline, ToggleBlock } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
+import type { ArtifactLink } from '@/utils/artifactLinks';
+
+import { AddEvidenceModal } from './AddEvidenceModal';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -79,8 +83,10 @@ export interface NodeDetailData {
   goal?: string;
   rationale?: string;
   riskNote?: string;
+  tags?: string[];
   evidenceLinks?: NodeEvidenceLinkV5[];
   semanticType?: string;
+  artifactLinks?: ArtifactLink[];
   aiExpansionHistory?: AIExpansionEntryV5[];
 }
 
@@ -177,6 +183,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
   const [loadingContext, setLoadingContext] = useState(false);
   const [aiExpanding, setAiExpanding] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
 
   // Sync local state when node changes
   useEffect(() => {
@@ -184,6 +191,7 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
       setNotes(nodeData.notes || '');
       setStatus(nodeData.status || 'idea');
       setAiSuggestions([]);
+      setTagInput('');
     }
   }, [nodeData?.nodeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -242,6 +250,43 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
       if (locked || !nodeData) return;
       setStatus(newStatus);
       onUpdateNode(nodeData.nodeId, { status: newStatus });
+    },
+    [locked, nodeData, onUpdateNode]
+  );
+
+  const handleAddTag = useCallback(() => {
+    if (!nodeData || locked) return;
+    const next = tagInput.trim();
+    if (!next) return;
+    const merged = Array.from(new Set([...(nodeData.tags || []), next]));
+    onUpdateNode(nodeData.nodeId, { tags: merged });
+    setTagInput('');
+  }, [locked, nodeData, onUpdateNode, tagInput]);
+
+  const handleRemoveTag = useCallback(
+    (tag: string) => {
+      if (!nodeData || locked) return;
+      onUpdateNode(nodeData.nodeId, { tags: (nodeData.tags || []).filter((item) => item !== tag) });
+    },
+    [locked, nodeData, onUpdateNode]
+  );
+
+  const [showEvidenceModal, setShowEvidenceModal] = useState(false);
+
+  const handleAddEvidenceLink = useCallback(
+    (title: string, url?: string) => {
+      if (!nodeData || locked) return;
+      const nextEvidence = [
+        ...(nodeData.evidenceLinks || []),
+        {
+          id: `evidence-${Date.now()}`,
+          type: url?.startsWith('http') ? 'url' : 'note',
+          title,
+          ...(url ? { url } : {}),
+          addedAt: new Date().toISOString(),
+        } as NodeEvidenceLinkV5,
+      ];
+      onUpdateNode(nodeData.nodeId, { evidenceLinks: nextEvidence });
     },
     [locked, nodeData, onUpdateNode]
   );
@@ -430,6 +475,143 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           disabled={locked || isProtected}
           onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { riskNote: val })}
         />
+        <DepthField
+          label={isPl ? 'Typ semantyczny' : 'Semantic type'}
+          value={nodeData?.semanticType || ''}
+          placeholder={isPl ? 'np. hipoteza, decyzja, insight' : 'e.g. hypothesis, decision, insight'}
+          disabled={locked || isProtected}
+          onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { semanticType: val })}
+        />
+
+        <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
+          <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2">
+            {isPl ? 'Tagi' : 'Tags'}
+          </div>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {(nodeData.tags || []).map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                disabled={locked || isProtected}
+                onClick={() => handleRemoveTag(tag)}
+                className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 disabled:opacity-50"
+              >
+                <span>{tag}</span>
+                <span className="text-slate-400">x</span>
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddTag();
+                }
+              }}
+              disabled={locked || isProtected}
+              placeholder={isPl ? 'Dodaj tag' : 'Add tag'}
+              className="flex-1 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+            />
+            <button
+              type="button"
+              onClick={handleAddTag}
+              disabled={locked || isProtected || !tagInput.trim()}
+              className="px-3 py-2 rounded-xl text-[11px] font-semibold bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 disabled:opacity-40"
+            >
+              {isPl ? 'Dodaj' : 'Add'}
+            </button>
+          </div>
+        </div>
+
+        <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
+          <ToggleBlock
+            title={isPl ? 'Dowody i zrodla' : 'Evidence and sources'}
+            badge={String(nodeData.evidenceLinks?.length || 0)}
+            defaultOpen={(nodeData.evidenceLinks?.length || 0) > 0}
+            icon={<Link2 size={14} />}
+          >
+            <div className="space-y-2 mt-1">
+              {(nodeData.evidenceLinks || []).map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-slate-200/40 dark:border-navy-700/40 px-3 py-2 bg-white/40 dark:bg-navy-950/20"
+                >
+                  <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                    {item.title}
+                  </div>
+                  {(item.url || item.artifactId) && (
+                    <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 break-all">
+                      {item.url || item.artifactId}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setShowEvidenceModal(true)}
+                disabled={locked || isProtected}
+                className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 disabled:opacity-40"
+              >
+                <Plus size={12} />
+                {isPl ? 'Dodaj dowod' : 'Add evidence'}
+              </button>
+            </div>
+          </ToggleBlock>
+        </div>
+
+        <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
+          <ToggleBlock
+            title={isPl ? 'Powiazane artefakty' : 'Linked artifacts'}
+            badge={String(nodeData.artifactLinks?.length || 0)}
+            defaultOpen={(nodeData.artifactLinks?.length || 0) > 0}
+            icon={<Paperclip size={14} />}
+          >
+            {nodeData.artifactLinks?.length ? (
+              <div className="space-y-1.5 mt-1">
+                {nodeData.artifactLinks.map((link, idx) => {
+                  const artifactType = link.artifactRef?.type;
+                  const artifactId = link.artifactRef?.id;
+                  return (
+                    <button
+                      key={`${artifactType || 'artifact'}-${artifactId || idx}`}
+                      type="button"
+                      onClick={() =>
+                        artifactType &&
+                        artifactId &&
+                        window.dispatchEvent(
+                          new CustomEvent('mywork-open-item', {
+                            detail: {
+                              type: artifactType,
+                              id: artifactId,
+                              name: link.label || `${artifactType}:${artifactId}`,
+                            },
+                          })
+                        )
+                      }
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-left hover:bg-slate-100/60 dark:hover:bg-white/[0.03] transition-colors"
+                    >
+                      <Paperclip size={11} className="text-slate-400 shrink-0" />
+                      <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200 flex-1 truncate">
+                        {link.label || `${artifactType}:${artifactId}`}
+                      </span>
+                      <ExternalLink size={10} className="text-slate-300 shrink-0" />
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyStateInline
+                icon={Paperclip}
+                message={isPl ? 'Brak powiazanych artefaktow' : 'No linked artifacts yet'}
+                dashed={false}
+                className="py-4"
+              />
+            )}
+          </ToggleBlock>
+        </div>
 
         {/* AI: Expand this topic */}
         {!isProtected && (
@@ -642,6 +824,43 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
             </Callout>
           </div>
         )}
+
+        <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
+          <ToggleBlock
+            title={isPl ? 'Historia AI' : 'AI history'}
+            badge={String(nodeData.aiExpansionHistory?.length || 0)}
+            defaultOpen={(nodeData.aiExpansionHistory?.length || 0) > 0}
+            icon={<Bot size={14} />}
+          >
+            {nodeData.aiExpansionHistory?.length ? (
+              <div className="space-y-2 mt-1">
+                {nodeData.aiExpansionHistory.map((entry) => (
+                  <div
+                    key={`${entry.timestamp}-${entry.prompt}`}
+                    className="rounded-xl border border-slate-200/40 dark:border-navy-700/40 px-3 py-2 bg-white/40 dark:bg-navy-950/20"
+                  >
+                    <div className="text-[10px] text-slate-400 mb-1">
+                      {new Date(entry.timestamp).toLocaleString()}
+                    </div>
+                    <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                      {entry.resultSummary}
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                      {entry.prompt}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyStateInline
+                icon={Bot}
+                message={isPl ? 'Brak zastosowanych zmian AI' : 'No applied AI changes yet'}
+                dashed={false}
+                className="py-4"
+              />
+            )}
+          </ToggleBlock>
+        </div>
       </div>
 
       {/* Footer: Convert */}
@@ -665,6 +884,12 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
           </button>
         </div>
       )}
+
+      <AddEvidenceModal
+        open={showEvidenceModal}
+        onClose={() => setShowEvidenceModal(false)}
+        onAdd={handleAddEvidenceLink}
+      />
     </div>
   );
 };

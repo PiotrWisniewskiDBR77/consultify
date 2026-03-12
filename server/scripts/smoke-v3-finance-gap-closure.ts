@@ -26,16 +26,18 @@ function main(): void {
 
   checks.push({
     name: 'Finance investment tab is a first-class kind and investment_case workflow',
-    pass: includesAll(financeTypes, [
-      "FinanceKind = 'models' | 'analysis' | 'investment' | 'prediction' | 'valuation'",
-      "investment: { code: 'INV'",
-    ]) && includesAll(financeHub, [
-      "defaultAnalysisType={activeTab === 'investment' ? 'investment_case' : 'comprehensive'}",
-      'Create a dedicated investment case with NPV, IRR, payback, and ROI metrics from this tab.',
-    ]) && includesAll(financeData, [
-      "kind: activeTab === 'investment' ? 'investment' : 'analysis'",
-      "normalized === 'investment_case'",
-    ]),
+    pass:
+      financeTypes.includes('export type FinanceKind') &&
+      financeTypes.includes("'investment'") &&
+      financeTypes.includes("investment: { code: 'INV'") &&
+      includesAll(financeHub, [
+        "defaultAnalysisType={activeTab === 'investment' ? 'investment_case' : 'comprehensive'}",
+        'Create a dedicated investment case with NPV, IRR, payback, and ROI metrics from this tab.',
+      ]) &&
+      includesAll(financeData, [
+        "kind: activeTab === 'investment' ? 'investment' : 'analysis'",
+        "normalized === 'investment_case'",
+      ]),
   });
 
   checks.push({

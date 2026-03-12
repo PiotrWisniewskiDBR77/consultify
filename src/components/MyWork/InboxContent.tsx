@@ -70,9 +70,11 @@ import {
   PreviewRelations,
   actionPillClass,
   type ActionRow,
+  type ExtraCopyFormat,
   type MetaPill,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { Modal } from '@/components/ui/primitives/Modal';
 import {
   type ColumnDef,
@@ -963,6 +965,7 @@ const PreviewPane: React.FC<{
           onClick: () => onTriage('accept_today'),
           colorScheme: 'emerald',
           flex: true,
+          shortcut: 'T',
         },
         {
           label: isPolish ? 'Tydzień' : 'Week',
@@ -970,6 +973,7 @@ const PreviewPane: React.FC<{
           onClick: () => onTriage('accept_week'),
           colorScheme: 'blue',
           flex: true,
+          shortcut: 'W',
         },
         {
           label: isPolish ? 'Później' : 'Later',
@@ -977,6 +981,7 @@ const PreviewPane: React.FC<{
           onClick: () => onTriage('accept_later'),
           colorScheme: 'neutral',
           flex: true,
+          shortcut: 'L',
         },
       ],
     },
@@ -988,12 +993,14 @@ const PreviewPane: React.FC<{
           icon: CheckCircle2,
           onClick: () => onTriage('done'),
           colorScheme: 'green',
+          shortcut: 'D',
         },
         {
           label: isPolish ? 'Zapisz' : 'Save',
           icon: Bookmark,
           onClick: () => onTriage('save'),
           colorScheme: 'amber',
+          shortcut: 'S',
         },
         ...(onSaveAsNote
           ? [
@@ -1002,6 +1009,7 @@ const PreviewPane: React.FC<{
                 icon: FileText,
                 onClick: () => onSaveAsNote(item),
                 colorScheme: 'neutral' as const,
+                shortcut: 'N',
               },
             ]
           : []),
@@ -1010,8 +1018,36 @@ const PreviewPane: React.FC<{
           icon: Archive,
           onClick: () => onTriage('dismiss'),
           colorScheme: 'neutral',
+          shortcut: 'X',
         },
       ],
+    },
+  ];
+
+  const extraCopyFormats: ExtraCopyFormat[] = [
+    {
+      label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+      onClick: () =>
+        void copyAsMarkdown(
+          {
+            title: item.title || '',
+            description: descriptionTrimmed,
+            aiSummary: aiResult?.brief,
+          },
+          isPolish ? 'pl' : 'en'
+        ),
+    },
+    {
+      label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+      onClick: () =>
+        void copyForSlack(
+          {
+            title: item.title || '',
+            description: descriptionTrimmed,
+            aiSummary: aiResult?.brief,
+          },
+          isPolish ? 'pl' : 'en'
+        ),
     },
   ];
 
@@ -1105,6 +1141,7 @@ const PreviewPane: React.FC<{
           onExpand={() => handleDetailsAction('expand')}
           onSummarize={() => handleDetailsAction('summarize')}
           onCopy={() => handleDetailsAction('copy')}
+          extraCopyFormats={extraCopyFormats}
         />
       </div>
     </PreviewPaneShell>
@@ -1432,7 +1469,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               ? 'saved'
               : 'open';
       const [res, statsRes] = await Promise.all([
-        Api.get(`/my-work/inbox?limit=200&status=${status}`) as Promise<InboxResponse>,
+        Api.inboxGetTable({ status, limit: 200 }).catch(
+          () => Api.get(`/my-work/inbox?limit=200&status=${status}`)
+        ) as Promise<InboxResponse>,
         Api.getCanonicalInboxStats().catch(() => null),
       ]);
       setData(res);

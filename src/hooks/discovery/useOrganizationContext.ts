@@ -9,46 +9,53 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { Api } from '@/services/api';
 
-// ==================== TYPES ====================
+interface OrganizationContextProfile {
+  companyName: string | null;
+  description: string | null;
+  industry: string | null;
+  companySize: string | null;
+  location: string | null;
+  employeeCount: number | null;
+  annualRevenue: string | null;
+  website: string | null;
+  defaultLanguage: string | null;
+  defaultTimezone: string | null;
+  currency: string | null;
+}
 
 interface OrganizationContext {
-  // Company profile
-  companyName: string;
-  industry: string;
-  size: string;
-  description: string;
-
-  // Projects and initiatives
-  activeProjects: Array<{
-    id: string;
-    name: string;
-    status: string;
-    progress: number;
-  }>;
-
-  // Assessment data
-  assessmentScores: Record<string, number>;
-  maturityLevel: string;
-
-  // Initiatives
-  initiatives: Array<{
-    id: string;
-    title: string;
-    status: string;
-    type: string;
-  }>;
-
-  // KPIs
-  kpis: Array<{
-    name: string;
-    value: number;
-    target: number;
-    trend: 'up' | 'down' | 'stable';
-  }>;
-
-  // Strategic context
-  strategicGoals: string[];
-  challenges: string[];
+  organizationId: string;
+  profile: OrganizationContextProfile;
+  strategic: {
+    goals: string[];
+    priorities: string[];
+    mission: string | null;
+    vision: string | null;
+    competitivePosition: string | null;
+    growthStage: string | null;
+    riskAppetite: string | null;
+  };
+  operations: {
+    keyMetrics: Array<Record<string, unknown>>;
+    constraints: string[];
+    gaps: Array<Record<string, unknown>>;
+    interviewAnswers: Array<Record<string, unknown>>;
+  };
+  systems: {
+    stack: string[];
+    cloudAdoption: string | null;
+    integrations: string[];
+  };
+  stakeholders: Array<Record<string, unknown>>;
+  signals: {
+    interviewInsights: string[];
+  };
+  conflicts: Array<{ claimPath: string; values: unknown[]; sourceTypes: string[] }>;
+  counts: {
+    items: number;
+    claims: number;
+    conflicts: number;
+  };
 }
 
 interface OrganizationContextState {
@@ -59,109 +66,72 @@ interface OrganizationContextState {
   formatForPrompt: () => string;
 }
 
-// ==================== HOOK ====================
+const fallbackContext = (): OrganizationContext => ({
+  organizationId: '',
+  profile: {
+    companyName: null,
+    description: null,
+    industry: null,
+    companySize: null,
+    location: null,
+    employeeCount: null,
+    annualRevenue: null,
+    website: null,
+    defaultLanguage: null,
+    defaultTimezone: null,
+    currency: null,
+  },
+  strategic: {
+    goals: [],
+    priorities: [],
+    mission: null,
+    vision: null,
+    competitivePosition: null,
+    growthStage: null,
+    riskAppetite: null,
+  },
+  operations: {
+    keyMetrics: [],
+    constraints: [],
+    gaps: [],
+    interviewAnswers: [],
+  },
+  systems: {
+    stack: [],
+    cloudAdoption: null,
+    integrations: [],
+  },
+  stakeholders: [],
+  signals: {
+    interviewInsights: [],
+  },
+  conflicts: [],
+  counts: {
+    items: 0,
+    claims: 0,
+    conflicts: 0,
+  },
+});
 
 export const useOrganizationContext = (): OrganizationContextState => {
-  // Try to get org from localStorage or use a default
-  const [currentOrg, setCurrentOrg] = useState<{ id: string; name: string } | null>(() => {
-    try {
-      const stored = localStorage.getItem('currentOrganization');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return { id: parsed.id || 'default', name: parsed.name || 'Organization' };
-      }
-    } catch {
-      // Ignore parse errors
-    }
-    return { id: 'default', name: 'Organization' };
-  });
-
   const [context, setContext] = useState<OrganizationContext | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchContext = useCallback(async () => {
-    if (!currentOrg?.id) return;
-
     setIsLoading(true);
     setError(null);
-
     try {
-      // Fetch organization profile
-      const profileResponse = await Api.get(`/organizations/${currentOrg.id}/profile`).catch(
-        () => null
-      );
-
-      // Fetch projects
-      const projectsResponse = await Api.get('/projects').catch(() => ({ projects: [] }));
-
-      // Fetch initiatives
-      const initiativesResponse = await Api.get('/initiatives').catch(() => ({ initiatives: [] }));
-
-      // Fetch assessment summary
-      const assessmentResponse = await Api.get('/assessment/summary').catch(() => null);
-
-      // Fetch KPIs
-      const kpisResponse = await Api.get('/kpis').catch(() => ({ kpis: [] }));
-
-      // Build context object
-      const orgContext: OrganizationContext = {
-        companyName: profileResponse?.name || currentOrg.name || 'Your Organization',
-        industry: profileResponse?.industry || 'Not specified',
-        size: profileResponse?.size || 'Not specified',
-        description: profileResponse?.description || '',
-
-        activeProjects: (projectsResponse?.projects || []).slice(0, 10).map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          status: p.status,
-          progress: p.progress || 0,
-        })),
-
-        assessmentScores: assessmentResponse?.scores || {},
-        maturityLevel: assessmentResponse?.maturityLevel || 'Not assessed',
-
-        initiatives: (initiativesResponse?.initiatives || []).slice(0, 10).map((i: any) => ({
-          id: i.id,
-          title: i.title,
-          status: i.status,
-          type: i.type,
-        })),
-
-        kpis: (kpisResponse?.kpis || []).slice(0, 10).map((k: any) => ({
-          name: k.name,
-          value: k.value,
-          target: k.target,
-          trend: k.trend || 'stable',
-        })),
-
-        strategicGoals: profileResponse?.strategicGoals || [],
-        challenges: profileResponse?.challenges || [],
-      };
-
-      setContext(orgContext);
+      const response = await Api.organizationContextGet();
+      setContext((response as OrganizationContext) || fallbackContext());
     } catch (err) {
       console.error('[useOrganizationContext] Error fetching context:', err);
       setError('Failed to load organization context');
-
-      // Set default context on error
-      setContext({
-        companyName: currentOrg?.name || 'Your Organization',
-        industry: 'Not specified',
-        size: 'Not specified',
-        description: '',
-        activeProjects: [],
-        assessmentScores: {},
-        maturityLevel: 'Not assessed',
-        initiatives: [],
-        kpis: [],
-        strategicGoals: [],
-        challenges: [],
-      });
+      setContext(fallbackContext());
     } finally {
       setIsLoading(false);
     }
-  }, [currentOrg?.id, currentOrg?.name]);
+  }, []);
 
   useEffect(() => {
     fetchContext();
@@ -174,57 +144,76 @@ export const useOrganizationContext = (): OrganizationContextState => {
 
     const sections: string[] = [];
 
-    // Company overview
     sections.push(`## Organization Overview
-- **Company**: ${context.companyName}
-- **Industry**: ${context.industry}
-- **Size**: ${context.size}
-${context.description ? `- **Description**: ${context.description}` : ''}`);
+- Company: ${context.profile.companyName || 'Unknown'}
+- Industry: ${context.profile.industry || 'Unknown'}
+- Size: ${context.profile.companySize || 'Unknown'}
+${context.profile.location ? `- Location: ${context.profile.location}` : ''}
+${context.profile.employeeCount ? `- Employees: ${context.profile.employeeCount}` : ''}
+${context.profile.annualRevenue ? `- Revenue: ${context.profile.annualRevenue}` : ''}
+${context.profile.description ? `- Description: ${context.profile.description}` : ''}`);
 
-    // Strategic goals
-    if (context.strategicGoals.length > 0) {
-      sections.push(`## Strategic Goals
-${context.strategicGoals.map((g) => `- ${g}`).join('\n')}`);
+    if (context.strategic.goals.length > 0 || context.strategic.priorities.length > 0) {
+      sections.push(`## Strategic Direction
+${context.strategic.goals.map((goal) => `- Goal: ${goal}`).join('\n')}
+${context.strategic.priorities.map((priority) => `- Priority: ${priority}`).join('\n')}
+${context.strategic.mission ? `- Mission: ${context.strategic.mission}` : ''}
+${context.strategic.vision ? `- Vision: ${context.strategic.vision}` : ''}`);
     }
 
-    // Challenges
-    if (context.challenges.length > 0) {
-      sections.push(`## Current Challenges
-${context.challenges.map((c) => `- ${c}`).join('\n')}`);
-    }
-
-    // Assessment maturity
-    if (context.maturityLevel !== 'Not assessed') {
-      sections.push(`## Maturity Assessment
-- **Level**: ${context.maturityLevel}
-${Object.entries(context.assessmentScores)
-  .map(([key, value]) => `- ${key}: ${value}/5`)
+    if (context.operations.constraints.length > 0 || context.operations.gaps.length > 0) {
+      sections.push(`## Constraints And Gaps
+${context.operations.constraints.map((constraint) => `- Constraint: ${constraint}`).join('\n')}
+${context.operations.gaps
+  .map((gap) => `- Gap: ${String(gap.description || gap.category || 'Unspecified')}`)
   .join('\n')}`);
     }
 
-    // Active projects
-    if (context.activeProjects.length > 0) {
-      sections.push(`## Active Projects (${context.activeProjects.length})
-${context.activeProjects
-  .map((p) => `- ${p.name} (${p.status}, ${p.progress}% complete)`)
+    if (context.operations.keyMetrics.length > 0) {
+      sections.push(`## Key Metrics
+${context.operations.keyMetrics
+  .map((metric) => `- ${String(metric.name || 'Metric')}: ${String(metric.value || '')}`)
   .join('\n')}`);
     }
 
-    // Initiatives
-    if (context.initiatives.length > 0) {
-      sections.push(`## Current Initiatives (${context.initiatives.length})
-${context.initiatives.map((i) => `- ${i.title} [${i.type}] - ${i.status}`).join('\n')}`);
+    if (context.systems.stack.length > 0 || context.systems.cloudAdoption) {
+      sections.push(`## Systems Landscape
+${context.systems.stack.map((tool) => `- Stack: ${tool}`).join('\n')}
+${context.systems.cloudAdoption ? `- Cloud adoption: ${context.systems.cloudAdoption}` : ''}
+${context.systems.integrations.map((integration) => `- Integration: ${integration}`).join('\n')}`);
     }
 
-    // KPIs
-    if (context.kpis.length > 0) {
-      sections.push(`## Key Performance Indicators
-${context.kpis
-  .map((k) => `- ${k.name}: ${k.value} (target: ${k.target}, trend: ${k.trend})`)
+    if (context.stakeholders.length > 0) {
+      sections.push(`## Stakeholders
+${context.stakeholders
+  .map((stakeholder) => {
+    const name = String(stakeholder.name || 'Unknown stakeholder');
+    const role = stakeholder.role ? ` (${String(stakeholder.role)})` : '';
+    return `- ${name}${role}`;
+  })
   .join('\n')}`);
     }
 
-    return sections.join('\n\n');
+    if (context.signals.interviewInsights.length > 0) {
+      sections.push(`## Interview Signals
+${context.signals.interviewInsights.map((signal) => `- ${signal}`).join('\n')}`);
+    }
+
+    if (context.conflicts.length > 0) {
+      sections.push(`## Context Warnings
+- There are ${context.conflicts.length} conflicting claims that may need review.`);
+    }
+
+    return sections
+      .map((section) =>
+        section
+          .split('\n')
+          .map((line) => line.trimEnd())
+          .filter(Boolean)
+          .join('\n')
+      )
+      .filter(Boolean)
+      .join('\n\n');
   }, [context]);
 
   return {

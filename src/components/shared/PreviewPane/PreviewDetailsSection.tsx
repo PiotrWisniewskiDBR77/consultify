@@ -1,4 +1,4 @@
-import { ChevronDown, Copy, type LucideIcon, MoreVertical, Sparkles } from 'lucide-react';
+import { ChevronDown, Copy, FileText, type LucideIcon, MessageSquare, MoreVertical, Sparkles } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +21,12 @@ export interface DetailsAction {
   disabled?: boolean;
 }
 
+export interface ExtraCopyFormat {
+  label: string;
+  icon?: LucideIcon;
+  onClick: () => void;
+}
+
 export interface PreviewDetailsSectionProps {
   text: string;
   loading?: boolean;
@@ -30,6 +36,8 @@ export interface PreviewDetailsSectionProps {
   onExpand?: () => void;
   onSummarize?: () => void;
   onCopy?: () => void;
+  /** Additional copy format options appended after the default Copy action (e.g. "Copy as Markdown", "Copy for Slack") */
+  extraCopyFormats?: ExtraCopyFormat[];
   /** Clamp text with line-clamp-N unless expanded */
   expanded?: boolean;
   onToggleExpanded?: () => void;
@@ -44,6 +52,7 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
   onExpand,
   onSummarize,
   onCopy,
+  extraCopyFormats,
   expanded,
   onToggleExpanded,
   label,
@@ -83,6 +92,12 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
           },
         ]
       : []),
+    ...(extraCopyFormats ?? []).map((fmt, i) => ({
+      id: `extra-copy-${i}`,
+      label: fmt.label,
+      icon: fmt.icon ?? (i === 0 ? FileText : MessageSquare),
+      onClick: fmt.onClick,
+    })),
   ];
 
   const actions = customActions ?? defaultActions;

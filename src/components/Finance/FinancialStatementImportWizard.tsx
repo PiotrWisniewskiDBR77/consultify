@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Edit3,
   FileText,
   Info,
   Loader2,
@@ -26,6 +25,11 @@ import { useTranslation } from 'react-i18next';
 
 import Api from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
+import {
+  FinancialStatementMappingEditor,
+  type FinancialStatementCanonicalLineOption,
+  type FinancialStatementMappedValue,
+} from './FinancialStatementMappingEditor';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -49,31 +53,28 @@ interface ExtractedLine {
   sourceRow?: number;
   suggestedCanonicalId?: string;
   suggestedCanonicalLabel?: string;
+  isNonFinancial?: boolean;
+  classificationReason?: string;
 }
 
-interface CanonicalLine {
-  id: string;
+type CanonicalLine = FinancialStatementCanonicalLineOption & {
   statement_type: string;
   line_code: string;
-  line_name: string;
-  line_name_pl: string;
-}
+};
 
-interface MappedValue {
-  originalLabel: string;
-  value: number;
-  confidence: number;
-  canonicalLineId: string | null;
-  canonicalLabel: string;
-  mappingStatus: string;
-  sourceRow?: number;
-}
+type MappedValue = FinancialStatementMappedValue;
 
 interface ValidationMessage {
   type: 'error' | 'warning' | 'info';
   code: string;
   message: string;
   details?: string;
+}
+
+interface ReadinessState {
+  readinessStatus: 'pending' | 'recoverable' | 'ready' | 'rejected';
+  summary: string;
+  reasonCodes: string[];
 }
 
 type WizardStep = 'upload' | 'detect' | 'map' | 'confirm';
@@ -107,13 +108,13 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
   // Map state
   const [mappedValues, setMappedValues] = useState<MappedValue[]>([]);
   const [canonicalLines, setCanonicalLines] = useState<CanonicalLine[]>([]);
-  const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
   // Validation state
   const [validation, setValidation] = useState<{
     status: string;
     messages: ValidationMessage[];
   } | null>(null);
+  const [readiness, setReadiness] = useState<ReadinessState | null>(null);
 
   // Override detection
   const [overrideType, setOverrideType] = useState<string>('');
@@ -122,6 +123,14 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
 
   const STEPS: WizardStep[] = ['upload', 'detect', 'map', 'confirm'];
   const stepIdx = STEPS.indexOf(step);
+
+  const handleDismiss = useCallback(() => {
+    if (statementId) {
+      onComplete?.(statementId);
+      return;
+    }
+    onClose?.();
+  }, [onClose, onComplete, statementId]);
 
   // ── Step 1: Upload ──
 
@@ -187,6 +196,11 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     setLoading(true);
     setError(null);
     try {
+      await Api.post(`/api/finance-statements/${statementId}/detect`, {
+        statementType: overrideType,
+        periodLabel: overridePeriod,
+        currency: overrideCurrency,
+      });
       const extractData = await Api.post(`/api/finance-statements/${statementId}/extract`, {});
       const { lines } = extractData as { lines: ExtractedLine[] };
       setExtractedLines(lines);
@@ -206,8 +220,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         confidence: l.confidence,
         canonicalLineId: l.suggestedCanonicalId || null,
         canonicalLabel: l.suggestedCanonicalLabel || '',
-        mappingStatus: l.suggestedCanonicalId ? 'auto' : 'unmapped',
+        mappingStatus: l.isNonFinancial ? 'unmapped' : l.suggestedCanonicalId ? 'auto' : 'unmapped',
         sourceRow: l.sourceRow,
+        isNonFinancial: !!l.isNonFinancial,
+        classificationReason: l.classificationReason,
       }));
       setMappedValues(mv);
       setStep('map');
@@ -234,6 +250,8 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               canonicalLineId: canonId || null,
               canonicalLabel: canon ? (isPl ? canon.line_name_pl : canon.line_name) : '',
               mappingStatus: canonId ? 'manual' : 'unmapped',
+              isNonFinancial: false,
+              classificationReason: canonId ? undefined : v.classificationReason,
             }
           : v
       )
@@ -253,9 +271,26 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           confidence: v.confidence,
           sourceRow: v.sourceRow,
           mappingStatus: v.mappingStatus,
+          isNonFinancial: v.isNonFinancial,
+          classificationReason: v.classificationReason,
         })),
       });
       setValidation((data as any)?.validation || null);
+      setReadiness(
+        (data as any)?.readiness
+          ? {
+              readinessStatus: String((data as any).readiness.readinessStatus || 'pending') as
+                | 'pending'
+                | 'recoverable'
+                | 'ready'
+                | 'rejected',
+              summary: String((data as any).readiness.summary || ''),
+              reasonCodes: Array.isArray((data as any).readiness.reasonCodes)
+                ? (data as any).readiness.reasonCodes.map((code: unknown) => String(code))
+                : [],
+            }
+          : null
+      );
       trackFunnelEvent('financial_statement_import_completed', {
         statementId,
         lineCount: mappedValues.length,
@@ -308,9 +343,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     t('finance.importWizard.stepMap', 'Map & Correct'),
     t('finance.importWizard.stepConfirm', 'Confirm'),
   ];
+  const isReadyForConfirm = readiness?.readinessStatus === 'ready';
 
   return (
-    <div className="min-h-screen bg-white dark:bg-navy-950 p-6">
+    <div className="min-h-full bg-white dark:bg-navy-950 p-6 pb-10">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -326,7 +362,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         </div>
         {onClose && (
           <button
-            onClick={onClose}
+            onClick={handleDismiss}
             className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
           >
             <X size={20} className="text-slate-500" />
@@ -534,107 +570,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
             </span>
           </div>
 
-          <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 dark:bg-navy-800">
-                <tr>
-                  <th className="text-left px-4 py-2 font-medium text-slate-500">
-                    {t('finance.importWizard.originalLabel', 'Original Label')}
-                  </th>
-                  <th className="text-right px-4 py-2 font-medium text-slate-500">
-                    {t('finance.importWizard.value', 'Value')}
-                  </th>
-                  <th className="text-center px-4 py-2 font-medium text-slate-500">
-                    {t('finance.importWizard.conf', 'Conf.')}
-                  </th>
-                  <th className="text-left px-4 py-2 font-medium text-slate-500">
-                    {t('finance.importWizard.mappedTo', 'Mapped To')}
-                  </th>
-                  <th className="w-10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-navy-700">
-                {mappedValues.map((v, idx) => (
-                  <tr
-                    key={idx}
-                    className={`hover:bg-slate-50 dark:hover:bg-navy-800/50 ${!v.canonicalLineId ? 'bg-amber-50/30 dark:bg-amber-900/10' : ''}`}
-                  >
-                    <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">
-                      {v.originalLabel}
-                    </td>
-                    <td className="px-4 py-2.5 text-right font-mono text-slate-900 dark:text-white">
-                      {editingIdx === idx ? (
-                        <input
-                          type="number"
-                          value={v.value}
-                          onChange={(e) =>
-                            handleValueChange(idx, 'value', parseFloat(e.target.value) || 0)
-                          }
-                          onBlur={() => setEditingIdx(null)}
-                          autoFocus
-                          className="w-28 px-2 py-1 border border-blue-300 rounded text-right text-sm"
-                        />
-                      ) : (
-                        <span
-                          onClick={() => setEditingIdx(idx)}
-                          className="cursor-pointer hover:text-blue-600"
-                        >
-                          {v.value.toLocaleString(isPl ? 'pl-PL' : 'en-US', {
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 2,
-                          })}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5 text-center">{confidenceBadge(v.confidence)}</td>
-                    <td className="px-4 py-2.5">
-                      <select
-                        value={v.canonicalLineId || ''}
-                        onChange={(e) => handleCanonicalChange(idx, e.target.value)}
-                        className={`w-full px-2 py-1 border rounded text-sm ${
-                          v.canonicalLineId
-                            ? 'border-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-700'
-                            : 'border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700'
-                        }`}
-                      >
-                        <option value="">
-                          {t('finance.importWizard.selectLine', '— Select canonical line —')}
-                        </option>
-                        {canonicalLines
-                          .filter(
-                            (c) => c.statement_type === (overrideType || detection?.statementType)
-                          )
-                          .map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {isPl ? c.line_name_pl : c.line_name} ({c.line_code})
-                            </option>
-                          ))}
-                        <optgroup label={t('finance.importWizard.otherTypes', 'Other types')}>
-                          {canonicalLines
-                            .filter(
-                              (c) => c.statement_type !== (overrideType || detection?.statementType)
-                            )
-                            .map((c) => (
-                              <option key={c.id} value={c.id}>
-                                [{c.statement_type}] {isPl ? c.line_name_pl : c.line_name}
-                              </option>
-                            ))}
-                        </optgroup>
-                      </select>
-                    </td>
-                    <td className="px-2">
-                      <button
-                        onClick={() => setEditingIdx(editingIdx === idx ? null : idx)}
-                        className="p-1 hover:bg-slate-100 dark:hover:bg-navy-700 rounded"
-                      >
-                        <Edit3 size={14} className="text-slate-400" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <FinancialStatementMappingEditor
+            mappedValues={mappedValues}
+            canonicalLines={canonicalLines}
+            onValueChange={handleValueChange}
+            onCanonicalChange={handleCanonicalChange}
+          />
 
           {mappedValues.length === 0 && (
             <div className="text-center py-12 text-slate-400">
@@ -673,26 +614,26 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           {/* Validation summary */}
           <div
             className={`p-6 rounded-xl border ${
-              validation.status === 'pass'
+              isReadyForConfirm
                 ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
-                : validation.status === 'warnings'
+                : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
                   ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800'
                   : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
             }`}
           >
             <div className="flex items-center gap-3 mb-4">
-              {validation.status === 'pass' ? (
+              {isReadyForConfirm ? (
                 <CheckCircle2 size={24} className="text-emerald-500" />
-              ) : validation.status === 'warnings' ? (
+              ) : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings' ? (
                 <AlertTriangle size={24} className="text-amber-500" />
               ) : (
                 <XCircle size={24} className="text-red-500" />
               )}
               <div>
                 <h3 className="font-semibold text-slate-900 dark:text-white">
-                  {validation.status === 'pass'
+                  {isReadyForConfirm
                     ? t('finance.importWizard.validationPass', 'All validations passed')
-                    : validation.status === 'warnings'
+                    : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
                       ? t('finance.importWizard.validationWarnings', 'Imported with warnings')
                       : t('finance.importWizard.validationErrors', 'Review required')}
                 </h3>
@@ -702,6 +643,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                 </p>
               </div>
             </div>
+
+            {readiness?.summary && (
+              <div className="mb-4 rounded-lg bg-white/70 dark:bg-navy-950/30 px-3 py-2 text-sm text-slate-700 dark:text-slate-300">
+                {readiness.summary}
+              </div>
+            )}
 
             {validation.messages.length > 0 && (
               <div className="space-y-2">
@@ -715,6 +662,19 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                       )}
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
+
+            {!!readiness?.reasonCodes?.length && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {readiness.reasonCodes.map((code) => (
+                  <span
+                    key={code}
+                    className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600 dark:bg-navy-800 dark:text-slate-300"
+                  >
+                    {code}
+                  </span>
                 ))}
               </div>
             )}
@@ -757,7 +717,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
             </button>
             <button
               onClick={handleConfirm}
-              disabled={loading}
+              disabled={loading || !isReadyForConfirm}
               className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-500 disabled:opacity-50"
             >
               {loading ? (
@@ -765,7 +725,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               ) : (
                 <CheckCircle2 size={16} />
               )}
-              {t('finance.importWizard.confirmAndSave', 'Confirm & Save')}
+              {isReadyForConfirm
+                ? t('finance.importWizard.confirmAndSave', 'Confirm & Save')
+                : t('finance.importWizard.reviewBeforeConfirm', 'Fix mapping to continue')}
             </button>
           </div>
         </div>

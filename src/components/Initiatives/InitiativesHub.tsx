@@ -858,6 +858,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
               selectedItem={selectedItem}
               onSelect={setPreviewInitiativeId}
               itemIds={itemIds}
+              getItemById={(id) => { const x = searchedInitiatives.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
               onOpenFull={(id) => {
                 const init = searchedInitiatives.find((x) => x.id === id);
                 if (init) handleOpenFullScreen(init);

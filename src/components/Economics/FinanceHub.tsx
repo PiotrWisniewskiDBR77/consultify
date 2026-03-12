@@ -19,18 +19,21 @@
  * - docs/ui-standards/03-modules/golden-standard-table-cards-preview-v3.md
  */
 
-import { BarChart3, Calculator, Plus, Sparkles, Target, TrendingUp } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import { BarChart3, Calculator, ChevronDown, FileText, Plus, Sparkles, Target, TrendingUp } from 'lucide-react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+
+import { Api } from '@/services/api';
 
 import { BudgetWorkspace } from '../Benefits/BudgetWorkspace';
 import { FinancialAnalysisWorkspace } from '../Benefits/FinancialAnalysisWorkspace';
 import { ValuationWorkspace } from '../Benefits/ValuationWorkspace';
 import { ExportToOutputDialog } from '../Finance/ExportToOutputDialog';
 import { FinancialModelWorkspace } from '../Finance/FinancialModelWorkspace';
+import { FinancialStatementWorkspace } from '../Finance/FinancialStatementWorkspace';
 import { FinancialStatementImportWizard } from '../Finance/FinancialStatementImportWizard';
 import {
   FilterableTable,
@@ -47,12 +50,15 @@ import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { useFinancePreview } from './FinancePreviewPanel';
 import {
   CANVAS_PADDING,
+  deriveStatementReadinessStatus,
   type FinanceAnalysisRow,
   type FinanceKind,
   type FinanceModelRow,
   type FinanceRow,
+  type FinanceStatementRow,
   type FinanceValuationRow,
   getTypeCode,
+  isWorkableStatement,
   KIND_ICONS,
   statusToItemStatus,
   statusToProgress,
@@ -110,18 +116,27 @@ export const FinanceHub: React.FC = () => {
   const [showAnalysisCreateModal, setShowAnalysisCreateModal] = useState(false);
   const [showPredictionCreateModal, setShowPredictionCreateModal] = useState(false);
   const [showValuationCreateModal, setShowValuationCreateModal] = useState(false);
+  const [showAnalyzeMenu, setShowAnalyzeMenu] = useState(false);
+  const [createModelSourceStatementId, setCreateModelSourceStatementId] = useState<string | null>(null);
+  const [analysisSourceStatementIds, setAnalysisSourceStatementIds] = useState<string[]>([]);
+  const [analysisInitialTitle, setAnalysisInitialTitle] = useState('');
+  const [budgetInitialTitle, setBudgetInitialTitle] = useState('');
   const [valuationInitialSource, setValuationInitialSource] = useState<{
-    type?: 'financial_model' | 'budget' | 'manual';
+    type?: 'financial_model' | 'financial_analysis' | 'budget' | 'manual';
     id?: string;
   }>({});
+  const [valuationInitialTitle, setValuationInitialTitle] = useState('');
+  const analyzeMenuRef = useRef<HTMLDivElement | null>(null);
 
   // ---- Extracted hooks ----
   const {
+    statements,
     models,
     analyses,
     valuations,
     budgets,
     loadingTab,
+    loadStatements,
     loadModels,
     loadAnalyses,
     loadValuations,
@@ -134,6 +149,8 @@ export const FinanceHub: React.FC = () => {
   const {
     selectedId,
     selectedItem,
+    statementPreviewDetail,
+    statementPreviewRatios,
     predictionValidations,
     analysisPreviewRatios,
     budgetPreviewScenarios,
@@ -147,6 +164,86 @@ export const FinanceHub: React.FC = () => {
     onSelectRow,
     deselectRow,
   } = useFinanceSelection(activeTab);
+
+  const statementRows = useMemo(
+    () =>
+      (statements || []).map(
+        (statement: any): FinanceStatementRow => {
+          const totalLineCount = Number(
+            statement.total_line_count ??
+              Number(statement.mapped_line_count ?? 0) + Number(statement.unmapped_line_count ?? 0)
+          );
+          const effectiveReadiness = deriveStatementReadinessStatus(
+            statement.readiness_status,
+            statement.status,
+            statement.validation_status,
+            statement.mapped_line_count,
+            statement.unmapped_line_count,
+            totalLineCount
+          );
+          return {
+            id: String(statement.id),
+            title: String(
+              statement.period_label ||
+                statement.source_file_name ||
+                `${statement.statement_type || 'Statement'} ${statement.period_end || ''}`
+            ),
+            kind: 'statements',
+            status:
+              effectiveReadiness === 'ready'
+                ? 'APPROVED'
+                : effectiveReadiness === 'recoverable'
+                  ? 'REVIEW'
+                  : 'DRAFT',
+            statementType: String(statement.statement_type || ''),
+            periodStart: String(statement.period_start || ''),
+            periodEnd: String(statement.period_end || ''),
+            periodLabel: String(statement.period_label || ''),
+            currency: String(statement.currency || 'PLN'),
+            scaling: String(statement.scaling || 'units'),
+            sourceFileName: String(statement.source_file_name || ''),
+            validationStatus: String(statement.validation_status || 'pending'),
+            mappedLineCount: Number(statement.mapped_line_count ?? 0),
+            totalLineCount,
+            unmappedLineCount: Number(statement.unmapped_line_count ?? 0),
+            nonFinancialLineCount: Number(statement.non_financial_line_count ?? 0),
+            overallConfidence: Number(statement.overall_confidence ?? 0),
+            rawStatus: String(statement.status || 'draft'),
+            readinessStatus: effectiveReadiness,
+            readinessScore: Number(statement.readiness_score ?? 0),
+            readinessSummary: String(statement.quality_summary || ''),
+            readinessReasonCodes:
+              typeof statement.quality_reason_codes === 'string' &&
+              statement.quality_reason_codes.trim().startsWith('[')
+                ? JSON.parse(statement.quality_reason_codes)
+                : Array.isArray(statement.quality_reason_codes)
+                  ? statement.quality_reason_codes
+                  : [],
+            documentClass: String(statement.document_class || ''),
+            extractionStrategy: String(statement.extraction_strategy || ''),
+            templateFamily: statement.template_family ? String(statement.template_family) : null,
+            valuesVersion: Number(statement.values_version ?? 0),
+            isWorkable: isWorkableStatement(
+              effectiveReadiness,
+              statement.status,
+              statement.validation_status,
+              statement.mapped_line_count,
+              statement.unmapped_line_count
+            ),
+            updatedAt: String(statement.updated_at || statement.created_at || new Date().toISOString()),
+          };
+        }
+      ),
+    [statements]
+  );
+  const readyStatementRows = useMemo(
+    () => statementRows.filter((statement) => statement.isWorkable),
+    [statementRows]
+  );
+  const analyzeContextRow = useMemo(
+    () => activeDocument ?? selectedItem ?? null,
+    [activeDocument, selectedItem]
+  );
 
   // ---- Document management ----
   const handleOpenFull = useCallback((row: FinanceRow) => {
@@ -177,7 +274,9 @@ export const FinanceHub: React.FC = () => {
     setActiveDocumentId(null);
     setActiveDocument(null);
     const kind: FinanceKind =
-      activeTab === 'models'
+      activeTab === 'statements'
+        ? 'statements'
+        : activeTab === 'models'
         ? 'models'
         : activeTab === 'analysis'
           ? 'analysis'
@@ -186,6 +285,7 @@ export const FinanceHub: React.FC = () => {
           : activeTab === 'prediction'
             ? 'prediction'
             : 'valuation';
+    if (kind === 'statements') loadStatements().catch(() => {});
     if (kind === 'analysis' || kind === 'investment') loadAnalyses().catch(() => {});
     if (kind === 'models') loadModels().catch(() => {});
     if (kind === 'prediction') {
@@ -193,17 +293,88 @@ export const FinanceHub: React.FC = () => {
       loadBudgets().catch(() => {});
     }
     if (kind === 'valuation') loadValuations().catch(() => {});
-  }, [activeTab, loadAnalyses, loadModels, loadBudgets, loadValuations]);
+  }, [activeTab, loadStatements, loadAnalyses, loadModels, loadBudgets, loadValuations]);
 
   const handleRemoveFilter = useCallback(
     (id: string) => setActiveFilters((prev) => prev.filter((f) => f.id !== id)),
     []
   );
   const handleClearFilters = useCallback(() => setActiveFilters([]), []);
+  const focusStatementQueue = useCallback(
+    (status: 'APPROVED' | 'REVIEW' | 'DRAFT') => {
+      const label =
+        status === 'APPROVED'
+          ? t('finance.counters.readyStatements', 'Ready Statements')
+          : status === 'REVIEW'
+            ? t('finance.counters.recoveryQueue', 'Recovery Queue')
+            : t('finance.counters.rejectedImports', 'Rejected Imports');
+      setActiveFilters((prev) => [
+        ...prev.filter((filter) => filter.column !== 'status'),
+        {
+          id: `status-${status}`,
+          column: 'status',
+          value: status,
+          label,
+        },
+      ]);
+    },
+    [t]
+  );
+  const buildAnalyzeTitle = useCallback(
+    (base: string, suffix: string) => {
+      const trimmedBase = String(base || '')
+        .trim()
+        .replace(/\s+/g, ' ');
+      return trimmedBase ? `${trimmedBase} ${suffix}` : suffix;
+    },
+    []
+  );
+  const openAnalysisFlow = useCallback(
+    (options?: { title?: string; statementIds?: string[]; analysisType?: 'comprehensive' | 'investment_case' }) => {
+      setShowAnalyzeMenu(false);
+      setAnalysisInitialTitle(options?.title || '');
+      setAnalysisSourceStatementIds(options?.statementIds || []);
+      const targetTab = options?.analysisType === 'investment_case' ? 'investment' : 'analysis';
+      setActiveTab(targetTab);
+      setShowAnalysisCreateModal(true);
+    },
+    []
+  );
+  const openModelFlow = useCallback((statementId?: string | null) => {
+    setShowAnalyzeMenu(false);
+    setCreateModelSourceStatementId(statementId || null);
+    setActiveTab('models');
+    setShowCreateModelModal(true);
+  }, []);
+  const openBudgetFlow = useCallback((title?: string) => {
+    setShowAnalyzeMenu(false);
+    setBudgetInitialTitle(title || '');
+    setActiveTab('prediction');
+    setShowPredictionCreateModal(true);
+  }, []);
+  const openValuationFlow = useCallback(
+    (options?: {
+      title?: string;
+      sourceType?: 'financial_model' | 'financial_analysis' | 'budget' | 'manual';
+      sourceId?: string;
+    }) => {
+      setShowAnalyzeMenu(false);
+      setValuationInitialTitle(options?.title || '');
+      setValuationInitialSource(
+        options?.sourceType ? { type: options.sourceType, id: options.sourceId } : {}
+      );
+      setActiveTab('valuation');
+      setShowValuationCreateModal(true);
+    },
+    []
+  );
 
   const handleModelChanged = useCallback(async () => {
     await loadModels();
   }, [loadModels]);
+  const handleStatementChanged = useCallback(async () => {
+    await loadStatements();
+  }, [loadStatements]);
   const handleAnalysisChanged = useCallback(async () => {
     await loadAnalyses();
   }, [loadAnalyses]);
@@ -225,10 +396,23 @@ export const FinanceHub: React.FC = () => {
     setExportDialogOpen(true);
   }, []);
 
+  const handleCreateModelFromStatement = useCallback((row: FinanceStatementRow) => {
+    setCreateModelSourceStatementId(row.id);
+    setShowCreateModelModal(true);
+  }, []);
+
+  const handleCreateAnalysisFromStatements = useCallback((statementIds: string[]) => {
+    setAnalysisSourceStatementIds(statementIds);
+    setShowAnalysisCreateModal(true);
+  }, []);
+
   // ---- Row actions ----
   const { getRowActions } = useFinanceRowActions({
     handleOpenFull,
     handleExport,
+    handleCreateModelFromStatement,
+    handleCreateAnalysisFromStatements,
+    loadStatements,
     loadModels,
     loadAnalyses,
     loadBudgets,
@@ -241,6 +425,8 @@ export const FinanceHub: React.FC = () => {
 
   // ---- Preview ----
   const { renderPreviewBody, renderPreviewFooter } = useFinancePreview({
+    statementPreviewDetail,
+    statementPreviewRatios,
     predictionValidations,
     analysisPreviewRatios,
     budgetPreviewScenarios,
@@ -248,6 +434,9 @@ export const FinanceHub: React.FC = () => {
     valuationPreviewDetail,
     handleOpenFull,
     handleExport,
+    handleCreateModelFromStatement,
+    handleCreateAnalysisFromStatements,
+    loadStatements,
     loadModels,
     loadAnalyses,
     loadAnalysisPreviewRatios,
@@ -262,10 +451,17 @@ export const FinanceHub: React.FC = () => {
   // ---- URL param handling for cross-module deep links ----
   useEffect(() => {
     const tab = searchParams.get('tab');
-    const createFrom = searchParams.get('createFrom') as 'financial_model' | 'budget' | null;
+    const createFrom = searchParams.get('createFrom') as
+      | 'financial_model'
+      | 'financial_analysis'
+      | 'budget'
+      | null;
     const sourceId = searchParams.get('sourceId');
 
-    if (tab && ['models', 'analysis', 'prediction', 'valuation', 'investment'].includes(tab)) {
+    if (
+      tab &&
+      ['statements', 'models', 'analysis', 'prediction', 'valuation', 'investment'].includes(tab)
+    ) {
       setActiveTab(tab as ModuleTab);
     }
 
@@ -276,9 +472,41 @@ export const FinanceHub: React.FC = () => {
     }
   }, [searchParams, setSearchParams]);
 
+  useEffect(() => {
+    if (activeTab !== 'statements') return;
+    setActiveFilters((prev) => {
+      if (prev.some((filter) => filter.column === 'status')) return prev;
+      return [
+        ...prev,
+        {
+          id: 'status-APPROVED',
+          column: 'status',
+          value: 'APPROVED',
+          label: t('finance.counters.readyStatements', 'Ready Statements'),
+        },
+      ];
+    });
+  }, [activeTab, t]);
+
+  useEffect(() => {
+    if (!showAnalyzeMenu) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (analyzeMenuRef.current?.contains(event.target as Node)) return;
+      setShowAnalyzeMenu(false);
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, [showAnalyzeMenu]);
+
   // ---- Tabs ----
   const tabs = useMemo(
     () => [
+      {
+        id: 'statements' as ModuleTab,
+        label: t('finance.tabs.statements', 'Statements'),
+        icon: <FileText size={16} />,
+        count: statements.length,
+      },
       {
         id: 'models' as ModuleTab,
         label: t('finance.tabs.models', 'Modele'),
@@ -312,7 +540,7 @@ export const FinanceHub: React.FC = () => {
         ).length,
       },
     ],
-    [t, models.length, analyses, valuations.length, budgets.length]
+    [t, statements.length, models.length, analyses, valuations.length, budgets.length]
   );
 
   // ---- Per-tab columns ----
@@ -381,6 +609,60 @@ export const FinanceHub: React.FC = () => {
   );
 
   const columnsForActiveTab: TableColumn[] = useMemo(() => {
+    if (activeTab === 'statements') {
+      return [
+        baseTypeCol,
+        baseTitleCol,
+        {
+          id: 'statementType',
+          label: t('finance.columns.statementType', 'Statement'),
+          width: '110px',
+          render: (row: FinanceRow) =>
+            row.kind === 'statements' ? (
+              <span className="text-sm text-slate-700 dark:text-slate-200">{row.statementType}</span>
+            ) : (
+              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+            ),
+        },
+        {
+          id: 'period',
+          label: t('finance.columns.period', 'Period'),
+          width: '170px',
+          render: (row: FinanceRow) =>
+            row.kind === 'statements' ? (
+              <span className="text-sm text-slate-700 dark:text-slate-200">
+                {row.periodLabel || `${row.periodStart} → ${row.periodEnd}`}
+              </span>
+            ) : (
+              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+            ),
+        },
+        {
+          id: 'currency',
+          label: t('common.currency', 'Currency'),
+          width: '90px',
+          render: (row: FinanceRow) =>
+            row.kind === 'statements' ? (
+              <span className="text-sm text-slate-700 dark:text-slate-200">{row.currency}</span>
+            ) : (
+              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+            ),
+        },
+        {
+          id: 'mappedLineCount',
+          label: t('finance.columns.mappedLines', 'Mapped'),
+          width: '90px',
+          render: (row: FinanceRow) =>
+            row.kind === 'statements' ? (
+              <span className="text-sm text-slate-700 dark:text-slate-200">{row.mappedLineCount}</span>
+            ) : (
+              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+            ),
+        },
+        baseStatusCol,
+        baseUpdatedCol,
+      ];
+    }
     if (activeTab === 'models') {
       return [
         baseTypeCol,
@@ -586,7 +868,9 @@ export const FinanceHub: React.FC = () => {
         progress: statusToProgress(row.status),
         updatedAt: row.updatedAt,
         brief:
-          row.kind === 'models'
+          row.kind === 'statements'
+            ? `${(row as FinanceStatementRow).statementType} • ${(row as FinanceStatementRow).currency} • ${((row as FinanceStatementRow).periodLabel || (row as FinanceStatementRow).periodEnd) ?? ''}`
+            : row.kind === 'models'
             ? `${(row as FinanceModelRow).scenario} • ${(row as FinanceModelRow).currency} • ${(row as FinanceModelRow).horizonMonths} ${isPl ? 'mies.' : 'mo'}`
             : row.kind === 'prediction'
               ? (row as FinanceModelRow).predictionType === 'budget'
@@ -602,6 +886,7 @@ export const FinanceHub: React.FC = () => {
   // ---- Primary CTA ----
   const primaryCta = useMemo(() => {
     const labels: Record<FinanceKind | 'investment', string> = {
+      statements: t('finance.cta.importStatement', '+ Importuj statement'),
       models: t('finance.cta.newModel', '+ Nowy model'),
       analysis: t('finance.cta.newAnalysis', '+ Nowa analiza'),
       prediction: t('finance.cta.newScenario', '+ Nowy scenariusz'),
@@ -614,7 +899,8 @@ export const FinanceHub: React.FC = () => {
     return (
       <button
         onClick={() => {
-          if (currentKind === 'models') setShowCreateModelModal(true);
+          if (currentKind === 'statements') setShowImportWizard(true);
+          else if (currentKind === 'models') setShowCreateModelModal(true);
           else if (currentKind === 'analysis' || currentKind === 'investment')
             setShowAnalysisCreateModal(true);
           else if (currentKind === 'prediction') setShowPredictionCreateModal(true);
@@ -631,28 +917,268 @@ export const FinanceHub: React.FC = () => {
     );
   }, [activeTab, t]);
 
+  const analyzeActions = useMemo(() => {
+    const contextRow = analyzeContextRow;
+    const readyStatementContext =
+      contextRow?.kind === 'statements' && (contextRow as FinanceStatementRow).isWorkable
+        ? (contextRow as FinanceStatementRow)
+        : readyStatementRows.length === 1
+          ? readyStatementRows[0]
+          : null;
+    const modelContext =
+      contextRow &&
+      (contextRow.kind === 'models' ||
+        (contextRow.kind === 'prediction' &&
+          (contextRow as FinanceModelRow).predictionType === 'model'))
+        ? (contextRow as FinanceModelRow)
+        : null;
+    const budgetContext =
+      contextRow?.kind === 'prediction' &&
+      (contextRow as FinanceModelRow).predictionType === 'budget'
+        ? (contextRow as FinanceModelRow)
+        : null;
+    const analysisContext =
+      contextRow && (contextRow.kind === 'analysis' || contextRow.kind === 'investment')
+        ? (contextRow as FinanceAnalysisRow)
+        : null;
+
+    if (activeTab === 'statements') {
+      return [
+        {
+          id: 'model',
+          label: t('finance.analyze.modeling', 'Modelowanie'),
+          description: t(
+            'finance.analyze.modelingHint',
+            'Utwórz model finansowy z gotowego statementu.'
+          ),
+          disabled: readyStatementRows.length === 0,
+          onSelect: () => openModelFlow(readyStatementContext?.id || null),
+        },
+        {
+          id: 'budget',
+          label: t('finance.analyze.budgeting', 'Budżetowanie'),
+          description: t(
+            'finance.analyze.budgetingHint',
+            'Przejdź do budżetu i utwórz nową pozycję planowania.'
+          ),
+          disabled: false,
+          onSelect: () =>
+            openBudgetFlow(
+              readyStatementContext
+                ? buildAnalyzeTitle(
+                    readyStatementContext.periodLabel || readyStatementContext.title,
+                    isPl ? 'budżet' : 'budget'
+                  )
+                : ''
+            ),
+        },
+        {
+          id: 'analysis',
+          label: t('finance.analyze.financialAnalysis', 'Analiza finansowa'),
+          description: t(
+            'finance.analyze.financialAnalysisHint',
+            'Utwórz analizę finansową na bazie gotowych statementów.'
+          ),
+          disabled: readyStatementRows.length === 0,
+          onSelect: () =>
+            openAnalysisFlow({
+              title: readyStatementContext
+                ? buildAnalyzeTitle(
+                    readyStatementContext.periodLabel || readyStatementContext.title,
+                    isPl ? 'analiza finansowa' : 'financial analysis'
+                  )
+                : '',
+              statementIds: readyStatementContext ? [readyStatementContext.id] : [],
+            }),
+        },
+        {
+          id: 'valuation',
+          label: t('finance.analyze.valuation', 'Wycena przedsiębiorstwa'),
+          description: t(
+            'finance.analyze.valuationFromStatementsHint',
+            'Wycena jest dostępna po utworzeniu modelu, budżetu lub analizy finansowej.'
+          ),
+          disabled: true,
+          onSelect: () => undefined,
+        },
+      ];
+    }
+
+    if (activeTab === 'models' || modelContext) {
+      return [
+        {
+          id: 'analysis',
+          label: t('finance.analyze.financialAnalysis', 'Analiza finansowa'),
+          description: t(
+            'finance.analyze.analysisFromModelHint',
+            'Przejdź do Analizy i utwórz draft w kontekście bieżącego modelu.'
+          ),
+          disabled: !modelContext,
+          onSelect: () =>
+            openAnalysisFlow({
+              title: modelContext
+                ? buildAnalyzeTitle(
+                    modelContext.title,
+                    isPl ? 'analiza finansowa' : 'financial analysis'
+                  )
+                : '',
+            }),
+        },
+        {
+          id: 'valuation',
+          label: t('finance.analyze.valuation', 'Wycena przedsiębiorstwa'),
+          description: t(
+            'finance.analyze.valuationFromModelHint',
+            'Przejdź do Wyceny i utwórz pozycję na bazie bieżącego modelu.'
+          ),
+          disabled: !modelContext,
+          onSelect: () =>
+            openValuationFlow({
+              title: modelContext
+                ? buildAnalyzeTitle(modelContext.title, isPl ? 'wycena' : 'valuation')
+                : '',
+              sourceType: 'financial_model',
+              sourceId: modelContext?.id,
+            }),
+        },
+      ];
+    }
+
+    if (activeTab === 'prediction') {
+      return [
+        {
+          id: 'analysis',
+          label: t('finance.analyze.financialAnalysis', 'Analiza finansowa'),
+          description: t(
+            'finance.analyze.analysisFromPredictionHint',
+            'Przejdź do Analizy i utwórz draft w kontekście bieżącego budżetu lub scenariusza.'
+          ),
+          disabled: !budgetContext && !modelContext,
+          onSelect: () =>
+            openAnalysisFlow({
+              title: budgetContext
+                ? buildAnalyzeTitle(
+                    budgetContext.title,
+                    isPl ? 'analiza finansowa' : 'financial analysis'
+                  )
+                : modelContext
+                  ? buildAnalyzeTitle(
+                      modelContext.title,
+                      isPl ? 'analiza finansowa' : 'financial analysis'
+                    )
+                  : '',
+            }),
+        },
+        {
+          id: 'valuation',
+          label: t('finance.analyze.valuation', 'Wycena przedsiębiorstwa'),
+          description: t(
+            'finance.analyze.valuationFromPredictionHint',
+            'Przejdź do Wyceny i utwórz pozycję na bazie bieżącego modelu lub budżetu.'
+          ),
+          disabled: !budgetContext && !modelContext,
+          onSelect: () =>
+            openValuationFlow(
+              budgetContext
+                ? {
+                    title: buildAnalyzeTitle(
+                      budgetContext.title,
+                      isPl ? 'wycena' : 'valuation'
+                    ),
+                    sourceType: 'budget',
+                    sourceId: getBudgetRawId(budgetContext.id),
+                  }
+                : {
+                    title: modelContext
+                      ? buildAnalyzeTitle(
+                          modelContext.title,
+                          isPl ? 'wycena' : 'valuation'
+                        )
+                      : '',
+                    sourceType: 'financial_model',
+                    sourceId: modelContext?.id,
+                  }
+            ),
+        },
+      ];
+    }
+
+    if (activeTab === 'analysis' || activeTab === 'investment') {
+      return [
+        {
+          id: 'valuation',
+          label: t('finance.analyze.valuation', 'Wycena przedsiębiorstwa'),
+          description: t(
+            'finance.analyze.valuationFromAnalysisHint',
+            'Przejdź do Wyceny i utwórz pozycję na bazie bieżącej analizy.'
+          ),
+          disabled: !analysisContext,
+          onSelect: () =>
+            openValuationFlow({
+              title: analysisContext
+                ? buildAnalyzeTitle(analysisContext.title, isPl ? 'wycena' : 'valuation')
+                : '',
+              sourceType: 'financial_analysis',
+              sourceId: analysisContext?.id,
+            }),
+        },
+      ];
+    }
+
+    return [];
+  }, [
+    activeTab,
+    analyzeContextRow,
+    readyStatementRows,
+    openModelFlow,
+    openBudgetFlow,
+    openAnalysisFlow,
+    openValuationFlow,
+    buildAnalyzeTitle,
+    getBudgetRawId,
+    isPl,
+    t,
+  ]);
+
   const rightControls = useMemo(() => {
-    if (activeTab === 'models') {
-      return (
+    if (analyzeActions.length === 0) return null;
+
+    return (
+      <div ref={analyzeMenuRef} className="relative">
         <button
-          onClick={() => setShowImportWizard(true)}
-          className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.08] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors duration-150 active:scale-[0.98]"
+          onClick={() => setShowAnalyzeMenu((prev) => !prev)}
+          className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-cyan-200/70 dark:border-cyan-400/20 bg-cyan-50/80 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300"
         >
-          {t('finance.cta.importPdf', 'Import PDF')}
+          <span>{t('finance.analyze.cta', 'Analyze')}</span>
+          <ChevronDown size={14} className={showAnalyzeMenu ? 'rotate-180 transition-transform' : 'transition-transform'} />
         </button>
-      );
-    }
-
-    if (activeTab === 'investment') {
-      return (
-        <div className="inline-flex items-center h-9 px-4 rounded-full text-sm font-medium border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300">
-          {t('finance.investment.meta', 'Investment cases: NPV • IRR • Payback • ROI')}
-        </div>
-      );
-    }
-
-    return null;
-  }, [activeTab, t]);
+        {showAnalyzeMenu && (
+          <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-xl p-2 z-20">
+            <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {t('finance.analyze.menuTitle', 'Choose next step')}
+            </div>
+            <div className="space-y-1">
+              {analyzeActions.map((action) => (
+                <button
+                  key={action.id}
+                  onClick={action.onSelect}
+                  disabled={action.disabled}
+                  className="w-full text-left rounded-xl px-3 py-3 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-50 disabled:hover:bg-transparent"
+                >
+                  <div className="text-sm font-medium text-slate-900 dark:text-white">
+                    {action.label}
+                  </div>
+                  <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    {action.description}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }, [analyzeActions, showAnalyzeMenu, t]);
 
   const aiControl = useMemo(
     () => (
@@ -684,19 +1210,28 @@ export const FinanceHub: React.FC = () => {
       },
       {
         id: 'DRAFT',
-        label: t('finance.counters.draft', 'Draft'),
+        label:
+          activeTab === 'statements'
+            ? t('finance.counters.rejectedImports', 'Rejected Imports')
+            : t('finance.counters.draft', 'Draft'),
         count: statusCounts.DRAFT,
         active: activeFilters.some((f) => f.column === 'status' && f.value === 'DRAFT'),
       },
       {
         id: 'REVIEW',
-        label: t('finance.counters.review', 'Review'),
+        label:
+          activeTab === 'statements'
+            ? t('finance.counters.recoveryQueue', 'Recovery Queue')
+            : t('finance.counters.review', 'Review'),
         count: statusCounts.REVIEW,
         active: activeFilters.some((f) => f.column === 'status' && f.value === 'REVIEW'),
       },
       {
         id: 'APPROVED',
-        label: t('finance.counters.approved', 'Approved'),
+        label:
+          activeTab === 'statements'
+            ? t('finance.counters.readyStatements', 'Ready Statements')
+            : t('finance.counters.approved', 'Approved'),
         count: statusCounts.APPROVED,
         active: activeFilters.some((f) => f.column === 'status' && f.value === 'APPROVED'),
       },
@@ -748,10 +1283,31 @@ export const FinanceHub: React.FC = () => {
         ))}
       </div>
     );
-  }, [rowsForActiveTab.length, statusCounts, activeFilters, t]);
+  }, [rowsForActiveTab.length, statusCounts, activeFilters, activeTab, t]);
 
   const emptyMessage = useMemo(() => {
+    const activeStatusFilter = activeFilters.find((filter) => filter.column === 'status')?.value;
     const messages: Record<FinanceKind | 'investment', string> = {
+      statements:
+        activeStatusFilter === 'APPROVED'
+          ? t(
+              'finance.empty.readyStatements',
+              'No ready statements in the working set. Imports that are not ready stay in Recovery Queue or Rejected Imports.'
+            )
+          : activeStatusFilter === 'REVIEW'
+            ? t(
+                'finance.empty.recoveryQueue',
+                'Recovery Queue is empty. Imports that still need remap, re-validation, or scale fixes will appear here.'
+              )
+            : activeStatusFilter === 'DRAFT'
+              ? t(
+                  'finance.empty.rejectedImports',
+                  'Rejected Imports is empty. Documents that fail the minimum recognition contract will appear here.'
+                )
+              : t(
+                  'finance.empty.statements',
+                  'No statements in the current view. Ready items go to the working set, recoverable items go to Recovery Queue, and rejected ones stay outside downstream flows.'
+                ),
       models: t('finance.empty.models', 'Brak modeli. Dodaj pierwszy model finansowy.'),
       analysis: t('finance.empty.analysis', 'Brak analiz. Utwórz pierwszą analizę.'),
       prediction: t('finance.empty.prediction', 'Brak danych do predykcji. Najpierw utwórz model.'),
@@ -765,7 +1321,7 @@ export const FinanceHub: React.FC = () => {
       | FinanceKind
       | 'investment';
     return messages[currentKind] || messages.models;
-  }, [activeTab, t]);
+  }, [activeFilters, activeTab, t]);
 
   // ---- Table + Preview ----
   const tableWithPreview = useMemo(
@@ -788,6 +1344,7 @@ export const FinanceHub: React.FC = () => {
         renderPreview={renderPreviewBody}
         renderPreviewFooter={renderPreviewFooter}
         itemIds={filteredRows.map((r) => r.id)}
+        getItemById={(id) => filteredRows.find((x) => x.id === id) ?? null}
       >
         <FilterableTable
           columns={columnsForActiveTab}
@@ -849,13 +1406,15 @@ export const FinanceHub: React.FC = () => {
     const activeModelRow = activeDocument as FinanceModelRow;
     const isBudgetPrediction =
       activeDocument.kind === 'prediction' && activeModelRow.predictionType === 'budget';
+    const openStatement = activeDocument.kind === 'statements';
     const isModelWorkspace =
       activeDocument.kind === 'models' ||
       (activeDocument.kind === 'prediction' && activeModelRow.predictionType === 'model');
     const openAnalysis =
       activeDocument.kind === 'analysis' || activeDocument.kind === 'investment';
     const openValuation = activeDocument.kind === 'valuation';
-    const needsFullHeight = isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
+    const needsFullHeight =
+      openStatement || isModelWorkspace || openAnalysis || isBudgetPrediction || openValuation;
     return (
       <div className="p-4 lg:p-6">
         <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
@@ -881,6 +1440,13 @@ export const FinanceHub: React.FC = () => {
                 initialBudgetId={getBudgetRawId(activeDocument.id)}
                 hideSidebar
                 onBudgetChanged={handleBudgetChanged}
+              />
+            ) : openStatement ? (
+              <FinancialStatementWorkspace
+                statementId={activeDocument.id}
+                onStatementChanged={handleStatementChanged}
+                onCreateModelFromStatement={handleCreateModelFromStatement}
+                onCreateAnalysisFromStatements={handleCreateAnalysisFromStatements}
               />
             ) : isModelWorkspace ? (
               <FinancialModelWorkspace
@@ -915,10 +1481,13 @@ export const FinanceHub: React.FC = () => {
     handleModelChanged,
     handleAnalysisChanged,
     handleBudgetChanged,
+    handleStatementChanged,
     handleValuationChanged,
     getBudgetRawId,
     t,
     handleShowList,
+    handleCreateModelFromStatement,
+    handleCreateAnalysisFromStatements,
   ]);
 
   const content = useMemo(() => {
@@ -1016,23 +1585,105 @@ export const FinanceHub: React.FC = () => {
 
       {showCreateModelModal && (
         <CreateModelModal
-          onClose={() => setShowCreateModelModal(false)}
+          availableStatements={readyStatementRows}
+          initialSourceStatementId={createModelSourceStatementId}
+          onClose={() => {
+            setShowCreateModelModal(false);
+            setCreateModelSourceStatementId(null);
+          }}
           onCreated={async (row) => {
             await loadModels();
             setShowCreateModelModal(false);
+            setCreateModelSourceStatementId(null);
             handleOpenFull(row);
           }}
         />
       )}
 
       {showImportWizard && (
-        <div className="fixed inset-0 z-50 bg-black/40">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40">
           <FinancialStatementImportWizard
             onClose={() => setShowImportWizard(false)}
-            onComplete={async () => {
+            onComplete={async (statementId) => {
               setShowImportWizard(false);
-              await loadModels();
-              toast.success(t('finance.importWizard.completed', 'Import zakończony'));
+              await loadStatements();
+              const statementDetail = (await Api.get(`/api/finance-statements/${statementId}`)) as any;
+              const statementRow: FinanceStatementRow = {
+                id: String(statementDetail.id),
+                title: String(
+                  statementDetail.period_label ||
+                    statementDetail.source_file_name ||
+                    statementDetail.id
+                ),
+                kind: 'statements',
+                status:
+                  String(
+                    statementDetail.readinessStatus || statementDetail.readiness_status || ''
+                  ).toLowerCase() === 'ready'
+                    ? 'APPROVED'
+                    : String(
+                          statementDetail.readinessStatus || statementDetail.readiness_status || ''
+                        ).toLowerCase() === 'recoverable'
+                      ? 'REVIEW'
+                      : 'DRAFT',
+                statementType: String(statementDetail.statement_type || ''),
+                periodStart: String(statementDetail.period_start || ''),
+                periodEnd: String(statementDetail.period_end || ''),
+                periodLabel: String(statementDetail.period_label || ''),
+                currency: String(statementDetail.currency || 'PLN'),
+                scaling: String(statementDetail.scaling || 'units'),
+                sourceFileName: String(statementDetail.source_file_name || ''),
+                validationStatus: String(statementDetail.validation_status || 'pending'),
+                mappedLineCount: Array.isArray(statementDetail.values)
+                  ? statementDetail.values.filter((value: any) => value?.line_code).length
+                  : 0,
+                totalLineCount: Number(statementDetail.totalLineCount ?? statementDetail.values?.length ?? 0),
+                unmappedLineCount: Number(statementDetail.unmappedLineCount ?? 0),
+                nonFinancialLineCount: Number(statementDetail.nonFinancialLineCount ?? 0),
+                overallConfidence: Number(statementDetail.overall_confidence ?? 0),
+                rawStatus: String(statementDetail.status || 'draft'),
+                readinessStatus: String(
+                  statementDetail.readinessStatus || statementDetail.readiness_status || 'pending'
+                ),
+                readinessScore: Number(
+                  statementDetail.readinessScore ?? statementDetail.readiness_score ?? 0
+                ),
+                readinessSummary: String(
+                  statementDetail.readinessSummary || statementDetail.readiness_summary || ''
+                ),
+                readinessReasonCodes: Array.isArray(statementDetail.readinessReasonCodes)
+                  ? statementDetail.readinessReasonCodes
+                  : Array.isArray(statementDetail.readiness_reason_codes)
+                    ? statementDetail.readiness_reason_codes
+                    : [],
+                isWorkable: isWorkableStatement(
+                  statementDetail.readinessStatus || statementDetail.readiness_status,
+                  statementDetail.status,
+                  statementDetail.validation_status,
+                  statementDetail.mappedLineCount ??
+                    (Array.isArray(statementDetail.values)
+                      ? statementDetail.values.filter((value: any) => value?.line_code).length
+                      : 0),
+                  statementDetail.unmappedLineCount ?? 0
+                ),
+                updatedAt: String(statementDetail.updated_at || new Date().toISOString()),
+              };
+              setActiveTab('statements');
+              focusStatementQueue(statementRow.status);
+              handleOpenFull(statementRow);
+              toast.success(
+                statementRow.isWorkable
+                  ? t('finance.importWizard.completed', 'Import zakończony')
+                  : statementRow.readinessStatus === 'rejected'
+                    ? t(
+                        'finance.importWizard.rejected',
+                        'Import zakończony, ale plik został odrzucony i wymaga ponownego podejścia.'
+                      )
+                    : t(
+                        'finance.importWizard.requiresReview',
+                        'Import zakończony. Statement trafił do recovery queue i wymaga domknięcia jakości.'
+                      )
+              );
             }}
           />
         </div>
@@ -1041,12 +1692,19 @@ export const FinanceHub: React.FC = () => {
       {showAnalysisCreateModal && (
         <CreateAnalysisModal
           defaultAnalysisType={activeTab === 'investment' ? 'investment_case' : 'comprehensive'}
+          availableStatements={readyStatementRows}
+          initialStatementIds={analysisSourceStatementIds}
+          initialTitle={analysisInitialTitle}
           onClose={() => {
             setShowAnalysisCreateModal(false);
+            setAnalysisSourceStatementIds([]);
+            setAnalysisInitialTitle('');
           }}
           onCreated={async (row) => {
             await loadAnalyses();
             setShowAnalysisCreateModal(false);
+            setAnalysisSourceStatementIds([]);
+            setAnalysisInitialTitle('');
             handleOpenFull(row);
           }}
         />
@@ -1054,10 +1712,15 @@ export const FinanceHub: React.FC = () => {
 
       {showPredictionCreateModal && (
         <CreateBudgetModal
-          onClose={() => setShowPredictionCreateModal(false)}
+          initialTitle={budgetInitialTitle}
+          onClose={() => {
+            setShowPredictionCreateModal(false);
+            setBudgetInitialTitle('');
+          }}
           onCreated={async (row) => {
             await loadBudgets();
             setShowPredictionCreateModal(false);
+            setBudgetInitialTitle('');
             handleOpenFull(row);
           }}
         />
@@ -1067,14 +1730,17 @@ export const FinanceHub: React.FC = () => {
         <CreateValuationModal
           initialSourceType={valuationInitialSource.type}
           initialSourceId={valuationInitialSource.id}
+          initialTitle={valuationInitialTitle}
           onClose={() => {
             setShowValuationCreateModal(false);
             setValuationInitialSource({});
+            setValuationInitialTitle('');
           }}
           onCreated={async (row) => {
             await loadValuations();
             setShowValuationCreateModal(false);
             setValuationInitialSource({});
+            setValuationInitialTitle('');
             handleOpenFull(row);
           }}
         />

@@ -15,6 +15,7 @@ import {
   type MetaPill,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
 
 export type InitiativePreviewV3Model = {
@@ -116,6 +117,7 @@ export const InitiativePreviewV3Body: React.FC<{
   }, [axis, isPolish, priority, progress, status, t]);
 
   const detailsCustomActions = useMemo((): DetailsAction[] => {
+    const title = String(initiative.name || initiative.title || '').trim();
     const actions: DetailsAction[] = [
       {
         id: 'toggle',
@@ -137,9 +139,27 @@ export const InitiativePreviewV3Body: React.FC<{
           await handleCopy();
         },
       },
+      {
+        id: 'copy-md',
+        label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+        onClick: () =>
+          void copyAsMarkdown(
+            { title, status, description: detailsText },
+            isPolish ? 'pl' : 'en'
+          ),
+      },
+      {
+        id: 'copy-slack',
+        label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+        onClick: () =>
+          void copyForSlack(
+            { title, status, description: detailsText },
+            isPolish ? 'pl' : 'en'
+          ),
+      },
     ];
     return actions;
-  }, [expanded, handleCopy, isPolish, onSummarize, t]);
+  }, [detailsText, expanded, handleCopy, initiative.name, initiative.title, isPolish, onSummarize, status, t]);
 
   return (
     <div className="space-y-4">
@@ -303,6 +323,7 @@ export const InitiativePreviewV3Footer: React.FC<{
         icon: ExternalLink,
         onClick: onOpenFull,
         colorScheme: 'primary',
+        shortcut: 'O',
       },
       ...(onOpenInModule
         ? [
@@ -311,6 +332,7 @@ export const InitiativePreviewV3Footer: React.FC<{
               icon: ChevronRight,
               onClick: onOpenInModule,
               colorScheme: 'neutral' as const,
+              shortcut: 'M',
             },
           ]
         : []),
@@ -321,6 +343,7 @@ export const InitiativePreviewV3Footer: React.FC<{
               icon: MessageSquare,
               onClick: () => onOpenChat(chatPrompt),
               colorScheme: 'neutral' as const,
+              shortcut: 'C',
             },
           ]
         : []),
@@ -348,12 +371,14 @@ export const InitiativePreviewV3Footer: React.FC<{
 
   return (
     <div className="space-y-0">
-      <PreviewAIHintStrip
-        hints={aiHintLabels}
-        onRunHint={handleRunHint}
-        onRegenerate={handleRegenerate}
-        disabled={!onOpenChat}
-      />
+      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+        <PreviewAIHintStrip
+          hints={aiHintLabels}
+          onRunHint={handleRunHint}
+          onRegenerate={handleRegenerate}
+          disabled={!onOpenChat}
+        />
+      </div>
 
       <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
@@ -361,10 +386,8 @@ export const InitiativePreviewV3Footer: React.FC<{
 
       <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 
-      <div className="space-y-2.5 py-1">
-        {extraActionsSlot ? extraActionsSlot : <PreviewActionBar rows={actionRows} />}
-        {extraActionsAfterSlot ? extraActionsAfterSlot : null}
-      </div>
+      {extraActionsSlot ? extraActionsSlot : <PreviewActionBar rows={actionRows} />}
+      {extraActionsAfterSlot ? extraActionsAfterSlot : null}
     </div>
   );
 };

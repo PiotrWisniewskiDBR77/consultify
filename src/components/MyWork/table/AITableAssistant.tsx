@@ -9,35 +9,49 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 
+import type { TableProposal } from './AITableProposal';
 import type { ColumnDef, FilterGroup, SortConfig, TableNode } from './tableTypes';
+
+interface ArtifactContext {
+  id: string;
+  type: string;
+  title: string;
+  snippet?: string;
+}
 
 interface AITableAssistantProps {
   open: boolean;
   onClose: () => void;
   ideaId: string;
   columns: ColumnDef[];
+  artifactContext?: ArtifactContext[];
   onSort: (sort: SortConfig) => void;
   onFilter: (filters: FilterGroup) => void;
   onGroup: (column: string | null) => void;
   onAddColumn: (col: ColumnDef) => void;
   onAddRows: (rows: TableNode[]) => void;
+  onProposal?: (proposal: TableProposal) => void;
 }
 
 const EXAMPLE_COMMANDS = {
   en: [
+    'Create a risk assessment table for digital transformation',
     'Sort by priority descending',
     'Show only high impact items',
     'Group by status',
     'Add 5 rows about digital transformation risks',
     'Add a "Deadline" date column',
+    'Build a project tracker with milestones and owners',
     'Summarize the table',
   ],
   pl: [
+    'Stwórz tabelę oceny ryzyka dla transformacji cyfrowej',
     'Posortuj po priorytecie malejąco',
     'Pokaż tylko elementy o wysokim wpływie',
     'Grupuj po statusie',
     'Dodaj 5 wierszy o ryzykach transformacji cyfrowej',
     'Dodaj kolumnę "Termin" typu data',
+    'Zbuduj tracker projektu z kamieniami milowymi i właścicielami',
     'Podsumuj tabelę',
   ],
 };
@@ -47,11 +61,13 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
   onClose,
   ideaId,
   columns,
+  artifactContext,
   onSort,
   onFilter,
   onGroup,
   onAddColumn,
   onAddRows,
+  onProposal,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -73,11 +89,20 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
 
     try {
       const schema = columns.map((c) => ({ key: c.key, header: c.header, type: c.type }));
-      const result = await Api.getIdeaAITableAction(ideaId, {
+      const payload: Record<string, unknown> = {
         command: command.trim(),
         schema,
         language: i18n.language,
-      });
+      };
+      if (artifactContext?.length) {
+        payload.artifactContext = artifactContext.map((a) => ({
+          id: a.id,
+          type: a.type,
+          title: a.title,
+          snippet: a.snippet,
+        }));
+      }
+      const result = await Api.getIdeaAITableAction(ideaId, payload as any);
 
       const action = result?.action;
       if (!action) {
@@ -135,6 +160,43 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
           break;
         case 'summarize':
           setLastResult(action.summary || action.message || '');
+          break;
+        case 'generate_table':
+          if (onProposal && action.proposal) {
+            const proposal: TableProposal = {
+              title: action.proposal.title,
+              description: action.proposal.description,
+              columns: (action.proposal.columns || []).map((c: any, idx: number) => ({
+                key: c.key || `col_${idx}`,
+                header: c.header || c.name || c.key,
+                type: c.type || 'text',
+                visible: true,
+                width: c.width || 160,
+                options: c.options,
+                optionColors: c.optionColors,
+                formula: c.formula,
+                aiPrompt: c.aiPrompt,
+              })),
+              views: (action.proposal.views || []).map((v: any, idx: number) => ({
+                id: `ai-view-${idx}`,
+                name: v.name || `View ${idx + 1}`,
+                icon: v.icon,
+                layout: v.layout || 'table',
+                sort: v.sort,
+                filters: v.filters,
+                groupBy: v.groupBy,
+              })),
+              rows: (action.proposal.rows || []).map((r: any, idx: number) => ({
+                id: `ai-row-${Date.now()}-${idx}`,
+                type: 'idea',
+                data: { label: r.label || r.name || '', ...r },
+                position: { x: 0, y: 0 },
+              })),
+              contextHints: action.proposal.contextHints,
+            };
+            onProposal(proposal);
+            toast.success(isPl ? 'Propozycja tabeli wygenerowana' : 'Table proposal generated');
+          }
           break;
         case 'error':
           toast.error(action.message || (isPl ? 'Błąd' : 'Error'));

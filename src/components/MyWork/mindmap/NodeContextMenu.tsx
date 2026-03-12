@@ -3,6 +3,7 @@ import {
   ChevronRight,
   Copy,
   Diamond,
+  FoldVertical,
   Edit3,
   ExternalLink,
   FileText,
@@ -13,16 +14,19 @@ import {
   ListChecks,
   MessageSquare,
   Network,
+  Paintbrush,
   Plus,
   Rocket,
   Scissors,
+  ScanSearch,
+  Share2,
   Sparkles,
   Star,
   Target,
   Trash2,
   UserPlus,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export interface NodeContextMenuProps {
   x: number;
@@ -31,6 +35,7 @@ export interface NodeContextMenuProps {
   nodeType: string;
   isLocked: boolean;
   isPl: boolean;
+  canPasteStyle?: boolean;
   onClose: () => void;
   onAction: (action: string) => void;
 }
@@ -40,9 +45,15 @@ interface MenuItem {
   labelPl: string;
   labelEn: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
+  shortcut?: string;
   danger?: boolean;
   disabled?: boolean;
-  dividerAfter?: boolean;
+}
+
+interface MenuGroup {
+  titlePl: string;
+  titleEn: string;
+  items: MenuItem[];
 }
 
 export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
@@ -52,264 +63,235 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   nodeType,
   isLocked,
   isPl,
+  canPasteStyle = false,
   onClose,
   onAction,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const [submenu, setSubmenu] = useState<string | null>(null);
+  const submenuTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as HTMLElement)) onClose();
     };
     const keyHandler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (submenu) { setSubmenu(null); return; }
+        onClose();
+      }
     };
     window.addEventListener('mousedown', handler);
     window.addEventListener('keydown', keyHandler);
     return () => {
       window.removeEventListener('mousedown', handler);
       window.removeEventListener('keydown', keyHandler);
+      if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
     };
-  }, [onClose]);
+  }, [onClose, submenu]);
 
   const handleClick = useCallback(
     (action: string) => {
       onAction(action);
       onClose();
     },
-    [onAction, onClose]
+    [onAction, onClose],
   );
 
   const isProtected = nodeId === 'root' || nodeId.startsWith('branch-');
 
-  const items: MenuItem[] = [
+  const groups: MenuGroup[] = useMemo(() => [
     {
-      id: 'ctx_open_detail',
-      labelPl: 'Otwórz szczegóły',
-      labelEn: 'Open details',
-      icon: ExternalLink,
-      disabled: isProtected,
+      titlePl: 'Edycja',
+      titleEn: 'Edit',
+      items: [
+        { id: 'ctx_edit', labelPl: 'Edytuj', labelEn: 'Edit', icon: Edit3, shortcut: 'F2', disabled: isProtected },
+        { id: 'ctx_open_detail', labelPl: 'Otwórz szczegóły', labelEn: 'Open details', icon: ExternalLink, disabled: isProtected },
+        { id: 'ctx_add_child', labelPl: 'Dodaj gałąź', labelEn: 'Add child', icon: Plus, shortcut: 'Tab', disabled: isLocked },
+        { id: 'ctx_add_sibling', labelPl: 'Dodaj sąsiada', labelEn: 'Add sibling', icon: GitBranch, shortcut: 'Enter', disabled: isLocked || isProtected },
+        { id: 'ctx_duplicate', labelPl: 'Duplikuj', labelEn: 'Duplicate', icon: Copy, shortcut: '⌘D', disabled: isLocked || isProtected },
+      ],
     },
     {
-      id: 'ctx_edit',
-      labelPl: 'Edytuj (F2)',
-      labelEn: 'Edit (F2)',
-      icon: Edit3,
-      disabled: isProtected,
+      titlePl: 'Struktura',
+      titleEn: 'Structure',
+      items: [
+        { id: 'ctx_toggle_collapse', labelPl: 'Zwiń / rozwiń', labelEn: 'Fold / unfold', icon: FoldVertical, shortcut: 'Space', disabled: isProtected },
+        { id: 'ctx_focus_subtree', labelPl: 'Skup poddrzewo', labelEn: 'Focus subtree', icon: ScanSearch, disabled: isProtected },
+        { id: 'ctx_drill_down', labelPl: 'Drill down', labelEn: 'Drill down', icon: ChevronRight, disabled: isProtected },
+        { id: 'ctx_connect_to_selected', labelPl: 'Połącz z zaznaczonym', labelEn: 'Connect to selected', icon: Link2, disabled: isLocked || isProtected },
+        { id: 'ctx_detach_branch', labelPl: 'Odłącz gałąź', labelEn: 'Detach branch', icon: Scissors, disabled: isLocked || isProtected },
+        { id: 'ctx_duplicate_branch', labelPl: 'Duplikuj gałąź', labelEn: 'Duplicate branch', icon: Copy, disabled: isLocked || isProtected },
+      ],
     },
     {
-      id: 'ctx_add_child',
-      labelPl: 'Dodaj gałąź (Tab)',
-      labelEn: 'Add child (Tab)',
-      icon: Plus,
-      disabled: isLocked,
-      dividerAfter: true,
+      titlePl: 'AI',
+      titleEn: 'AI',
+      items: [
+        { id: 'ctx_ai_expand', labelPl: 'Rozbuduj temat', labelEn: 'Expand topic', icon: Sparkles, disabled: isLocked },
+        { id: 'ctx_ai_deepen', labelPl: 'Pogłęb', labelEn: 'Deepen', icon: Sparkles, disabled: isLocked },
+        { id: 'ctx_what_if', labelPl: 'Co jeśli...?', labelEn: 'What if...?', icon: GitBranch, disabled: isLocked },
+        { id: 'ctx_summarize_branch', labelPl: 'Podsumuj gałąź', labelEn: 'Summarize branch', icon: FileText, disabled: isLocked },
+        { id: 'ctx_dependencies', labelPl: 'Wykryj zależności', labelEn: 'Detect dependencies', icon: Network, disabled: isLocked },
+        { id: 'ctx_priority', labelPl: 'Priorytetyzacja', labelEn: 'Prioritize', icon: Target, disabled: isLocked },
+        { id: 'ctx_competitive', labelPl: 'Konkurencja', labelEn: 'Competitors', icon: Globe, disabled: isLocked },
+      ],
     },
     {
-      id: 'ctx_add_sibling',
-      labelPl: 'Dodaj sąsiada (Enter)',
-      labelEn: 'Add sibling (Enter)',
-      icon: GitBranch,
-      disabled: isLocked || isProtected,
+      titlePl: 'Konwersja',
+      titleEn: 'Convert',
+      items: [
+        { id: 'ctx_convert_initiative', labelPl: '→ Inicjatywa', labelEn: '→ Initiative', icon: Rocket, disabled: isLocked },
+        { id: 'ctx_convert_decision', labelPl: '→ Decyzja', labelEn: '→ Decision', icon: Star, disabled: isLocked },
+        { id: 'ctx_convert_tasks', labelPl: '→ Zadania', labelEn: '→ Tasks', icon: ListChecks, disabled: isLocked },
+      ],
     },
     {
-      id: 'ctx_drill_down',
-      labelPl: 'Drill down (sub-mapa)',
-      labelEn: 'Drill down (sub-map)',
-      icon: ChevronRight,
-      disabled: isProtected,
+      titlePl: 'Wygląd i dane',
+      titleEn: 'Style & data',
+      items: [
+        { id: 'ctx_change_shape', labelPl: 'Zmień kształt', labelEn: 'Change shape', icon: Diamond, disabled: isLocked || isProtected },
+        { id: 'ctx_add_image', labelPl: 'Dodaj obraz', labelEn: 'Add image', icon: Image, disabled: isLocked || isProtected },
+        { id: 'ctx_copy_style', labelPl: 'Kopiuj styl', labelEn: 'Copy style', icon: Paintbrush, disabled: isProtected },
+        { id: 'ctx_paste_style', labelPl: 'Wklej styl', labelEn: 'Paste style', icon: Paintbrush, disabled: isLocked || isProtected || !canPasteStyle },
+        { id: 'ctx_vote_up', labelPl: 'Głosuj ↑', labelEn: 'Vote up', icon: Star, disabled: isLocked || isProtected },
+        { id: 'ctx_assign', labelPl: 'Przypisz osobę', labelEn: 'Assign person', icon: UserPlus, disabled: isLocked || isProtected },
+        { id: 'ctx_comments', labelPl: 'Komentarze', labelEn: 'Comments', icon: MessageSquare, disabled: isProtected },
+        { id: 'ctx_attach_knowledge', labelPl: 'Dołącz wiedzę', labelEn: 'Attach knowledge', icon: BookOpen, disabled: isLocked || isProtected },
+        { id: 'ctx_attach_artifact', labelPl: 'Dołącz artefakt', labelEn: 'Attach artifact', icon: BookOpen, disabled: isLocked || isProtected },
+        { id: 'ctx_open_linked_artifacts', labelPl: 'Powiązane artefakty', labelEn: 'Linked artifacts', icon: ExternalLink, disabled: isProtected },
+        { id: 'ctx_share_branch', labelPl: 'Kopiuj link', labelEn: 'Copy link', icon: Share2, disabled: isProtected },
+      ],
     },
     {
-      id: 'ctx_detach_branch',
-      labelPl: 'Odłącz gałąź',
-      labelEn: 'Detach branch',
-      icon: Scissors,
-      disabled: isLocked || isProtected,
+      titlePl: '',
+      titleEn: '',
+      items: [
+        { id: 'ctx_delete', labelPl: 'Usuń', labelEn: 'Delete', icon: Trash2, shortcut: 'Del', danger: true, disabled: isLocked || isProtected },
+      ],
     },
-    {
-      id: 'ctx_duplicate_branch',
-      labelPl: 'Duplikuj gałąź',
-      labelEn: 'Duplicate branch',
-      icon: Copy,
-      disabled: isLocked || isProtected,
-    },
-    {
-      id: 'ctx_summarize_branch',
-      labelPl: 'Podsumuj gałąź',
-      labelEn: 'Summarize branch',
-      icon: FileText,
-      disabled: isLocked,
-    },
-    {
-      id: 'ctx_convert_tasks',
-      labelPl: 'Gałąź → Zadania',
-      labelEn: 'Branch → Tasks',
-      icon: ListChecks,
-      disabled: isLocked,
-      dividerAfter: true,
-    },
-    {
-      id: 'ctx_ai_expand',
-      labelPl: 'AI: Rozbuduj temat',
-      labelEn: 'AI: Expand topic',
-      icon: Sparkles,
-      disabled: isLocked,
-      dividerAfter: true,
-    },
-    {
-      id: 'ctx_ai_deepen',
-      labelPl: 'AI: Pogłęb',
-      labelEn: 'AI: Deepen',
-      icon: Sparkles,
-      disabled: isLocked,
-    },
-    {
-      id: 'ctx_what_if',
-      labelPl: 'AI: Co jeśli...?',
-      labelEn: 'AI: What if...?',
-      icon: GitBranch,
-      disabled: isLocked,
-    },
-    {
-      id: 'ctx_convert_initiative',
-      labelPl: 'Konwertuj → Inicjatywa',
-      labelEn: 'Convert → Initiative',
-      icon: Rocket,
-      disabled: isLocked,
-    },
-    {
-      id: 'ctx_convert_decision',
-      labelPl: 'Konwertuj → Decyzja',
-      labelEn: 'Convert → Decision',
-      icon: Star,
-      disabled: isLocked,
-      dividerAfter: true,
-    },
-    {
-      id: 'ctx_vote_up',
-      labelPl: 'Głosuj ↑',
-      labelEn: 'Vote up',
-      icon: Star,
-      disabled: isLocked || isProtected,
-    },
-    {
-      id: 'ctx_assign',
-      labelPl: 'Przypisz osobę',
-      labelEn: 'Assign person',
-      icon: UserPlus,
-      disabled: isLocked || isProtected,
-    },
-    {
-      id: 'ctx_comments',
-      labelPl: 'Komentarze',
-      labelEn: 'Comments',
-      icon: MessageSquare,
-      disabled: isProtected,
-    },
-    {
-      id: 'ctx_attach_knowledge',
-      labelPl: 'Dołącz wiedzę',
-      labelEn: 'Attach knowledge',
-      icon: BookOpen,
-      disabled: isLocked || isProtected,
-    },
-    {
-      id: 'ctx_dependencies',
-      labelPl: 'Wykryj zależności',
-      labelEn: 'Detect dependencies',
-      icon: Network,
-      disabled: isLocked,
-    },
-    {
-      id: 'ctx_priority',
-      labelPl: 'AI: Priorytetyzacja',
-      labelEn: 'AI: Prioritize',
-      icon: Target,
-      disabled: isLocked,
-    },
-    {
-      id: 'ctx_competitive',
-      labelPl: 'AI: Konkurencja',
-      labelEn: 'AI: Competitors',
-      icon: Globe,
-      disabled: isLocked,
-    },
-    {
-      id: 'ctx_change_shape',
-      labelPl: 'Zmień kształt',
-      labelEn: 'Change shape',
-      icon: Diamond,
-      disabled: isLocked || isProtected,
-    },
-    {
-      id: 'ctx_add_image',
-      labelPl: 'Dodaj obraz',
-      labelEn: 'Add image',
-      icon: Image,
-      disabled: isLocked || isProtected,
-    },
-    {
-      id: 'ctx_share_branch',
-      labelPl: 'Udostępnij gałąź',
-      labelEn: 'Share branch',
-      icon: Link2,
-      disabled: isProtected,
-      dividerAfter: true,
-    },
-    {
-      id: 'ctx_duplicate',
-      labelPl: 'Duplikuj',
-      labelEn: 'Duplicate',
-      icon: Copy,
-      disabled: isLocked || isProtected,
-    },
-    {
-      id: 'ctx_delete',
-      labelPl: 'Usuń (Del)',
-      labelEn: 'Delete (Del)',
-      icon: Trash2,
-      danger: true,
-      disabled: isLocked || isProtected,
-    },
-  ];
+  ], [canPasteStyle, isLocked, isProtected]);
+
+  const clampedX = Math.min(x, window.innerWidth - 260);
+  const clampedY = Math.min(y, window.innerHeight - 400);
+
+  const renderItem = (item: MenuItem) => {
+    const Icon = item.icon;
+    return (
+      <button
+        key={item.id}
+        type="button"
+        disabled={item.disabled}
+        onClick={() => handleClick(item.id)}
+        className={`w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium transition-colors rounded-md ${
+          item.disabled
+            ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+            : item.danger
+              ? 'text-red-600 dark:text-red-400 hover:bg-red-500/10'
+              : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04]'
+        }`}
+      >
+        <Icon
+          size={13}
+          className={`shrink-0 ${item.danger ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}
+        />
+        <span className="flex-1 truncate">{isPl ? item.labelPl : item.labelEn}</span>
+        {item.shortcut && (
+          <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono ml-2 shrink-0">
+            {item.shortcut}
+          </span>
+        )}
+      </button>
+    );
+  };
+
+  const hasSubmenuGroups = groups.length > 5;
+
+  if (!hasSubmenuGroups) {
+    return (
+      <div
+        ref={ref}
+        className="fixed z-[100] min-w-[230px] max-h-[80vh] overflow-y-auto py-1.5 px-1 rounded-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+        style={{ left: clampedX, top: clampedY }}
+      >
+        {groups.map((group, gi) => (
+          <React.Fragment key={gi}>
+            {group.titlePl && (
+              <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                {isPl ? group.titlePl : group.titleEn}
+              </div>
+            )}
+            {group.items.map(renderItem)}
+            {gi < groups.length - 1 && (
+              <div className="my-1.5 mx-2 h-px bg-slate-200/40 dark:bg-white/[0.04]" />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  }
+
+  const mainItems = groups.slice(0, 2);
+  const subGroups = groups.slice(2, -1);
+  const deleteGroup = groups[groups.length - 1];
 
   return (
     <div
       ref={ref}
-      className="fixed z-[100] min-w-[200px] py-1 rounded-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-2xl"
-      style={{ left: x, top: y }}
+      className="fixed z-[100] min-w-[230px] py-1.5 px-1 rounded-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+      style={{ left: clampedX, top: clampedY }}
     >
-      {items.map((item) => {
-        const Icon = item.icon;
-        return (
-          <React.Fragment key={item.id}>
-            <button
-              type="button"
-              disabled={item.disabled}
-              onClick={() => handleClick(item.id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-[11px] font-medium transition-colors ${
-                item.disabled
-                  ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                  : item.danger
-                    ? 'text-red-600 dark:text-red-400 hover:bg-red-500/10'
-                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04]'
-              }`}
+      {mainItems.map((group, gi) => (
+        <React.Fragment key={gi}>
+          <div className="px-3 pt-2 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            {isPl ? group.titlePl : group.titleEn}
+          </div>
+          {group.items.map(renderItem)}
+          <div className="my-1.5 mx-2 h-px bg-slate-200/40 dark:bg-white/[0.04]" />
+        </React.Fragment>
+      ))}
+
+      {subGroups.map((group) => (
+        <div
+          key={group.titleEn}
+          className="relative"
+          onMouseEnter={() => {
+            if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
+            setSubmenu(group.titleEn);
+          }}
+          onMouseLeave={() => {
+            submenuTimerRef.current = window.setTimeout(() => setSubmenu(null), 200);
+          }}
+        >
+          <button
+            type="button"
+            className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04] rounded-md"
+          >
+            <span className="flex-1">{isPl ? group.titlePl : group.titleEn}</span>
+            <ChevronRight size={11} className="text-slate-400" />
+          </button>
+
+          {submenu === group.titleEn && (
+            <div
+              className="absolute left-full top-0 ml-1 min-w-[200px] py-1.5 px-1 rounded-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-2xl animate-in fade-in slide-in-from-left-1 duration-100"
+              onMouseEnter={() => {
+                if (submenuTimerRef.current) window.clearTimeout(submenuTimerRef.current);
+              }}
+              onMouseLeave={() => {
+                submenuTimerRef.current = window.setTimeout(() => setSubmenu(null), 200);
+              }}
             >
-              <Icon
-                size={13}
-                className={item.danger ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}
-              />
-              <span className="flex-1">{isPl ? item.labelPl : item.labelEn}</span>
-              {(item.id === 'ctx_ai_expand' || item.id === 'ctx_ai_deepen') && (
-                <ChevronRight size={10} className="text-slate-300" />
-              )}
-            </button>
-            {item.dividerAfter && (
-              <div className="my-1 mx-2 h-px bg-slate-200/40 dark:bg-white/[0.04]" />
-            )}
-          </React.Fragment>
-        );
-      })}
+              <div className="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                {isPl ? group.titlePl : group.titleEn}
+              </div>
+              {group.items.map(renderItem)}
+            </div>
+          )}
+        </div>
+      ))}
+
+      <div className="my-1.5 mx-2 h-px bg-slate-200/40 dark:bg-white/[0.04]" />
+      {deleteGroup.items.map(renderItem)}
     </div>
   );
 };

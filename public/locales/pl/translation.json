@@ -603,8 +603,8 @@
       "open": "Otwórz",
       "canvasTools": {
         "ariaLabel": "Narzędzie canvas",
-        "mindmap": "Mapa myśli",
-        "mindmapTooltip": "Mapa myśli — hierarchiczne węzły i połączenia",
+        "mindmap": "Mapa rekomendacji",
+        "mindmapTooltip": "Mapa rekomendacji — hierarchiczne węzły i gałęzie rekomendacji",
         "processFlow": "Przepływ procesu",
         "processFlowTooltip": "Przepływ procesu — kroki i zależności",
         "table": "Tabela",

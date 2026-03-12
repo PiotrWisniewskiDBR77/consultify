@@ -46,19 +46,6 @@ async function parseXMindZip(file: File): Promise<ImportedNode | null> {
   try {
     const { default: JSZip } = await import('jszip');
     const zip = await JSZip.loadAsync(file);
-    const contentFile = zip.file('content.json');
-    if (!contentFile) {
-      const metaFile = zip.file('metadata.json');
-      if (!metaFile) return null;
-    }
-
-    const contentStr = contentFile ? await contentFile.async('string') : null;
-    if (!contentStr) return null;
-
-    const content = JSON.parse(contentStr);
-    const sheet = Array.isArray(content) ? content[0] : content;
-    const rootTopic = sheet?.rootTopic || sheet?.topic;
-    if (!rootTopic) return null;
 
     let counter = 0;
     function parseTopic(topic: any): ImportedNode {
@@ -71,7 +58,26 @@ async function parseXMindZip(file: File): Promise<ImportedNode | null> {
       return { id: `imported-${counter++}`, label, children };
     }
 
-    return parseTopic(rootTopic);
+    // XMind 2020+ format: content.json at zip root
+    const contentFile = zip.file('content.json');
+    if (contentFile) {
+      const contentStr = await contentFile.async('string');
+      const content = JSON.parse(contentStr);
+      const sheet = Array.isArray(content) ? content[0] : content;
+      const rootTopic = sheet?.rootTopic || sheet?.topic;
+      if (rootTopic) return parseTopic(rootTopic);
+    }
+
+    // XMind 8 fallback: metadata.json contains sheet/topic structure
+    const metaFile = zip.file('metadata.json');
+    if (metaFile) {
+      const metaStr = await metaFile.async('string');
+      const meta = JSON.parse(metaStr);
+      const rootTopic = meta?.rootTopic || meta?.topic;
+      if (rootTopic) return parseTopic(rootTopic);
+    }
+
+    return null;
   } catch {
     return null;
   }

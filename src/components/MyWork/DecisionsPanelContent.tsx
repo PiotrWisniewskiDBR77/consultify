@@ -1552,6 +1552,7 @@ export const DecisionsPanelContent: React.FC<DecisionsPanelContentProps> = ({
             setPreviewDecisionId(null);
           }}
           itemIds={orderedDecisionIds}
+          getItemById={(id) => displayedDecisions.find((x) => x.id === id) ?? null}
           renderPreview={(item) => {
             const decisionData = (previewDecision || (item as any)) as DecisionPreviewData;
             if (previewLoading) {

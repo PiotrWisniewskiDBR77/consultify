@@ -244,17 +244,22 @@ function getReadPool(): Pool {
   return getPool();
 }
 
+function sanitizeParams(params: unknown[]): unknown[] {
+  return params.map((p) => (typeof p === 'string' ? p.replace(/\0/g, '') : p));
+}
+
 async function executeWithLogging<T>(
   poolFn: () => Pool,
   sql: string,
   params: unknown[],
   method: 'RUN' | 'GET' | 'ALL' | 'QUERY'
 ): Promise<{ rows: T[]; rowCount: number | null }> {
+  const safeParams = sanitizeParams(params);
   const start = Date.now();
   try {
     const pool = poolFn(); // Triggers getPool() which may start initDb and set initDbPromise
     if (initDbPromise) await initDbPromise;
-    const res = await pool.query(sql, params);
+    const res = await pool.query(sql, safeParams);
 
     const duration = Date.now() - start;
     if (duration > SLOW_QUERY_THRESHOLD_MS) {
@@ -275,7 +280,7 @@ async function executeWithLogging<T>(
       initDbPromise = null;
       const retryPool = poolFn();
       if (initDbPromise) await initDbPromise;
-      const res = await retryPool.query(sql, params);
+      const res = await retryPool.query(sql, safeParams);
       return { rows: res.rows as T[], rowCount: res.rowCount };
     }
 

@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { OrganizationContextOverview } from './OrganizationContextOverview';
 
 interface OrganizationProfileFormProps {
   currentUser: User;
@@ -543,6 +544,8 @@ export const OrganizationProfileForm: React.FC<OrganizationProfileFormProps> = (
           Refresh
         </button>
       </div>
+
+      <OrganizationContextOverview organizationId={effectiveOrgId} />
 
       {/* Sections */}
       <div className="space-y-4">

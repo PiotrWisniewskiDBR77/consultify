@@ -44,3 +44,5 @@ export function useUndoRedo<T>(initialState: T, options?: UndoRedoOptions) {
 
   return { state, push, set: setState, undo, redo, canUndo, canRedo };
 }
+
+export type UseUndoRedoReturn<T> = ReturnType<typeof useUndoRedo<T>>;

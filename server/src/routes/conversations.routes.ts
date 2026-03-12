@@ -30,6 +30,7 @@ import {
   validateQuery,
 } from '../middleware/validation.middleware.js';
 import { checkChatPermission } from '../services/chatPermissionService.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -618,6 +619,25 @@ router.post(
          WHERE id = ?`,
         [content.slice(0, 200), now, now, conversationId]
       );
+
+      const shouldCaptureAsOrgContext =
+        role === 'user' &&
+        req.organizationId &&
+        metadata &&
+        typeof metadata === 'object' &&
+        (metadata as Record<string, unknown>).captureOrganizationContext === true;
+
+      if (shouldCaptureAsOrgContext) {
+        await organizationContextService.recordChatMessage({
+          organizationId: req.organizationId,
+          userId: req.userId || null,
+          payload: {
+            conversationId,
+            messageId,
+            content,
+          },
+        });
+      }
 
       const message = await dbGet(
         `SELECT cm.*, COALESCE(u.first_name || ' ' || u.last_name, u.email) as author_name, u.email as author_email

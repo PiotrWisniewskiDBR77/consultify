@@ -1,0 +1,9 @@
+{
+  "name": "basic-cash-flow",
+  "fileName": "sample-cash-flow.pdf",
+  "expectedStatementType": "CF",
+  "expectedDocumentClass": "native_pdf",
+  "expectedMinExtracted": 3,
+  "expectedMinMapped": 2,
+  "text": "Cash Flow Statement\nFor the year ended 2025\nOperating cash flow 2025 420 2024 390\nCapital expenditures 2025 (120) 2024 (110)\nFree cash flow 2025 300 2024 280\nFinancing cash flow 2025 (80) 2024 (60)\nInvesting cash flow 2025 (140) 2024 (135)"
+}

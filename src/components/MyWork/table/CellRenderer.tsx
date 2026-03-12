@@ -24,6 +24,7 @@ import {
   RelationCell,
   RollupCell,
 } from './NewColumnRenderers';
+import { coerceValue } from './PropertyRegistry';
 import type { ColumnDef, ColumnType } from './tableTypes';
 import { evaluateFormula, SELECT_COLORS } from './tableTypes';
 
@@ -390,11 +391,98 @@ const WrappedEmailCell: React.FC<CellProps> = ({ value, onChange, locked }) => (
   <EmailCell value={value} onChange={onChange} locked={locked} />
 );
 
+// ── Status Cell (semantic status with fixed states) ─────────────────────────
+
+const STATUS_DISPLAY: Record<string, { en: string; pl: string; bg: string }> = {
+  todo: { en: 'To Do', pl: 'Do zrobienia', bg: '#e0e7ff' },
+  in_progress: { en: 'In Progress', pl: 'W toku', bg: '#fef3c7' },
+  done: { en: 'Done', pl: 'Gotowe', bg: '#d1fae5' },
+  blocked: { en: 'Blocked', pl: 'Zablokowane', bg: '#fee2e2' },
+};
+
+const StatusCell: React.FC<CellProps> = ({ column, value, onChange, locked }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const statusOptions = column.options?.length
+    ? column.options
+    : Object.keys(STATUS_DISPLAY);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const current = String(value ?? 'todo');
+  const display = STATUS_DISPLAY[current];
+  const bg = column.optionColors?.[current] || display?.bg || '#e0e7ff';
+  const label = display?.en || current;
+
+  return (
+    <div ref={ref} className="relative" onClick={(e) => e.stopPropagation()}>
+      <button
+        onClick={() => !locked && setOpen(!open)}
+        disabled={locked}
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold transition-colors"
+        style={{ backgroundColor: bg, color: '#334155' }}
+      >
+        {label}
+        {!locked && <ChevronDown size={10} />}
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 w-40 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1">
+          {statusOptions.map((opt) => {
+            const d = STATUS_DISPLAY[opt];
+            return (
+              <button
+                key={opt}
+                onClick={() => { onChange(opt); setOpen(false); }}
+                className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2"
+              >
+                <span
+                  className="w-3 h-3 rounded-sm flex-shrink-0"
+                  style={{ backgroundColor: column.optionColors?.[opt] || d?.bg || '#e0e7ff' }}
+                />
+                {d?.en || opt}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── System-managed cells (read-only) ────────────────────────────────────────
+
+const SystemTimestampCell: React.FC<CellProps> = ({ value }) => {
+  if (!value) return <span className="text-[10px] text-slate-400">—</span>;
+  const d = new Date(value);
+  const str = isNaN(d.getTime()) ? String(value) : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return <span className="text-[10px] text-slate-500 dark:text-slate-400 tabular-nums">{str}</span>;
+};
+
+const SystemUserCell: React.FC<CellProps> = ({ value }) => {
+  if (!value) return <span className="text-[10px] text-slate-400">—</span>;
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] text-slate-600 dark:text-slate-300">
+      <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-[8px] font-bold uppercase">
+        {String(value).charAt(0)}
+      </span>
+      {String(value)}
+    </span>
+  );
+};
+
 const RENDERERS: Record<ColumnType, React.FC<CellProps>> = {
   text: TextCell,
   number: NumberCell,
   select: SelectCell,
   multiselect: MultiSelectCell,
+  status: StatusCell,
   date: DateCell,
   checkbox: CheckboxCell,
   rating: RatingCell,
@@ -411,11 +499,19 @@ const RENDERERS: Record<ColumnType, React.FC<CellProps>> = {
   currency: WrappedCurrencyCell,
   phone: WrappedPhoneCell,
   email: WrappedEmailCell,
+  created_time: SystemTimestampCell,
+  created_by: SystemUserCell,
+  last_edited_time: SystemTimestampCell,
+  last_edited_by: SystemUserCell,
 };
 
 export const CellRenderer: React.FC<CellProps> = (props) => {
   const Renderer = RENDERERS[props.column.type] || TextCell;
-  return <Renderer {...props} />;
+  const coercedOnChange = useCallback(
+    (val: any) => props.onChange(coerceValue(props.column.type, val)),
+    [props.column.type, props.onChange]
+  );
+  return <Renderer {...props} onChange={coercedOnChange} />;
 };
 
 export default CellRenderer;

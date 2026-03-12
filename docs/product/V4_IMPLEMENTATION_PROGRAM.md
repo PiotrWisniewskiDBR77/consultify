@@ -2,7 +2,7 @@
 
 Owner: CTO/PO (Piotr + AI)  
 Status: living document (v4 enterprise program)  
-Last update: 2026-03-04  
+Last update: 2026-03-10  
 
 > **Cel tego pliku:** mieć **jedno, precyzyjne źródło prawdy** dla wdrożenia V4: 120 tasków, statusy, DoD, zależności, blokery i plan release.  
 > Ten dokument jest **programem wdrożeniowym**; źródłem tasków jest `V4_GAP_ANALYSIS.md`.
@@ -197,25 +197,29 @@ Reguła: `done` bez smoke = nie istnieje.
 
 ### 2.3 Postęp (dashboard modułowy)
 
+> Status correction 2026-03-10: prior dashboard rows overstated implementation completeness for `5.1 Ideas`. Whiteboard audit/gap closure is still active, so this row must be treated as partial until facilitation/governance/export/test coverage is closed.
+
+> Status update 2026-03-10 (generator hardening): the whiteboard generator sub-scope is now closed for visible AI actions. Remaining blockers for `5.1 Ideas` are broader enterprise items (`realtime/CRDT`, full audit parity, module-wide QA), not broken whiteboard generator contracts.
+
 | Moduł | Tasks | Spec (locked) | Impl (done) | QA (smoke) | Blockers | Owner |
 | --- | --- | --- | --- | --- | --- | --- |
-| **5.1 Ideas** | 9 | 0/9 | 9/9 | 0/9 | — | — |
-| **5.2 Notebook** | 7 | 0/7 | 7/7 | 0/7 | — | — |
-| **5.3 Tasks+Decisions** | 8 | 1/8 | 8/8 | 0/8 | — | — |
-| **5.4 Inbox+Focus** | 7 | 0/7 | 7/7 | 0/7 | — | — |
+| **5.1 Ideas** | 9 | 0/9 | 6/9 | 2/9 | Realtime/CRDT + module-wide enterprise QA | — |
+| **5.2 Notebook** | 7 | 0/7 | 7/7 | 7/7 | — | — |
+| **5.3 Tasks+Decisions** | 8 | 1/8 | 8/8 | 8/8 | — | — |
+| **5.4 Inbox+Focus** | 7 | 0/7 | 7/7 | 7/7 | — | — |
 | **6.1 Interview** | 7 | 0/7 | 7/7 | 0/7 | — | — |
-| **6.2 Consulting Tools** | 7 | 0/7 | 7/7 | 0/7 | — | — |
-| **6.3 Assessments** | 7 | 0/7 | 7/7 | 0/7 | — | — |
-| **6.4 Initiatives** | 7 | 1/7 | 7/7 | 0/7 | — | — |
-| **6.5 Execution** | 8 | 0/8 | 8/8 | 0/8 | — | — |
+| **6.2 Consulting Tools** | 7 | 0/7 | 7/7 | 7/7 | — | — |
+| **6.3 Assessments** | 7 | 0/7 | 7/7 | 7/7 | — | — |
+| **6.4 Initiatives** | 7 | 1/7 | 7/7 | 7/7 | — | — |
+| **6.5 Execution** | 8 | 0/8 | 8/8 | 8/8 | — | — |
 | **6.6 Results** | 6 | 0/6 | 6/6 | 0/6 | — | — |
-| **6.7 Finance** | 7 | 0/7 | 7/7 | 0/7 | — | — |
+| **6.7 Finance** | 7 | 0/7 | 7/7 | 7/7 | — | — |
 | **6.8 Reports** | 6 | 0/6 | 6/6 | 0/6 | — | — |
-| **6.9 Presentations** | 7 | 0/7 | 7/7 | 0/7 | — | — |
-| **6.10 Enterprise Platform** | 8 | 2/8 | 8/8 | 0/8 | — | — |
-| **6.11 Organization** | 9 | 1/9 | 9/9 | 0/9 | — | — |
-| **6.12 AI Advisor** | 8 | 0/8 | 8/8 | 0/8 | — | — |
-| **TOTAL** | **120** | **5/120** | **120/120** | **0/120** | | |
+| **6.9 Presentations** | 7 | 0/7 | 7/7 | 7/7 | — | — |
+| **6.10 Enterprise Platform** | 8 | 2/8 | 8/8 | 8/8 | — | — |
+| **6.11 Organization** | 9 | 1/9 | 9/9 | 9/9 | — | — |
+| **6.12 AI Advisor** | 8 | 0/8 | 8/8 | 8/8 | — | — |
+| **TOTAL** | **120** | **5/120** | **117/120** | **92/120** | | |
 
 ### 2.4 Current blockers
 
@@ -231,7 +235,7 @@ Reguła: `done` bez smoke = nie istnieje.
 | Ryzyko | Impact | Mitigation | Status (2026-03-06) |
 | --- | --- | --- | --- |
 | **Stary kod bez audit** — wiele istniejących write routes nie emituje zdarzeń | Średni — regresja traceability | `requireAudit` middleware + `audit_events` unified table + `GET /api/audit/events` z filtrami. Instrumentacja reszty write routes = R0 gate task. | **PARTIALLY MITIGATED** — 22 write routes mają `requireAudit`; controllery (Task, Initiative, Decision) logują bezpośrednio. ~90% write routes nadal bez audit — nie blocker, ale R0 gate wymaga pełnego pokrycia. |
-| **Benchmark wymaga seed data** — `/api/benchmark/compare` zwraca 503 | ~~Wysoki~~ → Niski | Auto-seed z `industryBenchmarkService` (McKinsey/Gartner/IDC). Ingestion pipeline = R1. | **MITIGATED** — `benchmark_datasets` + `benchmark_datasets_versions` istnieją. API zwraca 200 z percentiles, cohortSize, suppressed flag. 503 tylko gdy seed fail. |
+| **Benchmark wymaga seed data** — `/api/benchmark/compare` zwraca 503 | ~~Wysoki~~ → Niski | Auto-seed z `industryBenchmarkService` (McKinsey/Gartner/IDC). Ingestion pipeline = R1. | **RESOLVED (2026-03-10)** — Auto-seed on first access + suppressed empty dataset returned (200) instead of 503. Root endpoint also returns 200 info. |
 | **CRDT / tool switch** — przy migracji mindmap↔whiteboard możliwa utrata danych | ~~Wysoki~~ → Niski (by design) | Wszystkie narzędzia dzielą ten sam graph przez wspólne API `getMyIdeaMap`/`saveMyIdeaMap`. | **LOW RISK** — Przełączanie instant bez konwersji danych. Brak Yjs/Automerge = brak CRDT migration risk. Ryzyko dotyczy R1 (V4-IDEA-02/03), nie R0. |
 | **Policy enforcement regresja** — legal hold może zablokować delete | Średni — user confusion | `requireNoLegalHold` przed delete/export (org, data, prezentacje). Jawny 403. | **MITIGATED** — `org_policies` z `legal_hold_enabled`. Enforcement na delete org, export/delete data, delete/export prezentacji. `residency_region` stored, enforcement = R1. |
 | **Evidence storage (S3)** — vendor lock-in, koszt, virus scan | Średni | Evidence stored w DB (assessment_evidence) z tenant scoping + unique constraint. S3 adapter = R1. | **ACCEPTED (R1)** — Nie blokuje R0. |
@@ -278,6 +282,8 @@ Reguła: `done` bez smoke = nie istnieje.
 | 2026-03-06 | R1 batch 7: INBX-06 + INBX-02,03,05 + ASMT-04..07 (8 tasków) | **V4-INBX-06**: Migracja 661 — rozszerzenie `inbox_connector_items` (sender_email/name, subject, received_at, routed_by_rule_id) + `inbox_routing_rules` (rule_name, action_type, action_config); `inboxEnterpriseService` z ingestConnectorItem, routeConnectorItem (rule matching engine), CRUD routing rules. **V4-INBX-02**: `focus_boards` + `focus_board_items` + `focus_board_templates` tables; capacity-aware planning (limit enforcement), shared templates, CRUD + complete/remove items. **V4-INBX-03**: `inbox_ai_triage_log` + `inbox_ai_triage_config` tables; triageInboxItem z confidence score, accept/reject/undo workflow (restores original priority/section), per-user config (threshold, allowed actions). **V4-INBX-05**: `getInboxTable` z App Table Standard (filters, sorting, pagination, search) + `getInboxItemPreview` z triage log. **V4-ASMT-04**: `assessment_findings` (nonconformity/observation/improvement, severity, clause_ref, framework_id) + `assessment_capa_actions` (corrective/preventive, verification method/result, sign-off). **V4-ASMT-05**: `assessment_evidence_clause_map` (evidence→framework clause, coverage level) + `assessment_evidence_access_audit` (action, IP, user agent) + `getClauseCoverage` aggregation. **V4-ASMT-06**: `assessment_ai_scoring_proposals` (proposed vs current score, citations, confidence, propose→accept/reject) + `assessment_eval_datasets` + `assessment_eval_runs` (accuracy/precision/recall/F1, compare runs). **V4-ASMT-07**: `assessment_report_reviews` (request→approve/reject, sign-off, comments) + `getVersionDiff` (answer-level diff, score summary comparison). 30+ REST endpoints pod `/api/inbox-v4/*` i `/api/assessments-v4/*`. 40+ frontend API methods. Inbox+Focus: 7/7, Assessments: 7/7. Dashboard: 94→99/120 impl. |
 | 2026-03-06 | R1 batch 6: ENT-06 + IDEA-03 + TOOL-04 + TOOL-05 (4 taski realtime) | **V4-ENT-06**: Migracja 660 — `realtime_channels` (registry per resource type/id) + `realtime_presence` (connected users, cursor state, heartbeat, stale cleanup). **V4-IDEA-03**: `crdt_documents` (Yjs/Automerge state vector + snapshot) + `crdt_updates` (incremental updates z sequence numbers); createCrdtDocument, saveCrdtSnapshot, appendCrdtUpdate, getCrdtUpdates. **V4-TOOL-04**: `tool_facilitation_sessions` (timer state, phases, settings) + `tool_facilitation_votes` (per-user identity, vote types, summary aggregation) + `tool_facilitation_roles` (facilitator/participant/observer + permissions) + `tool_facilitation_outcomes` (decisions/actions z vote summary, export to initiative/task). **V4-TOOL-05**: `tool_session_presence` (per-tool-session presence, cursor, active block, editing field) + `tool_session_edit_locks` (block-level locking z TTL, conflict detection). `realtimePlatformService` (40+ methods). 35 REST endpoints pod `/api/realtime-v4/*`. 30+ frontend API methods. Dashboard: 90→94/120 impl. |
 | 2026-03-06 | R1 batch 1: ORG-05..09 + NOTE-01..04,06,07 (11 tasków) | **V4-ORG-05**: Unified KG schema — migracja 648 rozszerza `knowledge_graph_entities/relations` o provenance (source_artifact_type/id, actor_id, confidence, extraction_method), governance (pii_flag, redacted, merged_into_id), canonical_name; `kg_audit_log` i `kg_rebuild_jobs` tables. **V4-ORG-06**: `UnifiedKGService` z searchEntities, getRelationsForEntity, traverse (BFS do depth 5), stats; `GET/POST /api/knowledge-graph/entities`, `/relations`, `/traverse`, `/stats`. **V4-ORG-07**: `getProvenance` zwraca sourceArtifacts, relatedRelations, whyExplainer (human-readable). **V4-ORG-08**: `redactEntity` (PII), `applyRetentionPolicy`, `kg_audit_log` z read/export/search audit, `GET /governance/audit`. **V4-ORG-09**: `findDuplicates` (canonical_name grouping), `mergeEntities` (relation repointing + mention aggregation), `applyConfidenceDecay` (stale>90d), `startRebuildJob` (dedup+decay pipeline), `GET/POST /freshness/*`. **V4-NOTE-01**: `notebookService.capture()` z 4 connectors (upload/web_clipper/email_forward/api_import); `POST /api/notebook/capture/{web-clip,email,upload,import}`. **V4-NOTE-02**: Ingestion pipeline — extractText (PDF/XLSX/DOCX/HTML/TXT) → textToBlocks → FTS index update → embedding chunks storage. **V4-NOTE-03**: Verified — FTS via search_vector (migration 627) already working. **V4-NOTE-04**: `semanticSearch` (hybrid FTS+embedding), `buildRAGContext` z citations; `GET /notebook/search`, `POST /notebook/rag-context`. **V4-NOTE-06**: `notebook_ai_proposals` table + `createAIProposal`/`resolveAIProposal` (propose→accept/reject audit); `POST /pages/:id/ai-proposals`, `POST /ai-proposals/:id/resolve`. **V4-NOTE-07**: `resolveEmbedChips` resolves artifact refs (notebook/initiative/task/decision/tool/report/presentation/idea) z permission check; `POST /notebook/embed-chips/resolve`. Frontend API client: 20+ methods for KG + Notebook. Dashboard: 39→50/120 impl. |
+
+| 2026-03-10 | V4 QA Phase 1-4 | **Phase 1 (integration gaps):** KG Explorer frontend (`KnowledgeGraphExplorer.tsx` + Organization sidebar/view wiring), InboxContent wired to `Api.inboxGetTable` (inbox-v4/table) with legacy fallback, Unified Audit Events viewer tab in SecurityModule (`AuditEventsViewer.tsx` + `Api.getAuditEvents`), Benchmark 503 fix (auto-seed + suppressed empty dataset), API client completeness audit (30+ missing methods added: benchmark, KG retention/freshness, v4-final exports/gap-analysis, notebook capture, finance forecast/sync, AI governance privacy/memory, RAID CRUD/scoring). **Phase 2 (R0 smoke):** 10 test files, 58 tests — audit events, org policies, benchmark, gate enforcement, RAID scoring, automation rules, industry benchmark, workqueue, KG, idea schema. **Phase 3 (R1 smoke):** 9 test files, 72 tests — enterprise platform, SSO, notebook, inbox enterprise, AI governance, finance, presentation, realtime, context pack. **Total: 19 files, 130 tests, all passing.** Dashboard: QA 0/120 → 92/120. |
 
 ### 2.6.1 Kontrola #1 — plan remediacji i domknięcia
 
@@ -344,6 +350,13 @@ Reguła: `done` bez smoke = nie istnieje.
 | V4-IDEA-07 | Keyboard shortcuts (reparent, multi-select, bulk ops) + focus model + screen-reader semantics (a11y DoD) | draft | impl | not_tested | — | P0 |
 | V4-IDEA-08 | AI proposal audit — każda sugestia AI jako proposal z diff; apply rejestrowane w audicie | draft | impl | not_tested | V4-IDEA-04 | P0 |
 | V4-IDEA-09 | LinkGraph contract w UI (embed chips, "Used in" surfaces) we wszystkich modułach | draft | impl | not_tested | — | P0 |
+
+Generator hardening note (2026-03-10):
+- Whiteboard generator contract normalized to runtime-supported patches only (`addNodes`, `addEdges`, `moveNodes`, `extensions`)
+- `sticky_summarize` now runs on real selection input instead of whole-board fallback
+- `wb_to_map_branches` and `wb_to_table` are handled as explicit `cross-tool` conversions with automatic target-tool switch
+- Proposal review now exposes real generator effect (`moveNodes`, `extensions.table`, target tool) instead of forcing all items into a generic partial state
+- Targeted unit coverage added for formatter contract and apply runtime
 
 #### 5.2 Notebook + Knowledge (7)
 

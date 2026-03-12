@@ -32,6 +32,8 @@ export type GeneratorType =
   | 'process_coach'
   | 'next_step'
   | 'process_summary'
+  | 'process_brief'
+  | 'process_savings'
   | 'vsm_generator'
   | 'sticky_summarize'
   | 'vsm_future_state'
@@ -61,6 +63,12 @@ export interface GeneratorContext {
   existingEdges: any[];
   existingLanes?: any[];
   language: string;
+  selection?: {
+    type?: string;
+    count?: number;
+    ids?: string[];
+    primaryId?: string;
+  };
 }
 
 export interface GeneratorRequest {
@@ -80,6 +88,32 @@ interface OrgContext {
   admaScore?: number | null;
   activeInitiatives?: string[];
   kpis?: string[];
+}
+
+function getScopedGeneratorContext(
+  generatorType: GeneratorType,
+  context: GeneratorContext
+): GeneratorContext {
+  if (generatorType !== 'sticky_summarize') return context;
+
+  const selectedIds = new Set(
+    Array.isArray(context.selection?.ids)
+      ? context.selection?.ids.filter((id): id is string => typeof id === 'string' && id.length > 0)
+      : []
+  );
+  if (selectedIds.size === 0) return context;
+
+  const selectedNodes = context.existingNodes.filter((node: any) => selectedIds.has(String(node?.id)));
+  if (selectedNodes.length === 0) return context;
+
+  return {
+    ...context,
+    existingNodes: selectedNodes,
+    existingEdges: context.existingEdges.filter(
+      (edge: any) =>
+        selectedIds.has(String(edge?.source || '')) && selectedIds.has(String(edge?.target || ''))
+    ),
+  };
 }
 
 // ── Zod schemas for structured LLM output ────────────────────────────────────
@@ -317,6 +351,30 @@ const ProcessSummarySchema = z.object({
   estimatedDuration: z.string(),
   risks: z.array(z.string()),
   recommendations: z.array(z.string()),
+});
+
+const ProcessBriefSchema = z.object({
+  objective: z.string(),
+  currentGaps: z.array(z.string()),
+  nextMoves: z.array(z.string()),
+  reviewCheckpoints: z.array(z.string()),
+});
+
+const ProcessSavingsSchema = z.object({
+  recommendations: z.array(
+    z.object({
+      nodeId: z.string(),
+      automationPotential: z.enum(['low', 'medium', 'high']),
+      savingsEstimate: z.string(),
+      implementationEffort: z.enum(['low', 'medium', 'high']),
+      rationale: z.string(),
+    })
+  ),
+  summary: z.object({
+    totalSavingsEstimate: z.string(),
+    topOpportunityNodeIds: z.array(z.string()),
+    notes: z.array(z.string()),
+  }),
 });
 
 const VSMGeneratorSchema = z.object({
@@ -559,6 +617,8 @@ const SCHEMA_MAP: Record<GeneratorType, z.ZodSchema<any>> = {
   process_coach: ProcessCoachSchema,
   next_step: NextStepSchema,
   process_summary: ProcessSummarySchema,
+  process_brief: ProcessBriefSchema,
+  process_savings: ProcessSavingsSchema,
   vsm_generator: VSMGeneratorSchema,
   sticky_summarize: StickySummarizeSchema,
   vsm_future_state: VSMFutureStateSchema,
@@ -638,6 +698,65 @@ async function buildOrgContext(orgId: string): Promise<OrgContext> {
   }
 
   return ctx;
+}
+
+async function verifyArtifactCandidate(
+  orgId: string,
+  artifact: any
+): Promise<any> {
+  const type = String(artifact?.type || '').toLowerCase();
+  const rawId = String(artifact?.id || '').trim();
+  if (!type || !rawId) {
+    return { ...artifact, verified: false, verificationStatus: 'missing_id' };
+  }
+
+  const TABLE_MAP: Record<string, { table: string; title: string }> = {
+    initiative: { table: 'initiatives', title: 'title' },
+    task: { table: 'tasks', title: 'title' },
+    decision: { table: 'decisions', title: 'title' },
+    idea: { table: 'my_ideas', title: 'title' },
+    report: { table: 'reports', title: 'title' },
+    presentation: { table: 'presentations', title: 'title' },
+    notebook: { table: 'notebooks', title: 'title' },
+  };
+
+  const tableCfg = TABLE_MAP[type];
+  if (!tableCfg) {
+    return { ...artifact, verified: false, verificationStatus: 'unsupported_type' };
+  }
+
+  try {
+    const row = await queryHelpers.queryOne<any>(
+      `SELECT id, ${tableCfg.title} AS title
+       FROM ${tableCfg.table}
+       WHERE id = ? AND organization_id = ?
+       LIMIT 1`,
+      [rawId, orgId]
+    );
+    if (!row) {
+      return { ...artifact, verified: false, verificationStatus: 'not_found' };
+    }
+    return {
+      ...artifact,
+      id: row.id,
+      title: row.title || artifact.title,
+      verified: true,
+      verificationStatus: 'verified',
+    };
+  } catch {
+    return { ...artifact, verified: false, verificationStatus: 'lookup_failed' };
+  }
+}
+
+async function verifyRetrievedArtifacts(orgId: string, output: any): Promise<any> {
+  if (!Array.isArray(output?.artifacts) || output.artifacts.length === 0) return output;
+  const verifiedArtifacts = await Promise.all(
+    output.artifacts.map((artifact: any) => verifyArtifactCandidate(orgId, artifact))
+  );
+  return {
+    ...output,
+    artifacts: verifiedArtifacts,
+  };
 }
 
 function buildOrgContextBlock(org: OrgContext, isPl: boolean): string {
@@ -817,6 +936,36 @@ Lane'y: ${existingLaneLabels.join(', ') || 'brak'}`
 Elements: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: ${l}`).join(', ') || 'none'}
 Lanes: ${existingLaneLabels.join(', ') || 'none'}`,
 
+    process_brief: isPl
+      ? `Jesteś konsultantem process excellence. Przygotuj structured brief procesu gotowy do review. Zwróć: objective, currentGaps (3-5), nextMoves (3-5), reviewCheckpoints (3-5). Odpowiedz TYLKO w JSON.${orgBlock}
+
+Elementy: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: ${l}`).join(', ') || 'brak'}
+Lane'y: ${existingLaneLabels.join(', ') || 'brak'}`
+      : `You are a process excellence consultant. Prepare a structured process brief ready for review. Return: objective, currentGaps (3-5), nextMoves (3-5), reviewCheckpoints (3-5). Respond ONLY in JSON.${orgBlock}
+
+Elements: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: ${l}`).join(', ') || 'none'}
+Lanes: ${existingLaneLabels.join(', ') || 'none'}`,
+
+    process_savings: isPl
+      ? `Jesteś konsultantem automatyzacji procesów. Oceń każdy ważny krok procesu pod kątem potencjału automatyzacji i oszczędności. Zwróć recommendations[] z: nodeId, automationPotential, savingsEstimate, implementationEffort, rationale oraz summary z totalSavingsEstimate, topOpportunityNodeIds i notes. Odpowiedz TYLKO w JSON.${orgBlock}
+
+Elementy: ${ctx.existingNodes
+  .map(
+    (node: any, i: number) =>
+      `${node?.id || i}: ${node?.data?.label || existingNodeLabels[i] || 'step'} | duration=${node?.data?.duration || 'n/a'} | cost=${node?.data?.cost || 'n/a'} | automationCandidate=${node?.data?.automationCandidate ? 'yes' : 'no'}`
+  )
+  .join(', ') || 'brak'}
+Lane'y: ${existingLaneLabels.join(', ') || 'brak'}`
+      : `You are a process automation consultant. Assess each important process step for automation and savings potential. Return recommendations[] with: nodeId, automationPotential, savingsEstimate, implementationEffort, rationale plus a summary with totalSavingsEstimate, topOpportunityNodeIds, and notes. Respond ONLY in JSON.${orgBlock}
+
+Elements: ${ctx.existingNodes
+  .map(
+    (node: any, i: number) =>
+      `${node?.id || i}: ${node?.data?.label || existingNodeLabels[i] || 'step'} | duration=${node?.data?.duration || 'n/a'} | cost=${node?.data?.cost || 'n/a'} | automationCandidate=${node?.data?.automationCandidate ? 'yes' : 'no'}`
+  )
+  .join(', ') || 'none'}
+Lanes: ${existingLaneLabels.join(', ') || 'none'}`,
+
     vsm_generator: isPl
       ? `Jesteś ekspertem Lean manufacturing. Na podstawie opisu procesu wygeneruj mapę strumienia wartości (VSM) stanu obecnego z realistycznymi metrykami dla branży ${orgCtx.industry || 'produkcyjnej'}. Uwzględnij: bloki procesowe z czasem cyklu/przezbrojenia/dostępności, trójkąty zapasów, strzałki push/pull, dane osi czasu. Odpowiedz TYLKO w JSON.${orgBlock}
 
@@ -945,6 +1094,13 @@ function buildUserMessage(ctx: GeneratorContext): string {
     );
   if (ctx.branch) parts.push(isPl ? `Gałąź: ${ctx.branch}` : `Branch: ${ctx.branch}`);
   if (ctx.area) parts.push(isPl ? `Obszar: ${ctx.area}` : `Area: ${ctx.area}`);
+  if (ctx.selection?.ids?.length) {
+    parts.push(
+      isPl
+        ? `Zaznaczenie: ${ctx.selection.ids.length} elementów`
+        : `Selection: ${ctx.selection.ids.length} items`
+    );
+  }
 
   return (
     parts.join('\n\n') || (isPl ? 'Brak opisu wyzwania.' : 'No challenge description provided.')
@@ -955,6 +1111,7 @@ function buildUserMessage(ctx: GeneratorContext): string {
 
 export async function generateIdeaAI(request: GeneratorRequest): Promise<any> {
   const { generatorType, tool, context, userId, orgId } = request;
+  const scopedContext = getScopedGeneratorContext(generatorType, context);
 
   const schema = SCHEMA_MAP[generatorType];
   if (!schema) {
@@ -962,8 +1119,8 @@ export async function generateIdeaAI(request: GeneratorRequest): Promise<any> {
   }
 
   const orgCtx = await buildOrgContext(orgId);
-  const systemPrompt = buildSystemPrompt(generatorType, context, orgCtx);
-  const userMessage = buildUserMessage(context);
+  const systemPrompt = buildSystemPrompt(generatorType, scopedContext, orgCtx);
+  const userMessage = buildUserMessage(scopedContext);
 
   const { llmService } = await import('./ai/llmService.js');
   const modelRouter = (await import('./ai/modelRouter.js')).default;
@@ -988,17 +1145,160 @@ export async function generateIdeaAI(request: GeneratorRequest): Promise<any> {
     timeoutMs: 30000,
   });
 
-  const output = (result as any)?.object || result;
+  let output = (result as any)?.object || result;
+  if (generatorType === 'ai_retrieve_artifacts') {
+    output = await verifyRetrievedArtifacts(orgId, output);
+  }
 
   const ts = Date.now();
   const proposalId = `gen-${ts}-${Math.random().toString(36).slice(2, 6)}`;
 
-  return formatAsProposalBatch(generatorType, tool, output, proposalId, context.language);
+  return formatIdeaGeneratorOutput(generatorType, tool, output, proposalId, scopedContext.language);
 }
 
 // ── Format LLM output as AIProposalBatch ─────────────────────────────────────
 
-function formatAsProposalBatch(
+const WHITEBOARD_STICKY_PALETTE = [
+  '#fef3c7',
+  '#dbeafe',
+  '#d1fae5',
+  '#fce7f3',
+  '#ede9fe',
+  '#fee2e2',
+  '#e0e7ff',
+];
+
+const WHITEBOARD_FRAME_PALETTE = [
+  'rgba(245, 158, 11, 0.08)',
+  'rgba(59, 130, 246, 0.08)',
+  'rgba(16, 185, 129, 0.08)',
+  'rgba(236, 72, 153, 0.08)',
+  'rgba(139, 92, 246, 0.08)',
+  'rgba(148, 163, 184, 0.12)',
+];
+
+function createGridPosition(index: number, startX = 80, startY = 80, columns = 3) {
+  return {
+    x: startX + (index % columns) * 240,
+    y: startY + Math.floor(index / columns) * 180,
+  };
+}
+
+function toWhiteboardColorIndex(color: unknown, fallback = 0): number {
+  if (typeof color === 'number' && Number.isFinite(color)) return Math.max(0, Math.round(color)) % 7;
+  if (typeof color !== 'string' || !color.trim()) return fallback % 7;
+  const normalized = color.trim().toLowerCase();
+  const matchedIndex = WHITEBOARD_STICKY_PALETTE.findIndex(
+    (entry) => entry.toLowerCase() === normalized
+  );
+  return matchedIndex >= 0 ? matchedIndex : fallback % 7;
+}
+
+function toWhiteboardPriority(priority: unknown): number | undefined {
+  if (typeof priority === 'number' && Number.isFinite(priority)) {
+    return Math.max(0, Math.min(100, Math.round(priority)));
+  }
+  if (typeof priority !== 'string') return undefined;
+  const normalized = priority.trim().toLowerCase();
+  if (normalized === 'high') return 80;
+  if (normalized === 'medium') return 55;
+  if (normalized === 'low') return 25;
+  return undefined;
+}
+
+function createWhiteboardStickyNode(node: {
+  id: string;
+  label: string;
+  position?: { x: number; y: number };
+  data?: Record<string, unknown>;
+  color?: unknown;
+  author?: unknown;
+  priority?: unknown;
+}) {
+  const data = node.data && typeof node.data === 'object' ? node.data : {};
+  return {
+    id: node.id,
+    label: node.label,
+    type: 'stickyNote',
+    position: node.position,
+    data: {
+      ...data,
+      label: node.label,
+      author:
+        typeof data.author === 'string'
+          ? data.author
+          : typeof node.author === 'string'
+            ? node.author
+            : typeof (data as Record<string, unknown>).owner === 'string'
+              ? (data as Record<string, unknown>).owner
+              : undefined,
+      priority:
+        toWhiteboardPriority((data as Record<string, unknown>).priority) ??
+        toWhiteboardPriority(node.priority),
+      colorIndex: toWhiteboardColorIndex(
+        (data as Record<string, unknown>).colorIndex ??
+          (data as Record<string, unknown>).color ??
+          node.color,
+        0
+      ),
+    },
+  };
+}
+
+function createWhiteboardFrameNode(node: {
+  id: string;
+  label: string;
+  position?: { x: number; y: number };
+  data?: Record<string, unknown>;
+  bgColor?: string;
+  width?: number;
+  height?: number;
+}) {
+  const data = node.data && typeof node.data === 'object' ? node.data : {};
+  return {
+    id: node.id,
+    label: node.label,
+    type: 'frameNode',
+    position: node.position,
+    data: {
+      ...data,
+      label: node.label,
+      bgColor:
+        typeof (data as Record<string, unknown>).bgColor === 'string'
+          ? (data as Record<string, unknown>).bgColor
+          : node.bgColor,
+      width:
+        typeof (data as Record<string, unknown>).width === 'number'
+          ? (data as Record<string, unknown>).width
+          : node.width,
+      height:
+        typeof (data as Record<string, unknown>).height === 'number'
+          ? (data as Record<string, unknown>).height
+          : node.height,
+    },
+  };
+}
+
+function createTableRowNodes(rows: Array<Record<string, any>>, ts: number) {
+  return rows.map((row, index) => {
+    const cells = row?.cells && typeof row.cells === 'object' ? row.cells : {};
+    const label =
+      String(cells.title || cells.label || cells.name || Object.values(cells)[0] || '').trim() ||
+      `Row ${index + 1}`;
+    return {
+      id: `wb-table-row-${ts}-${index}`,
+      type: 'idea',
+      position: createGridPosition(index, 120, 120, 2),
+      data: {
+        label,
+        ...cells,
+        ...(row?.sourceNodeId ? { sourceNodeId: row.sourceNodeId } : {}),
+      },
+    };
+  });
+}
+
+export function formatIdeaGeneratorOutput(
   generatorType: GeneratorType,
   tool: CanvasTool,
   output: any,
@@ -1300,6 +1600,45 @@ function formatAsProposalBatch(
 
   if (generatorType === 'whiteboard_organize') {
     const groups = output?.groups || [];
+    const repositionMap = new Map<string, { x: number; y: number }>();
+    for (const item of output?.repositionedNodes || []) {
+      if (item?.id && item?.position) {
+        repositionMap.set(String(item.id), item.position);
+      }
+    }
+    const addNodes = groups.map((g: any, i: number) => {
+      const framePosition = createGridPosition(i, 80, 80, 2);
+      return createWhiteboardFrameNode({
+        id: g.id || `org-grp-${ts}-${i}`,
+        label: g.label,
+        position: framePosition,
+        bgColor: WHITEBOARD_FRAME_PALETTE[i % WHITEBOARD_FRAME_PALETTE.length],
+        width: 420,
+        height: 320,
+        data: { childIds: Array.isArray(g.nodeIds) ? g.nodeIds : [] },
+      });
+    });
+    const moveNodes = groups.flatMap((g: any, groupIndex: number) => {
+      const frameId = g.id || `org-grp-${ts}-${groupIndex}`;
+      const framePosition = addNodes[groupIndex]?.position || createGridPosition(groupIndex, 80, 80, 2);
+      const nodeIds = Array.isArray(g.nodeIds) ? g.nodeIds : [];
+      return nodeIds.map((nodeId: string, nodeIndex: number) => {
+        const absolute = repositionMap.get(String(nodeId));
+        const fallbackAbsolute = {
+          x: framePosition.x + 28 + (nodeIndex % 2) * 180,
+          y: framePosition.y + 70 + Math.floor(nodeIndex / 2) * 120,
+        };
+        const resolved = absolute || fallbackAbsolute;
+        return {
+          nodeId: String(nodeId),
+          parentId: frameId,
+          position: {
+            x: Math.max(20, resolved.x - framePosition.x),
+            y: Math.max(56, resolved.y - framePosition.y),
+          },
+        };
+      });
+    });
     return {
       id: batchId,
       tool,
@@ -1312,15 +1651,9 @@ function formatAsProposalBatch(
             ? `Proponuję ${groups.length} grup logicznych`
             : `Proposing ${groups.length} logical groups`,
           confidence: 0.7,
-          patch: {
-            addNodes: groups.map((g: any, i: number) => ({
-              id: g.id || `org-grp-${ts}-${i}`,
-              label: g.label,
-              type: 'groupNode',
-              data: { label: g.label, childIds: g.nodeIds },
-            })),
-            repositionedNodes: output?.repositionedNodes || [],
-          },
+          maturity: 'real',
+          generatorStatus: 'real',
+          patch: { addNodes, moveNodes },
           status: 'pending',
         },
       ],
@@ -1506,6 +1839,93 @@ function formatAsProposalBatch(
     };
   }
 
+  if (generatorType === 'process_brief') {
+    const objective = output?.objective || (isPl ? 'Brak celu' : 'No objective');
+    const currentGaps = output?.currentGaps || [];
+    const nextMoves = output?.nextMoves || [];
+    const reviewCheckpoints = output?.reviewCheckpoints || [];
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      proposals: [
+        {
+          id: `prop-${ts}-process-brief`,
+          type: 'view_patch',
+          rationale: isPl ? 'Structured brief procesu gotowy do review' : 'Structured process brief ready for review',
+          confidence: 0.82,
+          citations: [
+            { label: `${output?.currentGaps?.length || 0} gaps`, kind: 'note' },
+            { label: `${output?.nextMoves?.length || 0} next moves`, kind: 'note' },
+          ],
+          maturity: 'real',
+          patch: {
+            extensions: {
+              processFlow: {
+                processBrief: {
+                  objective,
+                  currentGaps,
+                  nextMoves,
+                  reviewCheckpoints,
+                  generatedAt: new Date(ts).toISOString(),
+                },
+              },
+            },
+          },
+          status: 'pending',
+        },
+      ],
+      createdAt: ts,
+    };
+  }
+
+  if (generatorType === 'process_savings') {
+    const recommendations = output?.recommendations || [];
+    return {
+      id: batchId,
+      tool,
+      generatorType,
+      proposals: [
+        {
+          id: `prop-${ts}-process-savings`,
+          type: 'graph_patch',
+          rationale: isPl
+            ? `Analiza savings dla ${recommendations.length} kroków`
+            : `Savings analysis for ${recommendations.length} steps`,
+          confidence: 0.8,
+          citations: [
+            { label: output?.summary?.totalSavingsEstimate || (isPl ? 'Brak sumy' : 'No total estimate'), kind: 'note' },
+          ],
+          maturity: 'real',
+          patch: {
+            updateNodes: recommendations.map((rec: any) => ({
+              id: rec.nodeId,
+              data: {
+                automationCandidate: rec.automationPotential !== 'low',
+                automationPotential: rec.automationPotential,
+                savingsEstimate: rec.savingsEstimate,
+                implementationEffort: rec.implementationEffort,
+                automationRationale: rec.rationale,
+              },
+            })),
+            extensions: {
+              processFlow: {
+                savingsAnalysis: {
+                  totalSavingsEstimate: output?.summary?.totalSavingsEstimate || '',
+                  topOpportunityNodeIds: output?.summary?.topOpportunityNodeIds || [],
+                  notes: output?.summary?.notes || [],
+                  generatedAt: new Date(ts).toISOString(),
+                },
+              },
+            },
+          },
+          status: 'pending',
+        },
+      ],
+      createdAt: ts,
+    };
+  }
+
   if (generatorType === 'vsm_generator') {
     const addNodes = (output?.addNodes || []).map((n: any, i: number) => ({
       id: n.id || `vsm-${ts}-${i}`,
@@ -1541,6 +1961,15 @@ function formatAsProposalBatch(
   }
 
   if (generatorType === 'sticky_summarize') {
+    const summaryNode = createWhiteboardStickyNode({
+      id: `sum-${ts}`,
+      label: output?.summary || '',
+      position: createGridPosition(0, 120, 120, 1),
+      data: {
+        keyThemes: output?.keyThemes || [],
+      },
+      color: WHITEBOARD_STICKY_PALETTE[1],
+    });
     return {
       id: batchId,
       tool,
@@ -1553,19 +1982,10 @@ function formatAsProposalBatch(
             ? `Podsumowanie ${output?.keyThemes?.length || 0} tematów`
             : `Summary of ${output?.keyThemes?.length || 0} themes`,
           confidence: 0.8,
+          maturity: 'real',
+          generatorStatus: 'real',
           patch: {
-            addNodes: [
-              {
-                id: `sum-${ts}`,
-                label: output?.summary || '',
-                type: 'stickyNote',
-                data: {
-                  label: output?.summary || '',
-                  color: '#dbeafe',
-                  keyThemes: output?.keyThemes || [],
-                },
-              },
-            ],
+            addNodes: [summaryNode],
             addEdges: [],
           },
           status: 'pending',
@@ -1720,14 +2140,19 @@ function formatAsProposalBatch(
         type: 'graph_patch',
         rationale: `${t.label}: ${t.description}`,
         confidence: t.confidence || 0.7,
+        maturity: 'real',
+        generatorStatus: 'real',
         patch: {
           addNodes: [
-            {
+            createWhiteboardFrameNode({
               id: t.id || `theme-${ts}-${i}`,
               label: t.label,
-              type: 'frameNode',
-              data: { label: t.label, description: t.description, childIds: t.nodeIds },
-            },
+              position: createGridPosition(i, 100, 90, 2),
+              bgColor: WHITEBOARD_FRAME_PALETTE[i % WHITEBOARD_FRAME_PALETTE.length],
+              width: 360,
+              height: 260,
+              data: { description: t.description, childIds: t.nodeIds },
+            }),
           ],
         },
         status: 'pending',
@@ -1771,20 +2196,33 @@ function formatAsProposalBatch(
       id: rootId,
       label: output?.rootLabel || 'Root',
       type: 'branch',
+      position: { x: 0, y: 0 },
       data: { label: output?.rootLabel || 'Root' },
     });
-    for (const branch of branches) {
+    for (let branchIndex = 0; branchIndex < branches.length; branchIndex++) {
+      const branch = branches[branchIndex];
       const bId = branch.id || `br-${ts}-${addNodes.length}`;
       addNodes.push({
         id: bId,
         label: branch.label,
         type: 'branch',
+        position: { x: -280 + branchIndex * 220, y: 180 },
         data: { label: branch.label },
       });
       addEdges.push({ id: `e-${rootId}-${bId}`, source: rootId, target: bId });
-      for (const child of branch.children || []) {
+      for (let childIndex = 0; childIndex < (branch.children || []).length; childIndex++) {
+        const child = branch.children[childIndex];
         const cId = child.id || `ch-${ts}-${addNodes.length}`;
-        addNodes.push({ id: cId, label: child.label, type: 'leaf', data: { label: child.label } });
+        addNodes.push({
+          id: cId,
+          label: child.label,
+          type: 'leaf',
+          position: {
+            x: -340 + branchIndex * 220,
+            y: 340 + childIndex * 120,
+          },
+          data: { label: child.label },
+        });
         addEdges.push({ id: `e-${bId}-${cId}`, source: bId, target: cId });
       }
     }
@@ -1800,6 +2238,13 @@ function formatAsProposalBatch(
             ? `Mapa myśli z ${branches.length} gałęziami`
             : `Mind map with ${branches.length} branches`,
           confidence: 0.8,
+          maturity: 'real',
+          generatorStatus: 'cross-tool',
+          targetTool: 'mindmap',
+          focusNodeId: rootId,
+          resultSummary: isPl
+            ? `Przełącz po akceptacji do mapy myśli (${branches.length} gałęzi)`
+            : `Switch to mind map after accept (${branches.length} branches)`,
           patch: { addNodes, addEdges },
           status: 'pending',
         },
@@ -1809,6 +2254,8 @@ function formatAsProposalBatch(
   }
 
   if (generatorType === 'wb_to_table') {
+    const columns = output?.columns || [];
+    const rows = output?.rows || [];
     return {
       id: batchId,
       tool,
@@ -1818,11 +2265,23 @@ function formatAsProposalBatch(
           id: `prop-${ts}-wb-to-table`,
           type: 'view_patch',
           rationale: isPl
-            ? `Tabela z ${output?.rows?.length || 0} wierszami`
-            : `Table with ${output?.rows?.length || 0} rows`,
+            ? `Tabela z ${rows.length} wierszami`
+            : `Table with ${rows.length} rows`,
           confidence: 0.8,
+          maturity: 'real',
+          generatorStatus: 'cross-tool',
+          targetTool: 'table',
+          resultSummary: isPl
+            ? `Przełącz po akceptacji do tabeli (${rows.length} wierszy)`
+            : `Switch to table after accept (${rows.length} rows)`,
           patch: {
-            extensions: { table: { columns: output?.columns || [], rows: output?.rows || [] } },
+            extensions: {
+              table: {
+                columns,
+                rows,
+                generatedRowNodes: createTableRowNodes(rows, ts),
+              },
+            },
           },
           status: 'pending',
         },
@@ -1846,19 +2305,23 @@ function formatAsProposalBatch(
             ? `${actions.length} akcji do wykonania`
             : `${actions.length} action items`,
           confidence: 0.8,
+          maturity: 'real',
+          generatorStatus: 'real',
           patch: {
-            addNodes: actions.map((a: any, i: number) => ({
-              id: a.id || `act-${ts}-${i}`,
-              label: a.text,
-              type: 'stickyNote',
-              data: {
+            addNodes: actions.map((a: any, i: number) =>
+              createWhiteboardStickyNode({
+                id: a.id || `act-${ts}-${i}`,
                 label: a.text,
-                color: '#d1fae5',
-                owner: a.owner,
+                position: createGridPosition(i, 120, 120, 3),
+                data: {
+                  sourceNodeId: a.sourceNodeId,
+                  status: 'todo',
+                },
+                color: WHITEBOARD_STICKY_PALETTE[2],
+                author: a.owner,
                 priority: a.priority,
-                sourceNodeId: a.sourceNodeId,
-              },
-            })),
+              })
+            ),
             addEdges: [],
           },
           status: 'pending',

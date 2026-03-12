@@ -23,10 +23,11 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 
 import type { CanvasToolType } from './ideaSelectionTypes';
+import type { CanvasTemplateGovernanceMeta } from './canvas/canvasOsContract';
 
 // ── Template types ───────────────────────────────────────────────────────────
 
-interface TemplateDefinition {
+export interface TemplateDefinition {
   id: string;
   nameEn: string;
   namePl: string;
@@ -37,6 +38,7 @@ interface TemplateDefinition {
   nodes: any[];
   edges: any[];
   extensions: Record<string, unknown>;
+  governance?: CanvasTemplateGovernanceMeta;
 }
 
 // ── Process Flow templates ───────────────────────────────────────────────────
@@ -53,6 +55,99 @@ const PROCESS_FLOW_TEMPLATES: TemplateDefinition[] = [
     nodes: [],
     edges: [],
     extensions: { processFlow: { lanes: [{ id: 'lane-1', label: 'Lane 1', color: '#e0e7ff' }] } },
+  },
+  {
+    id: 'pf-process-improvement',
+    nameEn: 'Process Improvement Workshop',
+    namePl: 'Warsztat usprawnienia procesu',
+    descEn: 'Current state, bottlenecks, target state, and KPI checkpoints in one starter.',
+    descPl: 'Stan obecny, bottlenecks, stan docelowy i checkpointy KPI w jednym starterze.',
+    icon: Sparkles,
+    tool: 'process_flow',
+    nodes: [
+      {
+        id: 'pf-pi-start',
+        type: 'flowNode',
+        position: { x: 40, y: 60 },
+        data: { label: 'Current state start', shape: 'start', laneId: 'lane-current', laneColor: '#dbeafe' },
+      },
+      {
+        id: 'pf-pi-map',
+        type: 'flowNode',
+        position: { x: 240, y: 60 },
+        data: { label: 'Map current process', shape: 'action', laneId: 'lane-current', laneColor: '#dbeafe' },
+      },
+      {
+        id: 'pf-pi-bottleneck',
+        type: 'flowNode',
+        position: { x: 460, y: 60 },
+        data: { label: 'Identify bottlenecks', shape: 'decision', laneId: 'lane-current', laneColor: '#dbeafe' },
+      },
+      {
+        id: 'pf-pi-kpi',
+        type: 'flowNode',
+        position: { x: 700, y: 220 },
+        data: { label: 'Define KPI baseline', shape: 'action', laneId: 'lane-kpi', laneColor: '#fef3c7' },
+      },
+      {
+        id: 'pf-pi-hypothesis',
+        type: 'flowNode',
+        position: { x: 700, y: 60 },
+        data: { label: 'Improvement hypothesis', shape: 'action', laneId: 'lane-target', laneColor: '#d1fae5' },
+      },
+      {
+        id: 'pf-pi-future',
+        type: 'flowNode',
+        position: { x: 930, y: 60 },
+        data: { label: 'Future state design', shape: 'action', laneId: 'lane-target', laneColor: '#d1fae5' },
+      },
+      {
+        id: 'pf-pi-review',
+        type: 'flowNode',
+        position: { x: 1160, y: 140 },
+        data: { label: 'Review impact', shape: 'end', laneId: 'lane-kpi', laneColor: '#fef3c7' },
+      },
+    ],
+    edges: [
+      { id: 'e-pi-1', source: 'pf-pi-start', target: 'pf-pi-map', type: 'flowEdge' },
+      { id: 'e-pi-2', source: 'pf-pi-map', target: 'pf-pi-bottleneck', type: 'flowEdge' },
+      {
+        id: 'e-pi-3',
+        source: 'pf-pi-bottleneck',
+        target: 'pf-pi-hypothesis',
+        type: 'flowEdge',
+        label: 'High impact',
+        data: { conditionType: 'yes' },
+      },
+      {
+        id: 'e-pi-4',
+        source: 'pf-pi-bottleneck',
+        target: 'pf-pi-kpi',
+        type: 'flowEdge',
+        label: 'Needs baseline',
+        data: { conditionType: 'default' },
+      },
+      { id: 'e-pi-5', source: 'pf-pi-kpi', target: 'pf-pi-review', type: 'flowEdge' },
+      { id: 'e-pi-6', source: 'pf-pi-hypothesis', target: 'pf-pi-future', type: 'flowEdge' },
+      { id: 'e-pi-7', source: 'pf-pi-future', target: 'pf-pi-review', type: 'flowEdge' },
+    ],
+    extensions: {
+      processFlow: {
+        lanes: [
+          { id: 'lane-current', label: 'Current state', color: '#dbeafe' },
+          { id: 'lane-target', label: 'Target state', color: '#d1fae5' },
+          { id: 'lane-kpi', label: 'KPI / Review', color: '#fef3c7' },
+        ],
+        semanticKit: 'classic',
+      },
+    },
+    governance: {
+      category: 'process',
+      library: 'core',
+      version: '1.0.0',
+      scope: 'global',
+      capability: 'real',
+    },
   },
   {
     id: 'pf-basic',
@@ -558,6 +653,104 @@ const PROCESS_FLOW_TEMPLATES: TemplateDefinition[] = [
         ],
       },
     },
+  },
+];
+
+const TYPED_PROCESS_FLOW_TEMPLATES: TemplateDefinition[] = [
+  {
+    id: 'pf-bpmn-approval',
+    nameEn: 'BPMN Approval',
+    namePl: 'BPMN Approval',
+    descEn: 'Typed BPMN starter with event, tasks, and gateway.',
+    descPl: 'Typowany starter BPMN z eventem, zadaniami i bramką.',
+    icon: Workflow,
+    tool: 'process_flow',
+    nodes: [
+      {
+        id: 'bpmn-start',
+        type: 'flowNode',
+        position: { x: 60, y: 80 },
+        data: { label: 'Start event', shape: 'bpmn_event', semanticType: 'process' },
+      },
+      {
+        id: 'bpmn-task-1',
+        type: 'flowNode',
+        position: { x: 240, y: 80 },
+        data: { label: 'Submit request', shape: 'bpmn_task', semanticType: 'process' },
+      },
+      {
+        id: 'bpmn-gateway',
+        type: 'flowNode',
+        position: { x: 460, y: 80 },
+        data: { label: 'Approved?', shape: 'bpmn_gateway', semanticType: 'decision' },
+      },
+      {
+        id: 'bpmn-task-2',
+        type: 'flowNode',
+        position: { x: 680, y: 20 },
+        data: { label: 'Notify approver', shape: 'bpmn_task', semanticType: 'process' },
+      },
+      {
+        id: 'bpmn-end',
+        type: 'flowNode',
+        position: { x: 900, y: 80 },
+        data: { label: 'End event', shape: 'bpmn_event', semanticType: 'process' },
+      },
+    ],
+    edges: [
+      { id: 'e-bpmn-1', source: 'bpmn-start', target: 'bpmn-task-1', type: 'flowEdge' },
+      { id: 'e-bpmn-2', source: 'bpmn-task-1', target: 'bpmn-gateway', type: 'flowEdge' },
+      { id: 'e-bpmn-3', source: 'bpmn-gateway', target: 'bpmn-task-2', type: 'flowEdge', label: 'Yes' },
+      { id: 'e-bpmn-4', source: 'bpmn-gateway', target: 'bpmn-end', type: 'flowEdge', label: 'No' },
+      { id: 'e-bpmn-5', source: 'bpmn-task-2', target: 'bpmn-end', type: 'flowEdge' },
+    ],
+    extensions: { processFlow: { semanticKit: 'bpmn', lanes: [{ id: 'lane-1', label: 'BPMN Lane', color: '#dbeafe' }] } },
+    governance: { category: 'process', library: 'core', version: '1.0.0', scope: 'global', capability: 'real' },
+  },
+  {
+    id: 'pf-system-architecture',
+    nameEn: 'System Mapping',
+    namePl: 'Mapa systemów',
+    descEn: 'Typed service, actor, and datastore starter.',
+    descPl: 'Typowany starter z serwisem, aktorem i magazynem danych.',
+    icon: Network,
+    tool: 'process_flow',
+    nodes: [
+      { id: 'sys-actor', type: 'flowNode', position: { x: 60, y: 80 }, data: { label: 'Business user', shape: 'system_actor', semanticType: 'role' } },
+      { id: 'sys-service', type: 'flowNode', position: { x: 280, y: 80 }, data: { label: 'Core service', shape: 'system_service', semanticType: 'system' } },
+      { id: 'sys-db', type: 'flowNode', position: { x: 520, y: 80 }, data: { label: 'ERP data store', shape: 'system_db', semanticType: 'system' } },
+      { id: 'sys-gateway', type: 'flowNode', position: { x: 760, y: 80 }, data: { label: 'API gateway', shape: 'decision', semanticType: 'system' } },
+    ],
+    edges: [
+      { id: 'e-sys-1', source: 'sys-actor', target: 'sys-service', type: 'flowEdge' },
+      { id: 'e-sys-2', source: 'sys-service', target: 'sys-db', type: 'flowEdge' },
+      { id: 'e-sys-3', source: 'sys-db', target: 'sys-gateway', type: 'flowEdge' },
+    ],
+    extensions: { processFlow: { semanticKit: 'system', lanes: [{ id: 'lane-1', label: 'System Boundary', color: '#cffafe' }] } },
+    governance: { category: 'system', library: 'core', version: '1.0.0', scope: 'global', capability: 'real' },
+  },
+  {
+    id: 'pf-org-handoffs',
+    nameEn: 'Org Handoffs',
+    namePl: 'Przekazania organizacyjne',
+    descEn: 'Typed org starter for roles, teams, and handoffs.',
+    descPl: 'Typowany starter organizacyjny dla ról, zespołów i przekazań.',
+    icon: Layers,
+    tool: 'process_flow',
+    nodes: [
+      { id: 'org-role', type: 'flowNode', position: { x: 60, y: 80 }, data: { label: 'Request owner', shape: 'org_role', semanticType: 'role' } },
+      { id: 'org-team', type: 'flowNode', position: { x: 280, y: 80 }, data: { label: 'Operations team', shape: 'org_team', semanticType: 'role' } },
+      { id: 'org-handoff', type: 'flowNode', position: { x: 520, y: 80 }, data: { label: 'Approval handoff', shape: 'org_handoff', semanticType: 'process' } },
+      { id: 'org-role-2', type: 'flowNode', position: { x: 760, y: 80 }, data: { label: 'Finance reviewer', shape: 'org_role', semanticType: 'role' } },
+    ],
+    edges: [
+      { id: 'e-org-1', source: 'org-role', target: 'org-team', type: 'flowEdge' },
+      { id: 'e-org-2', source: 'org-team', target: 'org-handoff', type: 'flowEdge' },
+      { id: 'e-org-3', source: 'org-handoff', target: 'org-role-2', type: 'flowEdge', label: 'Escalate' },
+      { id: 'e-org-4', source: 'org-handoff', target: 'org-role', type: 'flowEdge', label: 'Feedback' },
+    ],
+    extensions: { processFlow: { semanticKit: 'org', lanes: [{ id: 'lane-1', label: 'Org Flow', color: '#f3e8ff' }] } },
+    governance: { category: 'org', library: 'core', version: '1.0.0', scope: 'global', capability: 'real' },
   },
 ];
 
@@ -1550,10 +1743,44 @@ const EXTRA_MINDMAP_TEMPLATES: TemplateDefinition[] = [
 
 const ALL_TEMPLATES = [
   ...PROCESS_FLOW_TEMPLATES,
+  ...TYPED_PROCESS_FLOW_TEMPLATES,
   ...MINDMAP_TEMPLATES,
   ...EXTRA_MINDMAP_TEMPLATES,
   ...WHITEBOARD_TEMPLATES,
 ];
+
+export function findIdeaTemplate(templateId: string): TemplateDefinition | null {
+  return ALL_TEMPLATES.find((template) => template.id === templateId) || null;
+}
+
+export async function applyIdeaTemplate(params: {
+  ideaId: string;
+  template: TemplateDefinition;
+  isPl?: boolean;
+  activeTool?: CanvasToolType;
+}): Promise<void> {
+  const { ideaId, template, activeTool = template.tool, isPl } = params;
+  await Api.saveMyIdeaMap(ideaId, {
+    nodes: template.nodes,
+    edges: template.edges,
+    preferredTool: template.tool,
+    extensions: {
+      ...template.extensions,
+      templateGovernance: {
+        templateId: template.id,
+        templateName: isPl ? template.namePl : template.nameEn,
+        appliedAt: new Date().toISOString(),
+        ...(template.governance || {
+          category: activeTool === 'process_flow' ? 'process' : 'private',
+          library: 'core',
+          version: '1.0.0',
+          scope: 'global',
+          capability: 'real',
+        }),
+      },
+    },
+  });
+}
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -1576,18 +1803,26 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
   const isPl = i18n.language?.startsWith('pl');
   const [applying, setApplying] = useState<string | null>(null);
   const [aiFilling, setAiFilling] = useState<string | null>(null);
+  const [scopeFilter, setScopeFilter] = useState<'all' | CanvasTemplateGovernanceMeta['scope']>('all');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | CanvasTemplateGovernanceMeta['category']>('all');
 
-  const templates = ALL_TEMPLATES.filter((t) => t.tool === activeTool);
+  const templates = ALL_TEMPLATES.filter((t) => {
+    if (t.tool !== activeTool) return false;
+    const governance = t.governance;
+    if (scopeFilter !== 'all' && governance?.scope !== scopeFilter) return false;
+    if (categoryFilter !== 'all' && governance?.category !== categoryFilter) return false;
+    return true;
+  });
 
   const handleApply = useCallback(
     async (template: TemplateDefinition, withAIFill = false) => {
       setApplying(template.id);
       try {
-        await Api.saveMyIdeaMap(ideaId, {
-          nodes: template.nodes,
-          edges: template.edges,
-          preferredTool: template.tool,
-          extensions: template.extensions,
+        await applyIdeaTemplate({
+          ideaId,
+          template,
+          isPl,
+          activeTool,
         });
 
         if (withAIFill && template.nodes.length > 0) {
@@ -1657,6 +1892,37 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
           </button>
         </div>
 
+        <div className="px-5 py-3 border-b border-slate-200/60 dark:border-navy-700/60 flex flex-wrap gap-2">
+          {(['all', 'global', 'organization', 'project', 'private'] as const).map((scope) => (
+            <button
+              key={scope}
+              type="button"
+              onClick={() => setScopeFilter(scope)}
+              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
+                scopeFilter === scope
+                  ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                  : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
+              }`}
+            >
+              {scope}
+            </button>
+          ))}
+          {(['all', 'process', 'system', 'org', 'strategy', 'workshop'] as const).map((category) => (
+            <button
+              key={category}
+              type="button"
+              onClick={() => setCategoryFilter(category)}
+              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
+                categoryFilter === category
+                  ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+                  : 'bg-slate-100 text-slate-500 dark:bg-navy-800 dark:text-slate-300'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+
         {/* Templates grid */}
         <div className="flex-1 overflow-y-auto p-5">
           {templates.length === 0 ? (
@@ -1667,6 +1933,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
             <div className="grid grid-cols-2 gap-3">
               {templates.map((template) => {
                 const Icon = template.icon;
+                const governance = template.governance;
                 return (
                   <div
                     key={template.id}
@@ -1683,6 +1950,19 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
                         <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
                           {isPl ? template.descPl : template.descEn}
                         </div>
+                        {governance && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                              {governance.category}
+                            </span>
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                              {governance.scope}
+                            </span>
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-navy-800 dark:text-slate-300">
+                              v{governance.version}
+                            </span>
+                          </div>
+                        )}
                         <div className="mt-2 flex items-center gap-2">
                           <button
                             onClick={() => handleApply(template)}

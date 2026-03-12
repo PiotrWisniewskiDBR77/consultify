@@ -6,11 +6,14 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '@/services/api';
 
 import { type RowAction } from '../../shared/RowActionsMenu';
-import { type FinanceModelRow, type FinanceRow } from '../financeTypes';
+import { type FinanceModelRow, type FinanceRow, type FinanceStatementRow } from '../financeTypes';
 
 interface UseFinanceRowActionsParams {
   handleOpenFull: (row: FinanceRow) => void;
   handleExport: (row: FinanceRow) => void;
+  handleCreateModelFromStatement: (row: FinanceStatementRow) => void;
+  handleCreateAnalysisFromStatements: (statementIds: string[]) => void;
+  loadStatements: () => Promise<void>;
   loadModels: () => Promise<void>;
   loadAnalyses: () => Promise<void>;
   loadBudgets: () => Promise<void>;
@@ -24,6 +27,9 @@ interface UseFinanceRowActionsParams {
 export function useFinanceRowActions({
   handleOpenFull,
   handleExport,
+  handleCreateModelFromStatement,
+  handleCreateAnalysisFromStatements,
+  loadStatements,
   loadModels,
   loadAnalyses,
   loadBudgets,
@@ -44,7 +50,10 @@ export function useFinanceRowActions({
       if (!window.confirm(confirmMsg)) return;
 
       try {
-        if (
+        if (row.kind === 'statements') {
+          await Api.delete(`/api/finance-statements/${row.id}`);
+          await loadStatements();
+        } else if (
           row.kind === 'models' ||
           (row.kind === 'prediction' && (row as FinanceModelRow).predictionType === 'model')
         ) {
@@ -71,14 +80,19 @@ export function useFinanceRowActions({
         );
       }
     },
-    [isPl, loadModels, loadAnalyses, loadBudgets, loadValuations, getBudgetRawId, t]
+    [isPl, loadStatements, loadModels, loadAnalyses, loadBudgets, loadValuations, getBudgetRawId, t]
   );
 
   const handleDuplicate = useCallback(
     async (row: FinanceRow) => {
       try {
         const copyTitle = `${row.title} (${isPl ? 'kopia' : 'copy'})`;
-        if (
+        if (row.kind === 'statements') {
+          toast.error(
+            t('finance.toast.statementDuplicateUnsupported', 'Duplikacja statementu nie jest wspierana')
+          );
+          return;
+        } else if (
           row.kind === 'models' ||
           (row.kind === 'prediction' && (row as FinanceModelRow).predictionType === 'model')
         ) {
@@ -143,12 +157,16 @@ export function useFinanceRowActions({
           icon: Eye,
           onClick: () => handleOpenFull(row),
         },
-        {
-          id: 'duplicate',
-          label: t('common.duplicate', 'Duplikuj'),
-          icon: Copy,
-          onClick: () => handleDuplicate(row),
-        },
+        ...(row.kind === 'statements'
+          ? []
+          : [
+              {
+                id: 'duplicate',
+                label: t('common.duplicate', 'Duplikuj'),
+                icon: Copy,
+                onClick: () => handleDuplicate(row),
+              },
+            ]),
         ...(row.kind === 'analysis' ||
         row.kind === 'investment' ||
         row.kind === 'models' ||
@@ -166,6 +184,54 @@ export function useFinanceRowActions({
       ];
 
       const tabSpecific: RowAction[] = [];
+
+      if (row.kind === 'statements') {
+        const statementRow = row as FinanceStatementRow;
+        tabSpecific.push(
+          {
+            id: 'createModel',
+            label: t('finance.row.createModelFromStatement', 'Utwórz model'),
+            icon: TrendingUp,
+            variant: 'primary',
+            disabled: !statementRow.isWorkable,
+            onClick: () => handleCreateModelFromStatement(statementRow),
+          },
+          {
+            id: 'createAnalysis',
+            label: t('finance.row.createAnalysisFromStatement', 'Utwórz analizę'),
+            icon: Eye,
+            disabled: !statementRow.isWorkable,
+            onClick: () => handleCreateAnalysisFromStatements([statementRow.id]),
+          }
+        );
+        if (!statementRow.isWorkable) {
+          tabSpecific.push({
+            id: 'recovery',
+            label: t('finance.row.needsRecovery', 'Wymaga recovery'),
+            icon: RefreshCw,
+            onClick: () => handleOpenFull(statementRow),
+          });
+        }
+        if (statementRow.isWorkable && String(statementRow.rawStatus || '').toLowerCase() !== 'confirmed') {
+          tabSpecific.push({
+            id: 'confirm',
+            label: t('finance.row.confirmStatement', 'Potwierdź'),
+            icon: CheckCircle,
+            onClick: async () => {
+              try {
+                await Api.post(`/api/finance-statements/${statementRow.id}/confirm`, {});
+                await loadStatements();
+                toast.success(t('finance.toast.statementConfirmed', 'Statement potwierdzony'));
+              } catch (e: any) {
+                toast.error(
+                  e?.response?.data?.error ||
+                    t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                );
+              }
+            },
+          });
+        }
+      }
 
       if (row.kind === 'models') {
         if (row.status !== 'APPROVED') {
@@ -227,6 +293,15 @@ export function useFinanceRowActions({
               );
             }
           },
+        });
+        tabSpecific.push({
+          id: 'createValuation',
+          label: t('finance.row.createValuation', 'Utwórz wycenę'),
+          icon: TrendingUp,
+          onClick: () =>
+            window.location.assign(
+              `/economics?tab=valuation&createFrom=financial_analysis&sourceId=${row.id}`
+            ),
         });
       }
 
@@ -376,8 +451,11 @@ export function useFinanceRowActions({
       t,
       isPl,
       handleOpenFull,
+      handleCreateModelFromStatement,
+      handleCreateAnalysisFromStatements,
       handleDelete,
       handleDuplicate,
+      loadStatements,
       loadPredictionPreview,
       loadAnalyses,
       loadBudgets,

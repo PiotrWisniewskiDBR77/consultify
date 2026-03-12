@@ -1755,7 +1755,8 @@ router.get(
       `SELECT id, title, status, approved_at, updated_at
      FROM budgets
      WHERE organization_id = ?
-     ORDER BY CASE WHEN status = 'APPROVED' THEN 0 ELSE 1 END, updated_at DESC
+       AND UPPER(status) = 'APPROVED'
+     ORDER BY updated_at DESC
      LIMIT 50`,
       [orgId]
     );
@@ -1766,13 +1767,24 @@ router.get(
         `SELECT id, name, status, approved_at, updated_at
        FROM financial_models
        WHERE organization_id = ?
-       ORDER BY CASE WHEN status = 'approved' THEN 0 ELSE 1 END, updated_at DESC
+         AND LOWER(status) = 'approved'
+       ORDER BY updated_at DESC
        LIMIT 50`,
         [orgId]
       );
     } catch {
       financialModels = [];
     }
+
+    const financialAnalyses = await dbAll<any>(
+      `SELECT id, title, status, updated_at
+       FROM financial_analyses
+       WHERE organization_id = ?
+         AND UPPER(status) IN ('APPROVED', 'COMPLETED')
+       ORDER BY updated_at DESC
+       LIMIT 50`,
+      [orgId]
+    );
 
     return res.json({
       success: true,
@@ -1790,6 +1802,12 @@ router.get(
           status: m.status,
           approvedAt: m.approved_at,
           updatedAt: m.updated_at,
+        })),
+        financialAnalyses: (financialAnalyses || []).map((analysis: any) => ({
+          id: analysis.id,
+          title: analysis.title,
+          status: analysis.status,
+          updatedAt: analysis.updated_at,
         })),
       },
     });

@@ -1248,8 +1248,8 @@
       "open": "Open",
       "canvasTools": {
         "ariaLabel": "Canvas tool",
-        "mindmap": "Mind map",
-        "mindmapTooltip": "Mind map view — hierarchical nodes and connections",
+        "mindmap": "Recommendation map",
+        "mindmapTooltip": "Recommendation map — hierarchical nodes and recommendation branches",
         "processFlow": "Process flow",
         "processFlowTooltip": "Process flow view — sequential steps and dependencies",
         "table": "Table",

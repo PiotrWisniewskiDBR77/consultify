@@ -1,11 +1,9 @@
 /**
  * ActivityFeed — Panel showing history of map changes.
- * Tracks node additions, deletions, edits, AI actions, and status changes.
+ * Primary storage: backend API. Falls back to localStorage when API unavailable.
  */
 import {
   Bot,
-  ChevronDown,
-  ChevronUp,
   Clock,
   Edit3,
   GitBranch,
@@ -18,6 +16,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '@/services/api';
 
 export interface ActivityEntry {
   id: string;
@@ -46,9 +46,9 @@ interface ActivityFeedProps {
 }
 
 const STORAGE_KEY_PREFIX = 'mm-activity-';
-const MAX_ENTRIES = 100;
+const MAX_LOCAL_ENTRIES = 100;
 
-function loadActivity(ideaId: string): ActivityEntry[] {
+function loadLocalActivity(ideaId: string): ActivityEntry[] {
   try {
     const raw = localStorage.getItem(`${STORAGE_KEY_PREFIX}${ideaId}`);
     return raw ? JSON.parse(raw) : [];
@@ -57,19 +57,40 @@ function loadActivity(ideaId: string): ActivityEntry[] {
   }
 }
 
-export function pushActivity(ideaId: string, entry: Omit<ActivityEntry, 'id' | 'timestamp'>) {
+function saveLocalActivity(ideaId: string, entries: ActivityEntry[]) {
   try {
-    const existing = loadActivity(ideaId);
-    const full: ActivityEntry = {
-      ...entry,
-      id: `act-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
-      timestamp: Date.now(),
-    };
-    const updated = [...existing, full].slice(-MAX_ENTRIES);
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}${ideaId}`, JSON.stringify(updated));
-  } catch {
-    // storage full
-  }
+    localStorage.setItem(
+      `${STORAGE_KEY_PREFIX}${ideaId}`,
+      JSON.stringify(entries.slice(-MAX_LOCAL_ENTRIES))
+    );
+  } catch { /* storage full */ }
+}
+
+/**
+ * Fire-and-forget activity push. Tries backend first, falls back to localStorage.
+ */
+export function pushActivity(ideaId: string, entry: Omit<ActivityEntry, 'id' | 'timestamp'>) {
+  const full: ActivityEntry = {
+    ...entry,
+    id: `act-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+    timestamp: Date.now(),
+  };
+
+  // Always save locally as immediate fallback
+  const existing = loadLocalActivity(ideaId);
+  const updated = [...existing, full].slice(-MAX_LOCAL_ENTRIES);
+  saveLocalActivity(ideaId, updated);
+
+  // Try backend (fire-and-forget)
+  Api.createMyIdeaActivity(ideaId, {
+    type: entry.type,
+    actor: entry.actor,
+    nodeId: entry.nodeId,
+    nodeLabel: entry.nodeLabel,
+    detail: entry.detail,
+  }).catch(() => { /* API unavailable, localStorage already has it */ });
+
+  window.dispatchEvent(new CustomEvent('mm-activity-update'));
 }
 
 const TYPE_ICONS: Record<string, React.ComponentType<any>> = {
@@ -106,19 +127,34 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
   const isPl = i18n.language?.startsWith('pl');
 
   const [entries, setEntries] = useState<ActivityEntry[]>([]);
-  const [expanded, setExpanded] = useState(true);
   const [filter, setFilter] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) {
-      setEntries(loadActivity(ideaId));
-    }
+    if (!open) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const data = await Api.getMyIdeaActivity(ideaId, { limit: 200 });
+        if (!cancelled && Array.isArray(data?.entries)) {
+          setEntries(data.entries);
+          return;
+        }
+      } catch { /* API unavailable */ }
+
+      if (!cancelled) {
+        setEntries(loadLocalActivity(ideaId));
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [ideaId, open]);
 
-  // Listen for new activity events
   useEffect(() => {
     if (!open) return;
-    const handler = () => setEntries(loadActivity(ideaId));
+    const handler = () => {
+      setEntries(loadLocalActivity(ideaId));
+    };
     window.addEventListener('mm-activity-update', handler);
     return () => window.removeEventListener('mm-activity-update', handler);
   }, [ideaId, open]);
@@ -144,7 +180,6 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
 
   return (
     <div className="fixed top-0 right-0 bottom-0 z-[84] w-[340px] max-w-[85vw] bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border-l border-slate-200/60 dark:border-navy-700/60 shadow-2xl flex flex-col overflow-hidden">
-      {/* Header */}
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-200/40 dark:border-navy-700/40">
         <Clock size={14} className="text-amber-500 shrink-0" />
         <span className="text-[11px] font-bold text-slate-800 dark:text-white flex-1">
@@ -159,7 +194,6 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         </button>
       </div>
 
-      {/* Filters */}
       <div className="px-4 py-2 border-b border-slate-200/30 dark:border-navy-700/30 flex items-center gap-1 overflow-x-auto">
         <button
           onClick={() => setFilter(null)}
@@ -178,7 +212,6 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
         ))}
       </div>
 
-      {/* Entries */}
       <div className="flex-1 overflow-y-auto px-4 py-2">
         {filtered.length === 0 ? (
           <div className="text-center py-8 text-[11px] text-slate-400">

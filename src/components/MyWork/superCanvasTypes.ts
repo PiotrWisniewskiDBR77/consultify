@@ -19,7 +19,7 @@ export type ObjectFamily =
   | 'system';
 
 export const OBJECT_FAMILY_LABELS: Record<ObjectFamily, { en: string; pl: string }> = {
-  mindmap: { en: 'Mind Map', pl: 'Mapa myśli' },
+  mindmap: { en: 'Recommendation map', pl: 'Mapa rekomendacji' },
   whiteboard: { en: 'Whiteboard', pl: 'Tablica' },
   process_flow: { en: 'Process Flow', pl: 'Przepływ procesu' },
   table: { en: 'Table', pl: 'Tabela' },
@@ -64,6 +64,13 @@ export const NODE_TYPE_TO_FAMILY: Record<string, ObjectFamily> = {
   frameNode: 'whiteboard',
   imageNode: 'whiteboard',
   linkNode: 'whiteboard',
+  iconNode: 'whiteboard',
+  areaNode: 'whiteboard',
+  tableBlockNode: 'whiteboard',
+  themeCard: 'whiteboard',
+  outcomeCard: 'whiteboard',
+  decisionCard: 'whiteboard',
+  actionCard: 'whiteboard',
   summaryCard: 'whiteboard',
   kpiBadge: 'whiteboard',
   scoreNode: 'whiteboard',

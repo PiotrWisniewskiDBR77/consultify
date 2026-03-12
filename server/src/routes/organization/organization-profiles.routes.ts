@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { type AuthRequest, verifyToken } from '../../middleware/auth.middleware.js';
 import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js';
+import organizationContextService from '../../services/organizationContext/OrganizationContextService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -19,6 +20,19 @@ const notConfigured = (res: Response) =>
     type: 'not_configured',
     message: 'Service temporarily unavailable due to missing configuration',
   });
+
+const safeParseArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.filter((entry): entry is string => typeof entry === 'string');
+  if (typeof value !== 'string' || !value.trim()) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.filter((entry): entry is string => typeof entry === 'string')
+      : [];
+  } catch {
+    return [];
+  }
+};
 
 // Apply rate limiting and auth
 router.use(apiAuthRateLimiter);
@@ -41,6 +55,8 @@ router.get(
     }
 
     try {
+      const resolvedContext = await organizationContextService.buildResolvedContext(orgId).catch(() => null);
+
       // Get basic organization info
       const org = await dbGet<{
         id: string;
@@ -107,40 +123,93 @@ router.get(
       ];
       const filledFields = fields.filter(Boolean).length;
       const completeness = Math.round((filledFields / fields.length) * 100);
+      const hasResolvedProfile =
+        Boolean(resolvedContext?.profile.companyName) ||
+        Boolean(resolvedContext?.profile.industry) ||
+        Boolean(resolvedContext?.profile.description);
 
       return res.json({
-        exists: !!profile,
+        exists: !!profile || hasResolvedProfile,
         profile: {
           // Basic info
-          name: org.name,
+          name: resolvedContext?.profile.companyName || org.name,
           logoUrl: branding?.logo_light_url || brandingSettings.logoUrl || '',
-          description: brandingSettings.description || '',
+          description: resolvedContext?.profile.description || brandingSettings.description || '',
 
           // Company details
-          industry: profile?.industry || brandingSettings.industry || 'Technology',
-          companySize: profile?.company_size || brandingSettings.companySize || '51-200',
-          website: brandingSettings.website || '',
+          industry:
+            resolvedContext?.profile.industry ||
+            profile?.industry ||
+            brandingSettings.industry ||
+            'Technology',
+          companySize:
+            resolvedContext?.profile.companySize ||
+            profile?.company_size ||
+            brandingSettings.companySize ||
+            '51-200',
+          website: resolvedContext?.profile.website || brandingSettings.website || '',
+          employee_count:
+            resolvedContext?.profile.employeeCount || profile?.employee_count || undefined,
+          annual_revenue:
+            resolvedContext?.profile.annualRevenue &&
+            Number.isFinite(Number(resolvedContext.profile.annualRevenue))
+              ? Number(resolvedContext.profile.annualRevenue)
+              : undefined,
+          headquarters_country:
+            resolvedContext?.profile.location || profile?.headquarters_country || '',
+          strategic_priorities:
+            resolvedContext?.strategic.priorities ||
+            resolvedContext?.strategic.goals ||
+            safeParseArray(profile?.strategic_priorities),
+          competitive_position:
+            resolvedContext?.strategic.competitivePosition || (brandingSettings.competitive_position ?? ''),
+          growth_stage: resolvedContext?.strategic.growthStage || (brandingSettings.growth_stage ?? ''),
+          mission_statement: resolvedContext?.strategic.mission || (brandingSettings.mission_statement ?? ''),
+          vision_statement: resolvedContext?.strategic.vision || (brandingSettings.vision_statement ?? ''),
+          technology_stack:
+            resolvedContext?.systems.stack || safeParseArray(brandingSettings.technology_stack),
+          cloud_adoption_level:
+            resolvedContext?.systems.cloudAdoption ||
+            brandingSettings.cloud_adoption_level ||
+            '',
+          preferred_language:
+            resolvedContext?.profile.defaultLanguage || profile?.preferred_language || 'en',
+          currency: resolvedContext?.profile.currency || brandingSettings.currency || 'USD',
 
           // Branding
-          brandColor: branding?.primary_color || brandingSettings.brandColor || '#8B5CF6',
-          accentColor: branding?.accent_color || brandingSettings.accentColor || '#10B981',
+          brandColor:
+            resolvedContext?.profile.brandColor ||
+            branding?.primary_color ||
+            brandingSettings.brandColor ||
+            '#8B5CF6',
+          accentColor:
+            resolvedContext?.profile.accentColor ||
+            branding?.accent_color ||
+            brandingSettings.accentColor ||
+            '#10B981',
           faviconUrl: brandingSettings.faviconUrl || '',
 
           // Regional
           defaultTimezone:
-            org.default_timezone || brandingSettings.defaultTimezone || 'Europe/Warsaw',
-          defaultLanguage: org.default_language || profile?.preferred_language || 'en',
+            resolvedContext?.profile.defaultTimezone ||
+            org.default_timezone ||
+            brandingSettings.defaultTimezone ||
+            'Europe/Warsaw',
+          defaultLanguage:
+            resolvedContext?.profile.defaultLanguage ||
+            org.default_language ||
+            profile?.preferred_language ||
+            'en',
           dateFormat: brandingSettings.dateFormat || 'DD/MM/YYYY',
           timeFormat: brandingSettings.timeFormat || '24h',
-          currency: brandingSettings.currency || 'USD',
 
           // Custom domain
-          customDomain: brandingSettings.customDomain || '',
+          customDomain: resolvedContext?.profile.customDomain || brandingSettings.customDomain || '',
           customDomainVerified: brandingSettings.customDomainVerified || false,
 
           // Social
-          linkedinUrl: brandingSettings.linkedinUrl || '',
-          twitterUrl: brandingSettings.twitterUrl || '',
+          linkedinUrl: resolvedContext?.profile.linkedinUrl || brandingSettings.linkedinUrl || '',
+          twitterUrl: resolvedContext?.profile.twitterUrl || brandingSettings.twitterUrl || '',
         },
         completeness,
       });
@@ -282,6 +351,31 @@ router.put(
                  VALUES (?, 'branding', ?, datetime('now'))`,
         [orgId, JSON.stringify(brandingData)]
       );
+
+      await organizationContextService.recordOrganizationProfile({
+        organizationId: orgId,
+        userId,
+        payload: {
+          ...req.body,
+          description,
+          industry,
+          companySize,
+          website,
+          logoUrl,
+          faviconUrl,
+          brandColor,
+          accentColor,
+          customDomain,
+          customDomainVerified,
+          defaultTimezone,
+          defaultLanguage,
+          dateFormat,
+          timeFormat,
+          currency,
+          linkedinUrl,
+          twitterUrl,
+        },
+      });
 
       logger.info(`[organization-profiles] Profile updated for org ${orgId} by user ${userId}`);
 

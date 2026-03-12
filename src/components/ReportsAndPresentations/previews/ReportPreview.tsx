@@ -1,6 +1,7 @@
 /**
  * ReportPreview — Preview panel for reports
  * Uses shared PreviewPane building blocks for consistent UX.
+ * Exports Body + Footer for proper TableWithPreviewLayout split.
  */
 
 import { Download, ExternalLink } from 'lucide-react';
@@ -9,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import {
   PreviewActionBar,
+  PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
@@ -25,7 +27,7 @@ interface ReportPreviewProps {
   onExport?: () => void;
 }
 
-export const ReportPreview: React.FC<ReportPreviewProps> = ({ report, onOpen, onExport }) => {
+function useReportPreviewData(report: ReportItem) {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const typeMeta = REPORT_TYPE_META[report.reportType] || REPORT_TYPE_META.custom;
@@ -76,26 +78,64 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({ report, onOpen, on
       : []),
   ];
 
+  return { isPolish, t, pills, detailLines, relations };
+}
+
+export const ReportPreviewBody: React.FC<ReportPreviewProps> = ({ report }) => {
+  const { isPolish, pills, detailLines } = useReportPreviewData(report);
+
+  return (
+    <div className="space-y-4">
+      <PreviewMetaCard pills={pills} />
+      <PreviewDetailsSection text={detailLines} label={isPolish ? 'SZCZEGÓŁY' : 'DETAILS'} />
+    </div>
+  );
+};
+
+export const ReportPreviewFooter: React.FC<ReportPreviewProps> = ({ report, onOpen, onExport }) => {
+  const { isPolish, t, relations } = useReportPreviewData(report);
+
   const actionRows: ActionRow[] = [];
   if (onOpen || onExport) {
     actionRows.push({
       buttons: [
         ...(onOpen
-          ? [{ label: t('rap.preview.openFull', 'Otwórz pełny'), icon: ExternalLink, onClick: onOpen, colorScheme: 'primary' as const, flex: true }]
+          ? [{ label: t('rap.preview.openFull', 'Otwórz pełny'), icon: ExternalLink, onClick: onOpen, colorScheme: 'primary' as const, flex: true, shortcut: 'O' }]
           : []),
         ...(onExport
-          ? [{ label: t('rap.actions.export', 'Eksportuj'), icon: Download, onClick: onExport, colorScheme: 'neutral' as const }]
+          ? [{ label: t('rap.actions.export', 'Eksportuj'), icon: Download, onClick: onExport, colorScheme: 'neutral' as const, shortcut: 'E' }]
           : []),
       ],
     });
   }
 
+  const dividerClass = 'border-t border-slate-200/50 dark:border-white/[0.06] my-3';
+
   return (
-    <div className="space-y-4 text-sm">
-      <PreviewMetaCard pills={pills} />
-      <PreviewDetailsSection text={detailLines} label={isPolish ? 'SZCZEGÓŁY' : 'DETAILS'} />
-      {relations.length > 0 && <PreviewRelations items={relations} />}
+    <div className="space-y-0">
+      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+        <PreviewAIHintStrip
+          hints={[isPolish ? 'Raport gotowy do przeglądu' : 'Report ready for review']}
+        />
+      </div>
+      {relations.length > 0 && (
+        <>
+          <div className={dividerClass} />
+          <PreviewRelations items={relations} />
+        </>
+      )}
+      <div className={dividerClass} />
       {actionRows.length > 0 && <PreviewActionBar rows={actionRows} />}
     </div>
+  );
+};
+
+/** @deprecated Use ReportPreviewBody + ReportPreviewFooter for Body/Footer split */
+export const ReportPreview: React.FC<ReportPreviewProps> = (props) => {
+  return (
+    <>
+      <ReportPreviewBody {...props} />
+      <ReportPreviewFooter {...props} />
+    </>
   );
 };

@@ -93,4 +93,56 @@ describe('RealtimePlatformService', () => {
       [null, null, '{}', null, 'title', 'tool-presence-1'],
     );
   });
+
+  it('casts facilitation votes with conflict-safe upsert payload', async () => {
+    mockQueryRun.mockResolvedValue({ changes: 1 });
+
+    const { realtimePlatformService } = await import(
+      '../../../../server/src/services/realtimePlatformService.js'
+    );
+    const result = await realtimePlatformService.castVote('session-1', {
+      voterId: 'user-1',
+      voteTargetId: 'node-9',
+      voteType: 'upvote',
+      voteValue: 2,
+      comment: 'top priority',
+    });
+
+    expect(result).toEqual({ id: 'realtime-uuid' });
+    expect(mockQueryRun).toHaveBeenCalledWith(
+      expect.stringContaining('ON CONFLICT (facilitation_session_id, voter_id, vote_target_id, vote_type)'),
+      ['realtime-uuid', 'session-1', 'user-1', null, 'node-9', 'upvote', 2, 'top priority'],
+    );
+  });
+
+  it('creates facilitation outcomes with persisted export metadata', async () => {
+    mockQueryRun.mockResolvedValue({ changes: 1 });
+
+    const { realtimePlatformService } = await import(
+      '../../../../server/src/services/realtimePlatformService.js'
+    );
+    const result = await realtimePlatformService.createOutcome('session-7', {
+      outcomeType: 'decision',
+      title: 'Pick rollout scope',
+      description: 'Phase 1 rollout only',
+      voteSummary: { 'node-1': 5 },
+      exportedToType: 'decision',
+      exportedToId: 'dec-22',
+    });
+
+    expect(result).toEqual({ id: 'realtime-uuid' });
+    expect(mockQueryRun).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO tool_facilitation_outcomes'),
+      [
+        'realtime-uuid',
+        'session-7',
+        'decision',
+        'Pick rollout scope',
+        'Phase 1 rollout only',
+        JSON.stringify({ 'node-1': 5 }),
+        'decision',
+        'dec-22',
+      ],
+    );
+  });
 });

@@ -129,16 +129,18 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
       label: isPolish ? 'Rozpocznij' : 'Start',
       icon: Sparkles,
       onClick: onStartAssignment,
-      colorScheme: 'blue',
+      colorScheme: 'primary',
       flex: true,
+      shortcut: 'S',
     });
   } else if (assignment.status === 'in_progress' && hasSession && onContinueAssignment) {
     buttons.push({
       label: isPolish ? 'Kontynuuj' : 'Continue',
       icon: ChevronRight,
       onClick: onContinueAssignment,
-      colorScheme: 'purple',
+      colorScheme: 'primary',
       flex: true,
+      shortcut: 'C',
     });
   } else if (assignment.status === 'sent_back' && hasSession && onFixAssignment) {
     buttons.push({
@@ -147,6 +149,7 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
       onClick: onFixAssignment,
       colorScheme: 'amber',
       flex: true,
+      shortcut: 'F',
     });
   }
 
@@ -154,24 +157,27 @@ export const InterviewAssignmentPreviewFooter: React.FC<InterviewAssignmentPrevi
     label: isPolish ? 'Otwórz' : 'Open',
     icon: ChevronRight,
     onClick: onOpenFull,
-    colorScheme: 'neutral',
+    colorScheme: 'primary',
     flex: true,
+    shortcut: 'O',
   });
 
   const rows: ActionRow[] = [{ buttons }];
 
   return (
     <div className="space-y-0">
-      <PreviewAIHintStrip
-        hints={aiHints}
-        loading={aiLoading}
-        result={aiText}
-        error={aiError}
-        onRunHint={onRunAiHint}
-        onRegenerate={onRegenerateAi}
-        onCopy={onCopyAi}
-        onClear={onClearAi}
-      />
+      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+        <PreviewAIHintStrip
+          hints={aiHints}
+          loading={aiLoading}
+          result={aiText}
+          error={aiError}
+          onRunHint={onRunAiHint}
+          onRegenerate={onRegenerateAi}
+          onCopy={onCopyAi}
+          onClear={onClearAi}
+        />
+      </div>
 
       <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
 

@@ -4,6 +4,11 @@ export type ArtifactType =
   | 'decision'
   | 'initiative'
   | 'task'
+  | 'process'
+  | 'role'
+  | 'system'
+  | 'kpi'
+  | 'tool_session'
   | 'notification'
   | 'report'
   | 'assessment'
@@ -64,6 +69,41 @@ export const ARTIFACT_IDENTITY: Record<ArtifactType, ArtifactIdentity> = {
     labelEn: 'Task',
     labelPl: 'Zadanie',
     prefix: 'TASK',
+  },
+  process: {
+    icon: 'Workflow',
+    accent: 'sky',
+    labelEn: 'Process',
+    labelPl: 'Proces',
+    prefix: 'PROC',
+  },
+  role: {
+    icon: 'UserSquare2',
+    accent: 'violet',
+    labelEn: 'Role',
+    labelPl: 'Rola',
+    prefix: 'ROLE',
+  },
+  system: {
+    icon: 'Server',
+    accent: 'cyan',
+    labelEn: 'System',
+    labelPl: 'System',
+    prefix: 'SYS',
+  },
+  kpi: {
+    icon: 'Gauge',
+    accent: 'amber',
+    labelEn: 'KPI',
+    labelPl: 'KPI',
+    prefix: 'KPI',
+  },
+  tool_session: {
+    icon: 'BriefcaseBusiness',
+    accent: 'indigo',
+    labelEn: 'Tool Session',
+    labelPl: 'Sesja narzędzia',
+    prefix: 'TS',
   },
   decision: {
     icon: 'Scale',
@@ -212,6 +252,10 @@ function normalizeId(rawId: string): string {
 function getBasePath(type: ArtifactType, id: string): string {
   switch (type) {
     case 'task':
+    case 'process':
+    case 'role':
+    case 'system':
+    case 'kpi':
     case 'decision':
     case 'notification':
       return '/my-work';
@@ -225,6 +269,8 @@ function getBasePath(type: ArtifactType, id: string): string {
       return '/assessment';
     case 'tool':
       return '/discovery-tools/strategic';
+    case 'tool_session':
+      return `/my-work?session=${id}`;
     case 'insight':
       return '/interview';
     case 'risk':
@@ -390,4 +436,37 @@ export function withNormalizedArtifactLinks<T extends NodeLikeWithArtifacts>(nod
 export function buildArtifactPermalink(type: ArtifactType, id: string): string {
   const origin = window.location.origin;
   return `${origin}${getArtifactPath(type, id)}`;
+}
+
+/**
+ * Return the first pinned link, or the first link overall.
+ * Useful when UI needs a single "primary" artifact to highlight.
+ */
+export function getPrimaryArtifactLink(links: ArtifactLink[]): ArtifactLink | null {
+  if (!links || links.length === 0) return null;
+  return links.find((l) => l.pinned) || links[0];
+}
+
+/**
+ * Convert an ArtifactLink to a payload suitable for `mywork-open-item` events.
+ */
+export function artifactLinkToOpenPayload(link: ArtifactLink): {
+  type: string;
+  id: string;
+  name: string;
+} {
+  return {
+    type: link.artifactRef.type,
+    id: link.artifactRef.id,
+    name: link.label || `${link.artifactRef.type}:${link.artifactRef.id}`,
+  };
+}
+
+/**
+ * Convert a legacy `artifactRef` string (e.g. "initiative:abc123") to an ArtifactLink[].
+ */
+export function legacyRefToArtifactLinks(ref: string | null | undefined): ArtifactLink[] {
+  const parsed = parseArtifactRef(ref);
+  if (!parsed) return [];
+  return [buildArtifactLink(parsed.type, parsed.id, 'related')];
 }

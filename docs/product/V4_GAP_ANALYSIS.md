@@ -178,15 +178,17 @@ Use this block as a **canonical skeleton** (do not keep placeholder headings in 
 
 ### 5.1 Ideas / Idea Workspace (mindmap + whiteboard + process flow + table)
 
+> Status update 2026-03-10: `Idea Workspace` is no longer uniformly "fully complete". Whiteboard foundations and workshop tooling are present, but facilitation/governance/export hardening remain only partially implemented and should be treated as active gap-closure work, not closed scope.
+
 **Module snapshot**
-- **As‑is**: Full-screen Idea Workspace with multiple tools (mindmap/whiteboard/process flow/table) sharing one persisted graph; AI generators exist with propose→accept patterns in parts of the UI.
+- **As‑is**: Full-screen Idea Workspace with multiple tools (mindmap/whiteboard/process flow/table) sharing one persisted graph; AI generators exist with propose→accept patterns in parts of the UI. Whiteboard currently has local-first workshop runtime plus partial backend facilitation/governance wiring.
 - **V4 target**: Enterprise-grade “idea → execution” workspace: canonical graph, deterministic conversions to Tasks/Decisions/Initiatives with traceability, and collaboration (presence→CRDT) + audit.
 - **Top gaps**:
-  - Realtime collaboration end-to-end (presence, shared session state, CRDT) across all canvas tools.
-  - Audit + reproducibility for user edits and AI-applied changes (with replay and retention alignment).
-  - Node-level outcomes + traceability (clusters/outcomes → decisions/tasks/initiatives), not only “idea-level convert”.
-  - Import/export interoperability (PDF, richer structured exports; BPMN/Visio/draw.io parity for diagrams).
-  - Keyboard/A11y completion and strict UI standards compliance across tools.
+  - Realtime collaboration end-to-end (presence, shared session state, CRDT) across all canvas tools is still partial; whiteboard facilitation backend exists but is not fully enterprise-hardened.
+  - Audit + reproducibility for user edits and AI-applied changes (with replay and retention alignment) remain incomplete.
+  - Node-level outcomes + traceability (clusters/outcomes → decisions/tasks/initiatives), not only “idea-level convert”, are only partially formalized.
+  - Import/export interoperability (PDF, richer structured exports; BPMN/Visio/draw.io parity for diagrams) is present in parts, but governance enforcement and parity across tools remain incomplete.
+  - Keyboard/A11y completion and strict UI standards compliance across tools still require hardening.
 - **P0 epics**: EPIC‑ENT‑RT‑01, EPIC‑IDEAS‑01, EPIC‑LINK‑01, EPIC‑AI‑IDEAS‑01, EPIC‑ENT‑AUDIT‑01
 
 **Benchmark leaders (from your list):**
@@ -275,6 +277,19 @@ Use this block as a **canonical skeleton** (do not keep placeholder headings in 
 - **Voting**: `src/components/MyWork/IdeaVotingMode.tsx` is a voting overlay used from `IdeaMapWorkspace.tsx` (works for mindmap + whiteboard), but currently local-only (`userId = 'current-user'`).
 - **AI generators**: backend supports whiteboard generator types via `POST /api/my-work/my-ideas/:id/ai-generate` (`whiteboard_brainstorm`, `whiteboard_clusters`, `whiteboard_organize`, `sticky_summarize`) — see `server/src/routes/my-work.routes.ts` and `server/src/services/ideaAIGeneratorService.ts`.
 - **Persistence**: whiteboard elements are stored in the shared idea map via `GET/PUT /api/my-work/my-ideas/:id/map` (`server/src/routes/my-work.routes.ts`).
+
+> Status update 2026-03-10 (generator hardening): whiteboard AI buttons are now contract-aligned end-to-end. `sticky_summarize` is selection-aware, `whiteboard_organize` emits supported `moveNodes`, generator-added nodes now carry usable `position`/whiteboard data, proposal review shows `moveNodes` + `extensions.table` + cross-tool outcomes, and `wb_to_map_branches` / `wb_to_table` switch into the target tool after accept.
+
+**Whiteboard generator classification (runtime truth)**
+- `real`: `whiteboard_brainstorm`, `whiteboard_clusters`, `whiteboard_organize`, `sticky_summarize`, `wb_find_themes`, `wb_name_clusters`, `wb_extract_actions`
+- `cross-tool`: `wb_to_map_branches` → `mindmap`, `wb_to_table` → `table`
+- `partial`: none of the visible whiteboard generator buttons remain in placeholder state after this hardening pass
+
+**AI patch contract (workspace runtime)**
+- Supported patch fields for whiteboard generators are now limited to `addNodes`, `addEdges`, `moveNodes`, `extensions`
+- `whiteboard_organize` no longer relies on `repositionedNodes`; runtime consumes `moveNodes`
+- Table conversions persist usable `extensions.table.columns` plus generated table row nodes for the table tool runtime
+- Cross-tool proposals carry explicit target-tool metadata and are labeled as conversion flows in review UI
 
 | Slice (whiteboards) | Benchmark (leaders) | As‑is (Consultify code) | V4 target (enterprise) | Gap | Proposal (epics) | Status | V4 Priority |
 |---|---|---|---|---|---|---|---|

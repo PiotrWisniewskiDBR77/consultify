@@ -19,7 +19,7 @@ import {
 } from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-import { TemplatePreview } from './previews/TemplatePreview';
+import { TemplatePreviewBody, TemplatePreviewFooter } from './previews/TemplatePreview';
 import { TEMPLATE_TYPE_META, type TemplateItem } from './types';
 
 interface TemplatesTabContentProps {
@@ -265,7 +265,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         selectedItem={previewItem}
         onSelect={setSelectedId}
         itemIds={itemIds}
-        renderPreview={(item) => <TemplatePreview template={item} />}
+        getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
+        renderPreview={(item) => <TemplatePreviewBody template={item} />}
+        renderPreviewFooter={(item) => <TemplatePreviewFooter template={item} />}
       >
         <FilterableTable
           columns={columns}

@@ -89,7 +89,6 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
   const [externalNodes, setExternalNodes] = useState<TableNode[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [crossRelations, setCrossRelations] = useState<CrossRelation[]>([]);
   const [activeTab, setActiveTab] = useState<'relations' | 'network' | 'rollups'>('relations');
 
   const [linkSource, setLinkSource] = useState<string | null>(null);
@@ -168,8 +167,6 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
         targetLabel: targetNode?.data?.label || targetNodeId,
         relationType: linkRelType,
       };
-      setCrossRelations((prev) => [...prev, newRelation]);
-
       const edge: TableEdge = {
         id: newRelation.id,
         source: linkSource,
@@ -198,7 +195,7 @@ export const CrossTableRelations: React.FC<CrossTableRelationsProps> = ({
       }));
   }, [currentEdges, currentNodes, ideaId]);
 
-  const allRelations = [...existingRelations, ...crossRelations];
+  const allRelations = existingRelations;
 
   const filteredExternalNodes = searchQuery
     ? externalNodes.filter((n) =>

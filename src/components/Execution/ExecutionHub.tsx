@@ -3849,6 +3849,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             selectedItem={selectedItem}
             onSelect={setSummaryPreviewInitiativeId}
             itemIds={itemIds}
+            getItemById={(id) => { const x = summaryInitiatives.find((i) => i.id === id); return x ? { ...x, title: x.name || x.id } as any : null; }}
             onOpenFull={(id) => {
               const init = summaryInitiatives.find((x) => x.id === id);
               if (init) handleOpenDocument(init);

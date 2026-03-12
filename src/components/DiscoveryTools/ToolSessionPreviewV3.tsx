@@ -12,7 +12,9 @@ import {
   type MetaPill,
   type RelationItem,
   type ActionRow,
+  type ExtraCopyFormat,
 } from '@/components/shared/PreviewPane';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { Api } from '@/services/api';
 
 import { getToolCategoryLabel } from './ToolSessionPreview';
@@ -253,6 +255,24 @@ export const ToolSessionPreviewV3Body: React.FC<{
         text={detailsDisplayText}
         loading={detailsLoading}
         onCopy={() => void handleCopyDetails()}
+        extraCopyFormats={[
+          {
+            label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+            onClick: () =>
+              void copyAsMarkdown(
+                { title: itemName, status, description: detailsDisplayText },
+                isPolish ? 'pl' : 'en'
+              ),
+          },
+          {
+            label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+            onClick: () =>
+              void copyForSlack(
+                { title: itemName, status, description: detailsDisplayText },
+                isPolish ? 'pl' : 'en'
+              ),
+          },
+        ]}
       />
     </div>
   );
@@ -380,6 +400,7 @@ export const ToolSessionPreviewV3Footer: React.FC<{
                       colorScheme: 'primary' as const,
                       icon: ExternalLink,
                       flex: true,
+                      shortcut: 'O',
                     },
                   ]
                 : []),
@@ -388,9 +409,10 @@ export const ToolSessionPreviewV3Footer: React.FC<{
                     {
                       label: isPolish ? 'Wznów' : 'Resume',
                       onClick: onResume,
-                      colorScheme: 'neutral' as const,
+                      colorScheme: 'primary' as const,
                       icon: ExternalLink,
                       flex: true,
+                      shortcut: 'R',
                     },
                   ]
                 : []),

@@ -9,6 +9,10 @@ export type CanvasToolType = 'mindmap' | 'process_flow' | 'table' | 'whiteboard'
 export const IDEA_GRAPH_UPDATE_EVENT = 'idea-workspace-graph-update';
 export const IDEA_GRAPH_SAVE_EVENT = 'idea-graph-save-requested';
 export const IDEA_WORKSPACE_INSERT_EVENT = 'idea-workspace-insert';
+export const IDEA_WORKSPACE_THEME_EVENT = 'idea-workspace-theme';
+export const IDEA_WORKSPACE_FLOW_SEMANTIC_EVENT = 'idea-workspace-flow-semantic';
+export const IDEA_WORKSPACE_GOVERNANCE_EVENT = 'idea-workspace-governance';
+export const IDEA_WORKSPACE_IMPORT_EVENT = 'idea-workspace-import-graph';
 
 export type SelectionKind = 'none' | 'node' | 'edge' | 'lane' | 'row';
 
@@ -24,6 +28,7 @@ export interface IdeaWorkspaceSelection {
     label?: string;
     description?: string;
     owner?: string;
+    semanticType?: string;
     duration?: string;
     durationUnit?: string;
     cost?: string;
@@ -56,6 +61,7 @@ export interface IdeaWorkspaceInsertItem {
   parentId?: string;
   position?: { x: number; y: number };
   color?: string;
+  data?: Record<string, unknown>;
 }
 
 export interface IdeaWorkspaceInsertDetail {
@@ -70,11 +76,59 @@ export interface IdeaWorkspaceInsertDetail {
   color?: string;
 }
 
+export type CanvasGovernanceStatus = 'draft' | 'in_review' | 'approved' | 'changes_requested';
+
+export interface CanvasGovernanceUpdate {
+  status: CanvasGovernanceStatus;
+  note?: string;
+  actor?: string;
+}
+
+export interface CanvasGovernanceEntry {
+  id: string;
+  status: CanvasGovernanceStatus;
+  note?: string;
+  actor?: string;
+  createdAt: string;
+}
+
+export interface AIProposalCitation {
+  label: string;
+  kind?: 'artifact' | 'node' | 'document' | 'note';
+  ref?: string;
+}
+
+export interface CanvasAIReplayEntry {
+  id: string;
+  tool: string;
+  generatorType: string;
+  proposalIds: string[];
+  rationale: string[];
+  citations: AIProposalCitation[];
+  acceptedAt: string;
+}
+
+export interface IdeaWorkspaceImportPayload {
+  ideaId?: string;
+  sourceFormat: 'drawio_xml' | 'bpmn_xml' | 'diagram_package';
+  title?: string;
+  nodes: any[];
+  edges: any[];
+  extensions?: Record<string, unknown>;
+  mappingReport?: string[];
+}
+
 export interface AIProposal {
   id: string;
   type: 'graph_patch' | 'view_patch';
   rationale: string;
   confidence: number;
+  citations?: AIProposalCitation[];
+  maturity?: 'real' | 'partial' | 'scaffold' | 'missing' | 'out_of_scope';
+  generatorStatus?: 'real' | 'partial' | 'cross-tool';
+  targetTool?: CanvasToolType;
+  focusNodeId?: string;
+  resultSummary?: string;
   patch: {
     addNodes?: Array<{
       id: string;

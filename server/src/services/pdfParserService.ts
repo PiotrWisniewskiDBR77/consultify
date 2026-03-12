@@ -1,5 +1,7 @@
 import fs from 'fs';
+import path from 'path';
 
+import { logFinanceError, logFinanceEvent, summarizeTextPayload } from './financeDiagnosticsService.js';
 import logger from '../utils/Logger.js';
 
 type ParsedScores = { scores: Record<string, number> };
@@ -37,29 +39,33 @@ const extractKeyValueScores = (text: string): Record<string, number> => {
 const PDFParserService = {
   async extractTextFromBuffer(buffer: Buffer): Promise<string> {
     try {
-      const pdfParse = (await import('pdf-parse')).default as any;
-      const pdfData = await pdfParse(buffer);
-      return String(pdfData?.text || '');
+      const { PDFParse } = await import('pdf-parse');
+      const parser = new PDFParse({ data: buffer });
+      const pdfData = await parser.getText();
+      await parser.destroy();
+      const raw = String(pdfData?.text || '');
+      // Postgres TEXT columns reject null bytes (0x00) — strip them
+      return raw.replace(/\0/g, '');
     } catch (err: unknown) {
       throw new Error(`Failed to extract PDF text: ${(err as Error)?.message || String(err)}`);
     }
   },
 
   async extractText(filePath: string): Promise<string> {
+    const fileName = path.basename(filePath);
     try {
       const buffer = fs.readFileSync(filePath);
-      return await this.extractTextFromBuffer(buffer);
+      const text = await this.extractTextFromBuffer(buffer);
+      logFinanceEvent('pdf.extract.completed', {
+        fileName,
+        sizeBytes: buffer.length,
+        text: summarizeTextPayload(text),
+      });
+      return text;
     } catch (err: unknown) {
       logger.warn('[PDFParserService] pdf-parse failed:', (err as Error)?.message);
-      try {
-        return fs.readFileSync(filePath, 'utf-8');
-      } catch (readErr: unknown) {
-        throw new Error(
-          `Failed to extract text: ${(err as Error)?.message || String(err)}; read fallback failed: ${
-            (readErr as Error)?.message || String(readErr)
-          }`
-        );
-      }
+      logFinanceError('pdf.extract.failed', err, { fileName });
+      throw new Error(`Failed to extract text from PDF: ${fileName}`);
     }
   },
 

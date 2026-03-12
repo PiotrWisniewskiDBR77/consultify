@@ -234,7 +234,7 @@ export const ExportToPresentation: React.FC<ExportToPresentationProps> = ({
     try {
       const deckJson = buildDeckJson();
       const { Api } = await import('@/services/api');
-      const result = await (Api as any).createPresentationDeck?.({
+      const result = await Api.createPresentationDeck({
         title: deckJson.title,
         theme: deckJson.theme,
         slides: deckJson.slides,

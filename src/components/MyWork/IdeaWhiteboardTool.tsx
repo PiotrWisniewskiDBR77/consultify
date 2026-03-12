@@ -20,6 +20,7 @@ import {
   Circle,
   Copy,
   Diamond,
+  ExternalLink,
   Frame,
   GitBranch,
   Grid3X3,
@@ -33,17 +34,17 @@ import {
   Palette,
   Pen,
   Plus,
-  Redo2,
   Save,
   Shapes,
   Sparkles,
   StickyNote,
+  ThumbsUp,
   Trash2,
   TrendingUp,
   Type,
-  Undo2,
   Ungroup,
   Workflow,
+  Layers,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -54,7 +55,6 @@ import ReactFlow, {
   applyNodeChanges,
   Background,
   type Connection,
-  Controls,
   type Edge,
   type EdgeChange,
   type EdgeProps,
@@ -71,20 +71,42 @@ import ReactFlow, {
 } from 'reactflow';
 
 import { Api } from '@/services/api';
+import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
+import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import { type DrawingPath, IdeaDrawingLayer } from './IdeaDrawingLayer';
 import { KPIBadgeNode, ProgressNode, ScoreNode } from './IdeaMetricNodes';
 import { IdeaScenesManager, type Scene } from './IdeaScenesManager';
 import {
   type CanvasToolType,
   EMPTY_SELECTION,
+  IDEA_WORKSPACE_THEME_EVENT,
   IDEA_WORKSPACE_INSERT_EVENT,
   type IdeaWorkspaceInsertDetail,
   type IdeaWorkspaceSelection,
 } from './ideaSelectionTypes';
+import { CollaborationOverlay } from './mindmap/CollaborationOverlay';
 import { SummaryCardNode } from './IdeaSummaryCardNode';
 import { applySmartLayout, type LayoutAlgorithm } from './layout/IdeaSmartLayout';
+import { useWhiteboardNodes } from './whiteboard/useWhiteboardNodes';
+import {
+  createWhiteboardActivityEntry,
+  createWhiteboardHistoryEntry,
+  cycleWhiteboardClassification,
+  cycleWhiteboardRole,
+  getSemanticTypeLabel,
+  inferWhiteboardSemanticType,
+  type WhiteboardActivityEntry,
+  type WhiteboardClassification,
+  type WhiteboardHistoryEntry,
+  type WhiteboardLibraryItem,
+  type WhiteboardOutcomeRecord,
+  type WhiteboardSessionState,
+  type WhiteboardSharePolicy,
+  type WhiteboardVoteEntry,
+} from './whiteboard/whiteboardContracts';
+import { useWhiteboardQuickActions } from './whiteboard/useWhiteboardQuickActions';
 
 // ── Sticky colors ────────────────────────────────────────────────────────────
 
@@ -216,8 +238,15 @@ const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => 
           rows={size.textRows}
         />
       ) : (
-        <div className="text-xs font-medium text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words">
-          {data?.label || ''}
+        <div>
+          {data?.semanticLabel && (
+            <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+              {String(data.semanticLabel)}
+            </div>
+          )}
+          <div className="text-xs font-medium text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words">
+            {data?.label || ''}
+          </div>
         </div>
       )}
       {data?.author && (
@@ -281,8 +310,18 @@ const TextBlockNode: React.FC<NodeProps> = ({ data, selected }) => {
           rows={2}
         />
       ) : (
-        <div className="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words">
-          {data?.label || ''}
+        <div>
+          {data?.semanticLabel && (
+            <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+              {String(data.semanticLabel)}
+            </div>
+          )}
+          <div
+            className="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words"
+            style={typeof data?.fontSize === 'number' ? { fontSize: data.fontSize } : undefined}
+          >
+            {data?.label || ''}
+          </div>
         </div>
       )}
       <Handle
@@ -417,6 +456,11 @@ const FrameNode: React.FC<NodeProps> = ({ data, selected }) => {
       }}
     >
       <div className="flex items-center gap-1.5 mb-2">
+        {data?.semanticLabel && (
+          <span className="px-1.5 py-0.5 rounded-full bg-white/70 dark:bg-navy-800/60 text-[9px] font-bold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+            {String(data.semanticLabel)}
+          </span>
+        )}
         {!data?.locked && (
           <button
             type="button"
@@ -776,29 +820,61 @@ interface WhiteboardCanvasProps {
   nodes: Node[];
   edges: Edge[];
   locked: boolean;
+  isPolish?: boolean;
   onNodesChange?: (changes: NodeChange[]) => void;
   onEdgesChange?: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
   onNodeDoubleClick?: (nodeId: string, nodeData: any) => void;
-  setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
   bgPattern?: CanvasBgPattern;
   onViewportChange?: (vp: { x: number; y: number; zoom: number }) => void;
+  onExternalInsert?: (items: WhiteboardExternalInsert[]) => void;
+  onFullscreenToggle?: () => void;
+  isFullscreen?: boolean;
 }
 
 const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   nodes,
   edges,
   locked,
+  isPolish = false,
   onNodesChange,
   onEdgesChange,
   onConnect,
   onNodeDoubleClick,
-  setNodes,
   bgPattern = 'dots',
   onViewportChange,
+  onExternalInsert,
+  onFullscreenToggle: externalOnFullscreenToggle,
+  isFullscreen: externalIsFullscreen = false,
 }) => {
   const { screenToFlowPosition, setViewport } = useReactFlow();
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const [showMiniMap, setShowMiniMap] = React.useState(false);
+  const [internalFullscreen, setInternalFullscreen] = React.useState(false);
+
+  const toggleInternalFullscreen = React.useCallback(() => {
+    if (!containerRef.current) return;
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen?.().then(() => setInternalFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen?.().then(() => setInternalFullscreen(false)).catch(() => {});
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (externalOnFullscreenToggle) return;
+    const handler = () => setInternalFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, [externalOnFullscreenToggle]);
+
+  const onFullscreenToggle = externalOnFullscreenToggle ?? toggleInternalFullscreen;
+  const isFullscreen = externalOnFullscreenToggle ? externalIsFullscreen : internalFullscreen;
+
+  const selectedNodeId = React.useMemo(
+    () => nodes.find((node) => node.selected)?.id ?? null,
+    [nodes]
+  );
 
   React.useEffect(() => {
     const rfEl = containerRef.current?.closest('.react-flow');
@@ -843,14 +919,15 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
             const dataUrl = ev.target?.result as string;
             if (!dataUrl) return;
             const center = getCenter();
-            const id = `wb-img-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-            const newNode: Node = {
-              id,
-              type: 'imageNode',
-              position: center,
-              data: { src: dataUrl, label: file.name || 'Pasted image', width: 300, locked },
-            };
-            setNodes((prev: Node[]) => [...prev, newNode]);
+            onExternalInsert?.([
+              {
+                kind: 'image',
+                label: file.name || 'Pasted image',
+                src: dataUrl,
+                width: 300,
+                position: center,
+              },
+            ]);
           };
           reader.readAsDataURL(file);
           return;
@@ -861,29 +938,20 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
       if (text) {
         e.preventDefault();
         const center = getCenter();
-        const id = `wb-paste-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         const isUrl = /^https?:\/\//i.test(text);
-
-        if (isUrl) {
-          const newNode: Node = {
-            id,
-            type: 'linkNode',
-            position: center,
-            data: { label: text, url: text, locked },
-          };
-          setNodes((prev: Node[]) => [...prev, newNode]);
-        } else {
-          const newNode: Node = {
-            id,
-            type: text.length > 100 ? 'textBlock' : 'stickyNote',
-            position: center,
-            data: { label: text, locked, colorIndex: Math.floor(Math.random() * 6), _isNew: true },
-          };
-          setNodes((prev: Node[]) => [...prev, newNode]);
-        }
+        onExternalInsert?.([
+          isUrl
+            ? { kind: 'link', label: text, url: text, position: center }
+            : {
+                kind: 'text',
+                label: text,
+                position: center,
+                colorIndex: Math.floor(Math.random() * STICKY_COLORS.length),
+              },
+        ]);
       }
     },
-    [getCenter, locked, setNodes]
+    [getCenter, locked, onExternalInsert]
   );
 
   const handleDrop = React.useCallback(
@@ -904,23 +972,26 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
             reader.onload = (ev) => {
               const dataUrl = ev.target?.result as string;
               if (!dataUrl) return;
-              const newNode: Node = {
-                id,
-                type: 'imageNode',
-                position: { x: pos.x + i * 30, y: pos.y + i * 30 },
-                data: { src: dataUrl, label: file.name, width: 250, locked },
-              };
-              setNodes((prev: Node[]) => [...prev, newNode]);
+              onExternalInsert?.([
+                {
+                  kind: 'image',
+                  label: file.name,
+                  src: dataUrl,
+                  width: 250,
+                  position: { x: pos.x + i * 30, y: pos.y + i * 30 },
+                },
+              ]);
             };
             reader.readAsDataURL(file);
           } else {
-            const newNode: Node = {
-              id,
-              type: 'linkNode',
-              position: { x: pos.x + i * 30, y: pos.y + i * 30 },
-              data: { label: file.name, url: '', locked },
-            };
-            setNodes((prev: Node[]) => [...prev, newNode]);
+            onExternalInsert?.([
+              {
+                kind: 'link',
+                label: file.name,
+                url: '',
+                position: { x: pos.x + i * 30, y: pos.y + i * 30 },
+              },
+            ]);
           }
         }
         return;
@@ -928,20 +999,20 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
 
       const text = e.dataTransfer.getData('text/plain')?.trim();
       if (text) {
-        const id = `wb-drop-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
         const isUrl = /^https?:\/\//i.test(text);
-        const newNode: Node = {
-          id,
-          type: isUrl ? 'linkNode' : 'stickyNote',
-          position: pos,
-          data: isUrl
-            ? { label: text, url: text, locked }
-            : { label: text, locked, colorIndex: Math.floor(Math.random() * 6), _isNew: true },
-        };
-        setNodes((prev: Node[]) => [...prev, newNode]);
+        onExternalInsert?.([
+          isUrl
+            ? { kind: 'link', label: text, url: text, position: pos }
+            : {
+                kind: 'text',
+                label: text,
+                position: pos,
+                colorIndex: Math.floor(Math.random() * STICKY_COLORS.length),
+              },
+        ]);
       }
     },
-    [locked, screenToFlowPosition, setNodes]
+    [locked, onExternalInsert, screenToFlowPosition]
   );
 
   const handleDragOver = React.useCallback((e: React.DragEvent) => {
@@ -999,33 +1070,42 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
             }
           />
         )}
-        <Controls showInteractive={!locked} />
-        <MiniMap
-          nodeColor={(n: Node) => {
-            if (n.type === 'stickyNote') {
-              const idx = (n.data?.colorIndex ?? 0) % STICKY_COLORS.length;
-              return STICKY_COLORS[idx].hex;
-            }
-            if (n.type === 'kpiBadge') {
-              const s = n.data?.status;
-              return s === 'on_track'
-                ? '#34d399'
-                : s === 'off_track'
-                  ? '#f87171'
-                  : s === 'at_risk'
-                    ? '#fbbf24'
-                    : '#94a3b8';
-            }
-            if (n.type === 'scoreNode') return '#8b5cf6';
-            if (n.type === 'progressNode') return '#60a5fa';
-            if (n.type === 'summaryCard') return '#a78bfa';
-            if (n.type === 'frameNode') return '#f1f5f9';
-            if (n.type === 'shapeNode') return n.data?.bgColor || '#e0e7ff';
-            if (n.type === 'groupNode') return '#f8fafc';
-            return '#e2e8f0';
-          }}
-          maskColor="rgba(0,0,0,0.08)"
-          className="!bg-white/80 dark:!bg-navy-900/80 !border-slate-200 dark:!border-navy-700 !rounded-xl"
+        {showMiniMap && (
+          <MiniMap
+            nodeColor={(n: Node) => {
+              if (n.type === 'stickyNote') {
+                const idx = (n.data?.colorIndex ?? 0) % STICKY_COLORS.length;
+                return STICKY_COLORS[idx].hex;
+              }
+              if (n.type === 'kpiBadge') {
+                const s = n.data?.status;
+                return s === 'on_track'
+                  ? '#34d399'
+                  : s === 'off_track'
+                    ? '#f87171'
+                    : s === 'at_risk'
+                      ? '#fbbf24'
+                      : '#94a3b8';
+              }
+              if (n.type === 'scoreNode') return '#8b5cf6';
+              if (n.type === 'progressNode') return '#60a5fa';
+              if (n.type === 'summaryCard') return '#a78bfa';
+              if (n.type === 'frameNode') return '#f1f5f9';
+              if (n.type === 'shapeNode') return n.data?.bgColor || '#e0e7ff';
+              if (n.type === 'groupNode') return '#f8fafc';
+              return '#e2e8f0';
+            }}
+            maskColor="rgba(0,0,0,0.08)"
+            className="!bg-white/80 dark:!bg-navy-900/80 !border-slate-200 dark:!border-navy-700 !rounded-xl"
+          />
+        )}
+        <CanvasZoomControls
+          isPolish={isPolish}
+          selectedNodeId={selectedNodeId}
+          showMiniMap={showMiniMap}
+          onToggleMiniMap={() => setShowMiniMap((prev) => !prev)}
+          onFullscreenToggle={onFullscreenToggle}
+          isFullscreen={isFullscreen}
         />
       </ReactFlow>
     </div>
@@ -1071,6 +1151,82 @@ function isWbNodeKind(value: unknown): value is WbNodeKind {
   return typeof value === 'string' && WB_NODE_KINDS.includes(value as WbNodeKind);
 }
 
+type WhiteboardQuickStart = 'brainstorm' | 'affinity' | 'workshop';
+
+type WhiteboardCanvasSnapshot = {
+  nodes: Node[];
+  edges: Edge[];
+  drawingPaths: DrawingPath[];
+  scenes: Scene[];
+};
+
+type WhiteboardExternalInsert =
+  | {
+      kind: 'image';
+      label: string;
+      src: string;
+      width?: number;
+      position?: { x: number; y: number };
+    }
+  | {
+      kind: 'link';
+      label: string;
+      url: string;
+      position?: { x: number; y: number };
+    }
+  | {
+      kind: 'text';
+      label: string;
+      position?: { x: number; y: number };
+      colorIndex?: number;
+    };
+
+function cloneCanvasSnapshot(snapshot: WhiteboardCanvasSnapshot): WhiteboardCanvasSnapshot {
+  return {
+    nodes: snapshot.nodes.map((node) => ({ ...node, data: { ...(node.data || {}) } })),
+    edges: snapshot.edges.map((edge) => ({ ...edge, data: { ...(edge.data || {}) } })),
+    drawingPaths: snapshot.drawingPaths.map((path) => ({ ...path })),
+    scenes: snapshot.scenes.map((scene) => ({ ...scene })),
+  };
+}
+
+function isNodeDataLocked(node: Node | null | undefined): boolean {
+  return Boolean(node?.data?.locked);
+}
+
+function normalizeVoteSummary(
+  summary: Array<{ vote_target_id?: string; total?: number | string; count?: number | string }>
+): Record<string, number> {
+  return summary.reduce<Record<string, number>>((acc, entry) => {
+    const nodeId = String(entry.vote_target_id || '').trim();
+    if (!nodeId) return acc;
+    const total = Number(entry.total ?? entry.count ?? 0);
+    acc[nodeId] = Number.isFinite(total) ? total : 0;
+    return acc;
+  }, {});
+}
+
+const DEFAULT_SESSION_STATE: WhiteboardSessionState = {
+  active: false,
+  role: 'facilitator',
+  sessionId: null,
+  toolSessionId: null,
+  timerSeconds: 300,
+  timerEndsAt: null,
+  votingOpen: false,
+  followMe: false,
+  spotlightNodeId: null,
+  reactionsEnabled: true,
+  updatedAt: 0,
+};
+
+const DEFAULT_SHARE_POLICY: WhiteboardSharePolicy = {
+  classification: 'internal',
+  watermark: 'Consultify Whiteboard',
+  exportAllowed: true,
+  shareAllowed: true,
+};
+
 interface IdeaWhiteboardToolProps {
   open: boolean;
   ideaId: string;
@@ -1082,6 +1238,8 @@ interface IdeaWhiteboardToolProps {
   drillFocusNodeId?: string | null;
   focusMode?: 'system' | 'object' | null;
   focusObjectId?: string | null;
+  onFullscreenToggle?: () => void;
+  isFullscreen?: boolean;
 }
 
 export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
@@ -1095,23 +1253,108 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   drillFocusNodeId,
   focusMode,
   focusObjectId,
+  onFullscreenToggle: externalOnFullscreenToggle,
+  isFullscreen: externalIsFullscreen,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
+  const currentUser = useAppStore((state) => state.currentUser);
+  const currentUserId = String(currentUser?.id || 'current-user');
+  const currentUserName = useMemo(() => {
+    const fullName = [currentUser?.firstName, currentUser?.lastName]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    return fullName || currentUser?.email || (isPl ? 'Ty' : 'You');
+  }, [currentUser?.email, currentUser?.firstName, currentUser?.lastName, isPl]);
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
-  const [drawingActive, setDrawingActive] = useState(false);
+  const [whiteboardMode, setWhiteboardMode] = useState<'board' | 'draw'>('board');
   const [drawingPaths, setDrawingPaths] = useState<DrawingPath[]>([]);
   const [scenes, setScenes] = useState<Scene[]>([]);
+  const [sessionState, setSessionState] = useState<WhiteboardSessionState>(DEFAULT_SESSION_STATE);
+  const [sharePolicy, setSharePolicy] = useState<WhiteboardSharePolicy>(DEFAULT_SHARE_POLICY);
+  const [libraryItems, setLibraryItems] = useState<WhiteboardLibraryItem[]>([]);
+  const [outcomeRegistry, setOutcomeRegistry] = useState<WhiteboardOutcomeRecord[]>([]);
+  const [activityLog, setActivityLog] = useState<WhiteboardActivityEntry[]>([]);
+  const [historyLog, setHistoryLog] = useState<WhiteboardHistoryEntry[]>([]);
+  const [sessionVotes, setSessionVotes] = useState<Record<string, number>>({});
+  const [myVoteCounts, setMyVoteCounts] = useState<Record<string, number>>({});
+  const [presenceUsers, setPresenceUsers] = useState<
+    Array<{
+      userId: string;
+      userName?: string;
+      cursorState?: Record<string, unknown>;
+      activeBlockId?: string | null;
+    }>
+  >([]);
+  const [outlineImportOpen, setOutlineImportOpen] = useState(false);
+  const [outlineImportValue, setOutlineImportValue] = useState('');
   const [bgPattern, setBgPattern] = useState<CanvasBgPattern>('dots');
   const [viewportTransform, setViewportTransform] = useState<{
     x: number;
     y: number;
     zoom: number;
   }>({ x: 0, y: 0, zoom: 1 });
+  const selectedNodeIds = useMemo(
+    () => nodes.filter((node) => node.selected).map((node) => node.id),
+    [nodes]
+  );
+  const lastSnapshotRef = useRef<WhiteboardCanvasSnapshot | null>(null);
+  const undoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
+  const redoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
+  const toolSessionId = useMemo(() => `whiteboard:${ideaId}`, [ideaId]);
+  const appendActivity = useCallback(
+    (entry: WhiteboardActivityEntry) => {
+      setActivityLog((prev) => [entry, ...prev].slice(0, 40));
+    },
+    [setActivityLog]
+  );
+  const pushUndoSnapshot = useCallback(() => {
+    const snapshot = cloneCanvasSnapshot({ nodes, edges, drawingPaths, scenes });
+    undoStackRef.current = [...undoStackRef.current.slice(-24), snapshot];
+    redoStackRef.current = [];
+    lastSnapshotRef.current = snapshot;
+  }, [drawingPaths, edges, nodes, scenes]);
+
+  const restoreSnapshot = useCallback(
+    (snapshot: WhiteboardCanvasSnapshot) => {
+      const cloned = cloneCanvasSnapshot(snapshot);
+      setNodes(cloned.nodes);
+      setEdges(cloned.edges);
+      setDrawingPaths(cloned.drawingPaths);
+      setScenes(cloned.scenes);
+      lastSnapshotRef.current = cloned;
+    },
+    [setEdges, setNodes]
+  );
+
+  const undoWhiteboard = useCallback(() => {
+    const previous = undoStackRef.current[undoStackRef.current.length - 1];
+    if (!previous) return;
+    const current = cloneCanvasSnapshot({ nodes, edges, drawingPaths, scenes });
+    undoStackRef.current = undoStackRef.current.slice(0, -1);
+    redoStackRef.current = [current, ...redoStackRef.current.slice(0, 24)];
+    restoreSnapshot(previous);
+    appendActivity(
+      createWhiteboardActivityEntry('history', isPl ? 'Cofnięto zmianę' : 'Undid change', currentUserId)
+    );
+  }, [appendActivity, currentUserId, drawingPaths, edges, isPl, nodes, restoreSnapshot, scenes]);
+
+  const redoWhiteboard = useCallback(() => {
+    const next = redoStackRef.current[0];
+    if (!next) return;
+    const current = cloneCanvasSnapshot({ nodes, edges, drawingPaths, scenes });
+    redoStackRef.current = redoStackRef.current.slice(1);
+    undoStackRef.current = [...undoStackRef.current.slice(-24), current];
+    restoreSnapshot(next);
+    appendActivity(
+      createWhiteboardActivityEntry('history', isPl ? 'Ponowiono zmianę' : 'Redid change', currentUserId)
+    );
+  }, [appendActivity, currentUserId, drawingPaths, edges, isPl, nodes, restoreSnapshot, scenes]);
   const handleSelectionUpdate = useCallback(
     (nds: Node[]) => {
       const selected = nds.filter((n: Node) => n.selected);
@@ -1126,6 +1369,16 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           meta: {
             nodeType: selected[0]?.type,
             label: selected[0]?.data?.label,
+            description: selected[0]?.data?.description,
+            owner: selected[0]?.data?.owner,
+            status: selected[0]?.data?.status,
+            tags: Array.isArray(selected[0]?.data?.tags) ? selected[0]?.data?.tags : undefined,
+            artifactRef: selected[0]?.data?.artifactRef,
+            attachments: Array.isArray(selected[0]?.data?.attachments)
+              ? selected[0]?.data?.attachments
+              : undefined,
+            shape: typeof selected[0]?.data?.shape === 'string' ? selected[0]?.data?.shape : undefined,
+            semanticType: inferWhiteboardSemanticType(selected[0]),
           },
         });
       }
@@ -1135,18 +1388,28 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
+      const mutatingChange = changes.some(
+        (change) => change.type !== 'select' && change.type !== 'dimensions'
+      );
+      if (mutatingChange) pushUndoSnapshot();
       setNodes((nds) => {
-        const next = applyNodeChanges(changes, nds);
+        const filteredChanges = changes.filter((change) => {
+          if (change.type === 'select') return true;
+          const targetNode = nds.find((node) => node.id === change.id);
+          return !isNodeDataLocked(targetNode);
+        });
+        const next = applyNodeChanges(filteredChanges, nds);
         const hasSelectionChange = changes.some((c: NodeChange) => c.type === 'select');
         if (hasSelectionChange) handleSelectionUpdate(next);
         return next;
       });
     },
-    [handleSelectionUpdate]
+    [handleSelectionUpdate, pushUndoSnapshot]
   );
   const onEdgesChange = useCallback((changes: EdgeChange[]) => {
+    if (changes.some((change) => change.type !== 'select')) pushUndoSnapshot();
     setEdges((eds) => applyEdgeChanges(changes, eds));
-  }, []);
+  }, [pushUndoSnapshot]);
   const [extensions, setExtensions] = useState<Record<string, unknown>>({});
 
   const frameCollapseKey = nodes
@@ -1192,7 +1455,6 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   const didPersistRef = useRef(false);
   const stickyColorCounter = useRef(0);
 
-  const quickActionRef = useRef<(action: string) => void>(() => {});
 
   // ── Hydrate ──────────────────────────────────────────────────────────────
 
@@ -1217,6 +1479,10 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           const nodeData: Record<string, unknown> = {
             ...(normalizedNode?.data || { label: '' }),
             locked,
+            semanticLabel: getSemanticTypeLabel(
+              inferWhiteboardSemanticType(normalizedNode),
+              Boolean(isPl)
+            ),
             onLabelChange: (next: string) => {
               setNodes((nds: Node[]) =>
                 nds.map((nd: Node) =>
@@ -1239,6 +1505,18 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             type: normalizedNode?.type || 'stickyNote',
             position: normalizedNode?.position || { x: 100, y: 100 },
             data: nodeData,
+            ...(normalizedNode?.parentNode || normalizedNode?.parentId || normalizedNode?.data?.parentId
+              ? {
+                  parentNode:
+                    normalizedNode?.parentNode ||
+                    normalizedNode?.parentId ||
+                    normalizedNode?.data?.parentId,
+                  parentId:
+                    normalizedNode?.parentId ||
+                    normalizedNode?.parentNode ||
+                    normalizedNode?.data?.parentId,
+                }
+              : {}),
             ...(normalizedNode?.style ? { style: normalizedNode.style } : {}),
           };
         });
@@ -1264,8 +1542,38 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           : {};
       if (Array.isArray(wbExt.drawingPaths)) setDrawingPaths(wbExt.drawingPaths);
       if (Array.isArray(wbExt.scenes)) setScenes(wbExt.scenes);
+      if (wbExt.mode === 'board' || wbExt.mode === 'draw') {
+        setWhiteboardMode(wbExt.mode);
+      }
+      if (wbExt.sessionState && typeof wbExt.sessionState === 'object') {
+        setSessionState({
+          ...DEFAULT_SESSION_STATE,
+          toolSessionId,
+          ...(wbExt.sessionState as Partial<WhiteboardSessionState>),
+        });
+      } else {
+        setSessionState({ ...DEFAULT_SESSION_STATE, toolSessionId });
+      }
+      if (wbExt.sharePolicy && typeof wbExt.sharePolicy === 'object') {
+        setSharePolicy({
+          ...DEFAULT_SHARE_POLICY,
+          ...(wbExt.sharePolicy as Partial<WhiteboardSharePolicy>),
+        });
+      } else {
+        setSharePolicy(DEFAULT_SHARE_POLICY);
+      }
+      setLibraryItems(Array.isArray(wbExt.libraryItems) ? wbExt.libraryItems : []);
+      setOutcomeRegistry(Array.isArray(wbExt.outcomeRegistry) ? wbExt.outcomeRegistry : []);
+      setActivityLog(Array.isArray(wbExt.activityLog) ? wbExt.activityLog : []);
+      setHistoryLog(Array.isArray(wbExt.historyLog) ? wbExt.historyLog : []);
+      setSessionVotes(
+        wbExt.sessionVotes && typeof wbExt.sessionVotes === 'object' ? wbExt.sessionVotes : {}
+      );
       if (wbExt.bgPattern && ['dots', 'grid', 'lines', 'blank'].includes(wbExt.bgPattern)) {
         setBgPattern(wbExt.bgPattern as CanvasBgPattern);
+      }
+      if (wbExt.latestSnapshot && typeof wbExt.latestSnapshot === 'object') {
+        lastSnapshotRef.current = wbExt.latestSnapshot as WhiteboardCanvasSnapshot;
       }
 
       if (!didPersistRef.current) {
@@ -1288,7 +1596,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [i18n.language, ideaId, isPl, open, setEdges, setNodes]);
+  }, [i18n.language, ideaId, isPl, open, setEdges, setNodes, toolSessionId]);
 
   useEffect(() => {
     if (!open) return;
@@ -1296,23 +1604,414 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     hydrate();
   }, [hydrate, open, refreshToken]);
 
+  const rememberSnapshot = useCallback(
+    (label: string) => {
+      lastSnapshotRef.current = cloneCanvasSnapshot({
+        nodes,
+        edges,
+        drawingPaths,
+        scenes,
+      });
+      setHistoryLog((prev) => [createWhiteboardHistoryEntry(label), ...prev].slice(0, 20));
+    },
+    [drawingPaths, edges, nodes, scenes]
+  );
+
+  const buildWhiteboardExtensions = useCallback(() => {
+    return {
+      ...(extensions?.whiteboard && typeof extensions.whiteboard === 'object'
+        ? extensions.whiteboard
+        : {}),
+      mode: whiteboardMode,
+      viewState: { snap: false, showGrid: true },
+      drawingPaths,
+      scenes,
+      bgPattern,
+      sessionState: {
+        ...sessionState,
+        updatedAt: Date.now(),
+      },
+      sharePolicy,
+      libraryItems,
+      outcomeRegistry,
+      activityLog,
+      historyLog,
+      sessionVotes,
+      myVoteCounts,
+      latestSnapshot: lastSnapshotRef.current,
+    };
+  }, [
+    activityLog,
+    bgPattern,
+    drawingPaths,
+    extensions,
+    historyLog,
+    libraryItems,
+    myVoteCounts,
+    outcomeRegistry,
+    scenes,
+    sessionState,
+    sessionVotes,
+    sharePolicy,
+    whiteboardMode,
+  ]);
+
+  const ensureFacilitationSession = useCallback(async () => {
+    if (sessionState.sessionId) return sessionState.sessionId;
+    const created = await Api.facilitationCreateSession({
+      toolSessionId,
+      settings: { tool: 'whiteboard', ideaId },
+    });
+    const sessionId = String(created?.id || '');
+    if (!sessionId) throw new Error(isPl ? 'Brak sessionId' : 'Missing sessionId');
+    setSessionState((prev) => ({
+      ...prev,
+      active: true,
+      sessionId,
+      toolSessionId,
+      updatedAt: Date.now(),
+    }));
+    await Api.facilitationAssignRole(sessionId, {
+      userId: currentUserId,
+      roleName: sessionState.role,
+      permissions: sessionState.role === 'facilitator' ? ['timer', 'voting', 'follow'] : [],
+    }).catch(() => undefined);
+    return sessionId;
+  }, [currentUserId, ideaId, isPl, sessionState.role, sessionState.sessionId, toolSessionId]);
+
+  const syncFacilitationVotes = useCallback(
+    async (sessionId: string) => {
+      const [summaryRes, votesRes] = await Promise.all([
+        Api.facilitationGetVoteSummary(sessionId),
+        Api.facilitationGetVotes(sessionId),
+      ]);
+      const summary = Array.isArray(summaryRes?.summary) ? summaryRes.summary : [];
+      const votes = Array.isArray(votesRes?.votes) ? votesRes.votes : [];
+      setSessionVotes(normalizeVoteSummary(summary));
+      setMyVoteCounts(
+        (votes as Array<Record<string, unknown>>).reduce((acc: Record<string, number>, vote) => {
+          if (String(vote.voter_id || vote.voterId || '') !== currentUserId) return acc;
+          const nodeId = String(vote.vote_target_id || vote.voteTargetId || '');
+          if (!nodeId) return acc;
+          acc[nodeId] = (acc[nodeId] || 0) + Number(vote.vote_value ?? vote.voteValue ?? 1);
+          return acc;
+        }, {})
+      );
+    },
+    [currentUserId]
+  );
+
+  const setBoardMode = useCallback(
+    (mode: 'board' | 'draw') => {
+      setWhiteboardMode(mode);
+      appendActivity(
+        createWhiteboardActivityEntry(
+          'session',
+          mode === 'draw'
+            ? isPl
+              ? 'Włączono tryb rysowania'
+              : 'Draw mode enabled'
+            : isPl
+              ? 'Włączono tryb board'
+              : 'Board mode enabled',
+          currentUserId
+        )
+      );
+    },
+    [appendActivity, currentUserId, isPl]
+  );
+
+  const cycleSessionRole = useCallback(() => {
+    const nextRole = cycleWhiteboardRole(sessionState.role);
+    setSessionState((prev) => ({
+      ...prev,
+      active: true,
+      role: nextRole,
+      updatedAt: Date.now(),
+    }));
+    appendActivity(
+      createWhiteboardActivityEntry(
+        'session',
+        isPl ? `Rola sesji: ${nextRole}` : `Session role: ${nextRole}`,
+        currentUserId
+      )
+    );
+    ensureFacilitationSession()
+      .then((sessionId) =>
+        Api.facilitationAssignRole(sessionId, {
+          userId: currentUserId,
+          roleName: nextRole,
+          permissions: nextRole === 'facilitator' ? ['timer', 'voting', 'follow'] : [],
+        })
+      )
+      .catch(() => undefined);
+  }, [appendActivity, currentUserId, ensureFacilitationSession, isPl, sessionState.role]);
+
+  const toggleSessionTimer = useCallback(() => {
+    const timerEndsAt = sessionState.timerEndsAt ? null : Date.now() + sessionState.timerSeconds * 1000;
+    const nextState = {
+      ...sessionState,
+      active: true,
+      timerEndsAt,
+      updatedAt: Date.now(),
+    };
+    setSessionState(nextState);
+    appendActivity(
+      createWhiteboardActivityEntry(
+        'session',
+        timerEndsAt
+          ? isPl
+            ? 'Uruchomiono timer warsztatu'
+            : 'Workshop timer started'
+          : isPl
+            ? 'Zatrzymano timer warsztatu'
+            : 'Workshop timer stopped',
+        currentUserId
+      )
+    );
+    ensureFacilitationSession()
+      .then((sessionId) =>
+        Api.facilitationUpdateTimer(sessionId, {
+          timerEndsAt,
+          timerSeconds: sessionState.timerSeconds,
+          updatedBy: currentUserId,
+        })
+      )
+      .catch(() => undefined);
+  }, [appendActivity, currentUserId, ensureFacilitationSession, isPl, sessionState]);
+
+  const toggleSessionVoting = useCallback(() => {
+    const votingOpen = !sessionState.votingOpen;
+    setSessionState((prev) => ({
+      ...prev,
+      active: true,
+      votingOpen,
+      updatedAt: Date.now(),
+    }));
+    window.dispatchEvent(
+      new CustomEvent('idea-whiteboard-toggle-voting-overlay', {
+        detail: { open: votingOpen, ideaId },
+      })
+    );
+    appendActivity(
+      createWhiteboardActivityEntry(
+        'session',
+        votingOpen
+          ? isPl
+            ? 'Otworzono głosowanie'
+            : 'Voting opened'
+          : isPl
+            ? 'Zamknięto głosowanie'
+            : 'Voting closed',
+        currentUserId
+      )
+    );
+    ensureFacilitationSession()
+      .then(async (sessionId) => {
+        await Api.facilitationUpdatePhase(sessionId, votingOpen ? 'voting' : 'board');
+        if (votingOpen) {
+          await syncFacilitationVotes(sessionId);
+        }
+      })
+      .catch(() => undefined);
+  }, [
+    appendActivity,
+    currentUserId,
+    ensureFacilitationSession,
+    ideaId,
+    isPl,
+    sessionState.votingOpen,
+    syncFacilitationVotes,
+  ]);
+
+  const toggleSessionFollow = useCallback(() => {
+    const followMe = !sessionState.followMe;
+    setSessionState((prev) => ({ ...prev, active: true, followMe, updatedAt: Date.now() }));
+    appendActivity(
+      createWhiteboardActivityEntry(
+        'session',
+        followMe
+          ? isPl
+            ? 'Włączono follow-me'
+            : 'Follow-me enabled'
+          : isPl
+            ? 'Wyłączono follow-me'
+            : 'Follow-me disabled',
+        currentUserId
+      )
+    );
+    ensureFacilitationSession()
+      .then((sessionId) =>
+        Api.facilitationUpdatePhase(sessionId, followMe ? 'follow_me' : 'board')
+      )
+      .catch(() => undefined);
+  }, [appendActivity, currentUserId, ensureFacilitationSession, isPl, sessionState.followMe]);
+
+  const toggleSpotlightSelection = useCallback(() => {
+    const selectedId = nodes.find((node) => node.selected)?.id || null;
+    const spotlightNodeId = sessionState.spotlightNodeId === selectedId ? null : selectedId;
+    setSessionState((prev) => ({ ...prev, active: true, spotlightNodeId, updatedAt: Date.now() }));
+    appendActivity(
+      createWhiteboardActivityEntry(
+        'session',
+        spotlightNodeId
+          ? isPl
+            ? 'Ustawiono spotlight na zaznaczeniu'
+            : 'Spotlight set to selection'
+          : isPl
+            ? 'Wyczyszczono spotlight'
+            : 'Spotlight cleared',
+        currentUserId,
+        selectedId ? [selectedId] : undefined
+      )
+    );
+  }, [appendActivity, currentUserId, isPl, nodes]);
+
+  const importOutline = useCallback(() => {
+    if (!locked) setOutlineImportOpen(true);
+  }, [appendActivity, currentUserId, isPl, locked, rememberSnapshot]);
+
+  const saveSelectionToLibrary = useCallback(() => {
+    const selected = nodes.filter((node) => node.selected);
+    if (selected.length === 0) {
+      toast(isPl ? 'Najpierw zaznacz elementy' : 'Select elements first');
+      return;
+    }
+    const selectedIds = new Set(selected.map((node) => node.id));
+    const item: WhiteboardLibraryItem = {
+      id: `wb-library-${Date.now()}`,
+      name:
+        selected.length === 1
+          ? String(selected[0]?.data?.label || (isPl ? 'Fragment' : 'Fragment'))
+          : isPl
+            ? `Fragment (${selected.length})`
+            : `Fragment (${selected.length})`,
+      createdAt: Date.now(),
+      nodes: selected.map((node) => ({
+        ...node,
+        selected: false,
+      })),
+      edges: edges.filter((edge) => selectedIds.has(edge.source) && selectedIds.has(edge.target)),
+    };
+    setLibraryItems((prev) => [item, ...prev].slice(0, 12));
+    appendActivity(
+      createWhiteboardActivityEntry(
+        'library',
+        isPl ? 'Zapisano fragment do biblioteki' : 'Saved fragment to library',
+        currentUserId,
+        selected.map((node) => node.id)
+      )
+    );
+  }, [appendActivity, currentUserId, edges, isPl, nodes]);
+
+  const insertLatestLibraryItem = useCallback(() => {
+    const item = libraryItems[0];
+    if (!item) {
+      toast(isPl ? 'Biblioteka jest pusta' : 'Library is empty');
+      return;
+    }
+    pushUndoSnapshot();
+    const idMap = new Map<string, string>();
+    const insertedNodes = item.nodes.map((rawNode, index) => {
+      const originalId = String(rawNode.id || '');
+      const nextId = `wb-lib-${Date.now()}-${index}`;
+      idMap.set(originalId, nextId);
+      return {
+        ...rawNode,
+        id: nextId,
+        position: {
+          x: Number((rawNode.position as any)?.x || 0) + 80,
+          y: Number((rawNode.position as any)?.y || 0) + 80,
+        },
+        selected: false,
+        data: {
+          ...((rawNode.data as Record<string, unknown>) || {}),
+          onLabelChange: (label: string) => {
+            setNodes((prev) =>
+              prev.map((node) =>
+                node.id === nextId ? { ...node, data: { ...node.data, label } } : node
+              )
+            );
+          },
+        },
+      } as Node;
+    });
+    const insertedEdges = item.edges.map((rawEdge, index) => ({
+      ...rawEdge,
+      id: `wb-edge-lib-${Date.now()}-${index}`,
+      source: idMap.get(String(rawEdge.source || '')) || String(rawEdge.source || ''),
+      target: idMap.get(String(rawEdge.target || '')) || String(rawEdge.target || ''),
+    })) as Edge[];
+    setNodes((prev) => [...prev, ...insertedNodes]);
+    setEdges((prev) => [...prev, ...insertedEdges]);
+    appendActivity(
+      createWhiteboardActivityEntry(
+        'library',
+        isPl ? 'Wstawiono fragment z biblioteki' : 'Inserted library fragment',
+        currentUserId,
+        insertedNodes.map((node) => node.id)
+      )
+    );
+    rememberSnapshot(isPl ? 'Insert library fragment' : 'Inserted library fragment');
+  }, [appendActivity, currentUserId, isPl, libraryItems, pushUndoSnapshot, rememberSnapshot]);
+
+  const restoreLatestHistory = useCallback(() => {
+    if (!lastSnapshotRef.current) {
+      toast(isPl ? 'Brak snapshotu do przywrócenia' : 'No snapshot to restore');
+      return;
+    }
+    const snapshot = lastSnapshotRef.current;
+    pushUndoSnapshot();
+    restoreSnapshot(snapshot);
+    appendActivity(
+      createWhiteboardActivityEntry(
+        'history',
+        isPl ? 'Przywrócono ostatni snapshot' : 'Restored latest snapshot',
+        currentUserId
+      )
+    );
+  }, [appendActivity, currentUserId, isPl, pushUndoSnapshot, restoreSnapshot]);
+
+  const cycleGovernance = useCallback(() => {
+    setSharePolicy((prev) => {
+      const classification = cycleWhiteboardClassification(prev.classification);
+      appendActivity(
+        createWhiteboardActivityEntry(
+          'governance',
+          isPl ? `Klasyfikacja: ${classification}` : `Classification: ${classification}`,
+          currentUserId
+        )
+      );
+      return {
+        ...prev,
+        classification,
+        watermark: `${classification.toUpperCase()} • ${
+          String(prev.watermark || 'Consultify Whiteboard').split(' • ').slice(-1)[0]
+        }`,
+      };
+    });
+  }, [appendActivity, currentUserId, isPl]);
+
   // ── Connections ──────────────────────────────────────────────────────────
 
   const onConnect = useCallback(
     (connection: Connection) => {
       if (locked) return;
+      const sourceNode = nodes.find((node) => node.id === connection.source);
+      const targetNode = nodes.find((node) => node.id === connection.target);
+      if (isNodeDataLocked(sourceNode) || isNodeDataLocked(targetNode)) return;
+      pushUndoSnapshot();
       setEdges((eds: Edge[]) => addEdge({ ...connection, type: 'labeled' }, eds));
     },
-    [locked, setEdges]
+    [locked, nodes, pushUndoSnapshot, setEdges]
   );
 
   // ── Add elements ─────────────────────────────────────────────────────────
 
-  const addElement = useCallback(
-    (kind: WbNodeKind, extraData?: Record<string, unknown>) => {
-      if (locked) return;
+  const createNode = useCallback(
+    (kind: WbNodeKind, extraData?: Record<string, unknown>, index = 0): Node => {
       const id = `wb-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      const offset = nodes.length * 30;
+      const offset = index * 30;
       const explicitPosition = extraData?.position as { x: number; y: number } | undefined;
 
       const typeMap: Record<WbNodeKind, string> = {
@@ -1361,7 +2060,21 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
       const nodeData: Record<string, unknown> = {
         label: labels[isPl ? 0 : 1],
-        locked,
+        locked: Boolean(extraData?.locked ?? locked),
+        semanticType:
+          typeof extraData?.semanticType === 'string'
+            ? extraData.semanticType
+            : kind === 'sticky'
+              ? 'note'
+              : kind === 'image'
+                ? 'image'
+                : kind === 'link'
+                  ? 'link'
+                  : undefined,
+        semanticLabel:
+          typeof extraData?.semanticType === 'string'
+            ? getSemanticTypeLabel(extraData.semanticType as any, Boolean(isPl))
+            : undefined,
         onLabelChange: (next: string) => {
           setNodes((nds: Node[]) =>
             nds.map((nd: Node) =>
@@ -1394,46 +2107,587 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         type: typeMap[kind],
         position: explicitPosition || { x: 100 + offset, y: 100 + offset },
         data: nodeData,
-        ...(kind === 'group' || kind === 'frame' ? { style: { width: 400, height: 300 } } : {}),
+        draggable: !Boolean(nodeData.locked),
+        connectable: !Boolean(nodeData.locked),
+        deletable: !Boolean(nodeData.locked),
+        ...(kind === 'group' || kind === 'frame'
+          ? {
+              style: {
+                width: Number(extraData?.width || 400),
+                height: Number(extraData?.height || 300),
+              },
+            }
+          : {}),
       };
-      setNodes((prev: Node[]) => [...prev, newNode]);
+      if (extraData?.semanticType === 'theme') {
+        newNode.type = 'summaryCard';
+      }
+      if (extraData?.semanticType === 'outcome') {
+        newNode.type = 'summaryCard';
+      }
+      if (extraData?.semanticType === 'decision') {
+        newNode.type = 'textBlock';
+        newNode.data = {
+          ...newNode.data,
+          artifactRef: {
+            type: 'decision',
+            id: String((extraData as Record<string, unknown>)?.linkedOutcomeId || id),
+          },
+        };
+      }
+      if (extraData?.semanticType === 'action') {
+        newNode.type = 'stickyNote';
+        newNode.data = {
+          ...newNode.data,
+          colorIndex: 2,
+          status: 'todo',
+        };
+      }
+      return newNode;
     },
-    [isPl, locked, nodes.length, setNodes]
+    [isPl, locked]
   );
 
-  // ── Quick action listener (after addElement is defined) ─────────────────
-  quickActionRef.current = (action: string) => {
-    if (action === 'wb_add_sticky') addElement('sticky');
-    if (action === 'wb_add_text') addElement('text');
-    if (action === 'wb_add_group') addElement('group');
-    if (action === 'wb_add_shape_rectangle') addElement('shape_rectangle');
-    if (action === 'wb_add_shape_circle') addElement('shape_circle');
-    if (action === 'wb_add_shape_diamond') addElement('shape_diamond');
-    if (action === 'wb_add_shape_hexagon') addElement('shape_hexagon');
-    if (action === 'wb_add_frame') addElement('frame');
-    if (action === 'wb_add_image') addElement('image');
-    if (action === 'wb_add_link') addElement('link');
-    if (action === 'wb_add_kpi') addElement('kpi_badge');
-    if (action === 'wb_add_score') addElement('score');
-    if (action === 'wb_add_progress') addElement('progress');
-    if (action === 'wb_add_summary') addElement('summary');
-    if (action === 'wb_duplicate') duplicateSelected();
-    if (action === 'wb_group') groupSelected();
-    if (action === 'wb_ungroup') ungroupSelected();
-    if (action === 'wb_distribute_h') distributeNodes('horizontal');
-    if (action === 'wb_distribute_v') distributeNodes('vertical');
-    if (action === 'wb_delete') deleteSelected();
-  };
+  const createOutcomeRecord = useCallback(
+    (
+      type: WhiteboardOutcomeRecord['type'],
+      node: Node,
+      sourceNodeIds?: string[],
+      exportInfo?: { exportedToType?: string; exportedToId?: string }
+    ): WhiteboardOutcomeRecord => ({
+      id: `wb-outcome-${node.id}`,
+      type,
+      title: String(node.data?.label || getSemanticTypeLabel(type, Boolean(isPl))),
+      nodeId: node.id,
+      sourceNodeIds: sourceNodeIds?.length ? sourceNodeIds : [node.id],
+      exportedToType: exportInfo?.exportedToType,
+      exportedToId: exportInfo?.exportedToId,
+      linkedOutcomeId: typeof node.data?.linkedOutcomeId === 'string' ? node.data.linkedOutcomeId : undefined,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }),
+    [isPl]
+  );
+
+  const registerOutcomeRecord = useCallback(
+    (record: WhiteboardOutcomeRecord) => {
+      setOutcomeRegistry((prev) => {
+        const next = prev.filter((item) => item.id !== record.id);
+        return [record, ...next].slice(0, 40);
+      });
+    },
+    [setOutcomeRegistry]
+  );
+
+  const handleExternalInsert = useCallback(
+    (items: WhiteboardExternalInsert[]) => {
+      if (locked || items.length === 0) return;
+      pushUndoSnapshot();
+      const created = items.map((item, index) => {
+        if (item.kind === 'image') {
+          return createNode(
+            'image',
+            {
+              label: item.label,
+              src: item.src,
+              width: item.width ?? 300,
+              position: item.position,
+              semanticType: 'image',
+            },
+            index
+          );
+        }
+        if (item.kind === 'link') {
+          return createNode(
+            'link',
+            {
+              label: item.label,
+              url: item.url,
+              position: item.position,
+              semanticType: 'link',
+            },
+            index
+          );
+        }
+        return createNode(
+          item.label.length > 100 ? 'text' : 'sticky',
+          {
+            label: item.label,
+            position: item.position,
+            colorIndex: item.colorIndex,
+            semanticType: item.label.length > 100 ? undefined : 'note',
+          },
+          index
+        );
+      });
+      setNodes((prev) => [...prev, ...created]);
+      appendActivity(
+        createWhiteboardActivityEntry(
+          'import',
+          isPl ? 'Dodano elementy z wklejania/importu' : 'Inserted items from paste/import',
+          currentUserId,
+          created.map((node) => node.id)
+        )
+      );
+      rememberSnapshot(isPl ? 'Import external items' : 'Imported external items');
+    },
+    [appendActivity, createNode, currentUserId, isPl, locked, pushUndoSnapshot, rememberSnapshot]
+  );
+
+  const applyOutlineImport = useCallback(() => {
+    const lines = outlineImportValue
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(0, 24);
+    if (lines.length === 0) {
+      setOutlineImportOpen(false);
+      setOutlineImportValue('');
+      return;
+    }
+    handleExternalInsert(
+      lines.map((line, index) => ({
+        kind: 'text' as const,
+        label: line,
+        position: { x: 120 + (index % 4) * 190, y: 120 + Math.floor(index / 4) * 130 },
+        colorIndex: index % STICKY_COLORS.length,
+      }))
+    );
+    setOutlineImportOpen(false);
+    setOutlineImportValue('');
+    appendActivity(
+      createWhiteboardActivityEntry(
+        'import',
+        isPl ? `Zaimportowano ${lines.length} notatek` : `Imported ${lines.length} notes`,
+        currentUserId
+      )
+    );
+  }, [appendActivity, currentUserId, handleExternalInsert, isPl, outlineImportValue]);
+
+  const addElement = useCallback(
+    (kind: WbNodeKind, extraData?: Record<string, unknown>) => {
+      if (locked) return;
+      pushUndoSnapshot();
+      const newNode = createNode(kind, extraData, nodes.length);
+      setNodes((prev: Node[]) => [...prev, newNode]);
+      const semanticType =
+        typeof newNode.data?.semanticType === 'string' ? newNode.data.semanticType : undefined;
+      if (
+        semanticType === 'cluster' ||
+        semanticType === 'theme' ||
+        semanticType === 'outcome' ||
+        semanticType === 'decision' ||
+        semanticType === 'action'
+      ) {
+        registerOutcomeRecord(createOutcomeRecord(semanticType, newNode));
+      }
+      appendActivity(
+        createWhiteboardActivityEntry(
+          'create',
+          isPl ? `Dodano element: ${kind}` : `Added element: ${kind}`,
+          currentUserId,
+          [newNode.id]
+        )
+      );
+    },
+    [
+      appendActivity,
+      createNode,
+      createOutcomeRecord,
+      currentUserId,
+      isPl,
+      locked,
+      nodes.length,
+      pushUndoSnapshot,
+      registerOutcomeRecord,
+      setNodes,
+    ]
+  );
+
+  const seedQuickStart = useCallback(
+    (mode: WhiteboardQuickStart) => {
+      if (locked) return;
+      pushUndoSnapshot();
+
+      setBgPattern('dots');
+      setNodes((prev: Node[]) => {
+        if (prev.length > 0) return prev;
+
+        const created: Node[] = [];
+        const make = (kind: WbNodeKind, extraData: Record<string, unknown>) => {
+          const node = createNode(kind, extraData, prev.length + created.length);
+          created.push(node);
+        };
+
+        if (mode === 'brainstorm') {
+          make('frame', {
+            label: isPl ? 'Temat sesji' : 'Session topic',
+            position: { x: 120, y: 80 },
+            width: 540,
+            height: 250,
+            bgColor: 'rgba(245, 158, 11, 0.08)',
+          });
+          make('sticky', { label: isPl ? 'Pomysł 1' : 'Idea 1', position: { x: 180, y: 150 } });
+          make('sticky', { label: isPl ? 'Pomysł 2' : 'Idea 2', position: { x: 360, y: 150 } });
+          make('sticky', { label: isPl ? 'Pomysł 3' : 'Idea 3', position: { x: 240, y: 290 } });
+          make('sticky', { label: isPl ? 'Pomysł 4' : 'Idea 4', position: { x: 430, y: 290 } });
+        }
+
+        if (mode === 'affinity') {
+          make('frame', {
+            label: isPl ? 'Temat A' : 'Theme A',
+            position: { x: 120, y: 80 },
+            width: 260,
+            height: 320,
+            bgColor: 'rgba(139, 92, 246, 0.08)',
+          });
+          make('frame', {
+            label: isPl ? 'Temat B' : 'Theme B',
+            position: { x: 420, y: 80 },
+            width: 260,
+            height: 320,
+            bgColor: 'rgba(59, 130, 246, 0.08)',
+          });
+          make('sticky', { label: isPl ? 'Wrzutka 1' : 'Input 1', position: { x: 165, y: 145 } });
+          make('sticky', { label: isPl ? 'Wrzutka 2' : 'Input 2', position: { x: 165, y: 265 } });
+          make('sticky', { label: isPl ? 'Wrzutka 3' : 'Input 3', position: { x: 470, y: 145 } });
+          make('sticky', { label: isPl ? 'Wrzutka 4' : 'Input 4', position: { x: 470, y: 265 } });
+        }
+
+        if (mode === 'workshop') {
+          make('text', {
+            label: isPl ? 'Cele warsztatu' : 'Workshop goals',
+            position: { x: 140, y: 65 },
+          });
+          make('frame', {
+            label: isPl ? 'Do omówienia' : 'Discuss',
+            position: { x: 120, y: 110 },
+            width: 220,
+            height: 300,
+            bgColor: 'rgba(245, 158, 11, 0.08)',
+          });
+          make('frame', {
+            label: isPl ? 'Decyzje' : 'Decisions',
+            position: { x: 380, y: 110 },
+            width: 220,
+            height: 300,
+            bgColor: 'rgba(16, 185, 129, 0.08)',
+          });
+          make('frame', {
+            label: isPl ? 'Parking lot' : 'Parking lot',
+            position: { x: 640, y: 110 },
+            width: 220,
+            height: 300,
+            bgColor: 'rgba(148, 163, 184, 0.12)',
+          });
+        }
+
+        return [...prev, ...created];
+      });
+
+      toast.success(
+        mode === 'brainstorm'
+          ? isPl
+            ? 'Utworzono start do brainstormu'
+            : 'Brainstorm starter created'
+          : mode === 'affinity'
+            ? isPl
+              ? 'Utworzono start do affinity map'
+              : 'Affinity map starter created'
+            : isPl
+              ? 'Utworzono workshop wall'
+              : 'Workshop wall created',
+        { duration: 900 }
+      );
+      appendActivity(
+        createWhiteboardActivityEntry(
+          'create',
+          isPl ? `Uruchomiono quick start: ${mode}` : `Quick start: ${mode}`,
+          currentUserId
+        )
+      );
+      rememberSnapshot(isPl ? `Quick start: ${mode}` : `Quick start: ${mode}`);
+    },
+    [appendActivity, createNode, currentUserId, isPl, locked, pushUndoSnapshot, rememberSnapshot]
+  );
+
+  // ── Node CRUD, grouping, distribution (extracted to useWhiteboardNodes) ──
+  const {
+    deleteSelected,
+    duplicateSelected,
+    groupSelected,
+    ungroupSelected,
+    distributeNodes,
+  } = useWhiteboardNodes({
+    nodes,
+    setNodes,
+    setEdges,
+    locked: locked || false,
+    isPl,
+    pushSnapshot: pushUndoSnapshot,
+  });
+
+  // ── Quick action listener (extracted to useWhiteboardQuickActions) ───────
+  useWhiteboardQuickActions({
+    open,
+    handlers: {
+      addElement,
+      deleteSelected,
+      duplicateSelected,
+      groupSelected,
+      ungroupSelected,
+      distributeNodes,
+      setMode: setBoardMode,
+      cycleSessionRole,
+      toggleSessionTimer,
+      toggleSessionVoting,
+      toggleSessionFollow,
+      toggleSpotlightSelection,
+      importOutline,
+      saveSelectionToLibrary,
+      insertLatestLibraryItem,
+      restoreLatestHistory,
+      cycleGovernance,
+      undo: undoWhiteboard,
+      redo: redoWhiteboard,
+    },
+  });
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail?.action) quickActionRef.current(detail.action);
+    const handler = async (event: Event) => {
+      const detail = (event as CustomEvent).detail || {};
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const nodeId = String(detail.nodeId || detail.voteTargetId || '');
+      if (!nodeId) return;
+      try {
+        const sessionId = await ensureFacilitationSession();
+        await Api.facilitationCastVote(sessionId, {
+          voteTargetId: nodeId,
+          voteType: 'upvote',
+          voteValue: 1,
+        });
+        await syncFacilitationVotes(sessionId);
+        appendActivity(
+          createWhiteboardActivityEntry(
+            'vote',
+            isPl ? 'Zapisano głos w sesji' : 'Vote persisted to session',
+            currentUserId,
+            [nodeId]
+          )
+        );
+      } catch (error: any) {
+        toast.error(error?.message || (isPl ? 'Nie udało się zapisać głosu' : 'Failed to save vote'));
+      }
     };
-    window.addEventListener('idea-workspace-quick-action', handler);
-    return () => window.removeEventListener('idea-workspace-quick-action', handler);
-  }, [open]);
+    window.addEventListener('idea-whiteboard-cast-vote', handler);
+    return () => window.removeEventListener('idea-whiteboard-cast-vote', handler);
+  }, [
+    appendActivity,
+    currentUserId,
+    ensureFacilitationSession,
+    ideaId,
+    isPl,
+    open,
+    syncFacilitationVotes,
+  ]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail || {};
+      const nodeId = String(detail.nodeId || '');
+      if (!nodeId || !detail.data || typeof detail.data !== 'object') return;
+      setNodes((prev) =>
+        prev.map((node) =>
+          node.id === nodeId ? { ...node, data: { ...node.data, ...detail.data } } : node
+        )
+      );
+      appendActivity(
+        createWhiteboardActivityEntry(
+          'update',
+          isPl ? 'Zmieniono właściwości obiektu' : 'Updated object properties',
+          currentUserId,
+          [nodeId]
+        )
+      );
+    };
+    window.addEventListener('idea-workspace-node-update', handler);
+    return () => window.removeEventListener('idea-workspace-node-update', handler);
+  }, [appendActivity, currentUserId, isPl, open]);
+
+  useEffect(() => {
+    if (!open || !sessionState.timerEndsAt) return;
+    const msLeft = sessionState.timerEndsAt - Date.now();
+    if (msLeft <= 0) {
+      setSessionState((prev) => ({ ...prev, timerEndsAt: null, updatedAt: Date.now() }));
+      appendActivity(
+        createWhiteboardActivityEntry(
+          'session',
+          isPl ? 'Timer warsztatu zakończony' : 'Workshop timer completed',
+          currentUserId
+        )
+      );
+      if (sessionState.sessionId) {
+        Api.facilitationUpdateTimer(sessionState.sessionId, {
+          timerEndsAt: null,
+          timerSeconds: sessionState.timerSeconds,
+          updatedBy: currentUserId,
+        }).catch(() => undefined);
+      }
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setSessionState((prev) => ({ ...prev, timerEndsAt: null, updatedAt: Date.now() }));
+      appendActivity(
+        createWhiteboardActivityEntry(
+          'session',
+          isPl ? 'Timer warsztatu zakończony' : 'Workshop timer completed',
+          currentUserId
+        )
+      );
+      if (sessionState.sessionId) {
+        Api.facilitationUpdateTimer(sessionState.sessionId, {
+          timerEndsAt: null,
+          timerSeconds: sessionState.timerSeconds,
+          updatedBy: currentUserId,
+        }).catch(() => undefined);
+      }
+    }, msLeft);
+    return () => window.clearTimeout(timer);
+  }, [
+    appendActivity,
+    currentUserId,
+    isPl,
+    open,
+    sessionState.sessionId,
+    sessionState.timerEndsAt,
+    sessionState.timerSeconds,
+  ]);
+
+  useEffect(() => {
+    if (!open) return;
+    window.dispatchEvent(
+      new CustomEvent('idea-whiteboard-facilitation-state', {
+        detail: {
+          ideaId,
+          sessionState,
+          voteSummary: sessionVotes,
+          myVoteCounts,
+        },
+      })
+    );
+  }, [ideaId, myVoteCounts, open, sessionState, sessionVotes]);
+
+  useEffect(() => {
+    if (!open || !sessionState.sessionId || !sessionState.votingOpen) return;
+    syncFacilitationVotes(sessionState.sessionId).catch(() => undefined);
+    const interval = window.setInterval(() => {
+      syncFacilitationVotes(sessionState.sessionId as string).catch(() => undefined);
+    }, 5000);
+    return () => window.clearInterval(interval);
+  }, [open, sessionState.sessionId, sessionState.votingOpen, syncFacilitationVotes]);
+
+  useEffect(() => {
+    if (!open) return;
+    const syncPresence = async () => {
+      try {
+        await Api.toolSessionJoinPresence(toolSessionId, {
+          userName: currentUserName,
+          cursorState: {
+            viewport: viewportTransform,
+            spotlightNodeId: sessionState.spotlightNodeId,
+            role: sessionState.role,
+          },
+          activeBlockId: selectedNodeIds[0],
+        });
+        const presenceRes = await Api.toolSessionListPresence(toolSessionId);
+        setPresenceUsers(Array.isArray(presenceRes?.presence) ? presenceRes.presence : []);
+      } catch {
+        /* best-effort */
+      }
+    };
+    syncPresence();
+    const heartbeat = window.setInterval(() => {
+      Api.toolSessionHeartbeat(toolSessionId, {
+        viewport: viewportTransform,
+        spotlightNodeId: sessionState.spotlightNodeId,
+        role: sessionState.role,
+      }).catch(() => undefined);
+      Api.toolSessionListPresence(toolSessionId)
+        .then((presenceRes) => {
+          setPresenceUsers(Array.isArray(presenceRes?.presence) ? presenceRes.presence : []);
+        })
+        .catch(() => undefined);
+    }, 5000);
+    return () => {
+      window.clearInterval(heartbeat);
+      Api.toolSessionDisconnect(toolSessionId).catch(() => undefined);
+    };
+  }, [
+    currentUserName,
+    open,
+    selectedNodeIds,
+    sessionState.role,
+    sessionState.spotlightNodeId,
+    toolSessionId,
+    viewportTransform,
+  ]);
+
+  useEffect(() => {
+    if (!open || !sessionState.followMe) return;
+    const facilitator = presenceUsers.find((entry) => {
+      const role = String((entry.cursorState as Record<string, unknown> | undefined)?.role || '');
+      return role === 'facilitator' && String(entry.userId || '') !== currentUserId;
+    });
+    const viewport = (facilitator?.cursorState as Record<string, unknown> | undefined)?.viewport as
+      | { x?: number; y?: number; zoom?: number }
+      | undefined;
+    if (
+      viewport &&
+      typeof viewport.x === 'number' &&
+      typeof viewport.y === 'number' &&
+      typeof viewport.zoom === 'number'
+    ) {
+      window.dispatchEvent(
+        new CustomEvent('idea-whiteboard-navigate', {
+          detail: { viewport: { x: viewport.x, y: viewport.y, zoom: viewport.zoom }, ideaId },
+        })
+      );
+    }
+  }, [currentUserId, ideaId, open, presenceUsers, sessionState.followMe]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail || {};
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const outputId = String(detail.outputId || '');
+      const target = String(detail.target || '');
+      const nodeIds = Array.isArray(detail.nodeIds) ? detail.nodeIds.map(String) : [];
+      if (!outputId || nodeIds.length === 0) return;
+      const linkedNodes = nodes.filter((node) => nodeIds.includes(node.id));
+      linkedNodes.forEach((node) => {
+        const semanticType = String(node.data?.semanticType || '') as WhiteboardOutcomeRecord['type'];
+        if (
+          semanticType === 'cluster' ||
+          semanticType === 'theme' ||
+          semanticType === 'outcome' ||
+          semanticType === 'decision' ||
+          semanticType === 'action'
+        ) {
+          registerOutcomeRecord(
+            createOutcomeRecord(semanticType, node, nodeIds, {
+              exportedToId: outputId,
+              exportedToType: target,
+            })
+          );
+        }
+      });
+    };
+    window.addEventListener('idea-whiteboard-register-output', handler);
+    return () => window.removeEventListener('idea-whiteboard-register-output', handler);
+  }, [createOutcomeRecord, ideaId, nodes, open, registerOutcomeRecord]);
 
   // ── Ghost card materialization (idea-workspace-insert) ─────────────────
   useEffect(() => {
@@ -1445,7 +2699,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         for (const item of detail.items) {
           const label = item.text || item.label || '';
           const position = item.position || detail.position;
-          addElement('sticky', { label, position });
+          addElement('sticky', { label, position, ...(item.data || {}) });
         }
         return;
       }
@@ -1461,6 +2715,20 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     window.addEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
     return () => window.removeEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
   }, [open, addElement]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const themeId = String(detail.themeId || '');
+      if (themeId === 'ops') setBgPattern('grid');
+      if (themeId === 'workshop') setBgPattern('dots');
+      if (themeId === 'strategy') setBgPattern('lines');
+    };
+    window.addEventListener(IDEA_WORKSPACE_THEME_EVENT, handler);
+    return () => window.removeEventListener(IDEA_WORKSPACE_THEME_EVENT, handler);
+  }, [ideaId, open]);
 
   // ── Scene navigation (idea-whiteboard-navigate) ────────────────────────
   useEffect(() => {
@@ -1478,154 +2746,6 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     return () => window.removeEventListener('idea-whiteboard-navigate', handler);
   }, [open]);
 
-  // ── Delete selected ──────────────────────────────────────────────────────
-
-  const deleteSelected = useCallback(() => {
-    if (locked) return;
-    let removedIds: Set<string>;
-    setNodes((prev: Node[]) => {
-      removedIds = new Set(prev.filter((n: Node) => n.selected).map((n: Node) => n.id));
-      return prev.filter((n: Node) => !n.selected);
-    });
-    setEdges((prev: Edge[]) =>
-      prev.filter(
-        (e: Edge) => !e.selected && !removedIds!.has(e.source) && !removedIds!.has(e.target)
-      )
-    );
-  }, [locked, setEdges, setNodes]);
-
-  // ── V5-IDEA-19: Duplicate selected ───────────────────────────────────────
-  const duplicateSelected = useCallback(() => {
-    if (locked) return;
-    setNodes((prev: Node[]) => {
-      const selected = prev.filter((n: Node) => n.selected);
-      if (selected.length === 0) return prev;
-      const idMap = new Map<string, string>();
-      const newNodes = selected.map((n: Node) => {
-        const newId = `${n.id}-dup-${Date.now()}`;
-        idMap.set(n.id, newId);
-        return {
-          ...n,
-          id: newId,
-          position: { x: n.position.x + 30, y: n.position.y + 30 },
-          selected: false,
-          data: { ...n.data },
-        };
-      });
-      return [...prev.map((n: Node) => ({ ...n, selected: false })), ...newNodes];
-    });
-    setEdges((prev: Edge[]) => {
-      const selectedIds = new Set(
-        (nodes as Node[]).filter((n: Node) => n.selected).map((n: Node) => n.id)
-      );
-      const newEdges = prev
-        .filter((e: Edge) => selectedIds.has(e.source) && selectedIds.has(e.target))
-        .map((e: Edge) => ({
-          ...e,
-          id: `${e.id}-dup-${Date.now()}`,
-          source: `${e.source}-dup-${Date.now()}`,
-          target: `${e.target}-dup-${Date.now()}`,
-        }));
-      return [...prev, ...newEdges];
-    });
-    toast.success(isPl ? 'Zduplikowano' : 'Duplicated', { duration: 600 });
-  }, [isPl, locked, nodes, setEdges, setNodes]);
-
-  // ── V5-IDEA-19: Group selected into a frame ────────────────────────────
-  const groupSelected = useCallback(() => {
-    if (locked) return;
-    const selected = (nodes as Node[]).filter((n: Node) => n.selected);
-    if (selected.length < 2) {
-      toast.error(isPl ? 'Zaznacz co najmniej 2 elementy' : 'Select at least 2 elements');
-      return;
-    }
-    const xs = selected.map((n) => n.position.x);
-    const ys = selected.map((n) => n.position.y);
-    const minX = Math.min(...xs) - 20;
-    const minY = Math.min(...ys) - 40;
-    const maxX = Math.max(...xs) + 200;
-    const maxY = Math.max(...ys) + 160;
-
-    const groupId = `group-${Date.now()}`;
-    const groupNode: Node = {
-      id: groupId,
-      type: 'frameNode',
-      position: { x: minX, y: minY },
-      data: {
-        label: isPl ? 'Grupa' : 'Group',
-        width: maxX - minX,
-        height: maxY - minY,
-      },
-      style: { width: maxX - minX, height: maxY - minY },
-    };
-
-    setNodes((prev: Node[]) => {
-      const updated = prev.map((n: Node) => {
-        if (!n.selected) return n;
-        return { ...n, parentId: groupId, selected: false };
-      });
-      return [groupNode, ...updated];
-    });
-    toast.success(isPl ? 'Zgrupowano' : 'Grouped', { duration: 600 });
-  }, [isPl, locked, nodes, setNodes]);
-
-  // ── V5-IDEA-19: Ungroup selected frame ─────────────────────────────────
-  const ungroupSelected = useCallback(() => {
-    if (locked) return;
-    const selected = (nodes as Node[]).filter((n: Node) => n.selected);
-    const frameIds = new Set(
-      selected.filter((n) => n.type === 'frameNode' || n.type === 'groupNode').map((n) => n.id)
-    );
-    if (frameIds.size === 0) return;
-
-    setNodes((prev: Node[]) =>
-      prev
-        .filter((n: Node) => !frameIds.has(n.id))
-        .map((n: Node) => {
-          if (n.parentId && frameIds.has(n.parentId)) {
-            const { parentId: _, ...rest } = n as any;
-            return rest as Node;
-          }
-          return n;
-        })
-    );
-    toast.success(isPl ? 'Rozgrupowano' : 'Ungrouped', { duration: 600 });
-  }, [isPl, locked, nodes, setNodes]);
-
-  // ── V5-IDEA-19: Distribute selected ────────────────────────────────────
-  const distributeNodes = useCallback(
-    (axis: 'horizontal' | 'vertical') => {
-      setNodes((nds: Node[]) => {
-        const selected = nds.filter((n: Node) => n.selected);
-        if (selected.length < 3) return nds;
-
-        const sorted = [...selected].sort((a, b) =>
-          axis === 'horizontal' ? a.position.x - b.position.x : a.position.y - b.position.y
-        );
-        const first = sorted[0].position;
-        const last = sorted[sorted.length - 1].position;
-        const total = axis === 'horizontal' ? last.x - first.x : last.y - first.y;
-        const step = total / (sorted.length - 1);
-
-        const posMap = new Map<string, number>();
-        sorted.forEach((n, i) => {
-          posMap.set(n.id, (axis === 'horizontal' ? first.x : first.y) + step * i);
-        });
-
-        const ids = new Set(selected.map((n: Node) => n.id));
-        return nds.map((n: Node) => {
-          if (!ids.has(n.id)) return n;
-          const val = posMap.get(n.id)!;
-          return {
-            ...n,
-            position: axis === 'horizontal' ? { ...n.position, x: val } : { ...n.position, y: val },
-          };
-        });
-      });
-    },
-    [setNodes]
-  );
-
   // ── Save ─────────────────────────────────────────────────────────────────
 
   const handleSave = useCallback(async () => {
@@ -1634,15 +2754,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     try {
       const nextExt = {
         ...extensions,
-        whiteboard: {
-          ...(extensions?.whiteboard && typeof extensions.whiteboard === 'object'
-            ? extensions.whiteboard
-            : {}),
-          viewState: { snap: false, showGrid: true },
-          drawingPaths,
-          scenes,
-          bgPattern,
-        },
+        whiteboard: buildWhiteboardExtensions(),
       };
       await Api.saveMyIdeaMap(ideaId, {
         nodes: nodes as any,
@@ -1650,6 +2762,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         preferredTool: 'whiteboard' as CanvasToolType,
         extensions: nextExt,
       });
+      rememberSnapshot(isPl ? 'Ręczny zapis' : 'Manual save');
       toast.success(isPl ? 'Zapisano' : 'Saved', { duration: 900 });
       onSaved?.();
     } catch (err: any) {
@@ -1657,14 +2770,15 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     } finally {
       setSaving(false);
     }
-  }, [edges, extensions, ideaId, isPl, locked, nodes, onSaved]);
+  }, [buildWhiteboardExtensions, edges, extensions, ideaId, isPl, locked, nodes, onSaved, rememberSnapshot]);
 
   // ── Align selected nodes ─────────────────────────────────────────────────
 
   const alignNodes = useCallback(
     (direction: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
+      pushUndoSnapshot();
       setNodes((nds: Node[]) => {
-        const selected = nds.filter((n: Node) => n.selected);
+        const selected = nds.filter((n: Node) => n.selected && !isNodeDataLocked(n));
         if (selected.length < 2) return nds;
 
         const positions = selected.map((n: Node) => n.position);
@@ -1701,27 +2815,37 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         });
       });
     },
-    [setNodes]
+    [pushUndoSnapshot, setNodes]
   );
 
   // ── Lock selected nodes ─────────────────────────────────────────────────
 
   const lockSelected = useCallback(() => {
+    pushUndoSnapshot();
     setNodes((nds: Node[]) =>
       nds.map((n: Node) =>
-        n.selected ? { ...n, data: { ...n.data, locked: !n.data?.locked } } : n
+        n.selected
+          ? {
+              ...n,
+              draggable: Boolean(n.data?.locked),
+              connectable: Boolean(n.data?.locked),
+              deletable: Boolean(n.data?.locked),
+              data: { ...n.data, locked: !n.data?.locked },
+            }
+          : n
       )
     );
-  }, [setNodes]);
+  }, [pushUndoSnapshot, setNodes]);
 
   // ── Smart layout ─────────────────────────────────────────────────────────
   const handleLayout = useCallback(
     (algorithm: LayoutAlgorithm) => {
       if (locked) return;
+      pushUndoSnapshot();
       const { nodes: laid } = applySmartLayout(nodes, edges, { algorithm, spacing: 200 });
       setNodes(laid);
     },
-    [edges, locked, nodes, setNodes]
+    [edges, locked, nodes, pushUndoSnapshot, setNodes]
   );
 
   // ── Auto-save (debounced, 3s after last change) ──────────────────────────
@@ -1740,15 +2864,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     autoSaveTimerRef.current = setTimeout(() => {
       const nextExt = {
         ...extensions,
-        whiteboard: {
-          ...(extensions?.whiteboard && typeof extensions.whiteboard === 'object'
-            ? extensions.whiteboard
-            : {}),
-          viewState: { snap: false, showGrid: true },
-          drawingPaths,
-          scenes,
-          bgPattern,
-        },
+        whiteboard: buildWhiteboardExtensions(),
       };
       Api.saveMyIdeaMap(ideaId, {
         nodes: nodesRef.current as any,
@@ -1756,13 +2872,14 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         preferredTool: 'whiteboard' as CanvasToolType,
         extensions: nextExt,
       }).catch(() => undefined);
+      rememberSnapshot(isPl ? 'Auto-save snapshot' : 'Auto-save snapshot');
     }, 3000);
 
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, edges, open, locked, loading, ideaId]);
+  }, [buildWhiteboardExtensions, edges, extensions, ideaId, isPl, loading, locked, nodes, open, rememberSnapshot]);
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
 
@@ -1819,6 +2936,25 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     return { nodes: filteredNodes, edges: filteredEdges };
   }, [nodes, edges, focusMode, focusObjectId, drillFocusNodeId]);
 
+  const selectedNodes = useMemo(
+    () => nodes.filter((node: Node) => node.selected),
+    [nodes]
+  );
+  const canvasNodes = useMemo(
+    () =>
+      displayNodes.map((node) => ({
+        ...node,
+        draggable: !locked && !isNodeDataLocked(node),
+        connectable: !locked && !isNodeDataLocked(node),
+        deletable: !locked && !isNodeDataLocked(node),
+      })),
+    [displayNodes, locked]
+  );
+  const selectedCount = selectedNodes.length;
+  const hasSelectedFrame = selectedNodes.some(
+    (node: Node) => node.type === 'frameNode' || node.type === 'groupNode'
+  );
+
   if (!open) return null;
 
   return (
@@ -1835,261 +2971,91 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           {isPl ? 'Tablica' : 'Whiteboard'}
         </div>
 
-        {/* Sticky with color dropdown */}
         <ToolbarDropdown
-          icon={StickyNote}
-          label={isPl ? 'Notatka' : 'Sticky'}
-          disabled={locked}
-          items={STICKY_COLORS.map((c, i) => ({
-            id: `sticky-${i}`,
-            label: '',
-            swatch: c.hex,
-            onClick: () => addElement('sticky', { colorIndex: i }),
-          }))}
-          onMainClick={() => addElement('sticky')}
-        />
-
-        {/* Shape dropdown */}
-        <ToolbarDropdown
-          icon={Shapes}
-          label={isPl ? 'Kształt' : 'Shape'}
+          icon={Plus}
+          label={isPl ? 'Utwórz' : 'Create'}
           disabled={locked}
           items={[
+            ...STICKY_COLORS.map((c, i) => ({
+              id: `sticky-${i}`,
+              label: isPl ? 'Notatka' : 'Sticky',
+              icon: StickyNote,
+              swatch: c.hex,
+              onClick: () => addElement('sticky', { colorIndex: i }),
+            })),
             {
-              id: 'rect',
-              label: isPl ? 'Prostokąt' : 'Rectangle',
+              id: 'text',
+              label: isPl ? 'Tekst' : 'Text',
+              icon: Type,
+              onClick: () => addElement('text'),
+            },
+            {
+              id: 'frame',
+              label: isPl ? 'Rama' : 'Frame',
+              icon: Frame,
+              onClick: () => addElement('frame'),
+            },
+            {
+              id: 'shape',
+              label: isPl ? 'Kształt' : 'Shape',
               icon: Shapes,
               onClick: () => addElement('shape_rectangle'),
             },
             {
-              id: 'circle',
-              label: isPl ? 'Koło' : 'Circle',
-              icon: Circle,
-              onClick: () => addElement('shape_circle'),
+              id: 'image',
+              label: isPl ? 'Obraz' : 'Image',
+              icon: ImageIcon,
+              onClick: () => addElement('image'),
             },
             {
-              id: 'diamond',
-              label: isPl ? 'Romb' : 'Diamond',
-              icon: Diamond,
-              onClick: () => addElement('shape_diamond'),
-            },
-            {
-              id: 'hexagon',
-              label: isPl ? 'Sześciokąt' : 'Hexagon',
-              icon: Hexagon,
-              onClick: () => addElement('shape_hexagon'),
+              id: 'link',
+              label: 'Link',
+              icon: Link2,
+              onClick: () => addElement('link'),
             },
           ]}
-          onMainClick={() => addElement('shape_rectangle')}
-        />
-
-        <ToolbarBtn
-          icon={Type}
-          label={isPl ? 'Tekst' : 'Text'}
-          onClick={() => addElement('text')}
-          disabled={locked}
-        />
-        <ToolbarBtn
-          icon={Frame}
-          label={isPl ? 'Rama' : 'Frame'}
-          onClick={() => addElement('frame')}
-          disabled={locked}
-        />
-        <ToolbarBtn
-          icon={ImageIcon}
-          label={isPl ? 'Obraz' : 'Image'}
-          onClick={() => addElement('image')}
-          disabled={locked}
-        />
-        <ToolbarBtn
-          icon={Link2}
-          label="Link"
-          onClick={() => addElement('link')}
-          disabled={locked}
-        />
-
-        {/* Metrics dropdown */}
-        <ToolbarDropdown
-          icon={TrendingUp}
-          label={isPl ? 'Metryki' : 'Metrics'}
-          disabled={locked}
-          items={[
-            {
-              id: 'kpi',
-              label: 'KPI Badge',
-              icon: TrendingUp,
-              onClick: () => addElement('kpi_badge'),
-            },
-            {
-              id: 'score',
-              label: isPl ? 'Wynik' : 'Score',
-              icon: Circle,
-              onClick: () => addElement('score'),
-            },
-            {
-              id: 'progress',
-              label: isPl ? 'Postęp' : 'Progress',
-              icon: LayoutGrid,
-              onClick: () => addElement('progress'),
-            },
-            {
-              id: 'summary',
-              label: isPl ? 'Podsumowanie' : 'Summary',
-              icon: Sparkles,
-              onClick: () => addElement('summary'),
-            },
-          ]}
-          onMainClick={() => addElement('kpi_badge')}
-        />
-
-        <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-0.5 shrink-0" />
-
-        {/* Align dropdown */}
-        <ToolbarDropdown
-          icon={AlignCenter}
-          label={isPl ? 'Wyrównaj' : 'Align'}
-          disabled={locked}
-          items={[
-            {
-              id: 'left',
-              label: isPl ? 'Do lewej' : 'Left',
-              icon: AlignLeft,
-              onClick: () => alignNodes('left'),
-            },
-            {
-              id: 'center',
-              label: isPl ? 'Środek H' : 'Center H',
-              icon: AlignCenter,
-              onClick: () => alignNodes('center'),
-            },
-            {
-              id: 'right',
-              label: isPl ? 'Do prawej' : 'Right',
-              icon: AlignRight,
-              onClick: () => alignNodes('right'),
-            },
-            {
-              id: 'top',
-              label: isPl ? 'Do góry' : 'Top',
-              icon: ArrowUp,
-              onClick: () => alignNodes('top'),
-            },
-            {
-              id: 'middle',
-              label: isPl ? 'Środek V' : 'Middle V',
-              icon: AlignCenter,
-              onClick: () => alignNodes('middle'),
-            },
-            {
-              id: 'bottom',
-              label: isPl ? 'Do dołu' : 'Bottom',
-              icon: ArrowDown,
-              onClick: () => alignNodes('bottom'),
-            },
-          ]}
-          onMainClick={() => alignNodes('left')}
-        />
-
-        {/* V5-IDEA-19: Distribute */}
-        <ToolbarDropdown
-          icon={ArrowLeftRight}
-          label={isPl ? 'Rozłóż' : 'Distribute'}
-          disabled={locked}
-          items={[
-            {
-              id: 'dist_h',
-              label: isPl ? 'Poziomo' : 'Horizontal',
-              icon: ArrowLeftRight,
-              onClick: () => distributeNodes('horizontal'),
-            },
-            {
-              id: 'dist_v',
-              label: isPl ? 'Pionowo' : 'Vertical',
-              icon: ArrowUpDown,
-              onClick: () => distributeNodes('vertical'),
-            },
-          ]}
-          onMainClick={() => distributeNodes('horizontal')}
-        />
-
-        {/* V5-IDEA-19: Group / Ungroup / Duplicate */}
-        <ToolbarBtn
-          icon={Group}
-          label={isPl ? 'Grupuj' : 'Group'}
-          onClick={groupSelected}
-          disabled={locked}
-        />
-        <ToolbarBtn
-          icon={Ungroup}
-          label={isPl ? 'Rozgrupuj' : 'Ungroup'}
-          onClick={ungroupSelected}
-          disabled={locked}
-        />
-        <ToolbarBtn
-          icon={Copy}
-          label={isPl ? 'Duplikuj' : 'Duplicate'}
-          onClick={duplicateSelected}
-          disabled={locked}
-        />
-
-        {/* Layout dropdown */}
-        <ToolbarDropdown
-          icon={LayoutGrid}
-          label="Layout"
-          disabled={locked}
-          items={[
-            { id: 'auto', label: 'Auto', icon: LayoutGrid, onClick: () => handleLayout('auto') },
-            {
-              id: 'tree',
-              label: isPl ? 'Drzewo' : 'Tree',
-              icon: GitBranch,
-              onClick: () => handleLayout('tree'),
-            },
-            {
-              id: 'radial',
-              label: isPl ? 'Promieniowy' : 'Radial',
-              icon: Circle,
-              onClick: () => handleLayout('radial'),
-            },
-            {
-              id: 'force',
-              label: isPl ? 'Siłowy' : 'Force',
-              icon: Workflow,
-              onClick: () => handleLayout('force'),
-            },
-            {
-              id: 'grid',
-              label: isPl ? 'Siatka' : 'Grid',
-              icon: Grid3X3,
-              onClick: () => handleLayout('grid'),
-            },
-            {
-              id: 'horizontal',
-              label: isPl ? 'Poziomy' : 'Horizontal',
-              icon: LayoutGrid,
-              onClick: () => handleLayout('horizontal'),
-            },
-          ]}
-          onMainClick={() => handleLayout('auto')}
-        />
-
-        <ToolbarBtn
-          icon={Lock}
-          label={isPl ? 'Zablokuj' : 'Lock'}
-          onClick={() => lockSelected()}
-          disabled={locked}
+          onMainClick={() => addElement('sticky')}
         />
         <ToolbarBtn
           icon={Pen}
-          label={isPl ? 'Rysuj' : 'Draw'}
-          onClick={() => setDrawingActive(!drawingActive)}
+          label={whiteboardMode === 'draw' ? (isPl ? 'Canvas' : 'Canvas') : isPl ? 'Rysuj' : 'Draw'}
+          onClick={() => setBoardMode(whiteboardMode === 'draw' ? 'board' : 'draw')}
+          disabled={locked}
+          active={whiteboardMode === 'draw'}
+        />
+        <ToolbarBtn
+          icon={ThumbsUp}
+          label={sessionState.votingOpen ? (isPl ? 'Voting on' : 'Voting on') : 'Voting'}
+          onClick={toggleSessionVoting}
+          disabled={locked}
+          active={sessionState.votingOpen}
+        />
+        <ToolbarBtn
+          icon={Workflow}
+          label={isPl ? 'Rola' : 'Role'}
+          onClick={cycleSessionRole}
           disabled={locked}
         />
+        <ToolbarBtn
+          icon={TrendingUp}
+          label={isPl ? 'Follow' : 'Follow'}
+          onClick={toggleSessionFollow}
+          disabled={locked}
+          active={sessionState.followMe}
+        />
+        <ToolbarBtn
+          icon={ExternalLink}
+          label={isPl ? 'Eksport' : 'Export'}
+          onClick={() =>
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-open-export-menu', { detail: { ideaId } })
+            )
+          }
+        />
 
-        {/* Background pattern */}
         <ToolbarDropdown
           icon={Grid3X3}
-          label={isPl ? 'Tło' : 'Background'}
+          label={isPl ? 'Widok' : 'View'}
           disabled={false}
           items={[
             {
@@ -2130,7 +3096,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           }
         />
 
-        <ToolbarBtn icon={Trash2} label="" onClick={deleteSelected} disabled={locked} danger />
+        <div className="px-2 py-1 rounded-xl bg-white/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-700/60 shrink-0">
+          <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            {sharePolicy.classification}
+          </div>
+          <div className="text-[10px] text-slate-500 dark:text-slate-400">
+            {sharePolicy.watermark}
+          </div>
+        </div>
+        <div className="px-2 py-1 rounded-xl bg-white/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-700/60 shrink-0">
+          <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+            {isPl ? 'Presence' : 'Presence'}
+          </div>
+          <div className="text-[10px] text-slate-500 dark:text-slate-400">
+            {presenceUsers.length} {isPl ? 'aktywnych' : 'active'}
+          </div>
+        </div>
 
         <div className="flex-1" />
 
@@ -2156,18 +3137,242 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         </div>
       ) : (
         <div className="flex-1 relative">
+          <div className="absolute top-3 left-3 z-20 flex flex-col gap-2 max-w-[280px]">
+            <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm shadow-lg px-3 py-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                    {isPl ? 'Session layer' : 'Session layer'}
+                  </div>
+                  <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-100">
+                    {sessionState.role === 'facilitator'
+                      ? isPl
+                        ? 'Facylitator'
+                        : 'Facilitator'
+                      : sessionState.role === 'participant'
+                        ? isPl
+                          ? 'Uczestnik'
+                          : 'Participant'
+                        : isPl
+                          ? 'Obserwator'
+                          : 'Observer'}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                    {whiteboardMode === 'draw' ? (isPl ? 'Draw mode' : 'Draw mode') : 'Board mode'}
+                  </div>
+                  <div className="text-[9px] text-slate-400 dark:text-slate-500">
+                    {sessionState.timerEndsAt
+                      ? `${Math.max(0, Math.ceil((sessionState.timerEndsAt - Date.now()) / 1000))}s`
+                      : isPl
+                        ? 'Timer off'
+                        : 'Timer off'}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                <span className="px-2 py-1 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] font-medium text-slate-600 dark:text-slate-300">
+                  {sessionState.votingOpen
+                    ? isPl
+                      ? 'Voting open'
+                      : 'Voting open'
+                    : isPl
+                      ? 'Voting closed'
+                      : 'Voting closed'}
+                </span>
+                <span className="px-2 py-1 rounded-full bg-slate-100 dark:bg-navy-800 text-[10px] font-medium text-slate-600 dark:text-slate-300">
+                  {sessionState.followMe ? 'Follow-me on' : 'Follow-me off'}
+                </span>
+                {sessionState.spotlightNodeId && (
+                  <span className="px-2 py-1 rounded-full bg-amber-500/10 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                    {isPl ? 'Spotlight aktywny' : 'Spotlight active'}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {(activityLog.length > 0 || libraryItems.length > 0 || historyLog.length > 0) && (
+              <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm shadow-lg px-3 py-2.5 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                    {isPl ? 'Ops + governance' : 'Ops + governance'}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={cycleGovernance}
+                    className="text-[10px] font-semibold text-primary-600 dark:text-primary-400"
+                  >
+                    {isPl ? 'Zmień policy' : 'Cycle policy'}
+                  </button>
+                </div>
+                {libraryItems[0] && (
+                  <div className="text-[10px] text-slate-600 dark:text-slate-300">
+                    {isPl ? 'Biblioteka:' : 'Library:'} {libraryItems[0].name}
+                  </div>
+                )}
+                {historyLog[0] && (
+                  <button
+                    type="button"
+                    onClick={restoreLatestHistory}
+                    className="w-full text-left px-2 py-1.5 rounded-xl bg-slate-100/80 dark:bg-navy-800/80 text-[10px] font-medium text-slate-700 dark:text-slate-200"
+                  >
+                    {isPl ? 'Przywróć:' : 'Restore:'} {historyLog[0].label}
+                  </button>
+                )}
+                {activityLog.slice(0, 3).map((entry) => (
+                  <div key={entry.id} className="text-[10px] text-slate-500 dark:text-slate-400">
+                    {entry.label}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {selectedCount > 0 && (
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg px-2 py-1.5">
+              <span className="px-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                {isPl
+                  ? `${selectedCount} zazn.`
+                  : `${selectedCount} selected`}
+              </span>
+              <ToolbarBtn
+                icon={Link2}
+                label={isPl ? 'Dołącz' : 'Attach'}
+                onClick={() =>
+                  window.dispatchEvent(
+                    new CustomEvent('idea-workspace-quick-action', {
+                      detail: { action: 'attach_artifact', ideaId },
+                    })
+                  )
+                }
+                disabled={locked}
+              />
+              <ToolbarBtn
+                icon={ExternalLink}
+                label={isPl ? 'Powiązane' : 'Linked'}
+                onClick={() =>
+                  window.dispatchEvent(
+                    new CustomEvent('idea-workspace-quick-action', {
+                      detail: { action: 'open_linked_artifacts', ideaId },
+                    })
+                  )
+                }
+                disabled={false}
+              />
+              <ToolbarDropdown
+                icon={AlignCenter}
+                label={isPl ? 'Wyrównaj' : 'Align'}
+                disabled={locked || selectedCount < 2}
+                items={[
+                  {
+                    id: 'left',
+                    label: isPl ? 'Do lewej' : 'Left',
+                    icon: AlignLeft,
+                    onClick: () => alignNodes('left'),
+                  },
+                  {
+                    id: 'center',
+                    label: isPl ? 'Środek H' : 'Center H',
+                    icon: AlignCenter,
+                    onClick: () => alignNodes('center'),
+                  },
+                  {
+                    id: 'right',
+                    label: isPl ? 'Do prawej' : 'Right',
+                    icon: AlignRight,
+                    onClick: () => alignNodes('right'),
+                  },
+                  {
+                    id: 'top',
+                    label: isPl ? 'Do góry' : 'Top',
+                    icon: ArrowUp,
+                    onClick: () => alignNodes('top'),
+                  },
+                  {
+                    id: 'middle',
+                    label: isPl ? 'Środek V' : 'Middle V',
+                    icon: AlignCenter,
+                    onClick: () => alignNodes('middle'),
+                  },
+                  {
+                    id: 'bottom',
+                    label: isPl ? 'Do dołu' : 'Bottom',
+                    icon: ArrowDown,
+                    onClick: () => alignNodes('bottom'),
+                  },
+                ]}
+                onMainClick={() => alignNodes('left')}
+              />
+              <ToolbarDropdown
+                icon={ArrowLeftRight}
+                label={isPl ? 'Rozłóż' : 'Distribute'}
+                disabled={locked || selectedCount < 3}
+                items={[
+                  {
+                    id: 'dist_h',
+                    label: isPl ? 'Poziomo' : 'Horizontal',
+                    icon: ArrowLeftRight,
+                    onClick: () => distributeNodes('horizontal'),
+                  },
+                  {
+                    id: 'dist_v',
+                    label: isPl ? 'Pionowo' : 'Vertical',
+                    icon: ArrowUpDown,
+                    onClick: () => distributeNodes('vertical'),
+                  },
+                ]}
+                onMainClick={() => distributeNodes('horizontal')}
+              />
+              <ToolbarBtn
+                icon={Group}
+                label={isPl ? 'Grupuj' : 'Group'}
+                onClick={groupSelected}
+                disabled={locked || selectedCount < 2}
+              />
+              <ToolbarBtn
+                icon={Ungroup}
+                label={isPl ? 'Rozgrupuj' : 'Ungroup'}
+                onClick={ungroupSelected}
+                disabled={locked || !hasSelectedFrame}
+              />
+              <ToolbarBtn
+                icon={Copy}
+                label={isPl ? 'Duplikuj' : 'Duplicate'}
+                onClick={duplicateSelected}
+                disabled={locked}
+              />
+              <ToolbarBtn
+                icon={Lock}
+                label={isPl ? 'Lock' : 'Lock'}
+                onClick={() => lockSelected()}
+                disabled={locked}
+              />
+              <ToolbarBtn
+                icon={Trash2}
+                label={isPl ? 'Usuń' : 'Delete'}
+                onClick={deleteSelected}
+                disabled={locked}
+                danger
+              />
+            </div>
+          )}
+
           <ReactFlowProvider>
             <WhiteboardCanvas
-              nodes={displayNodes}
+              nodes={canvasNodes}
               edges={displayEdges}
-              locked={locked || drawingActive}
+              locked={locked || whiteboardMode === 'draw'}
+              isPolish={isPl}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
               onNodeDoubleClick={onNodeDetail}
-              setNodes={setNodes}
               bgPattern={bgPattern}
               onViewportChange={setViewportTransform}
+              onExternalInsert={handleExternalInsert}
+              onFullscreenToggle={externalOnFullscreenToggle}
+              isFullscreen={externalIsFullscreen}
             />
           </ReactFlowProvider>
 
@@ -2187,22 +3392,93 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
                     : 'Add sticky notes, shapes, or text from the toolbar'}
                 </div>
                 {!locked && (
-                  <button
-                    onClick={() => addElement('sticky')}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors"
-                  >
-                    <Plus size={14} />
-                    {isPl ? 'Dodaj notatkę' : 'Add sticky note'}
-                  </button>
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <button
+                        onClick={() => seedQuickStart('brainstorm')}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors"
+                      >
+                        <Sparkles size={14} />
+                        {isPl ? 'Brainstorm' : 'Brainstorm'}
+                      </button>
+                      <button
+                        onClick={() => seedQuickStart('affinity')}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition-colors"
+                      >
+                        <Layers size={14} />
+                        {isPl ? 'Affinity map' : 'Affinity map'}
+                      </button>
+                      <button
+                        onClick={() => seedQuickStart('workshop')}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+                      >
+                        <LayoutGrid size={14} />
+                        {isPl ? 'Workshop wall' : 'Workshop wall'}
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => addElement('sticky')}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors"
+                    >
+                      <Plus size={14} />
+                      {isPl ? 'Dodaj pustą notatkę' : 'Add blank sticky'}
+                    </button>
+                    <div className="text-[10px] text-slate-400 dark:text-slate-500 max-w-[260px]">
+                      {isPl
+                        ? 'Więcej akcji organizacji i AI znajdziesz w panelu Tools po prawej stronie.'
+                        : 'More organize and AI actions are available in the Tools panel on the right.'}
+                    </div>
+                  </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {outlineImportOpen && (
+            <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/20 backdrop-blur-[1px]">
+              <div className="w-full max-w-lg rounded-2xl border border-slate-200/70 bg-white p-4 shadow-2xl dark:border-navy-700/70 dark:bg-navy-900">
+                <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {isPl ? 'Import outline' : 'Import outline'}
+                </div>
+                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {isPl
+                    ? 'Wklej punkty, po jednym w linii. Zostaną dodane jako notatki lub krótkie bloki tekstu.'
+                    : 'Paste one item per line. They will be added as notes or short text blocks.'}
+                </div>
+                <textarea
+                  value={outlineImportValue}
+                  onChange={(event) => setOutlineImportValue(event.target.value)}
+                  rows={8}
+                  className="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none focus:border-primary-400 dark:border-navy-700 dark:bg-navy-950 dark:text-slate-100"
+                  placeholder={isPl ? 'Punkt 1\nPunkt 2\nPunkt 3' : 'Item 1\nItem 2\nItem 3'}
+                />
+                <div className="mt-3 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOutlineImportOpen(false);
+                      setOutlineImportValue('');
+                    }}
+                    className="rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-navy-800"
+                  >
+                    {isPl ? 'Anuluj' : 'Cancel'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={applyOutlineImport}
+                    className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
+                  >
+                    {isPl ? 'Importuj' : 'Import'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
           {/* Drawing layer overlay */}
           <IdeaDrawingLayer
-            active={drawingActive}
-            onClose={() => setDrawingActive(false)}
+            active={whiteboardMode === 'draw'}
+            onClose={() => setBoardMode('board')}
             paths={drawingPaths}
             onPathsChange={setDrawingPaths}
             viewportTransform={viewportTransform}
@@ -2219,6 +3495,13 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
               );
             }}
           />
+
+          <CollaborationOverlay
+            ideaId={ideaId}
+            currentUserId={currentUserId}
+            currentUserName={currentUserName}
+            selectedNodeIds={selectedNodeIds}
+          />
         </div>
       )}
     </div>
@@ -2233,7 +3516,8 @@ const ToolbarBtn: React.FC<{
   onClick: () => void;
   disabled?: boolean;
   danger?: boolean;
-}> = ({ icon: Icon, label, onClick, disabled, danger }) => (
+  active?: boolean;
+}> = ({ icon: Icon, label, onClick, disabled, danger, active }) => (
   <button
     type="button"
     onClick={onClick}
@@ -2241,7 +3525,9 @@ const ToolbarBtn: React.FC<{
     className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 shrink-0 ${
       danger
         ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+        : active
+          ? 'bg-primary-500/10 text-primary-700 dark:text-primary-300'
+          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
     }`}
     title={label}
   >

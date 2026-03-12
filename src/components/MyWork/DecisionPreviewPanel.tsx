@@ -25,9 +25,11 @@ import {
   actionPillClass,
   type ActionRow,
   type DetailsAction,
+  type ExtraCopyFormat,
   type MetaPill,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
@@ -306,6 +308,32 @@ export const DecisionPreviewBody: React.FC<{
             icon: Copy,
             onClick: () => onDetailsAction('copy'),
           },
+          {
+            id: 'copy-md',
+            label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+            onClick: () =>
+              void copyAsMarkdown(
+                {
+                  title: decision?.title || '',
+                  status: decision?.status ?? undefined,
+                  description: detailsText,
+                },
+                isPolish ? 'pl' : 'en'
+              ),
+          },
+          {
+            id: 'copy-slack',
+            label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+            onClick: () =>
+              void copyForSlack(
+                {
+                  title: decision?.title || '',
+                  status: decision?.status ?? undefined,
+                  description: detailsText,
+                },
+                isPolish ? 'pl' : 'en'
+              ),
+          },
         ] as DetailsAction[]}
       />
     </div>
@@ -393,6 +421,7 @@ export const DecisionPreviewFooter: React.FC<{
                 onClick: onApprove,
                 colorScheme: 'emerald' as const,
                 flex: true,
+                shortcut: 'A',
               },
               {
                 label: isPolish ? 'Odrzucona' : 'Reject',
@@ -400,6 +429,7 @@ export const DecisionPreviewFooter: React.FC<{
                 onClick: onReject,
                 colorScheme: 'red' as const,
                 flex: true,
+                shortcut: 'R',
               },
             ],
           },
@@ -413,6 +443,7 @@ export const DecisionPreviewFooter: React.FC<{
           onClick: onMoreInfo,
           colorScheme: 'neutral' as const,
           flex: true,
+          shortcut: 'I',
         },
         ...(canAct
           ? [
@@ -422,6 +453,7 @@ export const DecisionPreviewFooter: React.FC<{
                 onClick: onDelegate,
                 colorScheme: 'neutral' as const,
                 flex: true,
+                shortcut: 'G',
               },
             ]
           : [
@@ -431,6 +463,7 @@ export const DecisionPreviewFooter: React.FC<{
                 onClick: onRemind,
                 colorScheme: 'blue' as const,
                 flex: true,
+                shortcut: 'M',
               },
             ]),
       ],

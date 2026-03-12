@@ -315,6 +315,9 @@ router.post('/questions/:questionId/ai-improve', InterviewController.aiImproveAn
 /** POST /interview/questions/:questionId/ai-explain - Explain question in plain language */
 router.post('/questions/:questionId/ai-explain', InterviewController.aiExplainQuestion);
 
+/** POST /interview/sessions/:sessionId/evaluate-answers - AI evaluation of answer quality/sufficiency */
+router.post('/sessions/:sessionId/evaluate-answers', InterviewController.evaluateSessionAnswers);
+
 /** POST /interview/sessions/:sessionId/ai-parse - Map chat transcript to answers */
 router.post('/sessions/:sessionId/ai-parse', InterviewController.aiParseSessionAnswers);
 

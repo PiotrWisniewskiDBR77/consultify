@@ -13,6 +13,7 @@ import {
   Globe,
   Goal,
   Map,
+  Network,
   Palette,
   ShieldAlert,
   Target,
@@ -29,6 +30,7 @@ export type OrganizationSection =
   | 'challenges'
   | 'megatrends'
   | 'strategy'
+  | 'knowledge-graph'
   | 'members'
   | 'competencies'
   | 'billing'
@@ -102,6 +104,12 @@ export const OrganizationSidebar: React.FC<OrganizationSidebarProps> = ({
             labelKey: 'organization.sidebar.strategy',
             defaultLabel: 'Strategy',
             icon: Target,
+          },
+          {
+            id: 'knowledge-graph',
+            labelKey: 'organization.sidebar.knowledgeGraph',
+            defaultLabel: 'Knowledge Graph',
+            icon: Network,
           },
         ],
       },

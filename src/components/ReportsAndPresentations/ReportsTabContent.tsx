@@ -19,7 +19,7 @@ import {
 } from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-import { ReportPreview } from './previews/ReportPreview';
+import { ReportPreviewBody, ReportPreviewFooter } from './previews/ReportPreview';
 import { REPORT_STATUS_META, REPORT_TYPE_META, type ReportItem } from './types';
 import type { useRapActions } from './useRapData';
 
@@ -337,8 +337,14 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         selectedItem={previewItem}
         onSelect={setSelectedId}
         itemIds={itemIds}
+        getItemById={(id) => filteredData.find((x) => x.id === id) ?? null}
         renderPreview={(item) => (
-          <ReportPreview
+          <ReportPreviewBody
+            report={item}
+          />
+        )}
+        renderPreviewFooter={(item) => (
+          <ReportPreviewFooter
             report={item}
             onOpen={() => navigate(`/reports/builder/${item.id}`)}
             onExport={() => actions.exportReportPdf(item.id)}

@@ -1,6 +1,7 @@
 /**
  * PresentationPreview — Preview panel for presentations
  * Uses shared PreviewPane building blocks for consistent UX.
+ * Exports Body + Footer for proper TableWithPreviewLayout split.
  */
 
 import { Download, ExternalLink } from 'lucide-react';
@@ -9,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 import {
   PreviewActionBar,
+  PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
   PreviewRelations,
@@ -25,11 +27,7 @@ interface PresentationPreviewProps {
   onExport?: () => void;
 }
 
-export const PresentationPreview: React.FC<PresentationPreviewProps> = ({
-  presentation,
-  onOpen,
-  onExport,
-}) => {
+function usePresentationPreviewData(presentation: PresentationItem) {
   const { i18n, t } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const statusMeta =
@@ -66,22 +64,14 @@ export const PresentationPreview: React.FC<PresentationPreviewProps> = ({
       : []),
   ];
 
-  const actionRows: ActionRow[] = [];
-  if (onOpen || onExport) {
-    actionRows.push({
-      buttons: [
-        ...(onOpen
-          ? [{ label: t('rap.preview.openFull', 'Otwórz pełny'), icon: ExternalLink, onClick: onOpen, colorScheme: 'primary' as const, flex: true }]
-          : []),
-        ...(onExport
-          ? [{ label: t('rap.actions.export', 'Eksportuj'), icon: Download, onClick: onExport, colorScheme: 'neutral' as const }]
-          : []),
-      ],
-    });
-  }
+  return { isPolish, t, pills, detailLines, relations };
+}
+
+export const PresentationPreviewBody: React.FC<PresentationPreviewProps> = ({ presentation }) => {
+  const { isPolish, pills, detailLines } = usePresentationPreviewData(presentation);
 
   return (
-    <div className="space-y-4 text-sm">
+    <div className="space-y-4">
       {/* Thumbnail */}
       <div className="w-full aspect-[16/9] rounded-lg bg-gradient-to-br from-slate-200 to-slate-300 dark:from-navy-700 dark:to-navy-600 flex items-center justify-center overflow-hidden">
         {presentation.thumbnailUrl ? (
@@ -102,8 +92,58 @@ export const PresentationPreview: React.FC<PresentationPreviewProps> = ({
 
       <PreviewMetaCard pills={pills} />
       <PreviewDetailsSection text={detailLines} label={isPolish ? 'SZCZEGÓŁY' : 'DETAILS'} />
-      {relations.length > 0 && <PreviewRelations items={relations} />}
+    </div>
+  );
+};
+
+export const PresentationPreviewFooter: React.FC<PresentationPreviewProps> = ({
+  presentation,
+  onOpen,
+  onExport,
+}) => {
+  const { isPolish, t, relations } = usePresentationPreviewData(presentation);
+
+  const actionRows: ActionRow[] = [];
+  if (onOpen || onExport) {
+    actionRows.push({
+      buttons: [
+        ...(onOpen
+          ? [{ label: t('rap.preview.openFull', 'Otwórz pełny'), icon: ExternalLink, onClick: onOpen, colorScheme: 'primary' as const, flex: true, shortcut: 'O' }]
+          : []),
+        ...(onExport
+          ? [{ label: t('rap.actions.export', 'Eksportuj'), icon: Download, onClick: onExport, colorScheme: 'neutral' as const, shortcut: 'E' }]
+          : []),
+      ],
+    });
+  }
+
+  const dividerClass = 'border-t border-slate-200/50 dark:border-white/[0.06] my-3';
+
+  return (
+    <div className="space-y-0">
+      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+        <PreviewAIHintStrip
+          hints={[isPolish ? 'Prezentacja gotowa do przeglądu' : 'Presentation ready for review']}
+        />
+      </div>
+      {relations.length > 0 && (
+        <>
+          <div className={dividerClass} />
+          <PreviewRelations items={relations} />
+        </>
+      )}
+      <div className={dividerClass} />
       {actionRows.length > 0 && <PreviewActionBar rows={actionRows} />}
     </div>
+  );
+};
+
+/** @deprecated Use PresentationPreviewBody + PresentationPreviewFooter for Body/Footer split */
+export const PresentationPreview: React.FC<PresentationPreviewProps> = (props) => {
+  return (
+    <>
+      <PresentationPreviewBody {...props} />
+      <PresentationPreviewFooter {...props} />
+    </>
   );
 };

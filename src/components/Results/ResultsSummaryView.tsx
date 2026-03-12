@@ -373,6 +373,7 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
         onSelect={setSelectedId}
         onOpenFull={(id) => openInitiative(id)}
         itemIds={itemIds}
+        getItemById={(id) => filtered.find((x) => x.id === id) ?? null}
         renderPreview={(i) => {
           const desc = i.description?.trim() || t('common.noDescription', 'No description');
           const detailsText = [
@@ -398,7 +399,7 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
             },
           ];
           return (
-            <div className="space-y-4 text-sm">
+            <div className="space-y-4">
               <PreviewMetaCard
                 pills={metaPills}
                 trailing={
@@ -523,6 +524,7 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
                   icon: ExternalLink,
                   onClick: () => openInitiative(i.id),
                   colorScheme: 'primary',
+                  shortcut: 'O',
                 },
                 {
                   label: t('results.summary.actions.connectKpi', 'Connect KPI'),
@@ -532,6 +534,7 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
                     setShowCreateKpi(true);
                   },
                   colorScheme: 'neutral',
+                  shortcut: 'K',
                 },
                 {
                   label: t('results.summary.actions.connectRoi', 'Connect ROI'),
@@ -550,13 +553,15 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
           ];
           return (
             <div className="space-y-0">
-              <PreviewAIHintStrip
-                hints={aiHints.map((h) => h.label)}
-                onRunHint={(hint) => {
-                  const match = aiHints.find((h) => h.label === hint);
-                  if (match) void openAiChat(i, match.prompt);
-                }}
-              />
+              <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+                <PreviewAIHintStrip
+                  hints={aiHints.map((h) => h.label)}
+                  onRunHint={(hint) => {
+                    const match = aiHints.find((h) => h.label === hint);
+                    if (match) void openAiChat(i, match.prompt);
+                  }}
+                />
+              </div>
               <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
               <PreviewRelations items={relationItems} />
               <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />

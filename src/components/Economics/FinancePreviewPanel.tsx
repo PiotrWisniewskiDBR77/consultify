@@ -1,4 +1,4 @@
-import { BarChart3, Calculator, Clock, MoreVertical, Target, TrendingUp } from 'lucide-react';
+import { BarChart3, Calculator, Clock, FileText, MoreVertical, Target, TrendingUp } from 'lucide-react';
 import React, { useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,7 @@ import {
   type FinanceAnalysisRow,
   type FinanceModelRow,
   type FinanceRow,
+  type FinanceStatementRow,
   type FinanceValuationRow,
   formatAge,
   getTypeCode,
@@ -27,6 +28,7 @@ import {
 } from './financeTypes';
 
 const KIND_ICON_MAP: Record<FinanceKind, typeof Calculator> = {
+  statements: FileText,
   models: Calculator,
   analysis: BarChart3,
   investment: Target,
@@ -35,6 +37,8 @@ const KIND_ICON_MAP: Record<FinanceKind, typeof Calculator> = {
 };
 
 interface FinancePreviewPanelProps {
+  statementPreviewDetail: PreviewDataState['statementPreviewDetail'];
+  statementPreviewRatios: PreviewDataState['statementPreviewRatios'];
   predictionValidations: PreviewDataState['predictionValidations'];
   analysisPreviewRatios: PreviewDataState['analysisPreviewRatios'];
   budgetPreviewScenarios: PreviewDataState['budgetPreviewScenarios'];
@@ -42,6 +46,9 @@ interface FinancePreviewPanelProps {
   valuationPreviewDetail: PreviewDataState['valuationPreviewDetail'];
   handleOpenFull: (row: FinanceRow) => void;
   handleExport: (row: FinanceRow) => void;
+  handleCreateModelFromStatement: (row: FinanceStatementRow) => void;
+  handleCreateAnalysisFromStatements: (statementIds: string[]) => void;
+  loadStatements: () => Promise<void>;
   loadModels: () => Promise<void>;
   loadAnalyses: () => Promise<void>;
   loadAnalysisPreviewRatios: (id: string) => Promise<void>;
@@ -54,6 +61,8 @@ interface FinancePreviewPanelProps {
 }
 
 export function useFinancePreview({
+  statementPreviewDetail,
+  statementPreviewRatios,
   predictionValidations,
   analysisPreviewRatios,
   budgetPreviewScenarios,
@@ -61,6 +70,9 @@ export function useFinancePreview({
   valuationPreviewDetail,
   handleOpenFull,
   handleExport,
+  handleCreateModelFromStatement,
+  handleCreateAnalysisFromStatements,
+  loadStatements,
   loadModels,
   loadAnalyses,
   loadAnalysisPreviewRatios,
@@ -78,7 +90,15 @@ export function useFinancePreview({
     (row: FinanceRow) => {
       const metaPills: { label: string; value: string }[] = [];
 
-      if (row.kind === 'models') {
+      if (row.kind === 'statements') {
+        const sRow = row as FinanceStatementRow;
+        metaPills.push(
+          { label: t('finance.columns.type', 'Type'), value: sRow.statementType },
+          { label: t('finance.columns.period', 'Period'), value: sRow.periodLabel || sRow.periodEnd },
+          { label: t('common.currency', 'Currency'), value: sRow.currency },
+          { label: t('finance.columns.scaling', 'Scaling'), value: sRow.scaling }
+        );
+      } else if (row.kind === 'models') {
         metaPills.push(
           { label: t('finance.columns.scenario', 'Scenario'), value: row.scenario },
           { label: t('common.currency', 'Currency'), value: row.currency },
@@ -87,6 +107,12 @@ export function useFinancePreview({
             value: `${row.horizonMonths} ${t('finance.units.mo', 'mo')}`,
           }
         );
+        metaPills.push({
+          label: t('finance.columns.source', 'Source'),
+          value: row.sourceStatementId
+            ? t('finance.model.seededFromStatementShort', 'Statement')
+            : t('finance.model.seededManuallyShort', 'Manual'),
+        });
         if (row.startDate)
           metaPills.push({
             label: t('finance.columns.start', 'Start'),
@@ -163,10 +189,22 @@ export function useFinancePreview({
       ];
 
       let detailsText = '';
-      if (row.kind === 'models') {
+      if (row.kind === 'statements') {
+        const sRow = row as FinanceStatementRow;
+        const detail = statementPreviewDetail;
+        const coverage = statementPreviewRatios;
         detailsText = isPl
-          ? `Model finansowy P&L / Bilans / CF.\nScenariusz: ${row.scenario}\nWaluta: ${row.currency}\nHoryzont: ${row.horizonMonths} miesięcy\nStart: ${row.startDate || '—'}`
-          : `Financial model P&L / BS / CF.\nScenario: ${row.scenario}\nCurrency: ${row.currency}\nHorizon: ${row.horizonMonths} months\nStart: ${row.startDate || '—'}`;
+          ? `Sprawozdanie ${sRow.statementType}\nOkres: ${detail?.periodLabel || sRow.periodLabel || '—'}\nStatus: ${detail?.rawStatus || sRow.rawStatus}\nWaluta: ${detail?.currency || sRow.currency}\nŹródło: ${detail?.sourceFileName || sRow.sourceFileName || '—'}`
+          : `Financial statement ${sRow.statementType}\nPeriod: ${detail?.periodLabel || sRow.periodLabel || '—'}\nStatus: ${detail?.rawStatus || sRow.rawStatus}\nCurrency: ${detail?.currency || sRow.currency}\nSource: ${detail?.sourceFileName || sRow.sourceFileName || '—'}`;
+        if (detail?.mappedLineCount || coverage?.coveragePct) {
+          detailsText += isPl
+            ? `\nZmapowane linie: ${detail?.mappedLineCount || sRow.mappedLineCount} • Coverage: ${coverage?.coveragePct?.toFixed(0) || 0}%`
+            : `\nMapped lines: ${detail?.mappedLineCount || sRow.mappedLineCount} • Coverage: ${coverage?.coveragePct?.toFixed(0) || 0}%`;
+        }
+      } else if (row.kind === 'models') {
+        detailsText = isPl
+          ? `Model finansowy P&L / Bilans / CF.\nScenariusz: ${row.scenario}\nWaluta: ${row.currency}\nHoryzont: ${row.horizonMonths} miesięcy\nStart: ${row.startDate || '—'}\nŹródło: ${row.sourceStatementId ? 'seeded from statement' : 'manual / zero'}`
+          : `Financial model P&L / BS / CF.\nScenario: ${row.scenario}\nCurrency: ${row.currency}\nHorizon: ${row.horizonMonths} months\nStart: ${row.startDate || '—'}\nSource: ${row.sourceStatementId ? 'seeded from statement' : 'manual / zero'}`;
       } else if (row.kind === 'analysis' || row.kind === 'investment') {
         detailsText = isPl
           ? `${row.kind === 'investment' ? 'Case inwestycyjny' : 'Analiza finansowa'}: ${row.analysisType}\nWaluta: ${row.currency}\nLiczba okresów: ${row.periodCount}`
@@ -211,6 +249,60 @@ export function useFinancePreview({
               },
             ]}
           />
+
+          {row.kind === 'statements' && (
+            <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-2">
+              <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+                {t('finance.statements.previewTitle', 'Statement health')}
+              </div>
+              {statementPreviewDetail ? (
+                <>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-md bg-white/80 dark:bg-white/[0.03] p-2">
+                      <div className="text-slate-500 dark:text-slate-400">
+                        {t('finance.statements.mappedLines', 'Mapped lines')}
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {statementPreviewDetail.mappedLineCount}
+                      </div>
+                    </div>
+                    <div className="rounded-md bg-white/80 dark:bg-white/[0.03] p-2">
+                      <div className="text-slate-500 dark:text-slate-400">
+                        {t('finance.statements.validation', 'Validation')}
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white capitalize">
+                        {statementPreviewDetail.validationStatus}
+                      </div>
+                    </div>
+                  </div>
+                  {statementPreviewRatios && (
+                    <div className="space-y-1">
+                      <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+                        {t('finance.statements.ratios', 'Ratios')}
+                      </div>
+                      <div className="text-xs text-slate-600 dark:text-slate-300">
+                        {t('finance.statements.ratioCoverage', 'Coverage')}:{' '}
+                        {statementPreviewRatios.coveragePct.toFixed(0)}% ({statementPreviewRatios.computed}/
+                        {statementPreviewRatios.total})
+                      </div>
+                      {statementPreviewRatios.topRatios.map((ratio) => (
+                        <div key={ratio.code} className="flex items-center justify-between text-xs">
+                          <span className="text-slate-600 dark:text-slate-300">{ratio.name}</span>
+                          <span className="font-mono text-slate-900 dark:text-white">
+                            {ratio.value != null ? ratio.value.toFixed(2) : '—'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {isPl ? 'Ładowanie podglądu statementu…' : 'Loading statement preview…'}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Prediction: validation summary */}
           {row.kind === 'prediction' &&
@@ -531,6 +623,8 @@ export function useFinancePreview({
     [
       t,
       isPl,
+      statementPreviewDetail,
+      statementPreviewRatios,
       predictionValidations,
       analysisPreviewRatios,
       budgetPreviewScenarios,
@@ -544,6 +638,12 @@ export function useFinancePreview({
     (row: FinanceRow) => {
       const aiHints: string[] = (() => {
         switch (row.kind) {
+          case 'statements':
+            return [
+              isPl ? 'Sprawdź mapowanie' : 'Review mapping',
+              isPl ? 'Zbuduj model' : 'Create model',
+              isPl ? 'Porównaj okresy' : 'Compare periods',
+            ];
           case 'models':
             return [
               isPl ? 'Sprawdź spójność' : 'Check consistency',
@@ -581,6 +681,71 @@ export function useFinancePreview({
 
       const actionButtons: ActionRow['buttons'] = [];
 
+      if (row.kind === 'statements') {
+        const statementRow = row as FinanceStatementRow;
+        relationItems.push(
+          {
+            label: `${isPl ? 'Plik źródłowy' : 'Source file'}: ${
+              statementPreviewDetail?.sourceFileName || statementRow.sourceFileName || '—'
+            }`,
+          },
+          {
+            label: `${isPl ? 'Gotowość do modelu' : 'Model readiness'}: ${
+              statementRow.isWorkable
+                ? isPl
+                  ? 'Gotowy do seedowania'
+                  : 'Ready for seeding'
+                : String(statementRow.readinessStatus || '').toLowerCase() === 'rejected'
+                  ? isPl
+                    ? 'Import odrzucony'
+                    : 'Rejected import'
+                : isPl
+                  ? 'Recovery queue'
+                  : 'Recovery queue'
+            }`,
+          }
+        );
+        actionButtons.push(
+          {
+            label: t('finance.actions.createModelFromStatement', 'Utwórz model'),
+            onClick: () => handleCreateModelFromStatement(statementRow),
+            colorScheme: 'primary',
+            disabled: !statementRow.isWorkable,
+          },
+          {
+            label: t('finance.actions.createAnalysis', 'Utwórz analizę'),
+            onClick: () => handleCreateAnalysisFromStatements([statementRow.id]),
+            colorScheme: 'emerald',
+            disabled: !statementRow.isWorkable,
+          }
+        );
+        if (!statementRow.isWorkable) {
+          actionButtons.push({
+            label: t('finance.actions.openRecoveryQueue', 'Otwórz recovery queue'),
+            onClick: () => handleOpenFull(statementRow),
+            colorScheme: 'neutral',
+          });
+        }
+        if (statementRow.isWorkable && String(statementRow.rawStatus || '').toLowerCase() !== 'confirmed') {
+          actionButtons.push({
+            label: t('finance.actions.confirmStatement', 'Potwierdź statement'),
+            onClick: async () => {
+              try {
+                await Api.post(`/api/finance-statements/${statementRow.id}/confirm`, {});
+                await loadStatements();
+                toast.success(t('finance.toast.statementConfirmed', 'Statement potwierdzony'));
+              } catch (e: any) {
+                toast.error(
+                  e?.response?.data?.error ||
+                    t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
+                );
+              }
+            },
+            colorScheme: 'amber',
+          });
+        }
+      }
+
       if (row.kind === 'models' && row.status !== 'APPROVED') {
         actionButtons.push({
           label: t('finance.actions.approve', 'Zatwierdź'),
@@ -596,7 +761,7 @@ export function useFinancePreview({
               );
             }
           },
-          colorScheme: 'primary',
+          colorScheme: 'emerald',
         });
       }
 
@@ -618,6 +783,14 @@ export function useFinancePreview({
           },
           colorScheme: 'primary',
         });
+        actionButtons.push({
+          label: t('finance.actions.createValuation', 'Utwórz wycenę'),
+          onClick: () =>
+            window.location.assign(
+              `/economics?tab=valuation&createFrom=financial_analysis&sourceId=${row.id}`
+            ),
+          colorScheme: 'neutral',
+        });
         if (row.status !== 'APPROVED') {
           actionButtons.push({
             label: t('finance.actions.approve', 'Zatwierdź'),
@@ -633,7 +806,7 @@ export function useFinancePreview({
                 );
               }
             },
-            colorScheme: 'primary',
+            colorScheme: 'emerald',
           });
         }
       }
@@ -679,7 +852,7 @@ export function useFinancePreview({
                   );
                 }
               },
-              colorScheme: 'primary',
+              colorScheme: 'emerald',
             });
           }
         } else {
@@ -735,7 +908,7 @@ export function useFinancePreview({
                 );
               }
             },
-            colorScheme: 'primary',
+            colorScheme: 'emerald',
           });
         }
         actionButtons.push({
@@ -765,8 +938,10 @@ export function useFinancePreview({
       }
 
       if (
-        row.kind !== 'prediction' ||
+        row.kind !== 'statements' &&
+        (row.kind !== 'prediction' ||
         (row as FinanceModelRow).predictionType === 'model'
+        )
       ) {
         actionButtons.push({
           label: t('finance.actions.export', 'Eksportuj'),
@@ -778,19 +953,22 @@ export function useFinancePreview({
       actionButtons.push({
         label: t('common.open', 'Otwórz'),
         onClick: () => handleOpenFull(row),
-        colorScheme: 'neutral',
+        colorScheme: 'primary',
+        shortcut: 'O',
       });
 
       return (
         <div className="space-y-0">
-          <PreviewAIHintStrip
-            hints={aiHints}
-            onRunHint={(hint) =>
-              window.location.assign(
-                `/chat?context=finance&prompt=${encodeURIComponent(hint)}`
-              )
-            }
-          />
+          <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+            <PreviewAIHintStrip
+              hints={aiHints}
+              onRunHint={(hint) =>
+                window.location.assign(
+                  `/chat?context=finance&prompt=${encodeURIComponent(hint)}`
+                )
+              }
+            />
+          </div>
           <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
           <PreviewRelations
             items={relationItems}
@@ -804,8 +982,12 @@ export function useFinancePreview({
     [
       t,
       isPl,
+      statementPreviewDetail,
       handleOpenFull,
       handleExport,
+      handleCreateModelFromStatement,
+      handleCreateAnalysisFromStatements,
+      loadStatements,
       loadModels,
       loadPredictionPreview,
       loadAnalyses,

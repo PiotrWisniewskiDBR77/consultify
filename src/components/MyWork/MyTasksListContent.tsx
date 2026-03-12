@@ -38,7 +38,9 @@ import {
   type MetaPill,
   type RelationItem,
   type ActionRow,
+  type ExtraCopyFormat,
 } from '@/components/shared/PreviewPane';
+import { copyAsMarkdown, copyForSlack } from '@/utils/clipboard';
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { Modal } from '@/components/ui/primitives/Modal';
@@ -1628,6 +1630,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
             onTaskClick(id, full);
           }}
           itemIds={orderedTaskIds}
+          getItemById={(id) => tasks.find((t) => t.id === id) ?? null}
           renderPreview={(task) => {
             const isCompleted = ['done', 'completed', 'validated'].includes(
               task.status?.toLowerCase() || ''
@@ -1656,6 +1659,25 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               </span>
             );
 
+            const taskCopyFormats: ExtraCopyFormat[] = [
+              {
+                label: isPolish ? 'Kopiuj jako Markdown' : 'Copy as Markdown',
+                onClick: () =>
+                  void copyAsMarkdown(
+                    { title: task.title, status: statusCfg.label, description: desc },
+                    isPolish ? 'pl' : 'en'
+                  ),
+              },
+              {
+                label: isPolish ? 'Kopiuj dla Slack' : 'Copy for Slack',
+                onClick: () =>
+                  void copyForSlack(
+                    { title: task.title, status: statusCfg.label, description: desc },
+                    isPolish ? 'pl' : 'en'
+                  ),
+              },
+            ];
+
             return (
               <div className="space-y-4">
                 <PreviewMetaCard pills={pills} trailing={trailing}>
@@ -1675,6 +1697,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                   onExpand={() => void handleDetailsAction('expand', task)}
                   onSummarize={() => void handleDetailsAction('summarize', task)}
                   onCopy={() => void handleDetailsAction('copy', task)}
+                  extraCopyFormats={taskCopyFormats}
                 />
               </div>
             );
@@ -1725,6 +1748,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                     onClick: () => handleTriageAcceptToday(task.id),
                     colorScheme: 'emerald',
                     flex: true,
+                    shortcut: 'T',
                   },
                   {
                     label: isPolish ? 'Odłóż' : 'Snooze',
@@ -1732,6 +1756,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                     onClick: () => handleTriageSnooze(task.id),
                     colorScheme: 'amber',
                     flex: true,
+                    shortcut: 'Z',
                   },
                 ],
               },
@@ -1743,13 +1768,15 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                     onClick: () => handleToggleComplete(task.id, !isCompleted),
                     colorScheme: 'green',
                     flex: true,
+                    shortcut: 'D',
                   },
                   {
                     label: isPolish ? 'Otwórz' : 'Open',
                     icon: Eye,
                     onClick: () => onTaskClick(task.id, task),
-                    colorScheme: 'neutral',
+                    colorScheme: 'primary',
                     flex: true,
+                    shortcut: 'O',
                   },
                 ],
               },

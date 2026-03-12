@@ -1,10 +1,16 @@
-import { BarChart3, Calculator, Target, TrendingUp } from 'lucide-react';
+import { BarChart3, Calculator, FileText, Target, TrendingUp } from 'lucide-react';
 import React from 'react';
 
 import { type PreviewableItem } from '../shared/TableWithPreviewLayout';
 
 export type FinanceStatus = 'DRAFT' | 'REVIEW' | 'APPROVED';
-export type FinanceKind = 'models' | 'analysis' | 'investment' | 'prediction' | 'valuation';
+export type FinanceKind =
+  | 'statements'
+  | 'models'
+  | 'analysis'
+  | 'investment'
+  | 'prediction'
+  | 'valuation';
 export type PredictionType = 'model' | 'budget';
 
 export type FinanceRowBase = PreviewableItem & {
@@ -23,6 +29,8 @@ export type FinanceModelRow = FinanceRowBase & {
   periodStart?: string;
   periodEnd?: string;
   granularity?: string;
+  sourceStatementId?: string;
+  seedSourceType?: string;
 };
 
 export type FinanceAnalysisRow = FinanceRowBase & {
@@ -30,6 +38,7 @@ export type FinanceAnalysisRow = FinanceRowBase & {
   analysisType: string;
   currency: string;
   periodCount: number;
+  sourceStatementIds?: string[];
 };
 
 export type FinanceValuationRow = FinanceRowBase & {
@@ -40,9 +49,41 @@ export type FinanceValuationRow = FinanceRowBase & {
   horizonYears: number;
 };
 
-export type FinanceRow = FinanceModelRow | FinanceAnalysisRow | FinanceValuationRow;
+export type FinanceStatementRow = FinanceRowBase & {
+  kind: 'statements';
+  statementType: string;
+  periodStart: string;
+  periodEnd: string;
+  periodLabel: string;
+  currency: string;
+  scaling: string;
+  sourceFileName: string;
+  validationStatus: string;
+  mappedLineCount: number;
+  totalLineCount: number;
+  unmappedLineCount: number;
+  nonFinancialLineCount?: number;
+  overallConfidence: number;
+  rawStatus: string;
+  readinessStatus?: string;
+  readinessScore?: number;
+  readinessSummary?: string;
+  readinessReasonCodes?: string[];
+  documentClass?: string;
+  extractionStrategy?: string;
+  templateFamily?: string | null;
+  valuesVersion?: number;
+  isWorkable: boolean;
+};
+
+export type FinanceRow =
+  | FinanceStatementRow
+  | FinanceModelRow
+  | FinanceAnalysisRow
+  | FinanceValuationRow;
 
 export const KIND_LABELS: Record<FinanceKind, { code: string; en: string; pl: string }> = {
+  statements: { code: 'STM', en: 'Statement', pl: 'Sprawozdanie' },
   models: { code: 'MDL', en: 'Model', pl: 'Model' },
   analysis: { code: 'ANL', en: 'Analysis', pl: 'Analiza' },
   investment: { code: 'INV', en: 'Investment', pl: 'Inwestycja' },
@@ -51,6 +92,10 @@ export const KIND_LABELS: Record<FinanceKind, { code: string; en: string; pl: st
 };
 
 export const KIND_ICONS: Record<FinanceKind, React.ReactNode> = {
+  statements: React.createElement(FileText, {
+    size: 14,
+    className: 'text-cyan-500 dark:text-cyan-400',
+  }),
   models: React.createElement(Calculator, {
     size: 14,
     className: 'text-blue-500 dark:text-blue-400',
@@ -74,6 +119,7 @@ export const KIND_ICONS: Record<FinanceKind, React.ReactNode> = {
 };
 
 export const KIND_ACCENT: Record<FinanceKind, string> = {
+  statements: 'border-l-cyan-500 dark:border-l-cyan-400',
   models: 'border-l-blue-500 dark:border-l-blue-400',
   analysis: 'border-l-emerald-500 dark:border-l-emerald-400',
   investment: 'border-l-fuchsia-500 dark:border-l-fuchsia-400',
@@ -123,7 +169,113 @@ export function formatAge(dateStr: string, isPl: boolean): string {
   return d.toLocaleDateString();
 }
 
+export function isWorkableStatement(
+  readinessStatus: unknown,
+  rawStatus: unknown,
+  validationStatus: unknown,
+  mappedLineCount: unknown,
+  unmappedLineCount: unknown
+): boolean {
+  const normalizedReadiness = String(readinessStatus || '')
+    .trim()
+    .toLowerCase();
+  const normalizedRawStatus = String(rawStatus || '')
+    .trim()
+    .toLowerCase();
+  const normalizedValidation = String(validationStatus || '')
+    .trim()
+    .toLowerCase();
+  const mapped = Number(mappedLineCount || 0);
+  const unmapped = Number(unmappedLineCount || 0);
+
+  if (normalizedReadiness === 'ready') return true;
+  return (
+    ['mapped', 'confirmed'].includes(normalizedRawStatus) &&
+    ['pass', 'warnings'].includes(normalizedValidation) &&
+    mapped > 0 &&
+    unmapped === 0
+  );
+}
+
+export function isRecognizedStatement(
+  readinessStatus: unknown,
+  rawStatus: unknown,
+  statementType: unknown,
+  mappedLineCount: unknown,
+  totalLineCount: unknown
+): boolean {
+  const normalizedReadiness = String(readinessStatus || '')
+    .trim()
+    .toLowerCase();
+  const normalizedRawStatus = String(rawStatus || '')
+    .trim()
+    .toLowerCase();
+  const normalizedStatementType = String(statementType || '')
+    .trim()
+    .toUpperCase();
+  const mapped = Number(mappedLineCount || 0);
+  const total = Number(totalLineCount || 0);
+
+  return (
+    ['ready', 'recoverable', 'rejected'].includes(normalizedReadiness) ||
+    (['imported', 'mapped', 'confirmed'].includes(normalizedRawStatus) &&
+    ['P&L', 'PL', 'BS', 'BALANCE_SHEET', 'CF', 'CASH_FLOW'].includes(normalizedStatementType) &&
+    mapped > 0 &&
+    total > 0)
+  );
+}
+
+export function deriveStatementReadinessStatus(
+  readinessStatus: unknown,
+  rawStatus: unknown,
+  validationStatus: unknown,
+  mappedLineCount: unknown,
+  unmappedLineCount: unknown,
+  totalLineCount: unknown
+): 'pending' | 'recoverable' | 'ready' | 'rejected' {
+  const normalizedReadiness = String(readinessStatus || '')
+    .trim()
+    .toLowerCase();
+  if (['pending', 'recoverable', 'ready', 'rejected'].includes(normalizedReadiness)) {
+    return normalizedReadiness as 'pending' | 'recoverable' | 'ready' | 'rejected';
+  }
+  if (isWorkableStatement('', rawStatus, validationStatus, mappedLineCount, unmappedLineCount)) {
+    return 'ready';
+  }
+  const total = Number(totalLineCount || 0);
+  const mapped = Number(mappedLineCount || 0);
+  const normalizedRawStatus = String(rawStatus || '')
+    .trim()
+    .toLowerCase();
+  if (total > 0 && mapped > 0 && ['imported', 'mapped', 'confirmed'].includes(normalizedRawStatus)) {
+    return 'recoverable';
+  }
+  if (total > 0 && mapped === 0) return 'rejected';
+  return 'pending';
+}
+
 export interface PreviewDataState {
+  statementPreviewDetail: {
+    statementType: string;
+    periodLabel: string;
+    periodStart: string;
+    periodEnd: string;
+    currency: string;
+    scaling: string;
+    sourceFileName: string;
+    validationStatus: string;
+    rawStatus: string;
+    readinessStatus?: string;
+    readinessSummary?: string;
+    mappedLineCount: number;
+    topLineItems: { label: string; code: string; value: number }[];
+  } | null;
+  statementPreviewRatios: {
+    coveragePct: number;
+    computed: number;
+    total: number;
+    topRatios: { code: string; name: string; value: number | null }[];
+  } | null;
   predictionValidations: { total: number; pass: number; fail: number; warning: number } | null;
   analysisPreviewRatios:
     | { category: string; ratio_code: string; ratio_name: string; value: number | null }[]

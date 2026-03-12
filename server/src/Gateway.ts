@@ -141,11 +141,13 @@ import multiFrameworkAssessmentRoutes from './routes/multi-framework-assessment.
 import multiFrameworkWorkflowRoutes from './routes/multi-framework-workflow.routes.js';
 import myWorkRoutes from './routes/my-work.routes.js';
 import notebookV4Routes from './routes/notebook.routes.js';
+import previewAiRoutes from './routes/preview-ai.routes.js';
 import notificationRulesRoutes from './routes/notifications/notification-rules.routes.js';
 import notificationRoutes from './routes/notifications/notifications.routes.js';
 import notificationSettingsRoutes from './routes/notifications/notificationSettings.routes.js';
 import oauthRoutes from './routes/oauthRoutes.routes.js';
 import onboardingRoutes from './routes/onboarding.routes.js';
+import organizationContextRoutes from './routes/organization-context.routes.js';
 import brandingRoutes from './routes/organization/branding.routes.js';
 import invitationRoutes from './routes/organization/invitations.routes.js';
 import organizationDataRoutes from './routes/organization/organization-data.routes.js';
@@ -487,6 +489,7 @@ export class ApiGateway {
       app.use('/api/megatrends', megatrendRoutes);
       app.use('/api/organizations', organizationRoutes);
       mountStub('/api/invitations', invitationRoutes, 'invitationRoutes');
+      app.use('/api/organization-context', organizationContextRoutes);
       app.use('/api/organization-profiles', organizationProfilesRoutes);
       app.use('/api/organization-data', organizationDataRoutes);
       app.use('/api/organization', orgLimitsRoutes);
@@ -524,6 +527,7 @@ export class ApiGateway {
       // My Work is a production-critical module (not a stub).
       // It must remain available in production to avoid broken navigation from notifications/actionUrl deep links.
       app.use('/api/my-work', myWorkRoutes);
+      app.use('/api/preview-ai', previewAiRoutes);
       app.use('/api/notebook', notebookV4Routes);
 
       // Governance routes

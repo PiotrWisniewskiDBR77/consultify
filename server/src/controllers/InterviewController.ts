@@ -16,6 +16,7 @@ import { z } from 'zod';
 
 import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import PDFParserService from '../services/pdfParserService.js';
 import notificationService from '../services/notificationService.js';
 import { evaluateGatePolicy } from '../services/workflow/gatePolicy.js';
@@ -732,6 +733,8 @@ const buildTemplateQuestionResponse = (row: any) => {
     helpHint: row.help_hint || null,
     answerOptions: parseJson(row.answer_options, [] as unknown[]),
     expectedAnswerShape: row.expected_answer_shape || '',
+    description: row.description || '',
+    evidencePrompt: row.evidence_prompt || '',
     allowVoice: row.allow_voice === 1,
     allowFileUpload: row.allow_file_upload === 1,
     allowUrl: row.allow_url === 1,
@@ -3407,6 +3410,8 @@ export const InterviewController = {
       helpHint,
       answerOptions,
       expectedAnswerShape,
+      description,
+      evidencePrompt,
       allowVoice,
       allowFileUpload,
       allowUrl,
@@ -3429,8 +3434,8 @@ export const InterviewController = {
     const qid = uuidv4();
     await queryHelpers.queryRun(
       `INSERT INTO interview_library_template_questions
-       (id, template_id, category, question_text, sort_order, answer_type, is_required, help_hint, answer_options, expected_answer_shape, allow_voice, allow_file_upload, allow_url, allow_context_note, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, template_id, category, question_text, sort_order, answer_type, is_required, help_hint, answer_options, expected_answer_shape, description, evidence_prompt, allow_voice, allow_file_upload, allow_url, allow_context_note, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         qid,
         id,
@@ -3442,6 +3447,8 @@ export const InterviewController = {
         helpHint || null,
         JSON.stringify(Array.isArray(answerOptions) ? answerOptions : []),
         expectedAnswerShape || null,
+        description || null,
+        evidencePrompt || null,
         allowVoice ? 1 : 0,
         allowFileUpload ? 1 : 0,
         allowUrl ? 1 : 0,
@@ -3476,6 +3483,8 @@ export const InterviewController = {
       helpHint,
       answerOptions,
       expectedAnswerShape,
+      description,
+      evidencePrompt,
       allowVoice,
       allowFileUpload,
       allowUrl,
@@ -3534,6 +3543,14 @@ export const InterviewController = {
     if (expectedAnswerShape !== undefined) {
       updates.push('expected_answer_shape = ?');
       params.push(expectedAnswerShape);
+    }
+    if (description !== undefined) {
+      updates.push('description = ?');
+      params.push(description || null);
+    }
+    if (evidencePrompt !== undefined) {
+      updates.push('evidence_prompt = ?');
+      params.push(evidencePrompt || null);
     }
     if (allowVoice !== undefined) {
       updates.push('allow_voice = ?');
@@ -3672,10 +3689,7 @@ export const InterviewController = {
       return;
     }
 
-    const context = await queryHelpers.queryOne(
-      `SELECT * FROM organization_context WHERE organization_id = ?`,
-      [user.organizationId]
-    );
+    const context = await organizationContextService.buildResolvedContext(user.organizationId);
 
     const answered = await queryHelpers.queryAll(
       `SELECT category, question_text, answer_text
@@ -3730,7 +3744,7 @@ ${JSON.stringify(answered || [], null, 2)}
   aiImproveAnswer: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { questionId } = req.params;
-    const { answerText, language } = req.body || {};
+    const { answerText, language, mode } = req.body || {};
 
     if (!answerText || typeof answerText !== 'string' || answerText.trim().length < 3) {
       res.status(400).json({ error: 'answerText is required (min 3 chars)' });
@@ -3755,13 +3769,34 @@ ${JSON.stringify(answered || [], null, 2)}
       changesSummary: z.string(),
     });
 
-    const systemPrompt = `You are a professional writing assistant improving interview answers.
-Your job:
-1. Fix grammar, spelling, and punctuation errors.
+    const modeInstructions: Record<string, string> = {
+      improve: `1. Fix grammar, spelling, and punctuation errors.
 2. Improve clarity and readability — make the answer more structured if it's rambling.
 3. Expand overly brief answers with reasonable elaboration based on context.
 4. Keep the original meaning and intent intact — do NOT add new facts the user didn't mention.
-5. If the answer comes from voice transcription, clean up speech artifacts (filler words, repetitions, incomplete sentences).
+5. If the answer comes from voice transcription, clean up speech artifacts (filler words, repetitions, incomplete sentences).`,
+      fix_grammar: `1. ONLY fix grammar, spelling, and punctuation errors.
+2. Do NOT change the meaning, structure, or style of the answer.
+3. Do NOT expand or shorten the text.
+4. Clean up obvious typos and voice transcription artifacts.`,
+      shorten: `1. Make the answer significantly shorter while preserving the key points.
+2. Remove redundant phrases, filler words, and unnecessary elaboration.
+3. Target roughly 50-60% of the original length.
+4. Keep the most important information intact.`,
+      expand: `1. Expand the answer with more detail, examples, and elaboration.
+2. Add structure (e.g. numbered points) if the answer is a list of items.
+3. Keep the original meaning — elaborate on what the user said, don't invent new facts.
+4. Target roughly 150-200% of the original length.`,
+      formal: `1. Rewrite the answer in a professional, formal business tone.
+2. Remove colloquialisms, slang, and overly casual language.
+3. Keep the same meaning and level of detail.
+4. Use proper business vocabulary appropriate for a corporate report or presentation.`,
+    };
+
+    const activeMode = modeInstructions[mode] ? mode : 'improve';
+    const systemPrompt = `You are a professional writing assistant improving interview answers.
+Your job:
+${modeInstructions[activeMode]}
 6. Write in ${lang}.
 7. Return JSON: { "improvedText": "...", "changesSummary": "..." }.
    changesSummary = 1-2 sentence description of what you changed (in ${lang}).`;
@@ -3770,7 +3805,7 @@ Your job:
 ${(question as any).description ? `Helper text: ${(question as any).description}` : ''}
 ${(question as any).expected_answer_shape ? `Expected format: ${(question as any).expected_answer_shape}` : ''}
 
-User's answer to improve:
+User's answer to ${activeMode === 'improve' ? 'improve' : activeMode === 'fix_grammar' ? 'fix grammar in' : activeMode === 'shorten' ? 'shorten' : activeMode === 'expand' ? 'expand' : 'make formal'}:
 """
 ${answerText.trim()}
 """`;
@@ -3846,6 +3881,114 @@ Answer type: ${(question as any).answer_type || 'open'}`;
         whyItMatters: '',
       }
     );
+  }),
+
+  evaluateSessionAnswers: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const user = requireUser(req);
+    const { sessionId } = req.params;
+    const { language } = req.body || {};
+
+    const session = await queryHelpers.queryOne(
+      `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
+       JOIN projects p ON p.id = s.project_id
+       WHERE s.id = ? AND p.organization_id = ?`,
+      [sessionId, user.organizationId]
+    );
+    if (!session) { res.status(404).json({ error: 'Session not found' }); return; }
+
+    const questions = await queryHelpers.queryAll(
+      `SELECT id, question_text, answer_type, is_required, expected_answer_shape, description,
+              status, answer_text, context_note, confidence_score
+       FROM interview_questions
+       WHERE session_id = ? AND organization_id = ?
+       ORDER BY sort_order`,
+      [sessionId, user.organizationId]
+    );
+
+    if (!questions || questions.length === 0) {
+      res.json({ overallScore: 0, overallVerdict: 'empty', questionEvaluations: [], recommendations: [] });
+      return;
+    }
+
+    const lang = (language === 'pl') ? 'Polish' : 'English';
+
+    const EvalSchema = z.object({
+      questionEvaluations: z.array(z.object({
+        questionId: z.string(),
+        score: z.number().min(1).max(5),
+        verdict: z.enum(['sufficient', 'needs_improvement', 'insufficient', 'unanswered']),
+        feedback: z.string(),
+      })),
+      overallScore: z.number().min(1).max(5),
+      overallVerdict: z.enum(['ready_for_approval', 'needs_improvement', 'insufficient']),
+      recommendations: z.array(z.string()),
+    });
+
+    const questionsForPrompt = (questions as any[]).map((q, i) => {
+      const answered = q.status === 'answered' && q.answer_text?.trim();
+      return `[Q${i + 1}] id=${q.id} | required=${q.is_required ? 'yes' : 'no'} | type=${q.answer_type || 'open'}
+Question: ${q.question_text}
+${q.expected_answer_shape ? `Expected format: ${q.expected_answer_shape}` : ''}
+${q.description ? `Helper: ${q.description}` : ''}
+Status: ${q.status || 'not_started'}
+Answer: ${answered ? q.answer_text.trim() : '(no answer)'}
+${q.context_note ? `Context note: ${q.context_note}` : ''}`;
+    }).join('\n\n');
+
+    const systemPrompt = `You are a quality reviewer for interview/survey answers. Evaluate each answer for:
+1. Completeness — does it address the full question?
+2. Specificity — does it give concrete details, examples, or data rather than vague generalities?
+3. Actionability — could a consultant use this answer to make decisions or recommendations?
+4. Relevance — does it actually answer what was asked?
+
+Score each answer 1-5:
+- 5: Excellent — thorough, specific, actionable
+- 4: Good — adequate with minor gaps
+- 3: Acceptable — covers basics but lacks depth
+- 2: Needs improvement — too vague, incomplete, or off-topic
+- 1: Insufficient — essentially empty or irrelevant
+
+For unanswered questions, use verdict "unanswered" and score 1.
+
+Overall verdict:
+- "ready_for_approval": overallScore >= 3.5 and no required questions are "insufficient"
+- "needs_improvement": overallScore >= 2.5 or some answers need work
+- "insufficient": overallScore < 2.5 or many required questions unanswered
+
+Provide 2-5 actionable recommendations for improving the weakest answers.
+Write all feedback and recommendations in ${lang}.
+Return valid JSON matching the schema.`;
+
+    const userPrompt = `Session: ${(session as any).name || 'Interview session'}
+Total questions: ${questions.length}
+Answered: ${(questions as any[]).filter(q => q.status === 'answered').length}
+
+${questionsForPrompt}`;
+
+    try {
+      const result = await llmService.call({
+        type: 'structured',
+        modelConfig: { id: 'standard' },
+        systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+        schema: EvalSchema,
+        maxTokens: 2000,
+        temperature: 0.2,
+        cache: false,
+      });
+
+      const evaluation = (result as any).object || {
+        questionEvaluations: [],
+        overallScore: 1,
+        overallVerdict: 'insufficient',
+        recommendations: [],
+      };
+
+      res.json(evaluation);
+    } catch (err) {
+      console.error('[evaluateSessionAnswers] AI call failed:', err);
+      res.status(500).json({ error: 'AI evaluation failed' });
+    }
   }),
 
   aiParseSessionAnswers: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
@@ -4091,6 +4234,22 @@ ${JSON.stringify(questions || [], null, 2)}
 
     const updatedQuestion = updated as any;
     if (updatedQuestion?.session_id) {
+      await organizationContextService.recordInterviewAnswer({
+        organizationId: user.organizationId,
+        userId: user.id,
+        payload: {
+          questionId,
+          sessionId: updatedQuestion.session_id,
+          category: updatedQuestion.category,
+          questionText: updatedQuestion.question_text,
+          answerText: updatedQuestion.answer_text,
+          contextNote: updatedQuestion.context_note,
+          tags: parseJson(updatedQuestion.tags, []),
+          confidenceScore: updatedQuestion.confidence_score,
+          answerMode: updatedQuestion.answer_mode,
+        },
+      });
+
       const answerKnowledgeDocId = await ingestInterviewTextArtifact({
         organizationId: user.organizationId,
         sourceType: 'interview_answer',
@@ -4647,6 +4806,26 @@ ${JSON.stringify(questions || [], null, 2)}
       );
     }
 
+    await organizationContextService.recordInterviewEvidence({
+      organizationId: user.organizationId,
+      userId: user.id,
+      payload: {
+        evidenceId: id,
+        sessionId,
+        questionId: questionId || null,
+        title: resolvedTitle,
+        description: description || null,
+        evidenceType,
+        evidenceRole: evidenceRole || 'supporting',
+        fileName: resolvedFileName,
+        fileType: resolvedFileType,
+        url: url || null,
+        transcriptText: transcriptText || null,
+        category: category || null,
+        knowledgeDocumentId,
+      },
+    });
+
     const created = await queryHelpers.queryOne(`SELECT * FROM interview_evidence WHERE id = ?`, [
       id,
     ]);
@@ -4947,43 +5126,38 @@ ${JSON.stringify(questions || [], null, 2)}
 
   getOrganizationContext: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-
-    const row = await queryHelpers.queryOne(
-      `SELECT * FROM organization_context WHERE organization_id = ?`,
+    const resolved = await organizationContextService.buildResolvedContext(user.organizationId);
+    const legacyRow = await queryHelpers.queryOne(
+      `SELECT completeness_percent, last_interview_id FROM organization_context WHERE organization_id = ?`,
       [user.organizationId]
     );
 
-    if (!row) {
-      res.json({
-        organizationId: user.organizationId,
-        companyName: null,
-        industry: null,
-        companySize: null,
-        location: null,
-        employeeCount: null,
-        annualRevenue: null,
-        keyMetrics: [],
-        stakeholders: [],
-        openGaps: [],
-        completenessPercent: 0,
-      });
-      return;
-    }
-
     res.json({
-      id: (row as any).id,
-      organizationId: (row as any).organization_id,
-      companyName: (row as any).company_name,
-      industry: (row as any).industry,
-      companySize: (row as any).company_size,
-      location: (row as any).location,
-      employeeCount: (row as any).employee_count,
-      annualRevenue: (row as any).annual_revenue,
-      keyMetrics: parseJson((row as any).key_metrics, []),
-      stakeholders: parseJson((row as any).stakeholders, []),
-      openGaps: parseJson((row as any).open_gaps, []),
-      completenessPercent: (row as any).completeness_percent || 0,
-      lastInterviewId: (row as any).last_interview_id,
+      organizationId: user.organizationId,
+      companyName: resolved.profile.companyName,
+      industry: resolved.profile.industry,
+      companySize: resolved.profile.companySize,
+      location: resolved.profile.location,
+      employeeCount: resolved.profile.employeeCount,
+      annualRevenue: resolved.profile.annualRevenue,
+      keyMetrics: resolved.operations.keyMetrics,
+      stakeholders: resolved.stakeholders,
+      openGaps: resolved.operations.gaps,
+      completenessPercent:
+        (legacyRow as any)?.completeness_percent ||
+        Math.min(
+          100,
+          [
+            resolved.profile.companyName,
+            resolved.profile.industry,
+            resolved.profile.companySize,
+            resolved.profile.location,
+            resolved.profile.employeeCount,
+          ].filter(Boolean).length * 15 +
+            (resolved.operations.keyMetrics.length ? 20 : 0) +
+            (resolved.stakeholders.length ? 20 : 0)
+        ),
+      lastInterviewId: (legacyRow as any)?.last_interview_id || null,
     });
   }),
 
@@ -5083,6 +5257,23 @@ ${JSON.stringify(questions || [], null, 2)}
       [user.organizationId]
     );
 
+    await organizationContextService.recordInterviewContext({
+      organizationId: user.organizationId,
+      userId: user.id,
+      payload: {
+        companyName: (updated as any).company_name,
+        industry: (updated as any).industry,
+        companySize: (updated as any).company_size,
+        location: (updated as any).location,
+        employeeCount: (updated as any).employee_count,
+        annualRevenue: (updated as any).annual_revenue,
+        keyMetrics: parseJson((updated as any).key_metrics, []),
+        stakeholders: parseJson((updated as any).stakeholders, []),
+        openGaps: parseJson((updated as any).open_gaps, []),
+        lastInterviewId: (updated as any).last_interview_id,
+      },
+    });
+
     res.json({
       id: (updated as any).id,
       organizationId: (updated as any).organization_id,
@@ -5144,10 +5335,7 @@ ${JSON.stringify(questions || [], null, 2)}
       }
     }
 
-    const context = await queryHelpers.queryOne(
-      `SELECT * FROM organization_context WHERE organization_id = ?`,
-      [user.organizationId]
-    );
+    const context = await organizationContextService.buildResolvedContext(user.organizationId);
 
     const id = uuidv4();
     const now = new Date().toISOString();
@@ -5162,7 +5350,7 @@ ${JSON.stringify(questions || [], null, 2)}
         user.organizationId,
         targetType,
         targetId,
-        JSON.stringify(context || {}),
+        JSON.stringify(context),
         user.id,
         now,
       ]
@@ -5785,10 +5973,7 @@ ${JSON.stringify(questions || [], null, 2)}
       const toolType = 'dynamic-swot';
       const name = `Interview Insight: ${String(insightRow.title || 'Untitled')}`;
 
-      const orgContext = await queryHelpers.queryOne(
-        `SELECT * FROM organization_context WHERE organization_id = ?`,
-        [user.organizationId]
-      );
+      const orgContext = await organizationContextService.buildResolvedContext(user.organizationId);
 
       const contextSnapshot = {
         source: {
@@ -5801,7 +5986,7 @@ ${JSON.stringify(questions || [], null, 2)}
           insightType: insightRow.insight_type || insightRow.prompt_type || null,
           exportedAt: now,
         },
-        organizationContext: orgContext || {},
+        organizationContext: orgContext,
       };
 
       await queryHelpers.queryRun(
@@ -5919,10 +6104,7 @@ ${JSON.stringify(questions || [], null, 2)}
     const assessmentType = 'DRD';
     const name = `Interview Insight: ${String(insightRow.title || 'Untitled')}`;
 
-    const orgContext = await queryHelpers.queryOne(
-      `SELECT * FROM organization_context WHERE organization_id = ?`,
-      [user.organizationId]
-    );
+    const orgContext = await organizationContextService.buildResolvedContext(user.organizationId);
 
     const contextSnapshot = {
       source: {
@@ -5935,7 +6117,7 @@ ${JSON.stringify(questions || [], null, 2)}
         insightType: insightRow.insight_type || insightRow.prompt_type || null,
         exportedAt: now,
       },
-      organizationContext: orgContext || {},
+      organizationContext: orgContext,
     };
 
     await queryHelpers.queryRun(

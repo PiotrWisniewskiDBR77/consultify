@@ -547,6 +547,7 @@ export const MeetingHub: React.FC = () => {
                 if (meeting) openMeetingDocument(meeting);
               }}
               itemIds={filteredMeetings.map((item) => item.id)}
+              getItemById={(id) => filteredMeetings.find((x) => x.id === id) ?? null}
               renderPreview={(item) => (
                 <MeetingPreview
                   meeting={item}

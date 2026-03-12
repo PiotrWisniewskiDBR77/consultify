@@ -490,7 +490,13 @@ export type FunnelEventName =
   | 'ideas_v5_export_presentation'
   | 'ideas_v5_linkgraph_edge_created'
   | 'ideas_v5_viewport_restored'
-  | 'ideas_v5_zoom_fit_used';
+  | 'ideas_v5_zoom_fit_used'
+  | 'ideas_table_column_renamed'
+  | 'ideas_table_column_config_updated'
+  | 'ideas_table_column_deleted'
+  | 'ideas_table_bulk_convert'
+  | 'ideas_table_relation_created'
+  | 'ideas_table_artifact_linked';
 
 export function trackFunnelEvent(eventName: FunnelEventName, data: Record<string, unknown> = {}) {
   try {

@@ -17,6 +17,12 @@ export interface GeneratorContext {
   existingEdges: any[];
   existingLanes?: any[];
   language: string;
+  selection?: {
+    type?: string;
+    count?: number;
+    ids?: string[];
+    primaryId?: string;
+  };
 }
 
 export type GeneratorType =
@@ -38,6 +44,8 @@ export type GeneratorType =
   | 'process_coach'
   | 'next_step'
   | 'process_summary'
+  | 'process_brief'
+  | 'process_savings'
   | 'vsm_generator'
   | 'sticky_summarize'
   | 'vsm_future_state'
@@ -61,6 +69,49 @@ export interface AISuggestionItem {
   confidence?: number;
 }
 
+const GENERATOR_STATUS_MAP: Record<GeneratorType, 'real' | 'partial' | 'cross-tool'> = {
+  lane_generator: 'real',
+  flow_generator: 'real',
+  suggestions: 'real',
+  bottleneck: 'real',
+  enrichment: 'partial',
+  mindmap_expand: 'real',
+  table_columns: 'real',
+  table_views: 'real',
+  whiteboard_clusters: 'real',
+  whiteboard_brainstorm: 'real',
+  whiteboard_organize: 'real',
+  summary: 'real',
+  node_context: 'partial',
+  auto_cluster: 'real',
+  node_expand: 'partial',
+  process_coach: 'partial',
+  next_step: 'real',
+  process_summary: 'real',
+  process_brief: 'partial',
+  process_savings: 'partial',
+  vsm_generator: 'real',
+  sticky_summarize: 'real',
+  vsm_future_state: 'real',
+  wb_find_themes: 'real',
+  wb_name_clusters: 'real',
+  wb_to_map_branches: 'cross-tool',
+  wb_to_table: 'cross-tool',
+  wb_extract_actions: 'real',
+  table_rows: 'real',
+  table_simplify: 'real',
+  ai_retrieve_artifacts: 'partial',
+  ai_propose_attachments: 'partial',
+  ai_build_linked_table: 'real',
+  ai_autofill_mappings: 'partial',
+};
+
+export function getGeneratorStatus(
+  generatorType: GeneratorType
+): 'real' | 'partial' | 'cross-tool' {
+  return GENERATOR_STATUS_MAP[generatorType] || 'partial';
+}
+
 export async function generateAIProposal(params: {
   ideaId: string;
   generatorType: GeneratorType;
@@ -72,7 +123,24 @@ export async function generateAIProposal(params: {
     tool: params.tool,
     context: params.context,
   });
-  return result as AIProposalBatch;
+  const batch = result as AIProposalBatch;
+  return {
+    ...batch,
+    tool: batch?.tool || params.tool,
+    generatorType: batch?.generatorType || params.generatorType,
+    createdAt: batch?.createdAt || Date.now(),
+    proposals: Array.isArray(batch?.proposals)
+      ? batch.proposals.map((proposal) => ({
+          ...proposal,
+          citations: Array.isArray((proposal as any)?.citations) ? (proposal as any).citations : [],
+          generatorStatus:
+            (proposal as any)?.generatorStatus || getGeneratorStatus(params.generatorType),
+          maturity:
+            (proposal as any)?.maturity ||
+            (getGeneratorStatus(params.generatorType) === 'partial' ? 'partial' : 'real'),
+        }))
+      : [],
+  };
 }
 
 export async function generateAISuggestions(params: {

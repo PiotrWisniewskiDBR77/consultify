@@ -1,18 +1,24 @@
 /**
- * CanvasZoomControls — V5-IDEA-45 Unified zoom / focus / fit / restore controls.
+ * CanvasZoomControls — unified viewport controls for all canvases.
  *
  * Shared across all canvas tools (mind map, whiteboard, process flow).
- * Provides: zoom in/out, fit view, focus selected, restore saved viewport.
+ * Provides: zoom in/out, visible zoom level, fit view, fullscreen, optional focus/restore,
+ * and a toggle link for opening the full-field mini map.
  */
-import { Focus, Maximize2, Minus, Plus, RotateCcw } from 'lucide-react';
+import { Focus, Maximize2, Minus, Minimize2, Plus, RotateCcw } from 'lucide-react';
 import React, { useCallback } from 'react';
-import { useReactFlow } from 'reactflow';
+import { Panel, useReactFlow } from 'reactflow';
 
 interface CanvasZoomControlsProps {
   isPolish?: boolean;
   savedViewport?: { x: number; y: number; zoom: number } | null;
   selectedNodeId?: string | null;
   className?: string;
+  showMiniMap?: boolean;
+  onToggleMiniMap?: () => void;
+  /** When provided, Maximize2 toggles fullscreen instead of fit view */
+  onFullscreenToggle?: () => void;
+  isFullscreen?: boolean;
 }
 
 const ZOOM_DURATION = 220;
@@ -39,6 +45,10 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
   savedViewport,
   selectedNodeId,
   className = '',
+  showMiniMap = false,
+  onToggleMiniMap,
+  onFullscreenToggle,
+  isFullscreen = false,
 }) => {
   const { zoomIn, zoomOut, fitView, setViewport, getZoom } = useReactFlow();
 
@@ -68,40 +78,66 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
     setViewport(savedViewport, { duration: ZOOM_DURATION + 80 });
   }, [savedViewport, setViewport]);
 
+  const zoomPercent = `${Math.round(getZoom() * 100)}%`;
+
   return (
-    <div
-      className={`flex items-center gap-0.5 px-1.5 py-1 bg-white/90 dark:bg-navy-900/85 backdrop-blur-md rounded-2xl border border-slate-200/40 dark:border-white/[0.04] shadow-lg ${className}`}
-    >
-      <ZoomBtn onClick={handleZoomIn} title={isPolish ? 'Przybliż' : 'Zoom in'}>
-        <Plus size={15} />
-      </ZoomBtn>
-      <ZoomBtn onClick={handleZoomOut} title={isPolish ? 'Oddal' : 'Zoom out'}>
-        <Minus size={15} />
-      </ZoomBtn>
-      <Divider />
-      <ZoomBtn onClick={handleFitView} title={isPolish ? 'Dopasuj widok' : 'Fit view'}>
-        <Maximize2 size={14} />
-      </ZoomBtn>
-      {selectedNodeId && (
-        <ZoomBtn
-          onClick={handleFocusSelected}
-          title={isPolish ? 'Fokus na zaznaczeniu' : 'Focus selected'}
-        >
-          <Focus size={14} />
+    <Panel position="bottom-right">
+      <div
+        className={`flex items-center gap-0.5 px-1.5 py-1 bg-white/90 dark:bg-navy-900/85 backdrop-blur-md rounded-2xl border border-slate-200/40 dark:border-white/[0.04] shadow-lg ${className}`}
+      >
+        <ZoomBtn onClick={handleZoomOut} title={isPolish ? 'Oddal' : 'Zoom out'}>
+          <Minus size={15} />
         </ZoomBtn>
-      )}
-      {savedViewport && (
-        <>
-          <Divider />
+        <div className="min-w-[48px] px-1 text-center text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+          {zoomPercent}
+        </div>
+        <ZoomBtn onClick={handleZoomIn} title={isPolish ? 'Przybliż' : 'Zoom in'}>
+          <Plus size={15} />
+        </ZoomBtn>
+        <Divider />
+        {onFullscreenToggle ? (
+          <ZoomBtn
+            onClick={onFullscreenToggle}
+            title={isFullscreen ? (isPolish ? 'Wyłącz pełny ekran' : 'Exit fullscreen') : isPolish ? 'Pełny ekran' : 'Fullscreen'}
+          >
+            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          </ZoomBtn>
+        ) : (
+          <ZoomBtn onClick={handleFitView} title={isPolish ? 'Dopasuj widok' : 'Fit view'}>
+            <Maximize2 size={14} />
+          </ZoomBtn>
+        )}
+        {selectedNodeId && (
+          <ZoomBtn
+            onClick={handleFocusSelected}
+            title={isPolish ? 'Fokus na zaznaczeniu' : 'Focus selected'}
+          >
+            <Focus size={14} />
+          </ZoomBtn>
+        )}
+        {savedViewport && (
           <ZoomBtn
             onClick={handleRestore}
             title={isPolish ? 'Przywróć zapisany widok' : 'Restore saved viewport'}
           >
             <RotateCcw size={13} />
           </ZoomBtn>
-        </>
-      )}
-    </div>
+        )}
+        {onToggleMiniMap && (
+          <>
+            <Divider />
+            <button
+              type="button"
+              onClick={onToggleMiniMap}
+              className="px-2 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+              title={showMiniMap ? (isPolish ? 'Ukryj mini mapę' : 'Hide mini map') : isPolish ? 'Pokaż mini mapę' : 'Show mini map'}
+            >
+              {showMiniMap ? (isPolish ? 'Ukryj mini mapę' : 'Hide mini map') : isPolish ? 'Mini mapa' : 'Mini map'}
+            </button>
+          </>
+        )}
+      </div>
+    </Panel>
   );
 };
 

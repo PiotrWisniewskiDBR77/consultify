@@ -337,6 +337,7 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
       }}
       onOpenFull={(id) => onOpenKpi(id)}
       itemIds={itemIds}
+      getItemById={(id) => list.find((x) => x.id === id) ?? null}
       renderPreview={(kpi) => {
         const statusLabel =
           kpi.status === 'on-target'
@@ -537,25 +538,29 @@ export const ResultsKpisTableV3: React.FC<ResultsKpisTableV3Props> = ({
                 icon: ExternalLink,
                 onClick: () => onOpenKpi(kpi.id),
                 colorScheme: 'primary',
+                shortcut: 'O',
               },
               {
                 label: t('results.actions.recordValue', 'Record value'),
                 icon: Target,
                 onClick: () => onOpenKpi(kpi.id),
                 colorScheme: 'neutral',
+                shortcut: 'V',
               },
             ],
           },
         ];
         return (
           <div className="space-y-0">
-            <PreviewAIHintStrip
-              hints={aiHints.map((h) => h.label)}
-              onRunHint={(hint) => {
-                const match = aiHints.find((h) => h.label === hint);
-                if (match) void openAiChat(kpi, match.prompt);
-              }}
-            />
+            <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+              <PreviewAIHintStrip
+                hints={aiHints.map((h) => h.label)}
+                onRunHint={(hint) => {
+                  const match = aiHints.find((h) => h.label === hint);
+                  if (match) void openAiChat(kpi, match.prompt);
+                }}
+              />
+            </div>
             <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
             <PreviewRelations
               items={relationItems}

@@ -1,16 +1,40 @@
-export { PreviewMetaCard, type MetaPill, type PreviewMetaCardProps } from './PreviewMetaCard';
+export {
+  PreviewMetaCard,
+  type AISuggestion,
+  type CompletenessInfo,
+  type MetaPill,
+  type PreviewMetaCardProps,
+} from './PreviewMetaCard';
+export {
+  PreviewCompletenessRing,
+  type PreviewCompletenessRingProps,
+} from './PreviewCompletenessRing';
 export {
   PreviewDetailsSection,
   type DetailsAction,
+  type ExtraCopyFormat,
   type PreviewDetailsSectionProps,
 } from './PreviewDetailsSection';
 export {
   PreviewAIHintStrip,
   type PreviewAIHintStripProps,
 } from './PreviewAIHintStrip';
+export { PreviewAIBrief, type PreviewAIBriefProps } from './PreviewAIBrief';
+export {
+  PreviewBatchPanel,
+  type BatchAction,
+  type CommonField,
+  type PreviewBatchPanelProps,
+} from './PreviewBatchPanel';
+export {
+  PreviewActivityStrip,
+  type ActivityEvent,
+  type PreviewActivityStripProps,
+} from './PreviewActivityStrip';
 export {
   PreviewRelations,
   type RelationItem,
+  type RelationPreview,
   type PreviewRelationsProps,
 } from './PreviewRelations';
 export {

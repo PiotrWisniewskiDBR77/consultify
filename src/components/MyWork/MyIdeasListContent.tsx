@@ -83,7 +83,11 @@ interface MyIdeasListContentProps {
   viewMode?: IdeasViewMode;
   searchQuery: string;
   stageFilter?: IdeaStage | 'all';
-  onIdeaClick: (ideaId: string, ideaData?: MyIdea) => void;
+  onIdeaClick: (
+    ideaId: string,
+    ideaData?: MyIdea,
+    options?: { openMap?: boolean; initialTool?: 'process_flow' }
+  ) => void;
   onCreateIdea: () => void;
   onCountsChange: (counts: {
     total: number;
@@ -166,8 +170,8 @@ const TOOL_CONFIG: Record<
     color: 'text-violet-500',
     bgColor: 'bg-violet-500/10 dark:bg-violet-500/15',
     borderColor: 'border-violet-400/30',
-    label: 'Mind Map',
-    labelPl: 'Mind Map',
+    label: 'Recommendation map',
+    labelPl: 'Mapa rekomendacji',
   },
   table: {
     icon: Table2,
@@ -277,6 +281,13 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       setLoading(false);
     }
   }, [searchQuery, t]);
+
+  const openIdeaInProcessFlow = useCallback(
+    (idea: MyIdea) => {
+      onIdeaClick(idea.id, idea, { openMap: true, initialTool: 'process_flow' });
+    },
+    [onIdeaClick]
+  );
 
   useEffect(() => {
     fetchIdeas();
@@ -1044,6 +1055,14 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                           <Sparkles size={10} />
                           {isPolish ? 'Konwertuj' : 'Convert'}
                         </button>
+                        <button
+                          onClick={() => openIdeaInProcessFlow(idea)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-semibold hover:bg-blue-500/15 transition-colors"
+                          title={isPolish ? 'Otwórz w Process Flow' : 'Open in Process Flow'}
+                        >
+                          <Workflow size={10} />
+                          {isPolish ? 'Flow' : 'Flow'}
+                        </button>
                         <ConvertToOutputMenu
                           sourceType="idea"
                           sourceId={idea.id}
@@ -1183,6 +1202,13 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                       <Sparkles size={12} />
                       {isPolish ? 'Konwertuj' : 'Convert'}
                     </button>
+                    <button
+                      onClick={() => openIdeaInProcessFlow(idea)}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-semibold hover:bg-blue-500/15 transition-colors"
+                    >
+                      <Workflow size={12} />
+                      {isPolish ? 'Open Flow' : 'Open Flow'}
+                    </button>
                     <ConvertToOutputMenu
                       sourceType="idea"
                       sourceId={idea.id}
@@ -1294,6 +1320,18 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {renderStageBadge(stage)}
                           {renderToolBadge(idea.preferredTool)}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openIdeaInProcessFlow(idea);
+                            }}
+                            className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/15 transition-colors"
+                            title={isPolish ? 'Otwórz w Process Flow' : 'Open in Process Flow'}
+                          >
+                            <Workflow size={10} />
+                            Flow
+                          </button>
                           <span className="text-[10px] text-slate-400 whitespace-nowrap">
                             {idea.updatedAt
                               ? new Date(idea.updatedAt).toLocaleDateString()

@@ -7,7 +7,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
@@ -31,8 +31,20 @@ export interface ExtractedLine {
   confidence: number;
   sourcePage?: number;
   sourceRow?: number;
+  rawValue?: string;
+  selectedPeriodLabel?: string;
   suggestedCanonicalId?: string;
   suggestedCanonicalLabel?: string;
+  mappingReason?: string;
+  isNonFinancial?: boolean;
+  classificationReason?: string;
+  mappingCandidates?: Array<{
+    canonicalLineId: string;
+    canonicalLabel: string;
+    score: number;
+    reason: string;
+    selected?: boolean;
+  }>;
 }
 
 export interface ExtractionResult {
@@ -48,12 +60,119 @@ export interface ValidationMessage {
   details?: string;
 }
 
+export type StatementReadinessStatus = 'pending' | 'recoverable' | 'ready' | 'rejected';
+export type StatementQualityStage =
+  | 'upload'
+  | 'detect'
+  | 'extract'
+  | 'map'
+  | 'validate'
+  | 'repair'
+  | 'readiness'
+  | 'confirm'
+  | 'benchmark';
+export type StatementQualityResultStatus = 'pass' | 'warning' | 'fail' | 'info';
+export type StatementDocumentClass =
+  | 'unknown'
+  | 'native_pdf'
+  | 'scan_pdf'
+  | 'spreadsheet'
+  | 'csv'
+  | 'mixed_report';
+
+export interface StatementDocumentProfile {
+  documentClass: StatementDocumentClass;
+  extractionStrategy: string;
+  templateFamily: string | null;
+}
+
+export interface DocumentFamilyProfile {
+  templateFamily: string | null;
+  displayName: string | null;
+  matcherTerms: string[];
+  sectionKeywords: string[];
+  valueColumnStrategy: 'latest_reported_period' | 'quarter_end_primary' | 'annual_primary';
+}
+
+export interface StatementReadinessEvaluation {
+  readinessStatus: StatementReadinessStatus;
+  readinessScore: number;
+  summary: string;
+  reasonCodes: string[];
+  eligibleLineCount: number;
+  mappedLineCount: number;
+  unmappedLineCount: number;
+  nonFinancialLineCount: number;
+  hardFailCount: number;
+  warningCount: number;
+  isReady: boolean;
+}
+
 interface CanonicalLine {
   id: string;
   statement_type: string;
   line_code: string;
   line_name: string;
   line_name_pl: string;
+}
+
+let aliasTableSupport: boolean | null = null;
+
+export interface StatementSectionRecord {
+  sectionKey: string;
+  sectionLabel: string;
+  statementType: string;
+  lineStart: number;
+  lineEnd: number;
+  confidence: number;
+  text: string;
+  metadata?: Record<string, unknown>;
+}
+
+function isSchemaCompatError(error: unknown): boolean {
+  const message = String((error as Error)?.message || error || '').toLowerCase();
+  return (
+    message.includes('does not exist') ||
+    message.includes('no such column') ||
+    message.includes('no such table') ||
+    message.includes('undefined column')
+  );
+}
+
+async function canUseStatementAliasTable(): Promise<boolean> {
+  if (aliasTableSupport != null) return aliasTableSupport;
+
+  try {
+    if (process.env.DB_TYPE === 'postgres') {
+      const rows = (await dbAll<{ column_name?: string }>(
+        `SELECT column_name
+         FROM information_schema.columns
+         WHERE table_name = 'financial_statement_line_aliases'`,
+        []
+      )) as Array<{ column_name?: string }>;
+      const columns = new Set(
+        (rows || []).map((row) => String(row.column_name || '').trim()).filter(Boolean)
+      );
+      aliasTableSupport =
+        columns.has('statement_line_id') &&
+        columns.has('normalized_alias') &&
+        columns.has('template_family');
+      return aliasTableSupport;
+    }
+
+    const rows = (await dbAll<{ name?: string }>(`PRAGMA table_info(financial_statement_line_aliases)`, [])) as Array<{
+      name?: string;
+    }>;
+    const columns = new Set((rows || []).map((row) => String(row.name || '').trim()).filter(Boolean));
+    aliasTableSupport =
+      columns.has('statement_line_id') &&
+      columns.has('normalized_alias') &&
+      columns.has('template_family');
+    return aliasTableSupport;
+  } catch {
+    aliasTableSupport = false;
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -222,19 +341,394 @@ function detectLanguage(text: string): DetectionResult['language'] {
   return 'unknown';
 }
 
+const DOCUMENT_FAMILY_REGISTRY: Record<string, Omit<DocumentFamilyProfile, 'templateFamily'>> = {
+  gpw_apator: {
+    displayName: 'GPW Apator',
+    matcherTerms: ['apator', 'grupy apator', 'gk apator'],
+    sectionKeywords: ['bilans', 'rachunek zysków i strat', 'rachunek przepływów pieniężnych'],
+    valueColumnStrategy: 'quarter_end_primary',
+  },
+  gpw_quarterly_consolidated: {
+    displayName: 'GPW Quarterly Consolidated',
+    matcherTerms: ['skonsolidowany raport kwartalny', 'consolidated quarterly report'],
+    sectionKeywords: ['bilans', 'sprawozdanie z sytuacji finansowej', 'statement of financial position'],
+    valueColumnStrategy: 'quarter_end_primary',
+  },
+  annual_financial_report: {
+    displayName: 'Annual Financial Report',
+    matcherTerms: ['raport roczny', 'annual report', 'roczne sprawozdanie'],
+    sectionKeywords: ['bilans', 'rachunek zysków i strat', 'cash flow'],
+    valueColumnStrategy: 'annual_primary',
+  },
+};
+
+export function resolveDocumentFamilyProfile(
+  fileName: string,
+  loweredText: string
+): DocumentFamilyProfile {
+  const matches = Object.entries(DOCUMENT_FAMILY_REGISTRY)
+    .map(([templateFamily, definition]) => {
+      const score = definition.matcherTerms.filter(
+        (term) => fileName.includes(term) || loweredText.includes(term)
+      ).length;
+      return {
+        templateFamily,
+        score,
+        definition,
+      };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => right.score - left.score);
+
+  const bestMatch = matches[0];
+  if (!bestMatch) {
+    return {
+      templateFamily: null,
+      displayName: null,
+      matcherTerms: [],
+      sectionKeywords: [],
+      valueColumnStrategy: 'latest_reported_period',
+    };
+  }
+  return {
+    templateFamily: bestMatch.templateFamily,
+    displayName: bestMatch.definition.displayName,
+    matcherTerms: bestMatch.definition.matcherTerms,
+    sectionKeywords: bestMatch.definition.sectionKeywords,
+    valueColumnStrategy: bestMatch.definition.valueColumnStrategy,
+  };
+}
+
+export function resolveStatementColumnSelection(text: string, detection?: Partial<DetectionResult>): {
+  selectedPeriodLabel: string | null;
+  comparisonPeriodLabel: string | null;
+  selectionStrategy: string;
+} {
+  const headerWindow = String(text || '')
+    .split(/\r?\n/)
+    .slice(0, 120)
+    .join(' ');
+  const periodMatches = Array.from(
+    new Set(
+      [...headerWindow.matchAll(/\b(?:Q[1-4]|I|II|III|IV)\s*[-\/]?\s*(20\d{2})\b/gi)].map((match) =>
+        String(match[0]).replace(/\s+/g, ' ').trim()
+      )
+    )
+  );
+  const yearMatches = Array.from(
+    new Set([...headerWindow.matchAll(/\b(20\d{2})\b/g)].map((match) => String(match[1]).trim()))
+  );
+
+  if (periodMatches.length > 0) {
+    return {
+      selectedPeriodLabel: periodMatches[0] || null,
+      comparisonPeriodLabel: periodMatches[1] || yearMatches[1] || null,
+      selectionStrategy: 'header_period_primary',
+    };
+  }
+
+  const detectedPeriodLabel = String(detection?.periodLabel || '').trim();
+  return {
+    selectedPeriodLabel: detectedPeriodLabel || yearMatches[0] || null,
+    comparisonPeriodLabel: yearMatches[1] || null,
+    selectionStrategy: detectedPeriodLabel ? 'detected_period_fallback' : 'header_year_fallback',
+  };
+}
+
+export function classifyStatementDocument(params: {
+  fileName?: string;
+  parseMethod?: string;
+  text?: string;
+}): StatementDocumentProfile {
+  const fileName = String(params.fileName || '').toLowerCase();
+  const parseMethod = String(params.parseMethod || '').toLowerCase();
+  const text = String(params.text || '');
+  const loweredText = text.toLowerCase();
+
+  if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+    return {
+      documentClass: 'spreadsheet',
+      extractionStrategy: 'spreadsheet_structured',
+      templateFamily: detectTemplateFamily(fileName, loweredText),
+    };
+  }
+
+  if (fileName.endsWith('.csv')) {
+    return {
+      documentClass: 'csv',
+      extractionStrategy: 'csv_structured',
+      templateFamily: detectTemplateFamily(fileName, loweredText),
+    };
+  }
+
+  if (
+    parseMethod === 'ocr' ||
+    /scan|skan|zeskanowany/.test(fileName) ||
+    /ocr/.test(loweredText.slice(0, 500))
+  ) {
+    return {
+      documentClass: 'scan_pdf',
+      extractionStrategy: 'ocr_review',
+      templateFamily: detectTemplateFamily(fileName, loweredText),
+    };
+  }
+
+  if (fileName.endsWith('.pdf')) {
+    const multiStatementHints =
+      /(skonsolidowany raport kwartalny|sprawozdanie finansowe|statement of financial position|rachunek przepływów)/.test(
+        loweredText
+      ) && /(nota|note\s+\d+)/.test(loweredText);
+    return {
+      documentClass: multiStatementHints ? 'mixed_report' : 'native_pdf',
+      extractionStrategy: multiStatementHints ? 'pdf_layout_mixed' : 'pdf_layout_primary',
+      templateFamily: detectTemplateFamily(fileName, loweredText),
+    };
+  }
+
+  return {
+    documentClass: 'unknown',
+    extractionStrategy: 'manual_review',
+    templateFamily: detectTemplateFamily(fileName, loweredText),
+  };
+}
+
+function detectTemplateFamily(fileName: string, loweredText: string): string | null {
+  return resolveDocumentFamilyProfile(fileName, loweredText).templateFamily;
+}
+
 // ---------------------------------------------------------------------------
 // Line extraction from text
 // ---------------------------------------------------------------------------
 
-export function extractFinancialLines(text: string, detectedType: string): ExtractionResult {
+function normalizeAliasText(value: string): string {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[–—-]/g, ' ')
+    .replace(/\bnota\b\.?\s*[0-9ivxlcdm]+[a-z]?/giu, ' ')
+    .replace(/\bnote\b\.?\s*[0-9ivxlcdm]+[a-z]?/giu, ' ')
+    .replace(/^[ivxlcdm]+\.\s+/giu, ' ')
+    .replace(/^\d+[a-z]?[.)]\s+/giu, ' ')
+    .replace(/[^\p{L}\p{N}% ]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function cleanupExtractedLabel(value: string): string {
+  return String(value || '')
+    .replace(/\b(?:nota|note)\b\.?\s*[0-9ivxlcdm]+[a-z]?/giu, ' ')
+    .replace(/^[ivxlcdm]+\.\s+/giu, ' ')
+    .replace(/^\d+[a-z]?[.)]\s+/giu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function locateStatementSections(
+  text: string,
+  statementType: string
+): StatementSectionRecord[] {
+  const normalizedType = String(statementType || '').trim().toUpperCase();
+  const rawLines = String(text || '').split(/\r?\n/);
+  if (rawLines.length < 20) {
+    return [
+      {
+        sectionKey: normalizedType || 'UNKNOWN',
+        sectionLabel: normalizedType || 'Unknown Statement Section',
+        statementType: normalizedType || 'UNKNOWN',
+        lineStart: 1,
+        lineEnd: rawLines.length,
+        confidence: 0.2,
+        text,
+      },
+    ];
+  }
+
+  const sectionMarkers: Record<string, { start: RegExp[]; end: RegExp[] }> = {
+    BS: {
+      start: [
+        /\bbilans\b/i,
+        /sprawozdanie z sytuacji finansowej/i,
+        /statement of financial position/i,
+        /balance sheet/i,
+      ],
+      end: [
+        /rachunek zysków i strat/i,
+        /sprawozdanie z całkowitych dochodów/i,
+        /statement of profit or loss/i,
+        /cash flow/i,
+        /rachunek przepływów pieniężnych/i,
+        /zestawienie zmian w kapitale/i,
+      ],
+    },
+    'P&L': {
+      start: [
+        /rachunek zysków i strat/i,
+        /sprawozdanie z całkowitych dochodów/i,
+        /statement of profit or loss/i,
+        /\bprofit and loss\b/i,
+      ],
+      end: [
+        /cash flow/i,
+        /rachunek przepływów pieniężnych/i,
+        /zestawienie zmian w kapitale/i,
+        /\bbilans\b/i,
+        /sprawozdanie z sytuacji finansowej/i,
+      ],
+    },
+    CF: {
+      start: [
+        /cash flow/i,
+        /statement of cash flows/i,
+        /rachunek przepływów pieniężnych/i,
+      ],
+      end: [
+        /zestawienie zmian w kapitale/i,
+        /\bnotes\b/i,
+        /\binformacje dodatkowe\b/i,
+        /\bobjaśnienia\b/i,
+      ],
+    },
+  };
+
+  const markers = sectionMarkers[normalizedType];
+  if (!markers) {
+    return [
+      {
+        sectionKey: normalizedType || 'UNKNOWN',
+        sectionLabel: normalizedType || 'Unknown Statement Section',
+        statementType: normalizedType || 'UNKNOWN',
+        lineStart: 1,
+        lineEnd: rawLines.length,
+        confidence: 0.2,
+        text,
+      },
+    ];
+  }
+
+  const numericGroupRegex = /\(?-?(?:\d{1,3}(?:[ \u00A0]\d{3})+|\d+)(?:[.,]\d+)?\)?/g;
+  const candidateWindows: Array<{ start: number; end: number; score: number; sectionLabel: string }> =
+    [];
+
+  for (let index = 0; index < rawLines.length; index++) {
+    const line = rawLines[index];
+    if (!markers.start.some((pattern) => pattern.test(line))) continue;
+
+    const start = Math.max(0, index - 4);
+    let end = Math.min(rawLines.length, index + 220);
+    for (let cursor = index + 8; cursor < Math.min(rawLines.length, index + 260); cursor++) {
+      if (markers.end.some((pattern) => pattern.test(rawLines[cursor]))) {
+        end = cursor;
+        break;
+      }
+    }
+
+    const windowLines = rawLines.slice(start, end);
+    const numericLines = windowLines.filter((candidate) => {
+      const matches = candidate.match(numericGroupRegex) || [];
+      return matches.length >= 2;
+    }).length;
+    const semanticLines = windowLines.filter((candidate) =>
+      /(aktywa|pasywa|kapitał|equity|liabilities|assets|cash|należności|zobowiązania|revenue|przychody|profit|ebitda|flow)/i.test(
+        candidate
+      )
+    ).length;
+    candidateWindows.push({
+      start,
+      end,
+      score: numericLines * 2 + semanticLines,
+      sectionLabel: line.trim().slice(0, 120) || normalizedType,
+    });
+  }
+
+  const windows = candidateWindows
+    .sort((left, right) => right.score - left.score)
+    .filter((window, index, arr) => {
+      if (window.score < 12) return false;
+      return !arr.slice(0, index).some((other) => Math.abs(other.start - window.start) < 6);
+    })
+    .slice(0, 3);
+
+  if (windows.length === 0) {
+    return [
+      {
+        sectionKey: normalizedType || 'UNKNOWN',
+        sectionLabel: normalizedType || 'Unknown Statement Section',
+        statementType: normalizedType || 'UNKNOWN',
+        lineStart: 1,
+        lineEnd: rawLines.length,
+        confidence: 0.2,
+        text,
+      },
+    ];
+  }
+
+  return windows.map((window, index) => ({
+    sectionKey: `${normalizedType || 'UNKNOWN'}_${index + 1}`,
+    sectionLabel: window.sectionLabel,
+    statementType: normalizedType || 'UNKNOWN',
+    lineStart: window.start + 1,
+    lineEnd: window.end,
+    confidence: Math.max(0.2, Math.min(0.98, window.score / 40)),
+    text: rawLines.slice(window.start, window.end).join('\n'),
+    metadata: {
+      score: window.score,
+      sectionRank: index + 1,
+    },
+  }));
+}
+
+function extractRelevantStatementSection(
+  text: string,
+  statementType: string
+): { scopedText: string; lineOffset: number; sections: StatementSectionRecord[] } {
+  const sections = locateStatementSections(text, statementType);
+  const bestSection = sections[0];
+  if (!bestSection) {
+    return { scopedText: text, lineOffset: 0, sections: [] };
+  }
+  return {
+    scopedText: bestSection.text,
+    lineOffset: Math.max(0, bestSection.lineStart - 1),
+    sections,
+  };
+}
+
+function classifyNonFinancialLine(label: string): { isNonFinancial: boolean; reason?: string } {
+  const normalized = normalizeAliasText(label);
+  if (!normalized) return { isNonFinancial: true, reason: 'EMPTY_LABEL' };
+  if (normalized.length > 140) return { isNonFinancial: true, reason: 'NARRATIVE_LABEL_TOO_LONG' };
+  if (
+    /(sytuacja|sytuacji|szczegóły|w związku|na dzień publikacji|see note|refer to note|objaśnienia|komentarz|commentary)/.test(
+      normalized
+    )
+  ) {
+    return { isNonFinancial: true, reason: 'NARRATIVE_NOTE_LINE' };
+  }
+  if (normalized.split(' ').length > 14) {
+    return { isNonFinancial: true, reason: 'LONG_SENTENCE_LINE' };
+  }
+  return { isNonFinancial: false };
+}
+
+export function extractFinancialLines(
+  text: string,
+  detectedType: string,
+  _options?: { templateFamily?: string | null }
+): ExtractionResult {
   const lines: ExtractedLine[] = [];
   const warnings: string[] = [];
-  const rawLines = text.split(/\r?\n/);
+  const { scopedText, lineOffset, sections } = extractRelevantStatementSection(text, detectedType);
+  const rawLines = scopedText.split(/\r?\n/);
   let rawTableCount = 0;
+  let pendingLabel: string | null = null;
 
   // Number normalization: handle (negative), spaces in thousands, comma vs dot
   const normalizeNumber = (raw: string): number | null => {
     let s = raw.trim();
+    if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(s)) return null;
+    if (/^\d{4}$/.test(s)) {
+      const maybeYear = Number(s);
+      if (maybeYear >= 1900 && maybeYear <= 2100) return null;
+    }
     const isNeg = s.startsWith('(') && s.endsWith(')');
     if (isNeg) s = s.slice(1, -1);
     if (s.startsWith('-')) {
@@ -258,29 +752,94 @@ export function extractFinancialLines(text: string, detectedType: string): Extra
     return isNeg || raw.trim().startsWith('-') ? -num : num;
   };
 
+  const noisePatterns = [
+    /^strona\s+\d+/i,
+    /^--\s*\d+\s+of\s+\d+\s*--$/i,
+    /^w\s+tys\./i,
+    /^poziom zaokrągleń/i,
+    /^okres objęty/i,
+    /^waluta sprawozdawcza/i,
+    /^skonsolidowany raport/i,
+    /^spis treści/i,
+    /^nota\b/i,
+    /^note\b/i,
+  ];
+
+  const isNoiseLine = (line: string): boolean =>
+    noisePatterns.some((pattern) => pattern.test(line)) ||
+    /\b\d{2}\.\d{2}\.\d{4}\b.*\b\d{2}\.\d{2}\.\d{4}\b/.test(line);
+
+  const isLikelyLabelOnlyLine = (line: string): boolean => {
+    if (isNoiseLine(line)) return false;
+    if (!/[A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż]/.test(line)) return false;
+    if (/\d/.test(line)) return false;
+    return line.length >= 3 && line.length <= 140;
+  };
+
+  const numberGroupRegex =
+    /\(?-?(?:\d{1,3}(?:[ \u00A0]\d{3})+|\d+)(?:[.,]\d+)?\)?/g;
+  const seen = new Set<string>();
+
   for (let i = 0; i < rawLines.length; i++) {
     const line = rawLines[i].trim();
     if (!line) continue;
+    if (isNoiseLine(line)) {
+      pendingLabel = null;
+      continue;
+    }
 
-    // Pattern: "Label ... number" or "Label: number" with possible multi-column
-    const match = line.match(/^(.{3,80}?)\s{2,}([\d\s().,-]+)$/);
-    if (!match) continue;
+    const matches = [...line.matchAll(numberGroupRegex)];
+    const parsedMatches = matches
+      .map((match) => ({
+        raw: match[0],
+        index: match.index ?? -1,
+        value: normalizeNumber(match[0]),
+      }))
+      .filter((item) => item.index >= 0 && item.value !== null) as Array<{
+      raw: string;
+      index: number;
+      value: number;
+    }>;
 
-    const label = match[1].trim();
-    const numbersPart = match[2].trim();
+    if (parsedMatches.length < 2) {
+      if (isLikelyLabelOnlyLine(line)) {
+        pendingLabel = pendingLabel ? `${pendingLabel} ${line}` : line;
+      } else {
+        pendingLabel = null;
+      }
+      continue;
+    }
 
-    // Split multi-column numbers (take last column = most recent period)
-    const numTokens = numbersPart.split(/\s{2,}/).filter(Boolean);
-    const rawValue = numTokens[numTokens.length - 1];
-    const value = normalizeNumber(rawValue);
-    if (value === null) continue;
+    const firstNumberIndex = parsedMatches[0].index;
+    let label = line.slice(0, firstNumberIndex).trim();
+    if (pendingLabel) {
+      label = label ? `${pendingLabel} ${label}` : pendingLabel;
+      pendingLabel = null;
+    }
+
+    label = cleanupExtractedLabel(label.replace(/\s+/g, ' ').trim());
+    if (!label || label.length < 3 || isNoiseLine(label)) continue;
+    const lineClassification = classifyNonFinancialLine(label);
+
+    // Prefer the first resolved value in the row. In GPW-style statements the
+    // current/reporting period is typically shown before the comparison period,
+    // while the previous implementation incorrectly picked the trailing value.
+    const rawValue = parsedMatches[0].raw;
+    const value = parsedMatches[0].value;
+    const dedupeKey = `${detectedType}:${label.toLowerCase()}`;
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
 
     rawTableCount++;
     lines.push({
       originalLabel: label,
       value,
-      confidence: 0.6,
-      sourceRow: i + 1,
+      confidence: lineClassification.isNonFinancial ? 0.2 : 0.6,
+      rawValue,
+      selectedPeriodLabel: sections[0]?.sectionLabel,
+      sourceRow: lineOffset + i + 1,
+      isNonFinancial: lineClassification.isNonFinancial,
+      classificationReason: lineClassification.reason,
     });
   }
 
@@ -335,27 +894,67 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'depreciation and amortization',
   ],
   'fsl-pl-tax': ['income tax', 'tax expense', 'podatek dochodowy', 'podatek'],
-  'fsl-bs-total-assets': ['total assets', 'aktywa ogółem', 'aktywa razem'],
-  'fsl-bs-current-assets': ['current assets', 'aktywa obrotowe', 'aktywa bieżące'],
-  'fsl-bs-cash': ['cash', 'cash and cash equivalents', 'środki pieniężne', 'gotówka'],
+  'fsl-bs-total-assets': [
+    'total assets',
+    'aktywa ogółem',
+    'aktywa razem',
+    'suma aktywów',
+    'aktywa razem ogółem',
+  ],
+  'fsl-bs-current-assets': ['current assets', 'aktywa obrotowe', 'aktywa bieżące', 'aktywa obrotowe razem'],
+  'fsl-bs-cash': ['cash', 'cash and cash equivalents', 'środki pieniężne', 'gotówka', 'środki pieniężne i ich ekwiwalenty'],
   'fsl-bs-inventory': ['inventory', 'inventories', 'zapasy'],
-  'fsl-bs-ar': ['accounts receivable', 'receivables', 'należności', 'trade receivables'],
-  'fsl-bs-ap': ['accounts payable', 'payables', 'zobowiązania handlowe', 'trade payables'],
+  'fsl-bs-ar': [
+    'accounts receivable',
+    'receivables',
+    'należności',
+    'trade receivables',
+    'należności handlowe',
+    'należności z tytułu dostaw i usług',
+  ],
+  'fsl-bs-ap': [
+    'accounts payable',
+    'payables',
+    'zobowiązania handlowe',
+    'trade payables',
+    'zobowiązania z tytułu dostaw i usług',
+  ],
   'fsl-bs-wc': ['working capital', 'kapitał obrotowy'],
-  'fsl-bs-fixed': ['fixed assets', 'property plant', 'aktywa trwałe', 'ppe', 'non-current assets'],
-  'fsl-bs-total-liabilities': ['total liabilities', 'zobowiązania ogółem', 'zobowiązania razem'],
+  'fsl-bs-fixed': ['fixed assets', 'property plant', 'aktywa trwałe', 'ppe', 'non-current assets', 'aktywa trwałe razem'],
+  'fsl-bs-total-liabilities': [
+    'total liabilities',
+    'zobowiązania ogółem',
+    'zobowiązania razem',
+    'pasywa razem',
+    'pasywa ogółem',
+    'zobowiązania i rezerwy na zobowiązania',
+    'suma pasywów',
+    'zobowiązania razem ogółem',
+  ],
   'fsl-bs-current-liabilities': [
     'current liabilities',
     'zobowiązania krótkoterminowe',
     'zobowiązania bieżące',
+    'zobowiązania krótkoterminowe razem',
   ],
   'fsl-bs-long-term-debt': [
     'long-term debt',
     'long term liabilities',
     'zobowiązania długoterminowe',
     'non-current liabilities',
+    'zobowiązania długoterminowe razem',
+    'kredyty i pożyczki długoterminowe',
   ],
-  'fsl-bs-equity': ['equity', 'shareholders equity', 'kapitał własny', 'total equity'],
+  'fsl-bs-equity': [
+    'equity',
+    'shareholders equity',
+    'kapitał własny',
+    'total equity',
+    'kapitał własny razem',
+    'kapitał własny ogółem',
+    'razem kapitał własny',
+    'kapitał własny przypadający akcjonariuszom jednostki dominującej',
+  ],
   'fsl-cf-operating': [
     'operating cash flow',
     'cash from operations',
@@ -373,41 +972,227 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   'fsl-cf-investing': ['investing cash flow', 'cash from investing', 'przepływy z inwestycji'],
 };
 
+function buildFallbackCanonicalLines(statementType: string): CanonicalLine[] {
+  const normalizedStatementType = String(statementType || '').trim().toUpperCase();
+  const prefix =
+    normalizedStatementType === 'P&L'
+      ? 'fsl-pl-'
+      : normalizedStatementType === 'BS'
+        ? 'fsl-bs-'
+        : normalizedStatementType === 'CF'
+          ? 'fsl-cf-'
+          : '';
+  if (!prefix) return [];
+
+  return Object.entries(CANONICAL_MAPPING_HINTS)
+    .filter(([id]) => id.startsWith(prefix))
+    .map(([id, hints]) => {
+      const slug = id.replace(prefix, '');
+      const firstHint = hints[0] || slug;
+      return {
+        id,
+        statement_type: normalizedStatementType,
+        line_code: slug.replace(/-/g, '_').toUpperCase(),
+        line_name: firstHint
+          .split(' ')
+          .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+          .join(' '),
+        line_name_pl: firstHint,
+      };
+    });
+}
+
 export async function autoMapLines(
   extractedLines: ExtractedLine[],
-  statementType: string
+  statementType: string,
+  options?: { organizationId?: string; templateFamily?: string | null }
 ): Promise<ExtractedLine[]> {
+  const normalizedStatementType = String(statementType || '').trim().toUpperCase();
+  const organizationScope = String(options?.organizationId || '').trim();
+  const templateFamily = String(options?.templateFamily || '').trim();
   const canonicalLines: CanonicalLine[] = (await dbAll(
-    `SELECT id, statement_type, line_code, line_name, line_name_pl FROM financial_statement_lines WHERE is_system = TRUE`,
-    []
+    `SELECT id, statement_type, line_code, line_name, line_name_pl
+     FROM financial_statement_lines
+     WHERE statement_type = ?
+       AND (is_system = TRUE OR organization_id = ? OR organization_id IS NULL)`,
+    [normalizedStatementType, organizationScope]
   )) as CanonicalLine[];
+  for (const fallbackLine of buildFallbackCanonicalLines(normalizedStatementType)) {
+    if (!canonicalLines.some((canonical) => canonical.id === fallbackLine.id)) {
+      canonicalLines.push(fallbackLine);
+    }
+  }
+
+  let aliasRows: Array<{ statement_line_id: string; normalized_alias: string; template_family: string }> = [];
+  if (await canUseStatementAliasTable()) {
+    try {
+      aliasRows = (await dbAll(
+        `SELECT statement_line_id, normalized_alias, template_family
+         FROM financial_statement_line_aliases
+         WHERE statement_type = ?
+           AND organization_id IN ('', ?)
+           AND (template_family = '' OR template_family = ?)`,
+        [normalizedStatementType, organizationScope, templateFamily]
+      )) as Array<{ statement_line_id: string; normalized_alias: string; template_family: string }>;
+    } catch (error) {
+      if (!isSchemaCompatError(error)) throw error;
+      aliasRows = [];
+      aliasTableSupport = false;
+    }
+  }
+
+  const aliasLookup = new Map<string, string[]>();
+  for (const canonical of canonicalLines) {
+    const hints = CANONICAL_MAPPING_HINTS[canonical.id] || [];
+    aliasLookup.set(
+      canonical.id,
+      Array.from(
+        new Set([
+          ...hints.map((hint) => normalizeAliasText(hint)),
+          normalizeAliasText(canonical.line_code),
+          normalizeAliasText(canonical.line_name),
+          normalizeAliasText(canonical.line_name_pl),
+        ]).values()
+      ).filter(Boolean)
+    );
+  }
+
+  for (const row of aliasRows) {
+    const existing = aliasLookup.get(row.statement_line_id) || [];
+    aliasLookup.set(
+      row.statement_line_id,
+      Array.from(new Set([...existing, normalizeAliasText(row.normalized_alias)])).filter(Boolean)
+    );
+  }
 
   return extractedLines.map((line) => {
-    const label = line.originalLabel.toLowerCase();
-    let bestMatch: { id: string; name: string; score: number } | null = null;
+    const classification =
+      line.isNonFinancial != null
+        ? { isNonFinancial: line.isNonFinancial, reason: line.classificationReason }
+        : classifyNonFinancialLine(line.originalLabel);
+    if (classification.isNonFinancial) {
+      return {
+        ...line,
+        confidence: Math.min(line.confidence, 0.25),
+        suggestedCanonicalId: undefined,
+        suggestedCanonicalLabel: undefined,
+        isNonFinancial: true,
+        classificationReason: classification.reason || 'NON_FINANCIAL_LINE',
+        mappingReason: 'non_financial_filter',
+      };
+    }
 
-    for (const [canonId, hints] of Object.entries(CANONICAL_MAPPING_HINTS)) {
-      for (const hint of hints) {
-        if (label.includes(hint)) {
-          const canonical = canonicalLines.find((c) => c.id === canonId);
-          const score = hint.length / label.length;
-          if (canonical && (!bestMatch || score > bestMatch.score)) {
-            bestMatch = { id: canonical.id, name: canonical.line_name, score };
+    const label = normalizeAliasText(line.originalLabel);
+    const scoredMatches: Array<{ id: string; name: string; score: number; reason: string }> = [];
+
+    for (const canonical of canonicalLines) {
+      const aliases = aliasLookup.get(canonical.id) || [];
+      for (const alias of aliases) {
+        if (!alias) continue;
+        let score = 0;
+        if (label === alias) score = 1;
+        else if (label.includes(alias) || alias.includes(label)) {
+          score = Math.min(alias.length, label.length) / Math.max(alias.length, label.length);
+        } else {
+          const aliasTokens = new Set(alias.split(' ').filter(Boolean));
+          const labelTokens = label.split(' ').filter(Boolean);
+          const overlap = labelTokens.filter((token) => aliasTokens.has(token)).length;
+          if (overlap >= 2) {
+            score = overlap / Math.max(labelTokens.length, aliasTokens.size);
           }
         }
+
+        if (score <= 0) continue;
+        if (templateFamily && aliasRows.some((row) => row.statement_line_id === canonical.id && row.template_family === templateFamily)) {
+          score += 0.1;
+        }
+        scoredMatches.push({
+          id: canonical.id,
+          name: canonical.line_name,
+          score,
+          reason: score >= 1 ? 'exact_alias_match' : 'alias_similarity_match',
+        });
       }
     }
+
+    const dedupedMatches = Array.from(
+      scoredMatches
+        .sort((left, right) => right.score - left.score)
+        .reduce((acc, match) => {
+          if (!acc.has(match.id)) acc.set(match.id, match);
+          return acc;
+        }, new Map<string, { id: string; name: string; score: number; reason: string }>())
+        .values()
+    ).slice(0, 3);
+    const bestMatch = dedupedMatches[0] || null;
+    const mappingCandidates = dedupedMatches.map((match, index) => ({
+      canonicalLineId: match.id,
+      canonicalLabel: match.name,
+      score: Number(match.score.toFixed(4)),
+      reason: match.reason,
+      selected: index === 0,
+    }));
 
     if (bestMatch) {
       return {
         ...line,
-        confidence: Math.min(line.confidence + 0.2, 0.95),
+        confidence: Math.min(line.confidence + Math.min(bestMatch.score, 0.3), 0.98),
         suggestedCanonicalId: bestMatch.id,
         suggestedCanonicalLabel: bestMatch.name,
+        mappingReason: bestMatch.reason,
+        isNonFinancial: false,
+        mappingCandidates,
       };
     }
-    return line;
+    return {
+      ...line,
+      mappingReason: 'no_alias_match',
+      isNonFinancial: false,
+      mappingCandidates,
+    };
   });
+}
+
+export function resolveDuplicateSuggestedMappings(extractedLines: ExtractedLine[]): ExtractedLine[] {
+  const grouped = new Map<string, Array<{ line: ExtractedLine; index: number }>>();
+  extractedLines.forEach((line, index) => {
+    const key = String(line.suggestedCanonicalId || '').trim();
+    if (!key) return;
+    const bucket = grouped.get(key) || [];
+    bucket.push({ line, index });
+    grouped.set(key, bucket);
+  });
+
+  const nextLines = extractedLines.map((line) => ({ ...line }));
+  for (const [, bucket] of grouped) {
+    if (bucket.length <= 1) continue;
+    const winner = [...bucket].sort((left, right) => {
+      const candidateScore = (entry: { line: ExtractedLine }) =>
+        Number(entry.line.mappingCandidates?.find((candidate) => candidate.selected)?.score || 0);
+      const scoreDiff = candidateScore(right) - candidateScore(left);
+      if (scoreDiff !== 0) return scoreDiff;
+      const confidenceDiff = Number(right.line.confidence || 0) - Number(left.line.confidence || 0);
+      if (confidenceDiff !== 0) return confidenceDiff;
+      return Number(left.line.sourceRow || 0) - Number(right.line.sourceRow || 0);
+    })[0];
+
+    for (const entry of bucket) {
+      if (entry.index === winner.index) continue;
+      const current = nextLines[entry.index];
+      nextLines[entry.index] = {
+        ...current,
+        suggestedCanonicalId: undefined,
+        suggestedCanonicalLabel: undefined,
+        mappingReason: 'duplicate_candidate_conflict',
+        mappingCandidates: (current.mappingCandidates || []).map((candidate) => ({
+          ...candidate,
+          selected: false,
+        })),
+      };
+    }
+  }
+
+  return nextLines;
 }
 
 // ---------------------------------------------------------------------------
@@ -415,20 +1200,49 @@ export async function autoMapLines(
 // ---------------------------------------------------------------------------
 
 export function validateStatement(
-  lines: Array<{ canonicalLineId: string | null; value: number }>,
+  lines: Array<{
+    canonicalLineId: string | null;
+    value: number;
+    originalLabel?: string;
+    mappingStatus?: string;
+    isNonFinancial?: boolean;
+  }>,
   statementType: string
 ): { status: 'pass' | 'warnings' | 'needs_review'; messages: ValidationMessage[] } {
   const messages: ValidationMessage[] = [];
+  const activeLines = lines.filter((line) => !line.isNonFinancial);
 
+  const getValues = (lineId: string): number[] =>
+    activeLines.filter((line) => line.canonicalLineId === lineId).map((line) => Number(line.value || 0));
   const getValue = (lineId: string): number | null => {
-    const found = lines.find((l) => l.canonicalLineId === lineId);
-    return found ? found.value : null;
+    const values = getValues(lineId);
+    if (values.length === 0) return null;
+    return values.reduce((sum, value) => sum + value, 0);
   };
+
+  const duplicateCodes = Array.from(
+    new Set(
+      activeLines
+        .filter((line) => line.canonicalLineId)
+        .map((line) => String(line.canonicalLineId))
+        .filter((lineId, index, arr) => arr.indexOf(lineId) !== index)
+    )
+  );
+  if (duplicateCodes.length > 0) {
+    messages.push({
+      type: 'warning',
+      code: 'DUPLICATE_CANONICAL_LINES',
+      message: `Detected duplicate canonical mappings: ${duplicateCodes.join(', ')}`,
+    });
+  }
 
   if (statementType === 'BS') {
     const totalAssets = getValue('fsl-bs-total-assets');
     const totalLiabilities = getValue('fsl-bs-total-liabilities');
     const equity = getValue('fsl-bs-equity');
+    const cash = getValue('fsl-bs-cash');
+    const currentAssets = getValue('fsl-bs-current-assets');
+    const currentLiabilities = getValue('fsl-bs-current-liabilities');
 
     if (totalAssets !== null && totalLiabilities !== null && equity !== null) {
       const diff = Math.abs(totalAssets - (totalLiabilities + equity));
@@ -455,12 +1269,41 @@ export function validateStatement(
           'Cannot verify balance sheet equation — missing Total Assets, Total Liabilities, or Equity',
       });
     }
+
+    if (cash !== null && cash < 0) {
+      messages.push({
+        type: 'warning',
+        code: 'BS_NEGATIVE_CASH',
+        message: 'Cash is negative. Verify sign and scale.',
+      });
+    }
+    if (currentAssets !== null && totalAssets !== null && Math.abs(currentAssets) > Math.abs(totalAssets) * 1.05) {
+      messages.push({
+        type: 'error',
+        code: 'BS_CURRENT_ASSETS_EXCEED_TOTAL',
+        message: 'Current assets exceed total assets.',
+      });
+    }
+    if (
+      currentLiabilities !== null &&
+      totalLiabilities !== null &&
+      Math.abs(currentLiabilities) > Math.abs(totalLiabilities) * 1.1
+    ) {
+      messages.push({
+        type: 'warning',
+        code: 'BS_CURRENT_LIABILITIES_EXCEED_TOTAL',
+        message: 'Current liabilities exceed total liabilities.',
+      });
+    }
   }
 
   if (statementType === 'P&L') {
     const revenue = getValue('fsl-pl-revenue');
     const cogs = getValue('fsl-pl-cogs');
     const gross = getValue('fsl-pl-gross');
+    const ebitda = getValue('fsl-pl-ebitda');
+    const ebit = getValue('fsl-pl-ebit');
+    const netIncome = getValue('fsl-pl-net');
     if (revenue !== null && cogs !== null && gross !== null) {
       const expected = revenue - Math.abs(cogs);
       const diff = Math.abs(gross - expected);
@@ -473,15 +1316,69 @@ export function validateStatement(
         });
       }
     }
+    if (revenue !== null && revenue <= 0) {
+      messages.push({
+        type: 'warning',
+        code: 'PL_NON_POSITIVE_REVENUE',
+        message: 'Revenue is zero or negative. Verify statement type and sign.',
+      });
+    }
+    if (ebitda !== null && ebit !== null && ebitda < ebit) {
+      messages.push({
+        type: 'warning',
+        code: 'PL_EBITDA_BELOW_EBIT',
+        message: 'EBITDA is below EBIT. Verify depreciation or sign handling.',
+      });
+    }
+    if (revenue !== null && netIncome !== null && Math.abs(netIncome) > Math.abs(revenue) * 2) {
+      messages.push({
+        type: 'warning',
+        code: 'PL_NET_INCOME_OUTLIER',
+        message: 'Net income magnitude looks disproportionate to revenue.',
+      });
+    }
   }
 
-  const mappedCount = lines.filter((l) => l.canonicalLineId).length;
-  const totalCount = lines.length;
-  if (totalCount > 0 && mappedCount / totalCount < 0.5) {
+  if (statementType === 'CF') {
+    const operating = getValue('fsl-cf-operating');
+    const capex = getValue('fsl-cf-capex');
+    const freeCashFlow = getValue('fsl-cf-fcf');
+    const financing = getValue('fsl-cf-financing');
+    const investing = getValue('fsl-cf-investing');
+    if (operating !== null && capex !== null && freeCashFlow !== null) {
+      const expected = operating + (capex > 0 ? -capex : capex);
+      const diff = Math.abs(freeCashFlow - expected);
+      if (diff > Math.max(Math.abs(expected) * 0.05, 1)) {
+        messages.push({
+          type: 'warning',
+          code: 'CF_FCF_MISMATCH',
+          message: 'Free cash flow does not reconcile with operating cash flow and capex.',
+        });
+      }
+    }
+    if (operating === null && investing === null && financing === null) {
+      messages.push({
+        type: 'warning',
+        code: 'CF_CORE_LINES_MISSING',
+        message: 'Cash flow statement is missing operating, investing, and financing lines.',
+      });
+    }
+  }
+
+  const mappedCount = activeLines.filter((line) => line.canonicalLineId).length;
+  const totalCount = activeLines.length;
+  if (totalCount > 0 && mappedCount / totalCount < 0.75) {
     messages.push({
       type: 'warning',
       code: 'LOW_MAPPING_COVERAGE',
       message: `Only ${Math.round((mappedCount / totalCount) * 100)}% of lines are mapped to canonical categories`,
+    });
+  }
+  if (totalCount === 0) {
+    messages.push({
+      type: 'error',
+      code: 'NO_FINANCIAL_LINES',
+      message: 'No eligible financial lines remain after filtering non-financial rows.',
     });
   }
 
@@ -490,6 +1387,683 @@ export function validateStatement(
   const status = hasErrors ? 'needs_review' : hasWarnings ? 'warnings' : 'pass';
 
   return { status, messages };
+}
+
+export function evaluateStatementReadiness(params: {
+  rawStatus?: unknown;
+  statementType?: unknown;
+  validationStatus?: unknown;
+  currency?: unknown;
+  scaling?: unknown;
+  validationMessages?: ValidationMessage[];
+  values: Array<{
+    canonicalLineId: string | null;
+    value: number;
+    isNonFinancial?: boolean;
+  }>;
+}): StatementReadinessEvaluation {
+  const normalizedStatus = String(params.rawStatus || '').trim().toLowerCase();
+  const normalizedType = String(params.statementType || '').trim().toUpperCase();
+  const normalizedValidation = String(params.validationStatus || '').trim().toLowerCase();
+  const normalizedCurrency = String(params.currency || '').trim().toUpperCase();
+  const normalizedScaling = String(params.scaling || '').trim().toLowerCase();
+  const validationMessages = Array.isArray(params.validationMessages) ? params.validationMessages : [];
+  const activeValues = (params.values || []).filter((value) => !value.isNonFinancial);
+  const nonFinancialLineCount = Math.max(0, (params.values || []).length - activeValues.length);
+  const mappedLineCount = activeValues.filter((value) => value.canonicalLineId).length;
+  const eligibleLineCount = activeValues.length;
+  const unmappedLineCount = Math.max(0, eligibleLineCount - mappedLineCount);
+  const hardFailCount =
+    validationMessages.filter((message) => message.type === 'error').length +
+    (normalizedValidation === 'needs_review' || normalizedValidation === 'failed' ? 1 : 0);
+  const warningCount = validationMessages.filter((message) => message.type === 'warning').length;
+
+  const reasonCodes: string[] = [];
+  const hasDuplicateWarnings = validationMessages.some(
+    (message) => String(message.code || '').trim() === 'DUPLICATE_CANONICAL_LINES'
+  );
+  if (!['P&L', 'BS', 'CF'].includes(normalizedType)) reasonCodes.push('UNSUPPORTED_STATEMENT_TYPE');
+  if (eligibleLineCount === 0) reasonCodes.push('NO_ELIGIBLE_FINANCIAL_LINES');
+  if (!['imported', 'mapped', 'confirmed'].includes(normalizedStatus))
+    reasonCodes.push('PIPELINE_NOT_ADVANCED');
+  if (mappedLineCount === 0) reasonCodes.push('NO_MAPPED_LINES');
+  if (unmappedLineCount > 0) reasonCodes.push('UNMAPPED_FINANCIAL_LINES');
+  if (!normalizedCurrency || normalizedCurrency === 'UNKNOWN') reasonCodes.push('UNRESOLVED_CURRENCY');
+  if (!normalizedScaling || normalizedScaling === 'unknown') reasonCodes.push('UNRESOLVED_SCALING');
+  if (hasDuplicateWarnings) reasonCodes.push('DUPLICATE_MAPPING_CONFLICT');
+  if (hardFailCount > 0) reasonCodes.push('VALIDATION_HARD_FAIL');
+
+  const coverage = eligibleLineCount > 0 ? mappedLineCount / eligibleLineCount : 0;
+  const readinessScore = Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        coverage * 70 +
+          (hardFailCount === 0 ? 20 : 0) +
+          (warningCount === 0 ? 10 : 5) -
+          (reasonCodes.includes('PIPELINE_NOT_ADVANCED') ? 20 : 0) -
+          (reasonCodes.includes('DUPLICATE_MAPPING_CONFLICT') ? 10 : 0)
+      )
+    )
+  );
+
+  let readinessStatus: StatementReadinessStatus = 'pending';
+  if (reasonCodes.includes('UNSUPPORTED_STATEMENT_TYPE') || reasonCodes.includes('NO_ELIGIBLE_FINANCIAL_LINES')) {
+    readinessStatus = 'rejected';
+  } else if (
+    hardFailCount === 0 &&
+    coverage === 1 &&
+    mappedLineCount > 0 &&
+    ['mapped', 'confirmed'].includes(normalizedStatus) &&
+    ['pass', 'warnings'].includes(normalizedValidation) &&
+    !reasonCodes.includes('UNRESOLVED_CURRENCY') &&
+    !reasonCodes.includes('UNRESOLVED_SCALING') &&
+    !reasonCodes.includes('DUPLICATE_MAPPING_CONFLICT')
+  ) {
+    readinessStatus = 'ready';
+  } else if (mappedLineCount > 0 || warningCount > 0 || normalizedStatus === 'imported') {
+    readinessStatus = 'recoverable';
+  }
+
+  const summary =
+    readinessStatus === 'ready'
+      ? 'Statement passed the readiness contract and is ready for downstream work.'
+      : readinessStatus === 'recoverable'
+        ? 'Statement contains recognized financial data but still needs recovery actions before downstream use.'
+        : readinessStatus === 'rejected'
+          ? 'Statement could not meet the minimum recognition contract and should stay outside the working set.'
+          : 'Statement is still progressing through the ingestion pipeline.';
+
+  return {
+    readinessStatus,
+    readinessScore,
+    summary,
+    reasonCodes,
+    eligibleLineCount,
+    mappedLineCount,
+    unmappedLineCount,
+    nonFinancialLineCount,
+    hardFailCount,
+    warningCount,
+    isReady: readinessStatus === 'ready',
+  };
+}
+
+export async function startStatementIngestRun(params: {
+  statementId: string;
+  organizationId: string;
+  sourceFileName?: string | null;
+  sourceFilePath?: string | null;
+  parseMethod?: string | null;
+  documentClass?: string | null;
+  extractionStrategy?: string | null;
+  templateFamily?: string | null;
+  rawTextLength?: number | null;
+  summary?: Record<string, unknown> | null;
+  createdBy?: string | null;
+}): Promise<string | null> {
+  try {
+    const id = uuidv4();
+    await dbRun(
+      `INSERT INTO financial_statement_ingest_runs
+        (id, statement_id, organization_id, run_status, current_stage, source_file_name, source_file_path, parse_method,
+         document_class, extraction_strategy, template_family, raw_text_length, summary_json, created_by)
+       VALUES (?, ?, ?, 'running', 'upload', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        params.statementId,
+        params.organizationId,
+        params.sourceFileName || null,
+        params.sourceFilePath || null,
+        params.parseMethod || null,
+        params.documentClass || null,
+        params.extractionStrategy || null,
+        params.templateFamily || null,
+        params.rawTextLength ?? 0,
+        params.summary ? JSON.stringify(params.summary) : null,
+        params.createdBy || null,
+      ],
+      { fallback: false }
+    );
+    return id;
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    return null;
+  }
+}
+
+export async function getLatestStatementIngestRun(statementId: string): Promise<string | null> {
+  try {
+    const row = await dbGet<{ id: string }>(
+      `SELECT id
+       FROM financial_statement_ingest_runs
+       WHERE statement_id = ?
+       ORDER BY started_at DESC
+       LIMIT 1`,
+      [statementId]
+    );
+    return String(row?.id || '').trim() || null;
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    return null;
+  }
+}
+
+export async function updateStatementIngestRun(params: {
+  ingestRunId?: string | null;
+  currentStage?: string | null;
+  runStatus?: 'running' | 'completed' | 'failed' | 'cancelled' | null;
+  documentClass?: string | null;
+  extractionStrategy?: string | null;
+  templateFamily?: string | null;
+  rawTextLength?: number | null;
+  reasonCodes?: string[] | null;
+  summary?: Record<string, unknown> | null;
+}): Promise<void> {
+  if (!params.ingestRunId) return;
+  try {
+    await dbRun(
+      `UPDATE financial_statement_ingest_runs
+       SET current_stage = COALESCE(?, current_stage),
+           run_status = COALESCE(?, run_status),
+           document_class = COALESCE(?, document_class),
+           extraction_strategy = COALESCE(?, extraction_strategy),
+           template_family = COALESCE(?, template_family),
+           raw_text_length = COALESCE(?, raw_text_length),
+           latest_reason_codes = COALESCE(?, latest_reason_codes),
+           summary_json = COALESCE(?, summary_json),
+           completed_at = CASE WHEN ? IN ('completed', 'failed', 'cancelled') THEN CURRENT_TIMESTAMP ELSE completed_at END,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [
+        params.currentStage || null,
+        params.runStatus || null,
+        params.documentClass || null,
+        params.extractionStrategy || null,
+        params.templateFamily || null,
+        params.rawTextLength ?? null,
+        params.reasonCodes ? JSON.stringify(params.reasonCodes) : null,
+        params.summary ? JSON.stringify(params.summary) : null,
+        params.runStatus || null,
+        params.ingestRunId,
+      ],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+  }
+}
+
+export async function recordStatementSourceArtifact(params: {
+  statementId: string;
+  ingestRunId?: string | null;
+  artifactType: string;
+  stage: string;
+  contentText?: string | null;
+  contentJson?: unknown;
+  metadata?: Record<string, unknown> | null;
+  createdBy?: string | null;
+}): Promise<void> {
+  try {
+    const latestVersion =
+      Number(
+        (
+          await dbGet<{ next_version: number }>(
+            `SELECT COALESCE(MAX(version_no), 0) + 1 AS next_version
+             FROM financial_statement_source_artifacts
+             WHERE statement_id = ? AND artifact_type = ? AND stage = ?`,
+            [params.statementId, params.artifactType, params.stage]
+          )
+        )?.next_version || 1
+      ) || 1;
+    await dbRun(
+      `INSERT INTO financial_statement_source_artifacts
+        (id, statement_id, ingest_run_id, artifact_type, stage, version_no, content_text, content_json, metadata_json, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.statementId,
+        params.ingestRunId || null,
+        params.artifactType,
+        params.stage,
+        latestVersion,
+        params.contentText || null,
+        params.contentJson != null ? JSON.stringify(params.contentJson) : null,
+        params.metadata ? JSON.stringify(params.metadata) : null,
+        params.createdBy || null,
+      ],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+  }
+}
+
+export async function loadStatementSourceText(
+  statementId: string,
+  fallbackText?: string | null
+): Promise<string> {
+  try {
+    const artifact = await dbGet<{ content_text?: string | null }>(
+      `SELECT content_text
+       FROM financial_statement_source_artifacts
+       WHERE statement_id = ?
+         AND artifact_type = 'raw_text'
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [statementId]
+    );
+    const content = String(artifact?.content_text || '').trim();
+    if (content) return content;
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+  }
+  return String(fallbackText || '');
+}
+
+export async function persistStatementExtractedSections(params: {
+  statementId: string;
+  ingestRunId?: string | null;
+  sections: StatementSectionRecord[];
+}): Promise<Array<{ sectionId: string; sectionKey: string }>> {
+  if (!Array.isArray(params.sections) || params.sections.length === 0) return [];
+  try {
+    if (params.ingestRunId) {
+      await dbRun(`DELETE FROM financial_statement_extracted_sections WHERE ingest_run_id = ?`, [params.ingestRunId], {
+        fallback: false,
+      });
+    }
+    const created: Array<{ sectionId: string; sectionKey: string }> = [];
+    for (const section of params.sections) {
+      const sectionId = uuidv4();
+      await dbRun(
+        `INSERT INTO financial_statement_extracted_sections
+          (id, statement_id, ingest_run_id, section_key, section_label, statement_type, source_page_start, source_page_end, line_start, line_end, confidence, text_excerpt, metadata_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          sectionId,
+          params.statementId,
+          params.ingestRunId || null,
+          section.sectionKey,
+          section.sectionLabel,
+          section.statementType,
+          null,
+          null,
+          section.lineStart,
+          section.lineEnd,
+          section.confidence,
+          section.text.slice(0, 4000),
+          section.metadata ? JSON.stringify(section.metadata) : null,
+        ],
+        { fallback: false }
+      );
+      created.push({ sectionId, sectionKey: section.sectionKey });
+    }
+    return created;
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    return [];
+  }
+}
+
+export async function persistStatementCandidateRows(params: {
+  statementId: string;
+  ingestRunId?: string | null;
+  rows: ExtractedLine[];
+  sectionIdsByKey?: Record<string, string>;
+  statementType?: string | null;
+  currency?: string | null;
+  scaling?: string | null;
+}): Promise<Array<{ candidateRowId: string; sourceRow?: number }>> {
+  if (!Array.isArray(params.rows)) return [];
+  try {
+    if (params.ingestRunId) {
+      await dbRun(`DELETE FROM financial_statement_candidate_rows WHERE ingest_run_id = ?`, [params.ingestRunId], {
+        fallback: false,
+      });
+    }
+    const created: Array<{ candidateRowId: string; sourceRow?: number }> = [];
+    const sectionKey = `${String(params.statementType || '').trim().toUpperCase() || 'UNKNOWN'}_1`;
+    for (const row of params.rows) {
+      const candidateRowId = uuidv4();
+      await dbRun(
+        `INSERT INTO financial_statement_candidate_rows
+          (id, statement_id, ingest_run_id, section_id, row_key, row_label, normalized_label, source_row, selected_period_label, raw_value, normalized_value, currency, scaling, confidence, classification_reason, metadata_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          candidateRowId,
+          params.statementId,
+          params.ingestRunId || null,
+          params.sectionIdsByKey?.[sectionKey] || null,
+          row.sourceRow != null ? `${params.statementId}:${row.sourceRow}` : uuidv4(),
+          row.originalLabel,
+          normalizeAliasText(row.originalLabel),
+          row.sourceRow || null,
+          row.selectedPeriodLabel || null,
+          row.rawValue || null,
+          Number.isFinite(row.value) ? row.value : null,
+          params.currency || null,
+          params.scaling || null,
+          row.confidence,
+          row.classificationReason || null,
+          JSON.stringify({
+            mappingReason: row.mappingReason || null,
+            isNonFinancial: !!row.isNonFinancial,
+          }),
+        ],
+        { fallback: false }
+      );
+      created.push({ candidateRowId, sourceRow: row.sourceRow });
+    }
+    return created;
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    return [];
+  }
+}
+
+export async function persistStatementMappingCandidates(params: {
+  statementId: string;
+  ingestRunId?: string | null;
+  rows: ExtractedLine[];
+  candidateRowIdsBySourceRow?: Record<number, string>;
+}): Promise<void> {
+  if (!Array.isArray(params.rows)) return;
+  try {
+    if (params.ingestRunId) {
+      await dbRun(`DELETE FROM financial_statement_mapping_candidates WHERE ingest_run_id = ?`, [params.ingestRunId], {
+        fallback: false,
+      });
+    }
+    for (const row of params.rows) {
+      const candidates = Array.isArray(row.mappingCandidates) ? row.mappingCandidates : [];
+      const candidateRowId =
+        row.sourceRow != null ? params.candidateRowIdsBySourceRow?.[row.sourceRow] || null : null;
+      for (const candidate of candidates) {
+        await dbRun(
+          `INSERT INTO financial_statement_mapping_candidates
+            (id, statement_id, ingest_run_id, candidate_row_id, canonical_line_id, score, match_reason, is_selected, selected_by, metadata_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            uuidv4(),
+            params.statementId,
+            params.ingestRunId || null,
+            candidateRowId,
+            candidate.canonicalLineId,
+            candidate.score,
+            candidate.reason,
+            !!candidate.selected,
+            candidate.selected ? 'system' : 'system_alt',
+            JSON.stringify({
+              sourceRow: row.sourceRow || null,
+              originalLabel: row.originalLabel,
+            }),
+          ],
+          { fallback: false }
+        );
+      }
+    }
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+  }
+}
+
+export async function openStatementRepairSession(params: {
+  statementId: string;
+  organizationId: string;
+  ingestRunId?: string | null;
+  startedBy?: string | null;
+  summary?: string | null;
+  payload?: Record<string, unknown> | null;
+}): Promise<void> {
+  try {
+    await dbRun(
+      `INSERT INTO financial_statement_repair_sessions
+        (id, statement_id, organization_id, ingest_run_id, repair_status, summary, payload_json, started_by)
+       VALUES (?, ?, ?, ?, 'open', ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.statementId,
+        params.organizationId,
+        params.ingestRunId || null,
+        params.summary || null,
+        params.payload ? JSON.stringify(params.payload) : null,
+        params.startedBy || null,
+      ],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+  }
+}
+
+export async function recordStatementQualityRun(params: {
+  statementId: string;
+  organizationId: string;
+  stage: StatementQualityStage;
+  resultStatus: StatementQualityResultStatus;
+  readinessStatus?: StatementReadinessStatus;
+  strategy?: string;
+  summary?: string;
+  reasonCodes?: string[];
+  payload?: unknown;
+  createdBy?: string;
+}): Promise<void> {
+  try {
+    await dbRun(
+      `INSERT INTO financial_statement_quality_runs
+        (id, statement_id, organization_id, stage, result_status, readiness_status, strategy, summary, reason_codes, payload_json, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.statementId,
+        params.organizationId,
+        params.stage,
+        params.resultStatus,
+        params.readinessStatus || null,
+        params.strategy || null,
+        params.summary || null,
+        params.reasonCodes ? JSON.stringify(params.reasonCodes) : null,
+        params.payload ? JSON.stringify(params.payload) : null,
+        params.createdBy || null,
+      ],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+  }
+}
+
+export async function snapshotStatementValueVersion(params: {
+  statementId: string;
+  sourceStage: string;
+  values: unknown;
+  createdBy?: string;
+}): Promise<number> {
+  try {
+    const nextVersion =
+      Number(
+        (
+          await dbGet<{ next_version: number }>(
+            `SELECT COALESCE(MAX(version_no), 0) + 1 AS next_version
+             FROM financial_statement_value_versions
+             WHERE statement_id = ?`,
+            [params.statementId]
+          )
+        )?.next_version || 1
+      ) || 1;
+
+    await dbRun(
+      `INSERT INTO financial_statement_value_versions
+        (id, statement_id, version_no, source_stage, values_json, created_by)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.statementId,
+        nextVersion,
+        params.sourceStage,
+        JSON.stringify(params.values || []),
+        params.createdBy || null,
+      ],
+      { fallback: false }
+    );
+
+    await dbRun(
+      `UPDATE financial_statements
+       SET values_version = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [nextVersion, params.statementId],
+      { fallback: false }
+    );
+
+    return nextVersion;
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    return 0;
+  }
+}
+
+export async function updateStatementMetadata(
+  statementId: string,
+  patch: {
+    statementType?: string | null;
+    periodStart?: string | null;
+    periodEnd?: string | null;
+    periodLabel?: string | null;
+    currency?: string | null;
+    scaling?: string | null;
+    overallConfidence?: number | null;
+    documentClass?: StatementDocumentClass | null;
+    extractionStrategy?: string | null;
+    templateFamily?: string | null;
+  }
+): Promise<void> {
+  try {
+    await dbRun(
+      `UPDATE financial_statements
+       SET statement_type = COALESCE(?, statement_type),
+           period_start = COALESCE(?, period_start),
+           period_end = COALESCE(?, period_end),
+           period_label = COALESCE(?, period_label),
+           currency = COALESCE(?, currency),
+           scaling = COALESCE(?, scaling),
+           overall_confidence = COALESCE(?, overall_confidence),
+           document_class = COALESCE(?, document_class),
+           extraction_strategy = COALESCE(?, extraction_strategy),
+           template_family = COALESCE(?, template_family),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [
+        patch.statementType || null,
+        patch.periodStart || null,
+        patch.periodEnd || null,
+        patch.periodLabel || null,
+        patch.currency || null,
+        patch.scaling || null,
+        patch.overallConfidence ?? null,
+        patch.documentClass || null,
+        patch.extractionStrategy || null,
+        patch.templateFamily || null,
+        statementId,
+      ],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    await dbRun(
+      `UPDATE financial_statements
+       SET statement_type = COALESCE(?, statement_type),
+           period_start = COALESCE(?, period_start),
+           period_end = COALESCE(?, period_end),
+           period_label = COALESCE(?, period_label),
+           currency = COALESCE(?, currency),
+           scaling = COALESCE(?, scaling),
+           overall_confidence = COALESCE(?, overall_confidence),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [
+        patch.statementType || null,
+        patch.periodStart || null,
+        patch.periodEnd || null,
+        patch.periodLabel || null,
+        patch.currency || null,
+        patch.scaling || null,
+        patch.overallConfidence ?? null,
+        statementId,
+      ],
+      { fallback: false }
+    );
+  }
+}
+
+export async function updateStatementReadinessState(
+  statementId: string,
+  evaluation: StatementReadinessEvaluation
+): Promise<void> {
+  try {
+    await dbRun(
+      `UPDATE financial_statements
+       SET readiness_status = ?,
+           readiness_score = ?,
+           quality_summary = ?,
+           quality_reason_codes = ?,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [
+        evaluation.readinessStatus,
+        evaluation.readinessScore,
+        evaluation.summary,
+        JSON.stringify(evaluation.reasonCodes),
+        statementId,
+      ],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+  }
+}
+
+export async function learnStatementAliases(params: {
+  organizationId: string;
+  statementType: string;
+  templateFamily?: string | null;
+  values: Array<{ canonicalLineId: string | null; originalLabel: string }>;
+  createdBy?: string;
+}): Promise<void> {
+  const normalizedStatementType = String(params.statementType || '').trim().toUpperCase();
+  const templateFamily = String(params.templateFamily || '').trim();
+  for (const value of params.values || []) {
+    const canonicalLineId = String(value.canonicalLineId || '').trim();
+    const aliasText = String(value.originalLabel || '').trim();
+    const normalizedAlias = normalizeAliasText(aliasText);
+    if (!canonicalLineId || !normalizedAlias) continue;
+    try {
+      await dbRun(
+        `INSERT INTO financial_statement_line_aliases
+          (id, organization_id, statement_line_id, statement_type, alias_text, normalized_alias, template_family, source, usage_count, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'learned', 1, ?)
+         ON CONFLICT (organization_id, statement_line_id, normalized_alias, template_family)
+         DO UPDATE SET
+           alias_text = EXCLUDED.alias_text,
+           usage_count = financial_statement_line_aliases.usage_count + 1,
+           updated_at = CURRENT_TIMESTAMP`,
+        [
+          uuidv4(),
+          params.organizationId || '',
+          canonicalLineId,
+          normalizedStatementType,
+          aliasText,
+          normalizedAlias,
+          templateFamily,
+          params.createdBy || null,
+        ],
+        { fallback: false }
+      );
+    } catch (error) {
+      if (!isSchemaCompatError(error)) throw error;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -508,29 +2082,60 @@ export async function createStatement(params: {
   sourceFilePath?: string;
   parseMethod?: string;
   overallConfidence?: number;
+  documentClass?: StatementDocumentClass;
+  extractionStrategy?: string;
+  templateFamily?: string | null;
   createdBy: string;
 }): Promise<string> {
   const id = uuidv4();
-  const insertRes = await dbRun(
-    `INSERT INTO financial_statements (id, organization_id, statement_type, period_start, period_end, period_label, currency, scaling, source_file_name, source_file_path, parse_method, overall_confidence, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      id,
-      params.organizationId,
-      params.statementType,
-      params.periodStart,
-      params.periodEnd,
-      params.periodLabel || null,
-      params.currency || 'PLN',
-      params.scaling || 'units',
-      params.sourceFileName || null,
-      params.sourceFilePath || null,
-      params.parseMethod || 'text_extraction',
-      params.overallConfidence || 0,
-      params.createdBy,
-    ],
-    { fallback: false }
-  );
+  let insertRes;
+  try {
+    insertRes = await dbRun(
+      `INSERT INTO financial_statements (id, organization_id, statement_type, period_start, period_end, period_label, currency, scaling, source_file_name, source_file_path, parse_method, overall_confidence, document_class, extraction_strategy, template_family, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        params.organizationId,
+        params.statementType,
+        params.periodStart,
+        params.periodEnd,
+        params.periodLabel || null,
+        params.currency || 'PLN',
+        params.scaling || 'units',
+        params.sourceFileName || null,
+        params.sourceFilePath || null,
+        params.parseMethod || 'text_extraction',
+        params.overallConfidence || 0,
+        params.documentClass || 'unknown',
+        params.extractionStrategy || null,
+        params.templateFamily || null,
+        params.createdBy,
+      ],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    insertRes = await dbRun(
+      `INSERT INTO financial_statements (id, organization_id, statement_type, period_start, period_end, period_label, currency, scaling, source_file_name, source_file_path, parse_method, overall_confidence, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        params.organizationId,
+        params.statementType,
+        params.periodStart,
+        params.periodEnd,
+        params.periodLabel || null,
+        params.currency || 'PLN',
+        params.scaling || 'units',
+        params.sourceFileName || null,
+        params.sourceFilePath || null,
+        params.parseMethod || 'text_extraction',
+        params.overallConfidence || 0,
+        params.createdBy,
+      ],
+      { fallback: false }
+    );
+  }
   if (!insertRes?.success) {
     throw new Error(`DB insert failed (financial_statements): ${insertRes?.error || 'unknown'}`);
   }
@@ -546,24 +2151,48 @@ export async function saveStatementValues(
     confidence: number;
     sourceRow?: number;
     mappingStatus?: string;
+    isNonFinancial?: boolean;
+    classificationReason?: string;
   }>
 ): Promise<void> {
   for (const v of values) {
-    const r = await dbRun(
-      `INSERT INTO financial_statement_values (id, statement_id, canonical_line_id, original_label, value, confidence, source_row, mapping_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        uuidv4(),
-        statementId,
-        v.canonicalLineId || null,
-        v.originalLabel,
-        v.value,
-        v.confidence,
-        v.sourceRow || null,
-        v.mappingStatus || 'auto',
-      ],
-      { fallback: false }
-    );
+    let r;
+    try {
+      r = await dbRun(
+        `INSERT INTO financial_statement_values (id, statement_id, canonical_line_id, original_label, value, confidence, source_row, mapping_status, is_non_financial, classification_reason)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          statementId,
+          v.canonicalLineId || null,
+          v.originalLabel,
+          v.value,
+          v.confidence,
+          v.sourceRow || null,
+          v.mappingStatus || 'auto',
+          !!v.isNonFinancial,
+          v.classificationReason || null,
+        ],
+        { fallback: false }
+      );
+    } catch (error) {
+      if (!isSchemaCompatError(error)) throw error;
+      r = await dbRun(
+        `INSERT INTO financial_statement_values (id, statement_id, canonical_line_id, original_label, value, confidence, source_row, mapping_status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          statementId,
+          v.canonicalLineId || null,
+          v.originalLabel,
+          v.value,
+          v.confidence,
+          v.sourceRow || null,
+          v.mappingStatus || 'auto',
+        ],
+        { fallback: false }
+      );
+    }
     if (!r?.success) {
       throw new Error(`DB insert failed (financial_statement_values): ${r?.error || 'unknown'}`);
     }
@@ -591,12 +2220,47 @@ export async function updateStatementStatus(
   }
 }
 
-export async function confirmStatement(statementId: string, userId: string): Promise<void> {
-  const r = await dbRun(
-    `UPDATE financial_statements SET status = 'confirmed', confirmed_by = ?, confirmed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-    [userId, statementId],
-    { fallback: false }
-  );
+export async function confirmStatement(
+  statementId: string,
+  userId: string,
+  evaluation?: StatementReadinessEvaluation
+): Promise<void> {
+  let r;
+  try {
+    r = await dbRun(
+      `UPDATE financial_statements
+       SET status = 'confirmed',
+           confirmed_by = ?,
+           confirmed_at = CURRENT_TIMESTAMP,
+           readiness_status = COALESCE(?, readiness_status),
+           readiness_score = COALESCE(?, readiness_score),
+           quality_summary = COALESCE(?, quality_summary),
+           quality_reason_codes = COALESCE(?, quality_reason_codes),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [
+        userId,
+        evaluation?.readinessStatus || null,
+        evaluation?.readinessScore ?? null,
+        evaluation?.summary || null,
+        evaluation?.reasonCodes ? JSON.stringify(evaluation.reasonCodes) : null,
+        statementId,
+      ],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    r = await dbRun(
+      `UPDATE financial_statements
+       SET status = 'confirmed',
+           confirmed_by = ?,
+           confirmed_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [userId, statementId],
+      { fallback: false }
+    );
+  }
   if (!r?.success) {
     throw new Error(`DB update failed (financial_statements.confirm): ${r?.error || 'unknown'}`);
   }

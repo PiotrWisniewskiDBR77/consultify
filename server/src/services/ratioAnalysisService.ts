@@ -7,7 +7,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
@@ -60,6 +60,64 @@ export interface RatioAnalysisResult {
   ratios: ComputedRatio[];
   categories: Record<RatioCategory, ComputedRatio[]>;
   coverageSummary: { total: number; computed: number; na: number; coveragePct: number };
+}
+
+function deriveStatementReadiness(row: {
+  readiness_status?: unknown;
+  status?: unknown;
+  validation_status?: unknown;
+}): 'ready' | 'recoverable' | 'pending' {
+  const readiness = String(row.readiness_status || '')
+    .trim()
+    .toLowerCase();
+  if (['ready', 'recoverable', 'pending'].includes(readiness)) {
+    return readiness as 'ready' | 'recoverable' | 'pending';
+  }
+
+  const rawStatus = String(row.status || '')
+    .trim()
+    .toLowerCase();
+  const validationStatus = String(row.validation_status || '')
+    .trim()
+    .toLowerCase();
+
+  if (
+    ['confirmed', 'mapped'].includes(rawStatus) &&
+    ['pass', 'warnings', 'warning'].includes(validationStatus)
+  ) {
+    return 'ready';
+  }
+  if (['imported', 'mapped', 'confirmed'].includes(rawStatus)) {
+    return 'recoverable';
+  }
+  return 'pending';
+}
+
+async function assertReadyStatement(statementId: string, organizationId: string): Promise<any> {
+  let stmt: any;
+  try {
+    stmt = await dbGet<any>(
+      `SELECT id, organization_id, period_label, period_start, period_end, status, validation_status, readiness_status
+       FROM financial_statements
+       WHERE id = ? AND organization_id = ?`,
+      [statementId, organizationId]
+    );
+  } catch {
+    stmt = await dbGet<any>(
+      `SELECT id, organization_id, period_label, period_start, period_end, status, validation_status
+       FROM financial_statements
+       WHERE id = ? AND organization_id = ?`,
+      [statementId, organizationId]
+    );
+  }
+
+  if (!stmt) throw new Error('Statement not found');
+
+  if (deriveStatementReadiness(stmt) !== 'ready') {
+    throw new Error('Statement must be statement-ready before ratio computation');
+  }
+
+  return stmt;
 }
 
 // ---------------------------------------------------------------------------
@@ -316,11 +374,7 @@ export async function computeRatios(
   statementId: string,
   organizationId: string
 ): Promise<RatioAnalysisResult> {
-  const stmtRows = (await dbAll(`SELECT * FROM financial_statements WHERE id = ?`, [
-    statementId,
-  ])) as any[];
-  if (!stmtRows.length) throw new Error('Statement not found');
-  const stmt = stmtRows[0];
+  const stmt = await assertReadyStatement(statementId, organizationId);
 
   // Load values with canonical line codes
   const valueRows = (await dbAll(
@@ -442,6 +496,9 @@ export async function computeGrowthRatios(
   previousStatementId: string,
   organizationId: string
 ): Promise<ComputedRatio[]> {
+  await assertReadyStatement(currentStatementId, organizationId);
+  await assertReadyStatement(previousStatementId, organizationId);
+
   const loadValues = async (sid: string) => {
     const rows = (await dbAll(
       `SELECT fsl.line_code, fsv.value FROM financial_statement_values fsv

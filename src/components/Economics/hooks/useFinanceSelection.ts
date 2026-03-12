@@ -11,6 +11,10 @@ export function useFinanceSelection(activeTab: ModuleTab) {
 
   const [predictionValidations, setPredictionValidations] =
     useState<PreviewDataState['predictionValidations']>(null);
+  const [statementPreviewDetail, setStatementPreviewDetail] =
+    useState<PreviewDataState['statementPreviewDetail']>(null);
+  const [statementPreviewRatios, setStatementPreviewRatios] =
+    useState<PreviewDataState['statementPreviewRatios']>(null);
   const [analysisPreviewRatios, setAnalysisPreviewRatios] =
     useState<PreviewDataState['analysisPreviewRatios']>(null);
   const [budgetPreviewScenarios, setBudgetPreviewScenarios] =
@@ -23,6 +27,8 @@ export function useFinanceSelection(activeTab: ModuleTab) {
   useEffect(() => {
     setSelectedId(null);
     setSelectedItem(null);
+    setStatementPreviewDetail(null);
+    setStatementPreviewRatios(null);
     setPredictionValidations(null);
     setAnalysisPreviewRatios(null);
     setBudgetPreviewScenarios(null);
@@ -40,6 +46,60 @@ export function useFinanceSelection(activeTab: ModuleTab) {
       setPredictionValidations((val as any)?.summary || null);
     } catch {
       setPredictionValidations(null);
+    }
+  }, []);
+
+  const loadStatementPreview = useCallback(async (statementId: string) => {
+    try {
+      const [detail, ratios] = await Promise.all([
+        Api.get(`/api/finance-statements/${statementId}`),
+        Api.get(`/api/finance-statements/${statementId}/ratios`).catch(() => null),
+      ]);
+
+      const values = Array.isArray((detail as any)?.values) ? (detail as any).values : [];
+      const mappedValues = values.filter((value: any) => value?.line_code);
+      setStatementPreviewDetail({
+        statementType: String((detail as any)?.statement_type || ''),
+        periodLabel: String((detail as any)?.period_label || ''),
+        periodStart: String((detail as any)?.period_start || ''),
+        periodEnd: String((detail as any)?.period_end || ''),
+        currency: String((detail as any)?.currency || 'PLN'),
+        scaling: String((detail as any)?.scaling || 'units'),
+        sourceFileName: String((detail as any)?.source_file_name || ''),
+        validationStatus: String((detail as any)?.validation_status || 'pending'),
+        rawStatus: String((detail as any)?.status || 'draft'),
+        readinessStatus: String(
+          (detail as any)?.readinessStatus || (detail as any)?.readiness_status || 'pending'
+        ),
+        readinessSummary: String(
+          (detail as any)?.readinessSummary || (detail as any)?.readiness_summary || ''
+        ),
+        mappedLineCount: mappedValues.length,
+        topLineItems: mappedValues.slice(0, 4).map((value: any) => ({
+          label: String(value.line_name || value.line_name_pl || value.original_label || value.line_code || ''),
+          code: String(value.line_code || ''),
+          value: Number(value.value || 0),
+        })),
+      });
+
+      const ratioList = Array.isArray((ratios as any)?.ratios) ? (ratios as any).ratios : [];
+      const coverage = (ratios as any)?.coverageSummary;
+      setStatementPreviewRatios({
+        coveragePct: Number(coverage?.coveragePct ?? 0),
+        computed: Number(coverage?.computed ?? ratioList.filter((item: any) => item.value != null).length),
+        total: Number(coverage?.total ?? ratioList.length),
+        topRatios: ratioList
+          .filter((item: any) => item.value != null)
+          .slice(0, 3)
+          .map((item: any) => ({
+            code: String(item.code || ''),
+            name: String(item.name || item.namePl || item.code || ''),
+            value: item.value != null ? Number(item.value) : null,
+          })),
+      });
+    } catch {
+      setStatementPreviewDetail(null);
+      setStatementPreviewRatios(null);
     }
   }, []);
 
@@ -120,6 +180,8 @@ export function useFinanceSelection(activeTab: ModuleTab) {
   }, []);
 
   const clearAllPreview = useCallback(() => {
+    setStatementPreviewDetail(null);
+    setStatementPreviewRatios(null);
     setPredictionValidations(null);
     setAnalysisPreviewRatios(null);
     setBudgetPreviewScenarios(null);
@@ -131,15 +193,26 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     (row: FinanceRow) => {
       setSelectedId(row.id);
       setSelectedItem(row);
-      if (row.kind === 'prediction') {
+      if (row.kind === 'statements') {
+        loadStatementPreview(row.id);
+        setPredictionValidations(null);
+        setAnalysisPreviewRatios(null);
+        setBudgetPreviewScenarios(null);
+        setValuationPreviewResults(null);
+        setValuationPreviewDetail(null);
+      } else if (row.kind === 'prediction') {
         const modelRow = row as FinanceModelRow;
         if (modelRow.predictionType === 'budget') {
+          setStatementPreviewDetail(null);
+          setStatementPreviewRatios(null);
           setPredictionValidations(null);
           setAnalysisPreviewRatios(null);
           setValuationPreviewResults(null);
           setValuationPreviewDetail(null);
           loadBudgetPreviewScenarios(getBudgetRawId(row.id));
         } else {
+          setStatementPreviewDetail(null);
+          setStatementPreviewRatios(null);
           loadPredictionPreview(row.id);
           setAnalysisPreviewRatios(null);
           setBudgetPreviewScenarios(null);
@@ -147,12 +220,16 @@ export function useFinanceSelection(activeTab: ModuleTab) {
           setValuationPreviewDetail(null);
         }
       } else if (row.kind === 'analysis' || row.kind === 'investment') {
+        setStatementPreviewDetail(null);
+        setStatementPreviewRatios(null);
         setPredictionValidations(null);
         setBudgetPreviewScenarios(null);
         setValuationPreviewResults(null);
         setValuationPreviewDetail(null);
         loadAnalysisPreviewRatios(row.id);
       } else if (row.kind === 'valuation') {
+        setStatementPreviewDetail(null);
+        setStatementPreviewRatios(null);
         setPredictionValidations(null);
         setAnalysisPreviewRatios(null);
         setBudgetPreviewScenarios(null);
@@ -163,6 +240,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     },
     [
       loadPredictionPreview,
+      loadStatementPreview,
       loadAnalysisPreviewRatios,
       loadBudgetPreviewScenarios,
       getBudgetRawId,
@@ -182,12 +260,15 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     setSelectedId,
     selectedItem,
     setSelectedItem,
+    statementPreviewDetail,
+    statementPreviewRatios,
     predictionValidations,
     analysisPreviewRatios,
     budgetPreviewScenarios,
     valuationPreviewResults,
     valuationPreviewDetail,
     getBudgetRawId,
+    loadStatementPreview,
     loadPredictionPreview,
     loadBudgetPreviewScenarios,
     loadAnalysisPreviewRatios,

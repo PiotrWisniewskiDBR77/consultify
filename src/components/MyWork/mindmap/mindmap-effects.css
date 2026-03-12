@@ -127,7 +127,119 @@
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
 }
 
-/* Smooth transitions for all nodes */
+/* Smooth transitions for all nodes — filter only; transform must NOT be
+   transitioned because ReactFlow uses inline transforms for drag positioning
+   and a CSS transition would make dragging feel laggy / unresponsive. */
 .react-flow__node {
-  transition: filter 0.2s ease, transform 0.2s ease;
+  transition: filter 0.2s ease;
+}
+
+/* Living-line edge pulse for selected branch */
+@keyframes edgePulse {
+  0%, 100% {
+    stroke-dashoffset: 0;
+    opacity: 0.8;
+  }
+  50% {
+    stroke-dashoffset: 20;
+    opacity: 1;
+  }
+}
+
+.selected-branch-edge path {
+  stroke-dasharray: 8 4;
+  animation: edgePulse 2s ease-in-out infinite;
+}
+
+/* Floating toolbar entrance animation */
+@keyframes floatingToolbarEnter {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.floating-node-toolbar {
+  animation: floatingToolbarEnter 180ms ease-out;
+}
+
+/* Left toolbar entrance animation */
+@keyframes leftToolbarSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.canvas-left-toolbar-enter {
+  animation: leftToolbarSlideIn 200ms ease-out;
+}
+
+/* Onboarding overlay entrance */
+@keyframes onboardingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.onboarding-overlay-enter {
+  animation: onboardingFadeIn 400ms ease-out;
+}
+
+/* Center node glow for dark mode */
+@keyframes centerNodeGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.15), 0 0 60px rgba(251, 191, 36, 0.05);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.25), 0 0 80px rgba(251, 191, 36, 0.1);
+  }
+}
+
+.dark .center-node-glow {
+  animation: centerNodeGlow 3s ease-in-out infinite;
+}
+
+/* Center node animated gradient border */
+@keyframes centerBorderRotate {
+  from { --angle: 0deg; }
+  to { --angle: 360deg; }
+}
+
+.center-node-animated-border {
+  position: relative;
+}
+
+.center-node-animated-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--angle, 0deg), #f59e0b, #f97316, #ef4444, #8b5cf6, #3b82f6, #f59e0b);
+  opacity: 0.3;
+  z-index: -1;
+  animation: centerBorderRotate 4s linear infinite;
+}
+
+/* Center node hint pulse */
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.center-node-hint {
+  animation: hintPulse 2s ease-in-out infinite;
 }

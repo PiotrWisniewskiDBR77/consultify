@@ -1,11 +1,13 @@
 /**
  * SnapshotHistory — Time travel through map versions.
- * Stores snapshots in localStorage and allows restoring any version.
+ * Primary storage: backend API. Falls back to localStorage when API unavailable.
  */
-import { Calendar, ChevronLeft, Clock, Eye, RotateCcw, Save, X } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Calendar, Clock, RotateCcw, Save, X } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+
+import { Api } from '@/services/api';
 
 export interface MapSnapshot {
   id: string;
@@ -28,13 +30,13 @@ interface SnapshotHistoryProps {
 }
 
 const STORAGE_KEY_PREFIX = 'mm-snapshots-';
-const MAX_SNAPSHOTS = 20;
+const MAX_LOCAL_SNAPSHOTS = 20;
 
 function getStorageKey(ideaId: string) {
   return `${STORAGE_KEY_PREFIX}${ideaId}`;
 }
 
-function loadSnapshots(ideaId: string): MapSnapshot[] {
+function loadLocalSnapshots(ideaId: string): MapSnapshot[] {
   try {
     const raw = localStorage.getItem(getStorageKey(ideaId));
     return raw ? JSON.parse(raw) : [];
@@ -43,12 +45,10 @@ function loadSnapshots(ideaId: string): MapSnapshot[] {
   }
 }
 
-function saveSnapshots(ideaId: string, snapshots: MapSnapshot[]) {
+function saveLocalSnapshots(ideaId: string, snapshots: MapSnapshot[]) {
   try {
-    localStorage.setItem(getStorageKey(ideaId), JSON.stringify(snapshots.slice(-MAX_SNAPSHOTS)));
-  } catch {
-    // storage full
-  }
+    localStorage.setItem(getStorageKey(ideaId), JSON.stringify(snapshots.slice(-MAX_LOCAL_SNAPSHOTS)));
+  } catch { /* storage full */ }
 }
 
 export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
@@ -63,35 +63,75 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
   const isPl = i18n.language?.startsWith('pl');
 
   const [snapshots, setSnapshots] = useState<MapSnapshot[]>([]);
+  const [useBackend, setUseBackend] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [snapshotLabel, setSnapshotLabel] = useState('');
+  const [showLabelInput, setShowLabelInput] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      setSnapshots(loadSnapshots(ideaId));
-    }
+    if (!open) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const data = await Api.getMyIdeaMapSnapshots(ideaId);
+        if (!cancelled && Array.isArray(data?.snapshots)) {
+          setSnapshots(data.snapshots);
+          setUseBackend(true);
+          return;
+        }
+      } catch { /* API unavailable */ }
+
+      if (!cancelled) {
+        setSnapshots(loadLocalSnapshots(ideaId));
+        setUseBackend(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [ideaId, open]);
 
-  const handleSaveSnapshot = useCallback(() => {
-    const label = window.prompt(
-      isPl ? 'Nazwa snapshotu:' : 'Snapshot name:',
-      isPl ? `Wersja ${snapshots.length + 1}` : `Version ${snapshots.length + 1}`
-    );
+  const handleSaveSnapshot = useCallback(async () => {
+    const label = snapshotLabel.trim();
     if (!label) return;
+    setSaving(true);
 
-    const snapshot: MapSnapshot = {
-      id: `snap-${Date.now()}`,
-      timestamp: Date.now(),
-      label,
-      nodeCount: currentNodes.length,
-      edgeCount: currentEdges.length,
-      nodes: currentNodes,
-      edges: currentEdges,
-    };
-
-    const updated = [...snapshots, snapshot];
-    setSnapshots(updated);
-    saveSnapshots(ideaId, updated);
-    toast.success(isPl ? 'Snapshot zapisany' : 'Snapshot saved', { duration: 1000 });
-  }, [currentEdges, currentNodes, ideaId, isPl, snapshots]);
+    try {
+      if (useBackend) {
+        const res = await Api.createMyIdeaMapSnapshot(ideaId, {
+          label,
+          nodes: currentNodes,
+          edges: currentEdges,
+        });
+        if (res?.snapshot) {
+          setSnapshots((prev) => [
+            { ...res.snapshot, nodes: currentNodes, edges: currentEdges },
+            ...prev,
+          ]);
+        }
+      } else {
+        const snapshot: MapSnapshot = {
+          id: `snap-${Date.now()}`,
+          timestamp: Date.now(),
+          label,
+          nodeCount: currentNodes.length,
+          edgeCount: currentEdges.length,
+          nodes: currentNodes,
+          edges: currentEdges,
+        };
+        const updated = [...snapshots, snapshot];
+        setSnapshots(updated);
+        saveLocalSnapshots(ideaId, updated);
+      }
+      toast.success(isPl ? 'Snapshot zapisany' : 'Snapshot saved', { duration: 1000 });
+      setSnapshotLabel('');
+      setShowLabelInput(false);
+    } catch {
+      toast.error(isPl ? 'Błąd zapisu' : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  }, [currentEdges, currentNodes, ideaId, isPl, snapshotLabel, snapshots, useBackend]);
 
   const handleRestore = useCallback(
     (snapshot: MapSnapshot) => {
@@ -109,12 +149,17 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
   );
 
   const handleDelete = useCallback(
-    (id: string) => {
+    async (id: string) => {
+      try {
+        if (useBackend) {
+          await Api.deleteMyIdeaMapSnapshot(ideaId, id);
+        }
+      } catch { /* ignore */ }
       const updated = snapshots.filter((s) => s.id !== id);
       setSnapshots(updated);
-      saveSnapshots(ideaId, updated);
+      if (!useBackend) saveLocalSnapshots(ideaId, updated);
     },
-    [ideaId, snapshots]
+    [ideaId, snapshots, useBackend]
   );
 
   const formatTime = useCallback((ts: number) => {
@@ -133,6 +178,11 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
             <h3 className="text-sm font-bold text-slate-800 dark:text-white">
               {isPl ? 'Historia snapshotów' : 'Snapshot History'}
             </h3>
+            {!useBackend && (
+              <span className="text-[9px] rounded bg-amber-100 px-1.5 py-0.5 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                {isPl ? 'tryb lokalny' : 'local mode'}
+              </span>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -143,16 +193,47 @@ export const SnapshotHistory: React.FC<SnapshotHistoryProps> = ({
         </div>
 
         <div className="px-5 py-3 max-h-[50vh] overflow-y-auto">
-          {/* Save current */}
-          <button
-            onClick={handleSaveSnapshot}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/8 hover:from-amber-500/15 hover:to-orange-500/12 transition-all mb-3"
-          >
-            <Save size={14} className="text-amber-600" />
-            <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
-              {isPl ? 'Zapisz aktualny stan' : 'Save current state'}
-            </span>
-          </button>
+          {showLabelInput ? (
+            <div className="mb-3 flex items-center gap-2">
+              <input
+                autoFocus
+                value={snapshotLabel}
+                onChange={(e) => setSnapshotLabel(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveSnapshot();
+                  if (e.key === 'Escape') { setShowLabelInput(false); setSnapshotLabel(''); }
+                }}
+                placeholder={isPl ? 'Nazwa snapshotu...' : 'Snapshot name...'}
+                className="flex-1 rounded border border-slate-300 px-2 py-1.5 text-xs outline-none focus:border-amber-500 dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+              />
+              <button
+                onClick={handleSaveSnapshot}
+                disabled={!snapshotLabel.trim() || saving}
+                className="rounded bg-amber-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-600 disabled:opacity-40"
+              >
+                <Save size={12} />
+              </button>
+              <button
+                onClick={() => { setShowLabelInput(false); setSnapshotLabel(''); }}
+                className="rounded px-2 py-1.5 text-xs text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                setSnapshotLabel(isPl ? `Wersja ${snapshots.length + 1}` : `Version ${snapshots.length + 1}`);
+                setShowLabelInput(true);
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/8 hover:from-amber-500/15 hover:to-orange-500/12 transition-all mb-3"
+            >
+              <Save size={14} className="text-amber-600" />
+              <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
+                {isPl ? 'Zapisz aktualny stan' : 'Save current state'}
+              </span>
+            </button>
+          )}
 
           {snapshots.length === 0 ? (
             <div className="text-center py-8 text-[11px] text-slate-400">

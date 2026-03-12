@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { hasPermission } from '../services/permissionService.js';
 import KnownToolsService from '../services/KnownToolsService.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import ToolInitiativeService from '../services/ToolInitiativeService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -37,6 +38,15 @@ type ToolSessionRow = {
   updated_by?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+};
+
+const safeParseJSON = <T>(value: string | null | undefined, fallback: T): T => {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
 };
 
 const normalizeStatus = (status: string | null | undefined) => (status || 'DRAFT').toUpperCase();
@@ -506,6 +516,18 @@ export class ToolController {
         ]
       );
 
+      await organizationContextService.recordToolSession({
+        organizationId: user.organizationId,
+        userId: user.id,
+        payload: {
+          toolId: id,
+          toolType,
+          name,
+          projectId: projectId || null,
+          contextSnapshot: safeParseJSON(contextSnapshot, {}),
+        },
+      });
+
       res.json({ id, status: 'DRAFT' });
     }
   );
@@ -848,6 +870,20 @@ export class ToolController {
           user.organizationId,
         ]
       );
+
+      await organizationContextService.recordToolSession({
+        organizationId: user.organizationId,
+        userId: user.id,
+        payload: {
+          toolId,
+          toolType: req.body?.toolType || null,
+          name: req.body?.name || null,
+          answers,
+          contextSnapshot,
+          completionPercent,
+          confidenceAvg,
+        },
+      });
 
       res.json({ id: toolId, updatedAt: now });
     }

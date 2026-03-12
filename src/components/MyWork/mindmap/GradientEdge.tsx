@@ -80,8 +80,22 @@ export const GradientEdge: React.FC<EdgeProps> = ({
         </filter>
       </defs>
 
-      {/* Invisible wide hit area for hover */}
-      <path d={edgePath} fill="none" stroke="transparent" strokeWidth={16} />
+      {/* Invisible wide hit area for hover + right-click */}
+      <path
+        d={edgePath}
+        fill="none"
+        stroke="transparent"
+        strokeWidth={16}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          window.dispatchEvent(
+            new CustomEvent('mindmap-edge-contextmenu', {
+              detail: { edgeId: id, isUserCreated: !!data?.userCreated, x: e.clientX, y: e.clientY },
+            }),
+          );
+        }}
+      />
 
       {/* Glow layer */}
       <path

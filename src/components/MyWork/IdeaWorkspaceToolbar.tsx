@@ -1,21 +1,10 @@
 /**
- * IdeaWorkspaceToolbar — Floating bottom toolbar for the Idea Workspace.
+ * IdeaWorkspaceToolbar — Floating workspace-system switcher.
  *
- * Quick toggles for: canvas tool switching, voting mode, export,
- * and AI features. Always visible at the bottom of the canvas.
+ * This control only changes the active work system inside one shared workspace.
+ * Panel navigation lives separately in the right-side WorkspacePanelStrip.
  */
-import {
-  Brain,
-  Crosshair,
-  Download,
-  GitBranch,
-  Layers,
-  Sparkles,
-  StickyNote,
-  Table2,
-  ThumbsUp,
-  Workflow,
-} from 'lucide-react';
+import { GitBranch, Layers, StickyNote, Table2, Workflow } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -24,14 +13,6 @@ import type { CanvasToolType } from './ideaSelectionTypes';
 export interface IdeaWorkspaceToolbarProps {
   activeTool: CanvasToolType;
   onToolChange: (tool: CanvasToolType) => void;
-  isAccepted: boolean;
-  onToggleVoting?: () => void;
-  onToggleAI?: () => void;
-  onToggleContext?: () => void;
-  onExport?: () => void;
-  onToggleFocus?: () => void;
-  votingActive?: boolean;
-  focusMode?: 'full' | 'system' | 'object';
   familyCounts?: Record<string, number>;
 }
 
@@ -41,7 +22,7 @@ const TOOL_CONFIG: Array<{
   labelEn: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
 }> = [
-  { id: 'mindmap', labelPl: 'Mapa myśli', labelEn: 'Mind Map', icon: GitBranch },
+  { id: 'mindmap', labelPl: 'Mapa rekomendacji', labelEn: 'Recommendation map', icon: GitBranch },
   { id: 'whiteboard', labelPl: 'Tablica', labelEn: 'Whiteboard', icon: StickyNote },
   { id: 'process_flow', labelPl: 'Przepływ', labelEn: 'Process Flow', icon: Workflow },
   { id: 'table', labelPl: 'Tabela', labelEn: 'Table', icon: Table2 },
@@ -50,14 +31,6 @@ const TOOL_CONFIG: Array<{
 export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
   activeTool,
   onToolChange,
-  isAccepted,
-  onToggleVoting,
-  onToggleAI,
-  onToggleContext,
-  onExport,
-  onToggleFocus,
-  votingActive,
-  focusMode,
   familyCounts,
 }) => {
   const { i18n } = useTranslation();
@@ -100,73 +73,14 @@ export const IdeaWorkspaceToolbar: React.FC<IdeaWorkspaceToolbarProps> = ({
           return (
             <div className="flex items-center gap-0.5 ml-0.5">
               <Layers size={10} className="text-slate-400" />
-              <span className="text-[8px] text-slate-400 font-medium">
-                +{otherFamilies.length}
-              </span>
+              <span className="text-[8px] text-slate-400 font-medium">+{otherFamilies.length}</span>
             </div>
           );
         })()}
 
-        <div className="w-px h-5 bg-slate-200 dark:bg-navy-700 mx-1" />
-
-        {/* Quick actions */}
-        {isAccepted && (
-          <>
-            {onToggleVoting && (
-              <ToolbarAction
-                icon={ThumbsUp}
-                label={isPl ? 'Głosowanie' : 'Vote'}
-                onClick={onToggleVoting}
-                active={votingActive}
-              />
-            )}
-            {onToggleFocus && (
-              <ToolbarAction
-                icon={Crosshair}
-                label={isPl ? 'Fokus' : 'Focus'}
-                onClick={onToggleFocus}
-                active={focusMode === 'system'}
-              />
-            )}
-            {onToggleAI && <ToolbarAction icon={Sparkles} label="AI" onClick={onToggleAI} />}
-            {onToggleContext && (
-              <ToolbarAction
-                icon={Brain}
-                label={isPl ? 'Kontekst' : 'Context'}
-                onClick={onToggleContext}
-              />
-            )}
-            {onExport && (
-              <ToolbarAction
-                icon={Download}
-                label={isPl ? 'Eksport' : 'Export'}
-                onClick={onExport}
-              />
-            )}
-          </>
-        )}
       </div>
     </div>
   );
 };
-
-const ToolbarAction: React.FC<{
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  label: string;
-  onClick: () => void;
-  active?: boolean;
-}> = ({ icon: Icon, label, onClick, active }) => (
-  <button
-    onClick={onClick}
-    className={`p-1.5 rounded-xl transition-all ${
-      active
-        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
-    }`}
-    title={label}
-  >
-    <Icon size={14} />
-  </button>
-);
 
 export default IdeaWorkspaceToolbar;

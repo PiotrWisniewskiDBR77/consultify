@@ -5,14 +5,13 @@ import {
   Bot,
   ChevronDown,
   ChevronRight,
+  FileText,
   Flower2,
   GitBranch,
   Lightbulb,
-  Link2,
   Loader2,
-  Minus,
+  Pencil,
   Plus,
-  RotateCcw,
   Sparkles,
   X,
 } from 'lucide-react';
@@ -40,9 +39,19 @@ import ReactFlow, {
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
+import { artifactLinkToOpenPayload, buildArtifactLink, getArtifactPath, type ArtifactType } from '@/utils/artifactLinks';
 
+import { CanvasZoomControls } from './canvas/CanvasZoomControls';
+import {
+  IDEA_STAGE_COLORS,
+  IDEA_STAGE_LABELS,
+  IDEA_STAGES_V5,
+  type IdeaStageV5,
+  normalizeStageToV5,
+} from './ideaEntryTypes';
 import {
   type CanvasToolType,
+  IDEA_WORKSPACE_THEME_EVENT,
   IDEA_WORKSPACE_INSERT_EVENT,
   type IdeaWorkspaceInsertDetail,
 } from './ideaSelectionTypes';
@@ -67,7 +76,11 @@ import { DocumentToMap } from './mindmap/DocumentToMap';
 import { EmbedInReports } from './mindmap/EmbedInReports';
 import { ExportDiagramCode } from './mindmap/ExportDiagramCode';
 import { ExportPowerPoint } from './mindmap/ExportPowerPoint';
-import { applyForceLayout } from './mindmap/ForceDirectedLayout';
+import { AddEvidenceModal } from './mindmap/AddEvidenceModal';
+import { AssignPersonModal } from './mindmap/AssignPersonModal';
+import { AttachArtifactModal } from './mindmap/AttachArtifactModal';
+import { ImageUrlModal } from './mindmap/ImageUrlModal';
+import { FloatingNodeToolbar } from './mindmap/FloatingNodeToolbar';
 import { GradientEdge } from './mindmap/GradientEdge';
 import { IdeaFunnelAnalytics } from './mindmap/IdeaFunnelAnalytics';
 import { ImportExternalMap } from './mindmap/ImportExternalMap';
@@ -77,6 +90,14 @@ import { MapHealthScore } from './mindmap/MapHealthScore';
 import { MindMap3DView } from './mindmap/MindMap3DView';
 import { type NodeComment, NodeCommentThread } from './mindmap/NodeCommentThread';
 import { NodeContextMenu } from './mindmap/NodeContextMenu';
+import { PaneContextMenu } from './mindmap/PaneContextMenu';
+import { EdgeContextMenu } from './mindmap/EdgeContextMenu';
+import {
+  applyNodeStyle,
+  appendAIHistoryEntry,
+  collectDescendantIds,
+  copyNodeStyle,
+} from './mindmap/mindMapNodeModel';
 import { type NodeDetailData, NodeDetailDrawer, type NodeStatus } from './mindmap/NodeDetailDrawer';
 import {
   GlowWrapper,
@@ -86,17 +107,17 @@ import {
   VoteStars,
 } from './mindmap/NodeEnhancements';
 import { PresentationMode } from './mindmap/PresentationMode';
-import { applyRadialLayout } from './mindmap/RadialTreeLayout';
 import { SnapshotHistory } from './mindmap/SnapshotHistory';
 import { type BreadcrumbItem, SubMapBreadcrumb } from './mindmap/SubMapBreadcrumb';
 import { TimeHeatmap } from './mindmap/TimeHeatmap';
 import { TimelineView } from './mindmap/TimelineView';
 import { useAutoLayout } from './mindmap/useAutoLayout';
 import { useMapExport } from './mindmap/useMapExport';
+import { useMindMapNodes } from './mindmap/useMindMapNodes';
+import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
+import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { VoiceToNode } from './mindmap/VoiceToNode';
 import { triggerWebhooks, WebhookSettings } from './mindmap/WebhookSettings';
-
-type PersistenceStatus = 'online' | 'no_route' | 'missing_table' | 'offline';
 
 type AIMapProposal = {
   add: { nodes: Node[]; edges: Edge[] };
@@ -109,61 +130,6 @@ function uid() {
   return `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
-function buildLocalDefaultIdeaMap(
-  ideaId: string,
-  ideaTitle: string,
-  isPl: boolean
-): { nodes: Node[]; edges: Edge[] } {
-  const centerId = 'root';
-  const branchRadius = 320;
-  const branches = [
-    { key: 'problem', label: isPl ? 'Problem' : 'Problem', angle: -Math.PI / 2 },
-    { key: 'goal', label: isPl ? 'Cel / KPI' : 'Goal / KPI', angle: -Math.PI / 6 },
-    { key: 'options', label: isPl ? 'Opcje' : 'Options', angle: Math.PI / 6 },
-    { key: 'evidence', label: isPl ? 'Dowody' : 'Evidence', angle: Math.PI / 2 },
-    { key: 'risks', label: isPl ? 'Ryzyka' : 'Risks', angle: (5 * Math.PI) / 6 },
-    { key: 'experiments', label: isPl ? 'Eksperymenty' : 'Experiments', angle: (7 * Math.PI) / 6 },
-  ];
-
-  const nodes: Node[] = [
-    {
-      id: centerId,
-      type: 'center',
-      position: { x: 0, y: 0 },
-      data: {
-        label: ideaTitle || (isPl ? 'Mój pomysł' : 'My idea'),
-        hint: isPl ? 'Kliknij, aby edytować' : 'Click to edit',
-        ideaId,
-      },
-      draggable: false,
-    } as any,
-  ];
-  const edges: Edge[] = [];
-
-  for (const b of branches) {
-    const bx = Math.cos(b.angle) * branchRadius;
-    const by = Math.sin(b.angle) * branchRadius;
-    const branchId = `branch-${b.key}`;
-    nodes.push({
-      id: branchId,
-      type: 'branch',
-      position: { x: bx - 50, y: by - 20 },
-      data: { label: b.label, branchKey: b.key, count: 0 },
-      draggable: false,
-    } as any);
-    edges.push({
-      id: `edge-${centerId}-${branchId}`,
-      source: centerId,
-      target: branchId,
-      type: 'smoothstep',
-      animated: true,
-      style: { stroke: '#94a3b8', strokeWidth: 2.5, opacity: 0.35 },
-      data: { system: true, kind: 'frames' },
-    } as any);
-  }
-
-  return { nodes, edges };
-}
 
 const BRANCH_COLORS: Record<
   string,
@@ -576,32 +542,20 @@ function branchColor(key: string, depth?: number) {
   };
 }
 
-function getNodeDepth(nodeId: string, edges: { source: string; target: string }[]): number {
-  let depth = 0;
-  let current = nodeId;
-  const visited = new Set<string>();
-  while (depth < 10) {
-    const parentEdge = edges.find((e) => e.target === current);
-    if (!parentEdge || visited.has(parentEdge.source)) break;
-    visited.add(parentEdge.source);
-    current = parentEdge.source;
-    depth++;
-  }
-  return depth;
-}
-
 // ─────── Node Types ───────
 
 const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data }) => (
-  <div className="flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-xl shadow-amber-500/25 border-4 border-white dark:border-navy-800">
+  <div className="flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 shadow-2xl shadow-amber-500/30 border-4 border-white dark:border-navy-800 center-node-glow center-node-animated-border transition-transform duration-200 hover:scale-105">
     <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
     <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
     <Handle type="source" position={Position.Bottom} id="bottom" className="!opacity-0 !w-1 !h-1" />
     <Handle type="source" position={Position.Left} id="left" className="!opacity-0 !w-1 !h-1" />
     <div className="text-center px-2">
-      <Flower2 size={28} className="text-white mx-auto" />
-      <div className="text-[10px] font-semibold text-white mt-1 line-clamp-2">{data.label}</div>
-      <div className="text-[9px] text-white/80 mt-0.5">{data.hint}</div>
+      <Flower2 size={32} className="text-white mx-auto drop-shadow-sm" />
+      <div className="text-[11px] font-semibold text-white mt-1.5 line-clamp-2 drop-shadow-sm">{data.label}</div>
+      {data.hint && (
+        <div className="text-[9px] text-white/80 mt-0.5 center-node-hint">{data.hint}</div>
+      )}
     </div>
   </div>
 ));
@@ -786,13 +740,17 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
               .join(', ')}
             onClick={(e) => {
               e.stopPropagation();
-              const first = data.artifactLinks[0];
-              const artType = first?.artifactRef?.type || first?.type;
-              const artId = first?.artifactRef?.id || first?.id;
-              if (artType && artId) {
-                window.dispatchEvent(
-                  new CustomEvent('mywork-open-item', { detail: { type: artType, id: artId, name: first?.label || artType } })
-                );
+              if (data.artifactLinks.length === 1) {
+                const first = data.artifactLinks[0];
+                const artType = first?.artifactRef?.type || first?.type;
+                const artId = first?.artifactRef?.id || first?.id;
+                if (artType && artId) {
+                  window.dispatchEvent(
+                    new CustomEvent('mywork-open-item', { detail: { type: artType, id: artId, name: first?.label || artType } })
+                  );
+                }
+              } else {
+                setDrawerNodeId(id);
               }
             }}
           >
@@ -845,6 +803,24 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   {data.nodeType && (
                     <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5 uppercase tracking-wide">
                       {String(data.nodeType).replace(/_/g, ' ')}
+                    </div>
+                  )}
+                  {(data.semanticType || (Array.isArray(data.tags) && data.tags.length > 0)) && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {data.semanticType && (
+                        <span className="rounded-full bg-white/70 dark:bg-white/[0.06] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300">
+                          {String(data.semanticType)}
+                        </span>
+                      )}
+                      {Array.isArray(data.tags) &&
+                        data.tags.slice(0, 2).map((tag: string) => (
+                          <span
+                            key={tag}
+                            className="rounded-full bg-slate-100/90 dark:bg-white/[0.04] px-1.5 py-0.5 text-[8px] font-medium text-slate-500 dark:text-slate-400"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
                     </div>
                   )}
                 </div>
@@ -909,6 +885,7 @@ type IdeaRecommendationMapProps = {
   ideaTitle: string;
   onClose: () => void;
   onCenterEdit?: () => void;
+  onOpenTemplates?: () => void;
   preferredTool?: CanvasToolType;
   extensions?: Record<string, unknown>;
   onPreferredToolLoaded?: (tool: CanvasToolType | null) => void;
@@ -920,6 +897,19 @@ type IdeaRecommendationMapProps = {
   onViewportReport?: (viewport: { x: number; y: number; zoom: number }) => void;
   focusMode?: 'system' | 'object' | null;
   focusObjectId?: string | null;
+  /** When provided, fullscreen toggles the parent workspace (canvas + right panels) */
+  onFullscreenToggle?: () => void;
+  isFullscreen?: boolean;
+  /** Pinned card integration — stage, summary, actions */
+  stage?: string;
+  seedText?: string;
+  onEditCard?: () => void;
+  onAISummarize?: () => void;
+  onStageChange?: (newStage: IdeaStageV5) => void;
+  graphNodeCount?: number;
+  evidenceCount?: number;
+  /** Open AI chat with optional prompt */
+  onOpenChat?: (prompt?: string) => void;
 };
 
 // ─────── Undo/Redo for map state ───────
@@ -930,6 +920,7 @@ function MindMapInner({
   ideaTitle,
   onClose,
   onCenterEdit,
+  onOpenTemplates,
   preferredTool,
   extensions,
   onPreferredToolLoaded,
@@ -941,18 +932,33 @@ function MindMapInner({
   onViewportReport,
   focusMode,
   focusObjectId,
+  onFullscreenToggle,
+  isFullscreen = false,
+  stage,
+  seedText,
+  onEditCard,
+  onAISummarize,
+  onStageChange,
+  graphNodeCount = 0,
+  evidenceCount = 0,
+  onOpenChat,
 }: IdeaRecommendationMapProps) {
   const { i18n } = useTranslation();
   const currentUser = useAppStore((state) => state.currentUser);
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
-  const { zoomIn, zoomOut, fitView, getViewport, setViewport } = useReactFlow();
+  const { fitView, getViewport, setViewport } = useReactFlow();
   const { autoLayout } = useAutoLayout();
   const { exportAsPNG, exportAsSVG, exportAsJSON } = useMapExport();
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
-  const [persistence, setPersistence] = useState<PersistenceStatus>('online');
+  // ── Lightweight console-only debug logger (no state updates, no re-renders) ──
+  const debugLog = useCallback((msg: string) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`%c[MM] ${msg}`, 'color: #f59e0b; font-weight: bold');
+    }
+  }, []);
+
+  const [showMiniMap, setShowMiniMap] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const [nodes, setNodes, baseOnNodesChange] = useNodesState([] as Node[]) as [
     Node[],
@@ -965,20 +971,21 @@ function MindMapInner({
     (changes: unknown) => void,
   ];
 
+  const updateNodeDataById = useCallback(
+    (nodeId: string, updater: (data: any) => any) => {
+      setNodes((prev: Node[]) =>
+        prev.map((n) => (n.id === nodeId ? { ...n, data: updater(n.data) } : n))
+      );
+    },
+    [setNodes]
+  );
+
   // ── Collapse/Expand ──────────────────────────────────────────────────────
   const [collapsedNodeIds, setCollapsedNodeIds] = useState<Set<string>>(new Set());
   const [drillPath, setDrillPath] = useState<BreadcrumbItem[]>([]);
   const [remoteLockedNodeIds, setRemoteLockedNodeIds] = useState<Set<string>>(new Set());
   const drillFocusId = drillPath.length > 0 ? drillPath[drillPath.length - 1].nodeId : null;
 
-  const toggleCollapse = useCallback((nodeId: string) => {
-    setCollapsedNodeIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(nodeId)) next.delete(nodeId);
-      else next.add(nodeId);
-      return next;
-    });
-  }, []);
 
   // Apply collapse visibility + drill-down filtering
   const visibleNodes = useMemo(() => {
@@ -1068,7 +1075,7 @@ function MindMapInner({
     }));
   }, [focusFilteredNodes, focusMode, focusObjectId, visibleEdges]);
 
-  // ── Undo/Redo ────────────────────────────────────────────────────────────
+  // ── Undo/Redo (shared hook pattern) ──────────────────────────────────────
   const undoStackRef = useRef<MapSnapshot[]>([]);
   const redoStackRef = useRef<MapSnapshot[]>([]);
   const MAX_UNDO = 50;
@@ -1099,12 +1106,34 @@ function MindMapInner({
     setEdges(next.edges);
   }, [edges, nodes, setEdges, setNodes]);
 
+  const clearUndoHistory = useCallback(() => {
+    undoStackRef.current = [];
+    redoStackRef.current = [];
+  }, []);
+
   // ── Context menu ─────────────────────────────────────────────────────────
   const [contextMenu, setContextMenu] = useState<{
     nodeId: string;
     nodeType: string;
     x: number;
     y: number;
+  } | null>(null);
+  const [paneContextMenu, setPaneContextMenu] = useState<{
+    x: number;
+    y: number;
+    canvasX: number;
+    canvasY: number;
+  } | null>(null);
+  const [edgeContextMenu, setEdgeContextMenu] = useState<{
+    edgeId: string;
+    isUserCreated: boolean;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [styleClipboard, setStyleClipboard] = useState<{
+    shape?: string;
+    branchKey?: string;
+    priority?: number;
   } | null>(null);
 
   // ── Node Detail Drawer ──────────────────────────────────────────────────
@@ -1133,8 +1162,13 @@ function MindMapInner({
       goal: node.data?.goal || '',
       rationale: node.data?.rationale || '',
       riskNote: node.data?.riskNote || '',
+      tags: Array.isArray(node.data?.tags) ? node.data.tags : [],
       evidenceLinks: node.data?.evidenceLinks || [],
       semanticType: node.data?.semanticType || '',
+      artifactLinks: Array.isArray(node.data?.artifactLinks) ? node.data.artifactLinks : [],
+      aiExpansionHistory: Array.isArray(node.data?.aiExpansionHistory)
+        ? node.data.aiExpansionHistory
+        : [],
     };
   }, [drawerNodeId, edges, nodeMetaMap, nodes]);
 
@@ -1146,7 +1180,17 @@ function MindMapInner({
           [nodeId]: { ...prev[nodeId], ...patch },
         }));
       }
-      const depthFields: (keyof NodeDetailData)[] = ['context', 'goal', 'rationale', 'riskNote', 'semanticType', 'evidenceLinks'];
+      const depthFields: (keyof NodeDetailData)[] = [
+        'context',
+        'goal',
+        'rationale',
+        'riskNote',
+        'semanticType',
+        'tags',
+        'evidenceLinks',
+        'artifactLinks',
+        'aiExpansionHistory',
+      ];
       const dataPatch: Record<string, unknown> = {};
       if (patch.status) dataPatch.status = patch.status;
       if (patch.notes !== undefined) dataPatch.notes = patch.notes;
@@ -1232,178 +1276,79 @@ function MindMapInner({
   );
 
   // ── Selection ────────────────────────────────────────────────────────────
-  const editingNodeIdRef = useRef<string | null>(null);
+  const prevSelectedIdsRef = useRef<string>('');
+
+  const reportSelection = useCallback(
+    (currentNodes: Node[]) => {
+      try {
+        if (!onSelectionChange) return;
+        const selected = currentNodes.filter((n: Node) => n.selected);
+        const key = selected.map((n) => n.id).sort().join(',');
+        if (key === prevSelectedIdsRef.current) return;
+        prevSelectedIdsRef.current = key;
+        debugLog(`reportSelection: ${selected.length} selected [${key.slice(0, 60)}]`);
+        if (selected.length === 0) {
+          onSelectionChange({ type: 'none', count: 0, ids: [] });
+        } else {
+          onSelectionChange({
+            type: 'node',
+            count: selected.length,
+            ids: selected.map((n: Node) => n.id),
+            primaryId: selected[0]?.id,
+            meta: { nodeType: selected[0]?.type, label: selected[0]?.data?.label },
+          });
+        }
+      } catch (err: any) {
+        debugLog(`ERROR in reportSelection: ${err?.message || err}`);
+        console.error('[MindMap Debug] reportSelection error:', err);
+      }
+    },
+    [debugLog, onSelectionChange]
+  );
+
+  useEffect(() => {
+    reportSelection(nodes);
+  }, [nodes, reportSelection]);
 
   const onNodesChange = useCallback(
     (changes: import('reactflow').NodeChange[]) => {
-      baseOnNodesChange(changes);
-      const hasSelectionChange = changes.some((c) => c.type === 'select');
-      if (hasSelectionChange && onSelectionChange) {
-        setNodes((current: Node[]) => {
-          const selected = current.filter((n: Node) => n.selected);
-          if (selected.length === 0) {
-            onSelectionChange({ type: 'none', count: 0, ids: [] });
-          } else {
-            onSelectionChange({
-              type: 'node',
-              count: selected.length,
-              ids: selected.map((n: Node) => n.id),
-              primaryId: selected[0]?.id,
-              meta: { nodeType: selected[0]?.type, label: selected[0]?.data?.label },
-            });
-          }
-          return current;
-        });
+      try {
+        const types = changes.map((c) => c.type);
+        const uniqueTypes = [...new Set(types)];
+        if (uniqueTypes.some((t) => t !== 'position' && t !== 'dimensions')) {
+          debugLog(`onNodesChange: [${uniqueTypes.join(',')}] count=${changes.length}`);
+        }
+        baseOnNodesChange(changes);
+      } catch (err: any) {
+        debugLog(`ERROR in onNodesChange: ${err?.message || err}`);
+        console.error('[MindMap Debug] onNodesChange error:', err);
       }
     },
-    [baseOnNodesChange, onSelectionChange, setNodes]
+    [baseOnNodesChange, debugLog]
   );
 
-  const saveTimerRef = useRef<number | null>(null);
-  const isHydratingRef = useRef(true);
-
-  // ── Hydrate ──────────────────────────────────────────────────────────────
-  const hydrate = useCallback(async () => {
-    setLoading(true);
-    try {
-      setPersistence('online');
-      const res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
-      const map = res?.map || {};
-      const nextNodes = Array.isArray(map.nodes) ? map.nodes : [];
-      const nextEdges = Array.isArray(map.edges) ? map.edges : [];
-      const loadedPreferred = map?.preferredTool ? String(map.preferredTool) : null;
-      const loadedPreferredSafe =
-        loadedPreferred &&
-        ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(loadedPreferred)
-          ? (loadedPreferred as CanvasToolType)
-          : null;
-      onPreferredToolLoaded?.(loadedPreferredSafe);
-
-      const patchedNodes = nextNodes.map((n: any) => {
-        if (String(n?.id) !== 'root') return n;
-        return {
-          ...n,
-          data: {
-            ...(n.data || {}),
-            label: ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea'),
-            hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
-          },
-        };
-      });
-
-      // Restore collapsed state and viewport from extensions
-      const viewState = (map.extensions as any)?.mindmap?.viewState;
-      const savedCollapsed = viewState?.collapsedNodeIds;
-      if (Array.isArray(savedCollapsed)) setCollapsedNodeIds(new Set(savedCollapsed));
-
-      const savedViewport = viewState?.viewport;
-
-      // V5-IDEA-43: Inject hierarchical depth into node data
-      // V51-26: Normalize node types so all nodes render with custom components
-      const VALID_NODE_TYPES = ['center', 'branch', 'idea', 'knowledgeCard', 'noteCard', 'evidenceCard'];
-      const depthPatchedNodes = patchedNodes.map((n: any) => {
-        const inferredType = VALID_NODE_TYPES.includes(n?.type)
-          ? n.type
-          : n?.id === 'root'
-            ? 'center'
-            : n?.id?.startsWith?.('branch-')
-              ? 'branch'
-              : 'idea';
-        const mergedArtifactLinks = Array.isArray(n?.data?.artifactLinks)
-          ? n.data.artifactLinks
-          : Array.isArray(n?.artifactLinks) ? n.artifactLinks : undefined;
-        return {
-          ...n,
-          type: inferredType,
-          data: {
-            ...(n?.data || {}),
-            _depth: getNodeDepth(n.id, nextEdges),
-            branchKey: n?.data?.branchKey || 'uncategorized',
-            label: n?.data?.label ?? '',
-            ...(mergedArtifactLinks ? { artifactLinks: mergedArtifactLinks } : {}),
-          },
-        };
-      });
-
-      isHydratingRef.current = true;
-      setNodes(depthPatchedNodes);
-      setEdges(nextEdges);
-      undoStackRef.current = [];
-      redoStackRef.current = [];
-      setTimeout(() => {
-        isHydratingRef.current = false;
-        try {
-          if (
-            savedViewport &&
-            typeof savedViewport.x === 'number' &&
-            typeof savedViewport.zoom === 'number'
-          ) {
-            setViewport(savedViewport, { duration: 300 });
-          } else {
-            fitView({ padding: 0.3, duration: 300 });
-          }
-        } catch {
-          /* ignore */
-        }
-      }, 50);
-    } catch (err: any) {
-      const msg = String(err?.message || '');
-      const isNoRoute =
-        msg.toLowerCase().includes('route get') &&
-        msg.toLowerCase().includes('/my-work/my-ideas') &&
-        msg.toLowerCase().includes('/map');
-      const isMissingTable =
-        msg.toLowerCase().includes('database table missing') &&
-        msg.toLowerCase().includes('my_idea_maps');
-
-      if (isNoRoute) {
-        setPersistence('no_route');
-        toast(
-          (isPolish
-            ? 'Backend wymaga restartu (route mapy jeszcze nie działa).'
-            : 'Backend needs restart (map route not active).') as any
-        );
-      } else if (isMissingTable) {
-        setPersistence('missing_table');
-        toast(
-          (isPolish
-            ? 'Brakuje tabeli mapy — uruchom migracje DB.'
-            : 'Map table missing — run DB migrations.') as any
-        );
-      } else {
-        setPersistence('offline');
-        toast.error(msg || (isPolish ? 'Nie udało się wczytać mapy' : 'Failed to load map'));
-      }
-
-      const def = buildLocalDefaultIdeaMap(ideaId, ideaTitle, isPolish);
-      isHydratingRef.current = true;
-      setNodes(def.nodes);
-      setEdges(def.edges);
-      setTimeout(() => {
-        isHydratingRef.current = false;
-        try {
-          fitView({ padding: 0.3, duration: 250 });
-        } catch {
-          /* ignore */
-        }
-      }, 30);
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    fitView,
-    i18n.language,
-    ideaId,
-    ideaTitle,
-    isPolish,
-    onPreferredToolLoaded,
-    setEdges,
-    setNodes,
-  ]);
-
-  useEffect(() => {
-    hydrate();
-  }, [ideaId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { loading, saving, lastSavedAt, persistence, setSaving, setLastSavedAt, scheduleSave } =
+    useMindMapPersistence({
+      ideaId,
+      ideaTitle,
+      isPolish,
+      locked,
+      preferredTool,
+      extensions,
+      i18nLanguage: i18n.language,
+      nodes,
+      edges,
+      setNodes,
+      setEdges,
+      setCollapsedNodeIds,
+      collapsedNodeIds,
+      fitView,
+      setViewport,
+      getViewport,
+      onPreferredToolLoaded,
+      onViewportReport,
+      clearUndoHistory,
+    });
 
   useEffect(() => {
     const label = ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea');
@@ -1441,66 +1386,44 @@ function MindMapInner({
     }
   }, [loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Save ─────────────────────────────────────────────────────────────────
-  const scheduleSave = useCallback(
-    (nextNodes: Node[], nextEdges: Edge[]) => {
-      if (isHydratingRef.current) return;
-      if (persistence !== 'online') return;
-      if (locked) return;
-      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
-      saveTimerRef.current = window.setTimeout(async () => {
-        setSaving(true);
-        try {
-          const currentViewport = getViewport();
-          onViewportReport?.(currentViewport);
-          const ext = {
-            ...(extensions || {}),
-            mindmap: {
-              ...((extensions as any)?.mindmap || {}),
-              viewState: {
-                collapsedNodeIds: Array.from(collapsedNodeIds),
-                viewport: currentViewport,
-              },
-            },
-          };
-          await Api.saveMyIdeaMap(ideaId, {
-            nodes: nextNodes,
-            edges: nextEdges,
-            preferredTool: preferredTool || undefined,
-            extensions: ext,
-          });
-          setLastSavedAt(Date.now());
-        } catch (err: any) {
-          toast.error(
-            err?.message || (isPolish ? 'Nie udało się zapisać mapy' : 'Failed to save map')
-          );
-        } finally {
-          setSaving(false);
-        }
-      }, 700);
-    },
-    [collapsedNodeIds, extensions, ideaId, isPolish, locked, persistence, preferredTool]
+  // ── Node operations (extracted to useMindMapNodes) ──────────────────────
+  const {
+    editingNodeIdRef,
+    isNodeLockedByPeer,
+    getSelectedNode,
+    selectedNodeIds,
+    findParentId,
+    findChildrenIds,
+    addChildNode,
+    addSiblingNode,
+    deleteSelected,
+    duplicateSelected,
+    focusSelectedNode,
+    reparentSelectedPromote,
+    reparentSelectedDemote,
+    startEditingSelected,
+    toggleCollapse: toggleCollapseNode,
+  } = useMindMapNodes({
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    locked,
+    isPolish,
+    pushUndo,
+    fitView,
+    remoteLockedNodeIds,
+    autoLayout,
+  });
+
+  const toggleCollapse = useCallback(
+    (nodeId: string) => toggleCollapseNode(nodeId, setCollapsedNodeIds),
+    [toggleCollapseNode, setCollapsedNodeIds]
   );
 
-  useEffect(() => {
-    scheduleSave(nodes as any, edges as any);
-  }, [nodes, edges, scheduleSave]);
-
-  // ── Node operations ──────────────────────────────────────────────────────
-
-  const isNodeLockedByPeer = useCallback(
-    (nodeId?: string | null) => (nodeId ? remoteLockedNodeIds.has(String(nodeId)) : false),
-    [remoteLockedNodeIds]
-  );
-
-  const getSelectedNode = useCallback((): Node | undefined => {
-    return nodes.find((n: any) => n?.selected && !isNodeLockedByPeer(n.id));
-  }, [isNodeLockedByPeer, nodes]);
-
-  const selectedNodeIds = useMemo(
-    () => nodes.filter((node) => node.selected).map((node) => node.id),
-    [nodes]
-  );
+  // ── Manual drag tracking (disables auto-relayout for the session) ────────
+  const userDraggedRef = useRef(false);
+  const onNodeDragStop = useCallback(() => { userDraggedRef.current = true; }, []);
 
   const currentUserName = useMemo(() => {
     const fullName = [currentUser?.firstName, currentUser?.lastName]
@@ -1561,243 +1484,9 @@ function MindMapInner({
     }
   }, [contextMenu, drawerNodeId, remoteLockedNodeIds, setNodes]);
 
-  const findParentId = useCallback(
-    (nodeId: string): string | undefined => {
-      const parentEdge = edges.find((e) => e.target === nodeId);
-      return parentEdge?.source;
-    },
-    [edges]
-  );
-
-  const findChildrenIds = useCallback(
-    (nodeId: string): string[] => {
-      return edges.filter((e) => e.source === nodeId).map((e) => e.target);
-    },
-    [edges]
-  );
-
-  const addChildNode = useCallback(() => {
-    if (locked) return;
-    const selected = getSelectedNode();
-    if (!selected) {
-      toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
-      return;
-    }
-    pushUndo();
-
-    const branchKey = selected.data?.branchKey || 'options';
-    const children = findChildrenIds(selected.id);
-    const lastChild =
-      children.length > 0 ? nodes.find((n) => n.id === children[children.length - 1]) : null;
-    const newX = lastChild?.position?.x ?? selected.position.x + 220;
-    const newY = (lastChild?.position?.y ?? selected.position.y) + (lastChild ? 70 : 0);
-
-    const newId = `node-${uid()}`;
-    const newNode: Node = {
-      id: newId,
-      type: 'idea',
-      position: { x: newX, y: newY },
-      data: { label: '', branchKey, sourceType: 'manual', priority: 50, _startEditing: Date.now() },
-    } as any;
-
-    const colors = branchColor(branchKey);
-    const newEdge: Edge = {
-      id: `edge-${uid()}`,
-      source: selected.id,
-      target: newId,
-      type: 'smoothstep',
-      style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
-      animated: true,
-      data: { userCreated: true },
-    } as any;
-
-    editingNodeIdRef.current = newId;
-    setNodes((prev: Node[]) => [
-      ...prev.map((n) => ({ ...n, selected: false })),
-      { ...newNode, selected: true },
-    ]);
-    setEdges((prev: Edge[]) => [...prev, newEdge]);
-  }, [
-    edges,
-    findChildrenIds,
-    getSelectedNode,
-    isPolish,
-    locked,
-    nodes,
-    pushUndo,
-    setEdges,
-    setNodes,
-  ]);
-
-  const addSiblingNode = useCallback(() => {
-    if (locked) return;
-    const selected = getSelectedNode();
-    if (!selected || selected.id === 'root') {
-      toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
-      return;
-    }
-    pushUndo();
-
-    const parentId = findParentId(selected.id);
-    if (!parentId) return;
-
-    const branchKey = selected.data?.branchKey || 'options';
-    const newId = `node-${uid()}`;
-    const newNode: Node = {
-      id: newId,
-      type: 'idea',
-      position: { x: selected.position.x, y: selected.position.y + 70 },
-      data: { label: '', branchKey, sourceType: 'manual', priority: 50, _startEditing: Date.now() },
-    } as any;
-
-    const colors = branchColor(branchKey);
-    const newEdge: Edge = {
-      id: `edge-${uid()}`,
-      source: parentId,
-      target: newId,
-      type: 'smoothstep',
-      style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
-      animated: true,
-      data: { userCreated: true },
-    } as any;
-
-    editingNodeIdRef.current = newId;
-    setNodes((prev: Node[]) => [
-      ...prev.map((n) => ({ ...n, selected: false })),
-      { ...newNode, selected: true },
-    ]);
-    setEdges((prev: Edge[]) => [...prev, newEdge]);
-  }, [findParentId, getSelectedNode, isPolish, locked, pushUndo, setEdges, setNodes]);
-
-  const deleteSelected = useCallback(() => {
-    if (locked) return;
-    pushUndo();
-    let removedIds: Set<string>;
-    setNodes((prev: Node[]) => {
-      removedIds = new Set(
-        prev
-          .filter((n: Node) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-'))
-          .map((n: Node) => n.id)
-      );
-      return prev.filter((n: Node) => !removedIds.has(n.id));
-    });
-    setEdges((prev: Edge[]) =>
-      prev.filter(
-        (e: Edge) => !e.selected && !removedIds!.has(e.source) && !removedIds!.has(e.target)
-      )
-    );
-  }, [locked, pushUndo, setEdges, setNodes]);
-
-  const duplicateSelected = useCallback(() => {
-    if (locked) return;
-    const selected = getSelectedNode();
-    if (!selected || selected.id === 'root' || selected.id.startsWith('branch-')) return;
-    pushUndo();
-
-    const parentId = findParentId(selected.id);
-    if (!parentId) return;
-
-    const newId = `node-${uid()}`;
-    const newNode: Node = {
-      ...selected,
-      id: newId,
-      position: { x: selected.position.x + 30, y: selected.position.y + 30 },
-      selected: false,
-      data: { ...selected.data, _startEditing: undefined },
-    };
-
-    const colors = branchColor(selected.data?.branchKey || 'uncategorized');
-    const newEdge: Edge = {
-      id: `edge-${uid()}`,
-      source: parentId,
-      target: newId,
-      type: 'smoothstep',
-      style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
-      animated: true,
-      data: { userCreated: true },
-    } as any;
-
-    setNodes((prev: Node[]) => [...prev, newNode]);
-    setEdges((prev: Edge[]) => [...prev, newEdge]);
-  }, [findParentId, getSelectedNode, locked, pushUndo, setEdges, setNodes]);
-
-  const focusSelectedNode = useCallback(() => {
-    const selected = getSelectedNode();
-    if (!selected) return;
-    try {
-      fitView({ nodes: [{ id: selected.id } as any], padding: 0.45, duration: 350 });
-    } catch {
-      /* ignore */
-    }
-  }, [fitView, getSelectedNode]);
-
-  const reparentSelectedPromote = useCallback(() => {
-    if (locked) return;
-    const selected = getSelectedNode();
-    if (!selected || selected.id === 'root' || selected.id.startsWith('branch-')) return;
-    const parentId = findParentId(selected.id);
-    if (!parentId) return;
-    const grandParentId = findParentId(parentId);
-    if (!grandParentId) return;
-
-    pushUndo();
-    setEdges((prev: Edge[]) =>
-      prev.map((edge) =>
-        edge.target === selected.id
-          ? {
-              ...edge,
-              source: grandParentId,
-            }
-          : edge
-      )
-    );
-    setTimeout(() => focusSelectedNode(), 30);
-  }, [findParentId, focusSelectedNode, getSelectedNode, locked, pushUndo, setEdges]);
-
-  const reparentSelectedDemote = useCallback(() => {
-    if (locked) return;
-    const selected = getSelectedNode();
-    if (!selected || selected.id === 'root' || selected.id.startsWith('branch-')) return;
-    const parentId = findParentId(selected.id);
-    if (!parentId) return;
-    const siblings = findChildrenIds(parentId);
-    const selectedIndex = siblings.indexOf(selected.id);
-    if (selectedIndex <= 0) return;
-    const previousSiblingId = siblings[selectedIndex - 1];
-    if (!previousSiblingId) return;
-
-    pushUndo();
-    setEdges((prev: Edge[]) =>
-      prev.map((edge) =>
-        edge.target === selected.id
-          ? {
-              ...edge,
-              source: previousSiblingId,
-            }
-          : edge
-      )
-    );
-    setTimeout(() => focusSelectedNode(), 30);
-  }, [
-    findChildrenIds,
-    findParentId,
-    focusSelectedNode,
-    getSelectedNode,
-    locked,
-    pushUndo,
-    setEdges,
-  ]);
-
-  const startEditingSelected = useCallback(() => {
-    const selected = getSelectedNode();
-    if (!selected || selected.id === 'root' || selected.id.startsWith('branch-')) return;
-    editingNodeIdRef.current = selected.id;
-    setNodes((prev: Node[]) =>
-      prev.map((n) =>
-        n.id === selected.id ? { ...n, data: { ...n.data, _startEditing: Date.now() } } : n
-      )
-    );
-  }, [getSelectedNode, setNodes]);
+  // Node operations (findParentId, findChildrenIds, addChildNode, addSiblingNode,
+  // deleteSelected, duplicateSelected, focusSelectedNode, reparentSelectedPromote,
+  // reparentSelectedDemote, startEditingSelected) are now in useMindMapNodes hook above.
 
   // ── Handle inline edit completion ────────────────────────────────────────
   useEffect(() => {
@@ -1848,222 +1537,7 @@ function MindMapInner({
     return () => window.removeEventListener('idea-mindmap-edge-label', handler);
   }, [setEdges]);
 
-  // ── Quick action listener (from Tools panel) ─────────────────────────────
-  const quickActionRef = useRef<(action: string) => void>(() => {});
-  quickActionRef.current = (action: string) => {
-    if (action === 'mm_add_child') addChildNode();
-    if (action === 'mm_add_sibling') addSiblingNode();
-    if (action === 'mm_duplicate') duplicateSelected();
-    if (action === 'mm_toggle_collapse') {
-      const sel = getSelectedNode();
-      if (sel) toggleCollapse(sel.id);
-    }
-    if (action === 'mm_focus_selected') focusSelectedNode();
-    if (action === 'mm_reparent_promote') reparentSelectedPromote();
-    if (action === 'mm_reparent_demote') reparentSelectedDemote();
-    if (action === 'mm_delete') deleteSelected();
-    if (action === 'mm_undo') undo();
-    if (action === 'mm_redo') redo();
-
-    // V5-IDEA-27: Knowledge card creation
-    if (action === 'mm_add_knowledge' || action === 'mm_add_note' || action === 'mm_add_evidence') {
-      if (locked) return;
-      pushUndo();
-      const typeMap: Record<string, string> = {
-        mm_add_knowledge: 'knowledgeCard',
-        mm_add_note: 'noteCard',
-        mm_add_evidence: 'evidenceCard',
-      };
-      const labelMap: Record<string, string> = {
-        mm_add_knowledge: isPolish ? 'Wiedza' : 'Knowledge',
-        mm_add_note: isPolish ? 'Notatka' : 'Note',
-        mm_add_evidence: isPolish ? 'Dowód' : 'Evidence',
-      };
-      const newId = `${typeMap[action]}-${Date.now()}`;
-      const sel = getSelectedNode();
-      const baseX = sel ? sel.position.x + 200 : 300;
-      const baseY = sel ? sel.position.y : 200;
-      setNodes((prev) => [
-        ...prev,
-        {
-          id: newId,
-          type: typeMap[action],
-          position: { x: baseX, y: baseY },
-          data: {
-            label: labelMap[action],
-            kind: typeMap[action],
-            system: 'knowledge',
-            onLabelChange: (next: string) => {
-              setNodes((nds) =>
-                nds.map((n) => (n.id === newId ? { ...n, data: { ...n.data, label: next } } : n))
-              );
-            },
-          },
-        },
-      ]);
-      if (sel) {
-        setEdges((prev) => [
-          ...prev,
-          {
-            id: `e-${sel.id}-${newId}`,
-            source: sel.id,
-            target: newId,
-            type: 'labeled',
-            data: {},
-          },
-        ]);
-      }
-    }
-    if (action === 'mm_auto_layout') {
-      pushUndo();
-      const laid = autoLayout(nodes, edges);
-      setNodes(laid);
-      setTimeout(() => {
-        try {
-          fitView({ padding: 0.3, duration: 400 });
-        } catch {
-          /* ignore */
-        }
-      }, 50);
-    }
-    if (action === 'mm_ai_expand_branch') handleAIExpand();
-    if (action === 'mm_toggle_bubbles') setShowClusterBubbles((p) => !p);
-    if (action === 'mm_toggle_heatmap') setHeatmapMode((p) => !p);
-    if (action === 'mm_toggle_particles') setParticleFlow((p) => !p);
-    if (action === 'mm_what_if') setShowWhatIf(true);
-    if (action === 'mm_batch_convert') setShowBatchConvert(true);
-    if (action === 'mm_timeline') setShowTimeline(true);
-    if (action === 'mm_presentation') setShowPresentation(true);
-    if (action === 'mm_snapshots') setShowSnapshots(true);
-    if (action === 'mm_voice') setShowVoiceToNode(true);
-    if (action === 'mm_doc_to_map') setShowDocToMap(true);
-    if (action === 'mm_interview_to_map') setShowInterviewToMap(true);
-    if (action === 'mm_dependency_detect') setShowDependencyDetector(true);
-    if (action === 'mm_priority_recommender') setShowPriorityRecommender(true);
-    if (action === 'mm_auto_clustering') setShowAutoClustering(true);
-    if (action === 'mm_sentiment_analysis') setShowSentimentOverlay(true);
-    if (action === 'mm_activity_feed') setShowActivityFeed(true);
-    if (action === 'mm_toggle_health') setShowHealthScore((p) => !p);
-    if (action === 'mm_funnel_analytics') setShowFunnelAnalytics(true);
-    if (action === 'mm_radial_layout') {
-      pushUndo();
-      const newMode = layoutMode === 'radial' ? 'tree' : 'radial';
-      setLayoutMode(newMode);
-      if (newMode === 'radial') {
-        const laid = applyRadialLayout(nodes, edges);
-        setNodes(laid);
-      } else {
-        const laid = autoLayout(nodes, edges);
-        setNodes(laid);
-      }
-      setTimeout(() => {
-        try {
-          fitView({ padding: 0.3, duration: 400 });
-        } catch {
-          /* ignore */
-        }
-      }, 50);
-    }
-    if (action === 'mm_comments') {
-      const sel = getSelectedNode();
-      if (sel && sel.type === 'idea') setCommentNodeId(sel.id);
-    }
-    if (action === 'mm_export_pptx') setShowExportPPTX(true);
-    if (action === 'mm_embed_report') setShowEmbedInReports(true);
-    if (action === 'mm_competitive_landscape') setShowCompetitiveLandscape(true);
-    if (action === 'mm_branch_comparison') setShowBranchComparison(true);
-    if (action === 'mm_time_heatmap') setShowTimeHeatmap(true);
-    if (action === 'mm_export_diagram') setShowExportDiagramCode(true);
-    if (action === 'mm_force_layout') {
-      pushUndo();
-      const newMode = layoutMode === 'force' ? 'tree' : 'force';
-      setLayoutMode(newMode);
-      if (newMode === 'force') {
-        const laid = applyForceLayout(nodes, edges);
-        setNodes(laid);
-      } else {
-        const laid = autoLayout(nodes, edges);
-        setNodes(laid);
-      }
-      setTimeout(() => {
-        try {
-          fitView({ padding: 0.3, duration: 400 });
-        } catch {
-          /* ignore */
-        }
-      }, 50);
-    }
-    if (action === 'mm_import_external') setShowImportExternalMap(true);
-    if (action === 'mm_3d_view') setShowMindMap3D(true);
-    if (action === 'mm_webhooks') setShowWebhookSettings(true);
-    if (action === 'mm_export') {
-      const format = window.prompt(
-        isPolish ? 'Format eksportu: png, svg, json' : 'Export format: png, svg, json',
-        'png'
-      );
-      if (format === 'svg') exportAsSVG(`${ideaTitle || 'mindmap'}.svg`);
-      else if (format === 'json')
-        exportAsJSON(nodes, edges, extensions, `${ideaTitle || 'mindmap'}.json`);
-      else exportAsPNG(`${ideaTitle || 'mindmap'}.png`);
-    }
-  };
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (!detail?.action) return;
-
-      if (detail.action === 'convert_initiative' || detail.action === 'convert_decision') {
-        const target = detail.action === 'convert_initiative' ? 'initiative' : 'decision';
-        const selectedNode = getSelectedNode();
-        const nodeIds: string[] = Array.isArray(detail.nodeIds)
-          ? detail.nodeIds
-          : selectedNode
-            ? [selectedNode.id]
-            : [];
-        if (nodeIds.length === 0) return;
-
-        Api.convertMyIdea(ideaId, { target, options: { nodeIds } })
-          .then((result) => {
-            for (const nid of nodeIds) {
-              setNodes((prev: Node[]) =>
-                prev.map((n) =>
-                  n.id === nid
-                    ? {
-                        ...n,
-                        data: {
-                          ...n.data,
-                          status: 'converted',
-                          artifactRef: {
-                            type: target,
-                            id:
-                              result?.promotedEntityId ||
-                              result?.created?.initiativeId ||
-                              result?.created?.decisionId,
-                          },
-                        },
-                      }
-                    : n
-                )
-              );
-            }
-            toast.success(isPolish ? `Przekonwertowano na ${target}` : `Converted to ${target}`, {
-              duration: 2000,
-            });
-          })
-          .catch((err: any) => {
-            toast.error(
-              isPolish ? 'Błąd konwersji' : `Convert failed: ${err?.message || 'unknown error'}`
-            );
-          });
-        return;
-      }
-
-      quickActionRef.current(detail.action);
-    };
-    window.addEventListener('idea-workspace-quick-action', handler);
-    return () => window.removeEventListener('idea-workspace-quick-action', handler);
-  }, [getSelectedNode, ideaId, isPolish, setNodes]);
+  // Quick action listener is wired below (after all state declarations).
 
   // ── Insert from AI Suggestions panel ─────────────────────────────────────
   useEffect(() => {
@@ -2113,6 +1587,7 @@ function MindMapInner({
             branchKey,
             sourceType: 'ai_suggestion',
             priority: 50,
+            ...(item.data || {}),
             ...(anchorId ? { parentId: anchorId } : {}),
           },
         } as any;
@@ -2136,6 +1611,28 @@ function MindMapInner({
     window.addEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
     return () => window.removeEventListener(IDEA_WORKSPACE_INSERT_EVENT, handler);
   }, [edges, ideaId, isPolish, nodes, pushUndo, setEdges, setNodes]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const themeId = String(detail.themeId || '');
+      if (themeId === 'ops') {
+        setLayoutMode('tree');
+        setHeatmapMode(false);
+      }
+      if (themeId === 'workshop') {
+        setShowClusterBubbles(true);
+        setHeatmapMode(false);
+      }
+      if (themeId === 'strategy') {
+        setLayoutMode('radial');
+        setShowClusterBubbles(false);
+      }
+    };
+    window.addEventListener(IDEA_WORKSPACE_THEME_EVENT, handler);
+    return () => window.removeEventListener(IDEA_WORKSPACE_THEME_EVENT, handler);
+  }, [ideaId]);
 
   // ── Keyboard shortcuts ───────────────────────────────────────────────────
   useEffect(() => {
@@ -2265,6 +1762,7 @@ function MindMapInner({
   // ── Connect ──────────────────────────────────────────────────────────────
   const onConnect = useCallback(
     (connection: Connection) => {
+      debugLog(`onConnect: ${connection.source} → ${connection.target}`);
       if (locked) return;
       if (!connection.source || !connection.target) return;
       if (connection.source === connection.target) return;
@@ -2288,6 +1786,7 @@ function MindMapInner({
 
   const onEdgeClick = useCallback(
     (_: React.MouseEvent, edge: Edge) => {
+      debugLog(`onEdgeClick: ${edge.id}`);
       if (locked) return;
       const isUser = !!edge.data?.userCreated;
       const currentState = edge.data?.flowState || 'forward';
@@ -2343,6 +1842,122 @@ function MindMapInner({
     [isPolish, locked, pushUndo, setEdges]
   );
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { edgeId, isUserCreated, x, y } = (e as CustomEvent).detail;
+      setContextMenu(null);
+      setPaneContextMenu(null);
+      setEdgeContextMenu({ edgeId, isUserCreated, x, y });
+    };
+    window.addEventListener('mindmap-edge-contextmenu', handler);
+    return () => window.removeEventListener('mindmap-edge-contextmenu', handler);
+  }, []);
+
+  const handleEdgeContextAction = useCallback(
+    (action: string) => {
+      if (!edgeContextMenu) return;
+      const targetEdge = (edges as Edge[]).find((e) => e.id === edgeContextMenu.edgeId);
+      if (!targetEdge) return;
+
+      if (action === 'edge_add_label') {
+        const current = targetEdge.data?.label || '';
+        const label = window.prompt(isPolish ? 'Etykieta połączenia:' : 'Connection label:', current);
+        if (label !== null) {
+          setEdges((prev: Edge[]) =>
+            prev.map((e) => (e.id === targetEdge.id ? { ...e, data: { ...e.data, label } } : e)),
+          );
+        }
+      }
+
+      if (action === 'edge_insert_node') {
+        pushUndo();
+        const newId = `node-${uid()}`;
+        const midX = 0;
+        const midY = 0;
+        const sourceNode = (nodes as Node[]).find((n) => n.id === targetEdge.source);
+        const targetNode = (nodes as Node[]).find((n) => n.id === targetEdge.target);
+        const posX = sourceNode && targetNode
+          ? (sourceNode.position.x + targetNode.position.x) / 2
+          : midX;
+        const posY = sourceNode && targetNode
+          ? (sourceNode.position.y + targetNode.position.y) / 2
+          : midY;
+
+        const newNode: Node = {
+          id: newId,
+          type: 'idea',
+          position: { x: posX, y: posY },
+          data: { label: '', branchKey: 'uncategorized', sourceType: 'manual', priority: 50, _startEditing: Date.now() },
+        } as any;
+
+        setEdges((prev: Edge[]) => {
+          const without = prev.filter((e) => e.id !== targetEdge.id);
+          return [
+            ...without,
+            { ...targetEdge, id: `edge-${uid()}`, target: newId } as Edge,
+            { ...targetEdge, id: `edge-${uid()}`, source: newId, target: targetEdge.target } as Edge,
+          ];
+        });
+        setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+      }
+
+      if (action === 'edge_reverse') {
+        pushUndo();
+        setEdges((prev: Edge[]) =>
+          prev.map((e) =>
+            e.id === targetEdge.id
+              ? { ...e, source: e.target, target: e.source, sourceHandle: e.targetHandle, targetHandle: e.sourceHandle }
+              : e,
+          ),
+        );
+        toast.success(isPolish ? 'Kierunek odwrócony' : 'Direction reversed', { duration: 800 });
+      }
+
+      if (action === 'edge_change_style') {
+        const styles = ['solid', 'dashed', 'dotted'];
+        const current = targetEdge.style?.strokeDasharray ? (targetEdge.style.strokeDasharray === '2 2' ? 'dotted' : 'dashed') : 'solid';
+        const nextIdx = (styles.indexOf(current) + 1) % styles.length;
+        const nextStyle = styles[nextIdx];
+        const dasharray = nextStyle === 'dashed' ? '5 5' : nextStyle === 'dotted' ? '2 2' : undefined;
+        setEdges((prev: Edge[]) =>
+          prev.map((e) =>
+            e.id === targetEdge.id
+              ? { ...e, style: { ...e.style, strokeDasharray: dasharray } }
+              : e,
+          ),
+        );
+        toast.success(`Style: ${nextStyle}`, { duration: 800 });
+      }
+
+      if (action === 'edge_edit_relation') {
+        const current = targetEdge.data?.relation || '';
+        const relations = ['related', 'depends_on', 'blocks', 'supports', 'contradicts'];
+        const label = window.prompt(
+          isPolish
+            ? `Typ relacji (${relations.join(', ')}):`
+            : `Relation type (${relations.join(', ')}):`,
+          current,
+        );
+        if (label !== null) {
+          setEdges((prev: Edge[]) =>
+            prev.map((e) =>
+              e.id === targetEdge.id ? { ...e, data: { ...e.data, relation: label, label } } : e,
+            ),
+          );
+        }
+      }
+
+      if (action === 'edge_delete') {
+        pushUndo();
+        setEdges((prev: Edge[]) => prev.filter((e) => e.id !== targetEdge.id));
+        toast.success(isPolish ? 'Połączenie usunięte' : 'Connection removed', { duration: 800 });
+      }
+
+      setEdgeContextMenu(null);
+    },
+    [edgeContextMenu, edges, isPolish, nodes, pushUndo, setEdges, setNodes],
+  );
+
   const selectedBranchKey = useMemo(() => {
     const selected = nodes.find((n: any) => n?.selected);
     if (!selected) return 'options';
@@ -2376,6 +1991,11 @@ function MindMapInner({
   const [showAutoClustering, setShowAutoClustering] = useState(false);
   const [showSentimentOverlay, setShowSentimentOverlay] = useState(false);
 
+  // ── Inline modals (replacing window.prompt) ─────────────────────────
+  const [assignModalNodeId, setAssignModalNodeId] = useState<string | null>(null);
+  const [attachArtifactNodeId, setAttachArtifactNodeId] = useState<string | null>(null);
+  const [imageUrlNodeId, setImageUrlNodeId] = useState<string | null>(null);
+
   // ── R2: Collaboration ─────────────────────────────────────────────────
   const [commentNodeId, setCommentNodeId] = useState<string | null>(null);
   const [nodeComments, setNodeComments] = useState<Record<string, NodeComment[]>>({});
@@ -2406,6 +2026,9 @@ function MindMapInner({
 
   // ── R4.2: Export Diagram Code ──────────────────────────────────────
   const [showExportDiagramCode, setShowExportDiagramCode] = useState(false);
+
+  // ── Export format menu (replacing window.prompt) ──────────────────
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
   // ── R3.1+R3: Layout modes ──────────────────────────────────────────
   const [layoutMode, setLayoutMode] = useState<'tree' | 'radial' | 'force'>('tree');
@@ -2457,10 +2080,34 @@ function MindMapInner({
     pushUndo();
     setSaving(true);
     try {
+      const aiSummaryBySource = new Map<string, string[]>();
+      for (const edge of toAddEdges as any[]) {
+        const targetNode = toAddNodes.find((node: any) => node.id === edge.target);
+        if (!edge?.source || !targetNode?.data?.label) continue;
+        aiSummaryBySource.set(edge.source, [
+          ...(aiSummaryBySource.get(edge.source) || []),
+          String(targetNode.data.label),
+        ]);
+      }
       const nextNodes = (() => {
         const byId = new Map<string, Node>();
         for (const n of nodes as any) byId.set(String((n as any)?.id), n as any);
         for (const n of toAddNodes as any) byId.set(String((n as any)?.id), n as any);
+        for (const [sourceId, labels] of aiSummaryBySource.entries()) {
+          const existing = byId.get(String(sourceId));
+          if (!existing) continue;
+          byId.set(String(sourceId), {
+            ...existing,
+            data: {
+              ...(existing.data || {}),
+              aiExpansionHistory: appendAIHistoryEntry(existing.data?.aiExpansionHistory as any, {
+                timestamp: new Date().toISOString(),
+                prompt: isPolish ? 'AI expand branch' : 'AI expand branch',
+                resultSummary: labels.join(', '),
+              }),
+            },
+          } as Node);
+        }
         return Array.from(byId.values());
       })();
       const nextEdges = (() => {
@@ -2595,39 +2242,142 @@ function MindMapInner({
     [edges, i18n.language, ideaId, isPolish, locked, nodes, persistence, selectedBranchKey]
   );
 
+  // ── Quick action listener (extracted to useMindMapQuickActions) ──────────
+  useMindMapQuickActions({
+    ideaId,
+    ideaTitle,
+    isPolish,
+    locked,
+    nodes,
+    edges,
+    layoutMode,
+    extensions,
+    handlers: {
+      addChildNode,
+      addSiblingNode,
+      duplicateSelected,
+      deleteSelected,
+      getSelectedNode,
+      toggleCollapse,
+      focusSelectedNode,
+      reparentSelectedPromote,
+      reparentSelectedDemote,
+      pushUndo,
+      undo,
+      redo,
+      handleAIExpand,
+      autoLayout,
+      fitView,
+      exportAsSVG,
+      exportAsPNG,
+      exportAsJSON,
+      onOpenChat,
+    },
+    setters: {
+      setNodes,
+      setEdges,
+      setLayoutMode,
+      setShowClusterBubbles,
+      setHeatmapMode,
+      setParticleFlow,
+      setShowWhatIf,
+      setShowBatchConvert,
+      setShowTimeline,
+      setShowPresentation,
+      setShowSnapshots,
+      setShowVoiceToNode,
+      setShowDocToMap,
+      setShowInterviewToMap,
+      setShowDependencyDetector,
+      setShowPriorityRecommender,
+      setShowAutoClustering,
+      setShowSentimentOverlay,
+      setShowActivityFeed,
+      setShowHealthScore,
+      setShowFunnelAnalytics,
+      setShowExportPPTX,
+      setShowEmbedInReports,
+      setShowCompetitiveLandscape,
+      setShowBranchComparison,
+      setShowTimeHeatmap,
+      setShowExportDiagramCode,
+      setShowImportExternalMap,
+      setShowMindMap3D,
+      setShowWebhookSettings,
+      setCommentNodeId,
+      setExportMenuOpen,
+      setShowMiniMap,
+    },
+  });
+
   // ── Node click / context menu ────────────────────────────────────────────
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
-      if (isNodeLockedByPeer(node.id)) {
-        notifyLockedNode();
-        return;
+      try {
+        debugLog(`onNodeClick: id=${node.id} type=${node.type}`);
+        if (isNodeLockedByPeer(node.id)) {
+          debugLog(`  → locked by peer, ignoring`);
+          notifyLockedNode();
+          return;
+        }
+        if (node.type === 'center') {
+          debugLog(`  → center node → onCenterEdit`);
+          onCenterEdit?.();
+        }
+        if (node.type === 'branch') {
+          debugLog(`  → branch node → toggleCollapse`);
+          toggleCollapse(node.id);
+        }
+        if (node.type === 'idea') {
+          debugLog(`  → idea node (single click, no action)`);
+        }
+        debugLog(`  → onNodeClick DONE`);
+      } catch (err: any) {
+        debugLog(`ERROR in onNodeClick: ${err?.message || err}`);
+        console.error('[MindMap Debug] onNodeClick error:', err);
       }
-      if (node.type === 'center') onCenterEdit?.();
-      if (node.type === 'branch') toggleCollapse(node.id);
     },
-    [isNodeLockedByPeer, notifyLockedNode, onCenterEdit, toggleCollapse]
+    [debugLog, isNodeLockedByPeer, notifyLockedNode, onCenterEdit, toggleCollapse]
   );
 
   const onNodeDoubleClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
-      if (isNodeLockedByPeer(node.id)) {
-        notifyLockedNode();
-        return;
-      }
-      if (node.type === 'idea') {
-        setDrawerNodeId(node.id);
+      try {
+        debugLog(`onNodeDoubleClick: id=${node.id} type=${node.type}`);
+        if (isNodeLockedByPeer(node.id)) {
+          debugLog(`  → locked by peer, ignoring`);
+          notifyLockedNode();
+          return;
+        }
+        if (node.type === 'idea') {
+          debugLog(`  → opening drawer for node ${node.id}`);
+          setDrawerNodeId(node.id);
+        }
+        debugLog(`  → onNodeDoubleClick DONE`);
+      } catch (err: any) {
+        debugLog(`ERROR in onNodeDoubleClick: ${err?.message || err}`);
+        console.error('[MindMap Debug] onNodeDoubleClick error:', err);
       }
     },
-    [isNodeLockedByPeer, notifyLockedNode]
+    [debugLog, isNodeLockedByPeer, notifyLockedNode]
   );
+
+  const preContextMenuSelectionRef = useRef<string[]>([]);
 
   const onNodeContextMenu = useCallback(
     (e: React.MouseEvent, node: Node) => {
+      debugLog(`onNodeContextMenu: id=${node.id} type=${node.type}`);
       e.preventDefault();
+      setPaneContextMenu(null);
+      setEdgeContextMenu(null);
       if (isNodeLockedByPeer(node.id)) {
         notifyLockedNode();
         return;
       }
+      preContextMenuSelectionRef.current = (nodes as Node[])
+        .filter((n) => n.selected)
+        .map((n) => n.id);
+      setNodes((prev: Node[]) => prev.map((candidate) => ({ ...candidate, selected: candidate.id === node.id })));
       setContextMenu({
         nodeId: node.id,
         nodeType: node.type || 'idea',
@@ -2635,7 +2385,30 @@ function MindMapInner({
         y: e.clientY,
       });
     },
-    [isNodeLockedByPeer, notifyLockedNode]
+    [isNodeLockedByPeer, nodes, notifyLockedNode, setNodes]
+  );
+
+  const onPaneContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setContextMenu(null);
+      setEdgeContextMenu(null);
+      const reactFlowBounds = containerRef.current?.getBoundingClientRect();
+      const viewport = getViewport();
+      const canvasX = reactFlowBounds
+        ? (e.clientX - reactFlowBounds.left - viewport.x) / viewport.zoom
+        : 0;
+      const canvasY = reactFlowBounds
+        ? (e.clientY - reactFlowBounds.top - viewport.y) / viewport.zoom
+        : 0;
+      setPaneContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        canvasX,
+        canvasY,
+      });
+    },
+    [getViewport],
   );
 
   // V5-IDEA-17: Helper to get the context-menu target node (right-clicked) or fallback to selected
@@ -2647,18 +2420,9 @@ function MindMapInner({
   }, [contextMenu, getSelectedNode, nodes]);
 
   // V5-IDEA-17: Collect all descendants of a node (for branch operations)
-  const collectDescendants = useCallback(
-    (nodeId: string): string[] => {
-      const children = (edges as Edge[]).filter((e) => e.source === nodeId).map((e) => e.target);
-      const all: string[] = [];
-      for (const childId of children) {
-        all.push(childId);
-        all.push(...collectDescendants(childId));
-      }
-      return all;
-    },
-    [edges]
-  );
+  const collectDescendants = useCallback((nodeId: string): string[] => {
+    return collectDescendantIds(nodeId, edges as Edge[]);
+  }, [edges]);
 
   // V5-IDEA-17: Detach branch — disconnect node from parent, make it a root-level node
   const detachBranch = useCallback(
@@ -2752,7 +2516,6 @@ function MindMapInner({
     [collectDescendants, getContextTargetNode, ideaId, isPolish, nodes]
   );
 
-  // V5-IDEA-17: Convert branch — dispatch conversion event
   const convertBranch = useCallback(
     (target: string, nodeId?: string) => {
       const targetNodeId = nodeId || getContextTargetNode()?.id;
@@ -2760,9 +2523,17 @@ function MindMapInner({
       const descendants = collectDescendants(targetNodeId);
       const branchNodeIds = [targetNodeId, ...descendants];
 
+      const actionMap: Record<string, string> = {
+        initiative: 'convert_initiative',
+        decision: 'convert_decision',
+        task_set: 'convert_task_set',
+        report: 'convert_report',
+        presentation: 'convert_presentation',
+      };
+      const action = actionMap[target] || `convert_${target}`;
       window.dispatchEvent(
-        new CustomEvent('idea-workspace-convert-branch', {
-          detail: { ideaId, nodeIds: branchNodeIds, target },
+        new CustomEvent('idea-workspace-quick-action', {
+          detail: { action, nodeIds: branchNodeIds, ideaId },
         })
       );
       toast.success(isPolish ? `Konwersja gałęzi do ${target}` : `Converting branch to ${target}`, {
@@ -2774,11 +2545,22 @@ function MindMapInner({
 
   const handleContextAction = useCallback(
     (action: string) => {
+      debugLog(`handleContextAction: "${action}"`);
       const ctxNode = getContextTargetNode();
+      const updateNodeData = (nodeId: string, updater: (data: any) => any) => {
+        setNodes((prev: Node[]) =>
+          prev.map((node) =>
+            node.id === nodeId ? { ...node, data: updater(node.data || {}) } : node
+          )
+        );
+      };
+
       if (action === 'ctx_edit') startEditingSelected();
       if (action === 'ctx_open_detail') {
         if (ctxNode && ctxNode.type === 'idea') setDrawerNodeId(ctxNode.id);
       }
+      if (action === 'ctx_toggle_collapse' && ctxNode) toggleCollapse(ctxNode.id);
+      if (action === 'ctx_focus_subtree' && ctxNode) handleDrillDown(ctxNode.id);
       if (action === 'ctx_drill_down') {
         if (ctxNode) handleDrillDown(ctxNode.id);
       }
@@ -2792,26 +2574,12 @@ function MindMapInner({
         if (ctxNode && ctxNode.type === 'idea') {
           const currentVotes = ctxNode.data?.votes ?? 0;
           const newVotes = currentVotes >= 5 ? 0 : currentVotes + 1;
-          setNodes((prev: Node[]) =>
-            prev.map((n) =>
-              n.id === ctxNode.id ? { ...n, data: { ...n.data, votes: newVotes } } : n
-            )
-          );
+          updateNodeData(ctxNode.id, (data) => ({ ...data, votes: newVotes }));
         }
       }
       if (action === 'ctx_assign') {
         if (ctxNode && ctxNode.type === 'idea') {
-          const name = window.prompt(isPolish ? 'Przypisz osobę:' : 'Assign person:');
-          if (name) {
-            setNodes((prev: Node[]) =>
-              prev.map((n) =>
-                n.id === ctxNode.id ? { ...n, data: { ...n.data, assignee: name } } : n
-              )
-            );
-            toast.success(isPolish ? `Przypisano: ${name}` : `Assigned: ${name}`, {
-              duration: 1000,
-            });
-          }
+          setAssignModalNodeId(ctxNode.id);
         }
       }
       if (action === 'ctx_comments') {
@@ -2826,6 +2594,24 @@ function MindMapInner({
           );
         }
       }
+      if (action === 'ctx_attach_artifact' && ctxNode) {
+        setAttachArtifactNodeId(ctxNode.id);
+      }
+      if (action === 'ctx_open_linked_artifacts' && ctxNode) {
+        const links = Array.isArray(ctxNode.data?.artifactLinks) ? ctxNode.data.artifactLinks : [];
+        if (links.length === 0) {
+          toast(isPolish ? 'Ten wezel nie ma jeszcze artefaktow' : 'This node has no linked artifacts yet');
+        } else if (links.length === 1) {
+          const link = links[0];
+          window.dispatchEvent(
+            new CustomEvent('mywork-open-item', {
+              detail: artifactLinkToOpenPayload(link),
+            })
+          );
+        } else {
+          setDrawerNodeId(ctxNode.id);
+        }
+      }
       if (action === 'ctx_dependencies') setShowDependencyDetector(true);
       if (action === 'ctx_priority') setShowPriorityRecommender(true);
       if (action === 'ctx_competitive') setShowCompetitiveLandscape(true);
@@ -2834,12 +2620,31 @@ function MindMapInner({
           const shapes = ['default', 'circle', 'diamond', 'hexagon'];
           const current = ctxNode.data?.shape || 'default';
           const nextIdx = (shapes.indexOf(current) + 1) % shapes.length;
-          setNodes((prev: Node[]) =>
-            prev.map((n) =>
-              n.id === ctxNode.id ? { ...n, data: { ...n.data, shape: shapes[nextIdx] } } : n
-            )
-          );
+          updateNodeData(ctxNode.id, (data) => ({ ...data, shape: shapes[nextIdx] }));
           toast.success(`Shape: ${shapes[nextIdx]}`, { duration: 800 });
+        }
+      }
+      if (action === 'ctx_connect_to_selected' && ctxNode) {
+        const priorIds = preContextMenuSelectionRef.current;
+        const peerId = priorIds.find((id) => id !== ctxNode.id);
+        const peer = peerId ? nodes.find((n) => n.id === peerId) : undefined;
+        if (!peer) {
+          toast(
+            isPolish
+              ? 'Zaznacz drugi wezel, aby utworzyc polaczenie'
+              : 'Select another node to create a connection'
+          );
+        } else {
+          setEdges((prev: Edge[]) => [
+            ...prev,
+            {
+              id: `edge-${uid()}`,
+              source: ctxNode.id,
+              target: peer.id,
+              type: 'labeled',
+              data: { userCreated: true, relation: 'related' },
+            } as Edge,
+          ]);
         }
       }
       // V5-IDEA-17: New branch operations
@@ -2851,21 +2656,23 @@ function MindMapInner({
       if (action === 'ctx_convert_decision') convertBranch('decision', ctxNode?.id);
       if (action === 'ctx_add_image') {
         if (ctxNode && ctxNode.type === 'idea') {
-          const url = window.prompt(isPolish ? 'URL obrazka:' : 'Image URL:');
-          if (url) {
-            setNodes((prev: Node[]) =>
-              prev.map((n) =>
-                n.id === ctxNode.id ? { ...n, data: { ...n.data, imageUrl: url } } : n
-              )
-            );
-            toast.success(isPolish ? 'Obraz dodany' : 'Image added', { duration: 800 });
-          }
+          setImageUrlNodeId(ctxNode.id);
         }
       }
+      if (action === 'ctx_copy_style' && ctxNode) {
+        setStyleClipboard(copyNodeStyle(ctxNode));
+        toast.success(isPolish ? 'Styl skopiowany' : 'Style copied', { duration: 800 });
+      }
+      if (action === 'ctx_paste_style' && ctxNode && styleClipboard) {
+        setNodes((prev: Node[]) =>
+          prev.map((node) =>
+            node.id === ctxNode.id ? applyNodeStyle(node, styleClipboard) : node
+          )
+        );
+      }
       if (action === 'ctx_share_branch') {
-        const sel = getSelectedNode();
-        if (sel) {
-          const url = `${window.location.origin}${window.location.pathname}?focusNode=${sel.id}`;
+        if (ctxNode) {
+          const url = `${window.location.origin}${window.location.pathname}?focusNode=${ctxNode.id}`;
           navigator.clipboard
             .writeText(url)
             .then(() => {
@@ -2878,20 +2685,6 @@ function MindMapInner({
       }
       if (action === 'ctx_duplicate') duplicateSelected();
       if (action === 'ctx_delete') deleteSelected();
-      if (action === 'ctx_convert_initiative') {
-        const ctxIds = ctxNode ? [ctxNode.id] : nodes.filter((n) => n.selected).map((n) => n.id);
-        window.dispatchEvent(
-          new CustomEvent('idea-workspace-quick-action', {
-            detail: { action: 'convert_initiative', nodeIds: ctxIds },
-          })
-        );
-      }
-      if (action === 'ctx_convert_decision') {
-        const ctxIds = ctxNode ? [ctxNode.id] : nodes.filter((n) => n.selected).map((n) => n.id);
-        window.dispatchEvent(
-          new CustomEvent('idea-workspace-quick-action', { detail: { action: 'convert_decision', nodeIds: ctxIds } })
-        );
-      }
     },
     [
       addChildNode,
@@ -2902,14 +2695,166 @@ function MindMapInner({
       duplicateBranch,
       duplicateSelected,
       getContextTargetNode,
+      getSelectedNode,
       handleAIExpand,
       handleDrillDown,
       isPolish,
+      ideaId,
+      nodes,
       setEdges,
       setNodes,
+      styleClipboard,
       startEditingSelected,
       summarizeBranch,
+      toggleCollapse,
     ]
+  );
+
+  const handlePaneContextAction = useCallback(
+    (action: string) => {
+      const pos = paneContextMenu
+        ? { x: paneContextMenu.canvasX, y: paneContextMenu.canvasY }
+        : { x: 0, y: 0 };
+
+      if (action === 'pane_add_node') {
+        const newId = `node-${uid()}`;
+        const newNode: Node = {
+          id: newId,
+          type: 'idea',
+          position: pos,
+          data: { label: '', branchKey: 'uncategorized', sourceType: 'manual', priority: 50, _startEditing: Date.now() },
+        } as any;
+        const rootEdge: Edge = {
+          id: `edge-${uid()}`,
+          source: 'root',
+          target: newId,
+          type: 'gradient',
+          style: { stroke: '#94a3b8', strokeWidth: 1.5, opacity: 0.5 },
+          animated: true,
+          data: { userCreated: true },
+        } as any;
+        pushUndo();
+        setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+        setEdges((prev: Edge[]) => [...prev, rootEdge]);
+      }
+
+      if (action === 'pane_add_topic') {
+        const newId = `node-${uid()}`;
+        const newNode: Node = {
+          id: newId,
+          type: 'idea',
+          position: pos,
+          data: {
+            label: isPolish ? 'Nowy temat' : 'New topic',
+            branchKey: 'uncategorized',
+            sourceType: 'manual',
+            priority: 50,
+            semanticType: 'topic',
+            _startEditing: Date.now(),
+          },
+        } as any;
+        const rootEdge: Edge = {
+          id: `edge-${uid()}`,
+          source: 'root',
+          target: newId,
+          type: 'gradient',
+          style: { stroke: '#94a3b8', strokeWidth: 1.5, opacity: 0.5 },
+          animated: true,
+          data: { userCreated: true },
+        } as any;
+        pushUndo();
+        setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+        setEdges((prev: Edge[]) => [...prev, rootEdge]);
+      }
+
+      if (action === 'pane_paste') {
+        if (styleClipboard) {
+          const sel = getSelectedNode();
+          if (sel) {
+            setNodes((prev: Node[]) =>
+              prev.map((n) => (n.id === sel.id ? applyNodeStyle(n, styleClipboard) : n)),
+            );
+          }
+        }
+      }
+
+      if (action === 'pane_undo') undo();
+      if (action === 'pane_redo') redo();
+
+      if (action === 'pane_select_all') {
+        setNodes((prev: Node[]) => prev.map((n) => ({ ...n, selected: true })));
+      }
+
+      if (action === 'pane_collapse_all') {
+        const allBranchIds = (nodes as Node[])
+          .filter((n) => {
+            const children = (edges as Edge[]).filter((e) => e.source === n.id);
+            return children.length > 0 && n.id !== 'root';
+          })
+          .map((n) => n.id);
+        setCollapsedNodeIds(new Set(allBranchIds));
+      }
+
+      if (action === 'pane_expand_all') {
+        setCollapsedNodeIds(new Set());
+      }
+
+      if (action === 'pane_auto_layout') {
+        const laid = autoLayout(nodes as Node[], edges as Edge[]);
+        setNodes(laid);
+        setTimeout(() => {
+          try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+        }, 50);
+      }
+
+      if (action === 'pane_fit_view') {
+        try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+      }
+
+      if (action === 'pane_center_root') {
+        const rootNode = (nodes as Node[]).find((n) => n.id === 'root');
+        if (rootNode) {
+          try {
+            fitView({ nodes: [{ id: 'root' } as any], padding: 0.5, duration: 400 });
+          } catch { /* */ }
+        }
+      }
+
+      if (action === 'pane_zoom_in') {
+        const vp = getViewport();
+        setViewport({ ...vp, zoom: Math.min(vp.zoom * 1.3, 4) }, { duration: 200 });
+      }
+
+      if (action === 'pane_zoom_out') {
+        const vp = getViewport();
+        setViewport({ ...vp, zoom: Math.max(vp.zoom / 1.3, 0.1) }, { duration: 200 });
+      }
+
+      if (action === 'pane_ai_suggest') {
+        handleAIExpand();
+      }
+
+      setPaneContextMenu(null);
+    },
+    [
+      autoLayout,
+      edges,
+      fitView,
+      getSelectedNode,
+      getViewport,
+      handleAIExpand,
+      isPolish,
+      nodes,
+      paneContextMenu,
+      pushUndo,
+      redo,
+      setCollapsedNodeIds,
+      setEdges,
+      setNodes,
+      setViewport,
+      styleClipboard,
+      undo,
+    ],
   );
 
   const savedLabel = useMemo(() => {
@@ -2926,9 +2871,77 @@ function MindMapInner({
       ? 'fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950'
       : `relative w-full h-full bg-slate-50 dark:bg-navy-950 ${className || ''}`;
 
+  const floatingToolbarInfo = useMemo(() => {
+    if (locked) return null;
+    if (selectedNodeIds.length !== 1) return null;
+    if (contextMenu) return null;
+    const nodeId = selectedNodeIds[0];
+    const node = (nodes as Node[]).find((n) => n.id === nodeId);
+    if (!node || !node.position) return null;
+    const vp = getViewport();
+    const screenX = node.position.x * vp.zoom + vp.x;
+    const screenY = node.position.y * vp.zoom + vp.y;
+    return {
+      nodeId,
+      node,
+      position: { x: screenX + ((node.width || 160) * vp.zoom) / 2, y: screenY },
+    };
+  }, [locked, selectedNodeIds, nodes, contextMenu, getViewport]);
+
+  const handleFloatingToolbarUpdate = useCallback((patch: Record<string, any>) => {
+    debugLog(`floatingToolbarUpdate: ${JSON.stringify(patch).slice(0, 100)}`);
+    if (!floatingToolbarInfo) return;
+    updateNodeDataById(floatingToolbarInfo.nodeId, (data: any) => ({ ...data, ...patch }));
+  }, [debugLog, floatingToolbarInfo, updateNodeDataById]);
+
   return (
-    <div className={containerClassName}>
-      {/* Context menu */}
+    <div ref={containerRef} className={containerClassName}>
+      {/* Floating node toolbar */}
+      {floatingToolbarInfo && (
+        <FloatingNodeToolbar
+          nodeId={floatingToolbarInfo.nodeId}
+          nodeData={floatingToolbarInfo.node.data}
+          style={{
+            color: floatingToolbarInfo.node.data?.color,
+            fillOpacity: floatingToolbarInfo.node.data?.fillOpacity,
+            lineStyle: floatingToolbarInfo.node.data?.lineStyle,
+            fontSize: floatingToolbarInfo.node.data?.fontSize,
+            bold: floatingToolbarInfo.node.data?.bold,
+            semanticType: floatingToolbarInfo.node.data?.semanticType,
+            branchTheme: floatingToolbarInfo.node.data?.branchTheme,
+            autoLayout: floatingToolbarInfo.node.data?.autoLayout,
+            locked: floatingToolbarInfo.node.data?.locked,
+          }}
+          position={floatingToolbarInfo.position}
+          onUpdate={handleFloatingToolbarUpdate}
+          onOpenContextMenu={(pos) =>
+            setContextMenu({
+              nodeId: floatingToolbarInfo.nodeId,
+              nodeType: floatingToolbarInfo.node.type || 'idea',
+              x: pos.x,
+              y: pos.y,
+            })
+          }
+          onOpenArtifactModal={() => setAttachArtifactNodeId(floatingToolbarInfo.nodeId)}
+          onOpenChatAboutNode={() => {
+            const label = floatingToolbarInfo.node.data?.label || '';
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-quick-action', {
+                detail: { action: 'mm_chat_about_node', nodeId: floatingToolbarInfo.nodeId, label },
+              })
+            );
+          }}
+          onAction={(action) => {
+            window.dispatchEvent(
+              new CustomEvent('idea-workspace-quick-action', {
+                detail: { action, nodeId: floatingToolbarInfo.nodeId },
+              })
+            );
+          }}
+        />
+      )}
+
+      {/* Node context menu */}
       {contextMenu && (
         <NodeContextMenu
           x={contextMenu.x}
@@ -2937,8 +2950,40 @@ function MindMapInner({
           nodeType={contextMenu.nodeType}
           isLocked={locked}
           isPl={isPolish}
+          canPasteStyle={!!styleClipboard}
           onClose={() => setContextMenu(null)}
           onAction={handleContextAction}
+        />
+      )}
+
+      {/* Pane (empty canvas) context menu */}
+      {paneContextMenu && (
+        <PaneContextMenu
+          x={paneContextMenu.x}
+          y={paneContextMenu.y}
+          canvasX={paneContextMenu.canvasX}
+          canvasY={paneContextMenu.canvasY}
+          isPl={isPolish}
+          isLocked={locked}
+          canUndo={undoStackRef.current.length > 0}
+          canRedo={redoStackRef.current.length > 0}
+          canPaste={!!styleClipboard}
+          onClose={() => setPaneContextMenu(null)}
+          onAction={handlePaneContextAction}
+        />
+      )}
+
+      {/* Edge context menu */}
+      {edgeContextMenu && (
+        <EdgeContextMenu
+          x={edgeContextMenu.x}
+          y={edgeContextMenu.y}
+          edgeId={edgeContextMenu.edgeId}
+          isPl={isPolish}
+          isLocked={locked}
+          isUserCreated={edgeContextMenu.isUserCreated}
+          onClose={() => setEdgeContextMenu(null)}
+          onAction={handleEdgeContextAction}
         />
       )}
 
@@ -3082,9 +3127,9 @@ function MindMapInner({
         </div>
       )}
 
-      {/* Breadcrumb for drill-down */}
+      {/* Breadcrumb for drill-down — positioned below the unified header */}
       {drillPath.length > 0 && (
-        <div className="absolute top-14 left-3 z-[91]">
+        <div className="absolute top-[110px] left-3 z-[91]">
           <SubMapBreadcrumb
             path={drillPath}
             onNavigate={handleBreadcrumbNavigate}
@@ -3093,66 +3138,109 @@ function MindMapInner({
         </div>
       )}
 
-      {/* Top bar */}
-      <div className="absolute top-3 left-3 right-3 z-[90] flex items-center justify-between">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/85 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/60 dark:border-white/[0.06] shadow-2xl">
-          {showClose && (
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-              title={isPolish ? 'Zamknij mapę' : 'Close map'}
-            >
-              <X size={16} />
-            </button>
-          )}
-          <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.06]" />
-          <div className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate max-w-[520px]">
-            {isPolish ? 'Mapa rekomendacji' : 'Recommendation map'} — {ideaTitle}
-          </div>
-          <div className="ml-2 text-[10px] text-slate-500 dark:text-slate-400">{savedLabel}</div>
-        </div>
+      {/* Top-left unified header: map name + idea card + actions */}
+      {(() => {
+        const v5Stage = stage ? normalizeStageToV5(stage) : null;
+        const stageLabel = v5Stage ? (isPolish ? IDEA_STAGE_LABELS[v5Stage].pl : IDEA_STAGE_LABELS[v5Stage].en) : null;
+        const stageColor = v5Stage ? IDEA_STAGE_COLORS[v5Stage] : '';
+        const stageIdx = v5Stage ? IDEA_STAGES_V5.indexOf(v5Stage) : -1;
+        const canAdvance = stageIdx >= 0 && stageIdx < IDEA_STAGES_V5.length - 1;
+        const summary = seedText?.split('\n')[0]?.slice(0, 120) || '';
+        return (
+          <div className="absolute top-3 left-3 z-[90] flex flex-col gap-0 max-w-[380px]">
+            <div className="rounded-2xl bg-white/90 dark:bg-navy-900/90 backdrop-blur-xl border border-slate-200/60 dark:border-white/[0.06] shadow-2xl shadow-black/[0.06] dark:shadow-black/30">
+              {/* Row 1: close + title + stage badge */}
+              <div className="flex items-center gap-2 px-3 pt-2.5 pb-1">
+                {showClose && (
+                  <button
+                    onClick={onClose}
+                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors shrink-0"
+                    title={isPolish ? 'Zamknij mapę' : 'Close map'}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+                <h3 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 leading-snug truncate flex-1 min-w-0">
+                  {ideaTitle || (isPolish ? 'Bez tytułu' : 'Untitled')}
+                </h3>
+                {v5Stage && stageLabel && (
+                  <span className={`shrink-0 inline-flex items-center gap-1 rounded-lg bg-gradient-to-r ${stageColor} px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide`}>
+                    <span className="w-1 h-1 rounded-full bg-current opacity-70" />
+                    {stageLabel}
+                  </span>
+                )}
+              </div>
 
-        <div className="flex items-center gap-1 px-2 py-1.5 bg-white/85 dark:bg-navy-900/80 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-white/[0.06] shadow-2xl">
-          <button
-            onClick={() => zoomIn({ duration: 250 })}
-            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-            title={isPolish ? 'Przybliż' : 'Zoom in'}
-          >
-            <Plus size={16} />
-          </button>
-          <button
-            onClick={() => zoomOut({ duration: 250 })}
-            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-            title={isPolish ? 'Oddal' : 'Zoom out'}
-          >
-            <Minus size={16} />
-          </button>
-          <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.06] mx-0.5" />
-          <button
-            onClick={() => fitView({ padding: 0.3, duration: 300 })}
-            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-            title={isPolish ? 'Dopasuj widok' : 'Fit view'}
-          >
-            <RotateCcw size={14} />
-          </button>
-          <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.06] mx-0.5" />
-          <button
-            onClick={() => void handleAIExpand()}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/15 transition-colors"
-            title={isPolish ? 'AI: rozbuduj wybraną gałąź' : 'AI: expand selected branch'}
-            disabled={locked || saving || persistence !== 'online'}
-          >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-            AI
-          </button>
-          <div className="w-px h-5 bg-slate-200 dark:bg-white/[0.06] mx-0.5" />
-          <div className="text-[10px] text-slate-500 dark:text-slate-400 px-1">
-            {isPolish
-              ? 'Tab=child Enter=sibling Space=collapse'
-              : 'Tab=child Enter=sibling Space=collapse'}
+              {/* Row 2: summary + save status */}
+              <div className="px-3 pb-1.5">
+                {summary && (
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-1 mb-0.5">
+                    {summary}
+                  </p>
+                )}
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500">{savedLabel}</span>
+                  {evidenceCount > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
+                      <FileText size={10} />
+                      {evidenceCount} {isPolish ? 'dowodów' : 'evidence'}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Row 3: actions — Edit card, AI summarize, AI expand, stage advance */}
+              <div className="flex items-center gap-1 px-2.5 py-1.5 border-t border-slate-200/40 dark:border-white/[0.04]">
+                {onEditCard && (
+                  <button
+                    onClick={onEditCard}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-slate-100 dark:hover:bg-white/[0.04] transition-colors"
+                  >
+                    <Pencil size={10} />
+                    {isPolish ? 'Edytuj' : 'Edit card'}
+                  </button>
+                )}
+                {onAISummarize && (
+                  <button
+                    onClick={onAISummarize}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-violet-500 dark:text-violet-400 hover:text-violet-600 dark:hover:text-violet-300 hover:bg-violet-500/5 transition-colors"
+                  >
+                    <Sparkles size={10} />
+                    {isPolish ? 'AI podsumuj' : 'AI summarize'}
+                  </button>
+                )}
+                <div className="flex-1" />
+                <button
+                  onClick={() => void handleAIExpand()}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/15 transition-colors"
+                  title={isPolish ? 'AI: rozbuduj gałąź' : 'AI: expand branch'}
+                  disabled={locked || saving || persistence !== 'online'}
+                >
+                  {saving ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                  AI
+                </button>
+                {onStageChange && canAdvance && v5Stage !== 'converted' && (
+                  <button
+                    onClick={() => onStageChange(IDEA_STAGES_V5[stageIdx + 1])}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-primary-600 dark:text-primary-400 hover:bg-primary-500/5 transition-colors"
+                  >
+                    {isPolish ? IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].pl : IDEA_STAGE_LABELS[IDEA_STAGES_V5[stageIdx + 1]].en} →
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        );
+      })()}
+
+      <CanvasZoomControls
+        isPolish={isPolish}
+        selectedNodeId={selectedNodeIds[0] || null}
+        showMiniMap={showMiniMap}
+        onToggleMiniMap={() => setShowMiniMap((prev) => !prev)}
+        onFullscreenToggle={onFullscreenToggle}
+        isFullscreen={isFullscreen}
+      />
 
       {/* Canvas */}
       {loading ? (
@@ -3168,8 +3256,10 @@ function MindMapInner({
           onNodeClick={onNodeClick}
           onNodeDoubleClick={onNodeDoubleClick}
           onNodeContextMenu={onNodeContextMenu}
+          onPaneContextMenu={onPaneContextMenu}
           onConnect={onConnect}
           onEdgeClick={onEdgeClick}
+          onNodeDragStop={onNodeDragStop}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           nodesConnectable={!locked}
@@ -3196,30 +3286,82 @@ function MindMapInner({
         >
           {/* V5-IDEA-42: Unified canvas background */}
           <Background color="rgba(148,163,184,0.06)" gap={24} size={1} />
-          <MiniMap
-            nodeStrokeWidth={3}
-            zoomable
-            pannable
-            className="rounded-xl border border-slate-200/40 dark:border-navy-700/40"
-          />
+          {showMiniMap && (
+            <MiniMap
+              nodeStrokeWidth={3}
+              zoomable
+              pannable
+              className="rounded-xl border border-slate-200/40 dark:border-navy-700/40"
+            />
+          )}
 
-          {/* V51-26: Empty state when no idea nodes */}
+          {/* Empty state: pre-accept onboarding overlay OR post-accept quick-start */}
           {focusFilteredNodes.filter((n) => n.type === 'idea' && !n.hidden).length === 0 && (
-            <Panel position="top-center">
-              <div className="mt-16 text-center pointer-events-auto">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-                  <Lightbulb size={24} className="text-amber-500" />
-                </div>
-                <div className="text-sm font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  {isPolish ? 'Zacznij budować mapę' : 'Start building your map'}
-                </div>
-                <div className="text-[11px] text-slate-400 dark:text-slate-500 mb-3 max-w-[240px]">
-                  {isPolish
-                    ? 'Wybierz gałąź i naciśnij Tab aby dodać pomysł, lub użyj AI aby wygenerować strukturę'
-                    : 'Select a branch and press Tab to add an idea, or use AI to generate structure'}
-                </div>
-              </div>
-            </Panel>
+            <>
+              {locked ? (
+                <Panel position="center">
+                  <div className="pointer-events-auto max-w-sm mx-auto rounded-2xl bg-white/80 dark:bg-navy-900/60 backdrop-blur-xl shadow-2xl border border-slate-200/30 dark:border-white/[0.06] p-8 text-center onboarding-overlay-enter">
+                    <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                      <Lightbulb size={28} className="text-white" />
+                    </div>
+                    <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100 mb-2">
+                      {isPolish ? 'Opisz swoje wyzwanie' : 'Describe your challenge'}
+                    </h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                      {isPolish
+                        ? 'Wypełnij tytuł i opis w panelu Tools po prawej, a następnie zaakceptuj wyzwanie.'
+                        : 'Fill in the title and description in the Tools panel on the right, then accept.'}
+                    </p>
+                    <div className="space-y-2 text-left mb-6">
+                      {[
+                        { n: '1', pl: 'Nadaj tytuł wyzwaniu', en: 'Name your challenge' },
+                        { n: '2', pl: 'Opisz problem lub pomysł', en: 'Describe the problem or idea' },
+                        { n: '3', pl: 'Kliknij „Akceptuj" w panelu Tools', en: 'Click "Accept" in the Tools panel' },
+                      ].map((step) => (
+                        <div key={step.n} className="flex items-center gap-3">
+                          <span className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center justify-center shrink-0">
+                            {step.n}
+                          </span>
+                          <span className="text-sm text-slate-600 dark:text-slate-300">
+                            {isPolish ? step.pl : step.en}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onCenterEdit?.()}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30 transition-all"
+                    >
+                      <Sparkles size={16} />
+                      {isPolish ? 'Otwórz panel i zacznij' : 'Open panel & start'}
+                    </button>
+                  </div>
+                </Panel>
+              ) : (
+                <Panel position="bottom-center">
+                  <div className="mb-14 px-5 py-3 rounded-2xl bg-white/90 dark:bg-navy-900/80 backdrop-blur-xl border border-slate-200/40 dark:border-white/[0.06] shadow-xl text-sm text-slate-500 dark:text-slate-400 flex items-center gap-4 pointer-events-auto">
+                    <Lightbulb size={16} className="text-amber-500 shrink-0" />
+                    <span className="text-slate-600 dark:text-slate-300">
+                      {isPolish
+                        ? 'Wybierz gałąź i naciśnij Tab, aby dodać pierwszy węzeł'
+                        : 'Select a branch and press Tab to add the first node'}
+                    </span>
+                    <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
+                    {onOpenTemplates && (
+                      <button
+                        type="button"
+                        onClick={onOpenTemplates}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors whitespace-nowrap"
+                      >
+                        <Flower2 size={13} />
+                        {isPolish ? 'Użyj szablonu' : 'Use template'}
+                      </button>
+                    )}
+                  </div>
+                </Panel>
+              )}
+            </>
           )}
 
           {/* Cluster Bubbles overlay */}
@@ -3235,23 +3377,7 @@ function MindMapInner({
             />
           )}
 
-          <Panel position="bottom-left">
-            <div className="px-3 py-2 rounded-2xl bg-white/80 dark:bg-navy-900/75 backdrop-blur-sm border border-slate-200/60 dark:border-white/[0.06] shadow-2xl text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-2">
-              <Link2 size={14} className="text-slate-400" />
-              <span className="font-semibold">{isPolish ? 'Aktywna gałąź' : 'Active branch'}:</span>
-              <span className="text-slate-500 dark:text-slate-400">{selectedBranchKey}</span>
-              <span className="text-slate-400">·</span>
-              <span>
-                {locked
-                  ? isPolish
-                    ? 'Zaakceptuj wyzwanie, aby odblokować edycję'
-                    : 'Accept the challenge to unlock editing'
-                  : isPolish
-                    ? 'Prawy klik = menu kontekstowe'
-                    : 'Right-click = context menu'}
-              </span>
-            </div>
-          </Panel>
+          {/* Active branch info removed — redundant with visual branch nodes on canvas */}
         </ReactFlow>
       )}
 
@@ -3881,6 +4007,77 @@ function MindMapInner({
         onClose={() => setShowWebhookSettings(false)}
         ideaId={ideaId}
       />
+
+      {/* Export format menu */}
+      {exportMenuOpen && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/20"
+          onClick={() => setExportMenuOpen(false)}
+        >
+          <div
+            className="w-56 rounded-lg border border-slate-200 bg-white p-2 shadow-xl dark:border-navy-700 dark:bg-navy-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-1 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              {isPolish ? 'Format eksportu' : 'Export format'}
+            </div>
+            {[
+              { key: 'png', label: 'PNG', fn: () => exportAsPNG(`${ideaTitle || 'mindmap'}.png`) },
+              { key: 'svg', label: 'SVG', fn: () => exportAsSVG(`${ideaTitle || 'mindmap'}.svg`) },
+              { key: 'json', label: 'JSON', fn: () => exportAsJSON(nodes, edges, extensions, `${ideaTitle || 'mindmap'}.json`) },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => { opt.fn(); setExportMenuOpen(false); }}
+                className="w-full rounded px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-navy-800"
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Inline modals replacing window.prompt */}
+      <AssignPersonModal
+        open={!!assignModalNodeId}
+        onClose={() => setAssignModalNodeId(null)}
+        currentAssignee={assignModalNodeId ? nodes.find((n) => n.id === assignModalNodeId)?.data?.assignee : undefined}
+        recentAssignees={nodes.filter((n) => n.data?.assignee).map((n) => n.data.assignee)}
+        onAssign={(name) => {
+          if (assignModalNodeId) {
+            updateNodeData(assignModalNodeId, (data) => ({ ...data, assignee: name }));
+            toast.success(isPolish ? `Przypisano: ${name}` : `Assigned: ${name}`, { duration: 1000 });
+          }
+        }}
+      />
+      <AttachArtifactModal
+        open={!!attachArtifactNodeId}
+        onClose={() => setAttachArtifactNodeId(null)}
+        onAttach={(type, id, label) => {
+          if (attachArtifactNodeId) {
+            updateNodeData(attachArtifactNodeId, (data) => ({
+              ...data,
+              artifactLinks: [
+                ...(Array.isArray(data.artifactLinks) ? data.artifactLinks : []),
+                buildArtifactLink(type, id, 'related', label),
+              ],
+            }));
+            toast.success(isPolish ? 'Artefakt dołączony' : 'Artifact attached', { duration: 900 });
+          }
+        }}
+      />
+      <ImageUrlModal
+        open={!!imageUrlNodeId}
+        onClose={() => setImageUrlNodeId(null)}
+        onSubmit={(url) => {
+          if (imageUrlNodeId) {
+            updateNodeData(imageUrlNodeId, (data) => ({ ...data, imageUrl: url }));
+            toast.success(isPolish ? 'Obraz dodany' : 'Image added', { duration: 800 });
+          }
+        }}
+      />
+
     </div>
   );
 }

@@ -298,10 +298,13 @@ export default defineConfig({
       all: false,
       reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],
       include: [
+        // Backend coverage
         'server/src/controllers/**/*.{ts,js}',
         'server/src/middleware/**/*.{ts,js}',
         'server/src/routes/**/*.{ts,js}',
         'server/src/services/*.{ts,js}',
+        // Frontend coverage (initial target: 50%+ — will increase over time)
+        'src/**/*.{ts,tsx}',
       ],
       exclude: [
         'src/vite-env.d.ts',

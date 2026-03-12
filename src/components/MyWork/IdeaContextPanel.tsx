@@ -56,8 +56,10 @@ interface IdeaContextPanelProps {
   ideaId: string;
   title: string;
   selectedNodeId?: string | null;
+  selectionMeta?: Record<string, any> | null;
   refreshToken?: number;
   onInsertToCanvas?: (item: { text: string; type: string; detail?: string }) => void;
+  liveGraphNodes?: any[];
 }
 
 type SectionKey =
@@ -98,8 +100,10 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
   ideaId,
   title,
   selectedNodeId,
+  selectionMeta,
   refreshToken,
   onInsertToCanvas,
+  liveGraphNodes,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -118,6 +122,73 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
   const [linkedArtifacts, setLinkedArtifacts] = useState<LinkedArtifact[]>([]);
   const [nodeArtifactMap, setNodeArtifactMap] = useState<(LinkedArtifact & { nodeId?: string })[]>([]);
   const [newNoteText, setNewNoteText] = useState('');
+
+  const extractGraphData = useCallback((graphNodes: any[]) => {
+    const extractedNotes: NoteItem[] = graphNodes
+      .filter((n: any) => n?.type === 'noteCard' || n?.data?.kind === 'note_card')
+      .map((n: any) => ({
+        id: n.id,
+        text: n.data?.label || '',
+        createdAt: n.data?.createdAt,
+      }));
+    setNotes(extractedNotes);
+
+    const extractedEvidence: EvidenceItem[] = graphNodes
+      .filter((n: any) => n?.type === 'evidenceCard' || n?.data?.kind === 'evidence_card')
+      .map((n: any) => ({
+        id: n.id,
+        type: n.data?.evidenceType || 'note',
+        title: n.data?.label || '',
+        url: n.data?.url,
+        artifactId: n.data?.artifactId,
+      }));
+    setEvidence(extractedEvidence);
+
+    const extractedArtifacts: LinkedArtifact[] = graphNodes
+      .filter(
+        (n: any) =>
+          n?.type === 'knowledgeCard' ||
+          n?.data?.kind === 'artifact_ref' ||
+          n?.data?.kind === 'linked_artifact_card'
+      )
+      .map((n: any) => ({
+        id: n.id,
+        type: n.data?.artifactType || n.data?.kind || 'knowledge',
+        title: n.data?.label || '',
+        moduleIcon: n.data?.moduleIcon,
+      }));
+    const nodeArtLinks: (LinkedArtifact & { nodeId?: string })[] = graphNodes.flatMap((n: any) => {
+      const links = Array.isArray(n?.data?.artifactLinks)
+        ? n.data.artifactLinks
+        : Array.isArray(n?.artifactLinks) ? n.artifactLinks : null;
+      if (!Array.isArray(links)) return [];
+      return links.map((link: any) => {
+        const realType = link.artifactRef?.type || link.artifactType || link.type || 'unknown';
+        const realId = link.artifactRef?.id || link.artifactId || link.id || '';
+        return {
+          id: `${n.id}__${realType}:${realId}`,
+          type: realType,
+          title: link.label || link.title || `${realType}:${realId}`,
+          moduleIcon: link.moduleIcon,
+          artifactId: realId,
+          nodeId: String(n.id),
+        };
+      });
+    });
+    const seen = new Set(extractedArtifacts.map((a) => a.id));
+    const merged = [
+      ...extractedArtifacts,
+      ...nodeArtLinks.filter((a) => !seen.has(a.id)),
+    ];
+    setLinkedArtifacts(merged);
+    setNodeArtifactMap(nodeArtLinks);
+  }, []);
+
+  useEffect(() => {
+    if (liveGraphNodes && liveGraphNodes.length > 0) {
+      extractGraphData(liveGraphNodes);
+    }
+  }, [liveGraphNodes, extractGraphData]);
 
   const displayedArtifacts = useMemo(() => {
     if (!selectedNodeId) return linkedArtifacts;
@@ -140,8 +211,10 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
       setLoading(true);
       setError(null);
 
+      const hasLiveGraph = liveGraphNodes && liveGraphNodes.length > 0;
+
       try {
-        const [backlinksRes, suggestionsRes, mapRes] = await Promise.allSettled([
+        const promises: Promise<any>[] = [
           Api.getLinkGraphBacklinks({ type: 'idea', id: ideaId, limit: 50 }),
           Api.getIdeaAISuggestions(ideaId, {
             context: {
@@ -154,8 +227,13 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
             mode: 'passive',
             language: i18n.language,
           }),
-          Api.getMyIdeaMap(ideaId, { language: i18n.language }),
-        ]);
+        ];
+        if (!hasLiveGraph) {
+          promises.push(Api.getMyIdeaMap(ideaId, { language: i18n.language }));
+        }
+        const results = await Promise.allSettled(promises);
+        const [backlinksRes, suggestionsRes] = results;
+        const mapRes = hasLiveGraph ? undefined : results[2];
 
         if (signal?.cancelled) return;
 
@@ -243,71 +321,10 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
           setContextItems(items);
         }
 
-        // V5-IDEA-28: Extract notes, evidence, artifacts from workspace graph
-        if (mapRes.status === 'fulfilled') {
+        if (mapRes && mapRes.status === 'fulfilled') {
           const map = (mapRes as PromiseFulfilledResult<any>).value?.map;
-          const ext = map?.extensions || {};
-          const nodes = Array.isArray(map?.nodes) ? map.nodes : [];
-
-          const extractedNotes: NoteItem[] = nodes
-            .filter((n: any) => n?.type === 'noteCard' || n?.data?.kind === 'note_card')
-            .map((n: any) => ({
-              id: n.id,
-              text: n.data?.label || '',
-              createdAt: n.data?.createdAt,
-            }));
-          setNotes(extractedNotes);
-
-          const extractedEvidence: EvidenceItem[] = nodes
-            .filter((n: any) => n?.type === 'evidenceCard' || n?.data?.kind === 'evidence_card')
-            .map((n: any) => ({
-              id: n.id,
-              type: n.data?.evidenceType || 'note',
-              title: n.data?.label || '',
-              url: n.data?.url,
-              artifactId: n.data?.artifactId,
-            }));
-          setEvidence(extractedEvidence);
-
-          const extractedArtifacts: LinkedArtifact[] = nodes
-            .filter(
-              (n: any) =>
-                n?.type === 'knowledgeCard' ||
-                n?.data?.kind === 'artifact_ref' ||
-                n?.data?.kind === 'linked_artifact_card'
-            )
-            .map((n: any) => ({
-              id: n.id,
-              type: n.data?.artifactType || n.data?.kind || 'knowledge',
-              title: n.data?.label || '',
-              moduleIcon: n.data?.moduleIcon,
-            }));
-          // V51-30: Also extract artifacts from node.data.artifactLinks (with fallback to node.artifactLinks)
-          const nodeArtifactLinks: (LinkedArtifact & { nodeId?: string })[] = nodes.flatMap((n: any) => {
-            const links = Array.isArray(n?.data?.artifactLinks)
-              ? n.data.artifactLinks
-              : Array.isArray(n?.artifactLinks) ? n.artifactLinks : null;
-            if (!Array.isArray(links)) return [];
-            return links.map((link: any) => {
-              const realType = link.artifactRef?.type || link.artifactType || link.type || 'unknown';
-              const realId = link.artifactRef?.id || link.artifactId || link.id || '';
-              return {
-                id: `${n.id}__${realType}:${realId}`,
-                type: realType,
-                title: link.label || link.title || `${realType}:${realId}`,
-                moduleIcon: link.moduleIcon,
-                artifactId: realId,
-                nodeId: String(n.id),
-              };
-            });
-          });
-          const seen = new Set(extractedArtifacts.map((a) => a.id));
-          const merged = [
-            ...extractedArtifacts,
-            ...nodeArtifactLinks.filter((a) => !seen.has(a.id)),
-          ];
-          setLinkedArtifacts(merged);
-          setNodeArtifactMap(nodeArtifactLinks);
+          const graphNodes = Array.isArray(map?.nodes) ? map.nodes : [];
+          extractGraphData(graphNodes);
         }
       } catch (err: any) {
         if (signal?.cancelled) return;
@@ -318,7 +335,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
         if (!signal?.cancelled) setLoading(false);
       }
     },
-    [i18n.language, ideaId, isPl, title]
+    [extractGraphData, i18n.language, ideaId, isPl, liveGraphNodes, title]
   );
 
   useEffect(() => {
@@ -445,6 +462,11 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
       </div>
 
       <div className="px-3 py-2 flex-1 overflow-auto space-y-3">
+        {/* Node properties panel — shown when a single node is selected */}
+        {selectedNodeId && selectionMeta && (
+          <NodePropertiesSection nodeId={selectedNodeId} meta={selectionMeta} isPl={!!isPl} />
+        )}
+
         {/* V4-IDEA-09: EmbeddedView for "Used in" parity with Notebook/Tools/Initiatives */}
         <EmbeddedView
           title={isPl ? 'Użyte w (backlinks)' : 'Used in (backlinks)'}
@@ -900,6 +922,102 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
         )}
       </div>
     </ToolsPanelShell>
+  );
+};
+
+const NODE_STATUS_OPTIONS = [
+  { value: 'todo', labelEn: 'To Do', labelPl: 'Do zrobienia' },
+  { value: 'in_progress', labelEn: 'In Progress', labelPl: 'W toku' },
+  { value: 'done', labelEn: 'Done', labelPl: 'Gotowe' },
+  { value: 'blocked', labelEn: 'Blocked', labelPl: 'Zablokowane' },
+];
+
+const NodePropertiesSection: React.FC<{
+  nodeId: string;
+  meta: Record<string, any>;
+  isPl: boolean;
+}> = ({ nodeId, meta, isPl }) => {
+  const [description, setDescription] = useState(meta?.description || '');
+  const [owner, setOwner] = useState(meta?.owner || '');
+  const [status, setStatus] = useState(meta?.status || 'todo');
+  const [tags, setTags] = useState(meta?.tags?.join(', ') || '');
+
+  const dispatch = useCallback(
+    (data: Record<string, any>) => {
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-node-update', { detail: { nodeId, data } })
+      );
+    },
+    [nodeId]
+  );
+
+  const handleBlur = useCallback(
+    (field: string, value: any) => dispatch({ [field]: value }),
+    [dispatch]
+  );
+
+  return (
+    <div className="p-2.5 rounded-xl bg-primary-500/5 border border-primary-500/10 space-y-2">
+      <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-primary-600/80 dark:text-primary-400/80">
+        {isPl ? 'Właściwości węzła' : 'Node Properties'}
+      </div>
+      <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
+        {meta?.label || nodeId}
+      </div>
+      <div>
+        <label className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          {isPl ? 'Opis' : 'Description'}
+        </label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          onBlur={() => handleBlur('description', description)}
+          rows={2}
+          className="w-full mt-0.5 px-2 py-1 text-[11px] rounded-lg border border-slate-200/60 dark:border-navy-600/60 bg-white/60 dark:bg-navy-800/60 text-slate-700 dark:text-slate-200 outline-none focus:border-primary-400 resize-none"
+          placeholder={isPl ? 'Opis…' : 'Description…'}
+        />
+      </div>
+      <div>
+        <label className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          {isPl ? 'Właściciel' : 'Owner'}
+        </label>
+        <input
+          type="text"
+          value={owner}
+          onChange={(e) => setOwner(e.target.value)}
+          onBlur={() => handleBlur('owner', owner)}
+          className="w-full mt-0.5 px-2 py-1 text-[11px] rounded-lg border border-slate-200/60 dark:border-navy-600/60 bg-white/60 dark:bg-navy-800/60 text-slate-700 dark:text-slate-200 outline-none focus:border-primary-400"
+          placeholder={isPl ? 'Osoba' : 'Person'}
+        />
+      </div>
+      <div>
+        <label className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          Status
+        </label>
+        <select
+          value={status}
+          onChange={(e) => { setStatus(e.target.value); handleBlur('status', e.target.value); }}
+          className="w-full mt-0.5 px-2 py-1 text-[11px] rounded-lg border border-slate-200/60 dark:border-navy-600/60 bg-white/60 dark:bg-navy-800/60 text-slate-700 dark:text-slate-200 outline-none focus:border-primary-400"
+        >
+          {NODE_STATUS_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>{isPl ? opt.labelPl : opt.labelEn}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          {isPl ? 'Tagi' : 'Tags'}
+        </label>
+        <input
+          type="text"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+          onBlur={() => handleBlur('tags', tags.split(',').map((t: string) => t.trim()).filter(Boolean))}
+          className="w-full mt-0.5 px-2 py-1 text-[11px] rounded-lg border border-slate-200/60 dark:border-navy-600/60 bg-white/60 dark:bg-navy-800/60 text-slate-700 dark:text-slate-200 outline-none focus:border-primary-400"
+          placeholder="tag1, tag2"
+        />
+      </div>
+    </div>
   );
 };
 

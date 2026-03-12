@@ -430,6 +430,58 @@ router.post(
   })
 );
 
+/**
+ * POST /api/presentations/decks
+ * Create a deck directly from structured slide JSON (used by Table OS export).
+ */
+router.post(
+  '/decks',
+  requireAudit,
+  asyncHandler(async (req, res) => {
+    const orgId = getOrgId(req);
+    const { title, theme, slides, source } = req.body || {};
+
+    if (!title) return res.status(400).json({ success: false, error: 'Title is required' });
+
+    const deckId = uuidv4().replace(/-/g, '');
+    const slideCount = Array.isArray(slides) ? slides.length : 0;
+
+    try {
+      await dbRun(
+        `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, created_at, updated_at)
+         VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [deckId, orgId, title, theme || 'modern', slideCount, JSON.stringify({ source: source || 'idea_table' })]
+      );
+
+      if (Array.isArray(slides)) {
+        for (let i = 0; i < slides.length; i++) {
+          const slide = slides[i];
+          const cardId = uuidv4().replace(/-/g, '');
+          await dbRun(
+            `INSERT INTO presentation_cards (id, deck_id, card_index, intent, blocks_json, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+            [cardId, deckId, i, slide.type || 'content', JSON.stringify(slide.content || slide)]
+          );
+        }
+      }
+
+      await (req as any).emitAuditEvent?.({
+        actorType: 'USER',
+        action: 'create',
+        resourceType: 'presentation_deck',
+        resourceId: deckId,
+        after: { title, theme, slideCount, source },
+        metadata: { organizationId: orgId },
+      });
+
+      res.status(201).json({ success: true, data: { id: deckId, title, slideCount } });
+    } catch (error: any) {
+      logger.error('[presentations] Failed to create deck:', error);
+      res.status(500).json({ success: false, error: error?.message || 'Failed to create deck' });
+    }
+  })
+);
+
 router.get(
   '/decks',
   asyncHandler(async (req, res) => {

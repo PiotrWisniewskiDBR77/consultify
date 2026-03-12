@@ -233,6 +233,10 @@ export async function createAnalysis(
           currency: data.currency || 'PLN',
         };
 
+  if (sourceStatementIds.length > 0 && (resolved.periods || []).length === 0) {
+    throw new Error('Only statement-ready statements can seed a financial analysis');
+  }
+
   await dbRun(
     `INSERT INTO financial_analyses (id,organization_id,project_id,title,description,status,analysis_type,periods,statement_data,currency,source_statement_ids,created_by,created_at,updated_at) VALUES (?,?,?,?,?,'DRAFT',?,?,?,?,?,?,?,?)`,
     [
@@ -720,13 +724,24 @@ async function buildStatementDataFromStatements(
   if (ids.length === 0) return { periods: [], statementData: {}, currency: 'PLN' };
 
   const placeholders = ids.map(() => '?').join(',');
-  const stmts = await dbAll<any>(
-    `SELECT id, statement_type, period_label, period_end, currency
-     FROM financial_statements
-     WHERE organization_id = ? AND id IN (${placeholders}) AND status IN ('confirmed','mapped','imported','draft')
-     ORDER BY period_end DESC`,
-    [organizationId, ...ids]
-  );
+  let stmts: any[];
+  try {
+    stmts = await dbAll<any>(
+      `SELECT id, statement_type, period_label, period_end, currency
+       FROM financial_statements
+       WHERE organization_id = ? AND id IN (${placeholders}) AND readiness_status = 'ready'
+       ORDER BY period_end DESC`,
+      [organizationId, ...ids]
+    );
+  } catch {
+    stmts = await dbAll<any>(
+      `SELECT id, statement_type, period_label, period_end, currency
+       FROM financial_statements
+       WHERE organization_id = ? AND id IN (${placeholders}) AND status IN ('confirmed', 'mapped')
+       ORDER BY period_end DESC`,
+      [organizationId, ...ids]
+    );
+  }
 
   const currency = String(stmts?.find((s: any) => s.currency)?.currency || 'PLN');
   const periodKey = (s: any) =>

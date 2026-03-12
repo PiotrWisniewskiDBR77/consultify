@@ -33,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
+import { getArtifactLabel, getArtifactPath } from '@/utils/artifactLinks';
 
 import type { AIProposalBatch, CanvasToolType } from './ideaSelectionTypes';
 
@@ -97,6 +98,13 @@ export interface ExtendedNodeData {
   evidenceLinks?: NodeEvidenceLink[];
   semanticType?: string;
   aiExpansionHistory?: AIExpansionEntry[];
+  smartObjectType?: string;
+  artifactLinks?: Array<{
+    artifactRef: { type: string; id: string };
+    artifactIndex?: string;
+    label?: string;
+    linkRole?: string;
+  }>;
 }
 
 interface AIContextResult {
@@ -218,9 +226,11 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
   const [newComment, setNewComment] = useState('');
   const [aiContext, setAiContext] = useState<AIContextResult | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [artifactLinks, setArtifactLinks] = useState<any[]>([]);
+  const [artifactLoading, setArtifactLoading] = useState(false);
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['description', 'tags', 'ai_context', 'attachments', 'comments', 'links'])
+    new Set(['description', 'tags', 'ai_context', 'attachments', 'artifact_links', 'comments', 'links'])
   );
 
   useEffect(() => {
@@ -228,6 +238,26 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
     setDescValue(nodeData.description || '');
     setOwnerValue(nodeData.owner || '');
   }, [nodeData.label, nodeData.description, nodeData.owner, nodeId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!open || !ideaId || !nodeId) return;
+    setArtifactLoading(true);
+    Api.getObjectArtifacts(ideaId, nodeId)
+      .then((result) => {
+        if (cancelled) return;
+        setArtifactLinks(Array.isArray(result?.artifactLinks) ? result.artifactLinks : []);
+      })
+      .catch(() => {
+        if (!cancelled) setArtifactLinks([]);
+      })
+      .finally(() => {
+        if (!cancelled) setArtifactLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ideaId, nodeId, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -314,6 +344,27 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
       onNodeDataChange(nodeId, { attachments });
     },
     [locked, nodeData.attachments, nodeId, onNodeDataChange]
+  );
+
+  const handleDetachArtifact = useCallback(
+    async (artifactType: string, artifactId: string) => {
+      if (locked) return;
+      try {
+        await Api.detachArtifactFromObject(ideaId, nodeId, artifactType, artifactId);
+        setArtifactLinks((prev) =>
+          prev.filter(
+            (link) =>
+              !(
+                link?.artifactRef?.type === artifactType &&
+                link?.artifactRef?.id === artifactId
+              )
+          )
+        );
+      } catch {
+        // keep drawer responsive; attachment list will refresh on reopen
+      }
+    },
+    [ideaId, locked, nodeId]
   );
 
   const handleAddComment = useCallback(() => {
@@ -880,6 +931,65 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   </button>
                 </div>
               )}
+            </div>
+          </SectionToggle>
+
+          <SectionToggle
+            title={isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
+            icon={Link2}
+            expanded={expandedSections.has('artifact_links')}
+            onToggle={() => toggleSection('artifact_links')}
+            count={artifactLinks.length}
+          >
+            <div className="space-y-1.5">
+              {artifactLoading && (
+                <div className="text-[10px] text-slate-400">
+                  {isPl ? 'Ładowanie powiązań...' : 'Loading links...'}
+                </div>
+              )}
+              {!artifactLoading && artifactLinks.length === 0 && (
+                <div className="text-[10px] text-slate-400">
+                  {isPl ? 'Brak podpiętych artefaktów' : 'No linked artifacts'}
+                </div>
+              )}
+              {artifactLinks.map((link) => {
+                const artifactType = String(link?.artifactRef?.type || '');
+                const artifactId = String(link?.artifactRef?.id || '');
+                const label = link?.label || getArtifactLabel(artifactType as any, isPl);
+                return (
+                  <div
+                    key={`${artifactType}:${artifactId}`}
+                    className="flex items-center gap-2 rounded-lg bg-slate-50 p-2 dark:bg-navy-800"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[10px] font-medium text-slate-700 dark:text-slate-200 truncate">
+                        {label}
+                      </div>
+                      <div className="text-[9px] text-slate-400 truncate">
+                        {link?.artifactIndex || `${artifactType}:${artifactId}`}
+                        {link?.linkRole ? ` • ${link.linkRole}` : ''}
+                      </div>
+                    </div>
+                    {artifactType && artifactId && (
+                      <a
+                        href={getArtifactPath(artifactType as any, artifactId)}
+                        className="text-slate-400 hover:text-primary-500 shrink-0"
+                      >
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
+                    {!locked && artifactType && artifactId && (
+                      <button
+                        type="button"
+                        onClick={() => handleDetachArtifact(artifactType, artifactId)}
+                        className="text-slate-400 hover:text-red-500 shrink-0"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </SectionToggle>
 

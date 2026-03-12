@@ -281,6 +281,19 @@ Legend:
 6. V51-31 (browser/runtime verification)
 7. V51-32 (visual simplification and trust pass)
 
+**Navigation guardrail for Wave 4:**
+- keep one local 4-system switcher inside the workspace canvas chrome
+- keep `Tools | Context | AI Suggestions` as the only right-side strip
+- do not duplicate system switching in `MyWorkHub` topbar for an open idea document
+- move secondary workspace controls into `Tools` instead of mixing them into the system switcher
+
+**Navigation verification checklist:**
+- open an idea from `My Work -> Ideas` and confirm topbar shows only the right-side strip, not a duplicated 4-system switcher
+- switch between `Mind Map`, `Whiteboard`, `Process Flow`, and `Table` from the floating workspace switcher and confirm the same idea remains open
+- open `Tools`, `Context`, and `AI Suggestions` from the strip and confirm no panel action changes the active work system
+- from `Mind Map` empty state, verify `Open map tools` opens the `Tools` panel and `Use template` opens the template gallery
+- from the `Tools` panel, verify focus and voting controls work without reintroducing extra chrome into the bottom switcher
+
 ---
 
 ## 6) R0 cutline (V5.1 launch baseline)

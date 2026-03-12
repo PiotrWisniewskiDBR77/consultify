@@ -1,9 +1,10 @@
 /**
  * IdeaMapWorkspace — fullscreen workspace for editing an idea.
  *
- * Unified toolbar (Menu 2i) merges canvas tool selector + panel strip.
- * Selection contract drives Tools panel content.
- * Propose→Accept UX for AI patches.
+ * Keeps workspace navigation explicit:
+ * - 4 native systems stay in the floating workspace switcher
+ * - Tools / Context / AI Suggestions stay in the fixed right strip
+ * - Selection contract drives Tools panel content
  */
 import { AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -13,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import type { WorkspacePanelKey } from '@/components/shared/WorkspacePanelStrip';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { generateAIProposal } from '@/services/ideaAIGenerator';
 import { useAppStore } from '@/store/useAppStore';
 
 import {
@@ -24,22 +26,23 @@ import {
 } from '../../utils/artifactLinks';
 import { ArtifactAttachPopover } from '../shared/NModeBlocks/ArtifactAttachPopover';
 import { CommandPalette, useCommandPalette } from './CommandPalette';
+import { CanvasLeftToolbar } from './mindmap/CanvasLeftToolbar';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { IdeaAISuggestionsPanel } from './IdeaAISuggestionsPanel';
 import { IdeaContextPanel } from './IdeaContextPanel';
+import { IdeaExportMenu } from './IdeaExportMenu';
 import {
   composeIdeaBodyFromSeedIntent,
   deriveIdeaTitleFromSeedIntent,
   IDEA_STAGE_LABELS,
+  type IdeaStageV5,
   type IdeaWorkspaceCreationPayload,
   type IdeaWorkspaceSeedIntent,
   normalizePreferredSystem,
   normalizeStageToV5,
 } from './ideaEntryTypes';
 import { IdeaGhostCards } from './IdeaGhostCards';
-import { IdeaExportMenu } from './IdeaExportMenu';
 import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDrawer';
-import { IdeaPinnedCard, type IdeaPinnedCardData } from './IdeaPinnedCard';
 import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
 import { IdeaProposalReview } from './IdeaProposalReview';
 import { IdeaRecommendationMap } from './IdeaRecommendationMap';
@@ -47,20 +50,27 @@ import type { CanvasToolType } from './ideaSelectionTypes';
 import {
   type AIProposal,
   type AIProposalBatch,
+  type CanvasAIReplayEntry,
+  type CanvasGovernanceStatus,
   EMPTY_SELECTION,
+  IDEA_WORKSPACE_IMPORT_EVENT,
   type IdeaWorkspaceSelection,
+  type IdeaWorkspaceImportPayload,
 } from './ideaSelectionTypes';
 import { IdeaTableTool } from './IdeaTableTool';
-import { IdeaTemplateGallery } from './IdeaTemplateGallery';
+import { applyIdeaTemplate, findIdeaTemplate, IdeaTemplateGallery } from './IdeaTemplateGallery';
 import { IdeaUnifiedSearch } from './IdeaUnifiedSearch';
 import { IdeaVotingMode } from './IdeaVotingMode';
 import { IdeaWhiteboardTool } from './IdeaWhiteboardTool';
 import { IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
 import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
 import type { MyIdea } from './MyIdeasListContent';
+import { applyAIProposalRuntime } from './aiProposalRuntime';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { countNodesByFamily, type ObjectFamily } from './superCanvasTypes';
+import { type TransformInput, transformSelection } from './transforms/crossToolTransform';
+import type { ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 
 class CanvasToolErrorBoundary extends React.Component<
   { children: React.ReactNode; toolName: string; onRetry?: () => void },
@@ -74,6 +84,8 @@ class CanvasToolErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error(`[CanvasToolErrorBoundary] ${this.props.toolName} crashed:`, error, info);
+    console.error(`[CanvasToolErrorBoundary] Stack:`, error?.stack);
+    console.error(`[CanvasToolErrorBoundary] Component stack:`, info?.componentStack);
   }
 
   render() {
@@ -117,8 +129,6 @@ type IdeaMapWorkspaceProps = {
   seedIntent?: IdeaWorkspaceSeedIntent;
   onClose: () => void;
   onSaved: (idea: MyIdea) => void;
-  toolsOpen?: boolean;
-  onToolsOpenChange?: (open: boolean) => void;
   initialTool?: CanvasToolType;
   initialFocusNode?: string;
   activeTool?: CanvasToolType;
@@ -180,8 +190,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   seedIntent,
   onClose,
   onSaved,
-  toolsOpen: toolsOpenProp,
-  onToolsOpenChange,
   initialTool,
   initialFocusNode,
   activeTool: externalActiveTool,
@@ -196,6 +204,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const isNewInitial = useMemo(() => ideaId.startsWith('new-idea-'), [ideaId]);
   const { setChatKickoffMessage, isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const currentUser = useAppStore((state) => state.currentUser);
+  const currentUserId = String(currentUser?.id || 'current-user');
 
   const [loading, setLoading] = useState(true);
   const [realId, setRealId] = useState(ideaId);
@@ -214,9 +224,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [graphNodes, setGraphNodes] = useState<any[]>([]);
   const [graphEdges, setGraphEdges] = useState<any[]>([]);
   const [graphLanes, setGraphLanes] = useState<any[]>([]);
+  const [mapExtensions, setMapExtensions] = useState<Record<string, unknown>>({});
   const graphNodesRef = useRef<any[]>([]);
   const graphEdgesRef = useRef<any[]>([]);
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  // discoveryPanel removed — replaced by CanvasLeftToolbar
+  const [whiteboardFacilitation, setWhiteboardFacilitation] = useState<{
+    timerEndsAt?: number | null;
+    voteSummary?: Record<string, number>;
+    myVoteCounts?: Record<string, number>;
+  }>({});
   const [nodeDetailOpen, setNodeDetailOpen] = useState(false);
   const [nodeDetailId, setNodeDetailId] = useState<string>('');
   const [nodeDetailData, setNodeDetailData] = useState<ExtendedNodeData>({ label: '' });
@@ -225,8 +243,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   );
   const [votingActive, setVotingActive] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [pinnedCardVisible, setPinnedCardVisible] = useState(true);
-  const [pinnedCardData, setPinnedCardData] = useState<IdeaPinnedCardData>({ title: '' });
 
   // V5-IDEA-15: Focus modes
   type FocusMode = 'full' | 'system' | 'object';
@@ -238,7 +254,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   // V51-30: Artifact attach popover state
   const [artifactPopoverOpen, setArtifactPopoverOpen] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
   const [artifactSearchResults, setArtifactSearchResults] = useState<
     Array<{
       type: ArtifactType;
@@ -254,12 +269,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [internalActiveTool, setInternalActiveTool] = useState<CanvasToolType>(
     initialTool || 'mindmap'
   );
-  const [internalActivePanel, setInternalActivePanel] = useState<WorkspacePanelKey>(
-    toolsOpenProp ? 'tools' : null
-  );
+  const [internalActivePanel, setInternalActivePanel] = useState<WorkspacePanelKey>(null);
   const [mapRefreshToken, setMapRefreshToken] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const userSelectedToolRef = React.useRef(false);
   const aiKickoffTriggeredRef = React.useRef(false);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const workspaceRootRef = useRef<HTMLDivElement>(null);
+
+  const toggleWorkspaceFullscreen = useCallback(() => {
+    if (!workspaceRootRef.current) return;
+    if (!document.fullscreenElement) {
+      workspaceRootRef.current.requestFullscreen?.().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen?.().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
 
   const activeTool = externalActiveTool ?? internalActiveTool;
   const activePanel = externalActivePanel ?? internalActivePanel;
@@ -298,6 +329,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   const handleSelectionChange = useCallback(
     (next: IdeaWorkspaceSelection) => {
+      console.log(`%c[Workspace] selectionChange: type=${next.type} count=${next.count} ids=[${(next.ids || []).slice(0, 3).join(',')}]`, 'color: #3b82f6');
       setSelection(next);
       externalOnSelectionChange?.(next);
       if (next.type !== 'none') {
@@ -321,92 +353,57 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       try {
         const mapRes = await Api.getMyIdeaMap(realId, { language: i18n.language });
         const map = mapRes?.map || {};
-        let nodes: any[] = Array.isArray(map.nodes) ? [...map.nodes] : [];
-        let edges: any[] = Array.isArray(map.edges) ? [...map.edges] : [];
-        const extensions: Record<string, unknown> =
+        const baseNodes: any[] = Array.isArray(map.nodes) ? [...map.nodes] : [];
+        const baseEdges: any[] = Array.isArray(map.edges) ? [...map.edges] : [];
+        const baseExtensions: Record<string, unknown> =
           map?.extensions && typeof map.extensions === 'object' && !Array.isArray(map.extensions)
             ? { ...map.extensions }
             : {};
+        const runtimeResult = applyAIProposalRuntime({
+          proposals: accepted,
+          nodes: baseNodes,
+          edges: baseEdges,
+          extensions: baseExtensions,
+          activeTool,
+        });
+        const { nodes, edges } = runtimeResult;
+        const extensions = runtimeResult.extensions;
 
-        for (const proposal of accepted) {
-          const patch = proposal.patch;
-          if (!patch) continue;
+        const governance =
+          extensions.canvasGovernance &&
+          typeof extensions.canvasGovernance === 'object' &&
+          !Array.isArray(extensions.canvasGovernance)
+            ? { ...(extensions.canvasGovernance as Record<string, unknown>) }
+            : {};
+        const aiReplayLog = Array.isArray(governance.aiReplayLog)
+          ? (governance.aiReplayLog as CanvasAIReplayEntry[])
+          : [];
+        const replayEntry: CanvasAIReplayEntry = {
+          id: `ai-replay-${Date.now()}`,
+          tool: proposalBatch?.tool || activeTool,
+          generatorType: proposalBatch?.generatorType || 'unknown',
+          proposalIds: accepted.map((p) => p.id),
+          rationale: accepted.map((p) => p.rationale),
+          citations: accepted.flatMap((p) => p.citations || []),
+          acceptedAt: new Date().toISOString(),
+        };
+        extensions.canvasGovernance = {
+          ...governance,
+          status: governance.status || 'draft',
+          aiReplayLog: [...aiReplayLog, replayEntry].slice(-40),
+          lastAiApplyAt: replayEntry.acceptedAt,
+        };
 
-          if (patch.removeNodeIds?.length) {
-            const removeSet = new Set(patch.removeNodeIds);
-            nodes = nodes.filter((n: any) => !removeSet.has(String(n?.id)));
-          }
-          if (patch.removeEdgeIds?.length) {
-            const removeSet = new Set(patch.removeEdgeIds);
-            edges = edges.filter((e: any) => !removeSet.has(String(e?.id)));
-          }
-          if (patch.addNodes?.length) {
-            for (const n of patch.addNodes) {
-              nodes.push({
-                id: n.id,
-                type: n.type || 'idea',
-                data: { label: n.label, ...n.data },
-                position: n.position || { x: 0, y: 0 },
-              });
-            }
-          }
-          if (patch.addEdges?.length) {
-            for (const e of patch.addEdges) {
-              edges.push({
-                id: e.id,
-                source: e.source,
-                target: e.target,
-                type: 'default',
-                data: { label: e.label, ...e.data },
-              });
-            }
-          }
-          if (patch.updateNodes?.length) {
-            for (const upd of patch.updateNodes) {
-              nodes = nodes.map((n: any) =>
-                String(n?.id) === upd.id ? { ...n, data: { ...(n.data || {}), ...upd.data } } : n
-              );
-            }
-          }
-          if (patch.moveNodes?.length) {
-            for (const mv of patch.moveNodes) {
-              nodes = nodes.map((n: any) =>
-                String(n?.id) === mv.nodeId
-                  ? {
-                      ...n,
-                      parentNode: mv.parentId,
-                      parentId: mv.parentId,
-                      position: mv.position || n.position,
-                      data: { ...(n.data || {}), parentId: mv.parentId },
-                    }
-                  : n
-              );
-            }
-          }
-          if (patch.extensions && typeof patch.extensions === 'object') {
-            for (const [key, val] of Object.entries(patch.extensions)) {
-              const existing = extensions[key];
-              if (
-                existing &&
-                typeof existing === 'object' &&
-                typeof val === 'object' &&
-                val &&
-                !Array.isArray(val)
-              ) {
-                extensions[key] = {
-                  ...(existing as Record<string, unknown>),
-                  ...(val as Record<string, unknown>),
-                };
-              } else {
-                extensions[key] = val;
-              }
-            }
-          }
-        }
-
-        await Api.saveMyIdeaMap(realId, { nodes, edges, extensions, fromAI: true });
+        await Api.saveMyIdeaMap(realId, {
+          nodes,
+          edges,
+          extensions,
+          fromAI: true,
+          preferredTool: runtimeResult.nextTool || activeTool,
+        });
         setGraphNodes(nodes);
         setGraphEdges(edges);
+        setMapExtensions(extensions);
         if (
           extensions?.processFlow &&
           typeof extensions.processFlow === 'object' &&
@@ -419,6 +416,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             detail: { ideaId: realId, nodes, edges, extensions },
           })
         );
+        if (runtimeResult.nextTool) {
+          setFocusMode('full');
+          setFocusObjectId(runtimeResult.focusObjectId || null);
+          setActiveTool(runtimeResult.nextTool);
+        }
         setMapRefreshToken((v) => v + 1);
         toast.success(
           isPolish
@@ -431,7 +433,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         );
       }
     },
-    [i18n.language, isPolish, realId]
+    [activeTool, i18n.language, isPolish, proposalBatch?.generatorType, proposalBatch?.tool, realId]
   );
 
   const handleAcceptProposal = useCallback(
@@ -493,10 +495,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   }, []);
 
   // ── Quick tool actions ──────────────────────────────────────────────────────
-  const handleConvertRef = useRef<(target: IdeaConvertTarget) => void>(() => {});
+  const handleConvertRef = useRef<(target: IdeaConvertTarget, nodeIds?: string[]) => void>(() => {});
+  const handleAcceptChallengeRef = useRef<() => void>(() => {});
 
   const handleQuickAction = useCallback(
-    (action: string) => {
+    (action: string, eventDetail?: Record<string, any>) => {
+      console.log(`%c[Workspace] handleQuickAction: "${action}"`, 'color: #3b82f6; font-weight: bold');
       // V5-IDEA-26: Cross-system transforms
       const XFORM_MAP: Record<string, CanvasToolType> = {
         xform_to_mindmap: 'mindmap',
@@ -511,6 +515,36 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           to: targetTool,
           action,
         });
+
+        const selectedIds = selection.ids || [];
+        const liveNodes = graphNodesRef.current || [];
+        const liveEdges = graphEdgesRef.current || [];
+        const selectedSet = new Set(selectedIds);
+        const realNodes = selectedIds.map((id, i) => {
+          const live = liveNodes.find((n: any) => n.id === id);
+          if (live) return live;
+          return {
+            id,
+            type: selection.meta?.nodeType || 'default',
+            position: { x: 0, y: 0 },
+            data: {
+              label: i === 0 && selection.meta?.label ? selection.meta.label : `Item ${i + 1}`,
+              status: selection.meta?.status,
+            },
+          };
+        });
+        const relevantEdges = liveEdges.filter(
+          (e: any) => selectedSet.has(e.source) && selectedSet.has(e.target)
+        );
+        const transformInput: TransformInput = {
+          sourceTool: activeTool,
+          nodes: realNodes,
+          edges: relevantEdges,
+          selectedIds,
+        };
+
+        const result = transformSelection(transformInput, targetTool);
+
         toast.success(
           isPolish
             ? `Przekształcanie zaznaczenia do: ${targetTool}`
@@ -518,13 +552,50 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           { duration: 1200 }
         );
         setActiveTool(targetTool);
-        setTimeout(() => {
-          window.dispatchEvent(
-            new CustomEvent('idea-workspace-quick-action', {
-              detail: { action: `${action}_execute`, ideaId: realId, sourceTool: activeTool },
-            })
-          );
-        }, 300);
+
+        if (result) {
+          setTimeout(() => {
+            if (result.type === 'mindmap' || result.type === 'whiteboard') {
+              const items = result.data.nodes.map((n: any) => ({
+                id: n.id,
+                label: n.data?.label || '',
+                nodeType: n.type,
+                position: n.position,
+                color: n.data?.color,
+              }));
+              window.dispatchEvent(
+                new CustomEvent('idea-workspace-insert', {
+                  detail: { items, ideaId: realId },
+                })
+              );
+            } else if (result.type === 'table') {
+              window.dispatchEvent(
+                new CustomEvent('idea-workspace-insert', {
+                  detail: {
+                    items: result.data.rows.map((r) => ({
+                      id: r.id,
+                      label: r.label,
+                      nodeType: 'row',
+                    })),
+                    ideaId: realId,
+                  },
+                })
+              );
+            } else if (result.type === 'process_flow') {
+              const items = result.data.nodes.map((n: any) => ({
+                id: n.id,
+                label: n.data?.label || '',
+                nodeType: n.type,
+                position: n.position,
+              }));
+              window.dispatchEvent(
+                new CustomEvent('idea-workspace-insert', {
+                  detail: { items, ideaId: realId },
+                })
+              );
+            }
+          }, 400);
+        }
         return;
       }
 
@@ -549,6 +620,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setActivePanel('context');
         return;
       }
+      if (action === 'open_export_menu') {
+        setExportMenuOpen(true);
+        return;
+      }
+      if (action === 'accept_challenge') {
+        handleAcceptChallengeRef.current();
+        return;
+      }
 
       // V5-IDEA-38: Convert selection from any system
       const CONVERT_PREFIX_MAP: Record<string, IdeaConvertTarget> = {
@@ -559,6 +638,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         convert_presentation: 'presentation',
         wb_convert_initiative: 'initiative',
         wb_convert_task_set: 'task_set',
+        wb_convert_decision: 'decision',
         wb_convert_report: 'report',
         pf_convert_initiative: 'initiative',
         pf_convert_task_set: 'task_set',
@@ -571,7 +651,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       if (CONVERT_PREFIX_MAP[action]) {
         const target = CONVERT_PREFIX_MAP[action];
         trackFunnelEvent('ideas_convert_selection', { tool: activeTool, target, action });
-        handleConvertRef.current(target);
+        const explicitNodeIds = Array.isArray(eventDetail?.nodeIds) ? eventDetail.nodeIds : undefined;
+        handleConvertRef.current(target, explicitNodeIds);
         return;
       }
 
@@ -584,30 +665,289 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [activeTool, externalOnQuickAction, isPolish, realId, setActiveTool]
   );
 
-  // ── Panel management ────────────────────────────────────────────────────────
   useEffect(() => {
-    if (typeof toolsOpenProp !== 'boolean') return;
-    if (toolsOpenProp) {
-      setActivePanel('tools');
-      return;
-    }
-    if (activePanel === 'tools') {
-      setActivePanel(null);
-    }
-    // activePanel intentionally excluded to avoid infinite loop
-  }, [toolsOpenProp, setActivePanel]); // eslint-disable-line react-hooks/exhaustive-deps
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail || {};
+      const action = typeof detail.action === 'string' ? detail.action : '';
+      if (!action) return;
+      if (detail.ideaId && detail.ideaId !== realId) return;
+      if (
+        action.endsWith('_execute') ||
+        action.startsWith('mm_') ||
+        action.startsWith('wb_') ||
+        action.startsWith('pf_') ||
+        action.startsWith('tbl_') ||
+        action.startsWith('ctx_')
+      ) {
+        return;
+      }
+      if (
+        action.startsWith('xform_to_') ||
+        action === 'attach_artifact' ||
+        action === 'open_linked_artifacts' ||
+        action === 'accept_challenge' ||
+        action === 'open_export_menu' ||
+        action.startsWith('convert_')
+      ) {
+        handleQuickAction(action, detail);
+      }
+    };
 
+    window.addEventListener('idea-workspace-quick-action', handler);
+    return () => window.removeEventListener('idea-workspace-quick-action', handler);
+  }, [handleQuickAction, realId]);
+
+  const dispatchWorkspaceInsert = useCallback(
+    (items: Array<{ label?: string; text?: string; type?: string; data?: Record<string, unknown> }>) => {
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-insert', {
+          detail: { items, ideaId: realId },
+        })
+      );
+    },
+    [realId]
+  );
+
+  const handleApplyCanvasTheme = useCallback(
+    (themeId: string) => {
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-theme', {
+          detail: { ideaId: realId, tool: activeTool, themeId },
+        })
+      );
+      toast.success(isPolish ? `Zastosowano motyw: ${themeId}` : `Applied theme: ${themeId}`, {
+        duration: 1200,
+      });
+    },
+    [activeTool, isPolish, realId]
+  );
+
+  const handleApplyFlowSemantic = useCallback(
+    (semantic: ProcessFlowSemanticKit) => {
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-flow-semantic', {
+          detail: { ideaId: realId, semantic },
+        })
+      );
+      toast.success(isPolish ? `Aktywny kit: ${semantic}` : `Active kit: ${semantic}`, {
+        duration: 1200,
+      });
+    },
+    [isPolish, realId]
+  );
+
+  const handleApplyTemplate = useCallback(
+    async (templateId: string) => {
+      if (!realId) return;
+      const template = findIdeaTemplate(templateId);
+      if (!template) {
+        toast.error(isPolish ? 'Nie znaleziono szablonu' : 'Template not found');
+        return;
+      }
+      try {
+        await applyIdeaTemplate({
+          ideaId: realId,
+          template,
+          isPl: isPolish,
+          activeTool,
+        });
+        setMapRefreshToken((v) => v + 1);
+        toast.success(isPolish ? 'Szablon zastosowany' : 'Template applied', { duration: 1200 });
+      } catch (error: any) {
+        toast.error(error?.message || (isPolish ? 'Nie udało się zastosować szablonu' : 'Failed to apply template'));
+      }
+    },
+    [activeTool, isPolish, realId]
+  );
+
+  const handleGenerateCanvasAI = useCallback(
+    async (generatorType: string) => {
+      if (!realId) return;
+      try {
+        const batch = await generateAIProposal({
+          ideaId: realId,
+          generatorType: generatorType as any,
+          tool: activeTool,
+          context: {
+            seedText: seedText || '',
+            title: title || '',
+            existingNodes: graphNodesRef.current,
+            existingEdges: graphEdgesRef.current,
+            existingLanes: graphLanes,
+            language: i18n.language || 'en',
+            selection: {
+              type: selection.type,
+              count: selection.count,
+              ids: selection.ids,
+              primaryId: selection.primaryId,
+            },
+          },
+        });
+        if (batch?.proposals?.length) {
+          setProposalBatch(batch);
+          setActivePanel('tools');
+        } else {
+          toast(isPolish ? 'AI nie zwróciło propozycji do review' : 'AI returned no proposals to review', {
+            icon: '🤖',
+          });
+        }
+      } catch (error: any) {
+        toast.error(error?.message || (isPolish ? 'Nie udało się uruchomić AI' : 'Failed to run AI'));
+      }
+    },
+    [
+      activeTool,
+      graphLanes,
+      i18n.language,
+      isPolish,
+      realId,
+      seedText,
+      selection.count,
+      selection.ids,
+      selection.primaryId,
+      selection.type,
+      setActivePanel,
+      title,
+    ]
+  );
+
+  // ── Panel management ────────────────────────────────────────────────────────
   const handlePanelChange = useCallback(
     (next: WorkspacePanelKey) => {
+      console.log(`%c[Workspace] panelChange: ${next}`, 'color: #3b82f6');
       setActivePanel(next);
-      onToolsOpenChange?.(next === 'tools');
     },
-    [onToolsOpenChange]
+    [setActivePanel]
   );
 
   const toolsPanelOpen = activePanel === 'tools';
   const contextPanelOpen = activePanel === 'context';
   const aiPanelOpen = activePanel === 'ai_suggestions';
+
+  const persistWorkspaceExtensions = useCallback(
+    async (patch: Record<string, unknown>) => {
+      if (isNewInitial && realId === ideaId) return;
+      const nextExtensions = {
+        surfaceState: {
+          activeTool,
+          selectedNodeIds: selection.ids || [],
+        },
+        processFlow: { lanes: graphLanes },
+        ...(patch || {}),
+      };
+      await Api.saveMyIdeaMap(realId, {
+        nodes: graphNodes,
+        edges: graphEdges,
+        preferredTool: activeTool,
+        extensions: nextExtensions,
+      });
+      setMapRefreshToken((v) => v + 1);
+    },
+    [activeTool, graphEdges, graphLanes, graphNodes, ideaId, isNewInitial, realId, selection.ids]
+  );
+
+  const handleGovernanceUpdate = useCallback(
+    async (update: { status: string; note?: string; actor?: string }) => {
+      const nextStatus = update.status as CanvasGovernanceStatus;
+      const timestamp = new Date().toISOString();
+      const entry = {
+        id: `gov-${Date.now()}`,
+        status: nextStatus,
+        note: update.note,
+        actor: update.actor || 'Canvas OS',
+        createdAt: timestamp,
+      };
+      try {
+        const existing = await Api.getMyIdeaMap(realId, { language: i18n.language });
+        const governance =
+          existing?.map?.extensions?.canvasGovernance &&
+          typeof existing.map.extensions.canvasGovernance === 'object'
+            ? (existing.map.extensions.canvasGovernance as Record<string, unknown>)
+            : {};
+        const reviewLog = Array.isArray(governance.reviewLog) ? governance.reviewLog : [];
+        await Api.saveMyIdeaMap(realId, {
+          nodes: Array.isArray(existing?.map?.nodes) ? existing.map.nodes : graphNodes,
+          edges: Array.isArray(existing?.map?.edges) ? existing.map.edges : graphEdges,
+          preferredTool: activeTool,
+          extensions: {
+            ...(existing?.map?.extensions || {}),
+            processFlow: { lanes: graphLanes },
+            canvasGovernance: {
+              ...governance,
+              status: nextStatus,
+              lastReviewedAt: timestamp,
+              activeTool,
+              reviewLog: [...reviewLog, entry].slice(-40),
+            },
+          },
+        });
+        setMapRefreshToken((v) => v + 1);
+        toast.success(
+          isPolish
+            ? `Zapisano status review: ${nextStatus}`
+            : `Saved review status: ${nextStatus}`
+        );
+      } catch (err: any) {
+        toast.error(
+          err?.message || (isPolish ? 'Nie udało się zapisać review' : 'Failed to save review')
+        );
+      }
+    },
+    [activeTool, graphEdges, graphLanes, graphNodes, i18n.language, isPolish, realId]
+  );
+
+  const handleImportGraph = useCallback(
+    async (payload: IdeaWorkspaceImportPayload) => {
+      if (!payload?.nodes || !payload?.edges) return;
+      try {
+        await persistWorkspaceExtensions({
+          interop: {
+            lastImportAt: new Date().toISOString(),
+            lastImportFormat: payload.sourceFormat,
+            lastImportTitle: payload.title || null,
+            mappingReport: payload.mappingReport || [],
+          },
+          ...(payload.extensions || {}),
+        });
+        await Api.saveMyIdeaMap(realId, {
+          nodes: payload.nodes,
+          edges: payload.edges,
+          preferredTool: activeTool,
+          extensions: {
+            processFlow: { lanes: graphLanes },
+            interop: {
+              lastImportAt: new Date().toISOString(),
+              lastImportFormat: payload.sourceFormat,
+              lastImportTitle: payload.title || null,
+              mappingReport: payload.mappingReport || [],
+            },
+            ...(payload.extensions || {}),
+          },
+        });
+        setGraphNodes(payload.nodes);
+        setGraphEdges(payload.edges);
+        setMapRefreshToken((v) => v + 1);
+        toast.success(
+          isPolish
+            ? `Zaimportowano diagram (${payload.sourceFormat})`
+            : `Imported diagram (${payload.sourceFormat})`
+        );
+      } catch (err: any) {
+        toast.error(err?.message || (isPolish ? 'Import nie powiódł się' : 'Import failed'));
+      }
+    },
+    [activeTool, graphLanes, isPolish, persistWorkspaceExtensions, realId]
+  );
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = ((event as CustomEvent).detail || {}) as IdeaWorkspaceImportPayload;
+      if (detail.ideaId && detail.ideaId !== realId) return;
+      handleImportGraph(detail);
+    };
+    window.addEventListener(IDEA_WORKSPACE_IMPORT_EVENT, handler);
+    return () => window.removeEventListener(IDEA_WORKSPACE_IMPORT_EVENT, handler);
+  }, [handleImportGraph, realId]);
 
   const isDraft = useMemo(() => isNewInitial && realId === ideaId, [ideaId, isNewInitial, realId]);
   const preferredSeedSystem = useMemo(
@@ -812,6 +1152,20 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail || {};
+      if (detail.ideaId && detail.ideaId !== realId) return;
+      if (typeof detail.open === 'boolean') {
+        setVotingActive(detail.open);
+      } else {
+        setVotingActive((prev) => !prev);
+      }
+    };
+    window.addEventListener('idea-whiteboard-toggle-voting-overlay', handler);
+    return () => window.removeEventListener('idea-whiteboard-toggle-voting-overlay', handler);
+  }, [realId]);
+
   const handleSearchHighlight = useCallback(
     (nodeId: string) => {
       window.dispatchEvent(
@@ -832,6 +1186,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         const map = res?.map || {};
         setGraphNodes(Array.isArray(map.nodes) ? map.nodes : []);
         setGraphEdges(Array.isArray(map.edges) ? map.edges : []);
+        setMapExtensions(
+          map?.extensions && typeof map.extensions === 'object' && !Array.isArray(map.extensions)
+            ? map.extensions
+            : {}
+        );
         const ext = map?.extensions?.processFlow;
         if (ext && Array.isArray((ext as any)?.lanes)) {
           setGraphLanes((ext as any).lanes);
@@ -847,6 +1206,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   // ── V5-IDEA-14: Object-family coexistence tracking ─────────────────────────
   const familyCounts = useMemo(() => countNodesByFamily(graphNodes), [graphNodes]);
+  const governanceSummary = useMemo(() => {
+    const governance =
+      mapExtensions.canvasGovernance &&
+      typeof mapExtensions.canvasGovernance === 'object' &&
+      !Array.isArray(mapExtensions.canvasGovernance)
+        ? (mapExtensions.canvasGovernance as Record<string, unknown>)
+        : null;
+    if (!governance) return null;
+    const reviewLog = Array.isArray(governance.reviewLog) ? governance.reviewLog : [];
+    const latest = reviewLog.length > 0 ? (reviewLog[reviewLog.length - 1] as Record<string, unknown>) : null;
+    return {
+      status: String(governance.status || 'draft'),
+      actor: latest?.actor ? String(latest.actor) : null,
+      note: latest?.note ? String(latest.note) : null,
+    };
+  }, [mapExtensions]);
   const activeFamilies = useMemo(() => {
     const families: ObjectFamily[] = [];
     for (const [family, count] of Object.entries(familyCounts)) {
@@ -970,6 +1345,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   // ── Accept challenge ────────────────────────────────────────────────────────
   const handleAcceptChallenge = useCallback(async () => {
+    console.log(`%c[Workspace] handleAcceptChallenge`, 'color: #3b82f6; font-weight: bold');
     if (isDraft) return;
     const nextTitle = (title || safeTitleFromSeed(seedText, isPolish)).trim().slice(0, 255);
     if (!seedText.trim()) {
@@ -1049,7 +1425,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   ];
 
   const handleConvert = useCallback(
-    async (target: IdeaConvertTarget) => {
+    async (target: IdeaConvertTarget, explicitNodeIds?: string[]) => {
       if (isDraft) return;
       if (!SUPPORTED_CONVERT_TARGETS.includes(target)) {
         toast.error(
@@ -1059,6 +1435,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         );
         return;
       }
+      const nodeIds = explicitNodeIds?.length ? explicitNodeIds : selection.ids;
       setSaving(true);
       try {
         trackFunnelEvent('mywork_convert_clicked', { from: 'idea', to: target });
@@ -1066,7 +1443,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           target: target as any,
           options: {
             language: i18n.language,
-            ...(selection.ids?.length ? { nodeIds: selection.ids } : {}),
+            ...(nodeIds?.length ? { nodeIds } : {}),
           },
         });
         trackFunnelEvent('mywork_convert_completed', {
@@ -1108,9 +1485,24 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 outputLinks: [...(existingOutputLinks as any[]), newOutputLink],
               },
             });
+            setMapExtensions({
+              ...(currentMap?.extensions || {}),
+              outputLinks: [...(existingOutputLinks as any[]), newOutputLink],
+            });
           } catch {
             /* best-effort persistence */
           }
+
+          window.dispatchEvent(
+            new CustomEvent('idea-whiteboard-register-output', {
+              detail: {
+                ideaId: realId,
+                target,
+                outputId,
+                nodeIds,
+              },
+            })
+          );
         }
 
         toast.success(
@@ -1128,6 +1520,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   );
 
   handleConvertRef.current = handleConvert;
+  handleAcceptChallengeRef.current = handleAcceptChallenge;
 
   // ── V51-30: Artifact attach handlers ──────────────────────────────────────
   const artifactCacheRef = useRef<Array<{
@@ -1254,12 +1647,32 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               ? (tools.value as any).items
               : [];
             arr.forEach((tool: any) =>
-              pushArtifact('tool', tool.id, tool.name || tool.title || tool.toolType, {
+              pushArtifact('tool_session', tool.id, tool.name || tool.title || tool.toolType, {
                 status: tool.status,
                 owner: tool.createdBy,
               })
             );
           }
+          graphNodesRef.current.forEach((node: any) => {
+            const label = String(node?.data?.label || '').trim();
+            if (!label) return;
+            const semanticType = String(
+              node?.data?.semanticType || node?.data?.type || node?.data?.shape || ''
+            ).toLowerCase();
+            if (semanticType.includes('role') || semanticType.includes('owner')) {
+              pushArtifact('role', node.id, label, { status: node?.data?.status });
+            } else if (semanticType.includes('system') || semanticType.includes('api')) {
+              pushArtifact('system', node.id, label, { status: node?.data?.status });
+            } else if (semanticType.includes('kpi') || semanticType.includes('metric')) {
+              pushArtifact('kpi', node.id, label, { status: node?.data?.status });
+            } else if (
+              semanticType.includes('process') ||
+              semanticType.includes('flow') ||
+              semanticType.includes('task')
+            ) {
+              pushArtifact('process', node.id, label, { status: node?.data?.status });
+            }
+          });
           cache = all;
           artifactCacheRef.current = all;
         } catch {
@@ -1335,6 +1748,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       evidenceLinks: data?.evidenceLinks || [],
       semanticType: data?.semanticType || '',
       aiExpansionHistory: data?.aiExpansionHistory || [],
+      smartObjectType: data?.smartObjectType || '',
+      artifactLinks: data?.artifactLinks || [],
     });
     setNodeDetailOpen(true);
   }, []);
@@ -1356,6 +1771,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           extensions: map.extensions || {},
         });
         setGraphNodes(updatedNodes);
+        setMapExtensions(
+          map?.extensions && typeof map.extensions === 'object' && !Array.isArray(map.extensions)
+            ? map.extensions
+            : {}
+        );
         setMapRefreshToken((v) => v + 1);
       } catch {
         /* best-effort save */
@@ -1420,7 +1840,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       if (!objectId) return;
       try {
         await Api.attachArtifactToObject(realId, objectId, {
-          artifactRef: { type: detail.type === 'insight' ? 'interview' : detail.type, id: detail.id },
+          artifactRef: {
+            type: detail.type === 'insight' ? 'interview' : detail.type,
+            id: detail.id,
+          },
           artifactIndex: `INT-${detail.id}`,
           label: detail.title || 'Interview insight',
           linkRole: 'evidence',
@@ -1435,19 +1858,38 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     return () => window.removeEventListener('interview-attach-to-idea', handler);
   }, [isDraft, isPolish, realId, selection.ids, graphNodes]);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.ideaId && detail.ideaId !== realId) return;
+      setExportMenuOpen(true);
+    };
+    window.addEventListener('idea-workspace-open-export-menu', handler);
+    return () => window.removeEventListener('idea-workspace-open-export-menu', handler);
+  }, [realId]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.ideaId && detail.ideaId !== realId) return;
+      setWhiteboardFacilitation({
+        timerEndsAt:
+          typeof detail?.sessionState?.timerEndsAt === 'number' ? detail.sessionState.timerEndsAt : null,
+        voteSummary:
+          detail.voteSummary && typeof detail.voteSummary === 'object' ? detail.voteSummary : {},
+        myVoteCounts:
+          detail.myVoteCounts && typeof detail.myVoteCounts === 'object' ? detail.myVoteCounts : {},
+      });
+    };
+    window.addEventListener('idea-whiteboard-facilitation-state', handler);
+    return () => window.removeEventListener('idea-whiteboard-facilitation-state', handler);
+  }, [realId]);
+
   const handleDrillUp = useCallback((toIndex: number) => {
     setDrillDownStack((prev) => prev.slice(0, toIndex));
     setMapRefreshToken((v) => v + 1);
   }, []);
 
-  // ── Pinned card data sync ───────────────────────────────────────────────────
-  useEffect(() => {
-    setPinnedCardData((prev) => ({
-      ...prev,
-      title: title || safeTitleFromSeed(seedText, isPolish),
-      summary: seedText?.split('\n')[0]?.slice(0, 200) || '',
-    }));
-  }, [title, seedText, isPolish]);
 
   // ── Draft saved label ───────────────────────────────────────────────────────
   const draftSavedLabel = useMemo(() => {
@@ -1467,12 +1909,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   return (
     <div
+      ref={workspaceRootRef}
       className="w-full h-full flex overflow-hidden bg-white dark:bg-navy-950"
       role="region"
       aria-label={isPolish ? 'Obszar roboczy mapy idei' : 'Idea map workspace'}
     >
       {/* Canvas area */}
       <div
+        ref={canvasContainerRef}
         className="flex-1 min-w-0 h-full relative"
         role="group"
         aria-label={isPolish ? 'Płótno idei i narzędzia mapy' : 'Idea canvas and map tools'}
@@ -1525,44 +1969,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           </div>
         )}
 
-        {/* V5-IDEA-13: Pinned Idea Card summary */}
-        {pinnedCardVisible && isAccepted && (
-          <div className="absolute top-3 right-3 z-[55]">
-            <IdeaPinnedCard
-              stage={stage}
-              data={pinnedCardData}
-              evidenceCount={
-                graphNodes.filter(
-                  (n: any) =>
-                    n?.kind === 'evidence_card' ||
-                    n?.kind === 'knowledge_card' ||
-                    n?.kind === 'artifact_ref'
-                ).length
-              }
-              nodeCount={graphNodes.length}
-              onEdit={() => handlePanelChange('tools')}
-              onAISummarize={() => {
-                const prompt = isPolish
-                  ? `Podsumuj kartę pomysłu "${title}" — problem, szanse, ryzyka, następne kroki.`
-                  : `Summarize the idea card for "${title}" — problem, opportunities, risks, next steps.`;
-                openChat(prompt);
-              }}
-              onStageChange={async (newStage) => {
-                try {
-                  await Api.updateMyIdea(realId, { stage: newStage });
-                  setStage(newStage);
-                  toast.success(
-                    isPolish
-                      ? `Etap: ${IDEA_STAGE_LABELS[newStage].pl}`
-                      : `Stage: ${IDEA_STAGE_LABELS[newStage].en}`
-                  );
-                } catch {
-                  toast.error(isPolish ? 'Nie udało się zmienić etapu' : 'Failed to change stage');
-                }
-              }}
-            />
-          </div>
-        )}
+        {/* V5-IDEA-13: Pinned card info now merged into IdeaRecommendationMap top-left header */}
 
         {/* Ghost cards — AI gap suggestions */}
         {isAccepted && (activeTool === 'whiteboard' || activeTool === 'mindmap') && (
@@ -1594,31 +2001,52 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           active={votingActive}
           onClose={() => setVotingActive(false)}
           maxVotes={5}
-          timerSeconds={120}
+          timerSeconds={activeTool === 'whiteboard' ? undefined : 120}
+          timerEndsAt={activeTool === 'whiteboard' ? whiteboardFacilitation.timerEndsAt : null}
+          ideaId={realId}
+          currentUserId={currentUserId}
           nodes={graphNodes}
+          voteCounts={activeTool === 'whiteboard' ? whiteboardFacilitation.voteSummary : undefined}
+          myVoteCounts={activeTool === 'whiteboard' ? whiteboardFacilitation.myVoteCounts : undefined}
+          persistent={activeTool === 'whiteboard'}
           onVotesChange={(votes) => {
-            window.dispatchEvent(
-              new CustomEvent('idea-workspace-votes-update', { detail: { votes, ideaId: realId } })
-            );
+            if (activeTool !== 'whiteboard') {
+              window.dispatchEvent(
+                new CustomEvent('idea-workspace-votes-update', { detail: { votes, ideaId: realId } })
+              );
+            }
           }}
         />
+
+        <CanvasLeftToolbar
+          activeTool={activeTool}
+          selection={selection}
+          isAccepted={isAccepted}
+          ideaId={realId}
+          onAction={(action) => handleQuickAction(action)}
+          onOpenChat={() => { setChatKickoffMessage(''); if (isChatCollapsed) toggleChatCollapse(); }}
+          onApplyTemplate={handleApplyTemplate}
+          onSaveAsTemplate={() => setTemplateGalleryOpen(true)}
+        />
+
+        {governanceSummary && (
+          <div className="absolute left-[4.5rem] top-4 z-[56] rounded-2xl border border-slate-200/70 bg-white/95 px-3 py-2 text-[11px] shadow-lg dark:border-navy-700/70 dark:bg-navy-900/95">
+            <div className="font-semibold text-slate-700 dark:text-slate-200">
+              {isPolish ? 'Review state' : 'Review state'}: {governanceSummary.status}
+            </div>
+            {(governanceSummary.actor || governanceSummary.note) && (
+              <div className="mt-0.5 text-slate-500 dark:text-slate-400">
+                {[governanceSummary.actor, governanceSummary.note].filter(Boolean).join(' • ')}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Workspace bottom toolbar */}
         <IdeaWorkspaceToolbar
           activeTool={activeTool}
           onToolChange={setActiveTool}
-          isAccepted={isAccepted}
-          onToggleVoting={() => setVotingActive((v) => !v)}
-          votingActive={votingActive}
-          onToggleAI={() => handlePanelChange('ai_suggestions')}
-          onToggleContext={() => handlePanelChange('context')}
-          onToggleFocus={() => {
-            if (focusMode === 'system') handleExitFocus();
-            else handleEnterFocusSystem();
-          }}
-          focusMode={focusMode}
           familyCounts={familyCounts}
-          onExport={() => setShowExportMenu(true)}
         />
 
         {/* Proposal review overlay */}
@@ -1639,7 +2067,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         {activeTool === 'mindmap' && (
           <CanvasToolErrorBoundary
             key={`eb-mindmap-${realId}`}
-            toolName="Mind Map"
+            toolName={isPolish ? 'Mapa rekomendacji' : 'Recommendation map'}
             onRetry={() => setMapRefreshToken((v) => v + 1)}
           >
             <IdeaRecommendationMap
@@ -1648,8 +2076,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               ideaTitle={title || safeTitleFromSeed(seedText, isPolish)}
               onClose={() => setMapOpen(false)}
               onCenterEdit={() => handlePanelChange('tools')}
+              onOpenTemplates={() => setTemplateGalleryOpen(true)}
               preferredTool={activeTool}
-              extensions={{}}
+              extensions={mapExtensions}
               onPreferredToolLoaded={(tool) => {
                 if (!tool) return;
                 if (userSelectedToolRef.current) return;
@@ -1664,6 +2093,40 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               onViewportReport={handleViewportReport}
               focusMode={toolFocusMode}
               focusObjectId={focusObjectId}
+              onFullscreenToggle={toggleWorkspaceFullscreen}
+              isFullscreen={isFullscreen}
+              stage={stage}
+              seedText={seedText}
+              onEditCard={() => handlePanelChange('tools')}
+              onAISummarize={() => {
+                const prompt = isPolish
+                  ? `Podsumuj kartę pomysłu "${title}" — problem, szanse, ryzyka, następne kroki.`
+                  : `Summarize the idea card for "${title}" — problem, opportunities, risks, next steps.`;
+                openChat(prompt);
+              }}
+              onStageChange={async (newStage) => {
+                try {
+                  await Api.updateMyIdea(realId, { stage: newStage });
+                  setStage(newStage);
+                  toast.success(
+                    isPolish
+                      ? `Etap: ${IDEA_STAGE_LABELS[newStage].pl}`
+                      : `Stage: ${IDEA_STAGE_LABELS[newStage].en}`
+                  );
+                } catch {
+                  toast.error(isPolish ? 'Nie udało się zmienić etapu' : 'Failed to change stage');
+                }
+              }}
+              graphNodeCount={graphNodes.length}
+              evidenceCount={
+                graphNodes.filter(
+                  (n: any) =>
+                    n?.kind === 'evidence_card' ||
+                    n?.kind === 'knowledge_card' ||
+                    n?.kind === 'artifact_ref'
+                ).length
+              }
+              onOpenChat={openChat}
             />
           </CanvasToolErrorBoundary>
         )}
@@ -1704,6 +2167,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               onNodeDetail={handleOpenNodeDetail}
               focusMode={toolFocusMode}
               focusObjectId={focusObjectId}
+              onFullscreenToggle={toggleWorkspaceFullscreen}
+              isFullscreen={isFullscreen}
             />
           </CanvasToolErrorBoundary>
         )}
@@ -1726,6 +2191,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               drillFocusNodeId={
                 drillDownStack.length > 0 ? drillDownStack[drillDownStack.length - 1].nodeId : null
               }
+              onFullscreenToggle={toggleWorkspaceFullscreen}
+              isFullscreen={isFullscreen}
             />
           </CanvasToolErrorBoundary>
         )}
@@ -1781,6 +2248,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             count: batch.proposals.length,
           });
         }}
+        focusMode={focusMode}
+        onToggleFocus={() => {
+          if (focusMode === 'system') handleExitFocus();
+          else handleEnterFocusSystem();
+        }}
+        votingActive={votingActive}
+        onToggleVoting={() => setVotingActive((v) => !v)}
         graphNodes={graphNodes}
         graphEdges={graphEdges}
         graphLanes={graphLanes}
@@ -1793,7 +2267,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         ideaId={realId}
         title={title || safeTitleFromSeed(seedText, isPolish)}
         selectedNodeId={selection.ids?.[0] || null}
+        selectionMeta={selection.type === 'node' && selection.count === 1 ? selection.meta : null}
         refreshToken={mapRefreshToken}
+        liveGraphNodes={graphNodes}
         onInsertToCanvas={(item) => {
           window.dispatchEvent(
             new CustomEvent('idea-workspace-insert', { detail: { items: [item], ideaId: realId } })
@@ -1825,6 +2301,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         ideaId={realId}
         activeTool={activeTool}
         onApplied={() => setMapRefreshToken((v) => v + 1)}
+      />
+
+      <IdeaExportMenu
+        open={exportMenuOpen}
+        onClose={() => setExportMenuOpen(false)}
+        ideaId={realId}
+        title={title || safeTitleFromSeed(seedText, isPolish)}
+        graphNodes={graphNodes}
+        graphEdges={graphEdges}
+        extensions={{
+          processFlow: { lanes: graphLanes },
+          activeTool,
+        }}
+        canvasContainerRef={canvasContainerRef}
+        onImportGraph={handleImportGraph}
       />
 
       <IdeaNodeDetailDrawer
@@ -1874,15 +2365,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       <KeyboardShortcutsHelp
         isOpen={shortcutsHelpOpen}
         onClose={() => setShortcutsHelpOpen(false)}
-      />
-
-      <IdeaExportMenu
-        open={showExportMenu}
-        onClose={() => setShowExportMenu(false)}
-        ideaId={realId}
-        title={title || ''}
-        graphNodes={graphNodes || []}
-        graphEdges={graphEdges || []}
       />
     </div>
   );

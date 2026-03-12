@@ -1,93 +1,93 @@
 import { useCallback } from 'react';
 import type { Edge, Node } from 'reactflow';
 
+const H_GAP = 220;
+const V_GAP = 70;
 const NODE_WIDTH = 180;
 const NODE_HEIGHT = 60;
-const BRANCH_NODE_WIDTH = 140;
-const BRANCH_NODE_HEIGHT = 50;
 
-interface LayoutNode {
-  id: string;
-  width: number;
-  height: number;
-  x: number;
-  y: number;
+/**
+ * Recursive horizontal tree layout that handles N levels of depth.
+ * Root is placed on the left; children fan out to the right.
+ * Each parent is vertically centered among its children.
+ *
+ * Returns the next available Y position (yStart + total height consumed).
+ */
+function layoutSubtree(
+  nodeId: string,
+  x: number,
+  yStart: number,
+  adj: Map<string, string[]>,
+  positions: Map<string, { x: number; y: number }>,
+  visited: Set<string>
+): number {
+  if (visited.has(nodeId)) return yStart;
+  visited.add(nodeId);
+
+  const children = adj.get(nodeId) || [];
+  if (children.length === 0) {
+    positions.set(nodeId, { x, y: yStart });
+    return yStart + V_GAP;
+  }
+
+  const childX = x + H_GAP;
+  let yNext = yStart;
+  for (const childId of children) {
+    yNext = layoutSubtree(childId, childX, yNext, adj, positions, visited);
+  }
+
+  const firstChildY = positions.get(children[0])?.y ?? yStart;
+  const lastChildY = positions.get(children[children.length - 1])?.y ?? yStart;
+  const yMid = (firstChildY + lastChildY) / 2;
+  positions.set(nodeId, { x, y: yMid });
+
+  return yNext;
 }
 
 /**
- * Simple radial auto-layout that preserves the center+branch+idea hierarchy.
- * Does not require dagre — uses built-in radial positioning.
+ * Recursive N-level horizontal tree layout.
+ * Backward-compatible: handles both free-form trees and legacy branch-* SWOT maps.
  */
 export function useAutoLayout() {
   const autoLayout = useCallback((nodes: Node[], edges: Edge[]): Node[] => {
-    const centerNode = nodes.find((n) => n.id === 'root');
-    const branchNodes = nodes.filter((n) => n.id.startsWith('branch-'));
-    const ideaNodes = nodes.filter((n) => n.id !== 'root' && !n.id.startsWith('branch-'));
+    if (nodes.length === 0) return nodes;
 
-    if (!centerNode) return nodes;
+    const adj = new Map<string, string[]>();
+    const hasParent = new Set<string>();
 
-    const branchRadius = 320;
-    const ideaRadius = 200;
-    const branchCount = branchNodes.length;
-    const angleStep = (2 * Math.PI) / Math.max(branchCount, 1);
-
-    const positioned = new Map<string, { x: number; y: number }>();
-    positioned.set('root', { x: 0, y: 0 });
-
-    // Position branches in a circle
-    branchNodes.forEach((bn, i) => {
-      const angle = angleStep * i - Math.PI / 2;
-      const x = Math.cos(angle) * branchRadius - BRANCH_NODE_WIDTH / 2;
-      const y = Math.sin(angle) * branchRadius - BRANCH_NODE_HEIGHT / 2;
-      positioned.set(bn.id, { x, y });
-    });
-
-    // Group ideas by their parent branch
-    const branchChildren: Record<string, Node[]> = {};
-    for (const idea of ideaNodes) {
-      const parentEdge = edges.find((e) => e.target === idea.id && e.source.startsWith('branch-'));
-      const parentBranch = parentEdge?.source || 'branch-options';
-      if (!branchChildren[parentBranch]) branchChildren[parentBranch] = [];
-      branchChildren[parentBranch].push(idea);
+    for (const edge of edges) {
+      const children = adj.get(edge.source) || [];
+      children.push(edge.target);
+      adj.set(edge.source, children);
+      hasParent.add(edge.target);
     }
 
-    // Position ideas radiating outward from their branch
-    for (const [branchId, children] of Object.entries(branchChildren)) {
-      const branchPos = positioned.get(branchId);
-      if (!branchPos) continue;
+    const rootNode = nodes.find((n) => n.id === 'root');
+    const rootId = rootNode ? 'root' : nodes.find((n) => !hasParent.has(n.id))?.id;
 
-      const branchIdx = branchNodes.findIndex((n) => n.id === branchId);
-      const branchAngle = angleStep * branchIdx - Math.PI / 2;
-      const count = children.length;
-      const fanSpan = Math.min(Math.PI * 0.8, count * 0.4);
+    if (!rootId) return nodes;
 
-      children.forEach((child, idx) => {
-        const childAngle =
-          branchAngle + (idx - (count - 1) / 2) * (fanSpan / Math.max(count - 1, 1));
-        const cx =
-          branchPos.x + BRANCH_NODE_WIDTH / 2 + Math.cos(childAngle) * ideaRadius - NODE_WIDTH / 2;
-        const cy =
-          branchPos.y +
-          BRANCH_NODE_HEIGHT / 2 +
-          Math.sin(childAngle) * ideaRadius -
-          NODE_HEIGHT / 2;
-        positioned.set(child.id, { x: cx, y: cy });
-      });
-    }
+    const positions = new Map<string, { x: number; y: number }>();
+    const visited = new Set<string>();
 
-    // Ideas not connected to any branch — place in a grid below
-    const orphans = ideaNodes.filter((n) => !positioned.has(n.id));
+    layoutSubtree(rootId, 0, 0, adj, positions, visited);
+
+    const orphans = nodes.filter((n) => !positions.has(n.id));
+    const maxY = positions.size > 0
+      ? Math.max(...Array.from(positions.values()).map((p) => p.y)) + V_GAP * 2
+      : 0;
+
     orphans.forEach((orphan, idx) => {
       const col = idx % 4;
       const row = Math.floor(idx / 4);
-      positioned.set(orphan.id, {
-        x: -300 + col * (NODE_WIDTH + 20),
-        y: branchRadius + 200 + row * (NODE_HEIGHT + 20),
+      positions.set(orphan.id, {
+        x: col * (NODE_WIDTH + 20),
+        y: maxY + row * (NODE_HEIGHT + 20),
       });
     });
 
     return nodes.map((n) => {
-      const pos = positioned.get(n.id);
+      const pos = positions.get(n.id);
       if (!pos) return n;
       return { ...n, position: { x: pos.x, y: pos.y } };
     });

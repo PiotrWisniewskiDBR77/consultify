@@ -1,6 +1,7 @@
 /**
  * TemplatePreview — Preview panel for templates
  * Uses shared PreviewPane building blocks for consistent UX.
+ * Exports Body + Footer for proper TableWithPreviewLayout split.
  */
 
 import { BookTemplate, FileText, Presentation } from 'lucide-react';
@@ -10,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 
 import {
   PreviewActionBar,
+  PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
   type ActionRow,
@@ -22,7 +24,7 @@ interface TemplatePreviewProps {
   template: TemplateItem;
 }
 
-export const TemplatePreview: React.FC<TemplatePreviewProps> = ({ template }) => {
+function useTemplatePreviewData(template: TemplateItem) {
   const { i18n, t } = useTranslation();
   const navigate = useNavigate();
   const isPolish = i18n.language?.startsWith('pl');
@@ -53,28 +55,14 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({ template }) =>
     ...(template.slideCount != null ? [`${isPolish ? 'Slajdy' : 'Slides'}: ${template.slideCount}`] : []),
   ];
 
-  const actionRows: ActionRow[] = [
-    {
-      buttons: [
-        {
-          label: t('rap.preview.useTemplate', 'Użyj tego wzorca'),
-          icon: BookTemplate,
-          onClick: () => {
-            const path =
-              template.type === 'presentation'
-                ? `/presentations/wizard?templateId=${encodeURIComponent(template.id)}`
-                : `/reports/builder?templateId=${encodeURIComponent(template.id)}`;
-            navigate(path);
-          },
-          colorScheme: 'primary',
-          flex: true,
-        },
-      ],
-    },
-  ];
+  return { isPolish, t, navigate, typeMeta, pills, detailParts };
+}
+
+export const TemplatePreviewBody: React.FC<TemplatePreviewProps> = ({ template }) => {
+  const { isPolish, pills, detailParts } = useTemplatePreviewData(template);
 
   return (
-    <div className="space-y-4 text-sm">
+    <div className="space-y-4">
       <PreviewMetaCard pills={pills} />
 
       {/* Icon + brief */}
@@ -94,7 +82,55 @@ export const TemplatePreview: React.FC<TemplatePreviewProps> = ({ template }) =>
       </div>
 
       <PreviewDetailsSection text={detailParts.join('\n')} label={isPolish ? 'SZCZEGÓŁY' : 'DETAILS'} />
+    </div>
+  );
+};
+
+export const TemplatePreviewFooter: React.FC<TemplatePreviewProps> = ({ template }) => {
+  const { isPolish, t, navigate } = useTemplatePreviewData(template);
+
+  const actionRows: ActionRow[] = [
+    {
+      buttons: [
+        {
+          label: t('rap.preview.useTemplate', 'Użyj tego wzorca'),
+          icon: BookTemplate,
+          onClick: () => {
+            const path =
+              template.type === 'presentation'
+                ? `/presentations/wizard?templateId=${encodeURIComponent(template.id)}`
+                : `/reports/builder?templateId=${encodeURIComponent(template.id)}`;
+            navigate(path);
+          },
+          colorScheme: 'primary',
+          flex: true,
+          shortcut: 'U',
+        },
+      ],
+    },
+  ];
+
+  const dividerClass = 'border-t border-slate-200/50 dark:border-white/[0.06] my-3';
+
+  return (
+    <div className="space-y-0">
+      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+        <PreviewAIHintStrip
+          hints={[isPolish ? 'Wzorzec gotowy do użycia' : 'Template ready to use']}
+        />
+      </div>
+      <div className={dividerClass} />
       <PreviewActionBar rows={actionRows} />
     </div>
+  );
+};
+
+/** @deprecated Use TemplatePreviewBody + TemplatePreviewFooter for Body/Footer split */
+export const TemplatePreview: React.FC<TemplatePreviewProps> = (props) => {
+  return (
+    <>
+      <TemplatePreviewBody {...props} />
+      <TemplatePreviewFooter {...props} />
+    </>
   );
 };

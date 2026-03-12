@@ -168,6 +168,11 @@ export const RowTemplatePicker: React.FC<RowTemplatePickerProps> = ({
     if ((style.top as number) > window.innerHeight - 400) {
       style.top = anchorRect.top - 400;
     }
+  } else {
+    style.position = 'fixed';
+    style.left = '50%';
+    style.top = '50%';
+    style.transform = 'translate(-50%, -50%)';
   }
 
   return (

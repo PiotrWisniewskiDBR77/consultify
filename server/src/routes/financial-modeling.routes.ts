@@ -38,7 +38,13 @@ import {
   updateEvent,
   updateModel,
 } from '../services/financialModelingService.js';
+import {
+  getFinanceTraceId,
+  logFinanceError,
+  logFinanceEvent,
+} from '../services/financeDiagnosticsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { get as dbGet } from '../utils/DbPromise.js';
 import { run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -59,6 +65,7 @@ router.post(
     const orgId = req.user?.organizationId;
     const userId = req.user?.id;
     if (!orgId || !userId) return res.status(401).json({ error: 'Unauthorized' });
+    const traceId = getFinanceTraceId((req as any).correlationId);
     const {
       name,
       description,
@@ -74,24 +81,67 @@ router.post(
     } = req.body;
     if (!name || !startDate) return res.status(400).json({ error: 'name and startDate required' });
 
-    const id = await createModel({
+    logFinanceEvent('model.create.started', {
+      traceId,
       organizationId: orgId,
-      projectId,
-      initiativeId,
+      userId,
       name,
-      description,
       currency,
       horizonMonths,
       startDate,
       granularity,
       scenario,
-      assumptions,
-      createdBy: userId,
+      projectId,
+      initiativeId,
       sourceStatementId,
     });
 
-    logger.info(`[FinancialModeling] Model created: ${id} by ${userId}`);
-    res.status(201).json({ success: true, id });
+    try {
+      const id = await createModel({
+        organizationId: orgId,
+        projectId,
+        initiativeId,
+        name,
+        description,
+        currency,
+        horizonMonths,
+        startDate,
+        granularity,
+        scenario,
+        assumptions,
+        createdBy: userId,
+        sourceStatementId,
+      });
+
+      logFinanceEvent('model.create.completed', {
+        traceId,
+        modelId: id,
+        organizationId: orgId,
+        userId,
+        name,
+        seedType: sourceStatementId ? 'statement' : 'manual',
+        sourceStatementId: sourceStatementId || null,
+      });
+
+      logger.info(`[FinancialModeling] Model created: ${id} by ${userId}`);
+      res.status(201).json({ success: true, id });
+    } catch (e: any) {
+      logFinanceError('model.create.failed', e, {
+        traceId,
+        organizationId: orgId,
+        userId,
+        name,
+      });
+      const message = String(e?.message || 'Model creation failed');
+      if (
+        message.includes('Statement') ||
+        message.includes('critical lines') ||
+        message.includes('seed')
+      ) {
+        return res.status(400).json({ error: message });
+      }
+      throw e;
+    }
   })
 );
 
@@ -116,8 +166,28 @@ router.get(
     const model = await getModel(modelId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
 
+    const sourceStatement =
+      model.source_statement_id != null
+        ? await (async () => {
+            try {
+              return await dbGet(
+                `SELECT id, statement_type, period_start, period_end, period_label, currency, scaling, source_file_name, status, readiness_status
+                 FROM financial_statements
+                 WHERE id = ?`,
+                [model.source_statement_id]
+              );
+            } catch {
+              return dbGet(
+                `SELECT id, statement_type, period_start, period_end, period_label, currency, scaling, source_file_name, status
+                 FROM financial_statements
+                 WHERE id = ?`,
+                [model.source_statement_id]
+              );
+            }
+          })()
+        : null;
     const events = await listEvents(modelId);
-    res.json({ ...model, events });
+    res.json({ ...model, events, source_statement: sourceStatement || null });
   })
 );
 
@@ -167,23 +237,45 @@ router.post(
     const modelId = String(req.params.id);
     const model = await getModel(modelId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
+    const traceId = getFinanceTraceId((req as any).correlationId);
+
+    logFinanceEvent('model.compute.started', {
+      traceId,
+      modelId,
+      scenario: model.scenario,
+      granularity: model.granularity,
+      status: model.status,
+      seedType: model.source_statement_id ? 'statement' : 'manual',
+    });
 
     try {
       const result = await computeModel(modelId);
       await persistComputeResult(modelId, result, model.scenario || 'base');
+      const validationSummary = {
+        total: result.validations.length,
+        pass: result.validations.filter((v) => v.status === 'pass').length,
+        fail: result.validations.filter((v) => v.status === 'fail').length,
+        warning: result.validations.filter((v) => v.status === 'warning').length,
+      };
+
+      logFinanceEvent('model.compute.completed', {
+        traceId,
+        modelId,
+        overallStatus: result.overallStatus,
+        periodCount: result.periods.length,
+        validationSummary,
+        seedType: model.source_statement_id ? 'statement' : 'manual',
+        sourceStatementId: model.source_statement_id || null,
+      });
 
       res.json({
         success: true,
         overallStatus: result.overallStatus,
         periodCount: result.periods.length,
-        validationSummary: {
-          total: result.validations.length,
-          pass: result.validations.filter((v) => v.status === 'pass').length,
-          fail: result.validations.filter((v) => v.status === 'fail').length,
-          warning: result.validations.filter((v) => v.status === 'warning').length,
-        },
+        validationSummary,
       });
     } catch (e: any) {
+      logFinanceError('model.compute.failed', e, { traceId, modelId });
       return res.status(500).json({ error: 'Computation failed', detail: e.message });
     }
   })
@@ -233,6 +325,7 @@ router.post(
     const modelId = String(req.params.id);
     const model = await getModel(modelId);
     if (!model) return res.status(404).json({ error: 'Model not found' });
+    const traceId = getFinanceTraceId((req as any).correlationId);
 
     const {
       eventType,
@@ -254,6 +347,19 @@ router.post(
         .json({ error: 'eventType, name, amount, periodStart, cfClassification required' });
     }
 
+    logFinanceEvent('model.event.create.started', {
+      traceId,
+      modelId,
+      eventType,
+      name,
+      amount,
+      periodStart,
+      periodEnd,
+      recurrence,
+      growthRate,
+      cfClassification,
+    });
+
     const id = await addEvent({
       modelId,
       eventType,
@@ -269,6 +375,14 @@ router.post(
       parameters,
       sortOrder,
       createdBy: req.user?.id,
+    });
+
+    logFinanceEvent('model.event.create.completed', {
+      traceId,
+      modelId,
+      eventId: id,
+      eventType,
+      name,
     });
 
     res.status(201).json({ success: true, id });

@@ -27,15 +27,48 @@ import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { upload } from '../middleware/fileUpload.middleware.js';
 import {
   autoMapLines,
+  classifyStatementDocument,
   confirmStatement,
   createStatement,
   detectStatementType,
+  evaluateStatementReadiness,
   extractFinancialLines,
+  getLatestStatementIngestRun,
+  learnStatementAliases,
+  loadStatementSourceText,
+  locateStatementSections,
+  openStatementRepairSession,
+  persistStatementCandidateRows,
+  persistStatementExtractedSections,
+  persistStatementMappingCandidates,
+  recordStatementQualityRun,
+  recordStatementSourceArtifact,
+  resolveStatementColumnSelection,
+  resolveDuplicateSuggestedMappings,
   saveStatementValues,
+  snapshotStatementValueVersion,
+  startStatementIngestRun,
+  updateStatementMetadata,
+  updateStatementIngestRun,
+  updateStatementReadinessState,
   updateStatementStatus,
   validateStatement,
 } from '../services/financialStatementService.js';
+import {
+  getFinanceTraceId,
+  logFinanceError,
+  logFinanceEvent,
+  summarizeTextPayload,
+} from '../services/financeDiagnosticsService.js';
+import {
+  searchStatementDocumentIntelligence,
+  upsertStatementDocumentIntelligence,
+} from '../services/documentIntelligenceService.js';
 import PDFParserService from '../services/pdfParserService.js';
+import {
+  extractFinancialLinesWithAnthropic,
+  extractFinancialLinesWithOpenAI,
+} from '../services/openAIFinancialExtractionService.js';
 import {
   computeGrowthRatios,
   computeRatios,
@@ -66,7 +99,46 @@ function getUserId(req: AuthRequest): string | undefined {
   return raw.length > 0 ? raw : undefined;
 }
 
+function isSchemaCompatError(error: unknown): boolean {
+  const message = String((error as Error)?.message || error || '').toLowerCase();
+  return (
+    message.includes('does not exist') ||
+    message.includes('no such column') ||
+    message.includes('no such table') ||
+    message.includes('undefined column')
+  );
+}
+
 const DB_ALLOWED_PARSE_METHODS = new Set(['text_extraction', 'ocr', 'manual']);
+
+async function ensureIngestRun(params: {
+  statementId: string;
+  organizationId?: string;
+  createdBy?: string;
+  sourceFileName?: string;
+  sourceFilePath?: string;
+  parseMethod?: string;
+  documentClass?: string;
+  extractionStrategy?: string;
+  templateFamily?: string | null;
+  rawTextLength?: number;
+}): Promise<string | null> {
+  const existingRunId = await getLatestStatementIngestRun(params.statementId);
+  if (existingRunId) return existingRunId;
+  if (!params.organizationId) return null;
+  return startStatementIngestRun({
+    statementId: params.statementId,
+    organizationId: params.organizationId,
+    sourceFileName: params.sourceFileName,
+    sourceFilePath: params.sourceFilePath,
+    parseMethod: params.parseMethod,
+    documentClass: params.documentClass,
+    extractionStrategy: params.extractionStrategy,
+    templateFamily: params.templateFamily,
+    rawTextLength: params.rawTextLength,
+    createdBy: params.createdBy,
+  });
+}
 
 // ════════════════════════════════════════════════
 // T050: Financial Statement Ingestion
@@ -88,8 +160,10 @@ async function extractTextFromFile(
   }
   if (ext === 'xlsx' || ext === 'xls') {
     try {
+      const fs = await import('fs');
       const XLSX = await import('xlsx');
-      const wb = XLSX.readFile(filePath);
+      const buffer = fs.readFileSync(filePath);
+      const wb = XLSX.read(buffer, { type: 'buffer' });
       const lines: string[] = [];
       for (const sheetName of wb.SheetNames) {
         const ws = wb.Sheets[sheetName];
@@ -98,7 +172,7 @@ async function extractTextFromFile(
       }
       return { text: lines.join('\n'), parseMethod: 'excel_import' };
     } catch (e: any) {
-      throw new Error(`Excel parsing failed: ${e?.message}. Install xlsx package if missing.`);
+      throw new Error(`Excel parsing failed: ${e?.message}`);
     }
   }
   throw new Error(`Unsupported file format: ${ext}`);
@@ -115,14 +189,30 @@ router.post(
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'File required (PDF, XLSX, XLS, or CSV)' });
     if (!userId || !orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const traceId = getFinanceTraceId((req as any).correlationId);
+
+    logFinanceEvent('statement.upload.started', {
+      traceId,
+      organizationId: orgId,
+      userId,
+      fileName: file.originalname,
+      sizeBytes: file.size,
+      mimeType: file.mimetype,
+    });
 
     let text: string;
     let parseMethod: string;
     try {
       const result = await extractTextFromFile(file.path, file.originalname);
-      text = result.text;
+      // Strip null bytes — Postgres TEXT columns reject 0x00
+      text = result.text.replace(/\0/g, '');
       parseMethod = result.parseMethod;
     } catch (e: any) {
+      logFinanceError('statement.upload.extract_failed', e, {
+        traceId,
+        fileName: file.originalname,
+        sizeBytes: file.size,
+      });
       return res.status(422).json({ error: 'File extraction failed', detail: e?.message });
     }
 
@@ -131,8 +221,23 @@ router.post(
     const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod) ? parseMethod : 'manual';
     const notesPrefix =
       parseMethod === effectiveParseMethod ? '' : `[parse_method:${parseMethod}]\n`;
+    const textSummary = summarizeTextPayload(text);
+
+    logFinanceEvent('statement.upload.extracted', {
+      traceId,
+      fileName: file.originalname,
+      parseMethod,
+      effectiveParseMethod,
+      text: textSummary,
+    });
 
     const detection = detectStatementType(text);
+    const columnSelection = resolveStatementColumnSelection(text, detection);
+    const documentProfile = classifyStatementDocument({
+      fileName: file.originalname,
+      parseMethod: effectiveParseMethod,
+      text,
+    });
 
     const statementId = await createStatement({
       organizationId: orgId,
@@ -146,7 +251,40 @@ router.post(
       sourceFilePath: file.path,
       parseMethod: effectiveParseMethod,
       overallConfidence: detection.confidence,
+      documentClass: documentProfile.documentClass,
+      extractionStrategy: documentProfile.extractionStrategy,
+      templateFamily: documentProfile.templateFamily,
       createdBy: userId,
+    });
+    const ingestRunId = await startStatementIngestRun({
+      statementId,
+      organizationId: orgId,
+      sourceFileName: file.originalname,
+      sourceFilePath: file.path,
+      parseMethod: effectiveParseMethod,
+      documentClass: documentProfile.documentClass,
+      extractionStrategy: documentProfile.extractionStrategy,
+      templateFamily: documentProfile.templateFamily,
+      rawTextLength: text.length,
+      summary: {
+        detection,
+        documentProfile,
+        columnSelection,
+        parseMethod,
+        effectiveParseMethod,
+      },
+      createdBy: userId,
+    });
+
+    logFinanceEvent('statement.upload.detected', {
+      traceId,
+      statementId,
+      statementType: detection.statementType,
+      periodStart: detection.periodStart,
+      periodEnd: detection.periodEnd,
+      currency: detection.currency,
+      scaling: detection.scaling,
+      confidence: detection.confidence,
     });
 
     const notesRes = await dbRun(
@@ -155,11 +293,108 @@ router.post(
       { fallback: false }
     );
     if (!notesRes?.success) {
+      logFinanceError('statement.upload.persist_failed', notesRes?.error, {
+        traceId,
+        statementId,
+        fileName: file.originalname,
+        notesLength: `${notesPrefix}${text.substring(0, 100000)}`.length,
+        text: textSummary,
+      });
       return res.status(500).json({
         error: 'Failed to persist extracted text',
         detail: notesRes?.error || 'unknown',
       });
     }
+    await recordStatementSourceArtifact({
+      statementId,
+      ingestRunId,
+      artifactType: 'raw_text',
+      stage: 'upload',
+      contentText: text,
+      metadata: {
+        parseMethod,
+        effectiveParseMethod,
+        sourceFileName: file.originalname,
+        sizeBytes: file.size,
+      },
+      createdBy: userId,
+    });
+    await recordStatementSourceArtifact({
+      statementId,
+      ingestRunId,
+      artifactType: 'document_profile',
+      stage: 'upload',
+      contentJson: {
+        detection,
+        documentProfile,
+        columnSelection,
+        parseMethod,
+        effectiveParseMethod,
+      },
+      createdBy: userId,
+    });
+    await updateStatementIngestRun({
+      ingestRunId,
+      currentStage: 'upload',
+      runStatus: 'running',
+      documentClass: documentProfile.documentClass,
+      extractionStrategy: documentProfile.extractionStrategy,
+      templateFamily: documentProfile.templateFamily,
+      rawTextLength: text.length,
+    });
+    try {
+      await upsertStatementDocumentIntelligence({
+        statementId,
+        ingestRunId,
+        organizationId: orgId,
+        title: file.originalname,
+        text,
+        statementType: detection.statementType,
+        documentClass: documentProfile.documentClass,
+        templateFamily: documentProfile.templateFamily,
+      });
+    } catch (error) {
+      logFinanceError('statement.document_intelligence.index_failed', error, {
+        traceId,
+        statementId,
+        ingestRunId,
+      });
+    }
+
+    logFinanceEvent('statement.upload.completed', {
+      traceId,
+      statementId,
+      fileName: file.originalname,
+      parseMethod,
+      effectiveParseMethod,
+      documentClass: documentProfile.documentClass,
+      extractionStrategy: documentProfile.extractionStrategy,
+      templateFamily: documentProfile.templateFamily,
+      text: textSummary,
+    });
+
+    await recordStatementQualityRun({
+      statementId,
+      organizationId: orgId,
+      stage: 'upload',
+      resultStatus: detection.statementType === 'UNKNOWN' ? 'warning' : 'pass',
+      readinessStatus: 'pending',
+      strategy: documentProfile.extractionStrategy,
+      summary:
+        detection.statementType === 'UNKNOWN'
+          ? 'Upload completed with unknown statement type fallback.'
+          : 'Upload completed and initial document profile detected.',
+      reasonCodes:
+        detection.statementType === 'UNKNOWN' ? ['DETECTION_UNKNOWN_FALLBACK'] : ['UPLOAD_COMPLETE'],
+      payload: {
+        detection,
+        documentProfile,
+        columnSelection,
+        parseMethod,
+        effectiveParseMethod,
+      },
+      createdBy: userId,
+    });
 
     logger.info(
       `[FinanceStatements] Uploaded ${file.originalname} (${parseMethod}) → statement ${statementId} type=${detection.statementType}`
@@ -168,9 +403,14 @@ router.post(
     res.status(201).json({
       success: true,
       statementId,
+      ingestRunId,
       detection,
+      columnSelection,
       textLength: text.length,
       parseMethod,
+      documentClass: documentProfile.documentClass,
+      extractionStrategy: documentProfile.extractionStrategy,
+      templateFamily: documentProfile.templateFamily,
     });
   })
 );
@@ -181,30 +421,94 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const stmt = await getStatementOrFail(statementId, orgId, res);
     if (!stmt) return;
 
-    const text = stmt.notes || '';
+    const text = await loadStatementSourceText(statementId, stmt.notes || '');
     if (!text)
       return res.status(400).json({ error: 'No extracted text available — re-upload the PDF' });
+    const ingestRunId = await ensureIngestRun({
+      statementId,
+      organizationId: orgId,
+      createdBy: userId,
+      sourceFileName: stmt.source_file_name,
+      sourceFilePath: stmt.source_file_path,
+      parseMethod: stmt.parse_method,
+      documentClass: stmt.document_class,
+      extractionStrategy: stmt.extraction_strategy,
+      templateFamily: stmt.template_family,
+      rawTextLength: text.length,
+    });
 
-    const detection = detectStatementType(text);
+    const autoDetection = detectStatementType(text);
+    const detection = {
+      ...autoDetection,
+      statementType:
+        String(req.body?.statementType || '').trim() ||
+        (autoDetection.statementType === 'UNKNOWN' ? stmt.statement_type : autoDetection.statementType),
+      periodStart: String(req.body?.periodStart || '').trim() || autoDetection.periodStart,
+      periodEnd: String(req.body?.periodEnd || '').trim() || autoDetection.periodEnd,
+      periodLabel: String(req.body?.periodLabel || '').trim() || autoDetection.periodLabel,
+      currency: String(req.body?.currency || '').trim() || autoDetection.currency,
+      scaling: String(req.body?.scaling || '').trim() || autoDetection.scaling,
+    };
+    const columnSelection = resolveStatementColumnSelection(text, detection);
+    const documentProfile = classifyStatementDocument({
+      fileName: stmt.source_file_name,
+      parseMethod: stmt.parse_method,
+      text,
+    });
 
-    await dbRun(
-      `UPDATE financial_statements SET statement_type = ?, period_start = COALESCE(?, period_start), period_end = COALESCE(?, period_end), period_label = COALESCE(?, period_label), currency = ?, scaling = ?, overall_confidence = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      [
-        detection.statementType === 'UNKNOWN' ? stmt.statement_type : detection.statementType,
-        detection.periodStart,
-        detection.periodEnd,
-        detection.periodLabel,
-        detection.currency,
-        detection.scaling,
-        detection.confidence,
+    await updateStatementMetadata(statementId, {
+      statementType: detection.statementType,
+      periodStart: detection.periodStart,
+      periodEnd: detection.periodEnd,
+      periodLabel: detection.periodLabel,
+      currency: detection.currency,
+      scaling: detection.scaling,
+      overallConfidence: detection.confidence,
+      documentClass: documentProfile.documentClass,
+      extractionStrategy: documentProfile.extractionStrategy,
+      templateFamily: documentProfile.templateFamily,
+    });
+    await recordStatementSourceArtifact({
+      statementId,
+      ingestRunId,
+      artifactType: 'detection',
+      stage: 'detect',
+      contentJson: { detection, documentProfile, columnSelection },
+      createdBy: userId,
+    });
+    await updateStatementIngestRun({
+      ingestRunId,
+      currentStage: 'detect',
+      runStatus: 'running',
+      documentClass: documentProfile.documentClass,
+      extractionStrategy: documentProfile.extractionStrategy,
+      templateFamily: documentProfile.templateFamily,
+      rawTextLength: text.length,
+    });
+    if (orgId) {
+      await recordStatementQualityRun({
         statementId,
-      ]
-    );
+        organizationId: orgId,
+        stage: 'detect',
+        resultStatus: detection.statementType === 'UNKNOWN' ? 'warning' : 'pass',
+        readinessStatus: 'pending',
+        strategy: documentProfile.extractionStrategy,
+        summary: 'Detection metadata persisted for statement.',
+        reasonCodes:
+          detection.statementType === 'UNKNOWN'
+            ? ['DETECTION_UNKNOWN_FALLBACK']
+            : ['DETECTION_METADATA_UPDATED'],
+        payload: detection,
+        createdBy: userId,
+      });
+    }
 
-    res.json({ statementId, detection });
+    res.json({ statementId, ingestRunId, detection, documentProfile, columnSelection });
   })
 );
 
@@ -214,22 +518,185 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const stmt = await getStatementOrFail(statementId, orgId, res);
     if (!stmt) return;
+    const traceId = getFinanceTraceId((req as any).correlationId);
 
-    const text = stmt.notes || '';
+    const text = await loadStatementSourceText(statementId, stmt.notes || '');
     if (!text) return res.status(400).json({ error: 'No extracted text' });
+    const ingestRunId = await ensureIngestRun({
+      statementId,
+      organizationId: orgId,
+      createdBy: userId,
+      sourceFileName: stmt.source_file_name,
+      sourceFilePath: stmt.source_file_path,
+      parseMethod: stmt.parse_method,
+      documentClass: stmt.document_class,
+      extractionStrategy: stmt.extraction_strategy,
+      templateFamily: stmt.template_family,
+      rawTextLength: text.length,
+    });
+    const documentProfile = classifyStatementDocument({
+      fileName: stmt.source_file_name,
+      parseMethod: stmt.parse_method,
+      text,
+    });
+    const minimumAiLines =
+      String(stmt.statement_type || '').toUpperCase() === 'CF'
+        ? 2
+        : ['BS', 'P&L'].includes(String(stmt.statement_type || '').toUpperCase())
+          ? 3
+          : 2;
 
-    const extraction = extractFinancialLines(text, stmt.statement_type);
+    const openAiExtraction =
+      documentProfile.documentClass === 'spreadsheet' || documentProfile.documentClass === 'csv'
+        ? null
+        : await extractFinancialLinesWithOpenAI({
+            filePath: stmt.source_file_path,
+            fileName: stmt.source_file_name,
+            statementType: stmt.statement_type,
+            traceId,
+          });
+    const anthropicExtraction =
+      documentProfile.documentClass === 'spreadsheet' || documentProfile.documentClass === 'csv'
+        ? null
+        : !openAiExtraction || openAiExtraction.lines.length < minimumAiLines
+          ? await extractFinancialLinesWithAnthropic({
+              text,
+              fileName: stmt.source_file_name,
+              statementType: stmt.statement_type,
+              traceId,
+            })
+          : null;
+    const aiExtraction =
+      anthropicExtraction && anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
+        ? anthropicExtraction
+        : openAiExtraction;
+    const columnSelection = resolveStatementColumnSelection(text, {
+      periodLabel: stmt.period_label,
+      currency: stmt.currency,
+      scaling: stmt.scaling,
+    });
+    const extractionRaw =
+      aiExtraction && aiExtraction.lines.length > 0
+        ? aiExtraction
+        : extractFinancialLines(text, stmt.statement_type);
+    const extraction = {
+      ...extractionRaw,
+      lines: extractionRaw.lines.map((line) => ({
+        ...line,
+        selectedPeriodLabel: line.selectedPeriodLabel || columnSelection.selectedPeriodLabel || undefined,
+      })),
+    };
+    const extractedSections = locateStatementSections(text, stmt.statement_type);
+    const strategy =
+      anthropicExtraction && anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
+        ? openAiExtraction && (openAiExtraction.lines.length || 0) > 0
+          ? 'anthropic_text_fallback'
+          : 'anthropic_text_primary'
+        : openAiExtraction && openAiExtraction.lines.length > 0
+          ? 'openai_input_file'
+        : documentProfile.documentClass === 'spreadsheet'
+          ? 'spreadsheet_structured'
+          : 'local_parser';
+
+    logFinanceEvent('statement.extract.completed', {
+      traceId,
+      statementId,
+      strategy,
+      lineCount: extraction.lines.length,
+      rawTableCount: extraction.rawTableCount,
+      warnings: extraction.warnings,
+    });
 
     await updateStatementStatus(statementId, 'imported');
+    await updateStatementMetadata(statementId, {
+      documentClass: documentProfile.documentClass,
+      extractionStrategy: strategy,
+      templateFamily: documentProfile.templateFamily,
+    });
+    const persistedSections = await persistStatementExtractedSections({
+      statementId,
+      ingestRunId,
+      sections: extractedSections,
+    });
+    const sectionIdsByKey = Object.fromEntries(
+      persistedSections.map((section) => [section.sectionKey, section.sectionId])
+    );
+    const candidateRows = await persistStatementCandidateRows({
+      statementId,
+      ingestRunId,
+      rows: extraction.lines,
+      sectionIdsByKey,
+      statementType: stmt.statement_type,
+      currency: stmt.currency,
+      scaling: stmt.scaling,
+    });
+    await recordStatementSourceArtifact({
+      statementId,
+      ingestRunId,
+      artifactType: 'extraction',
+      stage: 'extract',
+      contentJson: {
+        strategy,
+        rawTableCount: extraction.rawTableCount,
+        warnings: extraction.warnings,
+        lineCount: extraction.lines.length,
+        columnSelection,
+        lines: extraction.lines,
+      },
+      createdBy: userId,
+    });
+    await updateStatementIngestRun({
+      ingestRunId,
+      currentStage: 'extract',
+      runStatus: extraction.lines.length > 0 ? 'running' : 'failed',
+      documentClass: documentProfile.documentClass,
+      extractionStrategy: strategy,
+      templateFamily: documentProfile.templateFamily,
+      rawTextLength: text.length,
+      reasonCodes: extraction.lines.length > 0 ? ['EXTRACTION_LINES_FOUND'] : ['EXTRACTION_NO_LINES'],
+      summary: {
+        sections: persistedSections.length,
+        candidateRows: candidateRows.length,
+      },
+    });
+    if (orgId) {
+      await recordStatementQualityRun({
+        statementId,
+        organizationId: orgId,
+        stage: 'extract',
+        resultStatus: extraction.lines.length > 0 ? 'pass' : 'fail',
+        readinessStatus: extraction.lines.length > 0 ? 'recoverable' : 'rejected',
+        strategy,
+        summary:
+          extraction.lines.length > 0
+            ? 'Extraction produced candidate financial lines.'
+            : 'Extraction did not produce usable financial lines.',
+        reasonCodes:
+          extraction.lines.length > 0 ? ['EXTRACTION_LINES_FOUND'] : ['EXTRACTION_NO_LINES'],
+        payload: {
+          rawTableCount: extraction.rawTableCount,
+          warnings: extraction.warnings,
+          lineCount: extraction.lines.length,
+        },
+        createdBy: userId,
+      });
+    }
 
     res.json({
       statementId,
+      ingestRunId,
       lines: extraction.lines,
+      sections: extractedSections,
+      columnSelection,
       rawTableCount: extraction.rawTableCount,
       warnings: extraction.warnings,
       lineCount: extraction.lines.length,
+      extractionStrategy: strategy,
+      documentClass: documentProfile.documentClass,
     });
   })
 );
@@ -240,18 +707,96 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const stmt = await getStatementOrFail(statementId, orgId, res);
     if (!stmt) return;
 
     const { lines } = req.body;
     if (!lines || !Array.isArray(lines))
       return res.status(400).json({ error: 'lines array required' });
+    const ingestRunId = await ensureIngestRun({
+      statementId,
+      organizationId: orgId,
+      createdBy: userId,
+      sourceFileName: stmt.source_file_name,
+      sourceFilePath: stmt.source_file_path,
+      parseMethod: stmt.parse_method,
+      documentClass: stmt.document_class,
+      extractionStrategy: stmt.extraction_strategy,
+      templateFamily: stmt.template_family,
+    });
 
-    const mapped = await autoMapLines(lines, stmt.statement_type);
+    const mapped = resolveDuplicateSuggestedMappings(
+      await autoMapLines(lines, stmt.statement_type, {
+      organizationId: orgId,
+      templateFamily: stmt.template_family,
+      })
+    );
+    const candidateRows = await persistStatementCandidateRows({
+      statementId,
+      ingestRunId,
+      rows: mapped,
+      statementType: stmt.statement_type,
+      currency: stmt.currency,
+      scaling: stmt.scaling,
+    });
+    await persistStatementMappingCandidates({
+      statementId,
+      ingestRunId,
+      rows: mapped,
+      candidateRowIdsBySourceRow: Object.fromEntries(
+        candidateRows
+          .filter((row) => row.sourceRow != null)
+          .map((row) => [Number(row.sourceRow), row.candidateRowId])
+      ),
+    });
 
     await updateStatementStatus(statementId, 'mapped');
+    await recordStatementSourceArtifact({
+      statementId,
+      ingestRunId,
+      artifactType: 'mapping',
+      stage: 'map',
+      contentJson: {
+        mappedLines: mapped,
+      },
+      createdBy: userId,
+    });
+    await updateStatementIngestRun({
+      ingestRunId,
+      currentStage: 'map',
+      runStatus: 'running',
+      reasonCodes: mapped.some((line) => line.suggestedCanonicalId)
+        ? ['MAPPING_COMPLETE']
+        : ['MAPPING_NO_SUGGESTIONS'],
+      summary: {
+        total: mapped.length,
+        suggested: mapped.filter((line) => line.suggestedCanonicalId).length,
+      },
+    });
+    if (orgId) {
+      await recordStatementQualityRun({
+        statementId,
+        organizationId: orgId,
+        stage: 'map',
+        resultStatus: mapped.some((line) => line.suggestedCanonicalId) ? 'pass' : 'warning',
+        readinessStatus: 'recoverable',
+        strategy: stmt.template_family || stmt.extraction_strategy || 'alias_engine',
+        summary: 'Canonical mapping suggestions generated.',
+        reasonCodes: mapped.some((line) => line.isNonFinancial)
+          ? ['MAPPING_COMPLETE', 'NON_FINANCIAL_ROWS_EXCLUDED']
+          : ['MAPPING_COMPLETE'],
+        payload: {
+          total: mapped.length,
+          suggested: mapped.filter((line) => line.suggestedCanonicalId).length,
+          nonFinancial: mapped.filter((line) => line.isNonFinancial).length,
+        },
+        createdBy: userId,
+      });
+    }
 
-    res.json({ statementId, mappedLines: mapped });
+    res.json({ statementId, ingestRunId, mappedLines: mapped });
   })
 );
 
@@ -261,23 +806,77 @@ router.put(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const stmt = await getStatementOrFail(statementId, orgId, res);
     if (!stmt) return;
 
     const { values } = req.body;
     if (!values || !Array.isArray(values))
       return res.status(400).json({ error: 'values array required' });
+    const ingestRunId = await ensureIngestRun({
+      statementId,
+      organizationId: orgId,
+      createdBy: userId,
+      sourceFileName: stmt.source_file_name,
+      sourceFilePath: stmt.source_file_path,
+      parseMethod: stmt.parse_method,
+      documentClass: stmt.document_class,
+      extractionStrategy: stmt.extraction_strategy,
+      templateFamily: stmt.template_family,
+    });
+
+    const normalizedValues = values.map((value: any) => ({
+      canonicalLineId: value.canonicalLineId || null,
+      originalLabel: String(value.originalLabel || ''),
+      value: Number(value.value || 0),
+      confidence: Number(value.confidence || 0),
+      sourceRow: value.sourceRow != null ? Number(value.sourceRow) : null,
+      mappingStatus: String(value.mappingStatus || (value.canonicalLineId ? 'auto' : 'unmapped')),
+      isNonFinancial: Boolean(value.isNonFinancial),
+      classificationReason: value.classificationReason
+        ? String(value.classificationReason)
+        : value.isNonFinancial
+          ? 'NON_FINANCIAL_LINE'
+          : null,
+    }));
+
+    await snapshotStatementValueVersion({
+      statementId,
+      sourceStage: 'values',
+      values: normalizedValues,
+      createdBy: userId,
+    });
 
     // Clear old values
     await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [statementId]);
 
-    await saveStatementValues(statementId, values);
+    await saveStatementValues(statementId, normalizedValues);
 
     // Run validation
     const validationResult = validateStatement(
-      values.map((v: any) => ({ canonicalLineId: v.canonicalLineId, value: v.value })),
+      normalizedValues.map((value: any) => ({
+        canonicalLineId: value.canonicalLineId,
+        value: value.value,
+        originalLabel: value.originalLabel,
+        mappingStatus: value.mappingStatus,
+        isNonFinancial: value.isNonFinancial,
+      })),
       stmt.statement_type
     );
+    const readiness = evaluateStatementReadiness({
+      rawStatus: 'mapped',
+      statementType: stmt.statement_type,
+      validationStatus: validationResult.status,
+      currency: stmt.currency,
+      scaling: stmt.scaling,
+      validationMessages: validationResult.messages,
+      values: normalizedValues.map((value: any) => ({
+        canonicalLineId: value.canonicalLineId,
+        value: value.value,
+        isNonFinancial: value.isNonFinancial,
+      })),
+    });
 
     await updateStatementStatus(
       statementId,
@@ -285,10 +884,88 @@ router.put(
       validationResult.status,
       validationResult.messages
     );
+    await updateStatementReadinessState(statementId, readiness);
+    await recordStatementSourceArtifact({
+      statementId,
+      ingestRunId,
+      artifactType: 'confirmed_values',
+      stage: 'values',
+      contentJson: {
+        values: normalizedValues,
+        validation: validationResult,
+        readiness,
+      },
+      createdBy: userId,
+    });
+    await updateStatementIngestRun({
+      ingestRunId,
+      currentStage: 'validate',
+      runStatus: readiness.isReady ? 'completed' : 'running',
+      reasonCodes: readiness.reasonCodes,
+      summary: {
+        readinessStatus: readiness.readinessStatus,
+        mapped: readiness.mappedLineCount,
+        eligible: readiness.eligibleLineCount,
+      },
+    });
+    if (orgId && !readiness.isReady) {
+      await openStatementRepairSession({
+        statementId,
+        organizationId: orgId,
+        ingestRunId,
+        startedBy: userId,
+        summary: readiness.summary,
+        payload: {
+          reasonCodes: readiness.reasonCodes,
+          validation: validationResult,
+        },
+      });
+    }
+    if (orgId) {
+      await learnStatementAliases({
+        organizationId: orgId,
+        statementType: stmt.statement_type,
+        templateFamily: stmt.template_family,
+        values: normalizedValues
+          .filter((value: any) => value.canonicalLineId && !value.isNonFinancial)
+          .map((value: any) => ({
+            canonicalLineId: value.canonicalLineId,
+            originalLabel: value.originalLabel,
+          })),
+        createdBy: userId,
+      });
+      await recordStatementQualityRun({
+        statementId,
+        organizationId: orgId,
+        stage: 'validate',
+        resultStatus:
+          readiness.readinessStatus === 'ready'
+            ? 'pass'
+            : readiness.readinessStatus === 'recoverable'
+              ? 'warning'
+              : 'fail',
+        readinessStatus: readiness.readinessStatus,
+        strategy: stmt.extraction_strategy || 'manual_mapping',
+        summary: readiness.summary,
+        reasonCodes: readiness.reasonCodes,
+        payload: {
+          validation: validationResult,
+          counts: {
+            eligible: readiness.eligibleLineCount,
+            mapped: readiness.mappedLineCount,
+            unmapped: readiness.unmappedLineCount,
+            nonFinancial: readiness.nonFinancialLineCount,
+          },
+        },
+        createdBy: userId,
+      });
+    }
 
     res.json({
       statementId,
-      savedCount: values.length,
+      ingestRunId,
+      savedCount: normalizedValues.length,
+      readiness,
       validation: validationResult,
     });
   })
@@ -300,19 +977,101 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const stmt = await getStatementOrFail(statementId, orgId, res);
     if (!stmt) return;
 
-    const valueRows = (await dbAll(
-      `SELECT canonical_line_id as canonicalLineId, value FROM financial_statement_values WHERE statement_id = ?`,
-      [statementId]
-    )) as any[];
+    let valueRows: any[];
+    try {
+      valueRows = (await dbAll(
+        `SELECT canonical_line_id as canonicalLineId, value, is_non_financial as isNonFinancial
+         FROM financial_statement_values WHERE statement_id = ?`,
+        [statementId]
+      )) as any[];
+    } catch (error) {
+      if (!isSchemaCompatError(error)) throw error;
+      valueRows = (await dbAll(
+        `SELECT canonical_line_id as canonicalLineId, value, FALSE as isNonFinancial
+         FROM financial_statement_values WHERE statement_id = ?`,
+        [statementId]
+      )) as any[];
+    }
 
     const result = validateStatement(valueRows, stmt.statement_type);
+    const ingestRunId = await ensureIngestRun({
+      statementId,
+      organizationId: orgId,
+      createdBy: userId,
+      sourceFileName: stmt.source_file_name,
+      sourceFilePath: stmt.source_file_path,
+      parseMethod: stmt.parse_method,
+      documentClass: stmt.document_class,
+      extractionStrategy: stmt.extraction_strategy,
+      templateFamily: stmt.template_family,
+    });
+    const readiness = evaluateStatementReadiness({
+      rawStatus: stmt.status,
+      statementType: stmt.statement_type,
+      validationStatus: result.status,
+      currency: stmt.currency,
+      scaling: stmt.scaling,
+      validationMessages: result.messages,
+      values: valueRows,
+    });
 
     await updateStatementStatus(statementId, stmt.status, result.status, result.messages);
+    await updateStatementReadinessState(statementId, readiness);
+    await recordStatementSourceArtifact({
+      statementId,
+      ingestRunId,
+      artifactType: 'validation',
+      stage: 'validate',
+      contentJson: { validation: result, readiness },
+      createdBy: userId,
+    });
+    await updateStatementIngestRun({
+      ingestRunId,
+      currentStage: 'validate',
+      runStatus: readiness.isReady ? 'completed' : 'running',
+      reasonCodes: readiness.reasonCodes,
+      summary: {
+        validationStatus: result.status,
+        warningCount: readiness.warningCount,
+        hardFailCount: readiness.hardFailCount,
+      },
+    });
+    if (orgId && !readiness.isReady) {
+      await openStatementRepairSession({
+        statementId,
+        organizationId: orgId,
+        ingestRunId,
+        startedBy: userId,
+        summary: readiness.summary,
+        payload: { validation: result, readiness },
+      });
+    }
+    if (orgId) {
+      await recordStatementQualityRun({
+        statementId,
+        organizationId: orgId,
+        stage: 'validate',
+        resultStatus:
+          readiness.readinessStatus === 'ready'
+            ? 'pass'
+            : readiness.readinessStatus === 'recoverable'
+              ? 'warning'
+              : 'fail',
+        readinessStatus: readiness.readinessStatus,
+        strategy: stmt.extraction_strategy || 'validation_refresh',
+        summary: readiness.summary,
+        reasonCodes: readiness.reasonCodes,
+        payload: { validation: result },
+        createdBy: userId,
+      });
+    }
 
-    res.json({ statementId, validation: result });
+    res.json({ statementId, ingestRunId, validation: result, readiness });
   })
 );
 
@@ -322,13 +1081,91 @@ router.post(
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
+    const orgId = getOrgId(req);
+    const stmt = await getStatementOrFail(statementId, orgId, res);
     if (!stmt) return;
+    const userId = req.user!.id;
 
-    await confirmStatement(statementId, req.user!.id);
-    logger.info(`[FinanceStatements] Statement ${statementId} confirmed by ${req.user!.id}`);
+    let valueRows: any[];
+    try {
+      valueRows = (await dbAll(
+        `SELECT canonical_line_id as canonicalLineId, value, is_non_financial as isNonFinancial
+         FROM financial_statement_values
+         WHERE statement_id = ?`,
+        [statementId]
+      )) as any[];
+    } catch (error) {
+      if (!isSchemaCompatError(error)) throw error;
+      valueRows = (await dbAll(
+        `SELECT canonical_line_id as canonicalLineId, value, FALSE as isNonFinancial
+         FROM financial_statement_values
+         WHERE statement_id = ?`,
+        [statementId]
+      )) as any[];
+    }
+    const validationMessages = stmt.validation_messages ? JSON.parse(stmt.validation_messages) : [];
+    const readiness = evaluateStatementReadiness({
+      rawStatus: stmt.status,
+      statementType: stmt.statement_type,
+      validationStatus: stmt.validation_status,
+      currency: stmt.currency,
+      scaling: stmt.scaling,
+      validationMessages,
+      values: valueRows,
+    });
+    if (!readiness.isReady) {
+      return res.status(400).json({
+        error: 'Statement is not ready to confirm',
+        readiness,
+      });
+    }
+    const ingestRunId = await ensureIngestRun({
+      statementId,
+      organizationId: orgId,
+      createdBy: userId,
+      sourceFileName: stmt.source_file_name,
+      sourceFilePath: stmt.source_file_path,
+      parseMethod: stmt.parse_method,
+      documentClass: stmt.document_class,
+      extractionStrategy: stmt.extraction_strategy,
+      templateFamily: stmt.template_family,
+    });
 
-    res.json({ success: true, statementId, status: 'confirmed' });
+    await confirmStatement(statementId, userId, readiness);
+    await recordStatementSourceArtifact({
+      statementId,
+      ingestRunId,
+      artifactType: 'confirmation',
+      stage: 'confirm',
+      contentJson: readiness,
+      createdBy: userId,
+    });
+    await updateStatementIngestRun({
+      ingestRunId,
+      currentStage: 'confirm',
+      runStatus: 'completed',
+      reasonCodes: readiness.reasonCodes,
+      summary: {
+        readinessStatus: readiness.readinessStatus,
+      },
+    });
+    if (orgId) {
+      await recordStatementQualityRun({
+        statementId,
+        organizationId: orgId,
+        stage: 'confirm',
+        resultStatus: 'pass',
+        readinessStatus: readiness.readinessStatus,
+        strategy: stmt.extraction_strategy || 'confirmation_gate',
+        summary: 'Statement confirmed as statement-ready.',
+        reasonCodes: readiness.reasonCodes,
+        payload: readiness,
+        createdBy: userId,
+      });
+    }
+    logger.info(`[FinanceStatements] Statement ${statementId} confirmed by ${userId}`);
+
+    res.json({ success: true, statementId, ingestRunId, status: 'confirmed', readiness });
   })
 );
 
@@ -339,11 +1176,74 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = getOrgId(req);
     if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
-    const statements = await dbAll(
-      `SELECT id, statement_type, period_start, period_end, period_label, currency, scaling, source_file_name, overall_confidence, validation_status, status, created_at, updated_at
-     FROM financial_statements WHERE organization_id = ? ORDER BY period_end DESC, created_at DESC LIMIT 100`,
-      [orgId]
-    );
+    const readinessFilter = String(req.query.readiness || '').trim().toLowerCase();
+    let statements: any[];
+    try {
+      statements = await dbAll(
+        `SELECT fs.id, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling, fs.source_file_name,
+                fs.overall_confidence, fs.validation_status, fs.status, fs.created_at, fs.updated_at,
+                fs.readiness_status, fs.readiness_score, fs.quality_summary, fs.quality_reason_codes,
+                fs.document_class, fs.extraction_strategy, fs.template_family, fs.values_version,
+                COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE) AS total_line_count,
+                COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE AND fsv.canonical_line_id IS NOT NULL) AS mapped_line_count,
+                COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = FALSE AND fsv.canonical_line_id IS NULL) AS unmapped_line_count,
+                COUNT(fsv.id) FILTER (WHERE COALESCE(fsv.is_non_financial, FALSE) = TRUE) AS non_financial_line_count,
+                CASE
+                  WHEN fs.readiness_status = 'ready' THEN TRUE
+                  ELSE FALSE
+                END AS is_workable
+         FROM financial_statements fs
+         LEFT JOIN financial_statement_values fsv ON fsv.statement_id = fs.id
+         WHERE fs.organization_id = ?
+           AND (? = '' OR LOWER(COALESCE(fs.readiness_status, 'pending')) = ?)
+         GROUP BY fs.id
+         ORDER BY fs.period_end DESC, fs.created_at DESC
+         LIMIT 100`,
+        [orgId, readinessFilter, readinessFilter]
+      );
+    } catch (error) {
+      if (!isSchemaCompatError(error)) throw error;
+      statements = await dbAll(
+        `SELECT fs.id, fs.statement_type, fs.period_start, fs.period_end, fs.period_label, fs.currency, fs.scaling, fs.source_file_name,
+                fs.overall_confidence, fs.validation_status, fs.status, fs.created_at, fs.updated_at,
+                COUNT(fsv.id) AS total_line_count,
+                COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NOT NULL) AS mapped_line_count,
+                COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NULL) AS unmapped_line_count,
+                0 AS non_financial_line_count,
+                CASE
+                  WHEN fs.status IN ('mapped', 'confirmed')
+                   AND fs.validation_status IN ('pass', 'warnings')
+                   AND COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NOT NULL) > 0
+                   AND COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NULL) = 0
+                  THEN TRUE
+                  ELSE FALSE
+                END AS is_workable,
+                CASE
+                  WHEN fs.status IN ('mapped', 'confirmed')
+                   AND fs.validation_status IN ('pass', 'warnings')
+                   AND COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NOT NULL) > 0
+                   AND COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NULL) = 0
+                  THEN 'ready'
+                  WHEN COUNT(fsv.id) FILTER (WHERE fsv.canonical_line_id IS NOT NULL) > 0
+                  THEN 'recoverable'
+                  ELSE 'pending'
+                END AS readiness_status,
+                0 AS readiness_score,
+                NULL AS quality_summary,
+                '[]' AS quality_reason_codes,
+                NULL AS document_class,
+                NULL AS extraction_strategy,
+                NULL AS template_family,
+                0 AS values_version
+         FROM financial_statements fs
+         LEFT JOIN financial_statement_values fsv ON fsv.statement_id = fs.id
+         WHERE fs.organization_id = ?
+         GROUP BY fs.id
+         ORDER BY fs.period_end DESC, fs.created_at DESC
+         LIMIT 100`,
+        [orgId]
+      );
+    }
     res.json(statements || []);
   })
 );
@@ -352,10 +1252,14 @@ router.get(
   '/canonical-lines',
   verifyToken,
   isAuthenticated,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOrgId(req);
     const lines = await dbAll(
-      `SELECT id, statement_type, line_code, line_name, line_name_pl, parent_line_id, sort_order FROM financial_statement_lines WHERE is_system = TRUE ORDER BY statement_type, sort_order`,
-      []
+      `SELECT id, statement_type, line_code, line_name, line_name_pl, parent_line_id, sort_order
+       FROM financial_statement_lines
+       WHERE is_system = TRUE OR organization_id = ?
+       ORDER BY statement_type, sort_order`,
+      [orgId || '']
     );
     res.json(lines || []);
   })
@@ -370,20 +1274,153 @@ router.get(
     const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
     if (!stmt) return;
 
-    const values = await dbAll(
-      `SELECT fsv.id, fsv.canonical_line_id, fsv.original_label, fsv.value, fsv.confidence, fsv.source_row, fsv.mapping_status, fsv.is_manually_corrected,
-            fsl.line_code, fsl.line_name, fsl.line_name_pl
-     FROM financial_statement_values fsv
-     LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
-     WHERE fsv.statement_id = ? ORDER BY fsv.source_row`,
-      [statementId]
-    );
+    let values: any[];
+    let qualityRuns: any[] = [];
+    let ingestRuns: any[] = [];
+    let extractedSections: any[] = [];
+    let repairSessions: any[] = [];
+    let mappingCandidates: any[] = [];
+    try {
+      values = await dbAll(
+        `SELECT fsv.id, fsv.canonical_line_id, fsv.original_label, fsv.value, fsv.confidence, fsv.source_row, fsv.mapping_status, fsv.is_manually_corrected,
+              fsv.is_non_financial, fsv.classification_reason,
+              fsl.line_code, fsl.line_name, fsl.line_name_pl
+       FROM financial_statement_values fsv
+       LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
+       WHERE fsv.statement_id = ? ORDER BY fsv.source_row`,
+        [statementId]
+      );
+      qualityRuns = await dbAll(
+        `SELECT stage, result_status, readiness_status, strategy, summary, reason_codes, created_at
+         FROM financial_statement_quality_runs
+         WHERE statement_id = ?
+         ORDER BY created_at DESC
+         LIMIT 8`,
+        [statementId]
+      );
+      ingestRuns = await dbAll(
+        `SELECT id, run_status, current_stage, source_file_name, parse_method, document_class, extraction_strategy,
+                template_family, raw_text_length, latest_reason_codes, started_at, completed_at, updated_at
+         FROM financial_statement_ingest_runs
+         WHERE statement_id = ?
+         ORDER BY started_at DESC
+         LIMIT 6`,
+        [statementId]
+      );
+      extractedSections = await dbAll(
+        `SELECT section_key, section_label, statement_type, line_start, line_end, confidence, text_excerpt, metadata_json, created_at
+         FROM financial_statement_extracted_sections
+         WHERE statement_id = ?
+         ORDER BY created_at DESC, confidence DESC
+         LIMIT 12`,
+        [statementId]
+      );
+      repairSessions = await dbAll(
+        `SELECT id, repair_status, summary, payload_json, started_by, created_at, updated_at
+         FROM financial_statement_repair_sessions
+         WHERE statement_id = ?
+         ORDER BY created_at DESC
+         LIMIT 6`,
+        [statementId]
+      );
+      mappingCandidates = await dbAll(
+        `SELECT candidate_row_id, canonical_line_id, score, match_reason, is_selected, selected_by, metadata_json, created_at
+         FROM financial_statement_mapping_candidates
+         WHERE statement_id = ?
+         ORDER BY created_at DESC, score DESC
+         LIMIT 150`,
+        [statementId]
+      );
+    } catch (error) {
+      if (!isSchemaCompatError(error)) throw error;
+      values = await dbAll(
+        `SELECT fsv.id, fsv.canonical_line_id, fsv.original_label, fsv.value, fsv.confidence, fsv.source_row, fsv.mapping_status, fsv.is_manually_corrected,
+              FALSE as is_non_financial, NULL as classification_reason,
+              fsl.line_code, fsl.line_name, fsl.line_name_pl
+       FROM financial_statement_values fsv
+       LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
+       WHERE fsv.statement_id = ? ORDER BY fsv.source_row`,
+        [statementId]
+      );
+      qualityRuns = [];
+      ingestRuns = [];
+      extractedSections = [];
+      repairSessions = [];
+      mappingCandidates = [];
+    }
 
     const { notes, ...stmtData } = stmt;
+    const activeValues = Array.isArray(values)
+      ? values.filter((value: any) => !value?.is_non_financial)
+      : [];
+    const totalLineCount = Array.isArray(activeValues) ? activeValues.length : 0;
+    const mappedLineCount = Array.isArray(values)
+      ? activeValues.filter((value: any) => value?.line_code).length
+      : 0;
+    const unmappedLineCount = Math.max(0, totalLineCount - mappedLineCount);
+    const validationMessages = stmt.validation_messages ? JSON.parse(stmt.validation_messages) : [];
+    const readiness = evaluateStatementReadiness({
+      rawStatus: stmt.status,
+      statementType: stmt.statement_type,
+      validationStatus: stmt.validation_status,
+      currency: stmt.currency,
+      scaling: stmt.scaling,
+      validationMessages,
+      values: (values || []).map((value: any) => ({
+        canonicalLineId: value.canonical_line_id,
+        value: Number(value.value || 0),
+        isNonFinancial: !!value.is_non_financial,
+      })),
+    });
     res.json({
       ...stmtData,
-      validationMessages: stmt.validation_messages ? JSON.parse(stmt.validation_messages) : [],
+      totalLineCount,
+      mappedLineCount,
+      unmappedLineCount,
+      nonFinancialLineCount: Array.isArray(values)
+        ? values.filter((value: any) => !!value?.is_non_financial).length
+        : 0,
+      isWorkable: readiness.isReady,
+      readinessStatus: readiness.readinessStatus,
+      readinessScore: readiness.readinessScore,
+      readinessSummary: readiness.summary,
+      readinessReasonCodes: readiness.reasonCodes,
+      validationMessages,
+      qualityRuns: qualityRuns || [],
+      ingestRuns: ingestRuns || [],
+      extractedSections: extractedSections || [],
+      repairSessions: repairSessions || [],
+      mappingCandidates: mappingCandidates || [],
       values: values || [],
+    });
+  })
+);
+
+router.get(
+  '/:id/document-intelligence/search',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const statementId = String(req.params.id);
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const query = String(req.query.q || '').trim();
+    if (!query) return res.status(400).json({ error: 'q is required' });
+
+    const stmt = await getStatementOrFail(statementId, orgId, res);
+    if (!stmt) return;
+
+    const matches = await searchStatementDocumentIntelligence({
+      statementId,
+      organizationId: orgId,
+      query,
+      limit: Number(req.query.limit || 5) || 5,
+    });
+    res.json({
+      statementId,
+      query,
+      matches,
+      authoritativeForNumbers: false,
     });
   })
 );

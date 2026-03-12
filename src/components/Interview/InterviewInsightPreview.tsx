@@ -10,6 +10,7 @@ import React from 'react';
 
 import {
   PreviewActionBar,
+  PreviewAIHintStrip,
   PreviewDetailsSection,
   PreviewMetaCard,
   type ActionRow,
@@ -156,6 +157,7 @@ export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFoot
       icon: ChevronRight,
       onClick: onOpenFull,
       colorScheme: 'primary',
+      shortcut: 'O',
     },
   ];
 
@@ -184,13 +186,23 @@ export const InterviewInsightPreviewFooter: React.FC<InterviewInsightPreviewFoot
     });
   }
 
+  const aiHints = isPolish
+    ? ['Podsumuj wniosek', 'Zasugeruj działania']
+    : ['Summarize insight', 'Suggest actions'];
+
   return (
-    <PreviewActionBar
-      rows={[
-        {
-          buttons,
-        },
-      ]}
-    />
+    <div className="space-y-0">
+      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+        <PreviewAIHintStrip hints={aiHints} />
+      </div>
+      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+      <PreviewActionBar
+        rows={[
+          {
+            buttons,
+          },
+        ]}
+      />
+    </div>
   );
 };
