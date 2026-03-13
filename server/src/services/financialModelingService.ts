@@ -11,6 +11,9 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { loadLatestStatementVersionSnapshot } from './financialStatementService.js';
+import { getVerifiedPackSeed } from './financialStatementPackService.js';
+import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
 import logger from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
@@ -218,6 +221,41 @@ function mergeAssumptions(
   };
 }
 
+async function loadSeedValueRows(statementIds: string[]): Promise<Array<{ line_code: string; value: number }>> {
+  const rowsFromSnapshots: Array<{ line_code: string; value: number }> = [];
+  let snapshotCoverage = 0;
+
+  for (const statementId of statementIds) {
+    const snapshotVersion = await loadLatestStatementVersionSnapshot(statementId);
+    const snapshotValues = Array.isArray(snapshotVersion?.snapshot?.values)
+      ? snapshotVersion?.snapshot?.values
+      : [];
+    if (snapshotValues.length === 0) continue;
+    snapshotCoverage += 1;
+    for (const value of snapshotValues) {
+      const lineCode = normalizeCanonicalLineCode(String(value?.lineCode || ''));
+      if (!lineCode) continue;
+      rowsFromSnapshots.push({
+        line_code: lineCode,
+        value: numberOrZero(value?.value),
+      });
+    }
+  }
+
+  if (snapshotCoverage === statementIds.length && rowsFromSnapshots.length > 0) {
+    return rowsFromSnapshots;
+  }
+
+  const placeholders = statementIds.map(() => '?').join(',');
+  return (await dbAll<any>(
+    `SELECT COALESCE(UPPER(fsl.line_code), '') AS line_code, fsv.value
+     FROM financial_statement_values fsv
+     LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
+     WHERE fsv.statement_id IN (${placeholders})`,
+    statementIds
+  )) as Array<{ line_code: string; value: number }>;
+}
+
 async function buildSeededAssumptionsFromStatement(
   organizationId: string,
   statementId: string
@@ -248,17 +286,11 @@ async function buildSeededAssumptionsFromStatement(
     throw new Error('Statement must be statement-ready before it can seed a model');
   }
 
-  const rows = await dbAll<any>(
-    `SELECT COALESCE(UPPER(fsl.line_code), '') AS line_code, fsv.value
-     FROM financial_statement_values fsv
-     LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
-     WHERE fsv.statement_id = ?`,
-    [statementId]
-  );
+  const rows = await loadSeedValueRows([statementId]);
 
   const valuesByCode = new Map<string, number>();
   for (const row of rows || []) {
-    const code = String(row.line_code || '').trim().toUpperCase();
+    const code = normalizeCanonicalLineCode(String(row.line_code || ''));
     if (!code) continue;
     valuesByCode.set(code, numberOrZero(valuesByCode.get(code)) + numberOrZero(row.value));
   }
@@ -332,6 +364,109 @@ async function buildSeededAssumptionsFromStatement(
       sourceFileName: String(stmt.source_file_name || ''),
       status: String(stmt.status || ''),
       readinessStatus,
+    },
+  };
+}
+
+async function buildSeededAssumptionsFromPack(
+  organizationId: string,
+  packId: string
+): Promise<StatementSeedResult> {
+  const packSeed = await getVerifiedPackSeed({ organizationId, packId });
+  const statementIds = packSeed.statementIds;
+  const placeholders = statementIds.map(() => '?').join(',');
+
+  const statements = await dbAll<any>(
+    `SELECT id, statement_type, period_label, period_start, period_end, currency, scaling, source_file_name, status,
+            readiness_status
+     FROM financial_statements
+     WHERE organization_id = ? AND id IN (${placeholders})`,
+    [organizationId, ...statementIds]
+  );
+  if (!Array.isArray(statements) || statements.length === 0) {
+    throw new Error('Source statement pack not found');
+  }
+
+  const rows = await loadSeedValueRows(statementIds);
+
+  const valuesByCode = new Map<string, number>();
+  for (const row of rows || []) {
+    const code = normalizeCanonicalLineCode(String(row.line_code || ''));
+    if (!code) continue;
+    valuesByCode.set(code, numberOrZero(valuesByCode.get(code)) + numberOrZero(row.value));
+  }
+
+  const cash = firstNonZero(valuesByCode, ['CASH']);
+  const totalAssets = firstNonZero(valuesByCode, ['TOTAL_ASSETS']);
+  const equity = firstNonZero(valuesByCode, ['TOTAL_EQUITY', 'EQUITY', 'EQUITY_CAPITAL']);
+  const debt = firstNonZero(valuesByCode, ['LONG_TERM_DEBT', 'TOTAL_LIABILITIES']);
+  const ppe = firstNonZero(valuesByCode, ['PPE_NET', 'PPE_GROSS']);
+  const ar = firstNonZero(valuesByCode, ['AR']);
+  const inventory = firstNonZero(valuesByCode, ['INVENTORY']);
+  const ap = firstNonZero(valuesByCode, ['AP', 'CURRENT_LIABILITIES']);
+
+  const missingCritical: string[] = [];
+  if (totalAssets === 0) missingCritical.push('TOTAL_ASSETS');
+  if (equity === 0) missingCritical.push('EQUITY');
+  if (cash === 0) missingCritical.push('CASH');
+  if (missingCritical.length > 0) {
+    throw new Error(`Statement pack missing critical lines: ${missingCritical.join(', ')}`);
+  }
+
+  const baseline = {
+    revenue: Math.abs(firstNonZero(valuesByCode, ['REVENUE'])),
+    cogs: Math.abs(firstNonZero(valuesByCode, ['COGS'])),
+    opex: Math.abs(firstNonZero(valuesByCode, ['OPEX'])),
+    depreciation: Math.abs(firstNonZero(valuesByCode, ['DEPRECIATION'])),
+    interest: Math.abs(firstNonZero(valuesByCode, ['INTEREST_EXPENSE'])),
+    tax: Math.abs(firstNonZero(valuesByCode, ['TAX', 'TAX_EXPENSE'])),
+    capex: Math.abs(firstNonZero(valuesByCode, ['CAPEX', 'CAPEX_CF', 'CFI'])),
+  };
+
+  const missingBaselineLines = Object.entries({
+    revenue: baseline.revenue,
+    cogs: baseline.cogs,
+    opex: baseline.opex,
+  })
+    .filter(([, value]) => !numberOrZero(value))
+    .map(([key]) => key);
+
+  const statementLabel =
+    packSeed.periodLabel || String(statements[0]?.period_label || statements[0]?.period_end || '');
+
+  return {
+    assumptions: {
+      initialCash: cash,
+      initialAR: ar,
+      initialInventory: inventory,
+      initialAP: ap,
+      initialDebt: debt,
+      initialEquity: equity,
+      initialPPE: ppe,
+      baseline,
+      seedSource: {
+        type: 'statement_pack',
+        statementPackId: packId,
+        statementIds,
+        periodLabel: statementLabel,
+        currency: packSeed.currency,
+      },
+      seedStatus: {
+        type: 'statement_pack',
+        state: 'seeded',
+        missingBaselineLines,
+      },
+    },
+    statementMeta: {
+      id: String(packId),
+      periodLabel: statementLabel,
+      periodStart: String(statements[0]?.period_start || ''),
+      periodEnd: String(statements[0]?.period_end || ''),
+      currency: String(packSeed.currency || statements[0]?.currency || 'PLN'),
+      scaling: String(statements[0]?.scaling || 'units'),
+      sourceFileName: String((statements || []).map((row) => row.source_file_name).filter(Boolean).join(', ')),
+      status: 'ready',
+      readinessStatus: 'ready',
     },
   };
 }
@@ -883,16 +1018,19 @@ export async function createModel(params: {
   assumptions?: Record<string, any>;
   createdBy: string;
   sourceStatementId?: string;
+  sourceStatementPackId?: string;
 }): Promise<string> {
   const id = uuidv4();
   const seeded =
-    params.sourceStatementId && params.organizationId
+    params.sourceStatementPackId && params.organizationId
+      ? await buildSeededAssumptionsFromPack(params.organizationId, params.sourceStatementPackId)
+      : params.sourceStatementId && params.organizationId
       ? await buildSeededAssumptionsFromStatement(params.organizationId, params.sourceStatementId)
       : null;
   const assumptions = mergeAssumptions(seeded?.assumptions || {}, params.assumptions);
   try {
     await dbRun(
-      `INSERT INTO financial_models (id, organization_id, project_id, initiative_id, name, description, currency, horizon_months, start_date, granularity, scenario, assumptions_json, created_by, source_statement_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO financial_models (id, organization_id, project_id, initiative_id, name, description, currency, horizon_months, start_date, granularity, scenario, assumptions_json, created_by, source_statement_id, source_statement_pack_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         params.organizationId,
@@ -908,27 +1046,50 @@ export async function createModel(params: {
         JSON.stringify(assumptions),
         params.createdBy,
         params.sourceStatementId || null,
+        params.sourceStatementPackId || null,
       ]
     );
   } catch {
-    await dbRun(
-      `INSERT INTO financial_models (id, organization_id, project_id, initiative_id, name, description, currency, horizon_months, start_date, granularity, scenario, assumptions_json, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        params.organizationId,
-        params.projectId || null,
-        params.initiativeId || null,
-        params.name,
-        params.description || null,
-        params.currency || 'PLN',
-        params.horizonMonths || 60,
-        params.startDate,
-        params.granularity || 'monthly',
-        params.scenario || 'base',
-        JSON.stringify(assumptions),
-        params.createdBy,
-      ]
-    );
+    try {
+      await dbRun(
+        `INSERT INTO financial_models (id, organization_id, project_id, initiative_id, name, description, currency, horizon_months, start_date, granularity, scenario, assumptions_json, created_by, source_statement_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          params.organizationId,
+          params.projectId || null,
+          params.initiativeId || null,
+          params.name,
+          params.description || null,
+          params.currency || 'PLN',
+          params.horizonMonths || 60,
+          params.startDate,
+          params.granularity || 'monthly',
+          params.scenario || 'base',
+          JSON.stringify(assumptions),
+          params.createdBy,
+          params.sourceStatementId || null,
+        ]
+      );
+    } catch {
+      await dbRun(
+        `INSERT INTO financial_models (id, organization_id, project_id, initiative_id, name, description, currency, horizon_months, start_date, granularity, scenario, assumptions_json, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          params.organizationId,
+          params.projectId || null,
+          params.initiativeId || null,
+          params.name,
+          params.description || null,
+          params.currency || 'PLN',
+          params.horizonMonths || 60,
+          params.startDate,
+          params.granularity || 'monthly',
+          params.scenario || 'base',
+          JSON.stringify(assumptions),
+          params.createdBy,
+        ]
+      );
+    }
   }
   return id;
 }
@@ -945,7 +1106,7 @@ export async function getModel(modelId: string): Promise<any> {
 
 export async function listModels(orgId: string): Promise<any[]> {
   return ((await dbAll(
-    `SELECT id, name, description, project_id, initiative_id, currency, horizon_months, start_date, granularity, scenario, status, version, created_at, updated_at, source_statement_id
+    `SELECT id, name, description, project_id, initiative_id, currency, horizon_months, start_date, granularity, scenario, status, version, created_at, updated_at, source_statement_id, source_statement_pack_id
      FROM financial_models
      WHERE organization_id = ?
      ORDER BY updated_at DESC

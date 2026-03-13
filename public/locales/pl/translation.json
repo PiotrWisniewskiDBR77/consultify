@@ -402,6 +402,8 @@
   },
   "myWork": {
     "title": "Moja Praca",
+    "home": "Home",
+    "manager": "Manager",
     "inbox": "Skrzynka",
     "focus": {
       "label": "Fokus",

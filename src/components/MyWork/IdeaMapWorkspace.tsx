@@ -46,7 +46,7 @@ import { type ExtendedNodeData, IdeaNodeDetailDrawer } from './IdeaNodeDetailDra
 import { IdeaProcessFlowTool } from './IdeaProcessFlowTool';
 import { IdeaProposalReview } from './IdeaProposalReview';
 import { IdeaRecommendationMap } from './IdeaRecommendationMap';
-import type { CanvasToolType } from './ideaSelectionTypes';
+import type { CanvasToolType, MindMapInteractionMode } from './ideaSelectionTypes';
 import {
   type AIProposal,
   type AIProposalBatch,
@@ -120,6 +120,29 @@ class CanvasToolErrorBoundary extends React.Component<
     }
     return this.props.children;
   }
+}
+
+function isSameSelection(
+  left: IdeaWorkspaceSelection,
+  right: IdeaWorkspaceSelection
+) {
+  if (left.type !== right.type) return false;
+  if (left.count !== right.count) return false;
+  if ((left.primaryId || null) !== (right.primaryId || null)) return false;
+
+  const leftIds = Array.isArray(left.ids) ? left.ids : [];
+  const rightIds = Array.isArray(right.ids) ? right.ids : [];
+  if (leftIds.length !== rightIds.length) return false;
+  for (let i = 0; i < leftIds.length; i += 1) {
+    if (leftIds[i] !== rightIds[i]) return false;
+  }
+
+  const leftMeta = left.meta || {};
+  const rightMeta = right.meta || {};
+  return (
+    (leftMeta.nodeType || null) === (rightMeta.nodeType || null) &&
+    (leftMeta.label || null) === (rightMeta.label || null)
+  );
 }
 
 type IdeaMapWorkspaceProps = {
@@ -294,6 +317,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   const activeTool = externalActiveTool ?? internalActiveTool;
   const activePanel = externalActivePanel ?? internalActivePanel;
+  // The canvas must stay editable even before formal acceptance.
+  // Acceptance still gates downstream actions like AI/convert, but not node manipulation.
+  const canvasLocked = false;
 
   const setActiveTool = useCallback(
     (tool: CanvasToolType) => {
@@ -326,10 +352,19 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
   // ── Selection contract ──────────────────────────────────────────────────────
   const [selection, setSelection] = useState<IdeaWorkspaceSelection>(EMPTY_SELECTION);
+  const selectionRef = useRef<IdeaWorkspaceSelection>(EMPTY_SELECTION);
+  const [mindMapInteractionMode, setMindMapInteractionMode] =
+    useState<MindMapInteractionMode>('select');
+
+  useEffect(() => {
+    selectionRef.current = selection;
+  }, [selection]);
 
   const handleSelectionChange = useCallback(
     (next: IdeaWorkspaceSelection) => {
       console.log(`%c[Workspace] selectionChange: type=${next.type} count=${next.count} ids=[${(next.ids || []).slice(0, 3).join(',')}]`, 'color: #3b82f6');
+      if (isSameSelection(selectionRef.current, next)) return;
+      selectionRef.current = next;
       setSelection(next);
       externalOnSelectionChange?.(next);
       if (next.type !== 'none') {
@@ -657,6 +692,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       }
 
       trackFunnelEvent('ideas_quick_tool_used', { tool: activeTool, action });
+      if (action === 'mm_select_mode') setMindMapInteractionMode('select');
+      if (action === 'mm_pan_mode') setMindMapInteractionMode('pan');
+      if (action === 'mm_connect_mode') setMindMapInteractionMode('connect');
       externalOnQuickAction?.(action);
       window.dispatchEvent(
         new CustomEvent('idea-workspace-quick-action', { detail: { action, ideaId: realId } })
@@ -1858,6 +1896,29 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     return () => window.removeEventListener('interview-attach-to-idea', handler);
   }, [isDraft, isPolish, realId, selection.ids, graphNodes]);
 
+  // Intent-led starting point applied from TemplatesPopover
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail?.seedText) return;
+      setSeedText(detail.seedText);
+      setDirty(true);
+      if (
+        detail.preferredSystem &&
+        ['mindmap', 'process_flow', 'table', 'whiteboard'].includes(detail.preferredSystem) &&
+        detail.preferredSystem !== activeTool
+      ) {
+        setActiveTool(detail.preferredSystem as CanvasToolType);
+      }
+      const prompt = isPolish
+        ? `Zacznij budowę workspace na bazie intencji: "${detail.label || ''}". Preferowany system: ${detail.preferredSystem || activeTool}.\n\n${detail.seedText}`
+        : `Start building the workspace based on the intent: "${detail.label || ''}". Preferred system: ${detail.preferredSystem || activeTool}.\n\n${detail.seedText}`;
+      openChat(prompt);
+    };
+    window.addEventListener('idea-workspace-apply-intent', handler);
+    return () => window.removeEventListener('idea-workspace-apply-intent', handler);
+  }, [activeTool, isPolish, openChat, setActiveTool]);
+
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail || {};
@@ -2020,13 +2081,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
 
         <CanvasLeftToolbar
           activeTool={activeTool}
+          interactionMode={mindMapInteractionMode}
           selection={selection}
           isAccepted={isAccepted}
           ideaId={realId}
           onAction={(action) => handleQuickAction(action)}
           onOpenChat={() => { setChatKickoffMessage(''); if (isChatCollapsed) toggleChatCollapse(); }}
           onApplyTemplate={handleApplyTemplate}
-          onSaveAsTemplate={() => setTemplateGalleryOpen(true)}
+          onOpenTemplateGallery={() => setTemplateGalleryOpen(true)}
         />
 
         {governanceSummary && (
@@ -2071,12 +2133,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             onRetry={() => setMapRefreshToken((v) => v + 1)}
           >
             <IdeaRecommendationMap
-              key={`${realId}:${mapRefreshToken}`}
               ideaId={realId}
               ideaTitle={title || safeTitleFromSeed(seedText, isPolish)}
               onClose={() => setMapOpen(false)}
               onCenterEdit={() => handlePanelChange('tools')}
-              onOpenTemplates={() => setTemplateGalleryOpen(true)}
               preferredTool={activeTool}
               extensions={mapExtensions}
               onPreferredToolLoaded={(tool) => {
@@ -2088,7 +2148,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               variant={mapOpen ? 'overlay' : 'embedded'}
               showClose={mapOpen}
               className={mapOpen ? '' : 'rounded-none'}
-              locked={!isAccepted}
+              locked={canvasLocked}
               onSelectionChange={handleSelectionChange}
               onViewportReport={handleViewportReport}
               focusMode={toolFocusMode}
@@ -2127,6 +2187,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 ).length
               }
               onOpenChat={openChat}
+              interactionMode={mindMapInteractionMode}
+              onInteractionModeChange={setMindMapInteractionMode}
             />
           </CanvasToolErrorBoundary>
         )}
@@ -2139,7 +2201,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             <IdeaTableTool
               open
               ideaId={realId}
-              locked={!isAccepted}
+              locked={canvasLocked}
               refreshToken={mapRefreshToken}
               onSaved={() => setMapRefreshToken((v) => v + 1)}
               onSelectionChange={handleSelectionChange}
@@ -2160,7 +2222,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             <IdeaProcessFlowTool
               open
               ideaId={realId}
-              locked={!isAccepted}
+              locked={canvasLocked}
               refreshToken={mapRefreshToken}
               onSaved={() => setMapRefreshToken((v) => v + 1)}
               onSelectionChange={handleSelectionChange}
@@ -2181,7 +2243,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             <IdeaWhiteboardTool
               open
               ideaId={realId}
-              locked={!isAccepted}
+              locked={canvasLocked}
               refreshToken={mapRefreshToken}
               onSaved={() => setMapRefreshToken((v) => v + 1)}
               onSelectionChange={handleSelectionChange}
@@ -2240,25 +2302,46 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         onStageChange={handleStageChange}
         onConvert={handleConvert}
         onOpenChat={openChat}
-        onGenerateProposal={(batch) => {
-          setProposalBatch(batch);
-          trackFunnelEvent('ideas_generator_proposal_created', {
-            tool: batch.tool,
-            generatorType: batch.generatorType,
-            count: batch.proposals.length,
-          });
-        }}
-        focusMode={focusMode}
-        onToggleFocus={() => {
-          if (focusMode === 'system') handleExitFocus();
-          else handleEnterFocusSystem();
-        }}
-        votingActive={votingActive}
-        onToggleVoting={() => setVotingActive((v) => !v)}
         graphNodes={graphNodes}
         graphEdges={graphEdges}
-        graphLanes={graphLanes}
-        onOpenTemplates={() => setTemplateGalleryOpen(true)}
+        evidenceCount={graphNodes.filter((n: any) => n?.data?.evidenceLinks?.length > 0).length}
+        onAISummarize={() => handleQuickAction('aiSummarize')}
+        onAIExpand={() => handleQuickAction('aiExpand')}
+        onLayoutChange={(mode) => {
+          window.dispatchEvent(
+            new CustomEvent('idea-mindmap-node-quick-action', {
+              detail: { action: 'set_layout_mode', layoutMode: mode },
+            })
+          );
+        }}
+        onThemeChange={(theme) => {
+          window.dispatchEvent(
+            new CustomEvent('idea-mindmap-node-quick-action', {
+              detail: { action: 'set_map_theme', theme },
+            })
+          );
+        }}
+        onStyleChange={(patch) => {
+          window.dispatchEvent(
+            new CustomEvent('idea-mindmap-node-quick-action', {
+              detail: { action: 'apply_style', ...patch },
+            })
+          );
+        }}
+        onFitView={() => {
+          window.dispatchEvent(
+            new CustomEvent('idea-mindmap-node-quick-action', {
+              detail: { action: 'pane_fit_view' },
+            })
+          );
+        }}
+        onAutoLayout={() => {
+          window.dispatchEvent(
+            new CustomEvent('idea-mindmap-node-quick-action', {
+              detail: { action: 'pane_auto_layout' },
+            })
+          );
+        }}
       />
 
       <IdeaContextPanel
@@ -2285,6 +2368,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         seedText={seedText}
         activeTool={activeTool}
         isAccepted={isAccepted}
+        selectedNodeId={selection.ids?.[0] || null}
         onSendToChat={openChat}
         onInsertToWorkspace={(items) => {
           window.dispatchEvent(
@@ -2325,7 +2409,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         nodeData={nodeDetailData}
         ideaId={realId}
         activeTool={activeTool}
-        locked={!isAccepted}
+        locked={canvasLocked}
         allNodes={graphNodes}
         onNodeDataChange={handleNodeDataChange}
         onGenerateProposal={(batch) => {

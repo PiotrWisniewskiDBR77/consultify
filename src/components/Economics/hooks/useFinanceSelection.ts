@@ -3,7 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Api } from '@/services/api';
 
 import { type ModuleTab } from '../../shared/ModuleHub';
-import { type FinanceModelRow, type FinanceRow, type PreviewDataState } from '../financeTypes';
+import {
+  type FinanceModelRow,
+  type FinanceRow,
+  type PreviewDataState,
+} from '../financeTypes';
 
 export function useFinanceSelection(activeTab: ModuleTab) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -51,52 +55,84 @@ export function useFinanceSelection(activeTab: ModuleTab) {
 
   const loadStatementPreview = useCallback(async (statementId: string) => {
     try {
-      const [detail, ratios] = await Promise.all([
-        Api.get(`/api/finance-statements/${statementId}`),
-        Api.get(`/api/finance-statements/${statementId}/ratios`).catch(() => null),
-      ]);
-
-      const values = Array.isArray((detail as any)?.values) ? (detail as any).values : [];
-      const mappedValues = values.filter((value: any) => value?.line_code);
+      const detail = await Api.get(`/api/finance-statements/packs/${statementId}`);
+      const statements = Array.isArray((detail as any)?.statements) ? (detail as any).statements : [];
       setStatementPreviewDetail({
-        statementType: String((detail as any)?.statement_type || ''),
+        entityName: String((detail as any)?.entity_name || ''),
         periodLabel: String((detail as any)?.period_label || ''),
         periodStart: String((detail as any)?.period_start || ''),
         periodEnd: String((detail as any)?.period_end || ''),
         currency: String((detail as any)?.currency || 'PLN'),
         scaling: String((detail as any)?.scaling || 'units'),
-        sourceFileName: String((detail as any)?.source_file_name || ''),
-        validationStatus: String((detail as any)?.validation_status || 'pending'),
-        rawStatus: String((detail as any)?.status || 'draft'),
+        sourceFileName: statements
+          .map((statement: any) => String(statement?.source_file_name || ''))
+          .filter(Boolean)
+          .join(', '),
+        validationStatus: String((detail as any)?.pack_status || 'pending'),
+        rawStatus: String((detail as any)?.pack_status || 'draft'),
         readinessStatus: String(
-          (detail as any)?.readinessStatus || (detail as any)?.readiness_status || 'pending'
+          (detail as any)?.pack_readiness_status || (detail as any)?.readiness_status || 'pending'
         ),
         readinessSummary: String(
-          (detail as any)?.readinessSummary || (detail as any)?.readiness_summary || ''
+          (detail as any)?.pack_quality_summary || (detail as any)?.readiness_summary || ''
         ),
-        mappedLineCount: mappedValues.length,
-        topLineItems: mappedValues.slice(0, 4).map((value: any) => ({
-          label: String(value.line_name || value.line_name_pl || value.original_label || value.line_code || ''),
-          code: String(value.line_code || ''),
-          value: Number(value.value || 0),
+        missingStatementTypes: Array.isArray((detail as any)?.missing_statement_types)
+          ? (detail as any).missing_statement_types.map((type: unknown) => String(type))
+          : [],
+        sourceStatementCount: Number((detail as any)?.source_statement_count ?? statements.length),
+        childStatements: statements.map((statement: any) => ({
+          id: String(statement.id),
+          statementType: String(statement.statement_type || ''),
+          rawStatus: String(statement.status || 'draft'),
+          readinessStatus: String(statement.readiness_status || 'pending'),
+          readinessScore: Number(statement.readiness_score ?? 0),
+          validationStatus: String(statement.validation_status || 'pending'),
+          mappedLineCount: Number(statement.mapped_line_count ?? 0),
+          totalLineCount: Number(statement.total_line_count ?? 0),
+          unmappedLineCount: Number(statement.unmapped_line_count ?? 0),
+          sourceFileName: String(statement.source_file_name || ''),
+          updatedAt: String(statement.updated_at || statement.created_at || ''),
+          valuesVersion: Number(statement.values_version ?? 0),
+          validationFailCount: Number(statement.validation_fail_count ?? 0),
+          validationWarningCount: Number(statement.validation_warning_count ?? 0),
+        })),
+        packValidations: Array.isArray((detail as any)?.validations)
+          ? (detail as any).validations.map((validation: any) => ({
+              validationScope: 'pack',
+              checkCode: String(validation.check_code || ''),
+              checkName: String(validation.check_name || ''),
+              severity: String(validation.severity || 'info') as 'info' | 'warning' | 'error',
+              status: String(validation.status || 'pass') as 'pass' | 'warning' | 'fail',
+              expectedValue:
+                validation.expected_value != null ? Number(validation.expected_value) : null,
+              actualValue:
+                validation.actual_value != null ? Number(validation.actual_value) : null,
+              difference: validation.difference != null ? Number(validation.difference) : null,
+              tolerance: validation.tolerance != null ? Number(validation.tolerance) : null,
+              message: validation.message ? String(validation.message) : null,
+              detailsJson: validation.details_json ? String(validation.details_json) : null,
+              computedAt: validation.computed_at ? String(validation.computed_at) : '',
+            }))
+          : [],
+        mappedLineCount: statements.reduce(
+          (sum: number, statement: any) => sum + Number(statement?.mapped_line_count ?? 0),
+          0
+        ),
+        totalLineCount: statements.reduce(
+          (sum: number, statement: any) => sum + Number(statement?.total_line_count ?? 0),
+          0
+        ),
+        unmappedLineCount: statements.reduce(
+          (sum: number, statement: any) => sum + Number(statement?.unmapped_line_count ?? 0),
+          0
+        ),
+        topLineItems: statements.slice(0, 4).map((statement: any) => ({
+          label: String(statement.statement_type || ''),
+          code: String(statement.readiness_status || 'pending'),
+          value: Number(statement.mapped_line_count ?? 0),
         })),
       });
-
-      const ratioList = Array.isArray((ratios as any)?.ratios) ? (ratios as any).ratios : [];
-      const coverage = (ratios as any)?.coverageSummary;
-      setStatementPreviewRatios({
-        coveragePct: Number(coverage?.coveragePct ?? 0),
-        computed: Number(coverage?.computed ?? ratioList.filter((item: any) => item.value != null).length),
-        total: Number(coverage?.total ?? ratioList.length),
-        topRatios: ratioList
-          .filter((item: any) => item.value != null)
-          .slice(0, 3)
-          .map((item: any) => ({
-            code: String(item.code || ''),
-            name: String(item.name || item.namePl || item.code || ''),
-            value: item.value != null ? Number(item.value) : null,
-          })),
-      });
+      setStatementPreviewRatios(null);
     } catch {
       setStatementPreviewDetail(null);
       setStatementPreviewRatios(null);

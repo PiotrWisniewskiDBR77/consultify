@@ -15,6 +15,7 @@ import {
   Check,
   CheckCircle2,
   Copy,
+  Database,
   Download,
   FileCode,
   FileText,
@@ -118,6 +119,8 @@ export interface MessageRendererProps {
   hoveredMessageId: string | null;
   setHoveredMessageId: (id: string | null) => void;
   copiedMessageId: string | null;
+  contextSaveBusyMessageId: string | null;
+  contextSavedMessageIds: Set<string>;
 
   // Multi-select state
   selectedMultiOptions: string[];
@@ -139,6 +142,7 @@ export interface MessageRendererProps {
   handleSaveAsDecision: (messageId: string, content: string) => void;
   handleSaveAsIdea: (messageId: string, content: string) => void;
   handleSaveAsNote: (messageId: string, content: string) => void;
+  handleSaveToContext: (messageId: string, content: string, role: 'user' | 'ai') => void;
   handleRunDirectedDeepening: (agentAuditPayload: any) => void;
   handleMultiSelectToggle: (value: string) => void;
   handleMultiSelectConfirm: () => void;
@@ -202,6 +206,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   hoveredMessageId,
   setHoveredMessageId,
   copiedMessageId,
+  contextSaveBusyMessageId,
+  contextSavedMessageIds,
   selectedMultiOptions,
   voiceState,
   handleCopyMessage,
@@ -217,6 +223,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   handleSaveAsDecision,
   handleSaveAsIdea,
   handleSaveAsNote,
+  handleSaveToContext,
   handleRunDirectedDeepening,
   handleMultiSelectToggle,
   handleMultiSelectConfirm,
@@ -238,6 +245,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const hasThinkingSteps = msg.thinkingSteps && msg.thinkingSteps.length > 0;
   const hasCitations = msg.citations && msg.citations.length > 0;
   const isCopied = copiedMessageId === msg.id;
+  const isContextSaveBusy = contextSaveBusyMessageId === msg.id;
+  const isContextSaved = contextSavedMessageIds.has(msg.id);
+  const canSaveToContext = msg.role === 'user' || msg.role === 'ai';
+  const contextSaveRole: 'user' | 'ai' = msg.role === 'user' ? 'user' : 'ai';
   const isDeepThinkingConfirm = (msg as any).metadata?.deepThinking?.kind === 'confirm';
   const confirmPayload =
     isDeepThinkingConfirm && dtPendingConfirm?.messageId === msg.id
@@ -1161,6 +1172,27 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </button>
                 )}
 
+                {canSaveToContext && (
+                  <button
+                    onClick={() => handleSaveToContext(msg.id, msg.content, contextSaveRole)}
+                    disabled={isContextSaveBusy || isContextSaved}
+                    className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={
+                      isContextSaved
+                        ? t('chat.actions.savedToContext', 'Saved to Context OS')
+                        : t('chat.actions.saveToContext', 'Save to Context OS')
+                    }
+                  >
+                    {isContextSaveBusy ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : isContextSaved ? (
+                      <CheckCircle2 size={12} className="text-emerald-500" />
+                    ) : (
+                      <Database size={12} />
+                    )}
+                  </button>
+                )}
+
                 {/* View Artifacts */}
                 {msg.role === 'ai' && hasArtifacts && (
                   <button
@@ -1251,6 +1283,24 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               title={t('myWork.notebook.saveAsNote', 'Save as note')}
             >
               <Bookmark size={14} />
+            </button>
+            <button
+              onClick={() => handleSaveToContext(msg.id, msg.content, 'ai')}
+              disabled={isContextSaveBusy || isContextSaved}
+              className="p-1.5 rounded-md text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title={
+                isContextSaved
+                  ? t('chat.actions.savedToContext', 'Saved to Context OS')
+                  : t('chat.actions.saveToContext', 'Save to Context OS')
+              }
+            >
+              {isContextSaveBusy ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : isContextSaved ? (
+                <CheckCircle2 size={14} />
+              ) : (
+                <Database size={14} />
+              )}
             </button>
           </div>
         </div>

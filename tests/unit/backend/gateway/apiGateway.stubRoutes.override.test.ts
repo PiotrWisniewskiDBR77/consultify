@@ -1,3 +1,4 @@
+/* @vitest-environment node */
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../../../server/src/utils/Logger.js', () => ({
@@ -16,7 +17,7 @@ describe('ApiGateway: stub routes can be enabled in production', () => {
     vi.resetModules();
     const { ApiGateway } = await import('../../../../server/src/Gateway.ts');
 
-    const app: any = { use: vi.fn() };
+    const app: any = { use: vi.fn(), get: vi.fn() };
     ApiGateway.getInstance().initializeRoutes(app);
 
     const mountedPaths = app.use.mock.calls

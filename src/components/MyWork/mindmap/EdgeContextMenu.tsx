@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef } from 'react';
 
+import { MENU_CONTAINER_CLASS, menuItemClass, type MenuItemBase } from './contextMenuTypes';
+
 export interface EdgeContextMenuProps {
   x: number;
   y: number;
@@ -17,16 +19,6 @@ export interface EdgeContextMenuProps {
   isUserCreated: boolean;
   onClose: () => void;
   onAction: (action: string) => void;
-}
-
-interface MenuItem {
-  id: string;
-  labelPl: string;
-  labelEn: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  danger?: boolean;
-  disabled?: boolean;
-  dividerAfter?: boolean;
 }
 
 export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
@@ -63,7 +55,7 @@ export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
     [onAction, onClose],
   );
 
-  const items: MenuItem[] = [
+  const items: MenuItemBase[] = [
     {
       id: 'edge_add_label',
       labelPl: 'Dodaj / edytuj etykietę',
@@ -116,7 +108,7 @@ export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
   return (
     <div
       ref={ref}
-      className="fixed z-[100] min-w-[220px] py-1.5 px-1 rounded-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+      className={MENU_CONTAINER_CLASS}
       style={{ left: clampedX, top: clampedY }}
     >
       {items.map((item) => {
@@ -127,13 +119,7 @@ export const EdgeContextMenu: React.FC<EdgeContextMenuProps> = ({
               type="button"
               disabled={item.disabled}
               onClick={() => handleClick(item.id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-[7px] text-left text-[11px] font-medium transition-colors rounded-md ${
-                item.disabled
-                  ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                  : item.danger
-                    ? 'text-red-600 dark:text-red-400 hover:bg-red-500/10'
-                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04]'
-              }`}
+              className={`w-full flex items-center gap-2.5 px-3 py-[7px] text-left text-[11px] font-medium transition-colors rounded-md ${menuItemClass(item)}`}
             >
               <Icon
                 size={13}

@@ -1,19 +1,14 @@
 import {
-  AlignCenter,
   Clipboard,
-  FoldVertical,
-  GitBranch,
   Grid3X3,
   Layout,
   Maximize,
   Plus,
-  Redo2,
   Sparkles,
-  Undo2,
-  ZoomIn,
-  ZoomOut,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef } from 'react';
+
+import { MENU_CONTAINER_CLASS, menuItemClass, type MenuItemBase } from './contextMenuTypes';
 
 export interface PaneContextMenuProps {
   x: number;
@@ -27,16 +22,6 @@ export interface PaneContextMenuProps {
   canPaste: boolean;
   onClose: () => void;
   onAction: (action: string) => void;
-}
-
-interface MenuItem {
-  id: string;
-  labelPl: string;
-  labelEn: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  shortcut?: string;
-  disabled?: boolean;
-  dividerAfter?: boolean;
 }
 
 export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
@@ -75,7 +60,7 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
     [onAction, onClose],
   );
 
-  const items: MenuItem[] = [
+  const items: MenuItemBase[] = [
     {
       id: 'pane_add_node',
       labelPl: 'Dodaj węzeł tutaj',
@@ -85,36 +70,12 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
       disabled: isLocked,
     },
     {
-      id: 'pane_add_topic',
-      labelPl: 'Dodaj temat',
-      labelEn: 'Add topic',
-      icon: GitBranch,
-      disabled: isLocked,
-      dividerAfter: true,
-    },
-    {
       id: 'pane_paste',
       labelPl: 'Wklej',
       labelEn: 'Paste',
       icon: Clipboard,
       shortcut: '⌘V',
       disabled: isLocked || !canPaste,
-    },
-    {
-      id: 'pane_undo',
-      labelPl: 'Cofnij',
-      labelEn: 'Undo',
-      icon: Undo2,
-      shortcut: '⌘Z',
-      disabled: !canUndo,
-    },
-    {
-      id: 'pane_redo',
-      labelPl: 'Ponów',
-      labelEn: 'Redo',
-      icon: Redo2,
-      shortcut: '⌘⇧Z',
-      disabled: !canRedo,
       dividerAfter: true,
     },
     {
@@ -125,26 +86,6 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
       shortcut: '⌘A',
     },
     {
-      id: 'pane_collapse_all',
-      labelPl: 'Zwiń wszystko',
-      labelEn: 'Collapse all',
-      icon: FoldVertical,
-    },
-    {
-      id: 'pane_expand_all',
-      labelPl: 'Rozwiń wszystko',
-      labelEn: 'Expand all',
-      icon: FoldVertical,
-      dividerAfter: true,
-    },
-    {
-      id: 'pane_auto_layout',
-      labelPl: 'Automatyczny układ',
-      labelEn: 'Auto layout',
-      icon: Layout,
-      shortcut: '⌘L',
-    },
-    {
       id: 'pane_fit_view',
       labelPl: 'Dopasuj widok',
       labelEn: 'Fit view',
@@ -152,25 +93,11 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
       shortcut: '⌘0',
     },
     {
-      id: 'pane_center_root',
-      labelPl: 'Centruj na korzeniu',
-      labelEn: 'Center on root',
-      icon: AlignCenter,
-      dividerAfter: true,
-    },
-    {
-      id: 'pane_zoom_in',
-      labelPl: 'Przybliż',
-      labelEn: 'Zoom in',
-      icon: ZoomIn,
-      shortcut: '⌘+',
-    },
-    {
-      id: 'pane_zoom_out',
-      labelPl: 'Oddal',
-      labelEn: 'Zoom out',
-      icon: ZoomOut,
-      shortcut: '⌘−',
+      id: 'pane_auto_layout',
+      labelPl: 'Automatyczny układ',
+      labelEn: 'Auto layout',
+      icon: Layout,
+      shortcut: '⌘L',
       dividerAfter: true,
     },
     {
@@ -188,7 +115,7 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
   return (
     <div
       ref={ref}
-      className="fixed z-[100] min-w-[220px] py-1 rounded-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+      className={MENU_CONTAINER_CLASS}
       style={{ left: clampedX, top: clampedY }}
     >
       {items.map((item) => {
@@ -199,16 +126,9 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
               type="button"
               disabled={item.disabled}
               onClick={() => handleClick(item.id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-[7px] text-left text-[11px] font-medium transition-colors ${
-                item.disabled
-                  ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-                  : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04]'
-              }`}
+              className={`w-full flex items-center gap-2.5 px-3 py-[7px] text-left text-[11px] font-medium transition-colors ${menuItemClass(item)}`}
             >
-              <Icon
-                size={13}
-                className="text-slate-400 dark:text-slate-500 shrink-0"
-              />
+              <Icon size={13} className="text-slate-400 dark:text-slate-500 shrink-0" />
               <span className="flex-1">{isPl ? item.labelPl : item.labelEn}</span>
               {item.shortcut && (
                 <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono ml-3">

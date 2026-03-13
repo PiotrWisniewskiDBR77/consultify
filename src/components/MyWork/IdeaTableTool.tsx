@@ -934,7 +934,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                   onClick={() => {
                     updateSavedView(viewContextMenu.viewId, {
-                      sort, filters, groupBy, layout: viewLayout,
+                      sort: sort ? [sort] : undefined,
+                      filters,
+                      groupBy: groupBy ?? undefined,
+                      layout: viewLayout,
                       columns: columns.map((c) => ({ key: c.key, visible: c.visible !== false, width: c.width })),
                     });
                     toast.success(isPl ? 'Widok zaktualizowany' : 'View updated');

@@ -14,7 +14,7 @@ const ARTIFACT_TYPES: { value: ArtifactType; label: string; labelPl: string }[] 
   { value: 'task', label: 'Task', labelPl: 'Zadanie' },
   { value: 'report', label: 'Report', labelPl: 'Raport' },
   { value: 'assessment', label: 'Assessment', labelPl: 'Ocena' },
-  { value: 'notebook_page', label: 'Notebook page', labelPl: 'Strona notatnika' },
+  { value: 'notebook', label: 'Notebook page', labelPl: 'Strona notatnika' },
 ];
 
 interface AttachArtifactModalProps {

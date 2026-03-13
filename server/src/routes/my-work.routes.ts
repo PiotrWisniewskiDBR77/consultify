@@ -10288,4 +10288,1059 @@ router.get(
   })
 );
 
+// ─────────────────────────────────────────────────────────────────────────────
+// UNIFIED CALENDAR ENDPOINT
+// Merges tasks, initiative milestones, and decision deadlines into a single
+// event stream. External calendar (Google/Outlook) events are fetched
+// separately via /api/integrations/calendar/* and merged on the frontend.
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get(
+  '/calendar/unified',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const db = req.db!;
+    const userId = req.userId!;
+    const orgId = req.organizationId!;
+
+    const start = req.query.start ? String(req.query.start) : null;
+    const end = req.query.end ? String(req.query.end) : null;
+    const sourcesParam = req.query.sources ? String(req.query.sources) : null;
+    const requestedSources = sourcesParam ? sourcesParam.split(',') : ['task', 'initiative', 'decision'];
+
+    try {
+      const events: Array<{
+        id: string;
+        title: string;
+        start: string;
+        end?: string;
+        allDay: boolean;
+        source: string;
+        sourceId: string;
+        color?: string;
+        status?: string;
+        priority?: string;
+        description?: string;
+      }> = [];
+
+      // Tasks with due dates
+      if (requestedSources.includes('task')) {
+        const dateFilter = start && end
+          ? `AND t.due_date >= ? AND t.due_date <= ?`
+          : '';
+        const dateParams = start && end ? [start, end] : [];
+
+        const tasks = await db.query(
+          `SELECT t.id, t.title, t.due_date, t.status, t.priority, t.description
+           FROM tasks t
+           WHERE t.organization_id = ? AND t.assignee_id = ?
+             AND t.due_date IS NOT NULL
+             AND LOWER(COALESCE(t.status,'')) NOT IN ('done','completed','cancelled')
+             ${dateFilter}
+           ORDER BY t.due_date ASC
+           LIMIT 500`,
+          [orgId, userId, ...dateParams]
+        );
+
+        for (const t of tasks) {
+          events.push({
+            id: `task-${t.id}`,
+            title: t.title,
+            start: t.due_date,
+            allDay: true,
+            source: 'task',
+            sourceId: t.id,
+            color: '#3b82f6',
+            status: t.status,
+            priority: t.priority,
+            description: t.description,
+          });
+        }
+      }
+
+      // Initiative milestones
+      if (requestedSources.includes('initiative')) {
+        const dateFilter = start && end
+          ? `AND i.target_date >= ? AND i.target_date <= ?`
+          : '';
+        const dateParams = start && end ? [start, end] : [];
+
+        const initiatives = await db.query(
+          `SELECT i.id, i.name as title, i.target_date, i.status
+           FROM initiatives i
+           WHERE i.organization_id = ?
+             AND i.target_date IS NOT NULL
+             AND LOWER(COALESCE(i.status,'')) NOT IN ('completed','cancelled')
+             ${dateFilter}
+           ORDER BY i.target_date ASC
+           LIMIT 200`,
+          [orgId, ...dateParams]
+        );
+
+        for (const i of initiatives) {
+          events.push({
+            id: `initiative-${i.id}`,
+            title: `🎯 ${i.title}`,
+            start: i.target_date,
+            allDay: true,
+            source: 'initiative',
+            sourceId: i.id,
+            color: '#8b5cf6',
+            status: i.status,
+          });
+        }
+      }
+
+      // Decision deadlines
+      if (requestedSources.includes('decision')) {
+        const dateFilter = start && end
+          ? `AND d.deadline >= ? AND d.deadline <= ?`
+          : '';
+        const dateParams = start && end ? [start, end] : [];
+
+        const decisions = await db.query(
+          `SELECT d.id, d.title, d.deadline, d.status, d.priority
+           FROM decisions d
+           WHERE d.organization_id = ?
+             AND (d.created_by = ? OR d.assigned_to = ?)
+             AND d.deadline IS NOT NULL
+             AND LOWER(COALESCE(d.status,'')) NOT IN ('resolved','cancelled')
+             ${dateFilter}
+           ORDER BY d.deadline ASC
+           LIMIT 200`,
+          [orgId, userId, userId, ...dateParams]
+        );
+
+        for (const d of decisions) {
+          events.push({
+            id: `decision-${d.id}`,
+            title: `⚖️ ${d.title}`,
+            start: d.deadline,
+            allDay: true,
+            source: 'decision',
+            sourceId: d.id,
+            color: '#f59e0b',
+            status: d.status,
+            priority: d.priority,
+          });
+        }
+      }
+
+      events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+      res.json({ events });
+    } catch (err: any) {
+      logger.error('[calendar-unified]', err);
+      res.status(500).json({ error: 'Failed to load unified calendar' });
+    }
+  })
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CALENDAR V2: EVENT CREATION + CONFLICT DETECTION (scaffolded for future use)
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post(
+  '/calendar/events',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const db = req.db!;
+    const userId = req.userId!;
+    const orgId = req.organizationId!;
+
+    const schema = z.object({
+      title: z.string().min(1).max(500),
+      start: z.string(),
+      end: z.string().optional(),
+      allDay: z.boolean().optional().default(true),
+      source: z.enum(['task', 'initiative', 'decision']).optional().default('task'),
+      description: z.string().optional(),
+    });
+
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid event data', details: parsed.error.issues });
+    }
+
+    const { title, start, end, allDay, source, description } = parsed.data;
+
+    try {
+      if (source === 'task') {
+        const id = uuidv4();
+        await db.query(
+          `INSERT INTO tasks (id, title, description, due_date, assignee_id, organization_id, status, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, 'todo', ${nowSql()}, ${nowSql()})`,
+          [id, title, description || null, start, userId, orgId]
+        );
+        res.json({ id, source: 'task', message: 'Task created from calendar' });
+      } else {
+        res.status(501).json({ error: `Creating ${source} events from calendar is not yet supported` });
+      }
+    } catch (err: any) {
+      logger.error('[calendar-create-event]', err);
+      res.status(500).json({ error: 'Failed to create calendar event' });
+    }
+  })
+);
+
+router.get(
+  '/calendar/conflicts',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const db = req.db!;
+    const userId = req.userId!;
+    const orgId = req.organizationId!;
+
+    const date = req.query.date ? String(req.query.date) : new Date().toISOString().split('T')[0];
+
+    try {
+      const tasksOnDate = await db.query(
+        `SELECT id, title, due_date FROM tasks
+         WHERE assignee_id = ? AND organization_id = ?
+           AND date(due_date) = date(?)
+           AND LOWER(COALESCE(status,'')) NOT IN ('done','completed','cancelled')
+         ORDER BY due_date ASC`,
+        [userId, orgId, date]
+      );
+
+      const decisionsOnDate = await db.query(
+        `SELECT id, title, deadline FROM decisions
+         WHERE organization_id = ?
+           AND (created_by = ? OR assigned_to = ?)
+           AND date(deadline) = date(?)
+           AND LOWER(COALESCE(status,'')) NOT IN ('resolved','cancelled')
+         ORDER BY deadline ASC`,
+        [orgId, userId, userId, date]
+      );
+
+      const hasConflicts = tasksOnDate.length + decisionsOnDate.length > 3;
+
+      res.json({
+        date,
+        tasks: tasksOnDate,
+        decisions: decisionsOnDate,
+        totalItems: tasksOnDate.length + decisionsOnDate.length,
+        hasConflicts,
+        suggestion: hasConflicts
+          ? 'This day looks busy. Consider rescheduling lower-priority items.'
+          : null,
+      });
+    } catch (err: any) {
+      logger.error('[calendar-conflicts]', err);
+      res.status(500).json({ error: 'Failed to check conflicts' });
+    }
+  })
+);
+
+router.patch(
+  '/calendar/events/:eventId/reschedule',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const db = req.db!;
+    const userId = req.userId!;
+    const orgId = req.organizationId!;
+    const { eventId } = req.params;
+
+    const schema = z.object({
+      newStart: z.string(),
+      newEnd: z.string().optional(),
+    });
+
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid reschedule data' });
+    }
+
+    const { newStart } = parsed.data;
+
+    try {
+      // Determine source from eventId prefix
+      if (eventId.startsWith('task-')) {
+        const taskId = eventId.replace('task-', '');
+        await db.query(
+          `UPDATE tasks SET due_date = ?, updated_at = ${nowSql()} WHERE id = ? AND assignee_id = ? AND organization_id = ?`,
+          [newStart, taskId, userId, orgId]
+        );
+        res.json({ success: true, source: 'task', id: taskId });
+      } else if (eventId.startsWith('decision-')) {
+        const decisionId = eventId.replace('decision-', '');
+        await db.query(
+          `UPDATE decisions SET deadline = ?, updated_at = ${nowSql()} WHERE id = ? AND organization_id = ? AND (created_by = ? OR assigned_to = ?)`,
+          [newStart, decisionId, orgId, userId, userId]
+        );
+        res.json({ success: true, source: 'decision', id: decisionId });
+      } else {
+        res.status(400).json({ error: 'Unknown event source' });
+      }
+    } catch (err: any) {
+      logger.error('[calendar-reschedule]', err);
+      res.status(500).json({ error: 'Failed to reschedule event' });
+    }
+  })
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOME TAB ENDPOINTS (V1 — mock data, V2 will integrate real AI + feeds)
+// ─────────────────────────────────────────────────────────────────────────────
+
+type HomeV2IndustryPreset = {
+  industryLabel: string;
+  marketSignalTitle: string;
+  marketSignalSummary: string;
+  technologySignalTitle: string;
+  technologySignalSummary: string;
+  benchmarkLabel: string;
+  benchmarkValue: string;
+  benchmarkDelta: string;
+  benchmarkImplication: string;
+  peerCaseTitle: string;
+  peerCaseSummary: string;
+  peerCaseImplication: string;
+};
+
+const DEFAULT_HOME_V2_PRESET: HomeV2IndustryPreset = {
+  industryLabel: 'Transformation',
+  marketSignalTitle: 'Transformation funding is moving toward cross-functional value pools',
+  marketSignalSummary:
+    'Leaders are backing programs that connect strategy, execution, and capability-building rather than isolated pilots.',
+  technologySignalTitle: 'AI copilots are being embedded into operating models, not launched as side tools',
+  technologySignalSummary:
+    'The strongest programs redesign rituals, decisions, and flows around AI assistance instead of adding another disconnected interface.',
+  benchmarkLabel: 'Transformation benchmark',
+  benchmarkValue: '10-15%',
+  benchmarkDelta: 'value capture in 12 months',
+  benchmarkImplication:
+    'Programs that tie governance, workflow redesign, and AI adoption together capture value faster.',
+  peerCaseTitle: 'Transformation office reframed AI as a portfolio lane',
+  peerCaseSummary:
+    'Instead of scattered pilots, one organization grouped initiatives into a single leadership narrative with weekly decision cadences.',
+  peerCaseImplication:
+    'Use the Home screen to sharpen one storyline, not to display disconnected updates.',
+};
+
+const MANUFACTURING_HOME_V2_PRESET: HomeV2IndustryPreset = {
+  industryLabel: 'Manufacturing',
+  marketSignalTitle: 'Energy pressure is changing transformation prioritization in manufacturing',
+  marketSignalSummary:
+    'Manufacturing programs are getting funded fastest when they connect planning, quality, and efficiency levers rather than isolated automation ideas.',
+  technologySignalTitle: 'Computer vision and planning copilots are moving from pilot to operating lane',
+  technologySignalSummary:
+    'Plants are redesigning quality triage, maintenance decisions, and production planning around AI-assisted workflows.',
+  benchmarkLabel: 'Manufacturing transformation benchmark',
+  benchmarkValue: '14-18%',
+  benchmarkDelta: 'value uplift in 12 months',
+  benchmarkImplication:
+    'Programs that combine quality, planning, and governance outperform single-tool pilots.',
+  peerCaseTitle: 'Tier-1 supplier shifted from AI PoC to transformation lane',
+  peerCaseSummary:
+    'The team stopped framing AI as a one-off experiment and created one cross-functional lane with owners, KPIs, and weekly steering decisions.',
+  peerCaseImplication:
+    'Your strongest opportunity likely needs the same reframing: initiative, owner, and executive storyline.',
+};
+
+function inferHomeV2TimeMode(date: Date): 'morning' | 'liveDay' | 'eveningWrap' {
+  const hour = date.getHours();
+  if (hour < 11) return 'morning';
+  if (hour < 17) return 'liveDay';
+  return 'eveningWrap';
+}
+
+function inferRoleLens(role: unknown): string {
+  const normalized = String(role || '')
+    .trim()
+    .toLowerCase();
+  if (['owner', 'admin', 'administrator', 'superadmin', 'super_admin'].includes(normalized)) {
+    return 'Executive sponsor';
+  }
+  if (['manager'].includes(normalized)) {
+    return 'Transformation lead';
+  }
+  return 'Program contributor';
+}
+
+function selectHomeV2Preset(industry: string | null | undefined): HomeV2IndustryPreset {
+  const normalized = String(industry || '')
+    .trim()
+    .toLowerCase();
+  if (
+    normalized.includes('manufact') ||
+    normalized.includes('factory') ||
+    normalized.includes('plant') ||
+    normalized.includes('production') ||
+    normalized.includes('automotive') ||
+    normalized.includes('industrial')
+  ) {
+    return MANUFACTURING_HOME_V2_PRESET;
+  }
+  return DEFAULT_HOME_V2_PRESET;
+}
+
+function computePriorityWeight(base: number, freshness: number, extra = 0): number {
+  return Math.max(40, Math.min(100, base + Math.round(freshness / 5) + extra));
+}
+
+function computeRecommendedSize(
+  priorityWeight: number,
+  preferred: 'sm' | 'md' | 'lg' | 'hero'
+): 'sm' | 'md' | 'lg' | 'hero' {
+  if (preferred === 'hero') return 'hero';
+  if (priorityWeight >= 88) return 'lg';
+  if (priorityWeight >= 72) return 'md';
+  return preferred;
+}
+
+router.get(
+  '/home/v2',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const db = req.db!;
+    const userId = req.userId!;
+    const orgId = req.organizationId!;
+
+    try {
+      const now = new Date();
+      const timeMode = inferHomeV2TimeMode(now);
+      const roleLens = inferRoleLens(req.user?.role);
+      const orgContext = await organizationContextService.buildResolvedContext(orgId);
+      const preset = selectHomeV2Preset(orgContext.profile.industry);
+
+      const [tasks, decisions, ideas, notes] = await Promise.all([
+        db.query(
+          `SELECT id, title, description, status, priority, due_date, updated_at
+           FROM tasks
+           WHERE organization_id = ? AND assignee_id = ?
+             AND due_date IS NOT NULL
+             AND LOWER(COALESCE(status,'')) NOT IN ('done','completed','cancelled')
+           ORDER BY due_date ASC, updated_at DESC
+           LIMIT 8`,
+          [orgId, userId]
+        ),
+        db.query(
+          `SELECT id, title, status, priority, deadline, created_at
+           FROM decisions
+           WHERE organization_id = ? AND (created_by = ? OR assigned_to = ?)
+             AND LOWER(COALESCE(status,'')) NOT IN ('resolved','cancelled')
+           ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline ASC, created_at DESC
+           LIMIT 6`,
+          [orgId, userId, userId]
+        ),
+        db.query(
+          `SELECT i.id, i.title, i.description, i.stage, i.updated_at, COUNT(t.id) as task_count
+           FROM ideas i
+           LEFT JOIN tasks t ON t.idea_id = i.id
+           WHERE i.organization_id = ? AND i.created_by = ?
+           GROUP BY i.id, i.title, i.description, i.stage, i.updated_at
+           ORDER BY i.updated_at DESC
+           LIMIT 4`,
+          [orgId, userId]
+        ),
+        db.query(
+          `SELECT id, title, content, updated_at
+           FROM notebook_pages
+           WHERE organization_id = ? AND user_id = ?
+           ORDER BY updated_at DESC
+           LIMIT 3`,
+          [orgId, userId]
+        ),
+      ]);
+
+      const overdueTasks = tasks.filter((task: any) => task.due_date && new Date(task.due_date) < now);
+      const tasksDueSoon = tasks.slice(0, 3);
+      const pendingDecisions = decisions;
+      const blockedCount = overdueTasks.length + (pendingDecisions.length > 2 ? 1 : 0);
+      const weekProgress = Math.round((((now.getDay() + 6) % 7) / 5) * 100);
+
+      const focusItems = [
+        tasksDueSoon[0]
+          ? {
+              id: String(tasksDueSoon[0].id),
+              type: 'task',
+              title: String(tasksDueSoon[0].title),
+              meta: overdueTasks.length > 0 ? 'Execution needs a clean next move' : 'Closest execution commitment',
+              priority: overdueTasks.length > 0 ? 'high' : 'medium',
+            }
+          : null,
+        pendingDecisions[0]
+          ? {
+              id: String(pendingDecisions[0].id),
+              type: 'decision',
+              title: String(pendingDecisions[0].title),
+              meta: `${pendingDecisions.length} active decision${pendingDecisions.length === 1 ? '' : 's'}`,
+              priority: 'high',
+            }
+          : null,
+        ideas[0]
+          ? {
+              id: String(ideas[0].id),
+              type: 'idea',
+              title: String(ideas[0].title),
+              meta: 'Strongest current transformation concept',
+              priority: 'medium',
+            }
+          : null,
+      ].filter(Boolean);
+
+      const pulseScore = Math.max(
+        55,
+        Math.min(
+          96,
+          68 +
+            Math.min(ideas.length * 4, 12) +
+            Math.min(notes.length * 2, 6) +
+            Math.min(tasksDueSoon.length * 3, 9) -
+            Math.min(pendingDecisions.length * 2, 10)
+        )
+      );
+
+      const pulseHeadline =
+        timeMode === 'morning'
+          ? 'Start the day with one move that sharpens narrative and execution.'
+          : timeMode === 'liveDay'
+            ? 'Protect momentum while clearing the single blocker shaping the week.'
+            : 'Close the loop on what moved and carry one strong storyline into tomorrow.';
+
+      const pulseSummary =
+        pendingDecisions.length > 0
+          ? `The program has movement, but decision flow is still shaping pace. ${pendingDecisions.length} active decisions and ${tasksDueSoon.length} near-term actions are competing for attention.`
+          : `Execution is moving without major friction. This is the right moment to convert the strongest idea into a more formal transformation lane.`;
+
+      const industry = orgContext.profile.industry || preset.industryLabel;
+      const priorities = (orgContext.strategic.priorities || []).slice(0, 2).join(', ');
+      const constraints = (orgContext.operations.constraints || []).slice(0, 2).join(', ');
+
+      const momentumFreshness = ideas.length > 0 ? 76 : 58;
+      const sparkFreshness = Math.min(95, 65 + ideas.length * 6 + notes.length * 4);
+      const decisionFreshness = pendingDecisions.length > 0 ? 82 : 55;
+      const industryFreshness = 74;
+
+      const aiPulsePriority = computePriorityWeight(88, 84, pendingDecisions.length > 0 ? 4 : 0);
+      const momentumPriority = computePriorityWeight(72, momentumFreshness, ideas.length > 1 ? 4 : 0);
+      const sparkPriority = computePriorityWeight(78, sparkFreshness, ideas.length > 0 ? 4 : 0);
+      const decisionPriority = computePriorityWeight(74, decisionFreshness, blockedCount * 2);
+      const industryPriority = computePriorityWeight(70, industryFreshness, priorities ? 3 : 0);
+      const executionPriority = computePriorityWeight(68, 62, tasksDueSoon.length > 0 ? 4 : 0);
+      const teamPriority = computePriorityWeight(64, 58, blockedCount > 1 ? 4 : 0);
+
+      const blocks = [
+        {
+          id: 'aiPulseCore',
+          title: 'AI Pulse Core',
+          subtitle: 'Your highest-signal transformation readout',
+          accent: 'ai',
+          size: 'hero',
+          priorityWeight: aiPulsePriority,
+          relevanceScore: 96,
+          freshnessScore: 84,
+          ctaIntents: ['prioritize_transformation', 'challenge_storyline', 'summarize_for_leadership'],
+          payload: {
+            greeting: `Good ${timeMode === 'morning' ? 'morning' : timeMode === 'liveDay' ? 'day' : 'evening'}${req.user?.firstName ? `, ${req.user.firstName}` : ''}`,
+            headline: pulseHeadline,
+            summary: pulseSummary,
+            insight: priorities
+              ? `The strongest storyline today sits at the intersection of ${priorities}. Use Home to keep the narrative transformational, not operational.`
+              : `The strongest storyline today is to connect ideas, decisions, and execution into one transformation lane with clear ownership.`,
+            weekProgress,
+            pulseScore,
+            focusItems,
+          },
+        },
+        {
+          id: 'momentum',
+          title: 'Momentum',
+          subtitle: 'Where the program is gaining or losing speed',
+          accent: 'success',
+          size: computeRecommendedSize(momentumPriority, 'md'),
+          priorityWeight: momentumPriority,
+          relevanceScore: 88,
+          freshnessScore: momentumFreshness,
+          ctaIntents: ['summarize_momentum', 'prioritize'],
+          payload: {
+            headline: ideas.length > 0 ? 'Ideas are moving faster than decisions.' : 'Execution is moving, but ideation needs fresh energy.',
+            summary:
+              pendingDecisions.length > 0
+                ? 'The program is alive, but one or two decisions are shaping the rate of progress more than task volume.'
+                : 'There is enough movement in the system to convert energy into one stronger transformation storyline.',
+            stats: [
+              { label: 'Ideas shaped', value: String(ideas.length), trend: ideas.length > 1 ? 'rising' : 'steady' },
+              { label: 'Tasks near term', value: String(tasksDueSoon.length), trend: overdueTasks.length > 0 ? 'attention needed' : 'under control' },
+              { label: 'Decisions active', value: String(pendingDecisions.length), trend: pendingDecisions.length > 1 ? 'leadership pull' : 'contained' },
+            ],
+            signals: [
+              {
+                id: 'momentum-1',
+                title: ideas.length > 0 ? 'Concept shaping is ahead of governance' : 'Narrative energy is low',
+                summary:
+                  ideas.length > 0
+                    ? 'Your strongest ideas are clearer than the approvals around them. That is a signal to tighten decision framing.'
+                    : 'There is space to generate a stronger future-state storyline before the next steering conversation.',
+                tag: 'Program pulse',
+                tone: ideas.length > 0 ? 'positive' : 'warning',
+              },
+              {
+                id: 'momentum-2',
+                title: tasksDueSoon.length > 0 ? 'Execution has a concrete next move' : 'Execution bandwidth is available',
+                summary:
+                  tasksDueSoon.length > 0
+                    ? 'Near-term work is visible, which makes this a good moment to connect it to the broader transformation narrative.'
+                    : 'You can safely use some bandwidth to clarify the strongest lane rather than react to noise.',
+                tag: 'Execution',
+                tone: 'positive',
+              },
+              {
+                id: 'momentum-3',
+                title: pendingDecisions.length > 0 ? 'Decision pacing is the main constraint' : 'Decision flow is currently clean',
+                summary:
+                  pendingDecisions.length > 0
+                    ? 'The system does not need more updates. It needs one cleaner decision sequence.'
+                    : 'This is a rare moment to push the strongest opportunity forward without governance drag.',
+                tag: 'Decision flow',
+                tone: pendingDecisions.length > 0 ? 'warning' : 'neutral',
+              },
+            ],
+          },
+        },
+        {
+          id: 'sparkField',
+          title: 'Spark Field',
+          subtitle: 'Ideas and notes with transformation gravity',
+          accent: 'warm',
+          size: computeRecommendedSize(sparkPriority, 'lg'),
+          priorityWeight: sparkPriority,
+          relevanceScore: 92,
+          freshnessScore: sparkFreshness,
+          ctaIntents: ['expand_idea', 'convert_to_initiative', 'challenge_assumptions'],
+          payload: {
+            ideas: ideas.map((idea: any) => ({
+              id: String(idea.id),
+              type: 'idea',
+              title: String(idea.title),
+              snippet: String(idea.description || '').slice(0, 220),
+              stage: String(idea.stage || 'spark'),
+              updatedAt: String(idea.updated_at || ''),
+              nodeCount: null,
+              taskCount: Number(idea.task_count || 0),
+            })),
+            notes: notes.map((note: any) => ({
+              id: String(note.id),
+              type: 'note',
+              title: String(note.title),
+              snippet: String(note.content || '')
+                .replace(/<[^>]*>/g, '')
+                .slice(0, 220),
+              updatedAt: String(note.updated_at || ''),
+            })),
+            nudge:
+              ideas[0] && Number(ideas[0].task_count || 0) === 0
+                ? {
+                    text: `The idea "${ideas[0].title}" still has no formal execution lane. This is the cleanest available unlock.`,
+                    ideaId: String(ideas[0].id),
+                  }
+                : null,
+          },
+        },
+        {
+          id: 'decisionTemperature',
+          title: 'Decision Temperature',
+          subtitle: 'Where approvals and blockers are heating up',
+          accent: 'alert',
+          size: computeRecommendedSize(decisionPriority, 'md'),
+          priorityWeight: decisionPriority,
+          relevanceScore: 87,
+          freshnessScore: decisionFreshness,
+          ctaIntents: ['unblock_decision', 'draft_decision', 'analyze_tradeoffs'],
+          payload: {
+            pendingCount: pendingDecisions.length,
+            blockedCount,
+            hottestDecision: pendingDecisions[0]
+              ? {
+                  id: String(pendingDecisions[0].id),
+                  title: String(pendingDecisions[0].title),
+                  ownerLabel: roleLens,
+                  priority: String(pendingDecisions[0].priority || 'high'),
+                  deadlineLabel: pendingDecisions[0].deadline
+                    ? `Target close: ${String(pendingDecisions[0].deadline)}`
+                    : 'Needs closure this week',
+                }
+              : null,
+            signals: [
+              {
+                id: 'decision-heat-1',
+                title:
+                  pendingDecisions.length > 0
+                    ? 'Decision drag is now visible at Home level'
+                    : 'No high-temperature decision detected',
+                summary:
+                  pendingDecisions.length > 0
+                    ? 'The right move is not another update. It is a tighter decision frame and a clearer owner path.'
+                    : 'Decision flow is currently calm, which creates space for stronger shaping work.',
+                tag: 'Governance',
+                tone: pendingDecisions.length > 0 ? 'warning' : 'neutral',
+              },
+              {
+                id: 'decision-heat-2',
+                title: blockedCount > 1 ? 'Execution and approvals are colliding' : 'Governance is manageable',
+                summary:
+                  blockedCount > 1
+                    ? 'A blocked work item is now amplifying decision pressure. This is a sequencing problem, not just a backlog problem.'
+                    : 'The current level of governance pressure should be absorbable if one decision is framed clearly.',
+                tag: 'Sequencing',
+                tone: blockedCount > 1 ? 'warning' : 'neutral',
+              },
+            ],
+          },
+        },
+        {
+          id: 'industryLens',
+          title: 'Industry Lens',
+          subtitle: 'External signals translated into transformation relevance',
+          accent: 'cool',
+          size: computeRecommendedSize(industryPriority, 'lg'),
+          priorityWeight: industryPriority,
+          relevanceScore: 85,
+          freshnessScore: industryFreshness,
+          ctaIntents: ['translate_signal', 'compare_peer_case', 'turn_signal_into_action'],
+          payload: {
+            industryLabel: industry || preset.industryLabel,
+            roleLens,
+            marketSignal: {
+              id: 'industry-market',
+              title: preset.marketSignalTitle,
+              summary: preset.marketSignalSummary,
+              tag: 'Market signal',
+              tone: 'warning',
+            },
+            technologySignal: {
+              id: 'industry-tech',
+              title: preset.technologySignalTitle,
+              summary: preset.technologySignalSummary,
+              tag: 'Technology signal',
+              tone: 'positive',
+            },
+            benchmark: {
+              label: preset.benchmarkLabel,
+              value: preset.benchmarkValue,
+              delta: preset.benchmarkDelta,
+              implication: constraints
+                ? `${preset.benchmarkImplication} Current constraints in context: ${constraints}.`
+                : preset.benchmarkImplication,
+            },
+            peerCase: {
+              title: preset.peerCaseTitle,
+              summary: preset.peerCaseSummary,
+              implication: preset.peerCaseImplication,
+            },
+          },
+        },
+        {
+          id: 'executionCurrent',
+          title: 'Execution Current',
+          subtitle: 'Transformation execution without drifting into operations control',
+          accent: 'cool',
+          size: computeRecommendedSize(executionPriority, 'md'),
+          priorityWeight: executionPriority,
+          relevanceScore: 82,
+          freshnessScore: 63,
+          ctaIntents: ['sequence_execution', 'review_dependencies'],
+          payload: {
+            headline:
+              tasksDueSoon.length > 0
+                ? 'Execution is visible. Use it to support narrative and decision clarity.'
+                : 'Execution is relatively light. This is a shaping window.',
+            streams: [
+              tasksDueSoon[0]
+                ? {
+                    id: `task-${tasksDueSoon[0].id}`,
+                    label: String(tasksDueSoon[0].title),
+                    progressLabel: overdueTasks.length > 0 ? 'Needs immediate attention' : 'Closest active move',
+                    status: overdueTasks.length > 0 ? 'blocked' : 'accelerating',
+                    entityType: 'task',
+                    entityId: String(tasksDueSoon[0].id),
+                  }
+                : null,
+              tasksDueSoon[1]
+                ? {
+                    id: `task-${tasksDueSoon[1].id}`,
+                    label: String(tasksDueSoon[1].title),
+                    progressLabel: 'Execution lane in motion',
+                    status: 'steady',
+                    entityType: 'task',
+                    entityId: String(tasksDueSoon[1].id),
+                  }
+                : null,
+              pendingDecisions[0]
+                ? {
+                    id: `decision-${pendingDecisions[0].id}`,
+                    label: String(pendingDecisions[0].title),
+                    progressLabel: 'Waiting on decision closure',
+                    status: 'blocked',
+                    entityType: 'decision',
+                    entityId: String(pendingDecisions[0].id),
+                  }
+                : null,
+            ].filter(Boolean),
+          },
+        },
+        {
+          id: 'teamSignal',
+          title: 'Team Signal',
+          subtitle: 'Organizational alignment around the transformation storyline',
+          accent: 'neutral',
+          size: computeRecommendedSize(teamPriority, 'md'),
+          priorityWeight: teamPriority,
+          relevanceScore: 77,
+          freshnessScore: 58,
+          ctaIntents: ['prepare_alignment_message', 'summarize_team_signal'],
+          payload: {
+            headline:
+              pendingDecisions.length > 1
+                ? 'The team has energy, but alignment still needs a cleaner narrative.'
+                : 'The system looks collaborative enough to push one strong storyline forward.',
+            summary:
+              priorities
+                ? `Current priorities in context: ${priorities}. Home should keep these visible without turning into an operational cockpit.`
+                : 'Home should help the team align around transformation direction, not just task status.',
+            signals: [
+              {
+                id: 'team-signal-1',
+                title: 'There is enough movement in the system',
+                detail: 'The risk is fragmentation, not inactivity. Use one storyline to align effort.',
+                tone: 'positive',
+              },
+              {
+                id: 'team-signal-2',
+                title: pendingDecisions.length > 0 ? 'Leadership attention is the lever' : 'Leadership attention is available',
+                detail:
+                  pendingDecisions.length > 0
+                    ? 'One cleaner approval path will likely unlock more than another status review.'
+                    : 'This is a good moment to package the strongest idea for leadership conversation.',
+                tone: pendingDecisions.length > 0 ? 'warning' : 'positive',
+              },
+              {
+                id: 'team-signal-3',
+                title: 'Narrative discipline matters more than more updates',
+                detail:
+                  'If Home keeps showing isolated signals, the team will see a dashboard. If it tells one story, they will see direction.',
+                tone: 'neutral',
+              },
+            ],
+          },
+        },
+        {
+          id: 'commandDock',
+          title: 'Command Dock',
+          subtitle: 'Immediate moves',
+          accent: 'neutral',
+          size: 'hero',
+          priorityWeight: 100,
+          relevanceScore: 100,
+          freshnessScore: 100,
+          ctaIntents: ['create', 'navigate', 'chat'],
+          payload: {
+            actions: [
+              { id: 'new-idea', label: '+ Idea', kind: 'create', target: 'idea' },
+              { id: 'new-note', label: '+ Note', kind: 'create', target: 'note' },
+              { id: 'new-task', label: '+ Task', kind: 'create', target: 'task' },
+              { id: 'new-decision', label: '+ Decision', kind: 'create', target: 'decision' },
+              { id: 'open-calendar', label: 'Calendar', kind: 'navigate', target: 'calendar' },
+              {
+                id: 'ask-ai',
+                label: 'Ask AI',
+                kind: 'chat',
+                starterPrompt:
+                  'Turn the current Home signals into one clear transformation narrative, three priorities, and one next decision.',
+              },
+            ],
+          },
+        },
+      ];
+
+      res.json({
+        timeMode,
+        updatedAt: now.toISOString(),
+        pulseLabel:
+          pendingDecisions.length > 0
+            ? 'Transformation pressure is rising in the right places'
+            : 'Transformation momentum is building',
+        blocks,
+      });
+    } catch (err: any) {
+      logger.error('[home-v2]', err);
+      res.status(500).json({ error: 'Failed to build Home V2' });
+    }
+  })
+);
+
+router.get(
+  '/home/brief',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const db = req.db!;
+    const userId = req.userId!;
+    const orgId = req.organizationId!;
+
+    try {
+      const now = new Date();
+      const hour = now.getHours();
+      const dayOfWeek = now.getDay();
+      const weekProgress = Math.round((dayOfWeek / 5) * 100);
+
+      const overdueTasks = await db.query(
+        `SELECT id, title FROM tasks WHERE assigned_to = ? AND organization_id = ? AND status NOT IN ('done','cancelled') AND due_date < ${nowSql()} ORDER BY due_date ASC LIMIT 3`,
+        [userId, orgId]
+      );
+
+      const pendingDecisions = await db.query(
+        `SELECT id, title FROM decisions WHERE organization_id = ? AND status = 'pending' AND (created_by = ? OR assigned_to = ?) ORDER BY created_at DESC LIMIT 3`,
+        [orgId, userId, userId]
+      );
+
+      const recentIdeas = await db.query(
+        `SELECT id, title FROM ideas WHERE created_by = ? AND organization_id = ? ORDER BY updated_at DESC LIMIT 1`,
+        [userId, orgId]
+      );
+
+      const focusItems: Array<{ id: string; type: string; title: string; meta: string; priority: string }> = [];
+
+      if (overdueTasks.length > 0) {
+        focusItems.push({
+          id: overdueTasks[0].id,
+          type: 'task',
+          title: overdueTasks[0].title,
+          meta: 'Overdue',
+          priority: 'high',
+        });
+      }
+
+      if (pendingDecisions.length > 0) {
+        focusItems.push({
+          id: pendingDecisions[0].id,
+          type: 'decision',
+          title: pendingDecisions[0].title,
+          meta: `${pendingDecisions.length} pending`,
+          priority: 'high',
+        });
+      }
+
+      if (recentIdeas.length > 0) {
+        focusItems.push({
+          id: recentIdeas[0].id,
+          type: 'idea',
+          title: recentIdeas[0].title,
+          meta: 'Recently updated',
+          priority: 'medium',
+        });
+      }
+
+      res.json({
+        greeting: hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening',
+        insight: null,
+        focusItems,
+        weekProgress,
+      });
+    } catch (err: any) {
+      logger.error('[home-brief]', err);
+      res.status(500).json({ error: 'Failed to load brief' });
+    }
+  })
+);
+
+router.get(
+  '/home/spark',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const db = req.db!;
+    const userId = req.userId!;
+    const orgId = req.organizationId!;
+
+    try {
+      const ideas = await db.query(
+        `SELECT id, title, description, stage, updated_at FROM ideas WHERE created_by = ? AND organization_id = ? ORDER BY updated_at DESC LIMIT 4`,
+        [userId, orgId]
+      );
+
+      const notes = await db.query(
+        `SELECT id, title, content, updated_at FROM notebook_pages WHERE user_id = ? AND organization_id = ? ORDER BY updated_at DESC LIMIT 2`,
+        [userId, orgId]
+      );
+
+      const ideasWithoutTasks = await db.query(
+        `SELECT i.id, i.title FROM ideas i LEFT JOIN tasks t ON t.idea_id = i.id WHERE i.created_by = ? AND i.organization_id = ? AND t.id IS NULL ORDER BY i.updated_at DESC LIMIT 1`,
+        [userId, orgId]
+      );
+
+      const aiNudge = ideasWithoutTasks.length > 0
+        ? {
+            text: `"${ideasWithoutTasks[0].title}" has no tasks yet. Want to break it into actionable steps?`,
+            ideaId: ideasWithoutTasks[0].id,
+            action: 'Expand idea',
+          }
+        : null;
+
+      res.json({
+        ideas: ideas.map((i: any) => ({
+          id: i.id,
+          type: 'idea',
+          title: i.title,
+          snippet: (i.description || '').substring(0, 200),
+          stage: i.stage || 'spark',
+          updatedAt: i.updated_at,
+        })),
+        notes: notes.map((n: any) => ({
+          id: n.id,
+          type: 'note',
+          title: n.title,
+          snippet: (n.content || '').replace(/<[^>]*>/g, '').substring(0, 200),
+          updatedAt: n.updated_at,
+        })),
+        aiNudge,
+      });
+    } catch (err: any) {
+      logger.error('[home-spark]', err);
+      res.status(500).json({ error: 'Failed to load spark data' });
+    }
+  })
+);
+
+router.get(
+  '/home/pulse',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    // V1: static curated content. V2 will integrate AI-generated summaries + RSS feeds.
+    res.json({
+      articles: [],
+      frameworkOfDay: {
+        name: 'Jobs-to-be-Done',
+        description:
+          "People don't buy products — they hire them to do a job. Understand the underlying job your client's customers are trying to accomplish.",
+      },
+      benchmark: null,
+    });
+  })
+);
+
+router.get(
+  '/home/nudge',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const db = req.db!;
+    const userId = req.userId!;
+    const orgId = req.organizationId!;
+
+    try {
+      const pendingDecisionsResult = await db.query(
+        `SELECT COUNT(*) as cnt FROM decisions WHERE organization_id = ? AND status = 'pending' AND (created_by = ? OR assigned_to = ?) AND created_at < ${daysAgoSql(1)}`,
+        [orgId, userId, userId]
+      );
+
+      const overdueTasksResult = await db.query(
+        `SELECT COUNT(*) as cnt FROM tasks WHERE assigned_to = ? AND organization_id = ? AND status NOT IN ('done','cancelled') AND due_date < ${nowSql()}`,
+        [userId, orgId]
+      );
+
+      const pendingDecisions = Number(pendingDecisionsResult[0]?.cnt || 0);
+      const overdueTasks = Number(overdueTasksResult[0]?.cnt || 0);
+
+      res.json({
+        pendingDecisions,
+        overdueTasks,
+        message: null,
+      });
+    } catch (err: any) {
+      logger.error('[home-nudge]', err);
+      res.status(500).json({ error: 'Failed to load nudge data' });
+    }
+  })
+);
+
 export default router;

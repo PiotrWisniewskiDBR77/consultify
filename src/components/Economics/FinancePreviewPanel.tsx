@@ -47,7 +47,7 @@ interface FinancePreviewPanelProps {
   handleOpenFull: (row: FinanceRow) => void;
   handleExport: (row: FinanceRow) => void;
   handleCreateModelFromStatement: (row: FinanceStatementRow) => void;
-  handleCreateAnalysisFromStatements: (statementIds: string[]) => void;
+  handleCreateAnalysisFromStatements: (row: FinanceStatementRow) => void;
   loadStatements: () => Promise<void>;
   loadModels: () => Promise<void>;
   loadAnalyses: () => Promise<void>;
@@ -93,7 +93,7 @@ export function useFinancePreview({
       if (row.kind === 'statements') {
         const sRow = row as FinanceStatementRow;
         metaPills.push(
-          { label: t('finance.columns.type', 'Type'), value: sRow.statementType },
+          { label: t('finance.columns.type', 'Type'), value: isPl ? 'Pack' : 'Pack' },
           { label: t('finance.columns.period', 'Period'), value: sRow.periodLabel || sRow.periodEnd },
           { label: t('common.currency', 'Currency'), value: sRow.currency },
           { label: t('finance.columns.scaling', 'Scaling'), value: sRow.scaling }
@@ -192,14 +192,13 @@ export function useFinancePreview({
       if (row.kind === 'statements') {
         const sRow = row as FinanceStatementRow;
         const detail = statementPreviewDetail;
-        const coverage = statementPreviewRatios;
         detailsText = isPl
-          ? `Sprawozdanie ${sRow.statementType}\nOkres: ${detail?.periodLabel || sRow.periodLabel || '—'}\nStatus: ${detail?.rawStatus || sRow.rawStatus}\nWaluta: ${detail?.currency || sRow.currency}\nŹródło: ${detail?.sourceFileName || sRow.sourceFileName || '—'}`
-          : `Financial statement ${sRow.statementType}\nPeriod: ${detail?.periodLabel || sRow.periodLabel || '—'}\nStatus: ${detail?.rawStatus || sRow.rawStatus}\nCurrency: ${detail?.currency || sRow.currency}\nSource: ${detail?.sourceFileName || sRow.sourceFileName || '—'}`;
-        if (detail?.mappedLineCount || coverage?.coveragePct) {
+          ? `Pakiet sprawozdań\nFirma: ${detail?.entityName || sRow.entityName || '—'}\nOkres: ${detail?.periodLabel || sRow.periodLabel || '—'}\nStatus: ${detail?.rawStatus || sRow.rawStatus}\nWaluta: ${detail?.currency || sRow.currency}\nDokumenty: ${detail?.sourceStatementCount || sRow.sourceStatementCount || 0}`
+          : `Statement pack\nEntity: ${detail?.entityName || sRow.entityName || '—'}\nPeriod: ${detail?.periodLabel || sRow.periodLabel || '—'}\nStatus: ${detail?.rawStatus || sRow.rawStatus}\nCurrency: ${detail?.currency || sRow.currency}\nDocuments: ${detail?.sourceStatementCount || sRow.sourceStatementCount || 0}`;
+        if (detail?.mappedLineCount || sRow.mappedLineCount) {
           detailsText += isPl
-            ? `\nZmapowane linie: ${detail?.mappedLineCount || sRow.mappedLineCount} • Coverage: ${coverage?.coveragePct?.toFixed(0) || 0}%`
-            : `\nMapped lines: ${detail?.mappedLineCount || sRow.mappedLineCount} • Coverage: ${coverage?.coveragePct?.toFixed(0) || 0}%`;
+            ? `\nZmapowane linie: ${detail?.mappedLineCount || sRow.mappedLineCount} • Kompletność: ${sRow.completenessLabel || '—'}`
+            : `\nMapped lines: ${detail?.mappedLineCount || sRow.mappedLineCount} • Completeness: ${sRow.completenessLabel || '—'}`;
         }
       } else if (row.kind === 'models') {
         detailsText = isPl
@@ -253,7 +252,7 @@ export function useFinancePreview({
           {row.kind === 'statements' && (
             <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-2">
               <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-                {t('finance.statements.previewTitle', 'Statement health')}
+                {t('finance.statements.previewTitle', 'Pack health')}
               </div>
               {statementPreviewDetail ? (
                 <>
@@ -268,37 +267,73 @@ export function useFinancePreview({
                     </div>
                     <div className="rounded-md bg-white/80 dark:bg-white/[0.03] p-2">
                       <div className="text-slate-500 dark:text-slate-400">
-                        {t('finance.statements.validation', 'Validation')}
+                        {t('finance.statements.validation', 'Pack status')}
                       </div>
                       <div className="text-sm font-semibold text-slate-900 dark:text-white capitalize">
                         {statementPreviewDetail.validationStatus}
                       </div>
                     </div>
-                  </div>
-                  {statementPreviewRatios && (
-                    <div className="space-y-1">
-                      <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
-                        {t('finance.statements.ratios', 'Ratios')}
+                    <div className="rounded-md bg-white/80 dark:bg-white/[0.03] p-2">
+                      <div className="text-slate-500 dark:text-slate-400">
+                        {isPl ? 'Nieprzypisane' : 'Unmapped'}
                       </div>
-                      <div className="text-xs text-slate-600 dark:text-slate-300">
-                        {t('finance.statements.ratioCoverage', 'Coverage')}:{' '}
-                        {statementPreviewRatios.coveragePct.toFixed(0)}% ({statementPreviewRatios.computed}/
-                        {statementPreviewRatios.total})
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {statementPreviewDetail.unmappedLineCount || 0}
                       </div>
-                      {statementPreviewRatios.topRatios.map((ratio) => (
-                        <div key={ratio.code} className="flex items-center justify-between text-xs">
-                          <span className="text-slate-600 dark:text-slate-300">{ratio.name}</span>
-                          <span className="font-mono text-slate-900 dark:text-white">
-                            {ratio.value != null ? ratio.value.toFixed(2) : '—'}
-                          </span>
-                        </div>
-                      ))}
                     </div>
-                  )}
+                    <div className="rounded-md bg-white/80 dark:bg-white/[0.03] p-2">
+                      <div className="text-slate-500 dark:text-slate-400">
+                        {isPl ? 'Wszystkie linie' : 'Total lines'}
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {statementPreviewDetail.totalLineCount || 0}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+                      {t('finance.statements.ratios', 'Statements')}
+                    </div>
+                    {(statementPreviewDetail.childStatements || []).map((statement) => (
+                      <div key={statement.id} className="flex items-center justify-between text-xs">
+                        <span className="text-slate-600 dark:text-slate-300">
+                          {statement.statementType}
+                        </span>
+                        <span className="font-mono text-slate-900 dark:text-white">
+                          {statement.readinessStatus || 'pending'} / {statement.mappedLineCount}
+                        </span>
+                      </div>
+                    ))}
+                    {Array.isArray(statementPreviewDetail.missingStatementTypes) &&
+                      statementPreviewDetail.missingStatementTypes.length > 0 && (
+                        <div className="text-xs text-amber-600 dark:text-amber-400">
+                          {isPl ? 'Braki:' : 'Missing:'} {statementPreviewDetail.missingStatementTypes.join(', ')}
+                        </div>
+                      )}
+                    {Array.isArray(statementPreviewDetail.packValidations) &&
+                      statementPreviewDetail.packValidations.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {statementPreviewDetail.packValidations.slice(0, 3).map((validation) => (
+                            <span
+                              key={`${validation.checkCode}-${validation.computedAt || ''}`}
+                              className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                validation.status === 'fail'
+                                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
+                                  : validation.status === 'warning'
+                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
+                                    : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300'
+                              }`}
+                            >
+                              {validation.checkName}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                  </div>
                 </>
               ) : (
                 <div className="text-xs text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Ładowanie podglądu statementu…' : 'Loading statement preview…'}
+                  {isPl ? 'Ładowanie podglądu pakietu…' : 'Loading pack preview…'}
                 </div>
               )}
             </div>
@@ -685,7 +720,7 @@ export function useFinancePreview({
         const statementRow = row as FinanceStatementRow;
         relationItems.push(
           {
-            label: `${isPl ? 'Plik źródłowy' : 'Source file'}: ${
+            label: `${isPl ? 'Źródła' : 'Sources'}: ${
               statementPreviewDetail?.sourceFileName || statementRow.sourceFileName || '—'
             }`,
           },
@@ -714,7 +749,7 @@ export function useFinancePreview({
           },
           {
             label: t('finance.actions.createAnalysis', 'Utwórz analizę'),
-            onClick: () => handleCreateAnalysisFromStatements([statementRow.id]),
+            onClick: () => handleCreateAnalysisFromStatements(statementRow),
             colorScheme: 'emerald',
             disabled: !statementRow.isWorkable,
           }
@@ -724,24 +759,6 @@ export function useFinancePreview({
             label: t('finance.actions.openRecoveryQueue', 'Otwórz recovery queue'),
             onClick: () => handleOpenFull(statementRow),
             colorScheme: 'neutral',
-          });
-        }
-        if (statementRow.isWorkable && String(statementRow.rawStatus || '').toLowerCase() !== 'confirmed') {
-          actionButtons.push({
-            label: t('finance.actions.confirmStatement', 'Potwierdź statement'),
-            onClick: async () => {
-              try {
-                await Api.post(`/api/finance-statements/${statementRow.id}/confirm`, {});
-                await loadStatements();
-                toast.success(t('finance.toast.statementConfirmed', 'Statement potwierdzony'));
-              } catch (e: any) {
-                toast.error(
-                  e?.response?.data?.error ||
-                    t('finance.toast.approveFailed', 'Nie udało się zatwierdzić')
-                );
-              }
-            },
-            colorScheme: 'amber',
           });
         }
       }

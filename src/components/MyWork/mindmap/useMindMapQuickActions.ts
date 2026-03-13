@@ -9,12 +9,13 @@ import { useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
 
+import type { MindMapInteractionMode } from '../ideaSelectionTypes';
 import { applyForceLayout } from './ForceDirectedLayout';
 import { applyRadialLayout } from './RadialTreeLayout';
 
 export interface MindMapQuickActionHandlers {
-  addChildNode: () => void;
-  addSiblingNode: () => void;
+  addChildNode: (nodeId?: string) => void;
+  addSiblingNode: (nodeId?: string) => void;
   duplicateSelected: () => void;
   deleteSelected: () => void;
   getSelectedNode: () => Node | undefined;
@@ -70,6 +71,7 @@ export interface MindMapQuickActionSetters {
   setExportMenuOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   setShowMiniMap?: React.Dispatch<React.SetStateAction<boolean>>;
   setShowCollaboration?: React.Dispatch<React.SetStateAction<boolean>>;
+  setInteractionMode?: (mode: MindMapInteractionMode) => void;
 }
 
 export interface UseMindMapQuickActionsOpts {
@@ -99,11 +101,12 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     setters,
   } = opts;
 
-  const quickActionRef = useRef<(action: string) => void>(() => {});
+  const quickActionRef = useRef<(action: string, detail?: Record<string, unknown>) => void>(() => {});
 
-  quickActionRef.current = (action: string) => {
-    if (action === 'mm_add_child') handlers.addChildNode();
-    if (action === 'mm_add_sibling') handlers.addSiblingNode();
+  quickActionRef.current = (action: string, detail?: Record<string, unknown>) => {
+    const targetNodeId = typeof detail?.nodeId === 'string' ? detail.nodeId : undefined;
+    if (action === 'mm_add_child') handlers.addChildNode(targetNodeId);
+    if (action === 'mm_add_sibling') handlers.addSiblingNode(targetNodeId);
     if (action === 'mm_duplicate') handlers.duplicateSelected();
     if (action === 'mm_toggle_collapse') {
       const sel = handlers.getSelectedNode();
@@ -325,11 +328,10 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     }
 
     // ── CanvasLeftToolbar direct slots ─────────────────────────────────────
-    if (action === 'mm_select_mode') {
-      toast(isPolish ? 'Tryb zaznaczania aktywny' : 'Select mode active', { icon: '🖱️', duration: 1200 });
-    }
+    if (action === 'mm_select_mode') setters.setInteractionMode?.('select');
+    if (action === 'mm_pan_mode') setters.setInteractionMode?.('pan');
     if (action === 'mm_connect_mode') {
-      toast(isPolish ? 'Kliknij węzeł źródłowy, potem docelowy' : 'Click source node, then target', { icon: '🔗', duration: 2000 });
+      setters.setInteractionMode?.('connect');
     }
     if (action === 'mm_add_frame') {
       if (locked) return;
@@ -391,9 +393,12 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     if (action === 'mm_ai_deepen') {
       const sel = handlers.getSelectedNode();
       if (sel && handlers.onOpenChat) {
+        const tags = Array.isArray(sel.data?.tags) ? sel.data.tags.join(', ') : '';
+        const sType = sel.data?.semanticType || '';
+        const ctx = [tags ? `Tags: ${tags}` : '', sType ? `Type: ${sType}` : ''].filter(Boolean).join('. ');
         const prompt = isPolish
-          ? `Pogłęb temat "${sel.data?.label}" w kontekście mapy "${ideaTitle}". Podaj szczegółową analizę.`
-          : `Deepen the topic "${sel.data?.label}" in the context of map "${ideaTitle}". Provide detailed analysis.`;
+          ? `Pogłęb temat "${sel.data?.label}" w kontekście mapy "${ideaTitle}".${ctx ? ` Kontekst: ${ctx}.` : ''} Podaj szczegółową analizę.`
+          : `Deepen the topic "${sel.data?.label}" in the context of map "${ideaTitle}".${ctx ? ` Context: ${ctx}.` : ''} Provide detailed analysis.`;
         handlers.onOpenChat(prompt);
       } else {
         handlers.handleAIExpand();
@@ -402,9 +407,30 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     if (action === 'mm_ai_summarize_branch') {
       const sel = handlers.getSelectedNode();
       if (sel && handlers.onOpenChat) {
+        const tags = Array.isArray(sel.data?.tags) ? sel.data.tags.join(', ') : '';
+        const sType = sel.data?.semanticType || '';
+        const ctx = [tags ? `Tags: ${tags}` : '', sType ? `Type: ${sType}` : ''].filter(Boolean).join('. ');
         const prompt = isPolish
-          ? `Podsumuj gałąź "${sel.data?.label}" i jej podwęzły w mapie "${ideaTitle}".`
-          : `Summarize the branch "${sel.data?.label}" and its sub-nodes in map "${ideaTitle}".`;
+          ? `Podsumuj gałąź "${sel.data?.label}" i jej podwęzły w mapie "${ideaTitle}".${ctx ? ` Kontekst: ${ctx}.` : ''}`
+          : `Summarize the branch "${sel.data?.label}" and its sub-nodes in map "${ideaTitle}".${ctx ? ` Context: ${ctx}.` : ''}`;
+        handlers.onOpenChat(prompt);
+      }
+    }
+    if (action === 'mm_chat_about_node') {
+      const nodeId = detail?.nodeId as string | undefined;
+      const node = nodeId ? nodes.find((n: any) => n.id === nodeId) : handlers.getSelectedNode();
+      if (node && handlers.onOpenChat) {
+        const label = node.data?.label || nodeId;
+        const tags = Array.isArray(node.data?.tags) ? node.data.tags.join(', ') : '';
+        const sType = node.data?.semanticType || '';
+        const ctx = [
+          tags ? `Tags: ${tags}` : '',
+          sType ? `Type: ${sType}` : '',
+          node.data?.description ? `Description: ${node.data.description}` : '',
+        ].filter(Boolean).join('. ');
+        const prompt = isPolish
+          ? `Porozmawiajmy o węźle "${label}" w mapie "${ideaTitle}".${ctx ? ` Kontekst: ${ctx}` : ''}`
+          : `Let's discuss the node "${label}" in map "${ideaTitle}".${ctx ? ` Context: ${ctx}` : ''}`;
         handlers.onOpenChat(prompt);
       }
     }
@@ -531,7 +557,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       if (!detail?.action) return;
       console.log(`%c[MM QuickAction] ${detail.action}`, 'color: #f59e0b; font-weight: bold');
       try {
-        quickActionRef.current(detail.action);
+        quickActionRef.current(detail.action, detail);
       } catch (err: any) {
         console.error(`[MM QuickAction] ERROR in "${detail.action}":`, err);
       }

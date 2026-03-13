@@ -384,6 +384,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [contextSaveBusyMessageId, setContextSaveBusyMessageId] = useState<string | null>(null);
+  const [contextSavedMessageIds, setContextSavedMessageIds] = useState<Set<string>>(new Set());
   const [hoveredMessageId, setHoveredMessageId] = useState<string | null>(null);
   const [selectedMultiOptions, setSelectedMultiOptions] = useState<string[]>([]);
   const [dtHintDismissed, setDtHintDismissed] = useState(false);
@@ -457,6 +459,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiConfig?.textToSpeech]);
+
+  useEffect(() => {
+    setContextSavedMessageIds(new Set());
+    setContextSaveBusyMessageId(null);
+  }, [activeConversationId]);
 
   // Ref for incremental TTS (defined here, used in effects after useAIStream)
   const spokenCharsRef = useRef(0);
@@ -2206,6 +2213,32 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     [saveMessageAsNote]
   );
 
+  const handleSaveToContext = useCallback(
+    async (messageId: string, _content: string, _role: 'user' | 'ai') => {
+      if (!activeConversationId) return;
+      setContextSaveBusyMessageId(messageId);
+      try {
+        const response = await Api.saveConversationMessageToContext(activeConversationId, messageId);
+        setContextSavedMessageIds((prev) => {
+          const next = new Set(prev);
+          next.add(messageId);
+          return next;
+        });
+        toast.success(
+          response?.alreadyCaptured
+            ? t('chat.context.alreadySaved', 'Message is already in Context OS')
+            : t('chat.context.saved', 'Saved to Context OS')
+        );
+      } catch (err) {
+        console.error('[UnifiedChatPanel] Failed to save message to context:', err);
+        toast.error(t('chat.context.saveFailed', 'Failed to save to Context OS'));
+      } finally {
+        setContextSaveBusyMessageId(null);
+      }
+    },
+    [activeConversationId, t]
+  );
+
   // Deep Thinking: Enable DT mode from hint banner
   const handleEnableDeepThinking = useCallback(() => {
     setDtHintDismissed(true);
@@ -2532,6 +2565,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       hoveredMessageId={hoveredMessageId}
       setHoveredMessageId={setHoveredMessageId}
       copiedMessageId={copiedMessageId}
+      contextSaveBusyMessageId={contextSaveBusyMessageId}
+      contextSavedMessageIds={contextSavedMessageIds}
       selectedMultiOptions={selectedMultiOptions}
       voiceState={voiceState}
       handleCopyMessage={handleCopyMessage}
@@ -2547,6 +2582,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       handleSaveAsDecision={handleSaveAsDecision}
       handleSaveAsIdea={handleSaveAsIdea}
       handleSaveAsNote={handleSaveAsNote}
+      handleSaveToContext={handleSaveToContext}
       handleRunDirectedDeepening={handleRunDirectedDeepening}
       handleMultiSelectToggle={handleMultiSelectToggle}
       handleMultiSelectConfirm={handleMultiSelectConfirm}

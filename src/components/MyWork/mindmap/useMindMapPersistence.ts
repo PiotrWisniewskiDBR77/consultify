@@ -261,8 +261,13 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
               },
             },
           };
+          const cleanNodes = nextNodes.map((n: any) => {
+            if (!n.data?._interactionMode && !n.data?._canAddSibling) return n;
+            const { _interactionMode, _canAddSibling, ...cleanData } = n.data || {};
+            return { ...n, data: cleanData };
+          });
           await Api.saveMyIdeaMap(ideaId, {
-            nodes: nextNodes,
+            nodes: cleanNodes,
             edges: nextEdges,
             preferredTool: preferredTool || undefined,
             extensions: ext,

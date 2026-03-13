@@ -33,7 +33,7 @@ import { FinancialAnalysisWorkspace } from '../Benefits/FinancialAnalysisWorkspa
 import { ValuationWorkspace } from '../Benefits/ValuationWorkspace';
 import { ExportToOutputDialog } from '../Finance/ExportToOutputDialog';
 import { FinancialModelWorkspace } from '../Finance/FinancialModelWorkspace';
-import { FinancialStatementWorkspace } from '../Finance/FinancialStatementWorkspace';
+import { FinancialStatementPackWorkspace } from '../Finance/FinancialStatementPackWorkspace';
 import { FinancialStatementImportWizard } from '../Finance/FinancialStatementImportWizard';
 import {
   FilterableTable,
@@ -50,7 +50,6 @@ import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { useFinancePreview } from './FinancePreviewPanel';
 import {
   CANVAS_PADDING,
-  deriveStatementReadinessStatus,
   type FinanceAnalysisRow,
   type FinanceKind,
   type FinanceModelRow,
@@ -58,7 +57,6 @@ import {
   type FinanceStatementRow,
   type FinanceValuationRow,
   getTypeCode,
-  isWorkableStatement,
   KIND_ICONS,
   statusToItemStatus,
   statusToProgress,
@@ -117,8 +115,8 @@ export const FinanceHub: React.FC = () => {
   const [showPredictionCreateModal, setShowPredictionCreateModal] = useState(false);
   const [showValuationCreateModal, setShowValuationCreateModal] = useState(false);
   const [showAnalyzeMenu, setShowAnalyzeMenu] = useState(false);
-  const [createModelSourceStatementId, setCreateModelSourceStatementId] = useState<string | null>(null);
-  const [analysisSourceStatementIds, setAnalysisSourceStatementIds] = useState<string[]>([]);
+  const [createModelSourceStatementPackId, setCreateModelSourceStatementPackId] = useState<string | null>(null);
+  const [analysisSourceStatementPackId, setAnalysisSourceStatementPackId] = useState<string | null>(null);
   const [analysisInitialTitle, setAnalysisInitialTitle] = useState('');
   const [budgetInitialTitle, setBudgetInitialTitle] = useState('');
   const [valuationInitialSource, setValuationInitialSource] = useState<{
@@ -169,24 +167,53 @@ export const FinanceHub: React.FC = () => {
     () =>
       (statements || []).map(
         (statement: any): FinanceStatementRow => {
-          const totalLineCount = Number(
-            statement.total_line_count ??
-              Number(statement.mapped_line_count ?? 0) + Number(statement.unmapped_line_count ?? 0)
+          const childStatements = Array.isArray(statement.statements)
+            ? statement.statements.map((row: any) => ({
+                id: String(row.id),
+                statementType: String(row.statement_type || ''),
+                rawStatus: String(row.status || 'draft'),
+                readinessStatus: String(row.readiness_status || 'pending'),
+                readinessScore: Number(row.readiness_score ?? 0),
+                validationStatus: String(row.validation_status || 'pending'),
+                mappedLineCount: Number(row.mapped_line_count ?? 0),
+                totalLineCount: Number(row.total_line_count ?? 0),
+                unmappedLineCount: Number(row.unmapped_line_count ?? 0),
+                sourceFileName: String(row.source_file_name || ''),
+                updatedAt: String(row.updated_at || row.created_at || ''),
+              }))
+            : [];
+          const presentTypes = new Set<string>();
+          if (Number(statement.pl_count ?? 0) > 0) presentTypes.add('P&L');
+          if (Number(statement.bs_count ?? 0) > 0) presentTypes.add('BS');
+          if (Number(statement.cf_count ?? 0) > 0) presentTypes.add('CF');
+          for (const row of childStatements) {
+            if (row.statementType) presentTypes.add(row.statementType);
+          }
+          const mappedLineCount = childStatements.reduce(
+            (sum: number, row: any) => sum + Number(row.mappedLineCount || 0),
+            0
           );
-          const effectiveReadiness = deriveStatementReadinessStatus(
-            statement.readiness_status,
-            statement.status,
-            statement.validation_status,
-            statement.mapped_line_count,
-            statement.unmapped_line_count,
-            totalLineCount
+          const unmappedLineCount = childStatements.reduce(
+            (sum: number, row: any) => sum + Number(row.unmappedLineCount || 0),
+            0
           );
+          const totalLineCount = mappedLineCount + unmappedLineCount;
+          const effectiveReadiness = String(
+            statement.pack_readiness_status || statement.readiness_status || 'pending'
+          ).toLowerCase();
+          const missingStatementTypes =
+            typeof statement.missing_statement_types === 'string' &&
+            statement.missing_statement_types.trim().startsWith('[')
+              ? JSON.parse(statement.missing_statement_types)
+              : Array.isArray(statement.missing_statement_types)
+                ? statement.missing_statement_types
+                : [];
           return {
             id: String(statement.id),
             title: String(
-              statement.period_label ||
-                statement.source_file_name ||
-                `${statement.statement_type || 'Statement'} ${statement.period_end || ''}`
+              statement.entity_name ||
+                statement.period_label ||
+                `${t('finance.pack.titleFallback', 'Statement Pack')} ${statement.period_end || ''}`
             ),
             kind: 'statements',
             status:
@@ -195,46 +222,53 @@ export const FinanceHub: React.FC = () => {
                 : effectiveReadiness === 'recoverable'
                   ? 'REVIEW'
                   : 'DRAFT',
-            statementType: String(statement.statement_type || ''),
+            statementType: 'PACK',
+            statementPackId: String(statement.id),
+            entityName: String(statement.entity_name || ''),
             periodStart: String(statement.period_start || ''),
             periodEnd: String(statement.period_end || ''),
             periodLabel: String(statement.period_label || ''),
             currency: String(statement.currency || 'PLN'),
             scaling: String(statement.scaling || 'units'),
-            sourceFileName: String(statement.source_file_name || ''),
-            validationStatus: String(statement.validation_status || 'pending'),
-            mappedLineCount: Number(statement.mapped_line_count ?? 0),
+            sourceFileName: childStatements.map((row: any) => row.sourceFileName).filter(Boolean).join(', '),
+            validationStatus: String(statement.pack_status || 'pending'),
+            mappedLineCount,
             totalLineCount,
-            unmappedLineCount: Number(statement.unmapped_line_count ?? 0),
+            unmappedLineCount,
+            sourceStatementCount: Number(
+              statement.source_statement_count ??
+                childStatements.length ??
+                Number(statement.pl_count ?? 0) + Number(statement.bs_count ?? 0) + Number(statement.cf_count ?? 0)
+            ),
+            statementIds: childStatements.map((row: any) => row.id),
+            missingStatementTypes: missingStatementTypes.map((value: unknown) => String(value)),
+            completenessLabel: ['P&L', 'BS', 'CF']
+              .map((type) => (presentTypes.has(type) ? type : `—${type}`))
+              .join(' / '),
+            childStatements,
             nonFinancialLineCount: Number(statement.non_financial_line_count ?? 0),
             overallConfidence: Number(statement.overall_confidence ?? 0),
-            rawStatus: String(statement.status || 'draft'),
+            rawStatus: String(statement.pack_status || statement.status || 'draft'),
             readinessStatus: effectiveReadiness,
-            readinessScore: Number(statement.readiness_score ?? 0),
-            readinessSummary: String(statement.quality_summary || ''),
+            readinessScore: Number(statement.pack_readiness_score ?? statement.readiness_score ?? 0),
+            readinessSummary: String(statement.pack_quality_summary || statement.quality_summary || ''),
             readinessReasonCodes:
-              typeof statement.quality_reason_codes === 'string' &&
-              statement.quality_reason_codes.trim().startsWith('[')
-                ? JSON.parse(statement.quality_reason_codes)
-                : Array.isArray(statement.quality_reason_codes)
-                  ? statement.quality_reason_codes
+              typeof statement.pack_quality_reason_codes === 'string' &&
+              statement.pack_quality_reason_codes.trim().startsWith('[')
+                ? JSON.parse(statement.pack_quality_reason_codes)
+                : Array.isArray(statement.pack_quality_reason_codes)
+                  ? statement.pack_quality_reason_codes
                   : [],
             documentClass: String(statement.document_class || ''),
             extractionStrategy: String(statement.extraction_strategy || ''),
             templateFamily: statement.template_family ? String(statement.template_family) : null,
             valuesVersion: Number(statement.values_version ?? 0),
-            isWorkable: isWorkableStatement(
-              effectiveReadiness,
-              statement.status,
-              statement.validation_status,
-              statement.mapped_line_count,
-              statement.unmapped_line_count
-            ),
+            isWorkable: effectiveReadiness === 'ready',
             updatedAt: String(statement.updated_at || statement.created_at || new Date().toISOString()),
           };
         }
       ),
-    [statements]
+    [statements, t]
   );
   const readyStatementRows = useMemo(
     () => statementRows.filter((statement) => statement.isWorkable),
@@ -258,15 +292,6 @@ export const FinanceHub: React.FC = () => {
     setActiveDocumentId(row.id);
     setActiveDocument(row);
   }, []);
-
-  const handleOpenStatementFromWorkspace = useCallback(
-    (id: string) => {
-      const row = statementRows.find((statement) => statement.id === id);
-      if (!row) return;
-      handleOpenFull(row);
-    },
-    [handleOpenFull, statementRows]
-  );
 
   const handleCloseDocument = useCallback(
     (id: string) => {
@@ -339,19 +364,23 @@ export const FinanceHub: React.FC = () => {
     []
   );
   const openAnalysisFlow = useCallback(
-    (options?: { title?: string; statementIds?: string[]; analysisType?: 'comprehensive' | 'investment_case' }) => {
+    (options?: {
+      title?: string;
+      statementPackId?: string | null;
+      analysisType?: 'comprehensive' | 'investment_case';
+    }) => {
       setShowAnalyzeMenu(false);
       setAnalysisInitialTitle(options?.title || '');
-      setAnalysisSourceStatementIds(options?.statementIds || []);
+      setAnalysisSourceStatementPackId(options?.statementPackId || null);
       const targetTab = options?.analysisType === 'investment_case' ? 'investment' : 'analysis';
       setActiveTab(targetTab);
       setShowAnalysisCreateModal(true);
     },
     []
   );
-  const openModelFlow = useCallback((statementId?: string | null) => {
+  const openModelFlow = useCallback((statementPackId?: string | null) => {
     setShowAnalyzeMenu(false);
-    setCreateModelSourceStatementId(statementId || null);
+    setCreateModelSourceStatementPackId(statementPackId || null);
     setActiveTab('models');
     setShowCreateModelModal(true);
   }, []);
@@ -406,14 +435,17 @@ export const FinanceHub: React.FC = () => {
   }, []);
 
   const handleCreateModelFromStatement = useCallback((row: FinanceStatementRow) => {
-    setCreateModelSourceStatementId(row.id);
+    setCreateModelSourceStatementPackId(row.id);
     setShowCreateModelModal(true);
   }, []);
 
-  const handleCreateAnalysisFromStatements = useCallback((statementIds: string[]) => {
-    setAnalysisSourceStatementIds(statementIds);
+  const handleCreateAnalysisFromStatements = useCallback((row: FinanceStatementRow) => {
+    setAnalysisSourceStatementPackId(row.id);
+    setAnalysisInitialTitle(
+      buildAnalyzeTitle(row.entityName || row.periodLabel || row.title, isPl ? 'analiza' : 'analysis')
+    );
     setShowAnalysisCreateModal(true);
-  }, []);
+  }, [buildAnalyzeTitle, isPl]);
 
   // ---- Row actions ----
   const { getRowActions } = useFinanceRowActions({
@@ -623,12 +655,14 @@ export const FinanceHub: React.FC = () => {
         baseTypeCol,
         baseTitleCol,
         {
-          id: 'statementType',
-          label: t('finance.columns.statementType', 'Statement'),
-          width: '110px',
+          id: 'completeness',
+          label: t('finance.columns.statementType', 'Completeness'),
+          width: '170px',
           render: (row: FinanceRow) =>
             row.kind === 'statements' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">{row.statementType}</span>
+              <span className="text-sm text-slate-700 dark:text-slate-200">
+                {row.completenessLabel || '—'}
+              </span>
             ) : (
               <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
             ),
@@ -658,12 +692,14 @@ export const FinanceHub: React.FC = () => {
             ),
         },
         {
-          id: 'mappedLineCount',
-          label: t('finance.columns.mappedLines', 'Mapped'),
+          id: 'sourceStatementCount',
+          label: t('finance.columns.mappedLines', 'Docs'),
           width: '90px',
           render: (row: FinanceRow) =>
             row.kind === 'statements' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">{row.mappedLineCount}</span>
+              <span className="text-sm text-slate-700 dark:text-slate-200">
+                {row.sourceStatementCount ?? row.statementIds?.length ?? 0}
+              </span>
             ) : (
               <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
             ),
@@ -878,7 +914,7 @@ export const FinanceHub: React.FC = () => {
         updatedAt: row.updatedAt,
         brief:
           row.kind === 'statements'
-            ? `${(row as FinanceStatementRow).statementType} • ${(row as FinanceStatementRow).currency} • ${((row as FinanceStatementRow).periodLabel || (row as FinanceStatementRow).periodEnd) ?? ''}`
+            ? `${(row as FinanceStatementRow).completenessLabel || 'PACK'} • ${(row as FinanceStatementRow).currency} • ${((row as FinanceStatementRow).periodLabel || (row as FinanceStatementRow).periodEnd) ?? ''}`
             : row.kind === 'models'
             ? `${(row as FinanceModelRow).scenario} • ${(row as FinanceModelRow).currency} • ${(row as FinanceModelRow).horizonMonths} ${isPl ? 'mies.' : 'mo'}`
             : row.kind === 'prediction'
@@ -934,14 +970,14 @@ export const FinanceHub: React.FC = () => {
         : readyStatementRows.length === 1
           ? readyStatementRows[0]
           : null;
-    const modelContext =
+    const modelContext: FinanceModelRow | null =
       contextRow &&
       (contextRow.kind === 'models' ||
         (contextRow.kind === 'prediction' &&
           (contextRow as FinanceModelRow).predictionType === 'model'))
         ? (contextRow as FinanceModelRow)
         : null;
-    const budgetContext =
+    const budgetContext: FinanceModelRow | null =
       contextRow?.kind === 'prediction' &&
       (contextRow as FinanceModelRow).predictionType === 'budget'
         ? (contextRow as FinanceModelRow)
@@ -997,7 +1033,7 @@ export const FinanceHub: React.FC = () => {
                     isPl ? 'analiza finansowa' : 'financial analysis'
                   )
                 : '',
-              statementIds: readyStatementContext ? [readyStatementContext.id] : [],
+              statementPackId: readyStatementContext ? readyStatementContext.id : null,
             }),
         },
         {
@@ -1070,12 +1106,7 @@ export const FinanceHub: React.FC = () => {
                     budgetContext.title,
                     isPl ? 'analiza finansowa' : 'financial analysis'
                   )
-                : modelContext
-                  ? buildAnalyzeTitle(
-                      modelContext.title,
-                      isPl ? 'analiza finansowa' : 'financial analysis'
-                    )
-                  : '',
+                : '',
             }),
         },
         {
@@ -1098,14 +1129,9 @@ export const FinanceHub: React.FC = () => {
                     sourceId: getBudgetRawId(budgetContext.id),
                   }
                 : {
-                    title: modelContext
-                      ? buildAnalyzeTitle(
-                          modelContext.title,
-                          isPl ? 'wycena' : 'valuation'
-                        )
-                      : '',
+                    title: '',
                     sourceType: 'financial_model',
-                    sourceId: modelContext?.id,
+                    sourceId: undefined,
                   }
             ),
         },
@@ -1427,22 +1453,24 @@ export const FinanceHub: React.FC = () => {
     return (
       <div className="p-4 lg:p-6">
         <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-200/70 dark:border-white/[0.06] flex items-center justify-between">
-            <div className="min-w-0">
-              <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {code}
+          {!openStatement && (
+            <div className="px-4 py-3 border-b border-slate-200/70 dark:border-white/[0.06] flex items-center justify-between">
+              <div className="min-w-0">
+                <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {code}
+                </div>
+                <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                  {activeDocument.title}
+                </div>
               </div>
-              <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                {activeDocument.title}
-              </div>
+              <button
+                className="h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                onClick={handleShowList}
+              >
+                {t('common.backToList', 'Wróć do listy')}
+              </button>
             </div>
-            <button
-              className="h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-              onClick={handleShowList}
-            >
-              {t('common.backToList', 'Wróć do listy')}
-            </button>
-          </div>
+          )}
           <div className={needsFullHeight ? 'h-[72vh] min-h-[620px] overflow-auto' : 'p-4'}>
             {isBudgetPrediction ? (
               <BudgetWorkspace
@@ -1451,12 +1479,11 @@ export const FinanceHub: React.FC = () => {
                 onBudgetChanged={handleBudgetChanged}
               />
             ) : openStatement ? (
-              <FinancialStatementWorkspace
-                statementId={activeDocument.id}
+              <FinancialStatementPackWorkspace
+                statementPackId={activeDocument.id}
                 onStatementChanged={handleStatementChanged}
-                onCreateModelFromStatement={handleCreateModelFromStatement}
-                onCreateAnalysisFromStatements={handleCreateAnalysisFromStatements}
-                onOpenStatement={handleOpenStatementFromWorkspace}
+                onCreateModelFromPack={handleCreateModelFromStatement}
+                onCreateAnalysisFromPack={handleCreateAnalysisFromStatements}
               />
             ) : isModelWorkspace ? (
               <FinancialModelWorkspace
@@ -1498,7 +1525,6 @@ export const FinanceHub: React.FC = () => {
     handleShowList,
     handleCreateModelFromStatement,
     handleCreateAnalysisFromStatements,
-    handleOpenStatementFromWorkspace,
   ]);
 
   const content = useMemo(() => {
@@ -1597,15 +1623,15 @@ export const FinanceHub: React.FC = () => {
       {showCreateModelModal && (
         <CreateModelModal
           availableStatements={readyStatementRows}
-          initialSourceStatementId={createModelSourceStatementId}
+          initialSourceStatementPackId={createModelSourceStatementPackId}
           onClose={() => {
             setShowCreateModelModal(false);
-            setCreateModelSourceStatementId(null);
+            setCreateModelSourceStatementPackId(null);
           }}
           onCreated={async (row) => {
             await loadModels();
             setShowCreateModelModal(false);
-            setCreateModelSourceStatementId(null);
+            setCreateModelSourceStatementPackId(null);
             handleOpenFull(row);
           }}
         />
@@ -1617,68 +1643,61 @@ export const FinanceHub: React.FC = () => {
             onClose={() => setShowImportWizard(false)}
             onComplete={async (statementId) => {
               setShowImportWizard(false);
-              await loadStatements();
               const statementDetail = (await Api.get(`/api/finance-statements/${statementId}`)) as any;
-              const statementRow: FinanceStatementRow = {
-                id: String(statementDetail.id),
-                title: String(
-                  statementDetail.period_label ||
-                    statementDetail.source_file_name ||
-                    statementDetail.id
-                ),
-                kind: 'statements',
-                status:
-                  String(
-                    statementDetail.readinessStatus || statementDetail.readiness_status || ''
-                  ).toLowerCase() === 'ready'
-                    ? 'APPROVED'
-                    : String(
-                          statementDetail.readinessStatus || statementDetail.readiness_status || ''
-                        ).toLowerCase() === 'recoverable'
-                      ? 'REVIEW'
-                      : 'DRAFT',
-                statementType: String(statementDetail.statement_type || ''),
-                periodStart: String(statementDetail.period_start || ''),
-                periodEnd: String(statementDetail.period_end || ''),
-                periodLabel: String(statementDetail.period_label || ''),
-                currency: String(statementDetail.currency || 'PLN'),
-                scaling: String(statementDetail.scaling || 'units'),
-                sourceFileName: String(statementDetail.source_file_name || ''),
-                validationStatus: String(statementDetail.validation_status || 'pending'),
-                mappedLineCount: Array.isArray(statementDetail.values)
-                  ? statementDetail.values.filter((value: any) => value?.line_code).length
-                  : 0,
-                totalLineCount: Number(statementDetail.totalLineCount ?? statementDetail.values?.length ?? 0),
-                unmappedLineCount: Number(statementDetail.unmappedLineCount ?? 0),
-                nonFinancialLineCount: Number(statementDetail.nonFinancialLineCount ?? 0),
-                overallConfidence: Number(statementDetail.overall_confidence ?? 0),
-                rawStatus: String(statementDetail.status || 'draft'),
-                readinessStatus: String(
-                  statementDetail.readinessStatus || statementDetail.readiness_status || 'pending'
-                ),
-                readinessScore: Number(
-                  statementDetail.readinessScore ?? statementDetail.readiness_score ?? 0
-                ),
-                readinessSummary: String(
-                  statementDetail.readinessSummary || statementDetail.readiness_summary || ''
-                ),
-                readinessReasonCodes: Array.isArray(statementDetail.readinessReasonCodes)
-                  ? statementDetail.readinessReasonCodes
-                  : Array.isArray(statementDetail.readiness_reason_codes)
-                    ? statementDetail.readiness_reason_codes
-                    : [],
-                isWorkable: isWorkableStatement(
-                  statementDetail.readinessStatus || statementDetail.readiness_status,
-                  statementDetail.status,
-                  statementDetail.validation_status,
-                  statementDetail.mappedLineCount ??
-                    (Array.isArray(statementDetail.values)
-                      ? statementDetail.values.filter((value: any) => value?.line_code).length
-                      : 0),
-                  statementDetail.unmappedLineCount ?? 0
-                ),
-                updatedAt: String(statementDetail.updated_at || new Date().toISOString()),
-              };
+              const statementPackId = String(
+                statementDetail.statement_pack_id || statementDetail.statementPackId || ''
+              );
+              const packs = (await Api.get('/api/finance-statements/packs')) as any[];
+              await loadStatements();
+              const pack = Array.isArray(packs)
+                ? packs.find((item: any) => String(item.id) === statementPackId)
+                : null;
+              const statementRow: FinanceStatementRow = pack
+                ? {
+                    id: String(pack.id),
+                    title: String(pack.entity_name || pack.period_label || pack.id),
+                    kind: 'statements',
+                    status:
+                      String(pack.pack_readiness_status || '').toLowerCase() === 'ready'
+                        ? 'APPROVED'
+                        : String(pack.pack_readiness_status || '').toLowerCase() === 'recoverable'
+                          ? 'REVIEW'
+                          : 'DRAFT',
+                    statementType: 'PACK',
+                    statementPackId: String(pack.id),
+                    entityName: String(pack.entity_name || ''),
+                    periodStart: String(pack.period_start || ''),
+                    periodEnd: String(pack.period_end || ''),
+                    periodLabel: String(pack.period_label || ''),
+                    currency: String(pack.currency || 'PLN'),
+                    scaling: String(pack.scaling || 'units'),
+                    sourceFileName: '',
+                    validationStatus: String(pack.pack_status || 'pending'),
+                    mappedLineCount: 0,
+                    totalLineCount: 0,
+                    unmappedLineCount: 0,
+                    sourceStatementCount: Number(pack.source_statement_count ?? 0),
+                    statementIds: [],
+                    missingStatementTypes:
+                      typeof pack.missing_statement_types === 'string' &&
+                      pack.missing_statement_types.trim().startsWith('[')
+                        ? JSON.parse(pack.missing_statement_types)
+                        : Array.isArray(pack.missing_statement_types)
+                          ? pack.missing_statement_types
+                          : [],
+                    completenessLabel: '',
+                    childStatements: [],
+                    overallConfidence: 0,
+                    rawStatus: String(pack.pack_status || 'draft'),
+                    readinessStatus: String(pack.pack_readiness_status || 'pending'),
+                    readinessScore: Number(pack.pack_readiness_score ?? 0),
+                    readinessSummary: String(pack.pack_quality_summary || ''),
+                    readinessReasonCodes: [],
+                    isWorkable: String(pack.pack_readiness_status || '').toLowerCase() === 'ready',
+                    updatedAt: String(pack.updated_at || new Date().toISOString()),
+                  }
+                : statementRows.find((row) => row.id === statementPackId) || statementRows[0];
+              if (!statementRow) return;
               setActiveTab('statements');
               focusStatementQueue(statementRow.status);
               handleOpenFull(statementRow);
@@ -1704,17 +1723,17 @@ export const FinanceHub: React.FC = () => {
         <CreateAnalysisModal
           defaultAnalysisType={activeTab === 'investment' ? 'investment_case' : 'comprehensive'}
           availableStatements={readyStatementRows}
-          initialStatementIds={analysisSourceStatementIds}
+          initialStatementPackId={analysisSourceStatementPackId}
           initialTitle={analysisInitialTitle}
           onClose={() => {
             setShowAnalysisCreateModal(false);
-            setAnalysisSourceStatementIds([]);
+            setAnalysisSourceStatementPackId(null);
             setAnalysisInitialTitle('');
           }}
           onCreated={async (row) => {
             await loadAnalyses();
             setShowAnalysisCreateModal(false);
-            setAnalysisSourceStatementIds([]);
+            setAnalysisSourceStatementPackId(null);
             setAnalysisInitialTitle('');
             handleOpenFull(row);
           }}

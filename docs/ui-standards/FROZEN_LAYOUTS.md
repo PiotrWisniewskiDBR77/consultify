@@ -32,6 +32,26 @@
 
 ---
 
+### 1b. My Work — wewnętrzna kolejność tabów
+
+**SSOT:** `src/components/MyWork/MyWorkHub.tsx` (tablica `tabs` w `useMemo`)
+
+**Kolejność tabów (lewa -> prawa):**
+1. Home (wszyscy)
+2. Ideas (wszyscy)
+3. Notebook (wszyscy)
+4. Inbox (wszyscy)
+5. Calendar (wszyscy)
+6. Tasks (wszyscy)
+7. Decisions (wszyscy)
+8. Manager (tylko admin/manager/superadmin)
+
+**Reguła:** Nie zmieniaj kolejności tabów. Nie dodawaj nowych tabów między istniejącymi. Tab Manager jest widoczny tylko dla ról admin/manager/superadmin. Home jest domyślnym landing tabem dla wszystkich użytkowników.
+
+**Specyfikacja:** `docs/product/MYWORK_HOME_V1_SSOT.md`, `docs/product/MYWORK_CALENDAR_V1_SSOT.md`
+
+---
+
 ### 2. Module topbar (kolejność przycisków)
 
 **SSOT:** `docs/ui-standards/03-modules/module-hub-standard.md` sekcja 2
@@ -118,6 +138,7 @@ Kontrakt: `value: 'tools' | 'context' | 'ai_suggestions' | null`
 ## Przed każdą zmianą UI (checklist)
 
 - [ ] Czy dotykam sidebar / menuConfig? → sprawdź FROZEN LAYOUTS §1  
+- [ ] Czy dotykam taby My Work? → sprawdź §1b (Home→Ideas→Notebook→Inbox→Calendar→Tasks→Decisions→Manager)  
 - [ ] Czy dotykam topbar modułu? → sprawdź §2 (kolejność Area→Add→Tool→View→Filters)  
 - [ ] Czy dotykam view modes? → sprawdź §3 (table→kanban→timeline→calendar→matrix→grid)  
 - [ ] Czy dodaję nowy rząd pod topbarem? → §4 — NIE (tylko 1 Command Row)  
@@ -130,4 +151,7 @@ Kontrakt: `value: 'tools' | 'context' | 'ai_suggestions' | null`
 
 - `.cursorrules` — sekcja FROZEN LAYOUTS  
 - `docs/product/V4_IMPLEMENTATION_PROGRAM.md` — kontrakt 1.4  
+- `docs/product/MYWORK_HOME_V1_SSOT.md` — specyfikacja Home tab  
+- `docs/product/MYWORK_CALENDAR_V1_SSOT.md` — specyfikacja Calendar tab  
+- `docs/ui-standards/00-foundation/canvas-mode.md` — Canvas Mode (rozszerzenie DBR77)  
 - `docs/ui-standards/README.md` — indeks wszystkich standardów

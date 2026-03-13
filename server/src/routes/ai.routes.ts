@@ -15,6 +15,7 @@ import {
   validateParams,
   validateQuery,
 } from '../middleware/validation.middleware.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
 import { inferChatTaskPurpose } from '../services/ai/aiTaskCatalog.js';
 import {
@@ -240,6 +241,19 @@ router.post(
       );
       if (embedding && Array.isArray(embedding) && embedding.length > 0) embeddedChunks += 1;
     }
+
+    await organizationContextService.recordAttachmentExtraction({
+      organizationId: orgId,
+      userId: req.userId || null,
+      payload: {
+        docId,
+        filename,
+        mimeType,
+        extractedText: text,
+        totalChunks: chunks.length,
+        embeddedChunks,
+      },
+    });
 
     return res.status(201).json({
       success: true,

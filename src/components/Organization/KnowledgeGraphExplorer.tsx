@@ -364,7 +364,7 @@ export const KnowledgeGraphExplorer: React.FC = () => {
               <Background gap={20} size={1} />
               <Controls showInteractive={false} />
               <MiniMap
-                nodeColor={(n) => getEntityColor(n.data?.entityType || 'default')}
+                nodeColor={(n: any) => getEntityColor(n.data?.entityType || 'default')}
                 maskColor="rgba(0,0,0,0.08)"
               />
             </ReactFlow>

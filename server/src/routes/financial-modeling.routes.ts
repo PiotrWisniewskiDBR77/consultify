@@ -78,6 +78,7 @@ router.post(
       projectId,
       initiativeId,
       sourceStatementId,
+      sourceStatementPackId,
     } = req.body;
     if (!name || !startDate) return res.status(400).json({ error: 'name and startDate required' });
 
@@ -94,6 +95,7 @@ router.post(
       projectId,
       initiativeId,
       sourceStatementId,
+      sourceStatementPackId,
     });
 
     try {
@@ -111,6 +113,7 @@ router.post(
         assumptions,
         createdBy: userId,
         sourceStatementId,
+        sourceStatementPackId,
       });
 
       logFinanceEvent('model.create.completed', {
@@ -119,8 +122,9 @@ router.post(
         organizationId: orgId,
         userId,
         name,
-        seedType: sourceStatementId ? 'statement' : 'manual',
+        seedType: sourceStatementPackId ? 'statement_pack' : sourceStatementId ? 'statement' : 'manual',
         sourceStatementId: sourceStatementId || null,
+        sourceStatementPackId: sourceStatementPackId || null,
       });
 
       logger.info(`[FinancialModeling] Model created: ${id} by ${userId}`);
@@ -186,8 +190,23 @@ router.get(
             }
           })()
         : null;
+    const sourceStatementPack =
+      model.source_statement_pack_id != null
+        ? await dbGet(
+            `SELECT id, entity_name, period_start, period_end, period_label, currency, scaling,
+                    pack_status, pack_readiness_status, pack_readiness_score
+             FROM financial_statement_packs
+             WHERE id = ?`,
+            [model.source_statement_pack_id]
+          )
+        : null;
     const events = await listEvents(modelId);
-    res.json({ ...model, events, source_statement: sourceStatement || null });
+    res.json({
+      ...model,
+      events,
+      source_statement: sourceStatement || null,
+      source_statement_pack: sourceStatementPack || null,
+    });
   })
 );
 
@@ -245,7 +264,11 @@ router.post(
       scenario: model.scenario,
       granularity: model.granularity,
       status: model.status,
-      seedType: model.source_statement_id ? 'statement' : 'manual',
+      seedType: model.source_statement_pack_id
+        ? 'statement_pack'
+        : model.source_statement_id
+          ? 'statement'
+          : 'manual',
     });
 
     try {
@@ -264,8 +287,13 @@ router.post(
         overallStatus: result.overallStatus,
         periodCount: result.periods.length,
         validationSummary,
-        seedType: model.source_statement_id ? 'statement' : 'manual',
+        seedType: model.source_statement_pack_id
+          ? 'statement_pack'
+          : model.source_statement_id
+            ? 'statement'
+            : 'manual',
         sourceStatementId: model.source_statement_id || null,
+        sourceStatementPackId: model.source_statement_pack_id || null,
       });
 
       res.json({

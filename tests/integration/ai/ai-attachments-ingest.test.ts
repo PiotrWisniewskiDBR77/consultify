@@ -2,33 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 
-vi.mock('multer', () => {
-  const multer: any = () => ({
-    single: (_field: string) => (req: any, _res: any, next: any) => {
-      const meta = req.body?.__file;
-      if (!meta) {
-        req.file = undefined;
-        return next();
-      }
-      const filename = String(meta.filename || 'note.txt');
-      const mimetype = String(meta.mimetype || 'text/plain');
-      const text = String(meta.text || '');
-      req.file = {
-        originalname: filename,
-        mimetype,
-        buffer: Buffer.from(text, 'utf8'),
-      };
-      next();
-    },
-  });
-
-  multer.memoryStorage = () => ({});
-
-  return {
-    default: multer,
-  };
-});
-
 vi.mock('../../../server/src/middleware/auth.middleware.js', async () => {
   const actual = (await vi.importActual(
     '../../../server/src/middleware/auth.middleware.js'
@@ -55,6 +28,7 @@ vi.mock('../../../server/src/middleware/rateLimiting.middleware.js', async () =>
 });
 
 const mockDbRun = vi.fn().mockResolvedValue(undefined);
+const recordAttachmentExtraction = vi.fn().mockResolvedValue({ itemId: 'ctx-doc-1' });
 vi.mock('../../../server/src/utils/DbPromise.js', async () => {
   const actual = (await vi.importActual('../../../server/src/utils/DbPromise.js')) as any;
   return {
@@ -62,6 +36,12 @@ vi.mock('../../../server/src/utils/DbPromise.js', async () => {
     run: (...args: any[]) => mockDbRun(...args),
   };
 });
+
+vi.mock('../../../server/src/services/organizationContext/OrganizationContextService.js', () => ({
+  default: {
+    recordAttachmentExtraction: (...args: any[]) => recordAttachmentExtraction(...args),
+  },
+}));
 
 vi.mock('../../../server/src/services/ragService.js', () => ({
   default: {
@@ -94,12 +74,9 @@ describe('AI attachments ingest (REAL integration)', () => {
     const app = makeApp();
     const res = await request(app)
       .post('/api/ai/attachments/ingest')
-      .send({
-        __file: {
-          filename: 'note.txt',
-          mimetype: 'text/plain',
-          text: 'Hello attachment\n\nSecond paragraph',
-        },
+      .attach('file', Buffer.from('Hello attachment\n\nSecond paragraph', 'utf8'), {
+        filename: 'note.txt',
+        contentType: 'text/plain',
       });
 
     expect(res.status).toBe(201);
@@ -115,5 +92,14 @@ describe('AI attachments ingest (REAL integration)', () => {
     );
     expect(res.body.totalChunks).toBeGreaterThan(0);
     expect(mockDbRun).toHaveBeenCalled();
+    expect(recordAttachmentExtraction).toHaveBeenCalledWith({
+      organizationId: 'e2e-org-id',
+      userId: 'e2e-user-id',
+      payload: expect.objectContaining({
+        filename: 'note.txt',
+        mimeType: 'text/plain',
+        extractedText: 'Hello attachment\n\nSecond paragraph',
+      }),
+    });
   });
 });

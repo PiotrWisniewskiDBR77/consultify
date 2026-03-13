@@ -7,7 +7,7 @@
  */
 import { Focus, Maximize2, Minus, Minimize2, Plus, RotateCcw } from 'lucide-react';
 import React, { useCallback } from 'react';
-import { Panel, useReactFlow } from 'reactflow';
+import { useReactFlow } from 'reactflow';
 
 interface CanvasZoomControlsProps {
   isPolish?: boolean;
@@ -81,7 +81,7 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
   const zoomPercent = `${Math.round(getZoom() * 100)}%`;
 
   return (
-    <Panel position="bottom-right">
+    <div className="absolute bottom-3 right-3 z-[92] pointer-events-auto">
       <div
         className={`flex items-center gap-0.5 px-1.5 py-1 bg-white/90 dark:bg-navy-900/85 backdrop-blur-md rounded-2xl border border-slate-200/40 dark:border-white/[0.04] shadow-lg ${className}`}
       >
@@ -137,7 +137,7 @@ export const CanvasZoomControls: React.FC<CanvasZoomControlsProps> = ({
           </>
         )}
       </div>
-    </Panel>
+    </div>
   );
 };
 

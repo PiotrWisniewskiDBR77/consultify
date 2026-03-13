@@ -28,6 +28,7 @@ import {
   Flame,
   GanttChart,
   GitBranch,
+  Home,
   Hourglass,
   Inbox,
   Kanban,
@@ -49,6 +50,7 @@ import {
   TreePine,
   TrendingUp,
   User,
+  Users,
   X,
   Zap,
 } from 'lucide-react';
@@ -60,6 +62,7 @@ import {
   type WorkspacePanelKey,
   WorkspacePanelStrip,
 } from '@/components/shared/WorkspacePanelStrip';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useUserCan } from '@/hooks/useUserCan';
 import { useAppStore } from '@/store/useAppStore';
 import { getArtifactPath } from '@/utils/artifactLinks';
@@ -78,6 +81,7 @@ import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './Inbo
 import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './MyIdeasListContent';
 import { MyIdeasListContent } from './MyIdeasListContent';
 import { MyTasksListContent } from './MyTasksListContent';
+import type { HomeScreenAction } from './Home/homeV2Types';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
@@ -96,6 +100,12 @@ const NotificationDetailView = React.lazy(() =>
 );
 const ExecutiveDashboard = React.lazy(() =>
   import('./Executive/ExecutiveDashboard').then((m) => ({ default: m.ExecutiveDashboard }))
+);
+const HomeView = React.lazy(() =>
+  import('./Home/HomeView').then((m) => ({ default: m.HomeView }))
+);
+const CalendarView = React.lazy(() =>
+  import('./Calendar/CalendarView').then((m) => ({ default: m.CalendarView }))
 );
 const FocusView = React.lazy(() =>
   import('./Focus/FocusView').then((m) => ({ default: m.FocusView }))
@@ -117,7 +127,7 @@ const DecisionsTimelineContainer = React.lazy(() =>
 );
 
 // Types
-type ModuleTab = 'executive' | 'inbox' | 'focus' | 'tasks' | 'notebook' | 'ideas' | 'decisions';
+type ModuleTab = 'home' | 'ideas' | 'notebook' | 'inbox' | 'calendar' | 'tasks' | 'decisions' | 'manager';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
 type IdeasViewMode = 'list' | 'cards' | 'garden';
@@ -128,18 +138,8 @@ type DecisionPriorityFilter = 'all' | 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
 
 // Q1: Per-tab system prompts for contextual chat
 const TAB_SYSTEM_PROMPTS: Record<ModuleTab, string> = {
-  executive:
-    'You are a C-level strategic advisor. The user is an executive reviewing portfolio health, KPIs, and team performance. Focus on high-level insights, risks, and strategic recommendations. Be concise and data-driven.',
-  inbox:
-    'You are a triage assistant. Help the user quickly process incoming items — prioritize, categorize, and suggest actions (accept, defer, delegate, dismiss). Be efficient and action-oriented.',
-  focus:
-    'You are a productivity coach. Help the user plan their day, prioritize tasks, manage energy, and stay focused. Suggest time-blocking, task ordering, and delegation when appropriate.',
-  tasks:
-    'You are an execution manager. Help the user manage tasks — break down work, estimate effort, identify blockers, suggest delegation, and track progress. Be practical and specific.',
-  decisions:
-    'You are a decision advisor. Help analyze decisions — weigh pros/cons, assess risks, identify stakeholders, and recommend approaches. Structure thinking clearly.',
-  notebook:
-    'You are a knowledge companion. Help the user develop ideas, structure notes, extract insights, and connect concepts. Be thoughtful and build on existing content.',
+  home:
+    'You are an AI transformation companion operating from the user\'s live Home screen. Synthesize signals across ideas, decisions, execution, team alignment, and industry context. Help the user understand what matters now, frame transformation moves, and convert signals into action. Stay strategic, concise, and highly relevant.',
   ideas: [
     'You have two roles inside the Idea Workspace:',
     '',
@@ -162,26 +162,46 @@ const TAB_SYSTEM_PROMPTS: Record<ModuleTab, string> = {
     '  • When the user asks "why", "what if", or "am I missing", switch to Expert mode.',
     '  • Reference the active system (mind map, whiteboard, process flow, table) when relevant.',
   ].join('\n'),
+  notebook:
+    'You are a knowledge companion. Help the user develop ideas, structure notes, extract insights, and connect concepts. Be thoughtful and build on existing content.',
+  inbox:
+    'You are a triage assistant. Help the user quickly process incoming items — prioritize, categorize, and suggest actions (accept, defer, delegate, dismiss). Be efficient and action-oriented.',
+  calendar:
+    'You are a scheduling assistant. Help the user plan their time, find conflicts, suggest optimal time slots for deep work, and coordinate across calendars. Be practical and time-aware.',
+  tasks:
+    'You are an execution manager. Help the user manage tasks — break down work, estimate effort, identify blockers, suggest delegation, and track progress. Be practical and specific.',
+  decisions:
+    'You are a decision advisor. Help analyze decisions — weigh pros/cons, assess risks, identify stakeholders, and recommend approaches. Structure thinking clearly.',
+  manager:
+    'You are a C-level strategic advisor. The user is a manager reviewing portfolio health, KPIs, and team performance. Focus on high-level insights, risks, and strategic recommendations. Be concise and data-driven.',
 };
 
 // Q3: Per-tab quick prompts shown as chips in the chat panel
 const TAB_QUICK_PROMPTS: Record<ModuleTab, string[]> = {
-  executive: [
-    'Give me a 30-second briefing',
-    'What needs my attention most?',
-    'Portfolio risk summary',
-    'Team capacity overview',
+  home: [
+    'What deserves the highest attention right now?',
+    'Translate these signals into a plan',
+    'What is the strongest transformation move this week?',
+    'Where are we losing momentum?',
   ],
+  ideas: [
+    'Build an initial structure for my idea',
+    'Challenge my assumptions',
+    'What am I missing?',
+    'Suggest next steps',
+    'Turn this into a decision matrix',
+    'Find root causes',
+  ],
+  notebook: ['Summarize this note', 'Extract action items', 'What perspectives am I missing?'],
   inbox: [
     'Triage all new items for me',
     'Summarize notifications since yesterday',
     'What needs urgent attention?',
   ],
-  focus: [
-    'Optimize my Today column',
-    'What should I tackle first?',
-    'Estimate my capacity for today',
-    'Help me plan my day',
+  calendar: [
+    'Find a free slot for deep work this week',
+    'What conflicts do I have tomorrow?',
+    'Suggest an optimal schedule for today',
   ],
   tasks: [
     'Reprioritize my tasks',
@@ -194,14 +214,11 @@ const TAB_QUICK_PROMPTS: Record<ModuleTab, string[]> = {
     'Analyze the most urgent decision',
     'What decisions are blocking progress?',
   ],
-  notebook: ['Summarize this note', 'Extract action items', 'What perspectives am I missing?'],
-  ideas: [
-    'Build an initial structure for my idea',
-    'Challenge my assumptions',
-    'What am I missing?',
-    'Suggest next steps',
-    'Turn this into a decision matrix',
-    'Find root causes',
+  manager: [
+    'Give me a 30-second briefing',
+    'What needs my attention most?',
+    'Portfolio risk summary',
+    'Team capacity overview',
   ],
 };
 type ItemStatus =
@@ -217,13 +234,14 @@ type ItemStatus =
   | 'unread';
 
 interface TabCounts {
-  executive: number;
-  inbox: number;
-  focus: number;
-  tasks: number;
-  notebook: number;
+  home: number;
   ideas: number;
+  notebook: number;
+  inbox: number;
+  calendar: number;
+  tasks: number;
   decisions: number;
+  manager: number;
 }
 
 interface TaskFilterCounts {
@@ -261,12 +279,12 @@ function getDocumentTab(type: OpenDocument['type']): ModuleTab {
   }
 }
 
-function getInitialMyWorkTab(searchParams: URLSearchParams, canViewExecutive: boolean): ModuleTab {
+function getInitialMyWorkTab(searchParams: URLSearchParams, _canViewManager: boolean): ModuleTab {
   if (searchParams.get('ideaId') || searchParams.get('idea')) return 'ideas';
   if (searchParams.get('taskId') || searchParams.get('task')) return 'tasks';
   if (searchParams.get('decisionId') || searchParams.get('decision')) return 'decisions';
 
-  return canViewExecutive ? 'executive' : 'focus';
+  return 'home';
 }
 
 function parseMyWorkPathIntent(
@@ -335,11 +353,14 @@ function parseMyWorkPathIntent(
     };
   }
 
+  if (segments[1] === 'home') return { tab: 'home' };
   if (segments[1] === 'ideas') return { tab: 'ideas' };
   if (segments[1] === 'tasks') return { tab: 'tasks' };
   if (segments[1] === 'decisions') return { tab: 'decisions' };
   if (segments[1] === 'notebook') return { tab: 'notebook' };
   if (segments[1] === 'inbox') return { tab: 'inbox' };
+  if (segments[1] === 'calendar') return { tab: 'calendar' };
+  if (segments[1] === 'manager') return { tab: 'manager' };
 
   return null;
 }
@@ -423,6 +444,7 @@ interface MyWorkHubProps {
 export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const openChatWithContext = useOpenChatWithContext();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
@@ -447,13 +469,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     </div>
   );
 
-  // A1.2: Role-based access – Executive tab restricted to admin/manager/superadmin
+  // Role-based access – Manager tab restricted to admin/manager/superadmin
   const { isAdmin, isManager, isSuperAdmin } = useUserCan();
-  const canViewExecutive = isAdmin || isManager || isSuperAdmin;
+  const canViewManager = isAdmin || isManager || isSuperAdmin;
 
-  // Tab state — managers land on Executive, regular users on Focus
+  // Tab state — everyone lands on Home
   const [activeTab, setActiveTab] = useState<ModuleTab>(() =>
-    getInitialMyWorkTab(searchParams, canViewExecutive)
+    getInitialMyWorkTab(searchParams, canViewManager)
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -538,13 +560,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     useState<DecisionPriorityFilter>('all');
   // Counts
   const [tabCounts, setTabCounts] = useState<TabCounts>({
-    executive: 0,
-    inbox: 0,
-    focus: 0,
-    tasks: 0,
-    notebook: 0,
+    home: 0,
     ideas: 0,
+    notebook: 0,
+    inbox: 0,
+    calendar: 0,
+    tasks: 0,
     decisions: 0,
+    manager: 0,
   });
   const [taskFilterCounts, setTaskFilterCounts] = useState<TaskFilterCounts>({
     overdue: 0,
@@ -756,9 +779,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   useEffect(() => {
     if (!myWorkIntent) return;
     if (myWorkIntent.tab) {
-      // A1.2: Block navigation to executive tab for unauthorized users
+      // Block navigation to manager tab for unauthorized users
       const targetTab = myWorkIntent.tab as ModuleTab;
-      if (targetTab === 'executive' && !canViewExecutive) {
+      if (targetTab === 'manager' && !canViewManager) {
         clearMyWorkIntent();
         return;
       }
@@ -965,57 +988,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     });
   }, [activeTab, handleOpenDocument, location.pathname, isPolish]);
 
-  // Tab configuration
-  // A1.2: Executive tab only visible to admin/manager/superadmin roles
+  // Tab configuration — new order: Home > Ideas > Notebook > Inbox > Calendar > Tasks > Decisions > Manager
   const tabs = useMemo(() => {
     const allTabs = [
       {
-        id: 'executive' as ModuleTab,
-        label: isPolish ? 'Executive' : 'Executive',
-        icon: <FileText size={16} />,
-        count: tabCounts.executive,
-        color: 'bg-violet-500',
-        requiresExecutiveAccess: true,
-      },
-      {
-        id: 'inbox' as ModuleTab,
-        label: isPolish ? 'Inbox' : 'Inbox',
-        icon: <Inbox size={16} />,
-        count: tabCounts.inbox,
-        color: 'bg-red-500',
-        requiresExecutiveAccess: false,
-      },
-      {
-        id: 'focus' as ModuleTab,
-        label: isPolish ? 'Focus' : 'Focus',
-        icon: <Target size={16} />,
-        count: tabCounts.focus,
-        color: 'bg-amber-500',
-        requiresExecutiveAccess: false,
-      },
-      {
-        id: 'tasks' as ModuleTab,
-        label: isPolish ? 'Zadania' : 'Tasks',
-        icon: <CheckSquare size={16} />,
-        count: tabCounts.tasks,
-        color: 'bg-blue-500',
-        requiresExecutiveAccess: false,
-      },
-      {
-        id: 'decisions' as ModuleTab,
-        label: isPolish ? 'Decyzje' : 'Decisions',
-        icon: <Scale size={16} />,
-        count: tabCounts.decisions,
-        color: 'bg-purple-500',
-        requiresExecutiveAccess: false,
-      },
-      {
-        id: 'notebook' as ModuleTab,
-        label: isPolish ? 'Notatnik' : 'Notebook',
-        icon: <FileText size={16} />,
-        count: tabCounts.notebook,
-        color: 'bg-slate-500',
-        requiresExecutiveAccess: false,
+        id: 'home' as ModuleTab,
+        label: 'Home',
+        icon: <Home size={16} />,
+        count: tabCounts.home,
+        color: 'bg-primary-500',
+        requiresManagerAccess: false,
       },
       {
         id: 'ideas' as ModuleTab,
@@ -1023,13 +1005,60 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         icon: <Lightbulb size={16} />,
         count: tabCounts.ideas,
         color: 'bg-amber-500',
-        requiresExecutiveAccess: false,
+        requiresManagerAccess: false,
+      },
+      {
+        id: 'notebook' as ModuleTab,
+        label: isPolish ? 'Notatnik' : 'Notebook',
+        icon: <FileText size={16} />,
+        count: tabCounts.notebook,
+        color: 'bg-slate-500',
+        requiresManagerAccess: false,
+      },
+      {
+        id: 'inbox' as ModuleTab,
+        label: 'Inbox',
+        icon: <Inbox size={16} />,
+        count: tabCounts.inbox,
+        color: 'bg-red-500',
+        requiresManagerAccess: false,
+      },
+      {
+        id: 'calendar' as ModuleTab,
+        label: isPolish ? 'Kalendarz' : 'Calendar',
+        icon: <Calendar size={16} />,
+        count: tabCounts.calendar,
+        color: 'bg-indigo-500',
+        requiresManagerAccess: false,
+      },
+      {
+        id: 'tasks' as ModuleTab,
+        label: isPolish ? 'Zadania' : 'Tasks',
+        icon: <CheckSquare size={16} />,
+        count: tabCounts.tasks,
+        color: 'bg-blue-500',
+        requiresManagerAccess: false,
+      },
+      {
+        id: 'decisions' as ModuleTab,
+        label: isPolish ? 'Decyzje' : 'Decisions',
+        icon: <Scale size={16} />,
+        count: tabCounts.decisions,
+        color: 'bg-purple-500',
+        requiresManagerAccess: false,
+      },
+      {
+        id: 'manager' as ModuleTab,
+        label: 'Manager',
+        icon: <Users size={16} />,
+        count: tabCounts.manager,
+        color: 'bg-violet-500',
+        requiresManagerAccess: true,
       },
     ];
 
-    // A1.2: Filter out Executive tab for users without admin/manager role
-    return allTabs.filter((tab) => !tab.requiresExecutiveAccess || canViewExecutive);
-  }, [isPolish, tabCounts, canViewExecutive]);
+    return allTabs.filter((tab) => !tab.requiresManagerAccess || canViewManager);
+  }, [isPolish, tabCounts, canViewManager]);
 
   // Task filters configuration
   const taskFilters = useMemo(
@@ -1518,14 +1547,106 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
   }, [isPolish, isChatCollapsed, setChatKickoffMessage, toggleChatCollapse]);
 
+  const handleHomeAction = useCallback(
+    async (action: HomeScreenAction) => {
+      switch (action.type) {
+        case 'create':
+          if (action.target === 'idea') {
+            setActiveTab('ideas');
+            handleCreateIdea();
+            return;
+          }
+          if (action.target === 'note') {
+            setActiveTab('notebook');
+            setNotebookCreateReqId((value) => value + 1);
+            return;
+          }
+          if (action.target === 'task') {
+            setActiveTab('tasks');
+            handleCreateTask();
+            return;
+          }
+          if (action.target === 'decision') {
+            setActiveTab('decisions');
+            handleCreateDecision();
+            return;
+          }
+          return;
+        case 'navigate':
+          setActiveTab(action.target);
+          return;
+        case 'open':
+          if (action.target === 'idea') {
+            handleIdeaClick(action.id);
+            return;
+          }
+          if (action.target === 'note') {
+            setActiveTab('notebook');
+            setNotebookOpenPageId(action.id);
+            return;
+          }
+          if (action.target === 'task') {
+            handleTaskClick(action.id);
+            return;
+          }
+          if (action.target === 'decision') {
+            handleDecisionClick(action.id);
+          }
+          return;
+        case 'chat': {
+          const packet = action.packet;
+          const entityType = packet.entityType || 'home';
+          const entityId = packet.entityId || `home-${packet.sourceBlock}`;
+
+          await openChatWithContext({
+            entityType,
+            entityId,
+            entityName: packet.entityName || packet.title,
+            contextData: {
+              sourceBlock: packet.sourceBlock,
+              intent: packet.intent,
+              title: packet.title,
+              ...(packet.contextData || {}),
+            },
+            pmoContext:
+              entityType === 'task'
+                ? { taskId: entityId }
+                : entityType === 'decision'
+                  ? { decisionId: entityId }
+                  : undefined,
+          });
+
+          setChatKickoffMessage(packet.starterPrompt);
+          if (isChatCollapsed) toggleChatCollapse();
+          return;
+        }
+        default:
+          return;
+      }
+    },
+    [
+      handleCreateDecision,
+      handleCreateIdea,
+      handleCreateTask,
+      handleDecisionClick,
+      handleIdeaClick,
+      handleTaskClick,
+      isChatCollapsed,
+      openChatWithContext,
+      setChatKickoffMessage,
+      toggleChatCollapse,
+    ]
+  );
+
   // Get action button config based on active tab
   const actionButton = useMemo(() => {
     // Don't show action button when viewing a document
     if (activeDocumentId) return null;
 
     switch (activeTab) {
-      case 'executive':
-      case 'focus':
+      case 'home':
+      case 'calendar':
+      case 'manager':
       case 'inbox':
         return null;
       case 'tasks':
@@ -1587,8 +1708,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       case 'decisions':
         // KANON v3 (MyWork): decision "All/My/Awaiting" lives in Command Row; topbar keeps only ONE select (priority).
         return [];
-      case 'executive':
-      case 'focus':
+      case 'home':
+      case 'calendar':
+      case 'manager':
       case 'inbox':
       default:
         return [];
@@ -2117,81 +2239,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       );
     }
 
-    // Focus: board controls live in Command Row (no extra toolbar strips in content).
-    if (activeTab === 'focus' && !activeDocumentId) {
-      const chipBase =
-        'inline-flex items-center gap-1.5 h-8 rounded-full border px-2.5 text-[11px] font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-      const chipInactive =
-        'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]';
-      const chipActive =
-        'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200';
-
-      const sortLabel =
-        focusSort === 'manual'
-          ? isPolish
-            ? 'Manual'
-            : 'Manual'
-          : focusSort === 'priority'
-            ? isPolish
-              ? 'Priority'
-              : 'Priority'
-            : isPolish
-              ? 'Due date'
-              : 'Due date';
-
-      return (
-        <div className="px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
-          <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
-            {/* Type filter */}
-            <div className="inline-flex items-center gap-1">
-              {(
-                [
-                  { id: 'all' as const, labelPl: 'All', labelEn: 'All' },
-                  { id: 'tasks' as const, labelPl: 'Tasks', labelEn: 'Tasks' },
-                  { id: 'decisions' as const, labelPl: 'Decisions', labelEn: 'Decisions' },
-                ] as const
-              ).map((f) => {
-                const isActive = focusFilter === f.id;
-                return (
-                  <button
-                    key={f.id}
-                    onClick={() => setFocusFilter(f.id)}
-                    className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
-                  >
-                    <span>{isPolish ? f.labelPl : f.labelEn}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="w-px h-6 bg-slate-200 dark:bg-navy-600 shrink-0" />
-
-            {/* Hide completed */}
-            <button
-              onClick={() => setFocusHideCompleted((v) => !v)}
-              className={`${chipBase} ${focusHideCompleted ? chipActive : chipInactive}`}
-              title={isPolish ? 'Ukryj ukończone' : 'Hide completed'}
-            >
-              {focusHideCompleted ? <EyeOff size={14} /> : <Eye size={14} />}
-              <span>{isPolish ? 'Hide done' : 'Hide done'}</span>
-            </button>
-
-            {/* Sort (cycle) */}
-            <button
-              onClick={() =>
-                setFocusSort((prev) =>
-                  prev === 'manual' ? 'priority' : prev === 'priority' ? 'dueDate' : 'manual'
-                )
-              }
-              className={`${chipBase} ${chipInactive}`}
-              title={isPolish ? 'Sortowanie' : 'Sort'}
-            >
-              <List size={14} />
-              <span>{isPolish ? `Sort: ${sortLabel}` : `Sort: ${sortLabel}`}</span>
-            </button>
-          </div>
-        </div>
-      );
+    // Home and Calendar tabs have no command row (content is self-contained)
+    if (activeTab === 'home' || activeTab === 'calendar' || activeTab === 'manager') {
+      return null;
     }
 
     // Ideas: stage presets in Command Row (same pattern as Inbox/Tasks)
@@ -2458,9 +2508,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Render list content based on active tab
   const renderListContent = () => {
     switch (activeTab) {
-      case 'executive':
-        // A1.2: Double-check role access – if user somehow navigated here without permission
-        if (!canViewExecutive) {
+      case 'home':
+        return (
+          <React.Suspense fallback={lazyFallback}>
+            <HomeView userName={currentUser?.firstName} refreshTrigger={refreshTrigger} onAction={handleHomeAction} />
+          </React.Suspense>
+        );
+      case 'manager':
+        if (!canViewManager) {
           return (
             <div className="flex h-64 items-center justify-center">
               <div className="text-center">
@@ -2485,10 +2540,20 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   setActiveTab('decisions');
                   if (options?.filter === 'pending') setDecisionFilter('my');
                 }
-                if (section === 'focus') setActiveTab('focus');
+                if (section === 'focus') setActiveTab('home');
                 if (section === 'inbox') setActiveTab('inbox');
               }}
               refreshTrigger={refreshTrigger}
+            />
+          </React.Suspense>
+        );
+      case 'calendar':
+        return (
+          <React.Suspense fallback={lazyFallback}>
+            <CalendarView
+              refreshTrigger={refreshTrigger}
+              onTaskClick={handleTaskClick}
+              onDecisionClick={handleDecisionClick}
             />
           </React.Suspense>
         );
@@ -2514,35 +2579,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             overdueOnly={inboxPreset === 'overdue'}
             aiOnly={inboxPreset === 'ai'}
           />
-        );
-      case 'focus':
-        return (
-          <React.Suspense fallback={lazyFallback}>
-            <FocusView
-              onItemClick={(item: FocusItem) => {
-                // FocusView uses ids like task:<id> / decision:<id>
-                if (item.type === 'task') {
-                  const id = String(item.id).replace(/^task[:_-]/, '');
-                  handleTaskClick(id);
-                } else if (item.type === 'decision') {
-                  const id = String(item.id).replace(/^decision[:_-]/, '');
-                  handleDecisionClick(id);
-                }
-              }}
-              onNavigateToInbox={() => setActiveTab('inbox')}
-              refreshTrigger={refreshTrigger}
-              controls={{
-                filter: focusFilter,
-                onFilterChange: setFocusFilter,
-                hideCompleted: focusHideCompleted,
-                onHideCompletedChange: setFocusHideCompleted,
-                sort: focusSort,
-                onSortChange: setFocusSort,
-                showAIPlan: focusShowAIPlan,
-                onShowAIPlanChange: setFocusShowAIPlan,
-              }}
-            />
-          </React.Suspense>
         );
       case 'tasks':
         return tasksViewMode === 'kanban' ? (
@@ -2700,9 +2736,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
   }, [activeTab]);
 
-  // Focus tools should not leak across tabs
+  // Focus tools should not leak across tabs (legacy — kept for FocusView if reused)
   useEffect(() => {
-    if (activeTab !== 'focus') {
+    if (activeTab !== 'home') {
       setFocusShowAIPlan(false);
     }
   }, [activeTab]);
@@ -2963,23 +2999,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             )}
 
             {/* Tools */}
-            {/* Focus: AI Plan (Tool slot) — no extra toolbars inside content */}
-            {activeTab === 'focus' && !activeDocumentId && (
-              <button
-                onClick={() => setFocusShowAIPlan((v) => !v)}
-                className={`inline-flex items-center gap-2 h-9 px-3 rounded-full border text-xs font-medium transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
-                  focusShowAIPlan
-                    ? 'border-purple-400/40 dark:border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-200'
-                    : 'border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-purple-50/70 dark:hover:bg-purple-500/10 hover:text-purple-700 dark:hover:text-purple-200'
-                }`}
-                title={isPolish ? 'Plan dnia (AI)' : 'AI Day Plan'}
-                aria-pressed={focusShowAIPlan}
-                data-testid="mywork-focus-ai-plan"
-              >
-                <Sparkles size={16} />
-                <span>{isPolish ? 'AI Plan' : 'AI Plan'}</span>
-              </button>
-            )}
 
             {/* Ideas workspace — panel strip (block 2: Tools / Context / AI) */}
             {activeTab === 'ideas' && activeDocumentId && (

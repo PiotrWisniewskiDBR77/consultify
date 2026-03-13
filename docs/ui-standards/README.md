@@ -44,6 +44,7 @@ docs/ui-standards/
 | **Kanon v3 (SSOT)**      | [UI_UX_CANON_V3.md](UI_UX_CANON_V3.md)                                           | Konsolidacja decyzji v3 (topbary, light mode, preview, AI, inbox)      |
 | **Kolory**               | [00-foundation/color-system.md](00-foundation/color-system.md)                   | Paleta DBR77, semantyka, WCAG                                          |
 | **Język wizualny**       | [00-foundation/visual-language.md](00-foundation/visual-language.md)             | Tła, ramki, typografia, motion                                         |
+| **Canvas Mode**          | [00-foundation/canvas-mode.md](00-foundation/canvas-mode.md)                     | Rozszerzenie DBR77 dla experience surfaces (Home tab, landing, onboarding) |
 | **Tożsamość artefaktów** | [00-foundation/artifact-identity-map.md](00-foundation/artifact-identity-map.md) | Kanon: 1 artefakt = 1 ikona + 1 akcent kolorystyczny (v3)              |
 | **Shell artefaktu**      | [01-shell-layout/artifact-shell.md](01-shell-layout/artifact-shell.md)           | 4-warstwowy shell, tokeny rozmiaru                                     |
 | **Tryby D/N/C**          | [01-shell-layout/presentation-modes.md](01-shell-layout/presentation-modes.md)   | Architektura 3 trybów, N blocks kit                                    |

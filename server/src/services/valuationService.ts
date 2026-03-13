@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import * as audit from './auditService.js';
+import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
 import {
   computeModel,
   getModel,
@@ -499,7 +500,8 @@ async function loadForecastFromFinancialModel(
         const statementType = String(row.statement_type || '').toLowerCase();
         const target =
           statementType === 'pl' ? bucket.pl : statementType === 'bs' ? bucket.bs : bucket.cf;
-        target[String(row.line_code || '')] = Number(row.value || 0);
+        const canonicalCode = normalizeCanonicalLineCode(String(row.line_code || ''));
+        if (canonicalCode) target[canonicalCode] = Number(row.value || 0);
       }
       periods = Array.from(grouped.values()).sort((a, b) => a.date.localeCompare(b.date));
     }
@@ -534,7 +536,7 @@ async function loadForecastFromFinancialModel(
     const revenue = sum('pl', 'REVENUE');
     const ebitda = sum('pl', 'EBITDA');
     const operatingCf = sum('cf', 'OPERATING_CF');
-    const capexCf = sum('cf', 'CAPEX_CF');
+    const capexCf = sum('cf', 'CAPEX');
     return {
       year: idx + 1,
       fcff: round(operatingCf + capexCf, 2),

@@ -164,7 +164,10 @@ export const CanonicalEdgeSchema = z.object({
   relationType: RelationTypeEnum.optional(),
   label: z.string().optional(),
   extensions: z.record(z.string(), z.unknown()).optional(),
-});
+  source: z.string().optional(),
+  target: z.string().optional(),
+  type: z.string().optional(),
+}).passthrough();
 
 // ── Graph schema (v2/v3 compatible) ─────────────────────────────────────────
 export const IdeaWorkspaceGraphSchema = z.object({
@@ -307,9 +310,17 @@ export function normalizeEdgeForStorage(edge: any): CanonicalEdge {
     id: String(edge.id || `e-${fromNodeId}-${toNodeId}`),
     fromNodeId: String(fromNodeId),
     toNodeId: String(toNodeId),
+    // Preserve ReactFlow fields for frontend round-trip
+    source: String(fromNodeId),
+    target: String(toNodeId),
   };
   if (relationType && RelationTypeEnum.safeParse(relationType).success) {
     result.relationType = relationType;
+  }
+  // Preserve ReactFlow edge type (e.g. 'gradient', 'labeled') separately from relationType
+  const rfType = edge.type;
+  if (typeof rfType === 'string' && !RelationTypeEnum.safeParse(rfType).success) {
+    result.type = rfType;
   }
   if (edge.label) result.label = edge.label;
   if (edge.extensions && typeof edge.extensions === 'object') result.extensions = edge.extensions;

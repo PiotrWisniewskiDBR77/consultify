@@ -27,6 +27,7 @@ import {
   updateStatementReadinessState,
   updateStatementStatus,
 } from '../src/services/financialStatementService.js';
+import { syncStatementToPack } from '../src/services/financialStatementPackService.js';
 import logger from '../src/utils/Logger.js';
 
 type SeedFixture = {
@@ -90,6 +91,15 @@ async function deleteExistingSeededStatements(orgId: string, fixtures: SeedFixtu
       { fallback: false }
     );
   }
+  await dbRun(
+    `DELETE FROM financial_statement_packs
+     WHERE organization_id = ?
+       AND NOT EXISTS (
+         SELECT 1 FROM financial_statements fs WHERE fs.statement_pack_id = financial_statement_packs.id
+       )`,
+    [orgId],
+    { fallback: false }
+  );
 }
 
 function buildValidationMessages(fixture: SeedFixture, forcedUnmappedCount: number) {
@@ -176,6 +186,7 @@ async function seedFixture(orgId: string, userId: string, fixture: SeedFixture):
     ],
     { fallback: false }
   );
+  await syncStatementToPack(statementId);
 
   const ingestRunId = await startStatementIngestRun({
     statementId,
@@ -393,6 +404,7 @@ async function seedFixture(orgId: string, userId: string, fixture: SeedFixture):
       valuesCount: values.length,
     },
   });
+  await syncStatementToPack(statementId);
 
   return { statementId, outcome };
 }

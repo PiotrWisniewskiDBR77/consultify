@@ -120,6 +120,11 @@ const ConversationIdParamSchema = z.object({
   id: z.string().uuid(),
 });
 
+const ConversationMessageParamSchema = z.object({
+  id: z.string().uuid(),
+  messageId: z.string().min(1),
+});
+
 const UpdateConversationSchema = z.object({
   title: z.string().max(255).optional(),
   titleSource: z.enum(['auto', 'user']).optional(),
@@ -650,6 +655,88 @@ router.post(
       return res.status(201).json(message);
     } catch (err: any) {
       logger.error('[Conversations] Add message error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+router.post(
+  '/:id/messages/:messageId/save-to-context',
+  verifyToken,
+  validateParams(ConversationMessageParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { id: conversationId, messageId } = req.params;
+
+    try {
+      const conversation = await findAccessibleConversation(
+        conversationId,
+        req.userId!,
+        req.organizationId
+      );
+
+      if (!conversation) {
+        return res.status(404).json({ error: 'Conversation not found' });
+      }
+
+      const message = (await dbGet(
+        `SELECT id, conversation_id, role, content, metadata, author_user_id
+         FROM conversation_messages
+         WHERE id = ? AND conversation_id = ?`,
+        [messageId, conversationId]
+      )) as
+        | {
+            id: string;
+            conversation_id: string;
+            role: 'user' | 'ai';
+            content: string;
+            metadata?: string | null;
+            author_user_id?: string | null;
+          }
+        | null;
+
+      if (!message) {
+        return res.status(404).json({ error: 'Message not found' });
+      }
+
+      const existingItem = await dbGet(
+        `SELECT id FROM organization_context_items
+         WHERE organization_id = ? AND source_type = 'chat_message' AND source_id = ?
+         LIMIT 1`,
+        [req.organizationId, messageId]
+      );
+
+      if (existingItem) {
+        return res.json({ ok: true, itemId: (existingItem as any).id, alreadyCaptured: true });
+      }
+
+      let parsedMetadata: Record<string, unknown> = {};
+      try {
+        parsedMetadata =
+          typeof message.metadata === 'string'
+            ? JSON.parse(message.metadata || '{}')
+            : ((message.metadata as Record<string, unknown>) || {});
+      } catch {
+        parsedMetadata = {};
+      }
+
+      const actorUserId =
+        message.role === 'user' ? String(message.author_user_id || req.userId || '') || null : req.userId;
+
+      const result = await organizationContextService.recordChatMessage({
+        organizationId: req.organizationId!,
+        userId: actorUserId,
+        payload: {
+          conversationId,
+          messageId,
+          role: message.role,
+          content: message.content,
+          metadata: parsedMetadata,
+        },
+      });
+
+      return res.json({ ok: true, itemId: result.itemId, alreadyCaptured: false });
+    } catch (err: any) {
+      logger.error('[Conversations] Save-to-context error:', err);
       return res.status(500).json({ error: err.message });
     }
   })

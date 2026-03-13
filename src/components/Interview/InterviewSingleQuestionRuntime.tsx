@@ -1823,7 +1823,14 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {currentEvidence.map((item) => {
                       const isArtifact = item.evidenceType === 'link' && (item.url || '').startsWith('artifact://');
-                      const EvidIcon = isArtifact ? Waypoints : item.evidenceType === 'link' ? Link2 : item.evidenceType === 'voice' ? Mic : Paperclip;
+                      const EvidIcon =
+                        isArtifact
+                          ? Waypoints
+                          : item.evidenceType === 'link'
+                            ? Link2
+                            : item.evidenceType === 'audio'
+                              ? Mic
+                              : Paperclip;
                       return (
                         <span
                           key={item.id}

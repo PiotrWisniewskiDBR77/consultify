@@ -5,6 +5,7 @@ import {
   Filter,
   Frame,
   GitBranch,
+  Hand,
   LayoutGrid,
   LayoutTemplate,
   Link2,
@@ -25,7 +26,11 @@ import {
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { CanvasToolType, IdeaWorkspaceSelection } from '../ideaSelectionTypes';
+import type {
+  CanvasToolType,
+  IdeaWorkspaceSelection,
+  MindMapInteractionMode,
+} from '../ideaSelectionTypes';
 import { AddNodePopover } from './toolbar-popovers/AddNodePopover';
 import { AIActionsPopover } from './toolbar-popovers/AIActionsPopover';
 import { ImportExportPopover } from './toolbar-popovers/ImportExportPopover';
@@ -37,13 +42,14 @@ type PopoverId = 'templates' | 'addNode' | 'knowledge' | 'importExport' | 'ai' |
 
 interface CanvasLeftToolbarProps {
   activeTool: CanvasToolType;
+  interactionMode?: MindMapInteractionMode;
   selection: IdeaWorkspaceSelection;
   isAccepted: boolean;
   ideaId?: string;
   onAction: (action: string) => void;
   onOpenChat: () => void;
   onApplyTemplate: (templateId: string) => void;
-  onSaveAsTemplate: () => void;
+  onOpenTemplateGallery: () => void;
 }
 
 type IconComponent = React.ComponentType<{ size?: number; className?: string }>;
@@ -59,6 +65,7 @@ interface ToolSlot {
 
 const SHARED_TOP: ToolSlot[] = [
   { id: 'select', icon: MousePointer2, labelPl: 'Zaznaczanie', labelEn: 'Select', action: 'mm_select_mode' },
+  { id: 'pan', icon: Hand, labelPl: 'Przesuwanie', labelEn: 'Pan', action: 'mm_pan_mode' },
   { id: 'templates', icon: LayoutTemplate, labelPl: 'Szablony', labelEn: 'Templates', popover: 'templates' },
 ];
 
@@ -67,7 +74,7 @@ const MM_CONTEXT_SLOTS: ToolSlot[] = [
   { id: 'add', icon: GitBranch, labelPl: 'Dodaj węzeł', labelEn: 'Add node', popover: 'addNode' },
   { id: 'knowledge', icon: FileText, labelPl: 'Wiedza', labelEn: 'Knowledge', popover: 'knowledge' },
   { id: 'comment', icon: MessageSquare, labelPl: 'Komentarze', labelEn: 'Comments', action: 'mm_comments' },
-  { id: 'connect', icon: Link2, labelPl: 'Połącz', labelEn: 'Connect', action: 'mm_connect_mode' },
+  { id: 'connect', icon: Link2, labelPl: 'Połącz — przeciągnij z uchwytu jednego węzła do drugiego', labelEn: 'Connect — drag from one node handle to another', action: 'mm_connect_mode' },
 ];
 
 const WB_CONTEXT_SLOTS: ToolSlot[] = [
@@ -114,12 +121,13 @@ const UNDO_REDO: ToolSlot[] = [
 
 export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
   activeTool,
+  interactionMode = 'select',
   selection,
   isAccepted,
   onAction,
   onOpenChat,
   onApplyTemplate,
-  onSaveAsTemplate,
+  onOpenTemplateGallery,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -153,11 +161,14 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
 
   const closePopover = useCallback(() => setOpenPopover(null), []);
 
-  if (!isAccepted) return null;
-
   const renderSlot = (slot: ToolSlot, idx: number) => {
     const Icon = slot.icon;
-    const isActive = openPopover === slot.popover && slot.popover != null;
+    const isModeSlot =
+      activeTool === 'mindmap' &&
+      ((slot.id === 'select' && interactionMode === 'select') ||
+        (slot.id === 'pan' && interactionMode === 'pan') ||
+        (slot.id === 'connect' && interactionMode === 'connect'));
+    const isActive = isModeSlot || (openPopover === slot.popover && slot.popover != null);
     return (
       <div key={slot.id} className="relative">
         <button
@@ -179,7 +190,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
                 isPl={!!isPl}
                 activeTool={activeTool}
                 onApplyTemplate={onApplyTemplate}
-                onSaveAsTemplate={onSaveAsTemplate}
+                onOpenGallery={onOpenTemplateGallery}
                 onClose={closePopover}
               />
             )}

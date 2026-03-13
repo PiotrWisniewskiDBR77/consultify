@@ -2,27 +2,36 @@ import {
   Bold,
   CircleDot,
   Link2,
+  CheckSquare,
   Lock,
   MoreVertical,
+  Paperclip,
   Sparkles,
   ToggleRight,
+  Tags,
   Unlock,
   Waypoints,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import type { ArtifactLink } from '@/utils/artifactLinks';
+
+import { ArtifactLinksPopover } from './floating-toolbar/ArtifactLinksPopover';
 import { BranchThemeDropdown } from './floating-toolbar/BranchThemeDropdown';
 import { ColorPickerPopover } from './floating-toolbar/ColorPickerPopover';
 import { FloatingAIPopover } from './floating-toolbar/FloatingAIPopover';
 import { FontSizeDropdown } from './floating-toolbar/FontSizeDropdown';
+import { SemanticControlsPopover } from './floating-toolbar/SemanticControlsPopover';
 import { SemanticTypeDropdown } from './floating-toolbar/SemanticTypeDropdown';
+import { QuickTaskPopover } from './floating-toolbar/QuickTaskPopover';
 
-type DropdownId = 'semanticType' | 'branchTheme' | 'color' | 'fontSize' | 'ai' | null;
+type DropdownId = 'semanticType' | 'semantic' | 'branchTheme' | 'color' | 'fontSize' | 'artifacts' | 'task' | 'ai' | null;
 
 export interface FloatingNodeToolbarProps {
   nodeId: string;
   nodeData?: Record<string, any>;
+  disabled?: boolean;
   style?: {
     color?: string;
     fillOpacity?: number;
@@ -38,17 +47,25 @@ export interface FloatingNodeToolbarProps {
   onUpdate: (patch: Record<string, any>) => void;
   onOpenContextMenu: (pos: { x: number; y: number }) => void;
   onOpenArtifactModal: () => void;
+  onOpenNodeDetail: () => void;
+  onRemoveArtifact: (link: ArtifactLink) => void;
+  onOpenLinkedArtifact: (link: ArtifactLink) => void;
   onOpenChatAboutNode: () => void;
   onAction: (action: string) => void;
 }
 
 export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
   nodeId,
+  nodeData,
+  disabled = false,
   style = {},
   position,
   onUpdate,
   onOpenContextMenu,
   onOpenArtifactModal,
+  onOpenNodeDetail,
+  onRemoveArtifact,
+  onOpenLinkedArtifact,
   onOpenChatAboutNode,
   onAction,
 }) => {
@@ -111,6 +128,31 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
                 current={style.semanticType}
                 onSelect={(type) => onUpdate({ semanticType: type })}
                 onClose={closeDD}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 1b. Semantic control center */}
+        <div className="relative">
+          <button
+            onClick={() => toggle('semantic')}
+            title={isPl ? 'Semantyka i tagi' : 'Semantics and tags'}
+            className={btnClass(openDropdown === 'semantic')}
+          >
+            <Tags size={13} />
+          </button>
+          {openDropdown === 'semantic' && (
+            <div className="absolute top-full left-0 mt-1 z-[100]">
+              <SemanticControlsPopover
+                isPl={!!isPl}
+                disabled={disabled}
+                nodeData={nodeData}
+                onUpdate={(patch) => onUpdate(patch)}
+                onOpenNodeDetail={() => {
+                  onOpenNodeDetail();
+                  closeDD();
+                }}
               />
             </div>
           )}
@@ -204,15 +246,61 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         <div className="w-px h-4 bg-slate-200/50 dark:bg-white/[0.06] mx-0.5" />
 
         {/* 7. Link / Artifact */}
-        <button
-          onClick={onOpenArtifactModal}
-          title={isPl ? 'Powiąż artefakt' : 'Link artifact'}
-          className={btnClass(false)}
-        >
-          <Link2 size={13} />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => toggle('artifacts')}
+            title={isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
+            className={btnClass(openDropdown === 'artifacts')}
+          >
+            <Paperclip size={13} />
+          </button>
+          {openDropdown === 'artifacts' && (
+            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-[100]">
+              <ArtifactLinksPopover
+                isPl={!!isPl}
+                disabled={disabled}
+                links={Array.isArray(nodeData?.artifactLinks) ? nodeData.artifactLinks : []}
+                onAttach={() => {
+                  onOpenArtifactModal();
+                  closeDD();
+                }}
+                onOpenNodeDetail={() => {
+                  onOpenNodeDetail();
+                  closeDD();
+                }}
+                onOpenArtifact={(link) => {
+                  onOpenLinkedArtifact(link);
+                  closeDD();
+                }}
+                onRemoveArtifact={(link) => onRemoveArtifact(link)}
+              />
+            </div>
+          )}
+        </div>
 
-        {/* 8. Lock */}
+        {/* 8. Quick Task */}
+        <div className="relative">
+          <button
+            onClick={() => toggle('task')}
+            title={isPl ? 'Szybkie zadanie' : 'Quick task'}
+            className={btnClass(openDropdown === 'task')}
+          >
+            <CheckSquare size={13} />
+          </button>
+          {openDropdown === 'task' && (
+            <div className="absolute top-full left-0 mt-1 z-[100]">
+              <QuickTaskPopover
+                isPl={!!isPl}
+                nodeId={nodeId}
+                nodeLabel={nodeData?.label}
+                onClose={closeDD}
+                onAction={onAction}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 9. Lock */}
         <button
           onClick={() => onUpdate({ locked: !style.locked })}
           title={isPl ? (style.locked ? 'Odblokuj' : 'Zablokuj') : (style.locked ? 'Unlock' : 'Lock')}

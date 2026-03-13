@@ -2915,7 +2915,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                 selectedNodeId={selectedNodeId}
                 showMiniMap={showMiniMap}
                 onToggleMiniMap={() => setShowMiniMap((prev) => !prev)}
-                onFullscreenToggle={toggleFullscreen}
+                onFullscreenToggle={onFullscreenToggle}
                 isFullscreen={isFullscreen}
               />
             </ReactFlow>

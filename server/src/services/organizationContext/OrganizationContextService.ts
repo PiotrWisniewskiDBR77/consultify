@@ -42,6 +42,7 @@ export const ORGANIZATION_CONTEXT_CLAIM_PATHS = [
   'notes.manualContext',
   'metadata.custom',
   'evidence.interview',
+  'evidence.documentExtraction',
   'signals.interviewInsights',
   'tools.sessionOutput',
   'myWork.idea',
@@ -457,6 +458,26 @@ function buildInterviewEvidenceClaims(input: Record<string, unknown>): ContextCl
   ];
 }
 
+function buildDocumentExtractionClaims(input: Record<string, unknown>): ContextClaimInput[] {
+  const filename = asString(input.filename) || asString(input.title);
+  const snippet = asString(input.snippet) || asString(input.extractedText);
+  if (!filename && !snippet) return [];
+  return [
+    {
+      claimPath: 'evidence.documentExtraction',
+      value: {
+        docId: asString(input.docId),
+        filename,
+        mimeType: asString(input.mimeType),
+        snippet,
+        totalChunks: asNumber(input.totalChunks),
+        embeddedChunks: asNumber(input.embeddedChunks),
+      },
+      confidence: 0.85,
+    },
+  ];
+}
+
 function buildMetadataClaims(input: Record<string, unknown>): ContextClaimInput[] {
   const key = asString(input.key);
   const value = input.value;
@@ -552,6 +573,7 @@ function buildChatClaims(input: Record<string, unknown>): ContextClaimInput[] {
       value: {
         conversationId: asString(input.conversationId),
         messageId: asString(input.messageId),
+        role: asString(input.role),
         content,
       },
       confidence: 0.85,
@@ -692,6 +714,8 @@ export class OrganizationContextService {
       value: unknown;
       confidence: number;
       sourceType: string;
+      sourceLabel: string | null;
+      reviewStatus: string;
       isExplicit: boolean;
       createdAt: string;
     }>
@@ -712,6 +736,8 @@ export class OrganizationContextService {
       value: readValue(row),
       confidence: Number(row.confidence || 0),
       sourceType: row.source_type,
+      sourceLabel: row.source_label || null,
+      reviewStatus: row.review_status || 'accepted',
       isExplicit: Boolean(row.is_explicit),
       createdAt: row.created_at,
     }));
@@ -850,6 +876,9 @@ export class OrganizationContextService {
       .map((entry) => entry.value)
       .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object');
     const evidenceValues = collectClaimValues(claimRows, 'evidence.interview')
+      .map((entry) => entry.value)
+      .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object');
+    const documentExtractionValues = collectClaimValues(claimRows, 'evidence.documentExtraction')
       .map((entry) => entry.value)
       .filter((entry): entry is Record<string, unknown> => !!entry && typeof entry === 'object');
     const insightValues = collectClaimValues(claimRows, 'signals.interviewInsights')
@@ -1013,7 +1042,10 @@ export class OrganizationContextService {
       metadata: {
         custom: mergeUniqueObjects(metadataValues, customMetadataRows),
       },
-      evidence: mergeUniqueObjects(evidenceValues, evidenceFromRows),
+      evidence: mergeUniqueObjects(
+        mergeUniqueObjects(evidenceValues, documentExtractionValues),
+        evidenceFromRows
+      ),
       signals: {
         interviewInsights: uniqStrings([...insightValues, ...signalsFromRows]),
       },
@@ -1171,17 +1203,47 @@ export class OrganizationContextService {
     organizationId: string;
     userId?: string | null;
     payload: Record<string, unknown>;
-  }): Promise<void> {
-    await this.recordContextSource({
+  }): Promise<{ itemId: string }> {
+    const messageRole = asString(params.payload.role);
+    return this.recordContextSource({
       organizationId: params.organizationId,
       sourceType: 'chat_message',
       sourceId: asString(params.payload.messageId),
       authorUserId: params.userId || null,
       channel: 'chat',
-      sourceLabel: 'Chat message captured as org context',
+      sourceLabel:
+        messageRole === 'ai'
+          ? 'AI message saved as org context'
+          : 'Chat message captured as org context',
       content: params.payload,
       isExplicit: true,
       claims: buildChatClaims(params.payload),
+    });
+  }
+
+  async recordAttachmentExtraction(params: {
+    organizationId: string;
+    userId?: string | null;
+    payload: Record<string, unknown>;
+  }): Promise<{ itemId: string }> {
+    const extractedText = asString(params.payload.extractedText) || '';
+    return this.recordContextSource({
+      organizationId: params.organizationId,
+      sourceType: 'document_extraction',
+      sourceId: asString(params.payload.docId),
+      authorUserId: params.userId || null,
+      channel: 'upload',
+      sourceLabel: asString(params.payload.filename) || 'Document extracted into org context',
+      content: {
+        ...params.payload,
+        extractedText: extractedText.slice(0, 12000),
+        truncated: extractedText.length > 12000,
+      },
+      isExplicit: true,
+      claims: buildDocumentExtractionClaims({
+        ...params.payload,
+        snippet: extractedText.slice(0, 2000),
+      }),
     });
   }
 }

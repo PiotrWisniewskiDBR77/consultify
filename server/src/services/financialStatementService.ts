@@ -8,6 +8,11 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import {
+  getCanonicalLineById,
+  getRequiredCanonicalLineIds,
+  type CanonicalStatementType,
+} from './financeCanonicalRegistry.js';
 import logger from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
@@ -114,6 +119,10 @@ interface CanonicalLine {
   line_code: string;
   line_name: string;
   line_name_pl: string;
+  required_level?: string;
+  sign_convention?: string;
+  is_computed?: boolean;
+  deaggregation_ready?: boolean;
 }
 
 let aliasTableSupport: boolean | null = null;
@@ -137,6 +146,22 @@ function isSchemaCompatError(error: unknown): boolean {
     message.includes('no such table') ||
     message.includes('undefined column')
   );
+}
+
+function toCanonicalStatementType(value: unknown): CanonicalStatementType | null {
+  const normalized = String(value || '')
+    .trim()
+    .toUpperCase();
+  if (normalized === 'P&L' || normalized === 'BS' || normalized === 'CF') {
+    return normalized;
+  }
+  return null;
+}
+
+function mapValidationMessageStatus(type: ValidationMessage['type']): 'pass' | 'warning' | 'fail' {
+  if (type === 'error') return 'fail';
+  if (type === 'warning') return 'warning';
+  return 'pass';
 }
 
 async function canUseStatementAliasTable(): Promise<boolean> {
@@ -1211,6 +1236,7 @@ export function validateStatement(
 ): { status: 'pass' | 'warnings' | 'needs_review'; messages: ValidationMessage[] } {
   const messages: ValidationMessage[] = [];
   const activeLines = lines.filter((line) => !line.isNonFinancial);
+  const canonicalStatementType = toCanonicalStatementType(statementType);
 
   const getValues = (lineId: string): number[] =>
     activeLines.filter((line) => line.canonicalLineId === lineId).map((line) => Number(line.value || 0));
@@ -1381,6 +1407,26 @@ export function validateStatement(
       message: 'No eligible financial lines remain after filtering non-financial rows.',
     });
   }
+  if (canonicalStatementType) {
+    const presentLineIds = new Set(
+      activeLines
+        .map((line) => String(line.canonicalLineId || '').trim())
+        .filter(Boolean)
+    );
+    const missingRequiredLineIds = getRequiredCanonicalLineIds(canonicalStatementType).filter(
+      (lineId) => !presentLineIds.has(lineId)
+    );
+    if (missingRequiredLineIds.length > 0) {
+      const missingCodes = missingRequiredLineIds
+        .map((lineId) => getCanonicalLineById(lineId)?.code || lineId)
+        .filter(Boolean);
+      messages.push({
+        type: 'warning',
+        code: 'REQUIRED_LINES_MISSING',
+        message: `Required canonical lines are missing: ${missingCodes.join(', ')}`,
+      });
+    }
+  }
 
   const hasErrors = messages.some((m) => m.type === 'error');
   const hasWarnings = messages.some((m) => m.type === 'warning');
@@ -1409,10 +1455,19 @@ export function evaluateStatementReadiness(params: {
   const normalizedScaling = String(params.scaling || '').trim().toLowerCase();
   const validationMessages = Array.isArray(params.validationMessages) ? params.validationMessages : [];
   const activeValues = (params.values || []).filter((value) => !value.isNonFinancial);
+  const canonicalStatementType = toCanonicalStatementType(params.statementType);
   const nonFinancialLineCount = Math.max(0, (params.values || []).length - activeValues.length);
   const mappedLineCount = activeValues.filter((value) => value.canonicalLineId).length;
   const eligibleLineCount = activeValues.length;
   const unmappedLineCount = Math.max(0, eligibleLineCount - mappedLineCount);
+  const presentLineIds = new Set(
+    activeValues
+      .map((value) => String(value.canonicalLineId || '').trim())
+      .filter(Boolean)
+  );
+  const missingRequiredLineCount = canonicalStatementType
+    ? getRequiredCanonicalLineIds(canonicalStatementType).filter((lineId) => !presentLineIds.has(lineId)).length
+    : 0;
   const hardFailCount =
     validationMessages.filter((message) => message.type === 'error').length +
     (normalizedValidation === 'needs_review' || normalizedValidation === 'failed' ? 1 : 0);
@@ -1428,6 +1483,7 @@ export function evaluateStatementReadiness(params: {
     reasonCodes.push('PIPELINE_NOT_ADVANCED');
   if (mappedLineCount === 0) reasonCodes.push('NO_MAPPED_LINES');
   if (unmappedLineCount > 0) reasonCodes.push('UNMAPPED_FINANCIAL_LINES');
+  if (missingRequiredLineCount > 0) reasonCodes.push('MISSING_REQUIRED_CANONICAL_LINES');
   if (!normalizedCurrency || normalizedCurrency === 'UNKNOWN') reasonCodes.push('UNRESOLVED_CURRENCY');
   if (!normalizedScaling || normalizedScaling === 'unknown') reasonCodes.push('UNRESOLVED_SCALING');
   if (hasDuplicateWarnings) reasonCodes.push('DUPLICATE_MAPPING_CONFLICT');
@@ -1443,6 +1499,7 @@ export function evaluateStatementReadiness(params: {
           (hardFailCount === 0 ? 20 : 0) +
           (warningCount === 0 ? 10 : 5) -
           (reasonCodes.includes('PIPELINE_NOT_ADVANCED') ? 20 : 0) -
+          missingRequiredLineCount * 6 -
           (reasonCodes.includes('DUPLICATE_MAPPING_CONFLICT') ? 10 : 0)
       )
     )
@@ -1457,6 +1514,7 @@ export function evaluateStatementReadiness(params: {
     mappedLineCount > 0 &&
     ['mapped', 'confirmed'].includes(normalizedStatus) &&
     ['pass', 'warnings'].includes(normalizedValidation) &&
+    missingRequiredLineCount === 0 &&
     !reasonCodes.includes('UNRESOLVED_CURRENCY') &&
     !reasonCodes.includes('UNRESOLVED_SCALING') &&
     !reasonCodes.includes('DUPLICATE_MAPPING_CONFLICT')
@@ -1875,6 +1933,232 @@ export async function recordStatementQualityRun(params: {
   }
 }
 
+export async function persistStatementValidationLedger(params: {
+  statementId: string;
+  statementType: string;
+  messages: ValidationMessage[];
+  values: Array<{
+    canonicalLineId: string | null;
+    value: number;
+    isNonFinancial?: boolean;
+  }>;
+}): Promise<void> {
+  try {
+    await dbRun(
+      `DELETE FROM financial_statement_validations
+       WHERE statement_id = ? AND validation_scope = 'statement'`,
+      [params.statementId],
+      { fallback: false }
+    );
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    return;
+  }
+
+  for (const message of params.messages || []) {
+    await dbRun(
+      `INSERT INTO financial_statement_validations
+        (id, statement_id, validation_scope, check_code, check_name, severity, status, message, details_json)
+       VALUES (?, ?, 'statement', ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.statementId,
+        message.code,
+        message.code.replace(/_/g, ' '),
+        message.type,
+        mapValidationMessageStatus(message.type),
+        message.message,
+        message.details ? JSON.stringify({ details: message.details }) : null,
+      ],
+      { fallback: false }
+    );
+  }
+
+  const activeValues = (params.values || []).filter((value) => !value.isNonFinancial);
+  const mappedCount = activeValues.filter((value) => value.canonicalLineId).length;
+  const eligibleCount = activeValues.length;
+  const coveragePct = eligibleCount > 0 ? mappedCount / eligibleCount : 0;
+  const canonicalStatementType = toCanonicalStatementType(params.statementType);
+  const presentLineIds = new Set(
+    activeValues
+      .map((value) => String(value.canonicalLineId || '').trim())
+      .filter(Boolean)
+  );
+  const missingRequired = canonicalStatementType
+    ? getRequiredCanonicalLineIds(canonicalStatementType).filter((lineId) => !presentLineIds.has(lineId))
+    : [];
+
+  await dbRun(
+    `INSERT INTO financial_statement_validations
+      (id, statement_id, validation_scope, check_code, check_name, severity, status, expected_value, actual_value, difference, tolerance, message, details_json)
+     VALUES (?, ?, 'statement', 'MAPPING_COVERAGE', 'Mapping Coverage', ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      uuidv4(),
+      params.statementId,
+      coveragePct === 1 ? 'info' : 'warning',
+      coveragePct === 1 ? 'pass' : 'warning',
+      1,
+      coveragePct,
+      1 - coveragePct,
+      0,
+      `Mapping coverage is ${Math.round(coveragePct * 100)}%.`,
+      JSON.stringify({ mappedCount, eligibleCount }),
+    ],
+    { fallback: false }
+  );
+
+  if (missingRequired.length > 0) {
+    await dbRun(
+      `INSERT INTO financial_statement_validations
+        (id, statement_id, validation_scope, check_code, check_name, severity, status, expected_value, actual_value, difference, tolerance, message, details_json)
+       VALUES (?, ?, 'statement', 'REQUIRED_LINE_COVERAGE', 'Required Line Coverage', 'warning', 'warning', ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.statementId,
+        canonicalStatementType ? getRequiredCanonicalLineIds(canonicalStatementType).length : 0,
+        (canonicalStatementType ? getRequiredCanonicalLineIds(canonicalStatementType).length : 0) - missingRequired.length,
+        missingRequired.length,
+        0,
+        'Required canonical lines are missing from the statement.',
+        JSON.stringify({
+          missingLineIds: missingRequired,
+          missingLineCodes: missingRequired
+            .map((lineId) => getCanonicalLineById(lineId)?.code || lineId)
+            .filter(Boolean),
+        }),
+      ],
+      { fallback: false }
+    );
+  }
+}
+
+export async function persistStatementValueEvidence(
+  evidences: Array<{
+    statementValueId: string;
+    candidateRowId?: string | null;
+    evidenceType?: 'direct' | 'aggregated' | 'split' | 'derived' | 'manual_note';
+    weight?: number;
+    contributionValue?: number | null;
+    explanation?: string | null;
+  }>
+): Promise<void> {
+  if (!Array.isArray(evidences) || evidences.length === 0) return;
+  for (const evidence of evidences) {
+    await dbRun(
+      `INSERT INTO financial_statement_value_evidence
+        (id, statement_value_id, candidate_row_id, evidence_type, weight, contribution_value, explanation)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        evidence.statementValueId,
+        evidence.candidateRowId || null,
+        evidence.evidenceType || 'direct',
+        evidence.weight ?? 1,
+        evidence.contributionValue ?? null,
+        evidence.explanation || null,
+      ],
+      { fallback: false }
+    );
+  }
+}
+
+export async function snapshotCanonicalStatementVersion(params: {
+  statementId: string;
+  versionKind: 'mapped' | 'validated' | 'confirmed' | 'repair';
+  readinessStatus?: StatementReadinessStatus;
+  values: unknown;
+  validations?: unknown;
+  createdBy?: string;
+  summary?: string;
+}): Promise<number> {
+  try {
+    const snapshotValues = Array.isArray(params.values)
+      ? params.values.map((value: any) => {
+          const canonical = getCanonicalLineById(String(value?.canonicalLineId || '').trim());
+          return {
+            ...value,
+            lineCode: canonical?.code || null,
+            lineName: canonical?.labelEn || null,
+            lineNamePl: canonical?.labelPl || null,
+            statementType: canonical?.statementType || null,
+            aggregationLevel: canonical?.aggregationLevel ?? null,
+            parentCanonicalLineId: canonical?.parentId || null,
+            requiredLevel: canonical?.requiredLevel || null,
+            signConvention: canonical?.signConvention || null,
+            formulaJson: canonical?.formulaJson || null,
+          };
+        })
+      : params.values || [];
+    const nextVersion =
+      Number(
+        (
+          await dbGet<{ next_version: number }>(
+            `SELECT COALESCE(MAX(version_no), 0) + 1 AS next_version
+             FROM financial_statement_versions
+             WHERE statement_id = ?`,
+            [params.statementId]
+          )
+        )?.next_version || 1
+      ) || 1;
+
+    await dbRun(
+      `INSERT INTO financial_statement_versions
+        (id, statement_id, version_no, version_kind, readiness_status, snapshot_json, change_summary, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.statementId,
+        nextVersion,
+        params.versionKind,
+        params.readinessStatus || null,
+        JSON.stringify({
+          values: snapshotValues,
+          validations: params.validations || [],
+        }),
+        params.summary || null,
+        params.createdBy || null,
+      ],
+      { fallback: false }
+    );
+
+    await dbRun(
+      `UPDATE financial_statements
+       SET values_version = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [nextVersion, params.statementId],
+      { fallback: false }
+    );
+
+    return nextVersion;
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    return 0;
+  }
+}
+
+export async function loadLatestStatementVersionSnapshot(
+  statementId: string
+): Promise<{ versionNo: number; snapshot: any } | null> {
+  try {
+    const row = await dbGet<{ version_no?: number; snapshot_json?: string }>(
+      `SELECT version_no, snapshot_json
+       FROM financial_statement_versions
+       WHERE statement_id = ?
+       ORDER BY version_no DESC
+       LIMIT 1`,
+      [statementId]
+    );
+    if (!row?.snapshot_json) return null;
+    return {
+      versionNo: Number(row.version_no || 0),
+      snapshot: JSON.parse(String(row.snapshot_json || '{}')),
+    };
+  } catch (error) {
+    if (!isSchemaCompatError(error)) throw error;
+    return null;
+  }
+}
+
 export async function snapshotStatementValueVersion(params: {
   statementId: string;
   sourceStage: string;
@@ -2149,29 +2433,59 @@ export async function saveStatementValues(
     originalLabel: string;
     value: number;
     confidence: number;
+    sourcePage?: number | null;
     sourceRow?: number;
     mappingStatus?: string;
     isNonFinancial?: boolean;
     classificationReason?: string;
+    valueOrigin?: 'source' | 'mapped' | 'manual' | 'computed' | 'estimated';
+    mappingConfidence?: number;
+    sourceCandidateRowId?: string | null;
+    selectedMappingCandidateId?: string | null;
+    periodGranularity?: string | null;
+    periodLabel?: string | null;
+    periodIndex?: number | null;
+    lineageType?: 'direct' | 'aggregated' | 'split' | 'derived' | 'manual_note';
+    derivedFromLineCodes?: string[] | null;
+    evidenceJson?: Record<string, unknown> | null;
+    manualOverrideReason?: string | null;
   }>
-): Promise<void> {
+): Promise<Array<{ id: string; sourceCandidateRowId?: string | null; value: number; originalLabel: string }>> {
+  const insertedRows: Array<{
+    id: string;
+    sourceCandidateRowId?: string | null;
+    value: number;
+    originalLabel: string;
+  }> = [];
   for (const v of values) {
     let r;
+    const rowId = uuidv4();
     try {
       r = await dbRun(
-        `INSERT INTO financial_statement_values (id, statement_id, canonical_line_id, original_label, value, confidence, source_row, mapping_status, is_non_financial, classification_reason)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO financial_statement_values
+          (id, statement_id, canonical_line_id, original_label, value, confidence, source_page, source_row,
+           mapping_status, is_non_financial, classification_reason, value_origin, mapping_confidence,
+           source_candidate_row_id, selected_mapping_candidate_id, period_granularity, evidence_json, notes, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
         [
-          uuidv4(),
+          rowId,
           statementId,
           v.canonicalLineId || null,
           v.originalLabel,
           v.value,
           v.confidence,
+          v.sourcePage ?? null,
           v.sourceRow || null,
           v.mappingStatus || 'auto',
           !!v.isNonFinancial,
           v.classificationReason || null,
+          v.valueOrigin || 'source',
+          v.mappingConfidence ?? v.confidence ?? 0,
+          v.sourceCandidateRowId || null,
+          v.selectedMappingCandidateId || null,
+          v.periodGranularity || null,
+          v.evidenceJson ? JSON.stringify(v.evidenceJson) : null,
+          v.manualOverrideReason || null,
         ],
         { fallback: false }
       );
@@ -2181,7 +2495,7 @@ export async function saveStatementValues(
         `INSERT INTO financial_statement_values (id, statement_id, canonical_line_id, original_label, value, confidence, source_row, mapping_status)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          uuidv4(),
+          rowId,
           statementId,
           v.canonicalLineId || null,
           v.originalLabel,
@@ -2196,7 +2510,14 @@ export async function saveStatementValues(
     if (!r?.success) {
       throw new Error(`DB insert failed (financial_statement_values): ${r?.error || 'unknown'}`);
     }
+    insertedRows.push({
+      id: rowId,
+      sourceCandidateRowId: v.sourceCandidateRowId || null,
+      value: v.value,
+      originalLabel: v.originalLabel,
+    });
   }
+  return insertedRows;
 }
 
 export async function updateStatementStatus(

@@ -1047,6 +1047,8 @@
   },
   "myWork": {
     "title": "My Work",
+    "home": "Home",
+    "manager": "Manager",
     "inbox": "Inbox",
     "focus": {
       "label": "Focus",

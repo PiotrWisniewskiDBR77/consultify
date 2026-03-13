@@ -82,9 +82,15 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     [edges]
   );
 
-  const addChildNode = useCallback(() => {
+  const getNodeById = useCallback(
+    (nodeId?: string | null): Node | undefined =>
+      nodeId ? nodes.find((n: any) => n?.id === nodeId && !isNodeLockedByPeer(n.id)) : undefined,
+    [isNodeLockedByPeer, nodes]
+  );
+
+  const addChildNode = useCallback((anchorNodeId?: string) => {
     if (locked) return;
-    const selected = getSelectedNode();
+    const selected = getNodeById(anchorNodeId) || getSelectedNode();
     if (!selected) {
       toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
       return;
@@ -134,6 +140,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     autoLayout,
     edges,
     fitView,
+    getNodeById,
     getSelectedNode,
     isPolish,
     locked,
@@ -142,9 +149,9 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     setNodes,
   ]);
 
-  const addSiblingNode = useCallback(() => {
+  const addSiblingNode = useCallback((anchorNodeId?: string) => {
     if (locked) return;
-    const selected = getSelectedNode();
+    const selected = getNodeById(anchorNodeId) || getSelectedNode();
     if (!selected) {
       toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
       return;
@@ -195,7 +202,19 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     setTimeout(() => {
       try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
     }, 60);
-  }, [autoLayout, edges, findParentId, fitView, getSelectedNode, isPolish, locked, pushUndo, setEdges, setNodes]);
+  }, [
+    autoLayout,
+    edges,
+    findParentId,
+    fitView,
+    getNodeById,
+    getSelectedNode,
+    isPolish,
+    locked,
+    pushUndo,
+    setEdges,
+    setNodes,
+  ]);
 
   const deleteSelected = useCallback(() => {
     if (locked) return;
@@ -331,6 +350,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     editingNodeIdRef,
     isNodeLockedByPeer,
     getSelectedNode,
+    getNodeById,
     selectedNodeIds,
     findParentId,
     findChildrenIds,

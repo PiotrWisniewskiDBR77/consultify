@@ -15,7 +15,7 @@ interface CreateAnalysisModalProps {
   onClose: () => void;
   defaultAnalysisType?: string;
   availableStatements?: FinanceStatementRow[];
-  initialStatementIds?: string[];
+  initialStatementPackId?: string | null;
   initialTitle?: string;
 }
 
@@ -24,26 +24,21 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
   onClose,
   defaultAnalysisType = 'comprehensive',
   availableStatements = [],
-  initialStatementIds = [],
+  initialStatementPackId = null,
   initialTitle = '',
 }) => {
   const { t } = useTranslation();
   const [title, setTitle] = useState(initialTitle);
   const [creating, setCreating] = useState(false);
-  const [selectedStatementIds, setSelectedStatementIds] = useState<string[]>(initialStatementIds);
+  const [selectedStatementPackId, setSelectedStatementPackId] = useState(initialStatementPackId || '');
 
-  const selectedStatements = useMemo(
-    () =>
-      availableStatements.filter((statement) =>
-        selectedStatementIds.includes(statement.id)
-      ),
-    [availableStatements, selectedStatementIds]
+  const selectedStatementPack = useMemo(
+    () => availableStatements.find((statement) => statement.id === selectedStatementPackId) || null,
+    [availableStatements, selectedStatementPackId]
   );
 
-  const toggleStatement = useCallback((statementId: string) => {
-    setSelectedStatementIds((prev) =>
-      prev.includes(statementId) ? prev.filter((id) => id !== statementId) : [...prev, statementId]
-    );
+  const selectStatementPack = useCallback((statementPackId: string) => {
+    setSelectedStatementPackId(statementPackId);
   }, []);
 
   const handleCreate = useCallback(async () => {
@@ -53,8 +48,8 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
       const result = await Api.post('/api/economics/financial-analyses', {
         title: title.trim(),
         analysisType: defaultAnalysisType,
-        currency: selectedStatements[0]?.currency || 'PLN',
-        sourceStatementIds: selectedStatementIds,
+        currency: selectedStatementPack?.currency || 'PLN',
+        sourceStatementPackId: selectedStatementPackId || undefined,
       });
       const created = result as any;
       const analysis = created?.analysis || created;
@@ -67,9 +62,18 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
         analysisType: String(
           analysis?.analysisType || analysis?.analysis_type || defaultAnalysisType
         ),
-        currency: String(analysis?.currency || selectedStatements[0]?.currency || 'PLN'),
+        currency: String(analysis?.currency || selectedStatementPack?.currency || 'PLN'),
         periodCount: Array.isArray(analysis?.periods) ? analysis.periods.length : 0,
-        sourceStatementIds: selectedStatementIds,
+        sourceStatementIds: Array.isArray(analysis?.sourceStatementIds)
+          ? analysis.sourceStatementIds
+          : Array.isArray(analysis?.source_statement_ids)
+            ? analysis.source_statement_ids
+            : selectedStatementPack?.statementIds,
+        sourceStatementPackId:
+          analysis?.sourceStatementPackId ||
+          analysis?.source_statement_pack_id ||
+          selectedStatementPackId ||
+          undefined,
         updatedAt: String(analysis?.updated_at || new Date().toISOString()),
       });
     } catch (e: any) {
@@ -79,7 +83,7 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
     } finally {
       setCreating(false);
     }
-  }, [defaultAnalysisType, selectedStatementIds, selectedStatements, title, onCreated, t]);
+  }, [defaultAnalysisType, onCreated, selectedStatementPack, selectedStatementPackId, t, title]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
@@ -103,33 +107,37 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
         <div className="space-y-2 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
           <div className="flex items-center justify-between">
             <label className="text-xs text-slate-500">
-              {t('finance.analysis.sourceStatements', 'Source statements')}
+              {t('finance.analysis.sourceStatements', 'Source statement pack')}
             </label>
             <span className="text-[11px] text-slate-400">
-              {selectedStatementIds.length} {t('finance.analysis.selected', 'selected')}
+              {selectedStatementPackId ? t('finance.analysis.selectedOne', 'selected') : '0 selected'}
             </span>
           </div>
           <div className="max-h-48 overflow-y-auto space-y-2">
             {availableStatements.map((statement) => (
-              <label
+              <button
                 key={statement.id}
-                className="flex items-start gap-3 rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-2 text-sm"
+                type="button"
+                onClick={() => selectStatementPack(statement.id)}
+                className={`w-full flex items-start gap-3 rounded-lg border px-3 py-2 text-sm text-left ${
+                  selectedStatementPackId === statement.id
+                    ? 'border-emerald-300 bg-emerald-50/70 dark:border-emerald-600/40 dark:bg-emerald-900/10'
+                    : 'border-slate-200 dark:border-navy-700'
+                }`}
               >
-                <input
-                  type="checkbox"
-                  checked={selectedStatementIds.includes(statement.id)}
-                  onChange={() => toggleStatement(statement.id)}
-                  className="mt-0.5"
-                />
+                <div className="mt-0.5 text-xs">
+                  {selectedStatementPackId === statement.id ? '●' : '○'}
+                </div>
                 <div className="min-w-0">
                   <div className="font-medium text-slate-900 dark:text-white">
-                    {statement.periodLabel || statement.title}
+                    {statement.entityName || statement.title}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
-                    {statement.statementType} • {statement.currency} • {statement.rawStatus}
+                    {statement.periodLabel || statement.periodEnd} • {statement.currency} •{' '}
+                    {statement.completenessLabel || statement.rawStatus}
                   </div>
                 </div>
-              </label>
+              </button>
             ))}
             {availableStatements.length === 0 && (
               <div className="text-xs text-slate-400">
@@ -147,7 +155,7 @@ export const CreateAnalysisModal: React.FC<CreateAnalysisModalProps> = ({
           </button>
           <button
             onClick={handleCreate}
-            disabled={!title.trim() || creating}
+            disabled={!title.trim() || creating || !selectedStatementPackId}
             className="px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-500 disabled:opacity-50"
           >
             {t('common.create', 'Create')}

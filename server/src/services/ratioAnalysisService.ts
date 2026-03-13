@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { normalizeCanonicalLineCode, withCanonicalAliases } from './financeCanonicalResolver.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -191,8 +192,8 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     formula: 'Gross Margin / Revenue × 100',
     formulaDescription: 'Percentage of revenue retained after direct costs',
     formulaDescriptionPl: 'Procent przychodu pozostający po kosztach bezpośrednich',
-    requiredLines: ['GROSS_MARGIN', 'REVENUE'],
-    compute: (v) => safe(v.GROSS_MARGIN, v.REVENUE, (a, b) => (a / b) * 100),
+    requiredLines: ['GROSS_PROFIT', 'REVENUE'],
+    compute: (v) => safe(v.GROSS_PROFIT, v.REVENUE, (a, b) => (a / b) * 100),
     thresholds: { warn: 20, critical: 10, direction: 'higher_better' },
     unit: '%',
   },
@@ -256,8 +257,8 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     formula: 'Net Income / Equity × 100',
     formulaDescription: "Return generated on shareholders' investment",
     formulaDescriptionPl: 'Zwrot wygenerowany na kapitale właścicieli',
-    requiredLines: ['NET_INCOME', 'EQUITY'],
-    compute: (v) => safe(v.NET_INCOME, v.EQUITY, (a, b) => (a / b) * 100),
+    requiredLines: ['NET_INCOME', 'TOTAL_EQUITY'],
+    compute: (v) => safe(v.NET_INCOME, v.TOTAL_EQUITY, (a, b) => (a / b) * 100),
     thresholds: { warn: 8, critical: 3, direction: 'higher_better' },
     unit: '%',
   },
@@ -271,8 +272,8 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     formula: 'Total Liabilities / Equity',
     formulaDescription: 'Proportion of financing from debt vs equity',
     formulaDescriptionPl: 'Proporcja finansowania długiem względem kapitału',
-    requiredLines: ['TOTAL_LIABILITIES', 'EQUITY'],
-    compute: (v) => safe(v.TOTAL_LIABILITIES, v.EQUITY, div),
+    requiredLines: ['TOTAL_LIABILITIES', 'TOTAL_EQUITY'],
+    compute: (v) => safe(v.TOTAL_LIABILITIES, v.TOTAL_EQUITY, div),
     thresholds: { warn: 2.0, critical: 3.0, direction: 'lower_better' },
     unit: 'x',
   },
@@ -386,10 +387,12 @@ export async function computeRatios(
 
   const values: Record<string, number> = {};
   for (const row of valueRows) {
-    if (row.line_code && row.value !== null) {
-      values[row.line_code] = row.value;
+    const canonicalCode = normalizeCanonicalLineCode(row.line_code);
+    if (canonicalCode && row.value !== null) {
+      values[canonicalCode] = Number(row.value || 0);
     }
   }
+  const resolvedValues = withCanonicalAliases(values);
 
   // Load benchmarks
   const benchmarkRows = (await dbAll(
@@ -404,7 +407,7 @@ export async function computeRatios(
   const ratios: ComputedRatio[] = [];
 
   for (const def of RATIO_CATALOG) {
-    const missingLines = def.requiredLines.filter((code) => !(code in values));
+    const missingLines = def.requiredLines.filter((code) => !(code in resolvedValues));
     const coveragePct =
       def.requiredLines.length > 0
         ? Math.round(
@@ -416,7 +419,7 @@ export async function computeRatios(
     let status: RatioStatus = 'na';
 
     if (missingLines.length === 0) {
-      computedValue = def.compute(values);
+      computedValue = def.compute(resolvedValues);
       if (computedValue !== null && Number.isFinite(computedValue)) {
         computedValue = Math.round(computedValue * 100) / 100;
         status = evaluateStatus(computedValue, def.thresholds);
@@ -507,8 +510,11 @@ export async function computeGrowthRatios(
       [sid]
     )) as any[];
     const map: Record<string, number> = {};
-    for (const r of rows) if (r.value !== null) map[r.line_code] = r.value;
-    return map;
+    for (const r of rows) {
+      const canonicalCode = normalizeCanonicalLineCode(r.line_code);
+      if (canonicalCode && r.value !== null) map[canonicalCode] = Number(r.value || 0);
+    }
+    return withCanonicalAliases(map);
   };
 
   const current = await loadValues(currentStatementId);

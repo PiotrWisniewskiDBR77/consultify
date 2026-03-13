@@ -77,6 +77,7 @@ interface IdeaAISuggestionsPanelProps {
   onInsertToWorkspace?: (items: Array<{ text: string; type: string }>) => void;
   graphNodes?: any[];
   graphEdges?: any[];
+  selectedNodeId?: string | null;
 }
 
 const CATEGORY_CONFIG: Record<
@@ -161,6 +162,7 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
   onInsertToWorkspace,
   graphNodes: currentNodes = [],
   graphEdges: currentEdges = [],
+  selectedNodeId,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -239,13 +241,19 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
           context: {
             title,
             seedText,
-            currentNodes: currentNodes.map((n) => ({
+            currentNodes: currentNodes.map((n: any) => ({
               id: n.id,
               type: n.type,
               label: n.data?.label,
+              tags: n.data?.tags,
+              semanticType: n.data?.semanticType,
+              artifactLinks: n.data?.artifactLinks,
+              description: n.data?.description,
+              notes: n.data?.notes,
             })),
             currentEdges,
             activeTool: activeTool || 'mindmap',
+            ...(selectedNodeId != null && { selectedNodeId }),
           },
           mode,
           prompt,
@@ -530,7 +538,10 @@ export const IdeaAISuggestionsPanel: React.FC<IdeaAISuggestionsPanelProps> = ({
                 <button
                   key={gen.action}
                   onClick={() => {
-                    trackFunnelEvent('ai_generator_used', { action: gen.action, tool: activeTool || 'mindmap' });
+                    trackFunnelEvent('my_idea_suggested', {
+                      action: gen.action,
+                      tool: activeTool || 'mindmap',
+                    });
                     window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action: gen.action } }));
                   }}
                   disabled={!isAccepted}

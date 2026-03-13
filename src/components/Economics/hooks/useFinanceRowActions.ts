@@ -12,7 +12,7 @@ interface UseFinanceRowActionsParams {
   handleOpenFull: (row: FinanceRow) => void;
   handleExport: (row: FinanceRow) => void;
   handleCreateModelFromStatement: (row: FinanceStatementRow) => void;
-  handleCreateAnalysisFromStatements: (statementIds: string[]) => void;
+  handleCreateAnalysisFromStatements: (row: FinanceStatementRow) => void;
   loadStatements: () => Promise<void>;
   loadModels: () => Promise<void>;
   loadAnalyses: () => Promise<void>;
@@ -201,7 +201,7 @@ export function useFinanceRowActions({
             label: t('finance.row.createAnalysisFromStatement', 'Utwórz analizę'),
             icon: Eye,
             disabled: !statementRow.isWorkable,
-            onClick: () => handleCreateAnalysisFromStatements([statementRow.id]),
+            onClick: () => handleCreateAnalysisFromStatements(statementRow),
           }
         );
         if (!statementRow.isWorkable) {

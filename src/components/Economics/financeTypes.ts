@@ -30,6 +30,7 @@ export type FinanceModelRow = FinanceRowBase & {
   periodEnd?: string;
   granularity?: string;
   sourceStatementId?: string;
+  sourceStatementPackId?: string;
   seedSourceType?: string;
 };
 
@@ -39,6 +40,7 @@ export type FinanceAnalysisRow = FinanceRowBase & {
   currency: string;
   periodCount: number;
   sourceStatementIds?: string[];
+  sourceStatementPackId?: string;
 };
 
 export type FinanceValuationRow = FinanceRowBase & {
@@ -49,9 +51,131 @@ export type FinanceValuationRow = FinanceRowBase & {
   horizonYears: number;
 };
 
+export type FinanceStatementPackChild = {
+  id: string;
+  statementType: string;
+  rawStatus: string;
+  readinessStatus?: string;
+  readinessScore?: number;
+  validationStatus?: string;
+  mappedLineCount: number;
+  totalLineCount: number;
+  unmappedLineCount: number;
+  sourceFileName?: string;
+  updatedAt?: string;
+  valuesVersion?: number;
+  validationFailCount?: number;
+  validationWarningCount?: number;
+};
+
+export type FinanceStatementValidation = {
+  validationScope: 'statement' | 'pack';
+  checkCode: string;
+  checkName: string;
+  severity: 'info' | 'warning' | 'error';
+  status: 'pass' | 'warning' | 'fail';
+  expectedValue?: number | null;
+  actualValue?: number | null;
+  difference?: number | null;
+  tolerance?: number | null;
+  message?: string | null;
+  detailsJson?: string | null;
+  computedAt?: string;
+};
+
+export type FinanceStatementExplainEvidence = {
+  evidenceType: 'direct' | 'aggregated' | 'split' | 'derived' | 'manual_note';
+  weight: number;
+  contributionValue?: number | null;
+  explanation?: string | null;
+  source?: {
+    candidateRowId?: string | null;
+    rowLabel?: string | null;
+    sourceRow?: number | null;
+    sourcePage?: number | null;
+    rawValue?: string | null;
+  } | null;
+};
+
+export type FinanceStatementExplain = {
+  valueId: string;
+  originalLabel: string;
+  mappedTo?: string | null;
+  lineCode?: string | null;
+  value: number;
+  mappingStatus: string;
+  valueOrigin: string;
+  mappingConfidence: number;
+  evidenceJson?: Record<string, unknown> | null;
+  evidences: FinanceStatementExplainEvidence[];
+  selectedMappingCandidate?: {
+    id: string;
+    score: number;
+    reason?: string | null;
+  } | null;
+};
+
+export type FinanceStatementTableRow = {
+  id: string;
+  canonicalLineId?: string | null;
+  lineCode?: string | null;
+  lineName?: string | null;
+  lineNameEn?: string | null;
+  lineNamePl?: string | null;
+  parentCanonicalLineId?: string | null;
+  originalLabel: string;
+  value: number;
+  confidence?: number;
+  sourcePage?: number | null;
+  sourceRow?: number | null;
+  mappingStatus?: string;
+  valueOrigin?: string;
+  mappingConfidence?: number;
+  isNonFinancial?: boolean;
+  classificationReason?: string | null;
+  aggregationLevel?: number | null;
+  requiredLevel?: string | null;
+  signConvention?: string | null;
+  isTotal?: boolean;
+  isSubtotal?: boolean;
+  isComputed?: boolean;
+  deaggregationReady?: boolean;
+  evidenceJson?: Record<string, unknown> | null;
+  sourceCandidateRowId?: string | null;
+  selectedMappingCandidateId?: string | null;
+  valuePeriodLabel?: string | null;
+  valuePeriodIndex?: number | null;
+  periodValues?: Array<{
+    id: string;
+    periodLabel?: string | null;
+    periodIndex?: number | null;
+    value: number;
+  }>;
+  explain?: FinanceStatementExplain | null;
+};
+
+export type FinanceStatementDetailV1 = {
+  id: string;
+  statementType: string;
+  sourceFileName?: string;
+  readinessStatus?: string;
+  readinessScore?: number;
+  readinessSummary?: string;
+  validationStatus?: string;
+  valuesVersion?: number;
+  latestVersionNo?: number;
+  mappedLineCount: number;
+  totalLineCount: number;
+  unmappedLineCount: number;
+  values: FinanceStatementTableRow[];
+  validationLedger: FinanceStatementValidation[];
+};
+
 export type FinanceStatementRow = FinanceRowBase & {
   kind: 'statements';
   statementType: string;
+  statementPackId?: string;
+  entityName?: string;
   periodStart: string;
   periodEnd: string;
   periodLabel: string;
@@ -62,6 +186,11 @@ export type FinanceStatementRow = FinanceRowBase & {
   mappedLineCount: number;
   totalLineCount: number;
   unmappedLineCount: number;
+  sourceStatementCount?: number;
+  statementIds?: string[];
+  missingStatementTypes?: string[];
+  completenessLabel?: string;
+  childStatements?: FinanceStatementPackChild[];
   nonFinancialLineCount?: number;
   overallConfidence: number;
   rawStatus: string;
@@ -256,7 +385,7 @@ export function deriveStatementReadinessStatus(
 
 export interface PreviewDataState {
   statementPreviewDetail: {
-    statementType: string;
+    entityName?: string;
     periodLabel: string;
     periodStart: string;
     periodEnd: string;
@@ -267,7 +396,13 @@ export interface PreviewDataState {
     rawStatus: string;
     readinessStatus?: string;
     readinessSummary?: string;
+    missingStatementTypes?: string[];
+    sourceStatementCount?: number;
+    childStatements?: FinanceStatementPackChild[];
+    packValidations?: FinanceStatementValidation[];
     mappedLineCount: number;
+    totalLineCount?: number;
+    unmappedLineCount?: number;
     topLineItems: { label: string; code: string; value: number }[];
   } | null;
   statementPreviewRatios: {

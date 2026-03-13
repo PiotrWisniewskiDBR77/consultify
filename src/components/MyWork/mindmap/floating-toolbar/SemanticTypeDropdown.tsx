@@ -16,7 +16,7 @@ interface SemanticTypeDropdownProps {
   onClose: () => void;
 }
 
-const SEMANTIC_TYPES = [
+export const SEMANTIC_TYPE_OPTIONS = [
   { id: 'topic', iconEl: CircleDot, labelPl: 'Temat', labelEn: 'Topic', color: 'text-blue-500' },
   { id: 'hypothesis', iconEl: Lightbulb, labelPl: 'Hipoteza', labelEn: 'Hypothesis', color: 'text-amber-500' },
   { id: 'risk', iconEl: AlertTriangle, labelPl: 'Ryzyko', labelEn: 'Risk', color: 'text-red-500' },
@@ -37,7 +37,7 @@ export const SemanticTypeDropdown: React.FC<SemanticTypeDropdownProps> = ({
       <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400">
         {isPl ? 'Typ węzła' : 'Node type'}
       </div>
-      {SEMANTIC_TYPES.map((t) => {
+      {SEMANTIC_TYPE_OPTIONS.map((t) => {
         const Icon = t.iconEl;
         const isActive = current === t.id;
         return (

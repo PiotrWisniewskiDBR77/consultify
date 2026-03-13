@@ -5252,41 +5252,45 @@ ${JSON.stringify(questions || [], null, 2)}
       );
     }
 
-    const updated = await queryHelpers.queryOne(
-      `SELECT * FROM organization_context WHERE organization_id = ?`,
-      [user.organizationId]
-    );
-
+    const contextPayload = {
+      companyName: companyName || null,
+      industry: industry || null,
+      companySize: companySize || null,
+      location: location || null,
+      employeeCount: employeeCount || null,
+      annualRevenue: annualRevenue || null,
+      keyMetrics: keyMetrics || [],
+      stakeholders: stakeholders || [],
+      openGaps: openGaps || [],
+      lastInterviewId: lastInterviewId || null,
+    };
     await organizationContextService.recordInterviewContext({
       organizationId: user.organizationId,
       userId: user.id,
-      payload: {
-        companyName: (updated as any).company_name,
-        industry: (updated as any).industry,
-        companySize: (updated as any).company_size,
-        location: (updated as any).location,
-        employeeCount: (updated as any).employee_count,
-        annualRevenue: (updated as any).annual_revenue,
-        keyMetrics: parseJson((updated as any).key_metrics, []),
-        stakeholders: parseJson((updated as any).stakeholders, []),
-        openGaps: parseJson((updated as any).open_gaps, []),
-        lastInterviewId: (updated as any).last_interview_id,
-      },
+      payload: contextPayload,
     });
 
+    const resolved = await organizationContextService.buildResolvedContext(user.organizationId);
+    const compatibility = await queryHelpers.queryOne(
+      `SELECT id, completeness_percent, last_interview_id FROM organization_context WHERE organization_id = ?`,
+      [user.organizationId]
+    );
+
     res.json({
-      id: (updated as any).id,
-      organizationId: (updated as any).organization_id,
-      companyName: (updated as any).company_name,
-      industry: (updated as any).industry,
-      companySize: (updated as any).company_size,
-      location: (updated as any).location,
-      employeeCount: (updated as any).employee_count,
-      annualRevenue: (updated as any).annual_revenue,
-      keyMetrics: parseJson((updated as any).key_metrics, []),
-      stakeholders: parseJson((updated as any).stakeholders, []),
-      openGaps: parseJson((updated as any).open_gaps, []),
-      completenessPercent: (updated as any).completeness_percent,
+      id: (compatibility as any)?.id || null,
+      organizationId: user.organizationId,
+      companyName: resolved.profile.companyName,
+      industry: resolved.profile.industry,
+      companySize: resolved.profile.companySize,
+      location: resolved.profile.location,
+      employeeCount: resolved.profile.employeeCount,
+      annualRevenue: resolved.profile.annualRevenue,
+      keyMetrics: resolved.operatingContext.keyMetrics || [],
+      stakeholders: resolved.operatingContext.stakeholders || [],
+      openGaps: resolved.operatingContext.openGaps || [],
+      lastInterviewId:
+        resolved.operatingContext.lastInterviewId || (compatibility as any)?.last_interview_id || null,
+      completenessPercent: (compatibility as any)?.completeness_percent || completeness,
     });
   }),
 

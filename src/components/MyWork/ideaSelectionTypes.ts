@@ -6,6 +6,7 @@
  */
 
 export type CanvasToolType = 'mindmap' | 'process_flow' | 'table' | 'whiteboard';
+export type MindMapInteractionMode = 'select' | 'pan' | 'connect';
 export const IDEA_GRAPH_UPDATE_EVENT = 'idea-workspace-graph-update';
 export const IDEA_GRAPH_SAVE_EVENT = 'idea-graph-save-requested';
 export const IDEA_WORKSPACE_INSERT_EVENT = 'idea-workspace-insert';

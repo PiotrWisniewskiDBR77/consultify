@@ -38,6 +38,8 @@ import {
   loadStatementSourceText,
   locateStatementSections,
   openStatementRepairSession,
+  persistStatementValidationLedger,
+  persistStatementValueEvidence,
   persistStatementCandidateRows,
   persistStatementExtractedSections,
   persistStatementMappingCandidates,
@@ -46,8 +48,10 @@ import {
   resolveStatementColumnSelection,
   resolveDuplicateSuggestedMappings,
   saveStatementValues,
+  snapshotCanonicalStatementVersion,
   snapshotStatementValueVersion,
   startStatementIngestRun,
+  loadLatestStatementVersionSnapshot,
   updateStatementMetadata,
   updateStatementIngestRun,
   updateStatementReadinessState,
@@ -76,6 +80,15 @@ import {
   getRatioCatalog,
   upsertBenchmark,
 } from '../services/ratioAnalysisService.js';
+import {
+  assignStatementToExistingPack,
+  detachStatementFromPack,
+  getStatementPackDetail,
+  listStatementPacks,
+  recomputeStatementPackForOrganization,
+  syncStatementToPack,
+} from '../services/financialStatementPackService.js';
+import { buildStatementAnalytics } from '../services/financeStatementAnalyticsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -138,6 +151,57 @@ async function ensureIngestRun(params: {
     rawTextLength: params.rawTextLength,
     createdBy: params.createdBy,
   });
+}
+
+function parseJsonArray(raw: unknown): any[] {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string' && raw.trim().startsWith('[')) {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+async function loadCandidateRowLookup(statementId: string): Promise<
+  Map<number, { candidateRowId: string; sourcePage: number | null; rowLabel: string }>
+> {
+  const rows = (await dbAll(
+    `SELECT id, source_row, source_page, row_label
+     FROM financial_statement_candidate_rows
+     WHERE statement_id = ?`,
+    [statementId]
+  )) as Array<{ id: string; source_row?: number; source_page?: number | null; row_label?: string }>;
+  const lookup = new Map<number, { candidateRowId: string; sourcePage: number | null; rowLabel: string }>();
+  for (const row of rows || []) {
+    if (row.source_row == null) continue;
+    lookup.set(Number(row.source_row), {
+      candidateRowId: String(row.id),
+      sourcePage: row.source_page != null ? Number(row.source_page) : null,
+      rowLabel: String(row.row_label || ''),
+    });
+  }
+  return lookup;
+}
+
+async function loadSelectedMappingLookup(
+  statementId: string
+): Promise<Map<string, string>> {
+  const rows = (await dbAll(
+    `SELECT candidate_row_id, canonical_line_id, id
+     FROM financial_statement_mapping_candidates
+     WHERE statement_id = ? AND is_selected = TRUE`,
+    [statementId]
+  )) as Array<{ candidate_row_id?: string; canonical_line_id?: string; id: string }>;
+  const lookup = new Map<string, string>();
+  for (const row of rows || []) {
+    const key = `${String(row.candidate_row_id || '')}:${String(row.canonical_line_id || '')}`;
+    if (!key || key === ':') continue;
+    lookup.set(key, String(row.id));
+  }
+  return lookup;
 }
 
 // ════════════════════════════════════════════════
@@ -256,6 +320,7 @@ router.post(
       templateFamily: documentProfile.templateFamily,
       createdBy: userId,
     });
+    const statementPackId = await syncStatementToPack(statementId);
     const ingestRunId = await startStatementIngestRun({
       statementId,
       organizationId: orgId,
@@ -403,6 +468,7 @@ router.post(
     res.status(201).json({
       success: true,
       statementId,
+      statementPackId,
       ingestRunId,
       detection,
       columnSelection,
@@ -473,6 +539,7 @@ router.post(
       extractionStrategy: documentProfile.extractionStrategy,
       templateFamily: documentProfile.templateFamily,
     });
+    const statementPackId = await syncStatementToPack(statementId);
     await recordStatementSourceArtifact({
       statementId,
       ingestRunId,
@@ -508,7 +575,7 @@ router.post(
       });
     }
 
-    res.json({ statementId, ingestRunId, detection, documentProfile, columnSelection });
+    res.json({ statementId, statementPackId, ingestRunId, detection, documentProfile, columnSelection });
   })
 );
 
@@ -825,21 +892,76 @@ router.put(
       extractionStrategy: stmt.extraction_strategy,
       templateFamily: stmt.template_family,
     });
+    const candidateRowLookup = await loadCandidateRowLookup(statementId);
+    const selectedMappingLookup = await loadSelectedMappingLookup(statementId);
 
-    const normalizedValues = values.map((value: any) => ({
-      canonicalLineId: value.canonicalLineId || null,
-      originalLabel: String(value.originalLabel || ''),
-      value: Number(value.value || 0),
-      confidence: Number(value.confidence || 0),
-      sourceRow: value.sourceRow != null ? Number(value.sourceRow) : null,
-      mappingStatus: String(value.mappingStatus || (value.canonicalLineId ? 'auto' : 'unmapped')),
-      isNonFinancial: Boolean(value.isNonFinancial),
-      classificationReason: value.classificationReason
-        ? String(value.classificationReason)
-        : value.isNonFinancial
-          ? 'NON_FINANCIAL_LINE'
-          : null,
-    }));
+    const normalizedValues = values.map((value: any) => {
+      const sourceRow = value.sourceRow != null ? Number(value.sourceRow) : null;
+      const candidate = sourceRow != null ? candidateRowLookup.get(sourceRow) : undefined;
+      const canonicalLineId = value.canonicalLineId || null;
+      const mappingStatus = String(value.mappingStatus || (canonicalLineId ? 'auto' : 'unmapped'));
+      const isNonFinancial = Boolean(value.isNonFinancial);
+      const valueOrigin =
+        String(value.valueOrigin || '').trim() ||
+        (mappingStatus === 'manual'
+          ? 'manual'
+          : mappingStatus === 'computed'
+            ? 'computed'
+            : canonicalLineId
+              ? 'mapped'
+              : 'source');
+      const evidenceJson =
+        value.evidenceJson && typeof value.evidenceJson === 'object'
+          ? value.evidenceJson
+          : {
+              sourceRow,
+              sourcePage: value.sourcePage != null ? Number(value.sourcePage) : candidate?.sourcePage || null,
+              candidateRowId: candidate?.candidateRowId || null,
+              originalLabel: String(value.originalLabel || candidate?.rowLabel || ''),
+              mappingStatus,
+              periodLabel: value.periodLabel ? String(value.periodLabel) : null,
+              periodIndex: value.periodIndex != null ? Number(value.periodIndex) : 0,
+              lineageType: value.lineageType ? String(value.lineageType) : 'direct',
+              derivedFromLineCodes: Array.isArray(value.derivedFromLineCodes)
+                ? value.derivedFromLineCodes.map((code: unknown) => String(code))
+                : [],
+            };
+      const selectedMappingCandidateId =
+        value.selectedMappingCandidateId ||
+        (candidate?.candidateRowId && canonicalLineId
+          ? selectedMappingLookup.get(`${candidate.candidateRowId}:${canonicalLineId}`) || null
+          : null);
+
+      return {
+        canonicalLineId,
+        originalLabel: String(value.originalLabel || ''),
+        value: Number(value.value || 0),
+        confidence: Number(value.confidence || 0),
+        sourcePage:
+          value.sourcePage != null ? Number(value.sourcePage) : candidate?.sourcePage ?? null,
+        sourceRow,
+        mappingStatus,
+        isNonFinancial,
+        classificationReason: value.classificationReason
+          ? String(value.classificationReason)
+          : isNonFinancial
+            ? 'NON_FINANCIAL_LINE'
+            : null,
+        valueOrigin,
+        mappingConfidence: Number(value.mappingConfidence ?? value.confidence ?? 0),
+        sourceCandidateRowId: value.sourceCandidateRowId || candidate?.candidateRowId || null,
+        selectedMappingCandidateId,
+        periodGranularity: String(value.periodGranularity || 'annual'),
+        periodLabel: value.periodLabel ? String(value.periodLabel) : null,
+        periodIndex: value.periodIndex != null ? Number(value.periodIndex) : 0,
+        lineageType: value.lineageType ? String(value.lineageType) : 'direct',
+        derivedFromLineCodes: Array.isArray(value.derivedFromLineCodes)
+          ? value.derivedFromLineCodes.map((code: unknown) => String(code))
+          : [],
+        evidenceJson,
+        manualOverrideReason: value.manualOverrideReason ? String(value.manualOverrideReason) : null,
+      };
+    });
 
     await snapshotStatementValueVersion({
       statementId,
@@ -851,7 +973,42 @@ router.put(
     // Clear old values
     await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [statementId]);
 
-    await saveStatementValues(statementId, normalizedValues);
+    const insertedValues = await saveStatementValues(statementId, normalizedValues);
+    await persistStatementValueEvidence(
+      insertedValues.flatMap((row, index) => {
+        const normalized = normalizedValues[index];
+        const provided = Array.isArray((values[index] as any)?.evidences) ? (values[index] as any).evidences : [];
+        if (provided.length > 0) {
+          return provided.map((evidence: any) => ({
+            statementValueId: row.id,
+            candidateRowId: evidence.candidateRowId ? String(evidence.candidateRowId) : row.sourceCandidateRowId || null,
+            evidenceType: String(evidence.evidenceType || normalized?.lineageType || 'direct') as
+              | 'direct'
+              | 'aggregated'
+              | 'split'
+              | 'derived'
+              | 'manual_note',
+            weight: evidence.weight != null ? Number(evidence.weight) : 1,
+            contributionValue:
+              evidence.contributionValue != null ? Number(evidence.contributionValue) : row.value,
+            explanation:
+              evidence.explanation
+                ? String(evidence.explanation)
+                : `Persisted ${String(normalized?.lineageType || 'direct')} lineage for "${row.originalLabel}".`,
+          }));
+        }
+        if (!row.sourceCandidateRowId) return [];
+        return [
+          {
+            statementValueId: row.id,
+            candidateRowId: row.sourceCandidateRowId || null,
+            evidenceType: 'direct' as const,
+            contributionValue: row.value,
+            explanation: `Mapped from source row for "${row.originalLabel}".`,
+          },
+        ];
+      })
+    );
 
     // Run validation
     const validationResult = validateStatement(
@@ -884,7 +1041,27 @@ router.put(
       validationResult.status,
       validationResult.messages
     );
+    await persistStatementValidationLedger({
+      statementId,
+      statementType: stmt.statement_type,
+      messages: validationResult.messages,
+      values: normalizedValues.map((value: any) => ({
+        canonicalLineId: value.canonicalLineId,
+        value: value.value,
+        isNonFinancial: value.isNonFinancial,
+      })),
+    });
     await updateStatementReadinessState(statementId, readiness);
+    await snapshotCanonicalStatementVersion({
+      statementId,
+      versionKind: readiness.isReady ? 'validated' : 'mapped',
+      readinessStatus: readiness.readinessStatus,
+      values: normalizedValues,
+      validations: validationResult.messages,
+      createdBy: userId,
+      summary: readiness.summary,
+    });
+    const statementPackId = await syncStatementToPack(statementId);
     await recordStatementSourceArtifact({
       statementId,
       ingestRunId,
@@ -963,6 +1140,7 @@ router.put(
 
     res.json({
       statementId,
+      statementPackId,
       ingestRunId,
       savedCount: normalizedValues.length,
       readiness,
@@ -1021,7 +1199,23 @@ router.post(
     });
 
     await updateStatementStatus(statementId, stmt.status, result.status, result.messages);
+    await persistStatementValidationLedger({
+      statementId,
+      statementType: stmt.statement_type,
+      messages: result.messages,
+      values: valueRows,
+    });
     await updateStatementReadinessState(statementId, readiness);
+    await snapshotCanonicalStatementVersion({
+      statementId,
+      versionKind: readiness.isReady ? 'validated' : 'mapped',
+      readinessStatus: readiness.readinessStatus,
+      values: valueRows,
+      validations: result.messages,
+      createdBy: userId,
+      summary: readiness.summary,
+    });
+    const statementPackId = await syncStatementToPack(statementId);
     await recordStatementSourceArtifact({
       statementId,
       ingestRunId,
@@ -1071,7 +1265,7 @@ router.post(
       });
     }
 
-    res.json({ statementId, ingestRunId, validation: result, readiness });
+    res.json({ statementId, statementPackId, ingestRunId, validation: result, readiness });
   })
 );
 
@@ -1132,6 +1326,16 @@ router.post(
     });
 
     await confirmStatement(statementId, userId, readiness);
+    await snapshotCanonicalStatementVersion({
+      statementId,
+      versionKind: 'confirmed',
+      readinessStatus: readiness.readinessStatus,
+      values: valueRows,
+      validations: validationMessages,
+      createdBy: userId,
+      summary: 'Confirmed statement-ready snapshot.',
+    });
+    const statementPackId = await syncStatementToPack(statementId);
     await recordStatementSourceArtifact({
       statementId,
       ingestRunId,
@@ -1165,7 +1369,7 @@ router.post(
     }
     logger.info(`[FinanceStatements] Statement ${statementId} confirmed by ${userId}`);
 
-    res.json({ success: true, statementId, ingestRunId, status: 'confirmed', readiness });
+    res.json({ success: true, statementId, statementPackId, ingestRunId, status: 'confirmed', readiness });
   })
 );
 
@@ -1249,19 +1453,172 @@ router.get(
 );
 
 router.get(
+  '/packs',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const readinessFilter = String(req.query.readiness || '').trim().toLowerCase();
+    const packs = await listStatementPacks(orgId, readinessFilter);
+    res.json(packs || []);
+  })
+);
+
+router.get(
+  '/packs/:id',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const packId = String(req.params.id);
+    const pack = await getStatementPackDetail(orgId, packId);
+    if (!pack) return res.status(404).json({ error: 'Statement pack not found' });
+    res.json(pack);
+  })
+);
+
+router.post(
+  '/packs/:id/recompute',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const packId = String(req.params.id);
+    const pack = await recomputeStatementPackForOrganization(orgId, packId);
+    if (!pack) return res.status(404).json({ error: 'Statement pack not found' });
+    res.json({ success: true, pack });
+  })
+);
+
+router.post(
+  '/packs/:id/statements/:statementId/assign',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const packId = String(req.params.id);
+    const statementId = String(req.params.statementId);
+    await assignStatementToExistingPack({
+      organizationId: orgId,
+      packId,
+      statementId,
+    });
+    const pack = await getStatementPackDetail(orgId, packId);
+    res.json({ success: true, pack });
+  })
+);
+
+router.get(
   '/canonical-lines',
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const orgId = getOrgId(req);
     const lines = await dbAll(
-      `SELECT id, statement_type, line_code, line_name, line_name_pl, parent_line_id, sort_order
+      `SELECT id, statement_type, line_code, line_name, line_name_en, line_name_pl, parent_line_id, sort_order,
+              aggregation_level, required_level, sign_convention, is_total, is_subtotal, is_computed,
+              formula_json, deaggregation_ready, taxonomy_version
        FROM financial_statement_lines
        WHERE is_system = TRUE OR organization_id = ?
        ORDER BY statement_type, sort_order`,
       [orgId || '']
     );
     res.json(lines || []);
+  })
+);
+
+router.get(
+  '/:id/analytics',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const statementId = String(req.params.id);
+    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
+    if (!stmt) return;
+    const requestedLevel = Math.min(3, Math.max(1, Number(req.query.level || 2) || 2));
+    const analytics = await buildStatementAnalytics({
+      statementId,
+      statementType: String(stmt.statement_type || '').toUpperCase() as 'P&L' | 'BS' | 'CF',
+      requestedLevel,
+      defaultPeriodLabel: stmt.period_label || null,
+    });
+    res.json(analytics);
+  })
+);
+
+router.get(
+  '/:id/values/:valueId/explain',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const statementId = String(req.params.id);
+    const valueId = String(req.params.valueId);
+    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
+    if (!stmt) return;
+
+    const rows = (await dbAll(
+      `SELECT fsv.id, fsv.original_label, fsv.value, fsv.mapping_status, fsv.value_origin, fsv.mapping_confidence,
+              fsv.evidence_json, fsl.line_code, fsl.line_name, fsl.line_name_pl,
+              fsve.evidence_type, fsve.weight, fsve.contribution_value, fsve.explanation,
+              fscr.id AS candidate_row_id, fscr.row_label, fscr.source_row, fscr.source_page, fscr.raw_value,
+              fsmc.id AS mapping_candidate_id, fsmc.score AS mapping_score, fsmc.match_reason
+       FROM financial_statement_values fsv
+       LEFT JOIN financial_statement_lines fsl ON fsl.id = fsv.canonical_line_id
+       LEFT JOIN financial_statement_value_evidence fsve ON fsve.statement_value_id = fsv.id
+       LEFT JOIN financial_statement_candidate_rows fscr ON fscr.id = COALESCE(fsve.candidate_row_id, fsv.source_candidate_row_id)
+       LEFT JOIN financial_statement_mapping_candidates fsmc ON fsmc.id = fsv.selected_mapping_candidate_id
+       WHERE fsv.statement_id = ? AND fsv.id = ?`,
+      [statementId, valueId]
+    )) as any[];
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Statement value not found' });
+    }
+
+    const head = rows[0];
+    res.json({
+      valueId,
+      originalLabel: head.original_label,
+      mappedTo: head.line_name || head.line_name_pl || head.line_code || null,
+      lineCode: head.line_code || null,
+      value: Number(head.value || 0),
+      mappingStatus: head.mapping_status || 'unmapped',
+      valueOrigin: head.value_origin || 'source',
+      mappingConfidence: Number(head.mapping_confidence || 0),
+      evidenceJson:
+        typeof head.evidence_json === 'string' && head.evidence_json.trim().startsWith('{')
+          ? JSON.parse(head.evidence_json)
+          : head.evidence_json || null,
+      evidences: rows
+        .filter((row) => row.evidence_type || row.candidate_row_id)
+        .map((row) => ({
+          evidenceType: row.evidence_type || 'direct',
+          weight: Number(row.weight ?? 1),
+          contributionValue:
+            row.contribution_value != null ? Number(row.contribution_value) : null,
+          explanation: row.explanation || null,
+          source: row.candidate_row_id
+            ? {
+                candidateRowId: row.candidate_row_id,
+                rowLabel: row.row_label || null,
+                sourceRow: row.source_row != null ? Number(row.source_row) : null,
+                sourcePage: row.source_page != null ? Number(row.source_page) : null,
+                rawValue: row.raw_value || null,
+              }
+            : null,
+        })),
+      selectedMappingCandidate: head.mapping_candidate_id
+        ? {
+            id: head.mapping_candidate_id,
+            score: Number(head.mapping_score || 0),
+            reason: head.match_reason || null,
+          }
+        : null,
+    });
   })
 );
 
@@ -1280,11 +1637,16 @@ router.get(
     let extractedSections: any[] = [];
     let repairSessions: any[] = [];
     let mappingCandidates: any[] = [];
+    let validationLedger: any[] = [];
+    let versions: any[] = [];
     try {
       values = await dbAll(
-        `SELECT fsv.id, fsv.canonical_line_id, fsv.original_label, fsv.value, fsv.confidence, fsv.source_row, fsv.mapping_status, fsv.is_manually_corrected,
-              fsv.is_non_financial, fsv.classification_reason,
-              fsl.line_code, fsl.line_name, fsl.line_name_pl
+        `SELECT fsv.id, fsv.canonical_line_id, fsv.original_label, fsv.value, fsv.confidence, fsv.source_page, fsv.source_row,
+              fsv.mapping_status, fsv.is_manually_corrected, fsv.is_non_financial, fsv.classification_reason,
+              fsv.value_origin, fsv.mapping_confidence, fsv.evidence_json, fsv.source_candidate_row_id,
+              fsv.selected_mapping_candidate_id, fsv.period_granularity,
+              fsl.line_code, fsl.line_name, fsl.line_name_en, fsl.line_name_pl, fsl.parent_line_id, fsl.aggregation_level, fsl.required_level,
+              fsl.sign_convention, fsl.is_total, fsl.is_subtotal, fsl.is_computed, fsl.formula_json, fsl.deaggregation_ready
        FROM financial_statement_values fsv
        LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
        WHERE fsv.statement_id = ? ORDER BY fsv.source_row`,
@@ -1331,6 +1693,22 @@ router.get(
          LIMIT 150`,
         [statementId]
       );
+      validationLedger = await dbAll(
+        `SELECT validation_scope, check_code, check_name, severity, status, expected_value, actual_value, difference,
+                tolerance, message, details_json, computed_at
+         FROM financial_statement_validations
+         WHERE statement_id = ?
+         ORDER BY computed_at DESC, check_code ASC`,
+        [statementId]
+      );
+      versions = await dbAll(
+        `SELECT version_no, version_kind, readiness_status, change_summary, created_at
+         FROM financial_statement_versions
+         WHERE statement_id = ?
+         ORDER BY version_no DESC
+         LIMIT 12`,
+        [statementId]
+      );
     } catch (error) {
       if (!isSchemaCompatError(error)) throw error;
       values = await dbAll(
@@ -1347,6 +1725,8 @@ router.get(
       extractedSections = [];
       repairSessions = [];
       mappingCandidates = [];
+      validationLedger = [];
+      versions = [];
     }
 
     const { notes, ...stmtData } = stmt;
@@ -1359,6 +1739,7 @@ router.get(
       : 0;
     const unmappedLineCount = Math.max(0, totalLineCount - mappedLineCount);
     const validationMessages = stmt.validation_messages ? JSON.parse(stmt.validation_messages) : [];
+    const latestVersionSnapshot = await loadLatestStatementVersionSnapshot(statementId);
     const readiness = evaluateStatementReadiness({
       rawStatus: stmt.status,
       statementType: stmt.statement_type,
@@ -1391,6 +1772,9 @@ router.get(
       extractedSections: extractedSections || [],
       repairSessions: repairSessions || [],
       mappingCandidates: mappingCandidates || [],
+      validationLedger: validationLedger || [],
+      versions: versions || [],
+      latestVersionNo: Number(latestVersionSnapshot?.versionNo || stmt.values_version || 0),
       values: values || [],
     });
   })
@@ -1440,6 +1824,7 @@ router.delete(
         .json({ error: 'Cannot delete confirmed statement. Archive it instead.' });
     }
 
+    await detachStatementFromPack(statementId);
     await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [statementId]);
     await dbRun(`DELETE FROM financial_statements WHERE id = ?`, [statementId]);
 

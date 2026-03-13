@@ -1,6 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { loadLatestStatementVersionSnapshot } from './financialStatementService.js';
+import { normalizeCanonicalLineCode } from './financeCanonicalResolver.js';
+import { getVerifiedPackSeed } from './financialStatementPackService.js';
 
 export interface StatementLine {
   code: string;
@@ -59,6 +62,7 @@ export interface FinancialAnalysis {
   statementData: StatementData;
   currency: string;
   sourceStatementIds?: string[];
+  sourceStatementPackId?: string;
   approvedBy?: string;
   approvedAt?: string;
   createdBy?: string;
@@ -91,6 +95,7 @@ function mapRow(row: any): FinancialAnalysis {
     statementData: safeJsonParse(row.statement_data, {}),
     currency: row.currency,
     sourceStatementIds: safeJsonParse(row.source_statement_ids, []),
+    sourceStatementPackId: row.source_statement_pack_id || undefined,
     approvedBy: row.approved_by,
     approvedAt: row.approved_at,
     createdBy: row.created_by,
@@ -124,6 +129,56 @@ function isInvestmentAnalysisType(value: unknown): boolean {
     normalized.includes('investment') ||
     normalized.includes('capex')
   );
+}
+
+async function loadAnalysisStatementRows(
+  statementIds: string[]
+): Promise<Array<{ statement_id: string; value: number; line_code: string; line_name: string; statement_type: string }>> {
+  const rowsFromSnapshots: Array<{
+    statement_id: string;
+    value: number;
+    line_code: string;
+    line_name: string;
+    statement_type: string;
+  }> = [];
+  let snapshotCoverage = 0;
+
+  for (const statementId of statementIds) {
+    const snapshotVersion = await loadLatestStatementVersionSnapshot(statementId);
+    const snapshotValues = Array.isArray(snapshotVersion?.snapshot?.values)
+      ? snapshotVersion?.snapshot?.values
+      : [];
+    if (snapshotValues.length === 0) continue;
+    snapshotCoverage += 1;
+    for (const value of snapshotValues) {
+      const lineCode = normalizeCanonicalLineCode(String(value?.lineCode || ''));
+      if (!lineCode) continue;
+      rowsFromSnapshots.push({
+        statement_id: statementId,
+        value: Number(value?.value || 0),
+        line_code: lineCode,
+        line_name: String(value?.lineName || lineCode),
+        statement_type: String(value?.statementType || ''),
+      });
+    }
+  }
+
+  if (snapshotCoverage === statementIds.length && rowsFromSnapshots.length > 0) {
+    return rowsFromSnapshots;
+  }
+
+  const placeholders = statementIds.map(() => '?').join(',');
+  const rows = (await dbAll<any>(
+    `SELECT fsv.statement_id, fsv.value, fsl.line_code, fsl.line_name, fsl.statement_type
+     FROM financial_statement_values fsv
+     LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
+     WHERE fsv.statement_id IN (${placeholders})`,
+    [...statementIds]
+  )) as Array<{ statement_id: string; value: number; line_code: string; line_name: string; statement_type: string }>;
+  return rows.map((row) => ({
+    ...row,
+    line_code: normalizeCanonicalLineCode(row.line_code),
+  }));
 }
 
 function computeInvestmentRatios(data: StatementData, periods: string[]): RatioResult[] {
@@ -216,12 +271,18 @@ export async function createAnalysis(
     statementData?: StatementData;
     currency?: string;
     sourceStatementIds?: string[];
+    sourceStatementPackId?: string;
   },
   userId?: string
 ): Promise<FinancialAnalysis> {
   const id = uuidv4();
   const now = new Date().toISOString();
-  const sourceStatementIds = Array.isArray(data.sourceStatementIds) ? data.sourceStatementIds : [];
+  const packSeed = data.sourceStatementPackId
+    ? await getVerifiedPackSeed({ organizationId: orgId, packId: data.sourceStatementPackId })
+    : null;
+  const sourceStatementIds = Array.isArray(data.sourceStatementIds)
+    ? data.sourceStatementIds
+    : packSeed?.statementIds || [];
 
   const resolved =
     sourceStatementIds.length > 0 &&
@@ -230,7 +291,7 @@ export async function createAnalysis(
       : {
           periods: data.periods || [],
           statementData: data.statementData || {},
-          currency: data.currency || 'PLN',
+          currency: data.currency || packSeed?.currency || 'PLN',
         };
 
   if (sourceStatementIds.length > 0 && (resolved.periods || []).length === 0) {
@@ -238,7 +299,7 @@ export async function createAnalysis(
   }
 
   await dbRun(
-    `INSERT INTO financial_analyses (id,organization_id,project_id,title,description,status,analysis_type,periods,statement_data,currency,source_statement_ids,created_by,created_at,updated_at) VALUES (?,?,?,?,?,'DRAFT',?,?,?,?,?,?,?,?)`,
+    `INSERT INTO financial_analyses (id,organization_id,project_id,title,description,status,analysis_type,periods,statement_data,currency,source_statement_ids,source_statement_pack_id,created_by,created_at,updated_at) VALUES (?,?,?,?,?,'DRAFT',?,?,?,?,?,?,?,?,?)`,
     [
       id,
       orgId,
@@ -250,6 +311,7 @@ export async function createAnalysis(
       JSON.stringify(resolved.statementData || {}),
       resolved.currency || 'PLN',
       JSON.stringify(sourceStatementIds),
+      data.sourceStatementPackId || null,
       userId || null,
       now,
       now,
@@ -267,6 +329,7 @@ export async function createAnalysis(
     statementData: resolved.statementData || {},
     currency: resolved.currency || 'PLN',
     sourceStatementIds,
+    sourceStatementPackId: data.sourceStatementPackId || undefined,
     createdBy: userId,
     createdAt: now,
     updatedAt: now,
@@ -306,6 +369,7 @@ export async function updateAnalysis(
     statementData: StatementData;
     currency: string;
     sourceStatementIds: string[];
+    sourceStatementPackId: string;
     rebuildFromStatements: boolean;
   }>
 ): Promise<void> {
@@ -334,6 +398,10 @@ export async function updateAnalysis(
   if (data.sourceStatementIds !== undefined) {
     s.push('source_statement_ids=?');
     p.push(JSON.stringify(Array.isArray(data.sourceStatementIds) ? data.sourceStatementIds : []));
+  }
+  if (data.sourceStatementPackId !== undefined) {
+    s.push('source_statement_pack_id=?');
+    p.push(data.sourceStatementPackId || null);
   }
   if (
     data.rebuildFromStatements &&
@@ -751,13 +819,7 @@ async function buildStatementDataFromStatements(
 
   const periods = Array.from(new Set((stmts || []).map(periodKey))).sort();
 
-  const valueRows = await dbAll<any>(
-    `SELECT fsv.statement_id, fsv.value, fsl.line_code, fsl.line_name, fsl.statement_type
-     FROM financial_statement_values fsv
-     LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
-     WHERE fsv.statement_id IN (${placeholders})`,
-    [...ids]
-  );
+  const valueRows = await loadAnalysisStatementRows(ids);
 
   const stmtById = new Map<string, any>();
   for (const s of stmts || []) stmtById.set(String(s.id), s);

@@ -21,12 +21,16 @@ import {
   ScanSearch,
   Share2,
   Sparkles,
+  StickyNote,
+  Tag,
   Star,
   Target,
   Trash2,
   UserPlus,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { MENU_CONTAINER_CLASS, menuItemClass, type MenuItemBase } from './contextMenuTypes';
 
 export interface NodeContextMenuProps {
   x: number;
@@ -40,20 +44,10 @@ export interface NodeContextMenuProps {
   onAction: (action: string) => void;
 }
 
-interface MenuItem {
-  id: string;
-  labelPl: string;
-  labelEn: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  shortcut?: string;
-  danger?: boolean;
-  disabled?: boolean;
-}
-
 interface MenuGroup {
   titlePl: string;
   titleEn: string;
-  items: MenuItem[];
+  items: MenuItemBase[];
 }
 
 export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
@@ -157,6 +151,8 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         { id: 'ctx_vote_up', labelPl: 'Głosuj ↑', labelEn: 'Vote up', icon: Star, disabled: isLocked || isProtected },
         { id: 'ctx_assign', labelPl: 'Przypisz osobę', labelEn: 'Assign person', icon: UserPlus, disabled: isLocked || isProtected },
         { id: 'ctx_comments', labelPl: 'Komentarze', labelEn: 'Comments', icon: MessageSquare, disabled: isProtected },
+        { id: 'ctx_quick_notes', labelPl: 'Notatki', labelEn: 'Notes', icon: StickyNote, disabled: isProtected },
+        { id: 'ctx_quick_tags', labelPl: 'Tagi', labelEn: 'Tags', icon: Tag, disabled: isProtected },
         { id: 'ctx_attach_knowledge', labelPl: 'Dołącz wiedzę', labelEn: 'Attach knowledge', icon: BookOpen, disabled: isLocked || isProtected },
         { id: 'ctx_attach_artifact', labelPl: 'Dołącz artefakt', labelEn: 'Attach artifact', icon: BookOpen, disabled: isLocked || isProtected },
         { id: 'ctx_open_linked_artifacts', labelPl: 'Powiązane artefakty', labelEn: 'Linked artifacts', icon: ExternalLink, disabled: isProtected },
@@ -175,7 +171,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   const clampedX = Math.min(x, window.innerWidth - 260);
   const clampedY = Math.min(y, window.innerHeight - 400);
 
-  const renderItem = (item: MenuItem) => {
+  const renderItem = (item: MenuItemBase) => {
     const Icon = item.icon;
     return (
       <button
@@ -183,13 +179,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         type="button"
         disabled={item.disabled}
         onClick={() => handleClick(item.id)}
-        className={`w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium transition-colors rounded-md ${
-          item.disabled
-            ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
-            : item.danger
-              ? 'text-red-600 dark:text-red-400 hover:bg-red-500/10'
-              : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04]'
-        }`}
+        className={`w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium transition-colors rounded-md ${menuItemClass(item)}`}
       >
         <Icon
           size={13}
@@ -211,7 +201,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
     return (
       <div
         ref={ref}
-        className="fixed z-[100] min-w-[230px] max-h-[80vh] overflow-y-auto py-1.5 px-1 rounded-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+        className={`${MENU_CONTAINER_CLASS} min-w-[230px] max-h-[80vh] overflow-y-auto`}
         style={{ left: clampedX, top: clampedY }}
       >
         {groups.map((group, gi) => (
@@ -238,7 +228,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   return (
     <div
       ref={ref}
-      className="fixed z-[100] min-w-[230px] py-1.5 px-1 rounded-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-2xl animate-in fade-in zoom-in-95 duration-100"
+      className={`${MENU_CONTAINER_CLASS} min-w-[230px]`}
       style={{ left: clampedX, top: clampedY }}
     >
       {mainItems.map((group, gi) => (

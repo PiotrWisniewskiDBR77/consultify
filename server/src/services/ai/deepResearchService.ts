@@ -115,6 +115,9 @@ export interface DeepResearchOptions {
     maturityLevel?: string;
     organizationName?: string;
     terminology?: Record<string, string>;
+    strategicPriorities?: string[];
+    openGaps?: string[];
+    keyMetrics?: string[];
   };
   /** Clarification answers from user (used to focus queries) */
   clarificationAnswers?: Record<string, string>;
@@ -248,7 +251,9 @@ async function generateSubQueries(
 - Industry: ${options.orgContext.industry || 'Unknown'}
 - Region: ${options.orgContext.region || 'Global'}
 - Maturity level: ${options.orgContext.maturityLevel || 'Unknown'}
-- Name: ${options.orgContext.organizationName || 'Unknown'}`
+- Name: ${options.orgContext.organizationName || 'Unknown'}
+- Strategic priorities: ${(options.orgContext.strategicPriorities || []).join(', ') || 'Unknown'}
+- Open gaps: ${(options.orgContext.openGaps || []).join(', ') || 'Unknown'}`
       : '';
 
     const clarificationBlock = options.clarificationAnswers
@@ -696,6 +701,9 @@ function buildSynthesisPrompt(
 - Industry: ${options.orgContext.industry || 'N/A'}
 - Region: ${options.orgContext.region || 'N/A'}
 - Digital maturity: ${options.orgContext.maturityLevel || 'N/A'}
+- Strategic priorities: ${(options.orgContext.strategicPriorities || []).join(', ') || 'N/A'}
+- Key metrics: ${(options.orgContext.keyMetrics || []).join(', ') || 'N/A'}
+- Open gaps: ${(options.orgContext.openGaps || []).join(', ') || 'N/A'}
 Tailor recommendations specifically to this organization's context.`
     : '';
 

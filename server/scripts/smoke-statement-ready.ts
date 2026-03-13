@@ -19,10 +19,13 @@ function main(): void {
   const modeling = read(root, 'server/src/services/financialModelingService.ts');
   const analysis = read(root, 'server/src/services/financialAnalysisService.ts');
   const workspace = read(root, 'src/components/Finance/FinancialStatementWorkspace.tsx');
+  const packWorkspace = read(root, 'src/components/Finance/FinancialStatementPackWorkspace.tsx');
+  const packService = read(root, 'server/src/services/financialStatementPackService.ts');
   const documentIntel = read(root, 'server/src/services/documentIntelligenceService.ts');
   const contract = read(root, 'docs/product/STATEMENT_READY_CONTRACT.md');
   const migration = read(root, 'server/migrations/668_statement_ready_contract.sql');
   const migrationRebuild = read(root, 'server/migrations/669_statement_import_rebuild.sql');
+  const packMigration = read(root, 'server/migrations/20260316_financial_statement_packs.sql');
 
   const checks: Check[] = [
     {
@@ -57,6 +60,7 @@ function main(): void {
         "error: 'Statement is not ready to confirm'",
         'readinessStatus',
         'document-intelligence/search',
+        '/packs',
       ]),
     },
     {
@@ -70,13 +74,33 @@ function main(): void {
       ]),
     },
     {
-      name: 'Downstream only accepts statement-ready sources',
-      pass: includesAll(modeling, ['readiness_status', 'Statement must be statement-ready']) &&
-        includesAll(analysis, ["readiness_status = 'ready'", 'Only statement-ready statements can seed a financial analysis']),
+      name: 'Pack migration adds pack tables and downstream references',
+      pass: includesAll(packMigration, [
+        'financial_statement_packs',
+        'statement_pack_id',
+        'source_statement_pack_id',
+      ]),
     },
     {
-      name: 'Workspace exposes recovery and quality run UX',
-      pass: includesAll(workspace, ['Recovery queue', 'qualityRuns', 'retryRecovery', 'recoveryWorkbench', 'documentIntelligence']),
+      name: 'Pack service exposes sync and verified pack seed',
+      pass: includesAll(packService, [
+        'syncStatementToPack',
+        'getVerifiedPackSeed',
+        'listStatementPacks',
+        'getStatementPackDetail',
+      ]),
+    },
+    {
+      name: 'Downstream only accepts statement-ready sources',
+      pass: includesAll(modeling, ['readiness_status', 'Statement must be statement-ready']) &&
+        includesAll(analysis, ["readiness_status = 'ready'", 'Only statement-ready statements can seed a financial analysis']) &&
+        includesAll(modeling, ['sourceStatementPackId', 'buildSeededAssumptionsFromPack']) &&
+        includesAll(analysis, ['sourceStatementPackId', 'getVerifiedPackSeed']),
+    },
+    {
+      name: 'Workspace exposes pack-level view and underlying statement recovery',
+      pass: includesAll(workspace, ['Recovery queue', 'qualityRuns']) &&
+        includesAll(packWorkspace, ['Statement pack', 'FinancialStatementWorkspace', 'onCreateModelFromPack']),
     },
     {
       name: 'Document intelligence remains non-authoritative',

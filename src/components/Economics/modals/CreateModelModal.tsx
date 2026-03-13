@@ -10,7 +10,7 @@ interface CreateModelModalProps {
   onCreated: (row: FinanceModelRow) => void;
   onClose: () => void;
   availableStatements?: FinanceStatementRow[];
-  initialSourceStatementId?: string | null;
+  initialSourceStatementPackId?: string | null;
 }
 
 function toForecastStartDate(periodEnd?: string): string {
@@ -25,14 +25,14 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
   onCreated,
   onClose,
   availableStatements = [],
-  initialSourceStatementId,
+  initialSourceStatementPackId,
 }) => {
   const { t } = useTranslation();
   const [creating, setCreating] = useState(false);
   const [mode, setMode] = useState<'manual' | 'statement'>(
-    initialSourceStatementId ? 'statement' : 'manual'
+    initialSourceStatementPackId ? 'statement' : 'manual'
   );
-  const [sourceStatementId, setSourceStatementId] = useState(initialSourceStatementId || '');
+  const [sourceStatementPackId, setSourceStatementPackId] = useState(initialSourceStatementPackId || '');
   const [form, setForm] = useState({
     name: '',
     startDate: new Date().toISOString().slice(0, 10),
@@ -42,14 +42,14 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
   });
 
   const selectedStatement = useMemo(
-    () => availableStatements.find((statement) => statement.id === sourceStatementId) || null,
-    [availableStatements, sourceStatementId]
+    () => availableStatements.find((statement) => statement.id === sourceStatementPackId) || null,
+    [availableStatements, sourceStatementPackId]
   );
 
   const updateFromStatement = useCallback(
-    (statementId: string) => {
-      setSourceStatementId(statementId);
-      const statement = availableStatements.find((item) => item.id === statementId) || null;
+    (statementPackId: string) => {
+      setSourceStatementPackId(statementPackId);
+      const statement = availableStatements.find((item) => item.id === statementPackId) || null;
       if (!statement) return;
       setForm((prev) => ({
         ...prev,
@@ -66,14 +66,14 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
   );
 
   useEffect(() => {
-    if (initialSourceStatementId) {
-      updateFromStatement(initialSourceStatementId);
+    if (initialSourceStatementPackId) {
+      updateFromStatement(initialSourceStatementPackId);
     }
-  }, [initialSourceStatementId, updateFromStatement]);
+  }, [initialSourceStatementPackId, updateFromStatement]);
 
   const handleCreate = useCallback(async () => {
     if (!form.name || !form.startDate) return;
-    if (mode === 'statement' && !sourceStatementId) return;
+    if (mode === 'statement' && !sourceStatementPackId) return;
     setCreating(true);
     try {
       const created = await Api.post('/api/financial-modeling/models', {
@@ -82,7 +82,7 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
         horizonMonths: form.horizonMonths,
         granularity: form.granularity,
         currency: form.currency,
-        sourceStatementId: mode === 'statement' ? sourceStatementId : undefined,
+        sourceStatementPackId: mode === 'statement' ? sourceStatementPackId : undefined,
         assumptions:
           mode === 'statement'
             ? undefined
@@ -108,6 +108,8 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
         currency: String(model?.currency || form.currency),
         horizonMonths: Number(model?.horizon_months || form.horizonMonths),
         startDate: String(model?.start_date || form.startDate),
+        sourceStatementPackId:
+          model?.source_statement_pack_id || (mode === 'statement' ? sourceStatementPackId : undefined),
         updatedAt: String(model?.updated_at || new Date().toISOString()),
       });
     } catch (e: any) {
@@ -117,7 +119,7 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
     } finally {
       setCreating(false);
     }
-  }, [form, mode, sourceStatementId, onCreated, t]);
+  }, [form, mode, onCreated, sourceStatementPackId, t]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
@@ -155,14 +157,14 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
                   {t('finance.model.sourceStatement', 'Source statement')}
                 </label>
                 <select
-                  value={sourceStatementId}
+                  value={sourceStatementPackId}
                   onChange={(e) => updateFromStatement(e.target.value)}
                   className="mt-1 w-full px-3 py-2 border border-slate-200 dark:border-navy-600 rounded-lg text-sm bg-white dark:bg-navy-800"
                 >
-                  <option value="">{t('finance.model.selectStatement', 'Select statement')}</option>
+                  <option value="">{t('finance.model.selectStatement', 'Select statement pack')}</option>
                   {availableStatements.map((statement) => (
                     <option key={statement.id} value={statement.id}>
-                      {statement.periodLabel || statement.title} - {statement.statementType} -{' '}
+                      {statement.entityName || statement.title} - {statement.periodLabel || statement.periodEnd} -{' '}
                       {statement.currency}
                     </option>
                   ))}
@@ -171,11 +173,14 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
               {selectedStatement && (
                 <div className="rounded-lg bg-slate-50 dark:bg-navy-800/70 p-3 text-xs text-slate-600 dark:text-slate-300">
                   <div>
+                    {t('finance.model.seedEntity', 'Entity')}: {selectedStatement.entityName || '—'}
+                  </div>
+                  <div>
                     {t('finance.model.seedPeriod', 'Period')}: {selectedStatement.periodLabel || '—'}
                   </div>
                   <div>
                     {t('finance.model.seedStatus', 'Seed status')}:{' '}
-                    {String(selectedStatement.rawStatus || '').toLowerCase() === 'confirmed'
+                    {String(selectedStatement.readinessStatus || '').toLowerCase() === 'ready'
                       ? t('finance.model.seedReady', 'ready')
                       : t('finance.model.seedNeedsConfirmation', 'requires confirmation')}
                   </div>
@@ -268,7 +273,7 @@ export const CreateModelModal: React.FC<CreateModelModalProps> = ({
           </button>
           <button
             onClick={handleCreate}
-            disabled={!form.name || creating || (mode === 'statement' && !sourceStatementId)}
+            disabled={!form.name || creating || (mode === 'statement' && !sourceStatementPackId)}
             className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-500 disabled:opacity-50"
           >
             {t('common.create', 'Create')}

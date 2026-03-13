@@ -11,6 +11,7 @@ import {
   Bot,
   ChevronDown,
   ChevronRight,
+  CircleDot,
   ExternalLink,
   FileText,
   GitBranch,
@@ -731,6 +732,38 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
             onChange={(val) => onNodeDataChange(nodeId, { riskNote: val })}
           />
 
+          {/* Semantic Type */}
+          <SectionToggle
+            title={isPl ? 'Typ semantyczny' : 'Semantic type'}
+            icon={CircleDot}
+            expanded={expandedSections.has('semantic_type')}
+            onToggle={() => toggleSection('semantic_type')}
+          >
+            <select
+              value={nodeData.semanticType || ''}
+              onChange={(e) => onNodeDataChange(nodeId, { semanticType: e.target.value || undefined })}
+              disabled={locked}
+              className="w-full h-9 px-3 rounded-lg text-sm bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-600 text-slate-700 dark:text-slate-300 focus:outline-none focus:border-purple-400 transition-colors"
+            >
+              <option value="">{isPl ? '— Brak —' : '— None —'}</option>
+              {[
+                { value: 'hypothesis', pl: 'Hipoteza', en: 'Hypothesis' },
+                { value: 'decision', pl: 'Decyzja', en: 'Decision' },
+                { value: 'risk', pl: 'Ryzyko', en: 'Risk' },
+                { value: 'opportunity', pl: 'Szansa', en: 'Opportunity' },
+                { value: 'action', pl: 'Akcja', en: 'Action' },
+                { value: 'evidence', pl: 'Dowód', en: 'Evidence' },
+                { value: 'insight', pl: 'Wniosek', en: 'Insight' },
+                { value: 'customer', pl: 'Klient', en: 'Customer' },
+                { value: 'blocker', pl: 'Blocker', en: 'Blocker' },
+              ].map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {isPl ? opt.pl : opt.en}
+                </option>
+              ))}
+            </select>
+          </SectionToggle>
+
           {/* Tags */}
           <SectionToggle
             title={isPl ? 'Tagi' : 'Tags'}
@@ -952,10 +985,26 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   {isPl ? 'Brak podpiętych artefaktów' : 'No linked artifacts'}
                 </div>
               )}
+              {!locked && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent('idea-mindmap-node-quick-action', {
+                        detail: { action: 'attach_artifact', nodeId },
+                      })
+                    );
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-500/5 hover:bg-primary-500/10 transition-colors mb-1.5"
+                >
+                  <Plus size={12} />
+                  {isPl ? 'Dołącz artefakt' : 'Attach artifact'}
+                </button>
+              )}
               {artifactLinks.map((link) => {
                 const artifactType = String(link?.artifactRef?.type || '');
                 const artifactId = String(link?.artifactRef?.id || '');
-                const label = link?.label || getArtifactLabel(artifactType as any, isPl);
+                const label = link?.label || getArtifactLabel(artifactType as any, isPl ? 'pl' : 'en');
                 return (
                   <div
                     key={`${artifactType}:${artifactId}`}

@@ -47,7 +47,7 @@ export function useFinanceData(
   const [loadingTab, setLoadingTab] = useState<FinanceKind | null>('models');
 
   const loadStatements = useCallback(async () => {
-    const data = await Api.get('/api/finance-statements');
+    const data = await Api.get('/api/finance-statements/packs');
     setStatements(Array.isArray(data) ? data : []);
   }, []);
 
@@ -111,36 +111,70 @@ export function useFinanceData(
     if (activeTab === 'statements') {
       return (statements || [])
         .map((s: any): FinanceStatementRow => {
-          const rawStatus = String(s.status || 'draft');
+          const rawStatus = String(s.pack_status || s.status || 'draft');
           const validationStatus = String(s.validation_status || 'pending');
-          const readinessStatus = String(s.readiness_status || 'pending');
-          const mappedLineCount = Number(s.mapped_line_count ?? 0);
-          const unmappedLineCount = Number(s.unmapped_line_count ?? 0);
-          const totalLineCount = Number(s.total_line_count ?? mappedLineCount + unmappedLineCount);
-          const effectiveReadiness = deriveStatementReadinessStatus(
-            readinessStatus,
-            rawStatus,
-            validationStatus,
-            mappedLineCount,
-            unmappedLineCount,
-            totalLineCount
+          const readinessStatus = String(s.pack_readiness_status || s.readiness_status || 'pending');
+          const childStatements = Array.isArray(s.statements)
+            ? s.statements.map((statement: any) => ({
+                id: String(statement.id),
+                statementType: String(statement.statement_type || ''),
+                rawStatus: String(statement.status || 'draft'),
+                readinessStatus: String(statement.readiness_status || 'pending'),
+                readinessScore: Number(statement.readiness_score ?? 0),
+                validationStatus: String(statement.validation_status || 'pending'),
+                mappedLineCount: Number(statement.mapped_line_count ?? 0),
+                totalLineCount: Number(statement.total_line_count ?? 0),
+                unmappedLineCount: Number(statement.unmapped_line_count ?? 0),
+                sourceFileName: String(statement.source_file_name || ''),
+                updatedAt: String(statement.updated_at || statement.created_at || ''),
+              }))
+            : [];
+          const presentTypes = new Set<string>();
+          if (Number(s.pl_count ?? 0) > 0) presentTypes.add('P&L');
+          if (Number(s.bs_count ?? 0) > 0) presentTypes.add('BS');
+          if (Number(s.cf_count ?? 0) > 0) presentTypes.add('CF');
+          for (const statement of childStatements) {
+            if (statement.statementType) presentTypes.add(statement.statementType);
+          }
+          const mappedLineCount = childStatements.reduce(
+            (sum: number, statement: any) => sum + Number(statement.mappedLineCount || 0),
+            0
           );
+          const unmappedLineCount = childStatements.reduce(
+            (sum: number, statement: any) => sum + Number(statement.unmappedLineCount || 0),
+            0
+          );
+          const totalLineCount = Number(s.total_line_count ?? mappedLineCount + unmappedLineCount);
+          const effectiveReadiness = String(readinessStatus || 'pending').toLowerCase();
           let readinessReasonCodes: string[] = [];
           try {
-            readinessReasonCodes = Array.isArray(s.quality_reason_codes)
-              ? s.quality_reason_codes.map((code: unknown) => String(code))
-              : typeof s.quality_reason_codes === 'string' && s.quality_reason_codes.trim().startsWith('[')
-                ? JSON.parse(s.quality_reason_codes).map((code: unknown) => String(code))
+            readinessReasonCodes = Array.isArray(s.pack_quality_reason_codes)
+              ? s.pack_quality_reason_codes.map((code: unknown) => String(code))
+              : typeof s.pack_quality_reason_codes === 'string' &&
+                  s.pack_quality_reason_codes.trim().startsWith('[')
+                ? JSON.parse(s.pack_quality_reason_codes).map((code: unknown) => String(code))
                 : [];
           } catch {
             readinessReasonCodes = [];
           }
+          let missingStatementTypes: string[] = [];
+          try {
+            missingStatementTypes = Array.isArray(s.missing_statement_types)
+              ? s.missing_statement_types.map((type: unknown) => String(type))
+              : typeof s.missing_statement_types === 'string' &&
+                  s.missing_statement_types.trim().startsWith('[')
+                ? JSON.parse(s.missing_statement_types).map((type: unknown) => String(type))
+                : [];
+          } catch {
+            missingStatementTypes = [];
+          }
+          const completenessLabel = ['P&L', 'BS', 'CF']
+            .map((type) => (presentTypes.has(type) ? type : `—${type}`))
+            .join(' / ');
           return {
             id: String(s.id),
             title: String(
-              s.period_label ||
-                s.source_file_name ||
-                `${s.statement_type || 'Statement'} ${s.period_end || ''}`
+              s.period_label || s.entity_name || `${t('finance.pack.titleFallback', 'Statement Pack')} ${s.period_end || ''}`
             ),
             kind: 'statements',
             status:
@@ -149,35 +183,43 @@ export function useFinanceData(
                 : effectiveReadiness === 'recoverable'
                   ? 'REVIEW'
                   : 'DRAFT',
-            statementType: String(s.statement_type || ''),
+            statementType: 'PACK',
+            statementPackId: String(s.id),
+            entityName: String(s.entity_name || ''),
             periodStart: String(s.period_start || ''),
             periodEnd: String(s.period_end || ''),
             periodLabel: String(s.period_label || ''),
             currency: String(s.currency || 'PLN'),
             scaling: String(s.scaling || 'units'),
-            sourceFileName: String(s.source_file_name || ''),
+            sourceFileName: childStatements
+              .map((statement: any) => statement.sourceFileName)
+              .filter(Boolean)
+              .join(', '),
             validationStatus,
             mappedLineCount,
             totalLineCount,
             unmappedLineCount,
+            sourceStatementCount: Number(
+              s.source_statement_count ??
+                childStatements.length ??
+                Number(s.pl_count ?? 0) + Number(s.bs_count ?? 0) + Number(s.cf_count ?? 0)
+            ),
+            statementIds: childStatements.map((statement: any) => statement.id),
+            missingStatementTypes,
+            completenessLabel,
+            childStatements,
             nonFinancialLineCount: Number(s.non_financial_line_count ?? 0),
             overallConfidence: Number(s.overall_confidence ?? 0),
             rawStatus,
             readinessStatus: effectiveReadiness,
-            readinessScore: Number(s.readiness_score ?? 0),
-            readinessSummary: String(s.quality_summary || ''),
+            readinessScore: Number(s.pack_readiness_score ?? s.readiness_score ?? 0),
+            readinessSummary: String(s.pack_quality_summary || s.quality_summary || ''),
             readinessReasonCodes,
             documentClass: String(s.document_class || ''),
             extractionStrategy: String(s.extraction_strategy || ''),
             templateFamily: s.template_family ? String(s.template_family) : null,
             valuesVersion: Number(s.values_version ?? 0),
-            isWorkable: isWorkableStatement(
-              effectiveReadiness,
-              rawStatus,
-              validationStatus,
-              mappedLineCount,
-              unmappedLineCount
-            ),
+            isWorkable: effectiveReadiness === 'ready',
             updatedAt: String(s.updated_at || s.created_at || new Date().toISOString()),
           };
         });
@@ -194,7 +236,14 @@ export function useFinanceData(
         horizonMonths: Number(m.horizon_months || 0),
         startDate: String(m.start_date || ''),
         sourceStatementId: m.source_statement_id ? String(m.source_statement_id) : undefined,
-        seedSourceType: m.source_statement_id ? 'statement' : 'manual',
+        sourceStatementPackId: m.source_statement_pack_id
+          ? String(m.source_statement_pack_id)
+          : undefined,
+        seedSourceType: m.source_statement_pack_id
+          ? 'statement_pack'
+          : m.source_statement_id
+            ? 'statement'
+            : 'manual',
         updatedAt: String(m.updated_at || m.created_at || new Date().toISOString()),
       }));
     }
@@ -210,7 +259,14 @@ export function useFinanceData(
         horizonMonths: Number(m.horizon_months || 0),
         startDate: String(m.start_date || ''),
         sourceStatementId: m.source_statement_id ? String(m.source_statement_id) : undefined,
-        seedSourceType: m.source_statement_id ? 'statement' : 'manual',
+        sourceStatementPackId: m.source_statement_pack_id
+          ? String(m.source_statement_pack_id)
+          : undefined,
+        seedSourceType: m.source_statement_pack_id
+          ? 'statement_pack'
+          : m.source_statement_id
+            ? 'statement'
+            : 'manual',
         updatedAt: String(m.updated_at || m.created_at || new Date().toISOString()),
       }));
       const budgetRows: FinanceModelRow[] = (budgets || []).map((b: any) => ({
@@ -250,6 +306,7 @@ export function useFinanceData(
         sourceStatementIds: Array.isArray(a.sourceStatementIds || a.source_statement_ids)
           ? (a.sourceStatementIds || a.source_statement_ids).map((id: unknown) => String(id))
           : [],
+        sourceStatementPackId: a.sourceStatementPackId || a.source_statement_pack_id || undefined,
         updatedAt: String(
           a.updatedAt || a.updated_at || a.createdAt || a.created_at || new Date().toISOString()
         ),

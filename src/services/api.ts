@@ -3302,6 +3302,29 @@ export const Api = {
     return handleResponse(res, 'Failed to save idea map');
   },
 
+  syncMyIdeaMap: async (
+    ideaId: string,
+    payload: {
+      nodes: any[];
+      edges: any[];
+      baseVersion?: number;
+      preferredTool?: 'mindmap' | 'process_flow' | 'table' | 'whiteboard';
+      extensions?: Record<string, unknown>;
+      fromAI?: boolean;
+      reason?: 'draft' | 'manual' | 'semantic' | 'ai';
+    }
+  ): Promise<any> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/sync`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to sync idea map');
+  },
+
   expandMyIdeaMap: async (
     ideaId: string,
     payload: {
@@ -4377,26 +4400,6 @@ export const Api = {
     if (!res.ok) throw new Error('Failed to fetch executive analytics');
     return res.json();
   },
-  getAutomationRules: async () => {
-    const res = await fetch(`${API_URL}/my-work/automation-rules`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch automation rules');
-    return res.json();
-  },
-  createAutomationRule: async (rule: {
-    name: string;
-    triggerType?: string;
-    conditions?: any[];
-    actions: any[];
-  }) => {
-    const res = await fetch(`${API_URL}/my-work/automation-rules`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(rule),
-    });
-    if (!res.ok) throw new Error('Failed to create automation rule');
-    return res.json();
-  },
-
   getTaskDecisions: async (taskId: string): Promise<any[]> => {
     const res = await fetch(`${API_URL}/decisions?taskId=${taskId}`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch task decisions');
@@ -7423,6 +7426,19 @@ export const Api = {
       body: JSON.stringify(message),
     });
     return handleResponse(res, 'Failed to add message');
+  },
+  saveConversationMessageToContext: async (
+    conversationId: string,
+    messageId: string
+  ): Promise<{ ok: boolean; itemId?: string; alreadyCaptured?: boolean }> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/conversations/${conversationId}/messages/${messageId}/save-to-context`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to save message to organization context');
   },
 
   /**
