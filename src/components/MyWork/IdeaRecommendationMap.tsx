@@ -3624,7 +3624,7 @@ function MindMapInner({
   const containerClassName =
     variant === 'overlay'
       ? 'fixed inset-0 z-[80] bg-slate-50 dark:bg-navy-950'
-      : `relative w-full h-full bg-slate-50 dark:bg-navy-950 ${className || ''}`;
+      : `relative w-full h-full bg-slate-50 dark:bg-navy-950 isolate z-0 ${className || ''}`;
 
   const floatingToolbarInfo = useMemo(() => {
     if (locked) return null;

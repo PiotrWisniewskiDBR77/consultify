@@ -2081,52 +2081,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           }}
         />
 
-        <CanvasLeftToolbar
-          activeTool={activeTool}
-          interactionMode={mindMapInteractionMode}
-          selection={selection}
-          isAccepted={isAccepted}
-          ideaId={realId}
-          onAction={(action) => handleQuickAction(action)}
-          onOpenChat={() => { setChatKickoffMessage(''); if (isChatCollapsed) toggleChatCollapse(); }}
-          onApplyTemplate={handleApplyTemplate}
-          onOpenTemplateGallery={() => setTemplateGalleryOpen(true)}
-        />
-
-        {governanceSummary && (
-          <div className="absolute left-[4.5rem] top-4 z-[56] rounded-2xl border border-slate-200/70 bg-white/95 px-3 py-2 text-[11px] shadow-lg dark:border-navy-700/70 dark:bg-navy-900/95">
-            <div className="font-semibold text-slate-700 dark:text-slate-200">
-              {isPolish ? 'Review state' : 'Review state'}: {governanceSummary.status}
-            </div>
-            {(governanceSummary.actor || governanceSummary.note) && (
-              <div className="mt-0.5 text-slate-500 dark:text-slate-400">
-                {[governanceSummary.actor, governanceSummary.note].filter(Boolean).join(' • ')}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Workspace bottom toolbar */}
-        <IdeaWorkspaceToolbar
-          activeTool={activeTool}
-          onToolChange={setActiveTool}
-          familyCounts={familyCounts}
-        />
-
-        {/* Proposal review overlay */}
-        {proposalBatch && (
-          <div className="absolute bottom-4 left-4 right-4 z-[90] max-w-lg mx-auto">
-            <IdeaProposalReview
-              batch={proposalBatch}
-              onAccept={handleAcceptProposal}
-              onReject={handleRejectProposal}
-              onAcceptAll={handleAcceptAllProposals}
-              onRejectAll={handleRejectAllProposals}
-              onDismiss={() => setProposalBatch(null)}
-            />
-          </div>
-        )}
-
         {/* Canvas tools — each wrapped in error boundary for resilience */}
         {activeTool === 'mindmap' && (
           <CanvasToolErrorBoundary
@@ -2256,6 +2210,51 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               isFullscreen={isFullscreen}
             />
           </CanvasToolErrorBoundary>
+        )}
+
+        {/* UI overlays rendered AFTER canvas tools so they appear on top */}
+        <CanvasLeftToolbar
+          activeTool={activeTool}
+          interactionMode={mindMapInteractionMode}
+          selection={selection}
+          isAccepted={isAccepted}
+          ideaId={realId}
+          onAction={(action) => handleQuickAction(action)}
+          onOpenChat={() => { setChatKickoffMessage(''); if (isChatCollapsed) toggleChatCollapse(); }}
+          onApplyTemplate={handleApplyTemplate}
+          onOpenTemplateGallery={() => setTemplateGalleryOpen(true)}
+        />
+
+        {governanceSummary && (
+          <div className="absolute left-[4.5rem] top-4 z-[56] rounded-2xl border border-slate-200/70 bg-white/95 px-3 py-2 text-[11px] shadow-lg dark:border-navy-700/70 dark:bg-navy-900/95">
+            <div className="font-semibold text-slate-700 dark:text-slate-200">
+              {isPolish ? 'Review state' : 'Review state'}: {governanceSummary.status}
+            </div>
+            {(governanceSummary.actor || governanceSummary.note) && (
+              <div className="mt-0.5 text-slate-500 dark:text-slate-400">
+                {[governanceSummary.actor, governanceSummary.note].filter(Boolean).join(' • ')}
+              </div>
+            )}
+          </div>
+        )}
+
+        <IdeaWorkspaceToolbar
+          activeTool={activeTool}
+          onToolChange={setActiveTool}
+          familyCounts={familyCounts}
+        />
+
+        {proposalBatch && (
+          <div className="absolute bottom-4 left-4 right-4 z-[90] max-w-lg mx-auto">
+            <IdeaProposalReview
+              batch={proposalBatch}
+              onAccept={handleAcceptProposal}
+              onReject={handleRejectProposal}
+              onAcceptAll={handleAcceptAllProposals}
+              onRejectAll={handleRejectAllProposals}
+              onDismiss={() => setProposalBatch(null)}
+            />
+          </div>
         )}
       </div>
 
