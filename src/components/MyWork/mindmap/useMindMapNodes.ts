@@ -89,12 +89,16 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
   );
 
   const addChildNode = useCallback((anchorNodeId?: string) => {
-    if (locked) return;
+    console.log('[MindMap:addChildNode] called with anchorNodeId:', anchorNodeId, 'locked:', locked);
+    if (locked) { console.log('[MindMap:addChildNode] BLOCKED: locked'); return; }
     const selected = getNodeById(anchorNodeId) || getSelectedNode();
+    console.log('[MindMap:addChildNode] selected node:', selected?.id, selected?.type, 'from nodes count:', nodes.length);
     if (!selected) {
+      console.log('[MindMap:addChildNode] NO NODE FOUND');
       toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
       return;
     }
+    console.log('[MindMap:addChildNode] CREATING child for', selected.id);
     pushUndo();
 
     const branchKey = selected.data?.branchKey || 'uncategorized';
@@ -124,6 +128,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         ...prev.map((n) => ({ ...n, selected: false })),
         { ...newNode, selected: true },
       ];
+      console.log('[MindMap:addChildNode] setNodes updater: prev=', prev.length, 'next=', nextNodes.length, 'newId=', newId);
       const nextEdges = [...edges, newEdge];
       if (autoLayout) {
         const laid = autoLayout(nextNodes, nextEdges);
@@ -132,6 +137,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       return nextNodes;
     });
     setEdges((prev: Edge[]) => [...prev, newEdge]);
+    console.log('[MindMap:addChildNode] DONE - node and edge added');
 
     setTimeout(() => {
       try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }

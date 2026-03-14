@@ -2071,20 +2071,23 @@ function MindMapInner({
   useEffect(() => {
     const handler = (e: Event) => {
       const { nodeId, label, cancelled } = (e as CustomEvent).detail;
+      console.log('[MindMap:edit] event:', { nodeId, label, cancelled });
       debugLog(`CUSTOM_EVENT idea-mindmap-node-edit`, {
         source: 'custom',
         detail: summarizeDebugDetail({ nodeId, cancelled, label }),
       });
       editingNodeIdRef.current = null;
+
+      const fallback = isPolish ? 'Nowy pomysł' : 'New idea';
+
       if (cancelled) {
-        // If it was a new empty node, remove it
         setNodes((prev: Node[]) => {
           const node = prev.find((n) => n.id === nodeId);
           if (node && !node.data?.label) {
-            setEdges((pe: Edge[]) =>
-              pe.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+            console.log('[MindMap:edit] cancelled empty node → assigning fallback label');
+            return prev.map((n) =>
+              n.id === nodeId ? { ...n, data: { ...n.data, label: fallback, _startEditing: undefined } } : n
             );
-            return prev.filter((n) => n.id !== nodeId);
           }
           return prev.map((n) =>
             n.id === nodeId ? { ...n, data: { ...n.data, _startEditing: undefined } } : n
@@ -2093,9 +2096,12 @@ function MindMapInner({
         return;
       }
       if (!label) {
-        // Empty label on confirm = delete node
-        setNodes((prev: Node[]) => prev.filter((n) => n.id !== nodeId));
-        setEdges((prev: Edge[]) => prev.filter((e) => e.source !== nodeId && e.target !== nodeId));
+        console.log('[MindMap:edit] empty label → assigning fallback label');
+        setNodes((prev: Node[]) =>
+          prev.map((n) =>
+            n.id === nodeId ? { ...n, data: { ...n.data, label: fallback, _startEditing: undefined } } : n
+          )
+        );
         return;
       }
       setNodes((prev: Node[]) =>
@@ -2106,7 +2112,7 @@ function MindMapInner({
     };
     window.addEventListener('idea-mindmap-node-edit', handler);
     return () => window.removeEventListener('idea-mindmap-node-edit', handler);
-  }, [debugLog, setEdges, setNodes]);
+  }, [debugLog, isPolish, setEdges, setNodes]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -3281,7 +3287,9 @@ function MindMapInner({
   const handleContextAction = useCallback(
     (action: string) => {
       debugLog(`handleContextAction: "${action}"`);
+      console.log('[MindMap] handleContextAction:', action);
       const ctxNode = getContextTargetNode();
+      console.log('[MindMap] ctxNode:', ctxNode?.id, ctxNode?.type);
       const updateNodeData = (nodeId: string, updater: (data: any) => any) => {
         setNodes((prev: Node[]) =>
           prev.map((node) =>
