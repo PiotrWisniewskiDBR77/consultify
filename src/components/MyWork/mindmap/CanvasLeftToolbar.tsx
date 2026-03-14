@@ -64,8 +64,7 @@ interface ToolSlot {
 }
 
 const SHARED_TOP: ToolSlot[] = [
-  { id: 'select', icon: MousePointer2, labelPl: 'Zaznaczanie', labelEn: 'Select', action: 'mm_select_mode' },
-  { id: 'pan', icon: Hand, labelPl: 'Przesuwanie', labelEn: 'Pan', action: 'mm_pan_mode' },
+  { id: 'pointer_toggle', icon: MousePointer2, labelPl: 'Tryb kursora', labelEn: 'Cursor mode', action: 'mm_toggle_pointer' },
   { id: 'templates', icon: LayoutTemplate, labelPl: 'Szablony', labelEn: 'Templates', popover: 'templates' },
 ];
 
@@ -78,27 +77,27 @@ const MM_CONTEXT_SLOTS: ToolSlot[] = [
 ];
 
 const WB_CONTEXT_SLOTS: ToolSlot[] = [
-  { id: 'sticky', icon: StickyNote, labelPl: 'Karteczka', labelEn: 'Sticky', action: 'wb_sticky' },
-  { id: 'text', icon: Type, labelPl: 'Tekst', labelEn: 'Text', action: 'wb_text' },
-  { id: 'shape', icon: Square, labelPl: 'Kształt', labelEn: 'Shape', action: 'wb_shape' },
-  { id: 'pen', icon: Pen, labelPl: 'Rysuj', labelEn: 'Draw', action: 'wb_draw' },
-  { id: 'frame', icon: Frame, labelPl: 'Ramka', labelEn: 'Frame', action: 'wb_frame' },
+  { id: 'sticky', icon: StickyNote, labelPl: 'Karteczka', labelEn: 'Sticky', action: 'wb_add_sticky' },
+  { id: 'text', icon: Type, labelPl: 'Tekst', labelEn: 'Text', action: 'wb_add_text' },
+  { id: 'shape', icon: Square, labelPl: 'Kształt', labelEn: 'Shape', action: 'wb_add_shape_rectangle' },
+  { id: 'pen', icon: Pen, labelPl: 'Rysuj', labelEn: 'Draw', action: 'wb_mode_draw' },
+  { id: 'frame', icon: Frame, labelPl: 'Ramka', labelEn: 'Frame', action: 'wb_add_frame' },
 ];
 
 const PF_CONTEXT_SLOTS: ToolSlot[] = [
-  { id: 'start', icon: Workflow, labelPl: 'Start/End', labelEn: 'Start/End', action: 'pf_start_end' },
-  { id: 'task', icon: Square, labelPl: 'Task', labelEn: 'Task', action: 'pf_task' },
-  { id: 'decision', icon: Diamond, labelPl: 'Decyzja', labelEn: 'Decision', action: 'pf_decision' },
+  { id: 'start', icon: Workflow, labelPl: 'Start/End', labelEn: 'Start/End', action: 'pf_add_start' },
+  { id: 'task', icon: Square, labelPl: 'Task', labelEn: 'Task', action: 'pf_add_action' },
+  { id: 'decision', icon: Diamond, labelPl: 'Decyzja', labelEn: 'Decision', action: 'pf_add_decision' },
   { id: 'lane', icon: Plus, labelPl: 'Lane', labelEn: 'Lane', action: 'pf_add_lane' },
-  { id: 'frame', icon: Frame, labelPl: 'Ramka', labelEn: 'Frame', action: 'pf_frame' },
+  { id: 'frame', icon: Frame, labelPl: 'Ramka', labelEn: 'Frame', action: 'wb_add_frame' },
 ];
 
 const TBL_CONTEXT_SLOTS: ToolSlot[] = [
   { id: 'row', icon: Plus, labelPl: 'Nowy wiersz', labelEn: 'Add row', action: 'tbl_add_row' },
-  { id: 'cols', icon: Columns3, labelPl: 'Kolumny', labelEn: 'Columns', action: 'tbl_columns' },
-  { id: 'grid', icon: LayoutGrid, labelPl: 'Widok', labelEn: 'View', action: 'tbl_view' },
+  { id: 'cols', icon: Columns3, labelPl: 'Kolumny', labelEn: 'Columns', action: 'tbl_add_column' },
+  { id: 'grid', icon: LayoutGrid, labelPl: 'Widok', labelEn: 'View', action: 'tbl_grid' },
   { id: 'filter', icon: Filter, labelPl: 'Filtruj', labelEn: 'Filter', action: 'tbl_filter' },
-  { id: 'frame', icon: Frame, labelPl: 'Ramka', labelEn: 'Frame', action: 'tbl_frame' },
+  { id: 'summary', icon: Frame, labelPl: 'Dashboard', labelEn: 'Dashboard', action: 'tbl_summary' },
 ];
 
 const CONTEXT_SLOTS: Record<CanvasToolType, ToolSlot[]> = {
@@ -161,13 +160,48 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
 
   const closePopover = useCallback(() => setOpenPopover(null), []);
 
+  const handlePointerToggle = useCallback(() => {
+    const next = interactionMode === 'select' ? 'pan' : 'select';
+    onAction(next === 'select' ? 'mm_select_mode' : 'mm_pan_mode');
+    setOpenPopover(null);
+  }, [interactionMode, onAction]);
+
+  const pointerTooltip = (() => {
+    if (interactionMode === 'select') {
+      return isPl
+        ? 'Zaznaczanie — klik zaznacza, kliknij by przełączyć na przesuwanie'
+        : 'Select — click to select nodes, click to switch to pan';
+    }
+    return isPl
+      ? 'Przesuwanie — przeciągaj canvas, kliknij by przełączyć na zaznaczanie'
+      : 'Pan — drag the canvas, click to switch to select';
+  })();
+
   const renderSlot = (slot: ToolSlot, idx: number) => {
+    if (slot.id === 'pointer_toggle') {
+      const PointerIcon = interactionMode === 'pan' ? Hand : MousePointer2;
+      return (
+        <div key={slot.id} className="relative">
+          <button
+            onClick={handlePointerToggle}
+            title={pointerTooltip}
+            className="flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 bg-primary-500/10 text-primary-600 dark:text-primary-400"
+          >
+            <PointerIcon size={15} />
+          </button>
+          <div className="absolute left-[calc(100%+6px)] top-1/2 -translate-y-1/2 pointer-events-none">
+            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider whitespace-nowrap bg-primary-500/10 text-primary-500 dark:text-primary-400">
+              {interactionMode === 'pan' ? (isPl ? 'PAN' : 'PAN') : (isPl ? 'SEL' : 'SEL')}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
     const Icon = slot.icon;
     const isModeSlot =
       activeTool === 'mindmap' &&
-      ((slot.id === 'select' && interactionMode === 'select') ||
-        (slot.id === 'pan' && interactionMode === 'pan') ||
-        (slot.id === 'connect' && interactionMode === 'connect'));
+      (slot.id === 'connect' && interactionMode === 'connect');
     const isActive = isModeSlot || (openPopover === slot.popover && slot.popover != null);
     return (
       <div key={slot.id} className="relative">

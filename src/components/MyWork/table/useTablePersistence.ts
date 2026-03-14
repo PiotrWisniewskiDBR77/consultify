@@ -7,6 +7,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
+import {
+  formatIdeaMapSyncLabel,
+  resolveIdeaMapHydration,
+  useIdeaMapSync,
+} from '@/components/MyWork/canvas/useIdeaMapSync';
 import { Api } from '@/services/api';
 import { getNodeArtifactLinks, withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
@@ -59,6 +64,8 @@ export interface UseTablePersistenceOpts {
 export interface UseTablePersistenceReturn {
   loading: boolean;
   saving: boolean;
+  syncState: string;
+  saveStatusLabel: string;
   handleSave: () => Promise<void>;
 }
 
@@ -95,15 +102,72 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
   } = opts;
 
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const didPersistPreferredRef = useRef(false);
+  const {
+    saving,
+    syncState,
+    lastSavedAt,
+    queueSync,
+    flushNow,
+    primeServerVersion,
+  } = useIdeaMapSync({
+    ideaId,
+    tool: 'table',
+    open,
+    locked,
+  });
+
+  const buildPayload = useCallback(
+    () => ({
+      nodes: nodes as any,
+      edges: edges as any,
+      preferredTool: 'table' as CanvasToolType,
+      extensions: {
+        ...extensions,
+        table: {
+          columns: columns.map((c) => ({
+            key: c.key,
+            header: c.header,
+            type: c.type,
+            visible: c.visible,
+            width: c.width,
+            options: c.options,
+            optionColors: c.optionColors,
+            formula: c.formula,
+            aiPrompt: c.aiPrompt,
+            aggregation: c.aggregation,
+          })),
+          views: savedViews,
+          activeViewId,
+          viewState: { sort, filters, groupBy },
+          formatting: formatRules,
+          viewLayout,
+        },
+      },
+    }),
+    [
+      activeViewId,
+      columns,
+      edges,
+      extensions,
+      filters,
+      formatRules,
+      groupBy,
+      nodes,
+      savedViews,
+      sort,
+      viewLayout,
+    ]
+  );
 
   const hydrate = useCallback(async () => {
     if (!open) return;
     setLoading(true);
     try {
       const res = await Api.getMyIdeaMap(ideaId, { language });
-      const map = res?.map || {};
+      const hydration = resolveIdeaMapHydration(ideaId, res?.map || {});
+      const map = hydration.map || {};
+      primeServerVersion(Number(map?.version || 1));
       const nextNodes = Array.isArray(map.nodes) ? (map.nodes as any[]) : [];
       const nextEdges = Array.isArray(map.edges) ? (map.edges as any[]) : [];
       const nextExtensions =
@@ -176,9 +240,10 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
         didPersistPreferredRef.current = true;
         const preferred = map?.preferredTool ? String(map.preferredTool) : null;
         if (preferred !== 'table') {
-          Api.saveMyIdeaMap(ideaId, {
+          Api.syncMyIdeaMap(ideaId, {
             nodes: nextNodes as any,
             edges: nextEdges as any,
+            baseVersion: Number(map?.version || 1),
             preferredTool: 'table',
             extensions: nextExtensions,
           }).catch(() => undefined);
@@ -203,60 +268,29 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
 
   const handleSave = useCallback(async () => {
     if (locked) return;
-    setSaving(true);
     try {
-      const nextExt = {
-        ...extensions,
-        table: {
-          columns: columns.map((c) => ({
-            key: c.key,
-            header: c.header,
-            type: c.type,
-            visible: c.visible,
-            width: c.width,
-            options: c.options,
-            optionColors: c.optionColors,
-            formula: c.formula,
-            aiPrompt: c.aiPrompt,
-            aggregation: c.aggregation,
-          })),
-          views: savedViews,
-          activeViewId,
-          viewState: { sort, filters, groupBy },
-          formatting: formatRules,
-          viewLayout,
-        },
-      };
-      await Api.saveMyIdeaMap(ideaId, {
-        nodes: nodes as any,
-        edges: edges as any,
-        preferredTool: 'table' as CanvasToolType,
-        extensions: nextExt,
+      await flushNow(buildPayload(), {
+        reason: 'manual',
+        createSnapshot: true,
+        snapshotLabel: isPl ? 'Tabela checkpoint' : 'Table checkpoint',
       });
       toast.success(isPl ? 'Zapisano' : 'Saved', { duration: 900 });
       onSaved?.();
     } catch (err: any) {
       toast.error(err?.message || (isPl ? 'Nie udało się zapisać' : 'Failed to save'));
-    } finally {
-      setSaving(false);
     }
-  }, [
-    activeViewId,
-    columns,
-    edges,
-    extensions,
-    filters,
-    groupBy,
-    ideaId,
-    isPl,
-    locked,
-    nodes,
-    onSaved,
-    savedViews,
-    sort,
-    formatRules,
-    viewLayout,
-  ]);
+  }, [buildPayload, flushNow, isPl, locked, onSaved]);
 
-  return { loading, saving, handleSave };
+  useEffect(() => {
+    if (!open || locked || loading) return;
+    queueSync(buildPayload(), { reason: 'draft' });
+  }, [buildPayload, loading, locked, open, queueSync]);
+
+  return {
+    loading,
+    saving,
+    syncState,
+    saveStatusLabel: formatIdeaMapSyncLabel(syncState, lastSavedAt, isPl),
+    handleSave,
+  };
 }

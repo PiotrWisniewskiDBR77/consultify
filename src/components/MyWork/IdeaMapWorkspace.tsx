@@ -551,7 +551,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           action,
         });
 
-        const selectedIds = selection.ids || [];
+        const sel = selectionRef.current;
+        const selectedIds = sel.ids || [];
         const liveNodes = graphNodesRef.current || [];
         const liveEdges = graphEdgesRef.current || [];
         const selectedSet = new Set(selectedIds);
@@ -560,11 +561,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           if (live) return live;
           return {
             id,
-            type: selection.meta?.nodeType || 'default',
+            type: sel.meta?.nodeType || 'default',
             position: { x: 0, y: 0 },
             data: {
-              label: i === 0 && selection.meta?.label ? selection.meta.label : `Item ${i + 1}`,
-              status: selection.meta?.status,
+              label: i === 0 && sel.meta?.label ? sel.meta.label : `Item ${i + 1}`,
+              status: sel.meta?.status,
             },
           };
         });
@@ -637,7 +638,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       // V51-30: Attach artifact — open real popover
       if (action === 'attach_artifact') {
         trackFunnelEvent('ideas_attach_artifact', { tool: activeTool });
-        if (selection.type === 'none' || !selection.ids?.length) {
+        const sel2 = selectionRef.current;
+        if (sel2.type === 'none' || !sel2.ids?.length) {
           toast(
             isPolish
               ? 'Najpierw zaznacz obiekt na canvasie'
@@ -2203,7 +2205,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               ideaId={realId}
               locked={canvasLocked}
               refreshToken={mapRefreshToken}
-              onSaved={() => setMapRefreshToken((v) => v + 1)}
               onSelectionChange={handleSelectionChange}
               onConvert={(target) =>
                 handleConvert(target === 'task' ? 'task_set' : (target as any))
@@ -2224,7 +2225,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               ideaId={realId}
               locked={canvasLocked}
               refreshToken={mapRefreshToken}
-              onSaved={() => setMapRefreshToken((v) => v + 1)}
               onSelectionChange={handleSelectionChange}
               onNodeDetail={handleOpenNodeDetail}
               focusMode={toolFocusMode}
@@ -2245,7 +2245,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               ideaId={realId}
               locked={canvasLocked}
               refreshToken={mapRefreshToken}
-              onSaved={() => setMapRefreshToken((v) => v + 1)}
               onSelectionChange={handleSelectionChange}
               onNodeDetail={handleOpenNodeDetail}
               focusMode={toolFocusMode}
@@ -2305,8 +2304,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         graphNodes={graphNodes}
         graphEdges={graphEdges}
         evidenceCount={graphNodes.filter((n: any) => n?.data?.evidenceLinks?.length > 0).length}
-        onAISummarize={() => handleQuickAction('aiSummarize')}
-        onAIExpand={() => handleQuickAction('aiExpand')}
+        onAISummarize={() => handleQuickAction('mm_ai_summarize')}
+        onAIExpand={() => handleQuickAction('mm_ai_expand')}
         onLayoutChange={(mode) => {
           window.dispatchEvent(
             new CustomEvent('idea-mindmap-node-quick-action', {

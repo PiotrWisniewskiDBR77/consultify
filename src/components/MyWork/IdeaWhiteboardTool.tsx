@@ -74,6 +74,11 @@ import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
+import {
+  formatIdeaMapSyncLabel,
+  resolveIdeaMapHydration,
+  useIdeaMapSync,
+} from './canvas/useIdeaMapSync';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import { type DrawingPath, IdeaDrawingLayer } from './IdeaDrawingLayer';
 import { KPIBadgeNode, ProgressNode, ScoreNode } from './IdeaMetricNodes';
@@ -1269,7 +1274,6 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   }, [currentUser?.email, currentUser?.firstName, currentUser?.lastName, isPl]);
 
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [whiteboardMode, setWhiteboardMode] = useState<'board' | 'draw'>('board');
@@ -1303,6 +1307,19 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     () => nodes.filter((node) => node.selected).map((node) => node.id),
     [nodes]
   );
+  const {
+    saving,
+    syncState,
+    lastSavedAt,
+    queueSync,
+    flushNow,
+    primeServerVersion,
+  } = useIdeaMapSync({
+    ideaId,
+    tool: 'whiteboard',
+    open,
+    locked,
+  });
   const lastSnapshotRef = useRef<WhiteboardCanvasSnapshot | null>(null);
   const undoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
   const redoStackRef = useRef<WhiteboardCanvasSnapshot[]>([]);
@@ -1463,7 +1480,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     setLoading(true);
     try {
       const res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
-      const map = res?.map || {};
+      const hydration = resolveIdeaMapHydration(ideaId, res?.map || {});
+      const map = hydration.map || {};
+      primeServerVersion(Number(map?.version || 1));
       const rawNodes = Array.isArray(map.nodes) ? (map.nodes as any[]) : [];
       const rawEdges = Array.isArray(map.edges) ? (map.edges as any[]) : [];
       const rawExt =
@@ -1580,9 +1599,10 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
         didPersistRef.current = true;
         const preferred = map?.preferredTool ? String(map.preferredTool) : null;
         if (preferred !== 'whiteboard') {
-          Api.saveMyIdeaMap(ideaId, {
+          Api.syncMyIdeaMap(ideaId, {
             nodes: rawNodes as any,
             edges: rawEdges as any,
+            baseVersion: Number(map?.version || 1),
             preferredTool: 'whiteboard',
             extensions: rawExt,
           }).catch(() => undefined);
@@ -1655,6 +1675,22 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     sharePolicy,
     whiteboardMode,
   ]);
+  const saveStatusLabel = useMemo(
+    () => formatIdeaMapSyncLabel(syncState, lastSavedAt, isPl),
+    [isPl, lastSavedAt, syncState]
+  );
+  const buildPersistPayload = useCallback(
+    () => ({
+      nodes: nodes as any,
+      edges: edges as any,
+      preferredTool: 'whiteboard' as CanvasToolType,
+      extensions: {
+        ...extensions,
+        whiteboard: buildWhiteboardExtensions(),
+      },
+    }),
+    [buildWhiteboardExtensions, edges, extensions, nodes]
+  );
 
   const ensureFacilitationSession = useCallback(async () => {
     if (sessionState.sessionId) return sessionState.sessionId;
@@ -2750,27 +2786,19 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   const handleSave = useCallback(async () => {
     if (locked) return;
-    setSaving(true);
     try {
-      const nextExt = {
-        ...extensions,
-        whiteboard: buildWhiteboardExtensions(),
-      };
-      await Api.saveMyIdeaMap(ideaId, {
-        nodes: nodes as any,
-        edges: edges as any,
-        preferredTool: 'whiteboard' as CanvasToolType,
-        extensions: nextExt,
+      await flushNow(buildPersistPayload(), {
+        reason: 'manual',
+        createSnapshot: true,
+        snapshotLabel: isPl ? 'Whiteboard checkpoint' : 'Whiteboard checkpoint',
       });
       rememberSnapshot(isPl ? 'Ręczny zapis' : 'Manual save');
       toast.success(isPl ? 'Zapisano' : 'Saved', { duration: 900 });
       onSaved?.();
     } catch (err: any) {
       toast.error(err?.message || (isPl ? 'Nie udało się zapisać' : 'Failed to save'));
-    } finally {
-      setSaving(false);
     }
-  }, [buildWhiteboardExtensions, edges, extensions, ideaId, isPl, locked, nodes, onSaved, rememberSnapshot]);
+  }, [buildPersistPayload, flushNow, isPl, locked, onSaved, rememberSnapshot]);
 
   // ── Align selected nodes ─────────────────────────────────────────────────
 
@@ -2848,38 +2876,11 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     [edges, locked, nodes, pushUndoSnapshot, setNodes]
   );
 
-  // ── Auto-save (debounced, 3s after last change) ──────────────────────────
-
-  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const nodesRef = useRef(nodes);
-  const edgesRef = useRef(edges);
-  nodesRef.current = nodes;
-  edgesRef.current = edges;
-
   useEffect(() => {
     if (!open || locked || loading) return;
     if (nodes.length === 0 && edges.length === 0) return;
-
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setTimeout(() => {
-      const nextExt = {
-        ...extensions,
-        whiteboard: buildWhiteboardExtensions(),
-      };
-      Api.saveMyIdeaMap(ideaId, {
-        nodes: nodesRef.current as any,
-        edges: edgesRef.current as any,
-        preferredTool: 'whiteboard' as CanvasToolType,
-        extensions: nextExt,
-      }).catch(() => undefined);
-      rememberSnapshot(isPl ? 'Auto-save snapshot' : 'Auto-save snapshot');
-    }, 3000);
-
-    return () => {
-      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildWhiteboardExtensions, edges, extensions, ideaId, isPl, loading, locked, nodes, open, rememberSnapshot]);
+    queueSync(buildPersistPayload(), { reason: 'draft' });
+  }, [buildPersistPayload, loading, locked, nodes.length, edges.length, open, queueSync]);
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
 
@@ -3128,6 +3129,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
           {saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
         </button>
+        <span className="text-[11px] text-slate-500 dark:text-slate-400">{saveStatusLabel}</span>
       </div>
 
       {/* Canvas */}

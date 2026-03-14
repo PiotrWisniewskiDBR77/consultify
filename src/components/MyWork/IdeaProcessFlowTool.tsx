@@ -82,6 +82,11 @@ import { generateAIProposal, generateProcessSummary, runProcessCoach } from '@/s
 import { useAppStore } from '@/store/useAppStore';
 import { withNormalizedArtifactLinks } from '@/utils/artifactLinks';
 
+import {
+  formatIdeaMapSyncLabel,
+  resolveIdeaMapHydration,
+  useIdeaMapSync,
+} from './canvas/useIdeaMapSync';
 import { CanvasZoomControls } from './canvas/CanvasZoomControls';
 import { type ProcessFlowSemanticKit } from './canvas/canvasOsContract';
 import {
@@ -1115,7 +1120,6 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const currentUser = useAppStore((state) => state.currentUser);
 
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [lanes, setLanes] = useState<Lane[]>(DEFAULT_LANES);
@@ -1157,6 +1161,19 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [metricsDraft, setMetricsDraft] = useState<Record<string, string>>({});
   const [savingsLoading, setSavingsLoading] = useState(false);
   const [dragOverLaneId, setDragOverLaneId] = useState<string | null>(null);
+  const {
+    saving,
+    syncState,
+    lastSavedAt,
+    queueSync,
+    flushNow,
+    primeServerVersion,
+  } = useIdeaMapSync({
+    ideaId,
+    tool: 'process_flow',
+    open,
+    locked,
+  });
 
   // V5-IDEA-21: Flow mode
   const [flowMode, setFlowMode] = useState<ProcessFlowMode>('classic');
@@ -1197,6 +1214,30 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       .trim();
     return fullName || currentUser?.email || (isPl ? 'Ty' : 'You');
   }, [currentUser?.email, currentUser?.firstName, currentUser?.lastName, isPl]);
+  const saveStatusLabel = useMemo(
+    () => formatIdeaMapSyncLabel(syncState, lastSavedAt, isPl),
+    [isPl, lastSavedAt, syncState]
+  );
+  const buildPersistPayload = useCallback(
+    () => ({
+      nodes: nodes as any,
+      edges: edges as any,
+      preferredTool: 'process_flow' as CanvasToolType,
+      extensions: {
+        ...extensions,
+        processFlow: {
+          ...(extensions?.processFlow && typeof extensions.processFlow === 'object'
+            ? extensions.processFlow
+            : {}),
+          lanes,
+          flowMode,
+          semanticKit,
+          viewState: { layoutMode: 'horizontal', showGrid: true, snap: true },
+        },
+      },
+    }),
+    [edges, extensions, flowMode, lanes, nodes, semanticKit]
+  );
 
   useEffect(() => {
     if (flowMode === 'classic' || flowMode === 'automation' || flowMode === 'vsm') {
@@ -1461,7 +1502,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
     setLoading(true);
     try {
       const res = await Api.getMyIdeaMap(ideaId, { language: i18n.language });
-      const map = res?.map || {};
+      const hydration = resolveIdeaMapHydration(ideaId, res?.map || {});
+      const map = hydration.map || {};
+      primeServerVersion(Number(map?.version || 1));
       const rawNodes = Array.isArray(map.nodes) ? (map.nodes as any[]) : [];
       const rawEdges = Array.isArray(map.edges) ? (map.edges as any[]) : [];
       const rawExt =
@@ -1537,9 +1580,10 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
         didPersistRef.current = true;
         const preferred = map?.preferredTool ? String(map.preferredTool) : null;
         if (preferred !== 'process_flow') {
-          Api.saveMyIdeaMap(ideaId, {
+          Api.syncMyIdeaMap(ideaId, {
             nodes: rawNodes as any,
             edges: rawEdges as any,
+            baseVersion: Number(map?.version || 1),
             preferredTool: 'process_flow',
             extensions: rawExt,
           }).catch(() => undefined);
@@ -2076,34 +2120,23 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
 
   const handleSave = useCallback(async () => {
     if (locked) return;
-    setSaving(true);
     try {
-      const nextExt = {
-        ...extensions,
-        processFlow: {
-          ...(extensions?.processFlow && typeof extensions.processFlow === 'object'
-            ? extensions.processFlow
-            : {}),
-          lanes,
-          flowMode,
-          semanticKit,
-          viewState: { layoutMode: 'horizontal', showGrid: true, snap: true },
-        },
-      };
-      await Api.saveMyIdeaMap(ideaId, {
-        nodes: nodes as any,
-        edges: edges as any,
-        preferredTool: 'process_flow' as CanvasToolType,
-        extensions: nextExt,
+      await flushNow(buildPersistPayload(), {
+        reason: 'manual',
+        createSnapshot: true,
+        snapshotLabel: isPl ? 'Process flow checkpoint' : 'Process flow checkpoint',
       });
       toast.success(isPl ? 'Zapisano' : 'Saved', { duration: 900 });
       onSaved?.();
     } catch (err: any) {
       toast.error(err?.message || (isPl ? 'Nie udało się zapisać' : 'Failed to save'));
-    } finally {
-      setSaving(false);
     }
-  }, [edges, extensions, ideaId, isPl, lanes, locked, nodes, onSaved, semanticKit]);
+  }, [buildPersistPayload, flushNow, isPl, locked, onSaved]);
+
+  useEffect(() => {
+    if (!open || locked || loading) return;
+    queueSync(buildPersistPayload(), { reason: 'draft' });
+  }, [buildPersistPayload, loading, locked, open, queueSync]);
 
   // ── Lane backgrounds ──────────────────────────────────────────────────
 
@@ -2581,6 +2614,9 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
                   {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                   {saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
                 </button>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {saveStatusLabel}
+                </span>
               </div>
             </div>
           </div>

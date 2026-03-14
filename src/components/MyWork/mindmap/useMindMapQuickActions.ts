@@ -71,6 +71,11 @@ export interface MindMapQuickActionSetters {
   setExportMenuOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   setShowMiniMap?: React.Dispatch<React.SetStateAction<boolean>>;
   setShowCollaboration?: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowBackgroundSettings?: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowGovernancePanel?: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowTimerPanel?: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowCrossToolPanel?: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowKanbanView?: React.Dispatch<React.SetStateAction<boolean>>;
   setInteractionMode?: (mode: MindMapInteractionMode) => void;
 }
 
@@ -509,17 +514,25 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       handlers.fitView({ padding: 0.3, duration: 400 });
     }
     if (action === 'mm_background') {
-      toast(isPolish ? 'Zmiana tła — użyj Ctrl+Shift+B' : 'Background — use Ctrl+Shift+B', { icon: '🎨', duration: 2000 });
+      if (setters.setShowBackgroundSettings) {
+        setters.setShowBackgroundSettings(true);
+      }
     }
     if (action === 'mm_activity') setters.setShowActivityFeed(true);
     if (action === 'mm_governance') {
-      toast(isPolish ? 'Governance — otwórz panel Tools → Governance' : 'Governance — open Tools panel → Governance', { icon: '🛡️', duration: 2500 });
+      if (setters.setShowGovernancePanel) {
+        setters.setShowGovernancePanel(true);
+      }
     }
     if (action === 'mm_timers') {
-      toast(isPolish ? 'Timer — dostępny w trybie Whiteboard' : 'Timer — available in Whiteboard mode', { icon: '⏱️', duration: 2000 });
+      if (setters.setShowTimerPanel) {
+        setters.setShowTimerPanel(true);
+      }
     }
     if (action === 'mm_cross_tool') {
-      toast(isPolish ? 'Zaznacz węzły i użyj paska narzędzi na dole' : 'Select nodes and use the bottom toolbar', { icon: '🔄', duration: 2500 });
+      if (setters.setShowCrossToolPanel) {
+        setters.setShowCrossToolPanel(true);
+      }
     }
     if (action === 'mm_share') {
       const url = `${window.location.origin}${window.location.pathname}?ideaId=${ideaId}`;
@@ -532,8 +545,6 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     if (action === 'mm_collaboration') {
       if (setters.setShowCollaboration) {
         setters.setShowCollaboration(true);
-      } else {
-        toast(isPolish ? 'Współpraca w czasie rzeczywistym — wkrótce' : 'Real-time collaboration — coming soon', { icon: '👥', duration: 2000 });
       }
     }
     if (action === 'mm_embed') {
@@ -547,7 +558,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     }
     if (action === 'mm_branch_analysis') setters.setShowBranchComparison(true);
     if (action === 'mm_kanban_view') {
-      toast(isPolish ? 'Kanban — przełącz na widok Table' : 'Kanban — switch to Table view', { icon: '📋', duration: 2000 });
+      if (setters.setShowKanbanView) {
+        setters.setShowKanbanView(true);
+      }
     }
   };
 

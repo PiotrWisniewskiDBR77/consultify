@@ -265,7 +265,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const processedRowsWithRollups = useRollupComputation(processedRows, columns, nodes, edges);
 
   // ── Persistence hook ────────────────────────────────────────────────────────
-  const { loading, saving, handleSave } = useTablePersistence({
+  const { loading, saving, saveStatusLabel, handleSave } = useTablePersistence({
     open,
     ideaId,
     isPl,
@@ -1374,6 +1374,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             </div>
           )}
 
+          <span className="text-[11px] text-slate-500 dark:text-slate-400">{saveStatusLabel}</span>
           <button
             type="button"
             onClick={handleSave}
