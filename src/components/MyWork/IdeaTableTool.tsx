@@ -140,6 +140,11 @@ interface IdeaTableToolProps {
   onSaved?: () => void;
   onSelectionChange?: (sel: IdeaWorkspaceSelection) => void;
   onConvert?: (target: string) => void;
+  onGraphChange?: (graph: {
+    nodes: any[];
+    edges: any[];
+    extensions?: Record<string, unknown>;
+  }) => void;
 }
 
 // DEFAULT_COLUMNS now lives in useTableSchema.ts
@@ -154,6 +159,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   onSaved,
   onSelectionChange,
   onConvert: onConvertProp,
+  onGraphChange,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -260,6 +266,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     addRowBtnRect,
     setAddRowBtnRect,
   } = rowOps;
+
+  useEffect(() => {
+    onGraphChange?.({
+      nodes: nodes as any[],
+      edges: edges as any[],
+      extensions,
+    });
+  }, [edges, extensions, nodes, onGraphChange]);
 
   // ── Rollup computation (inject aggregated values for rollup columns) ───────
   const processedRowsWithRollups = useRollupComputation(processedRows, columns, nodes, edges);

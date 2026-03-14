@@ -44,6 +44,9 @@ interface Detection {
   currency: string;
   scaling: string;
   language: string;
+  containedStatementTypes?: string[];
+  containsMultipleStatements?: boolean;
+  documentClass?: string;
 }
 
 interface ExtractedLine {
@@ -51,10 +54,32 @@ interface ExtractedLine {
   value: number;
   confidence: number;
   sourceRow?: number;
+  selectedPeriodLabel?: string;
+  comparisonPeriodLabel?: string;
+  rowType?: string;
+  sectionKey?: string;
+  signMode?: string;
   suggestedCanonicalId?: string;
   suggestedCanonicalLabel?: string;
   isNonFinancial?: boolean;
   classificationReason?: string;
+}
+
+interface ExtractionDiagnostics {
+  sections?: Array<{
+    sectionKey: string;
+    sectionLabel: string;
+    confidence: number;
+  }>;
+  columnSelection?: {
+    selectedPeriodLabel?: string | null;
+    comparisonPeriodLabel?: string | null;
+    selectionStrategy?: string;
+  };
+  warnings?: string[];
+  rawTableCount?: number;
+  extractionStrategy?: string;
+  documentClass?: string;
 }
 
 type CanonicalLine = FinancialStatementCanonicalLineOption & {
@@ -104,6 +129,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
 
   // Extract state
   const [extractedLines, setExtractedLines] = useState<ExtractedLine[]>([]);
+  const [extractionDiagnostics, setExtractionDiagnostics] = useState<ExtractionDiagnostics | null>(null);
 
   // Map state
   const [mappedValues, setMappedValues] = useState<MappedValue[]>([]);
@@ -176,10 +202,14 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       formData.append('file', file);
       const data = await Api.postMultipart('/api/finance-statements/upload', formData);
       setStatementId(data.statementId);
-      setDetection(data.detection);
-      setOverrideType(data.detection.statementType);
-      setOverrideCurrency(data.detection.currency);
-      setOverridePeriod(data.detection.periodLabel || '');
+      const detectionPayload: Detection = {
+        ...(data.detection || {}),
+        documentClass: data.documentProfile?.documentClass || undefined,
+      };
+      setDetection(detectionPayload);
+      setOverrideType(detectionPayload.statementType);
+      setOverrideCurrency(detectionPayload.currency);
+      setOverridePeriod(detectionPayload.periodLabel || '');
       trackFunnelEvent('financial_statement_import_started', { statementId: data.statementId });
       setStep('detect');
     } catch (e: any) {
@@ -201,12 +231,32 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         periodLabel: overridePeriod,
         currency: overrideCurrency,
       });
-      const extractData = await Api.post(`/api/finance-statements/${statementId}/extract`, {});
+      const extractData = await Api.post(`/api/finance-statements/${statementId}/extract`, {
+        statementType: overrideType,
+        periodLabel: overridePeriod,
+        currency: overrideCurrency,
+      });
       const { lines } = extractData as { lines: ExtractedLine[] };
       setExtractedLines(lines);
+      setExtractionDiagnostics({
+        sections: Array.isArray((extractData as any)?.sections)
+          ? (extractData as any).sections.map((section: any) => ({
+              sectionKey: String(section.sectionKey || ''),
+              sectionLabel: String(section.sectionLabel || ''),
+              confidence: Number(section.confidence || 0),
+            }))
+          : [],
+        columnSelection: (extractData as any)?.columnSelection,
+        warnings: Array.isArray((extractData as any)?.warnings)
+          ? (extractData as any).warnings.map((warning: unknown) => String(warning))
+          : [],
+        rawTableCount: Number((extractData as any)?.rawTableCount || 0),
+        extractionStrategy: String((extractData as any)?.extractionStrategy || ''),
+        documentClass: String((extractData as any)?.documentClass || ''),
+      });
 
       // Auto-map
-      const mapData = await Api.post(`/api/finance-statements/${statementId}/map`, { lines });
+      const mapData = await Api.post(`/api/finance-statements/${statementId}/map`, {});
       const { mappedLines } = mapData as { mappedLines: ExtractedLine[] };
 
       // Load canonical lines for dropdown
@@ -343,6 +393,18 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     t('finance.importWizard.stepMap', 'Map & Correct'),
     t('finance.importWizard.stepConfirm', 'Confirm'),
   ];
+  const detectedStatementTypes = Array.isArray(detection?.containedStatementTypes)
+    ? detection!.containedStatementTypes.filter(Boolean)
+    : [];
+  const containsMultipleStatements = Boolean(
+    detection?.containsMultipleStatements || detectedStatementTypes.length > 1
+  );
+  const selectedStatementSection = overrideType || detection?.statementType || '';
+  const displayedDetectionConfidence = detection?.confidence || 0;
+  const detectionConfidenceHint = t(
+    'finance.importWizard.confidenceAutoDetection',
+    'Heuristic confidence from automatic document detection.'
+  );
   const isReadyForConfirm = readiness?.readinessStatus === 'ready';
 
   return (
@@ -472,11 +534,54 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               <Search size={18} className="text-blue-500" />
               {t('finance.importWizard.detectionResults', 'Detection Results')}
             </h3>
+            <div className="text-sm text-slate-600 dark:text-slate-300">
+              {containsMultipleStatements
+                ? t(
+                    'finance.importWizard.multiStatementIntro',
+                    'This source file appears to contain more than one financial statement. Choose which section to extract in this import.'
+                  )
+                : t(
+                    'finance.importWizard.singleStatementIntro',
+                    'Review the detected metadata before extracting the statement section.'
+                  )}
+            </div>
+
+            {containsMultipleStatements && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-100">
+                <div className="font-medium">
+                  {t(
+                    'finance.importWizard.multiStatementWarningTitle',
+                    'This file contains multiple statement sections'
+                  )}
+                </div>
+                <div className="mt-1">
+                  {t(
+                    'finance.importWizard.multiStatementWarningBody',
+                    'The selector below does not describe the whole source file. It only chooses which section of the report will be extracted now.'
+                  )}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {detectedStatementTypes.map((type) => (
+                    <span
+                      key={type}
+                      className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-800 dark:border-amber-800 dark:bg-navy-900 dark:text-amber-200"
+                    >
+                      {type}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-slate-500 uppercase tracking-wider">
-                  {t('finance.importWizard.statementType', 'Statement Type')}
+                  {containsMultipleStatements
+                    ? t(
+                        'finance.importWizard.statementSectionToExtract',
+                        'Statement section to extract'
+                      )
+                    : t('finance.importWizard.statementType', 'Statement Type')}
                 </label>
                 <select
                   value={overrideType || detection.statementType}
@@ -490,14 +595,40 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               </div>
               <div>
                 <label className="text-xs text-slate-500 uppercase tracking-wider">
-                  {t('finance.importWizard.confidence', 'Confidence')}
+                  {containsMultipleStatements
+                    ? t('finance.importWizard.selectedSection', 'Selected section')
+                    : t('finance.importWizard.confidence', 'Confidence')}
                 </label>
-                <div className="mt-1 flex items-center gap-2">
-                  {confidenceBadge(detection.confidence)}
-                  <span className="text-sm text-slate-600 dark:text-slate-300">
-                    {detection.language?.toUpperCase()}
-                  </span>
-                </div>
+                {containsMultipleStatements ? (
+                  <>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="inline-flex rounded-full border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200">
+                        {selectedStatementSection || 'P&L'}
+                      </span>
+                      <span className="text-sm text-slate-600 dark:text-slate-300">
+                        {detection.language?.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {t(
+                        'finance.importWizard.selectedSectionHint',
+                        'This import will extract the section you selected manually.'
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="mt-1 flex items-center gap-2">
+                      {confidenceBadge(displayedDetectionConfidence)}
+                      <span className="text-sm text-slate-600 dark:text-slate-300">
+                        {detection.language?.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {detectionConfidenceHint}
+                    </div>
+                  </>
+                )}
               </div>
               <div>
                 <label className="text-xs text-slate-500 uppercase tracking-wider">
@@ -535,6 +666,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                 {t('finance.importWizard.scaleDetected', 'Scale detected')}:{' '}
                 <strong>{detection.scaling}</strong>
               </span>
+              {detection.documentClass && (
+                <span>
+                  • {t('finance.importWizard.documentClass', 'Document class')}:{' '}
+                  <strong>{detection.documentClass}</strong>
+                </span>
+              )}
             </div>
           </div>
 
@@ -551,7 +688,12 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 disabled:opacity-50"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-              {t('finance.importWizard.extractLines', 'Extract Financial Lines')}
+              {containsMultipleStatements
+                ? t(
+                    'finance.importWizard.extractSelectedSection',
+                    'Extract selected statement section'
+                  )
+                : t('finance.importWizard.extractLines', 'Extract Financial Lines')}
             </button>
           </div>
         </div>
@@ -569,6 +711,44 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               {t('finance.importWizard.mapped', 'mapped')}
             </span>
           </div>
+
+          {extractionDiagnostics && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-navy-700 dark:bg-navy-900">
+              <div className="flex flex-wrap gap-3 text-slate-600 dark:text-slate-300">
+                <span>
+                  {t('finance.importWizard.selectedSection', 'Selected section')}:&nbsp;
+                  <strong>{overrideType || detection?.statementType || '—'}</strong>
+                </span>
+                <span>
+                  {t('finance.importWizard.period', 'Period')}:&nbsp;
+                  <strong>
+                    {extractionDiagnostics.columnSelection?.selectedPeriodLabel ||
+                      overridePeriod ||
+                      detection?.periodLabel ||
+                      '—'}
+                  </strong>
+                </span>
+                {extractionDiagnostics.extractionStrategy && (
+                  <span>
+                    {t('finance.importWizard.extractionStrategy', 'Extraction strategy')}:&nbsp;
+                    <strong>{extractionDiagnostics.extractionStrategy}</strong>
+                  </span>
+                )}
+              </div>
+              {extractionDiagnostics.warnings && extractionDiagnostics.warnings.length > 0 && (
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-100">
+                  <div className="font-medium">
+                    {t('finance.importWizard.extractionWarnings', 'Extraction warnings')}
+                  </div>
+                  <div className="mt-1 space-y-1">
+                    {extractionDiagnostics.warnings.map((warning) => (
+                      <div key={warning}>{warning}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <FinancialStatementMappingEditor
             mappedValues={mappedValues}

@@ -8,6 +8,7 @@ import type { Edge, Node } from 'reactflow';
 import { Api } from '@/services/api';
 
 import type { CanvasToolType } from '../ideaSelectionTypes';
+import type { IdeaMapSyncState } from '../canvas/useIdeaMapSync';
 import { normalizeMindMapNodes } from './mindMapNodeModel';
 
 type PersistenceStatus = 'online' | 'no_route' | 'missing_table' | 'offline';
@@ -49,6 +50,26 @@ export interface UseMindMapPersistenceOpts {
   onPreferredToolLoaded?: (tool: CanvasToolType | null) => void;
   onViewportReport?: (viewport: { x: number; y: number; zoom: number }) => void;
   clearUndoHistory: () => void;
+  externalRuntime?: {
+    version: number;
+    loading: boolean;
+    saving: boolean;
+    lastSavedAt: number | null;
+    syncState: IdeaMapSyncState;
+    nodes: Node[];
+    edges: Edge[];
+    extensions: Record<string, unknown>;
+    captureGraph: (
+      graph: { nodes: Node[]; edges: Edge[]; extensions?: Record<string, unknown> },
+      opts?: { reason?: 'draft' | 'manual' | 'semantic' | 'ai'; immediate?: boolean }
+    ) => void;
+    flushGraph: (opts?: {
+      reason?: 'draft' | 'manual' | 'semantic' | 'ai';
+      createSnapshot?: boolean;
+      snapshotLabel?: string;
+    }) => Promise<unknown>;
+    refresh: () => Promise<void>;
+  };
 }
 
 export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
@@ -72,6 +93,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     onPreferredToolLoaded,
     onViewportReport,
     clearUndoHistory,
+    externalRuntime,
   } = opts;
 
   const [loading, setLoading] = useState(true);
@@ -81,8 +103,74 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
 
   const saveTimerRef = useRef<number | null>(null);
   const isHydratingRef = useRef(true);
+  const lastHydratedRuntimeVersionRef = useRef<number | null>(null);
+  const runtimeVersion = externalRuntime?.version ?? null;
+  const runtimeLoading = externalRuntime?.loading ?? false;
+  const runtimeSaving = externalRuntime?.saving ?? false;
+  const runtimeLastSavedAt = externalRuntime?.lastSavedAt ?? null;
+  const runtimeSyncState = externalRuntime?.syncState ?? null;
+  const runtimeNodes = externalRuntime?.nodes ?? null;
+  const runtimeEdges = externalRuntime?.edges ?? null;
+  const runtimeExtensions = externalRuntime?.extensions ?? null;
+  const runtimeCaptureGraph = externalRuntime?.captureGraph;
+
+  useEffect(() => {
+    if (runtimeVersion === null) return;
+    setLoading(runtimeLoading);
+    setSaving(runtimeSaving);
+    setLastSavedAt(runtimeLastSavedAt);
+    setPersistence(runtimeSyncState === 'offline' ? 'offline' : 'online');
+  }, [runtimeLastSavedAt, runtimeLoading, runtimeSaving, runtimeSyncState, runtimeVersion]);
 
   const hydrate = useCallback(async () => {
+    if (externalRuntime) {
+      const nextNodes = Array.isArray(runtimeNodes) ? runtimeNodes : [];
+      const nextEdges = Array.isArray(runtimeEdges) ? runtimeEdges : [];
+      const safeRuntimeExtensions =
+        runtimeExtensions && typeof runtimeExtensions === 'object' ? runtimeExtensions : {};
+      const viewState = (safeRuntimeExtensions as any)?.mindmap?.viewState;
+      const savedCollapsed = viewState?.collapsedNodeIds;
+      if (Array.isArray(savedCollapsed)) setCollapsedNodeIds(new Set(savedCollapsed));
+      const savedViewport = viewState?.viewport;
+      const patchedNodes = nextNodes.map((n: any) => {
+        if (String(n?.id) !== 'root') return n;
+        return {
+          ...n,
+          data: {
+            ...(n.data || {}),
+            label: ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea'),
+            hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
+          },
+        };
+      });
+      const depthPatchedNodes = normalizeMindMapNodes(
+        patchedNodes,
+        nextEdges as Edge[],
+        ideaTitle,
+        isPolish
+      );
+      isHydratingRef.current = true;
+      setNodes(depthPatchedNodes);
+      setEdges(nextEdges);
+      clearUndoHistory();
+      setTimeout(() => {
+        isHydratingRef.current = false;
+        try {
+          if (
+            savedViewport &&
+            typeof savedViewport.x === 'number' &&
+            typeof savedViewport.zoom === 'number'
+          ) {
+            setViewport(savedViewport, { duration: 300 });
+          } else {
+            fitView({ padding: 0.3, duration: 300 });
+          }
+        } catch {
+          /* ignore */
+        }
+      }, 50);
+      return;
+    }
     setLoading(true);
     try {
       setPersistence('online');
@@ -195,6 +283,9 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     ideaTitle,
     isPolish,
     onPreferredToolLoaded,
+    runtimeEdges,
+    runtimeExtensions,
+    runtimeNodes,
     setEdges,
     setNodes,
   ]);
@@ -203,6 +294,14 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     hydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ideaId]);
+
+  useEffect(() => {
+    if (runtimeVersion === null) return;
+    if (lastHydratedRuntimeVersionRef.current === runtimeVersion) return;
+    lastHydratedRuntimeVersionRef.current = runtimeVersion;
+    hydrate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runtimeVersion]);
 
   useEffect(() => {
     const label = ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea');
@@ -243,8 +342,36 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
   const scheduleSave = useCallback(
     (nextNodes: Node[], nextEdges: Edge[]) => {
       if (isHydratingRef.current) return;
-      if (persistence !== 'online') return;
       if (locked) return;
+      if (externalRuntime) {
+        const currentViewport = getViewport();
+        onViewportReport?.(currentViewport);
+        const ext = {
+          ...(extensions || {}),
+          mindmap: {
+            ...((extensions as any)?.mindmap || {}),
+            viewState: {
+              collapsedNodeIds: Array.from(collapsedNodeIds),
+              viewport: currentViewport,
+            },
+          },
+        };
+        const cleanNodes = nextNodes.map((n: any) => {
+          if (!n.data?._interactionMode && !n.data?._canAddSibling) return n;
+          const { _interactionMode, _canAddSibling, ...cleanData } = n.data || {};
+          return { ...n, data: cleanData };
+        });
+        runtimeCaptureGraph?.(
+          {
+            nodes: cleanNodes as Node[],
+            edges: nextEdges,
+            extensions: ext,
+          },
+          { reason: 'draft' }
+        );
+        return;
+      }
+      if (persistence !== 'online') return;
       if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
       saveTimerRef.current = window.setTimeout(async () => {
         setSaving(true);
@@ -292,6 +419,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       onViewportReport,
       persistence,
       preferredTool,
+      runtimeCaptureGraph,
     ]
   );
 

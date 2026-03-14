@@ -18,6 +18,7 @@ vi.mock('../../../../server/src/utils/DbPromise.js', async () => {
 
 describe('financialStatementService canonical layer', () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
     mockDb.run.mockResolvedValue({ success: true });
   });
@@ -105,5 +106,113 @@ describe('financialStatementService canonical layer', () => {
     const snapshot = await loadLatestStatementVersionSnapshot('stmt-1');
     expect(snapshot?.versionNo).toBe(1);
     expect(snapshot?.snapshot?.values?.[0]?.lineCode).toBe('REVENUE');
+  });
+
+  it('selects the numeric token bound to the chosen period without concatenating year digits', async () => {
+    const { extractFinancialLines } = await import(
+      '../../../../server/src/services/financialStatementService.js'
+    );
+
+    const extraction = extractFinancialLines(
+      [
+        'Balance Sheet',
+        'For the year ended 2025',
+        'Current Assets 2025 450 2024 420',
+        'Cash and cash equivalents 2025 210 2024 180',
+      ].join('\n'),
+      'BS',
+      {
+        selectedPeriodLabel: '2025',
+      }
+    );
+
+    expect(extraction.lines).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          originalLabel: 'Current Assets 2025',
+          value: 450,
+          rawValue: '450',
+          selectedPeriodLabel: '2025',
+          selectedNumericToken: expect.objectContaining({
+            raw: '450',
+            selectionReason: 'matched_selected_period',
+          }),
+        }),
+        expect.objectContaining({
+          originalLabel: 'Cash and cash equivalents 2025',
+          value: 210,
+          rawValue: '210',
+        }),
+      ])
+    );
+  });
+
+  it('maps cash-flow rows using deterministic operating/investing/financing scope signals', async () => {
+    mockDb.all.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM financial_statement_lines')) {
+        return [
+          {
+            id: 'fsl-cf-operating',
+            statement_type: 'CF',
+            line_code: 'OPERATING_CASH_FLOW',
+            line_name: 'Operating cash flow',
+            line_name_pl: 'Przepływy operacyjne',
+          },
+          {
+            id: 'fsl-cf-investing',
+            statement_type: 'CF',
+            line_code: 'INVESTING_CASH_FLOW',
+            line_name: 'Investing cash flow',
+            line_name_pl: 'Przepływy inwestycyjne',
+          },
+          {
+            id: 'fsl-cf-financing',
+            statement_type: 'CF',
+            line_code: 'FINANCING_CASH_FLOW',
+            line_name: 'Financing cash flow',
+            line_name_pl: 'Przepływy finansowe',
+          },
+        ];
+      }
+      if (sql.includes('information_schema.columns')) {
+        return [];
+      }
+      return [];
+    });
+
+    const { autoMapLines, resolveDuplicateSuggestedMappings } = await import(
+      '../../../../server/src/services/financialStatementService.js'
+    );
+
+    const mapped = resolveDuplicateSuggestedMappings(
+      await autoMapLines(
+        [
+          {
+            originalLabel: 'Przepływy pieniężne netto z działalności operacyjnej 2025',
+            value: 880,
+            confidence: 0.6,
+          },
+          {
+            originalLabel: 'Przepływy pieniężne netto z działalności inwestycyjnej 2025',
+            value: -310,
+            confidence: 0.6,
+          },
+          {
+            originalLabel: 'Przepływy pieniężne netto z działalności finansowej 2025',
+            value: -180,
+            confidence: 0.6,
+          },
+        ],
+        'CF',
+        { organizationId: '', templateFamily: null }
+      )
+    );
+
+    expect(mapped.map((line) => line.suggestedCanonicalId)).toEqual([
+      'fsl-cf-operating',
+      'fsl-cf-investing',
+      'fsl-cf-financing',
+    ]);
+    expect(mapped.every((line) => line.mappingReason === 'cash_flow_scope_match')).toBe(true);
   });
 });

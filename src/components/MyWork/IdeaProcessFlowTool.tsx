@@ -1100,6 +1100,11 @@ interface IdeaProcessFlowToolProps {
   focusObjectId?: string | null;
   onFullscreenToggle?: () => void;
   isFullscreen?: boolean;
+  onGraphChange?: (graph: {
+    nodes: any[];
+    edges: any[];
+    extensions?: Record<string, unknown>;
+  }) => void;
 }
 
 export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
@@ -1114,6 +1119,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   focusObjectId,
   onFullscreenToggle: externalOnFullscreenToggle,
   isFullscreen: externalIsFullscreen,
+  onGraphChange,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -1125,6 +1131,22 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
   const [lanes, setLanes] = useState<Lane[]>(DEFAULT_LANES);
   const [extensions, setExtensions] = useState<Record<string, unknown>>({});
   const [warnings, setWarnings] = useState<ValidationWarning[]>([]);
+
+  useEffect(() => {
+    onGraphChange?.({
+      nodes: nodes as any[],
+      edges: edges as any[],
+      extensions: {
+        ...extensions,
+        processFlow: {
+          ...(extensions?.processFlow && typeof extensions.processFlow === 'object'
+            ? extensions.processFlow
+            : {}),
+          lanes,
+        },
+      },
+    });
+  }, [edges, extensions, lanes, nodes, onGraphChange]);
   const [showWarnings, setShowWarnings] = useState(false);
   const [coachInsights, setCoachInsights] = useState<any[]>([]);
   const [showCoach, setShowCoach] = useState(false);

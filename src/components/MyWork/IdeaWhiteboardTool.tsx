@@ -1245,6 +1245,11 @@ interface IdeaWhiteboardToolProps {
   focusObjectId?: string | null;
   onFullscreenToggle?: () => void;
   isFullscreen?: boolean;
+  onGraphChange?: (graph: {
+    nodes: any[];
+    edges: any[];
+    extensions?: Record<string, unknown>;
+  }) => void;
 }
 
 export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
@@ -1260,6 +1265,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
   focusObjectId,
   onFullscreenToggle: externalOnFullscreenToggle,
   isFullscreen: externalIsFullscreen,
+  onGraphChange,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -1428,6 +1434,14 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
     setEdges((eds) => applyEdgeChanges(changes, eds));
   }, [pushUndoSnapshot]);
   const [extensions, setExtensions] = useState<Record<string, unknown>>({});
+
+  useEffect(() => {
+    onGraphChange?.({
+      nodes: nodes as any[],
+      edges: edges as any[],
+      extensions,
+    });
+  }, [edges, extensions, nodes, onGraphChange]);
 
   const frameCollapseKey = nodes
     .filter((n) => n.type === 'frameNode')

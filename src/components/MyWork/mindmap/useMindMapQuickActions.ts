@@ -16,6 +16,7 @@ import { applyRadialLayout } from './RadialTreeLayout';
 export interface MindMapQuickActionHandlers {
   addChildNode: (nodeId?: string) => void;
   addSiblingNode: (nodeId?: string) => void;
+  addRootTopic: () => void;
   duplicateSelected: () => void;
   deleteSelected: () => void;
   getSelectedNode: () => Node | undefined;
@@ -112,6 +113,10 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     const targetNodeId = typeof detail?.nodeId === 'string' ? detail.nodeId : undefined;
     if (action === 'mm_add_child') handlers.addChildNode(targetNodeId);
     if (action === 'mm_add_sibling') handlers.addSiblingNode(targetNodeId);
+    if (action === 'mm_add_root') {
+      handlers.addRootTopic();
+      return;
+    }
     if (action === 'mm_duplicate') handlers.duplicateSelected();
     if (action === 'mm_toggle_collapse') {
       const sel = handlers.getSelectedNode();
@@ -303,7 +308,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       const spec = SEMANTIC_INSERT_MAP[action];
       const newId = `${spec.kind}-${Date.now()}`;
       const sel = handlers.getSelectedNode();
-      const isRoot = action === 'mm_add_root';
+      const isRoot = false;
       const baseX = isRoot ? Math.random() * 400 + 100 : (sel ? sel.position.x + 220 : 300);
       const baseY = isRoot ? Math.random() * 300 + 100 : (sel ? sel.position.y + 20 : 200);
       setters.setNodes((prev) => [

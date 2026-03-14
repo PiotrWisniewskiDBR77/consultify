@@ -71,6 +71,10 @@ import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 import { countNodesByFamily, type ObjectFamily } from './superCanvasTypes';
 import { type TransformInput, transformSelection } from './transforms/crossToolTransform';
 import type { ProcessFlowSemanticKit } from './canvas/canvasOsContract';
+import {
+  mergeWorkspaceExtensions,
+  useWorkspaceGraphRuntime,
+} from './canvas/workspaceGraphRuntime';
 
 class CanvasToolErrorBoundary extends React.Component<
   { children: React.ReactNode; toolName: string; onRetry?: () => void },
@@ -244,10 +248,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
   const [mapOpen, setMapOpen] = useState(Boolean(initialOpenMap));
-  const [graphNodes, setGraphNodes] = useState<any[]>([]);
-  const [graphEdges, setGraphEdges] = useState<any[]>([]);
-  const [graphLanes, setGraphLanes] = useState<any[]>([]);
-  const [mapExtensions, setMapExtensions] = useState<Record<string, unknown>>({});
   const graphNodesRef = useRef<any[]>([]);
   const graphEdgesRef = useRef<any[]>([]);
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
@@ -378,6 +378,33 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [activeTool, externalOnSelectionChange]
   );
 
+  const graphRuntime = useWorkspaceGraphRuntime({
+    ideaId: realId,
+    open: Boolean(realId && (!isNewInitial || realId !== ideaId)),
+    locked: canvasLocked,
+    preferredTool: activeTool,
+    language: i18n.language || 'en',
+    selection,
+  });
+  const graphNodes = graphRuntime.graph.nodes as any[];
+  const graphEdges = graphRuntime.graph.edges as any[];
+  const mapExtensions = graphRuntime.graph.extensions;
+  const applyRuntimeExtensionsPatch = graphRuntime.applyExtensionsPatch;
+  const captureRuntimeGraph = graphRuntime.captureToolGraph;
+  const flushRuntimeGraph = graphRuntime.flushGraph;
+  const refreshRuntimeGraph = graphRuntime.refresh;
+  const replaceRuntimeGraph = graphRuntime.replaceGraph;
+  const setRuntimeViewport = graphRuntime.setViewport;
+  const graphLanes = useMemo(() => {
+    const ext =
+      mapExtensions?.processFlow &&
+      typeof mapExtensions.processFlow === 'object' &&
+      !Array.isArray(mapExtensions.processFlow)
+        ? (mapExtensions.processFlow as Record<string, unknown>)
+        : null;
+    return Array.isArray(ext?.lanes) ? (ext.lanes as any[]) : [];
+  }, [mapExtensions]);
+
   // ── AI Proposals (Propose→Accept) ──────────────────────────────────────────
   const [proposalBatch, setProposalBatch] = useState<AIProposalBatch | null>(null);
 
@@ -386,23 +413,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       const accepted = proposals.filter((p) => p.status === 'accepted');
       if (accepted.length === 0) return;
       try {
-        const mapRes = await Api.getMyIdeaMap(realId, { language: i18n.language });
-        const map = mapRes?.map || {};
-        const baseNodes: any[] = Array.isArray(map.nodes) ? [...map.nodes] : [];
-        const baseEdges: any[] = Array.isArray(map.edges) ? [...map.edges] : [];
-        const baseExtensions: Record<string, unknown> =
-          map?.extensions && typeof map.extensions === 'object' && !Array.isArray(map.extensions)
-            ? { ...map.extensions }
-            : {};
         const runtimeResult = applyAIProposalRuntime({
           proposals: accepted,
-          nodes: baseNodes,
-          edges: baseEdges,
-          extensions: baseExtensions,
+          nodes: [...graphNodes],
+          edges: [...graphEdges],
+          extensions: { ...mapExtensions },
           activeTool,
         });
         const { nodes, edges } = runtimeResult;
-        const extensions = runtimeResult.extensions;
+        const extensions = { ...runtimeResult.extensions };
 
         const governance =
           extensions.canvasGovernance &&
@@ -428,24 +447,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           aiReplayLog: [...aiReplayLog, replayEntry].slice(-40),
           lastAiApplyAt: replayEntry.acceptedAt,
         };
-
-        await Api.saveMyIdeaMap(realId, {
-          nodes,
-          edges,
-          extensions,
-          fromAI: true,
-          preferredTool: runtimeResult.nextTool || activeTool,
-        });
-        setGraphNodes(nodes);
-        setGraphEdges(edges);
-        setMapExtensions(extensions);
-        if (
-          extensions?.processFlow &&
-          typeof extensions.processFlow === 'object' &&
-          Array.isArray((extensions.processFlow as any)?.lanes)
-        ) {
-          setGraphLanes((extensions.processFlow as any).lanes);
-        }
+        graphRuntime.captureToolGraph(
+          {
+            nodes: nodes as any[],
+            edges: edges as any[],
+            extensions,
+          },
+          { reason: 'ai', immediate: true }
+        );
+        await graphRuntime.flushGraph({ reason: 'ai' });
         window.dispatchEvent(
           new CustomEvent('idea-workspace-graph-update', {
             detail: { ideaId: realId, nodes, edges, extensions },
@@ -468,7 +478,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         );
       }
     },
-    [activeTool, i18n.language, isPolish, proposalBatch?.generatorType, proposalBatch?.tool, realId]
+    [
+      activeTool,
+      graphEdges,
+      graphNodes,
+      graphRuntime,
+      isPolish,
+      mapExtensions,
+      proposalBatch?.generatorType,
+      proposalBatch?.tool,
+      realId,
+    ]
   );
 
   const handleAcceptProposal = useCallback(
@@ -867,23 +887,19 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const persistWorkspaceExtensions = useCallback(
     async (patch: Record<string, unknown>) => {
       if (isNewInitial && realId === ideaId) return;
-      const nextExtensions = {
-        surfaceState: {
-          activeTool,
-          selectedNodeIds: selection.ids || [],
-        },
-        processFlow: { lanes: graphLanes },
-        ...(patch || {}),
-      };
-      await Api.saveMyIdeaMap(realId, {
-        nodes: graphNodes,
-        edges: graphEdges,
-        preferredTool: activeTool,
-        extensions: nextExtensions,
-      });
+      graphRuntime.applyExtensionsPatch(
+        mergeWorkspaceExtensions(
+          {
+            processFlow: { lanes: graphLanes },
+          },
+          patch
+        ),
+        { reason: 'semantic', immediate: true }
+      );
+      await graphRuntime.flushGraph({ reason: 'manual' });
       setMapRefreshToken((v) => v + 1);
     },
-    [activeTool, graphEdges, graphLanes, graphNodes, ideaId, isNewInitial, realId, selection.ids]
+    [graphLanes, graphRuntime, ideaId, isNewInitial, realId]
   );
 
   const handleGovernanceUpdate = useCallback(
@@ -898,19 +914,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         createdAt: timestamp,
       };
       try {
-        const existing = await Api.getMyIdeaMap(realId, { language: i18n.language });
         const governance =
-          existing?.map?.extensions?.canvasGovernance &&
-          typeof existing.map.extensions.canvasGovernance === 'object'
-            ? (existing.map.extensions.canvasGovernance as Record<string, unknown>)
+          mapExtensions.canvasGovernance && typeof mapExtensions.canvasGovernance === 'object'
+            ? (mapExtensions.canvasGovernance as Record<string, unknown>)
             : {};
         const reviewLog = Array.isArray(governance.reviewLog) ? governance.reviewLog : [];
-        await Api.saveMyIdeaMap(realId, {
-          nodes: Array.isArray(existing?.map?.nodes) ? existing.map.nodes : graphNodes,
-          edges: Array.isArray(existing?.map?.edges) ? existing.map.edges : graphEdges,
-          preferredTool: activeTool,
-          extensions: {
-            ...(existing?.map?.extensions || {}),
+        graphRuntime.applyExtensionsPatch(
+          {
             processFlow: { lanes: graphLanes },
             canvasGovernance: {
               ...governance,
@@ -920,7 +930,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               reviewLog: [...reviewLog, entry].slice(-40),
             },
           },
-        });
+          { reason: 'semantic', immediate: true }
+        );
+        await graphRuntime.flushGraph({ reason: 'manual' });
         setMapRefreshToken((v) => v + 1);
         toast.success(
           isPolish
@@ -933,14 +945,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         );
       }
     },
-    [activeTool, graphEdges, graphLanes, graphNodes, i18n.language, isPolish, realId]
+    [activeTool, graphLanes, graphRuntime, isPolish, mapExtensions.canvasGovernance, realId]
   );
 
   const handleImportGraph = useCallback(
     async (payload: IdeaWorkspaceImportPayload) => {
       if (!payload?.nodes || !payload?.edges) return;
       try {
-        await persistWorkspaceExtensions({
+        const extensionPatch = {
           interop: {
             lastImportAt: new Date().toISOString(),
             lastImportFormat: payload.sourceFormat,
@@ -948,24 +960,25 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             mappingReport: payload.mappingReport || [],
           },
           ...(payload.extensions || {}),
-        });
-        await Api.saveMyIdeaMap(realId, {
-          nodes: payload.nodes,
-          edges: payload.edges,
-          preferredTool: activeTool,
-          extensions: {
-            processFlow: { lanes: graphLanes },
-            interop: {
-              lastImportAt: new Date().toISOString(),
-              lastImportFormat: payload.sourceFormat,
-              lastImportTitle: payload.title || null,
-              mappingReport: payload.mappingReport || [],
-            },
-            ...(payload.extensions || {}),
+        };
+        graphRuntime.captureToolGraph(
+          {
+            nodes: payload.nodes as any[],
+            edges: payload.edges as any[],
+            extensions: mergeWorkspaceExtensions(
+              {
+                processFlow: { lanes: graphLanes },
+              },
+              extensionPatch
+            ),
           },
+          { reason: 'semantic', immediate: true }
+        );
+        await graphRuntime.flushGraph({
+          reason: 'manual',
+          createSnapshot: true,
+          snapshotLabel: `import-${payload.sourceFormat}`,
         });
-        setGraphNodes(payload.nodes);
-        setGraphEdges(payload.edges);
         setMapRefreshToken((v) => v + 1);
         toast.success(
           isPolish
@@ -976,7 +989,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         toast.error(err?.message || (isPolish ? 'Import nie powiódł się' : 'Import failed'));
       }
     },
-    [activeTool, graphLanes, isPolish, persistWorkspaceExtensions, realId]
+    [graphLanes, graphRuntime, isPolish]
   );
 
   useEffect(() => {
@@ -1216,34 +1229,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   );
 
   // ── Graph data sync (for AI panels) ────────────────────────────────────────
-  useEffect(() => {
-    if (!realId || loading) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await Api.getMyIdeaMap(realId, { language: i18n.language });
-        if (cancelled) return;
-        const map = res?.map || {};
-        setGraphNodes(Array.isArray(map.nodes) ? map.nodes : []);
-        setGraphEdges(Array.isArray(map.edges) ? map.edges : []);
-        setMapExtensions(
-          map?.extensions && typeof map.extensions === 'object' && !Array.isArray(map.extensions)
-            ? map.extensions
-            : {}
-        );
-        const ext = map?.extensions?.processFlow;
-        if (ext && Array.isArray((ext as any)?.lanes)) {
-          setGraphLanes((ext as any).lanes);
-        }
-      } catch {
-        /* best-effort */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [realId, mapRefreshToken, i18n.language, loading]);
-
   // ── V5-IDEA-14: Object-family coexistence tracking ─────────────────────────
   const familyCounts = useMemo(() => countNodesByFamily(graphNodes), [graphNodes]);
   const governanceSummary = useMemo(() => {
@@ -1276,7 +1261,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const latestSurfaceStateRef = useRef<Record<string, unknown>>({});
   const handleViewportReport = useCallback((vp: { x: number; y: number; zoom: number }) => {
     lastViewportRef.current = vp;
-  }, []);
+    setRuntimeViewport(vp);
+  }, [setRuntimeViewport]);
 
   useEffect(() => {
     graphNodesRef.current = graphNodes;
@@ -1296,23 +1282,25 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   }, [activeTool, focusMode, focusObjectId, selection.ids]);
 
   useEffect(() => {
-    return () => {
-      if (!realId || isDraft) return;
-      const surfaceState: Record<string, unknown> = { ...latestSurfaceStateRef.current };
-      if (lastViewportRef.current) {
-        surfaceState.viewport = lastViewportRef.current;
-      }
-      try {
-        Api.saveMyIdeaMap(realId, {
-          nodes: graphNodesRef.current,
-          edges: graphEdgesRef.current,
-          extensions: { surfaceState },
-        }).catch(() => {});
-      } catch {
-        /* best-effort */
-      }
-    };
-  }, [isDraft, realId]);
+    if (!realId || isDraft) return;
+    applyRuntimeExtensionsPatch(
+      {
+        surfaceState: {
+          ...latestSurfaceStateRef.current,
+          ...(lastViewportRef.current ? { viewport: lastViewportRef.current } : {}),
+        },
+      },
+      { reason: 'draft' }
+    );
+  }, [
+    activeTool,
+    applyRuntimeExtensionsPatch,
+    focusMode,
+    focusObjectId,
+    isDraft,
+    realId,
+    selection.ids,
+  ]);
 
   // ── Chat ────────────────────────────────────────────────────────────────────
   const openChat = useCallback(
@@ -1518,17 +1506,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               label: `Converted to ${target}`,
               linkRole: 'output' as const,
             };
-            await Api.saveMyIdeaMap(realId, {
-              ...currentMap,
-              extensions: {
-                ...(currentMap?.extensions || {}),
+            graphRuntime.applyExtensionsPatch(
+              {
                 outputLinks: [...(existingOutputLinks as any[]), newOutputLink],
               },
-            });
-            setMapExtensions({
-              ...(currentMap?.extensions || {}),
-              outputLinks: [...(existingOutputLinks as any[]), newOutputLink],
-            });
+              { reason: 'semantic', immediate: true }
+            );
+            await graphRuntime.flushGraph({ reason: 'manual' });
           } catch {
             /* best-effort persistence */
           }
@@ -1749,7 +1733,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           label: ref.title,
           linkRole: role,
         });
-        setMapRefreshToken((v) => v + 1);
+        await graphRuntime.refresh();
         toast.success(isPolish ? `Dołączono: ${ref.title}` : `Attached: ${ref.title}`);
         trackFunnelEvent('ideas_artifact_attached', {
           ideaId: realId,
@@ -1761,7 +1745,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         toast.error(err?.message || (isPolish ? 'Nie udało się dołączyć' : 'Failed to attach'));
       }
     },
-    [isDraft, isPolish, realId, selection.ids]
+    [graphRuntime, isDraft, isPolish, realId, selection.ids]
   );
 
   // ── Node detail drawer ──────────────────────────────────────────────────────
@@ -1805,23 +1789,24 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         const updatedNodes = nodes.map((n: any) =>
           String(n?.id) === nodeId ? { ...n, data: { ...(n.data || {}), ...patch } } : n
         );
-        await Api.saveMyIdeaMap(realId, {
-          nodes: updatedNodes,
-          edges,
-          extensions: map.extensions || {},
-        });
-        setGraphNodes(updatedNodes);
-        setMapExtensions(
-          map?.extensions && typeof map.extensions === 'object' && !Array.isArray(map.extensions)
-            ? map.extensions
-            : {}
+        graphRuntime.captureToolGraph(
+          {
+            nodes: updatedNodes as any[],
+            edges: edges as any[],
+            extensions:
+              map?.extensions && typeof map.extensions === 'object' && !Array.isArray(map.extensions)
+                ? map.extensions
+                : {},
+          },
+          { reason: 'semantic', immediate: true }
         );
+        await graphRuntime.flushGraph({ reason: 'manual' });
         setMapRefreshToken((v) => v + 1);
       } catch {
         /* best-effort save */
       }
     },
-    [i18n.language, realId]
+    [graphRuntime, i18n.language, realId]
   );
 
   // ── Drill-down (sub-idea navigation) ────────────────────────────────────────
@@ -1888,7 +1873,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           label: detail.title || 'Interview insight',
           linkRole: 'evidence',
         });
-        setMapRefreshToken((v) => v + 1);
+        await graphRuntime.refresh();
         toast.success(isPolish ? 'Dodano dowód z wywiadu' : 'Interview evidence attached');
       } catch {
         toast.error(isPolish ? 'Nie udało się dołączyć' : 'Failed to attach');
@@ -1896,7 +1881,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     };
     window.addEventListener('interview-attach-to-idea', handler);
     return () => window.removeEventListener('interview-attach-to-idea', handler);
-  }, [isDraft, isPolish, realId, selection.ids, graphNodes]);
+  }, [graphNodes, graphRuntime, isDraft, isPolish, realId, selection.ids]);
 
   // Intent-led starting point applied from TemplatesPopover
   useEffect(() => {
@@ -2145,6 +2130,19 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               onOpenChat={openChat}
               interactionMode={mindMapInteractionMode}
               onInteractionModeChange={setMindMapInteractionMode}
+              externalRuntime={{
+                version: graphRuntime.graph.version,
+                loading: graphRuntime.loading,
+                saving: graphRuntime.saving,
+                lastSavedAt: graphRuntime.lastSavedAt,
+                syncState: graphRuntime.syncState,
+                nodes: graphNodes as any,
+                edges: graphEdges as any,
+                extensions: mapExtensions,
+                captureGraph: graphRuntime.captureToolGraph,
+                flushGraph: graphRuntime.flushGraph,
+                refresh: graphRuntime.refresh,
+              }}
             />
           </CanvasToolErrorBoundary>
         )}
@@ -2160,6 +2158,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               locked={canvasLocked}
               refreshToken={mapRefreshToken}
               onSelectionChange={handleSelectionChange}
+              onGraphChange={(graph) => graphRuntime.replaceGraph(graph)}
               onConvert={(target) =>
                 handleConvert(target === 'task' ? 'task_set' : (target as any))
               }
@@ -2180,6 +2179,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               locked={canvasLocked}
               refreshToken={mapRefreshToken}
               onSelectionChange={handleSelectionChange}
+              onGraphChange={(graph) => graphRuntime.replaceGraph(graph)}
               onNodeDetail={handleOpenNodeDetail}
               focusMode={toolFocusMode}
               focusObjectId={focusObjectId}
@@ -2200,6 +2200,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               locked={canvasLocked}
               refreshToken={mapRefreshToken}
               onSelectionChange={handleSelectionChange}
+              onGraphChange={(graph) => graphRuntime.replaceGraph(graph)}
               onNodeDetail={handleOpenNodeDetail}
               focusMode={toolFocusMode}
               focusObjectId={focusObjectId}
@@ -2369,9 +2370,63 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         selectedNodeId={selection.ids?.[0] || null}
         onSendToChat={openChat}
         onInsertToWorkspace={(items) => {
-          window.dispatchEvent(
-            new CustomEvent('idea-workspace-insert', { detail: { items, ideaId: realId } })
-          );
+          const anchorNodeId = selection.ids?.[0] || null;
+          const batch: AIProposalBatch = {
+            id: `ai-suggestions-${Date.now()}`,
+            tool: activeTool,
+            generatorType: 'ai_suggestions_panel',
+            createdAt: Date.now(),
+            proposals: items.map((item, index) => {
+              const nodeId = `ai-suggestion-${Date.now()}-${index}`;
+              const anchorNode = anchorNodeId
+                ? graphNodes.find((node: any) => String(node?.id) === String(anchorNodeId))
+                : null;
+              return {
+                id: `proposal-${nodeId}`,
+                type: 'graph_patch' as const,
+                rationale: item.text,
+                confidence: 0.74,
+                targetTool: activeTool,
+                focusNodeId: anchorNodeId || undefined,
+                resultSummary: item.text,
+                status: 'pending' as const,
+                patch: {
+                  addNodes: [
+                    {
+                      id: nodeId,
+                      label: item.text,
+                      type: 'idea',
+                      position: anchorNode
+                        ? {
+                            x: Number(anchorNode?.position?.x || 0) + 220,
+                            y: Number(anchorNode?.position?.y || 0) + index * 80,
+                          }
+                        : { x: 240 + index * 40, y: 180 + index * 70 },
+                      data: {
+                        label: item.text,
+                        semanticType: item.type,
+                        sourceType: 'ai',
+                      },
+                    },
+                  ],
+                  ...(anchorNodeId && activeTool === 'mindmap'
+                    ? {
+                        addEdges: [
+                          {
+                            id: `edge-${nodeId}`,
+                            source: anchorNodeId,
+                            target: nodeId,
+                            data: { edgeRole: 'structural', sourceType: 'ai' },
+                          },
+                        ],
+                      }
+                    : {}),
+                },
+              };
+            }),
+          };
+          setProposalBatch(batch);
+          setActivePanel('tools');
         }}
         graphNodes={graphNodes}
         graphEdges={graphEdges}

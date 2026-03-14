@@ -3875,6 +3875,27 @@ function parseIdeaMapObject(raw: unknown): Record<string, unknown> {
   }
 }
 
+function isPlainIdeaMapObject(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function mergeIdeaMapExtensions(
+  existing: Record<string, unknown>,
+  patch: Record<string, unknown> | null | undefined
+): Record<string, unknown> {
+  if (!patch) return existing;
+  const next: Record<string, unknown> = { ...existing };
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined) continue;
+    if (isPlainIdeaMapObject(next[key]) && isPlainIdeaMapObject(value)) {
+      next[key] = mergeIdeaMapExtensions(next[key] as Record<string, unknown>, value);
+      continue;
+    }
+    next[key] = value;
+  }
+  return next;
+}
+
 /**
  * GET /api/my-work/my-ideas/:id/map
  * Returns per-idea working map (nodes + edges). If missing, returns a default skeleton.
@@ -4111,7 +4132,10 @@ router.put(
     if (existing?.extensions_json && extensions) {
       try {
         const existingExt = JSON.parse(String(existing.extensions_json || '{}'));
-        mergedExtensions = { ...existingExt, ...extensions };
+        mergedExtensions = mergeIdeaMapExtensions(
+          isPlainIdeaMapObject(existingExt) ? existingExt : {},
+          extensions
+        );
       } catch {
         mergedExtensions = extensions;
       }
@@ -4312,7 +4336,7 @@ router.post(
 
     let mergedExtensions = extensions;
     if (existing?.extensionsJson && extensions) {
-      mergedExtensions = { ...parseIdeaMapObject(existing.extensionsJson), ...extensions };
+      mergedExtensions = mergeIdeaMapExtensions(parseIdeaMapObject(existing.extensionsJson), extensions);
     } else if (existing?.extensionsJson) {
       mergedExtensions = parseIdeaMapObject(existing.extensionsJson);
     }

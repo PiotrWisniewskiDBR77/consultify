@@ -10,6 +10,16 @@ function uid() {
   return `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
+function getEdgeRole(edge: Edge): 'structural' | 'relation' {
+  const role = (edge as any)?.data?.edgeRole;
+  if (role === 'relation') return 'relation';
+  return 'structural';
+}
+
+function isStructuralEdge(edge: Edge) {
+  return getEdgeRole(edge) === 'structural';
+}
+
 export const BRANCH_COLORS: Record<string, { bg: string; text: string; edge: string; glow: string }> = {
   strengths: { bg: '#dcfce7', text: '#166534', edge: '#22c55e', glow: '#bbf7d0' },
   weaknesses: { bg: '#fee2e2', text: '#991b1b', edge: '#ef4444', glow: '#fecaca' },
@@ -71,14 +81,15 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
   const findParentId = useCallback(
     (nodeId: string): string | undefined => {
-      const parentEdge = edges.find((e) => e.target === nodeId);
+      const parentEdge = edges.find((e) => e.target === nodeId && isStructuralEdge(e));
       return parentEdge?.source;
     },
     [edges]
   );
 
   const findChildrenIds = useCallback(
-    (nodeId: string): string[] => edges.filter((e) => e.source === nodeId).map((e) => e.target),
+    (nodeId: string): string[] =>
+      edges.filter((e) => e.source === nodeId && isStructuralEdge(e)).map((e) => e.target),
     [edges]
   );
 
@@ -118,7 +129,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       type: 'gradient',
       style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
       animated: true,
-      data: { userCreated: true },
+      data: { userCreated: true, edgeRole: 'structural' },
     } as any;
 
     editingNodeIdRef.current = newId;
@@ -186,7 +197,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       type: 'gradient',
       style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
       animated: true,
-      data: { userCreated: true },
+      data: { userCreated: true, edgeRole: 'structural' },
     } as any;
 
     editingNodeIdRef.current = newId;
@@ -267,7 +278,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       type: 'gradient',
       style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
       animated: true,
-      data: { userCreated: true },
+      data: { userCreated: true, edgeRole: 'structural' },
     } as any;
 
     setNodes((prev: Node[]) => [...prev, newNode]);
@@ -352,6 +363,46 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     []
   );
 
+  const addRootTopic = useCallback(() => {
+    if (locked) return;
+    const rootNode = nodes.find((node) => node.id === 'root');
+    if (!rootNode) {
+      toast.error(isPolish ? 'Brak korzenia mapy' : 'Map root is missing');
+      return;
+    }
+    pushUndo();
+    const newId = `node-${uid()}`;
+    const newNode: Node = {
+      id: newId,
+      type: 'idea',
+      position: { x: rootNode.position.x + 220, y: rootNode.position.y + 120 },
+      data: {
+        label: '',
+        branchKey: 'uncategorized',
+        semanticType: 'topic',
+        sourceType: 'manual',
+        priority: 50,
+        _startEditing: Date.now(),
+      },
+    } as any;
+    const colors = branchColor('uncategorized');
+    const newEdge: Edge = {
+      id: `edge-${uid()}`,
+      source: 'root',
+      target: newId,
+      type: 'gradient',
+      style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
+      animated: true,
+      data: { userCreated: true, edgeRole: 'structural' },
+    } as any;
+    editingNodeIdRef.current = newId;
+    setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+    setEdges((prev: Edge[]) => [...prev, newEdge]);
+    setTimeout(() => {
+      try { fitView({ padding: 0.3, duration: 300 }); } catch { /* ignore */ }
+    }, 60);
+  }, [fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
+
   return {
     editingNodeIdRef,
     isNodeLockedByPeer,
@@ -369,5 +420,6 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     reparentSelectedDemote,
     startEditingSelected,
     toggleCollapse,
+    addRootTopic,
   };
 }

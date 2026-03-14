@@ -30,10 +30,12 @@ import {
   classifyStatementDocument,
   confirmStatement,
   createStatement,
+  detectContainedStatementTypes,
   detectStatementType,
   evaluateStatementReadiness,
   extractFinancialLines,
   getLatestStatementIngestRun,
+  loadPersistedStatementCandidateRows,
   learnStatementAliases,
   loadStatementSourceText,
   locateStatementSections,
@@ -94,6 +96,17 @@ import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
 const router = Router();
+
+function normalizeStatementTypeInput(value: unknown): 'P&L' | 'BS' | 'CF' | null {
+  const normalized = String(value || '')
+    .trim()
+    .toUpperCase();
+  if (normalized === 'PL' || normalized === 'P&L') return 'P&L';
+  if (normalized === 'BS') return 'BS';
+  if (normalized === 'CF') return 'CF';
+  return null;
+}
+
 interface AuthRequest extends Request {
   // Set by auth middleware (authoritative)
   organizationId?: string;
@@ -296,6 +309,7 @@ router.post(
     });
 
     const detection = detectStatementType(text);
+    const containedStatementTypes = detectContainedStatementTypes(text);
     const columnSelection = resolveStatementColumnSelection(text, detection);
     const documentProfile = classifyStatementDocument({
       fileName: file.originalname,
@@ -509,16 +523,30 @@ router.post(
     });
 
     const autoDetection = detectStatementType(text);
+    const manualStatementType = normalizeStatementTypeInput(req.body?.statementType);
+    const manualSelectionApplied = Boolean(manualStatementType);
+    const containedStatementTypes = Array.isArray(autoDetection.containedStatementTypes)
+      ? autoDetection.containedStatementTypes
+      : [];
+    const effectiveStatementType =
+      manualStatementType ||
+      normalizeStatementTypeInput(autoDetection.statementType) ||
+      normalizeStatementTypeInput(stmt.statement_type) ||
+      'P&L';
     const detection = {
       ...autoDetection,
-      statementType:
-        String(req.body?.statementType || '').trim() ||
-        (autoDetection.statementType === 'UNKNOWN' ? stmt.statement_type : autoDetection.statementType),
+      statementType: effectiveStatementType,
       periodStart: String(req.body?.periodStart || '').trim() || autoDetection.periodStart,
       periodEnd: String(req.body?.periodEnd || '').trim() || autoDetection.periodEnd,
       periodLabel: String(req.body?.periodLabel || '').trim() || autoDetection.periodLabel,
       currency: String(req.body?.currency || '').trim() || autoDetection.currency,
       scaling: String(req.body?.scaling || '').trim() || autoDetection.scaling,
+      confidence:
+        manualSelectionApplied &&
+        ((autoDetection.containedStatementTypes || []).length > 1 ||
+          autoDetection.statementType !== manualStatementType)
+          ? 1
+          : autoDetection.confidence,
     };
     const columnSelection = resolveStatementColumnSelection(text, detection);
     const documentProfile = classifyStatementDocument({
@@ -527,18 +555,27 @@ router.post(
       text,
     });
 
-    await updateStatementMetadata(statementId, {
-      statementType: detection.statementType,
-      periodStart: detection.periodStart,
-      periodEnd: detection.periodEnd,
-      periodLabel: detection.periodLabel,
-      currency: detection.currency,
-      scaling: detection.scaling,
-      overallConfidence: detection.confidence,
-      documentClass: documentProfile.documentClass,
-      extractionStrategy: documentProfile.extractionStrategy,
-      templateFamily: documentProfile.templateFamily,
-    });
+    try {
+      await updateStatementMetadata(statementId, {
+        statementType: detection.statementType,
+        periodStart: detection.periodStart,
+        periodEnd: detection.periodEnd,
+        periodLabel: detection.periodLabel,
+        currency: detection.currency,
+        scaling: detection.scaling,
+        overallConfidence: detection.confidence,
+        documentClass: documentProfile.documentClass,
+        extractionStrategy: documentProfile.extractionStrategy,
+        templateFamily: documentProfile.templateFamily,
+      });
+    } catch (error) {
+      logger.warn('[FinanceStatements] Detect metadata persistence failed; continuing with request-local selection', {
+        statementId,
+        requestedStatementType: req.body?.statementType,
+        effectiveStatementType: detection.statementType,
+        error: String((error as Error)?.message || error || 'unknown'),
+      });
+    }
     const statementPackId = await syncStatementToPack(statementId);
     await recordStatementSourceArtifact({
       statementId,
@@ -575,7 +612,19 @@ router.post(
       });
     }
 
-    res.json({ statementId, statementPackId, ingestRunId, detection, documentProfile, columnSelection });
+    res.json({
+      statementId,
+      statementPackId,
+      ingestRunId,
+      detection: {
+        ...detection,
+        containedStatementTypes,
+        containsMultipleStatements:
+          documentProfile.documentClass === 'mixed_report' || containedStatementTypes.length > 1,
+      },
+      documentProfile,
+      columnSelection,
+    });
   })
 );
 
@@ -610,10 +659,17 @@ router.post(
       parseMethod: stmt.parse_method,
       text,
     });
+    const effectiveStatementType =
+      normalizeStatementTypeInput(req.body?.statementType) ||
+      normalizeStatementTypeInput(stmt.statement_type) ||
+      'P&L';
+    const effectivePeriodLabel = String(req.body?.periodLabel || '').trim() || stmt.period_label || undefined;
+    const effectiveCurrency = String(req.body?.currency || '').trim() || stmt.currency || undefined;
+    const effectiveScaling = String(req.body?.scaling || '').trim() || stmt.scaling || undefined;
     const minimumAiLines =
-      String(stmt.statement_type || '').toUpperCase() === 'CF'
+      effectiveStatementType === 'CF'
         ? 2
-        : ['BS', 'P&L'].includes(String(stmt.statement_type || '').toUpperCase())
+        : ['BS', 'P&L'].includes(effectiveStatementType)
           ? 3
           : 2;
 
@@ -623,7 +679,7 @@ router.post(
         : await extractFinancialLinesWithOpenAI({
             filePath: stmt.source_file_path,
             fileName: stmt.source_file_name,
-            statementType: stmt.statement_type,
+            statementType: effectiveStatementType,
             traceId,
           });
     const anthropicExtraction =
@@ -633,7 +689,7 @@ router.post(
           ? await extractFinancialLinesWithAnthropic({
               text,
               fileName: stmt.source_file_name,
-              statementType: stmt.statement_type,
+              statementType: effectiveStatementType,
               traceId,
             })
           : null;
@@ -642,14 +698,17 @@ router.post(
         ? anthropicExtraction
         : openAiExtraction;
     const columnSelection = resolveStatementColumnSelection(text, {
-      periodLabel: stmt.period_label,
-      currency: stmt.currency,
-      scaling: stmt.scaling,
+      periodLabel: effectivePeriodLabel,
+      currency: effectiveCurrency,
+      scaling: effectiveScaling,
     });
     const extractionRaw =
       aiExtraction && aiExtraction.lines.length > 0
         ? aiExtraction
-        : extractFinancialLines(text, stmt.statement_type);
+        : extractFinancialLines(text, effectiveStatementType, {
+            selectedPeriodLabel: columnSelection.selectedPeriodLabel,
+            comparisonPeriodLabel: columnSelection.comparisonPeriodLabel,
+          });
     const extraction = {
       ...extractionRaw,
       lines: extractionRaw.lines.map((line) => ({
@@ -657,7 +716,7 @@ router.post(
         selectedPeriodLabel: line.selectedPeriodLabel || columnSelection.selectedPeriodLabel || undefined,
       })),
     };
-    const extractedSections = locateStatementSections(text, stmt.statement_type);
+    const extractedSections = locateStatementSections(text, effectiveStatementType);
     const strategy =
       anthropicExtraction && anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
         ? openAiExtraction && (openAiExtraction.lines.length || 0) > 0
@@ -680,6 +739,10 @@ router.post(
 
     await updateStatementStatus(statementId, 'imported');
     await updateStatementMetadata(statementId, {
+      statementType: effectiveStatementType,
+      periodLabel: effectivePeriodLabel,
+      currency: effectiveCurrency,
+      scaling: effectiveScaling,
       documentClass: documentProfile.documentClass,
       extractionStrategy: strategy,
       templateFamily: documentProfile.templateFamily,
@@ -697,9 +760,9 @@ router.post(
       ingestRunId,
       rows: extraction.lines,
       sectionIdsByKey,
-      statementType: stmt.statement_type,
-      currency: stmt.currency,
-      scaling: stmt.scaling,
+      statementType: effectiveStatementType,
+      currency: effectiveCurrency,
+      scaling: effectiveScaling,
     });
     await recordStatementSourceArtifact({
       statementId,
@@ -779,9 +842,6 @@ router.post(
     const stmt = await getStatementOrFail(statementId, orgId, res);
     if (!stmt) return;
 
-    const { lines } = req.body;
-    if (!lines || !Array.isArray(lines))
-      return res.status(400).json({ error: 'lines array required' });
     const ingestRunId = await ensureIngestRun({
       statementId,
       organizationId: orgId,
@@ -794,8 +854,17 @@ router.post(
       templateFamily: stmt.template_family,
     });
 
+    const requestLines = Array.isArray(req.body?.lines) ? req.body.lines : null;
+    const sourceLines =
+      requestLines && requestLines.length > 0
+        ? requestLines
+        : await loadPersistedStatementCandidateRows({ statementId, ingestRunId });
+    if (!sourceLines || sourceLines.length === 0) {
+      return res.status(400).json({ error: 'No extracted candidate rows available for mapping' });
+    }
+
     const mapped = resolveDuplicateSuggestedMappings(
-      await autoMapLines(lines, stmt.statement_type, {
+      await autoMapLines(sourceLines, stmt.statement_type, {
       organizationId: orgId,
       templateFamily: stmt.template_family,
       })

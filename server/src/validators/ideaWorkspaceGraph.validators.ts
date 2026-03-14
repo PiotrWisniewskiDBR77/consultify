@@ -324,6 +324,11 @@ export function normalizeEdgeForStorage(edge: any): CanonicalEdge {
   }
   if (edge.label) result.label = edge.label;
   if (edge.extensions && typeof edge.extensions === 'object') result.extensions = edge.extensions;
+  if (edge.data && typeof edge.data === 'object') result.data = edge.data;
+  if (edge.style && typeof edge.style === 'object') result.style = edge.style;
+  if (typeof edge.animated === 'boolean') result.animated = edge.animated;
+  if (edge.sourceHandle) result.sourceHandle = edge.sourceHandle;
+  if (edge.targetHandle) result.targetHandle = edge.targetHandle;
 
   return result as CanonicalEdge;
 }

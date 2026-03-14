@@ -174,6 +174,13 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   });
 });
 
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  if (req.path.startsWith('/api/')) {
+    (req as any).db = getDatabase();
+  }
+  next();
+});
+
 const skipManagedSchema =
   process.env.DB_MANAGED_SCHEMA === 'false' ||
   process.env.DB_MANAGED_SCHEMA === '0' ||

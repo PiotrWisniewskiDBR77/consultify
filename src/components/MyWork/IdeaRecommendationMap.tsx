@@ -1184,6 +1184,26 @@ type IdeaRecommendationMapProps = {
   onOpenChat?: (prompt?: string) => void;
   interactionMode?: MindMapInteractionMode;
   onInteractionModeChange?: (mode: MindMapInteractionMode) => void;
+  externalRuntime?: {
+    version: number;
+    loading: boolean;
+    saving: boolean;
+    lastSavedAt: number | null;
+    syncState: 'idle' | 'queued' | 'saving' | 'saved' | 'offline' | 'conflict';
+    nodes: Node[];
+    edges: Edge[];
+    extensions: Record<string, unknown>;
+    captureGraph: (
+      graph: { nodes: Node[]; edges: Edge[]; extensions?: Record<string, unknown> },
+      opts?: { reason?: 'draft' | 'manual' | 'semantic' | 'ai'; immediate?: boolean }
+    ) => void;
+    flushGraph: (opts?: {
+      reason?: 'draft' | 'manual' | 'semantic' | 'ai';
+      createSnapshot?: boolean;
+      snapshotLabel?: string;
+    }) => Promise<unknown>;
+    refresh: () => Promise<void>;
+  };
 };
 
 // ─────── Undo/Redo for map state ───────
@@ -1217,6 +1237,7 @@ function MindMapInner({
   onOpenChat,
   interactionMode: externalInteractionMode = 'select',
   onInteractionModeChange,
+  externalRuntime,
 }: IdeaRecommendationMapProps) {
   const { i18n } = useTranslation();
   const currentUser = useAppStore((state) => state.currentUser);
@@ -1526,6 +1547,7 @@ function MindMapInner({
   const visibleNodes = useMemo(() => {
     const childrenOf = new Map<string, string[]>();
     for (const e of edges) {
+      if ((e as any)?.data?.edgeRole === 'relation') continue;
       if (!childrenOf.has(e.source)) childrenOf.set(e.source, []);
       childrenOf.get(e.source)!.push(e.target);
     }
@@ -1570,6 +1592,16 @@ function MindMapInner({
     });
   }, [collapsedNodeIds, drillFocusId, edges, nodes]);
 
+  useEffect(() => {
+    const hiddenSelectedIds = new Set(
+      visibleNodes.filter((node) => node.hidden && node.selected).map((node) => node.id)
+    );
+    if (hiddenSelectedIds.size === 0) return;
+    setNodes((prev: Node[]) =>
+      prev.map((node) => (hiddenSelectedIds.has(node.id) ? { ...node, selected: false } : node))
+    );
+  }, [setNodes, visibleNodes]);
+
   const visibleEdges = useMemo(() => {
     const hiddenNodeIds = new Set(visibleNodes.filter((n) => n.hidden).map((n) => n.id));
     if (hiddenNodeIds.size === 0) return edges;
@@ -1605,19 +1637,27 @@ function MindMapInner({
     });
   }, [focusFilteredNodes, focusMode, focusObjectId, visibleEdges]);
 
-  const enrichedNodes = useMemo(() => {
-    const parentIds = new Set(edges.map((e) => e.target));
-    return focusFilteredNodes.map((n) => {
-      const needsSibling = n.id !== 'root' && !n.id.startsWith('branch-');
-      const currentMode = n.data?._interactionMode;
-      const currentSibling = n.data?._canAddSibling;
-      if (currentMode === interactionMode && currentSibling === needsSibling) return n;
-      return {
-        ...n,
-        data: { ...n.data, _interactionMode: interactionMode, _canAddSibling: needsSibling },
-      };
+  useEffect(() => {
+    setNodes((prev: Node[]) => {
+      let hasChanges = false;
+      const nextNodes = prev.map((node) => {
+        const needsSibling = node.id !== 'root' && !node.id.startsWith('branch-');
+        const currentMode = node.data?._interactionMode;
+        const currentSibling = node.data?._canAddSibling;
+        if (currentMode === interactionMode && currentSibling === needsSibling) {
+          return node;
+        }
+        hasChanges = true;
+        return {
+          ...node,
+          data: { ...node.data, _interactionMode: interactionMode, _canAddSibling: needsSibling },
+        };
+      });
+      return hasChanges ? nextNodes : prev;
     });
-  }, [edges, focusFilteredNodes, interactionMode]);
+  }, [interactionMode, setNodes]);
+
+  const enrichedNodes = focusFilteredNodes;
 
   const visibleIdeaNodeCount = useMemo(
     () => enrichedNodes.filter((n) => n.type === 'idea' && !n.hidden).length,
@@ -1915,6 +1955,7 @@ function MindMapInner({
       onPreferredToolLoaded,
       onViewportReport,
       clearUndoHistory,
+      externalRuntime,
     });
 
   // ── Node operations (extracted to useMindMapNodes) ──────────────────────
@@ -1934,6 +1975,7 @@ function MindMapInner({
     reparentSelectedDemote,
     startEditingSelected,
     toggleCollapse: toggleCollapseNode,
+    addRootTopic,
   } = useMindMapNodes({
     nodes,
     edges,
@@ -2081,27 +2123,34 @@ function MindMapInner({
       const fallback = isPolish ? 'Nowy pomysł' : 'New idea';
 
       if (cancelled) {
-        setNodes((prev: Node[]) => {
-          const node = prev.find((n) => n.id === nodeId);
-          if (node && !node.data?.label) {
-            console.log('[MindMap:edit] cancelled empty node → assigning fallback label');
-            return prev.map((n) =>
-              n.id === nodeId ? { ...n, data: { ...n.data, label: fallback, _startEditing: undefined } } : n
-            );
-          }
-          return prev.map((n) =>
-            n.id === nodeId ? { ...n, data: { ...n.data, _startEditing: undefined } } : n
+        const target = nodes.find((n) => n.id === nodeId);
+        const shouldRollback = !!target && !String(target.data?.label || '').trim();
+        if (shouldRollback) {
+          setNodes((prev: Node[]) => prev.filter((n) => n.id !== nodeId));
+          setEdges((prev: Edge[]) => prev.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+        } else {
+          setNodes((prev: Node[]) =>
+            prev.map((n) =>
+              n.id === nodeId ? { ...n, data: { ...n.data, _startEditing: undefined } } : n
+            )
           );
-        });
+        }
         return;
       }
       if (!label) {
-        console.log('[MindMap:edit] empty label → assigning fallback label');
-        setNodes((prev: Node[]) =>
-          prev.map((n) =>
-            n.id === nodeId ? { ...n, data: { ...n.data, label: fallback, _startEditing: undefined } } : n
-          )
-        );
+        const target = nodes.find((n) => n.id === nodeId);
+        const shouldRollback = !!target && !String(target.data?.label || '').trim();
+        if (shouldRollback) {
+          setNodes((prev: Node[]) => prev.filter((n) => n.id !== nodeId));
+          setEdges((prev: Edge[]) => prev.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+        } else {
+          console.log('[MindMap:edit] empty label → assigning fallback label');
+          setNodes((prev: Node[]) =>
+            prev.map((n) =>
+              n.id === nodeId ? { ...n, data: { ...n.data, label: fallback, _startEditing: undefined } } : n
+            )
+          );
+        }
         return;
       }
       setNodes((prev: Node[]) =>
@@ -2112,7 +2161,7 @@ function MindMapInner({
     };
     window.addEventListener('idea-mindmap-node-edit', handler);
     return () => window.removeEventListener('idea-mindmap-node-edit', handler);
-  }, [debugLog, isPolish, setEdges, setNodes]);
+  }, [debugLog, isPolish, nodes, setEdges, setNodes]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -2265,6 +2314,9 @@ function MindMapInner({
         e.preventDefault();
         debugLog('KEY_HANDLED save', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
         scheduleSave(nodes as any, edges as any);
+        if (externalRuntime) {
+          void externalRuntime.flushGraph({ reason: 'manual' });
+        }
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
@@ -2462,6 +2514,8 @@ function MindMapInner({
   ]);
 
   // ── Connect ──────────────────────────────────────────────────────────────
+  const isRelationEdge = useCallback((edge: Edge) => edge?.data?.edgeRole === 'relation', []);
+
   const onConnect = useCallback(
     (connection: Connection) => {
       debugLog(`onConnect: ${connection.source} → ${connection.target}`, { source: 'handler' });
@@ -2479,7 +2533,13 @@ function MindMapInner({
         type: 'labeled',
         style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.7, strokeDasharray: '6 3' },
         animated: false,
-        data: { userCreated: true, flowState: 'forward', label: '' },
+        data: {
+          userCreated: true,
+          edgeRole: 'relation',
+          relationType: 'related',
+          flowState: 'forward',
+          label: '',
+        },
       };
       setEdges((prev: Edge[]) => addEdge(newEdge, prev));
       updateInteractionMode('select');
@@ -2491,6 +2551,7 @@ function MindMapInner({
     (event: React.MouseEvent, edge: Edge) => {
       markInputHandled('click', event.target, 'onEdgeClick', `edge:${edge.id}`);
       if (locked) return;
+      if (!isRelationEdge(edge)) return;
       const isUser = !!edge.data?.userCreated;
       const currentState = edge.data?.flowState || 'forward';
 
@@ -2542,7 +2603,7 @@ function MindMapInner({
           .filter(Boolean)
       );
     },
-    [isPolish, locked, pushUndo, setEdges]
+    [isPolish, isRelationEdge, locked, pushUndo, setEdges]
   );
 
   useEffect(() => {
@@ -2561,6 +2622,7 @@ function MindMapInner({
       if (!edgeContextMenu) return;
       const targetEdge = (edges as Edge[]).find((e) => e.id === edgeContextMenu.edgeId);
       if (!targetEdge) return;
+      const relationEdge = isRelationEdge(targetEdge);
 
       if (action === 'edge_add_label') {
         const current = targetEdge.data?.label || '';
@@ -2572,7 +2634,7 @@ function MindMapInner({
         }
       }
 
-      if (action === 'edge_insert_node') {
+      if (action === 'edge_insert_node' && relationEdge) {
         pushUndo();
         const newId = `node-${uid()}`;
         const midX = 0;
@@ -2604,7 +2666,7 @@ function MindMapInner({
         setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
       }
 
-      if (action === 'edge_reverse') {
+      if (action === 'edge_reverse' && relationEdge) {
         pushUndo();
         setEdges((prev: Edge[]) =>
           prev.map((e) =>
@@ -2632,7 +2694,7 @@ function MindMapInner({
         toast.success(`Style: ${nextStyle}`, { duration: 800 });
       }
 
-      if (action === 'edge_edit_relation') {
+      if (action === 'edge_edit_relation' && relationEdge) {
         const current = targetEdge.data?.relation || '';
         const relations = ['related', 'depends_on', 'blocks', 'supports', 'contradicts'];
         const label = window.prompt(
@@ -2650,7 +2712,7 @@ function MindMapInner({
         }
       }
 
-      if (action === 'edge_delete') {
+      if (action === 'edge_delete' && relationEdge) {
         pushUndo();
         setEdges((prev: Edge[]) => prev.filter((e) => e.id !== targetEdge.id));
         toast.success(isPolish ? 'Połączenie usunięte' : 'Connection removed', { duration: 800 });
@@ -2658,7 +2720,7 @@ function MindMapInner({
 
       setEdgeContextMenu(null);
     },
-    [edgeContextMenu, edges, isPolish, nodes, pushUndo, setEdges, setNodes],
+    [edgeContextMenu, edges, isPolish, isRelationEdge, nodes, pushUndo, setEdges, setNodes],
   );
 
   const selectedBranchKey = useMemo(() => {
@@ -2823,7 +2885,17 @@ function MindMapInner({
       setNodes(nextNodes as any);
       setEdges(nextEdges as any);
 
-      if (persistence === 'online') {
+      if (externalRuntime) {
+        externalRuntime.captureGraph(
+          {
+            nodes: nextNodes as any,
+            edges: nextEdges as any,
+            extensions: extensions || undefined,
+          },
+          { reason: 'ai', immediate: true }
+        );
+        await externalRuntime.flushGraph({ reason: 'ai' });
+      } else if (persistence === 'online') {
         await Api.saveMyIdeaMap(ideaId, {
           nodes: nextNodes as any,
           edges: nextEdges as any,
@@ -2958,6 +3030,7 @@ function MindMapInner({
     handlers: {
       addChildNode,
       addSiblingNode,
+      addRootTopic,
       duplicateSelected,
       deleteSelected,
       getSelectedNode,
@@ -3388,7 +3461,7 @@ function MindMapInner({
               source: ctxNode.id,
               target: peer.id,
               type: 'labeled',
-              data: { userCreated: true, relation: 'related' },
+              data: { userCreated: true, edgeRole: 'relation', relation: 'related' },
             } as Edge,
           ]);
         }
@@ -3477,7 +3550,7 @@ function MindMapInner({
           type: 'gradient',
           style: { stroke: '#94a3b8', strokeWidth: 1.5, opacity: 0.5 },
           animated: true,
-          data: { userCreated: true },
+          data: { userCreated: true, edgeRole: 'structural' },
         } as any;
         pushUndo();
         setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
@@ -3506,7 +3579,7 @@ function MindMapInner({
           type: 'gradient',
           style: { stroke: '#94a3b8', strokeWidth: 1.5, opacity: 0.5 },
           animated: true,
-          data: { userCreated: true },
+          data: { userCreated: true, edgeRole: 'structural' },
         } as any;
         pushUndo();
         setNodes((prev: Node[]) => [...prev.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }]);
@@ -3681,17 +3754,39 @@ function MindMapInner({
           onOpenArtifactModal={() => setAttachArtifactNodeId(floatingToolbarInfo.nodeId)}
           onOpenNodeDetail={() => setDrawerNodeId(floatingToolbarInfo.nodeId)}
           onRemoveArtifact={(link) => {
-            updateNodeDataById(floatingToolbarInfo.nodeId, (data: any) => ({
-              ...data,
-              artifactLinks: (Array.isArray(data.artifactLinks) ? data.artifactLinks : []).filter(
-                (item: ArtifactLink) =>
-                  !(
-                    item?.artifactRef?.type === link?.artifactRef?.type &&
-                    item?.artifactRef?.id === link?.artifactRef?.id &&
-                    item?.label === link?.label
-                  )
-              ),
-            }));
+            const artifactType = link?.artifactRef?.type;
+            const artifactId = link?.artifactRef?.id;
+            if (!artifactType || !artifactId) return;
+            void (async () => {
+              try {
+                await Api.detachArtifactFromObject(
+                  ideaId,
+                  floatingToolbarInfo.nodeId,
+                  artifactType,
+                  artifactId
+                );
+                if (externalRuntime) {
+                  await externalRuntime.refresh();
+                } else {
+                  updateNodeDataById(floatingToolbarInfo.nodeId, (data: any) => ({
+                    ...data,
+                    artifactLinks: (Array.isArray(data.artifactLinks) ? data.artifactLinks : []).filter(
+                      (item: ArtifactLink) =>
+                        !(
+                          item?.artifactRef?.type === link?.artifactRef?.type &&
+                          item?.artifactRef?.id === link?.artifactRef?.id &&
+                          item?.label === link?.label
+                        )
+                    ),
+                  }));
+                }
+                toast.success(isPolish ? 'Artefakt odłączony' : 'Artifact detached', { duration: 900 });
+              } catch (err: any) {
+                toast.error(
+                  err?.message || (isPolish ? 'Nie udało się odłączyć artefaktu' : 'Failed to detach artifact')
+                );
+              }
+            })();
           }}
           onOpenLinkedArtifact={(link) => {
             const artifactType = link?.artifactRef?.type;
@@ -4398,7 +4493,7 @@ function MindMapInner({
               opacity: 0.7,
               strokeDasharray: depType === 'conflicts_with' ? '5 5' : undefined,
             },
-            data: { label: dep.relationship, depType, userCreated: true },
+            data: { label: dep.relationship, depType, userCreated: true, edgeRole: 'relation' },
           };
           setEdges((prev: Edge[]) => addEdge(newEdge, prev));
           pushActivity(ideaId, {
@@ -4434,7 +4529,7 @@ function MindMapInner({
                 opacity: 0.7,
                 strokeDasharray: depType === 'conflicts_with' ? '5 5' : undefined,
               },
-              data: { label: dep.relationship, depType, userCreated: true },
+              data: { label: dep.relationship, depType, userCreated: true, edgeRole: 'relation' },
             };
             setEdges((prev: Edge[]) => addEdge(newEdge, prev));
           }
@@ -4758,14 +4853,31 @@ function MindMapInner({
         onClose={() => setAttachArtifactNodeId(null)}
         onAttach={(type, id, label) => {
           if (attachArtifactNodeId) {
-            updateNodeDataById(attachArtifactNodeId, (data: any) => ({
-              ...data,
-              artifactLinks: [
-                ...(Array.isArray(data.artifactLinks) ? data.artifactLinks : []),
-                buildArtifactLink(type, id, 'related', label),
-              ],
-            }));
-            toast.success(isPolish ? 'Artefakt dołączony' : 'Artifact attached', { duration: 900 });
+            void (async () => {
+              try {
+                await Api.attachArtifactToObject(ideaId, attachArtifactNodeId, {
+                  artifactRef: { type, id },
+                  label,
+                  linkRole: 'related',
+                });
+                if (externalRuntime) {
+                  await externalRuntime.refresh();
+                } else {
+                  updateNodeDataById(attachArtifactNodeId, (data: any) => ({
+                    ...data,
+                    artifactLinks: [
+                      ...(Array.isArray(data.artifactLinks) ? data.artifactLinks : []),
+                      buildArtifactLink(type, id, 'related', label),
+                    ],
+                  }));
+                }
+                toast.success(isPolish ? 'Artefakt dołączony' : 'Artifact attached', { duration: 900 });
+              } catch (err: any) {
+                toast.error(
+                  err?.message || (isPolish ? 'Nie udało się dołączyć artefaktu' : 'Failed to attach artifact')
+                );
+              }
+            })();
           }
         }}
       />

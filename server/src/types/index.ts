@@ -9,6 +9,8 @@ import type { NextFunction, Request, Response } from 'express';
 // EXPRESS EXTENSIONS
 // ==========================================
 
+import type { IDatabase } from '../database/IDatabase.js';
+
 export interface AuthenticatedUser {
   id: string;
   email: string;
@@ -32,6 +34,7 @@ export interface AuthenticatedRequest<
   can?: (capability: string) => boolean;
   tenantId?: string;
   workspaceId?: string;
+  db?: IDatabase;
 }
 
 export type AsyncHandler<ReqBody = any, P = any, ResBody = any, ReqQuery = any> = (
