@@ -384,7 +384,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     locked: canvasLocked,
     preferredTool: activeTool,
     language: i18n.language || 'en',
-    selection,
   });
   const graphNodes = graphRuntime.graph.nodes as any[];
   const graphEdges = graphRuntime.graph.edges as any[];
@@ -1260,6 +1259,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const lastViewportRef = React.useRef<{ x: number; y: number; zoom: number } | null>(null);
   const latestSurfaceStateRef = useRef<Record<string, unknown>>({});
   const handleViewportReport = useCallback((vp: { x: number; y: number; zoom: number }) => {
+    const prev = lastViewportRef.current;
+    if (prev && prev.x === vp.x && prev.y === vp.y && prev.zoom === vp.zoom) {
+      return;
+    }
     lastViewportRef.current = vp;
     setRuntimeViewport(vp);
   }, [setRuntimeViewport]);
@@ -1277,9 +1280,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       focusMode,
       focusObjectId: focusObjectId || null,
       activeTool,
-      selectedNodeIds: selection.ids || [],
     };
-  }, [activeTool, focusMode, focusObjectId, selection.ids]);
+  }, [activeTool, focusMode, focusObjectId]);
 
   useEffect(() => {
     if (!realId || isDraft) return;
@@ -1299,7 +1301,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     focusObjectId,
     isDraft,
     realId,
-    selection.ids,
   ]);
 
   // ── Chat ────────────────────────────────────────────────────────────────────

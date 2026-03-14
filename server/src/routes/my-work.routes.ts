@@ -428,6 +428,22 @@ const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: 
 };
 
 const requireTables = async (res: Response, tables: string[]): Promise<boolean> => {
+  const isTestGateway =
+    process.env.NODE_ENV === 'test' ||
+    process.env.E2E_MODE === 'true' ||
+    process.env.ENABLE_TEST_GATEWAY === 'true';
+  const mockDbEnabled =
+    process.env.MOCK_DB === 'true' ||
+    (process.env.NODE_ENV === 'test' &&
+      process.env.RUN_DB_TESTS !== '1' &&
+      process.env.MOCK_DB !== 'false');
+
+  // Mock/test gateways do not expose a real schema catalog, so table introspection
+  // would otherwise block the whole My Work surface with false 503s.
+  if (isTestGateway && mockDbEnabled) {
+    return true;
+  }
+
   for (const t of tables) {
     const cols = await getTableColumns(t);
     if (!cols || cols.size === 0) {
@@ -10914,44 +10930,104 @@ router.get(
       const orgContext = await organizationContextService.buildResolvedContext(orgId);
       const preset = selectHomeV2Preset(orgContext.profile.industry);
 
+      const safeHomeV2Query = async <T = any>(
+        label: string,
+        attempts: Array<{ sql: string; params: unknown[] }>
+      ): Promise<T[]> => {
+        for (const attempt of attempts) {
+          try {
+            const rows = await db.query(attempt.sql, attempt.params);
+            return Array.isArray(rows) ? (rows as T[]) : [];
+          } catch (err: any) {
+            logger.warn(`[home-v2] ${label} query fallback`, {
+              message: err?.message,
+            });
+          }
+        }
+        return [];
+      };
+
       const [tasks, decisions, ideas, notes] = await Promise.all([
-        db.query(
-          `SELECT id, title, description, status, priority, due_date, updated_at
-           FROM tasks
-           WHERE organization_id = ? AND assignee_id = ?
-             AND due_date IS NOT NULL
-             AND LOWER(COALESCE(status,'')) NOT IN ('done','completed','cancelled')
-           ORDER BY due_date ASC, updated_at DESC
-           LIMIT 8`,
-          [orgId, userId]
-        ),
-        db.query(
-          `SELECT id, title, status, priority, deadline, created_at
-           FROM decisions
-           WHERE organization_id = ? AND (created_by = ? OR assigned_to = ?)
-             AND LOWER(COALESCE(status,'')) NOT IN ('resolved','cancelled')
-           ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline ASC, created_at DESC
-           LIMIT 6`,
-          [orgId, userId, userId]
-        ),
-        db.query(
-          `SELECT i.id, i.title, i.description, i.stage, i.updated_at, COUNT(t.id) as task_count
-           FROM ideas i
-           LEFT JOIN tasks t ON t.idea_id = i.id
-           WHERE i.organization_id = ? AND i.created_by = ?
-           GROUP BY i.id, i.title, i.description, i.stage, i.updated_at
-           ORDER BY i.updated_at DESC
-           LIMIT 4`,
-          [orgId, userId]
-        ),
-        db.query(
-          `SELECT id, title, content, updated_at
-           FROM notebook_pages
-           WHERE organization_id = ? AND user_id = ?
-           ORDER BY updated_at DESC
-           LIMIT 3`,
-          [orgId, userId]
-        ),
+        safeHomeV2Query('tasks', [
+          {
+            sql: `SELECT id, title, description, status, priority, due_date, updated_at
+                  FROM tasks
+                  WHERE organization_id = ? AND assignee_id = ?
+                    AND due_date IS NOT NULL
+                    AND LOWER(COALESCE(status,'')) NOT IN ('done','completed','cancelled')
+                  ORDER BY due_date ASC, updated_at DESC
+                  LIMIT 8`,
+            params: [orgId, userId],
+          },
+          {
+            sql: `SELECT id, title, description, status, NULL::int as priority, due_date, updated_at
+                  FROM tasks
+                  WHERE organization_id = ? AND assignee_id = ?
+                    AND due_date IS NOT NULL
+                    AND LOWER(COALESCE(status,'')) NOT IN ('done','completed','cancelled')
+                  ORDER BY due_date ASC, updated_at DESC
+                  LIMIT 8`,
+            params: [orgId, userId],
+          },
+        ]),
+        safeHomeV2Query('decisions', [
+          {
+            sql: `SELECT id, title, status, priority, deadline, created_at
+                  FROM decisions
+                  WHERE organization_id = ? AND (created_by = ? OR assigned_to = ?)
+                    AND LOWER(COALESCE(status,'')) NOT IN ('resolved','cancelled')
+                  ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline ASC, created_at DESC
+                  LIMIT 6`,
+            params: [orgId, userId, userId],
+          },
+          {
+            sql: `SELECT id, title, status, NULL::int as priority, deadline, created_at
+                  FROM decisions
+                  WHERE organization_id = ? AND (created_by = ? OR assigned_to = ?)
+                    AND LOWER(COALESCE(status,'')) NOT IN ('resolved','cancelled')
+                  ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline ASC, created_at DESC
+                  LIMIT 6`,
+            params: [orgId, userId, userId],
+          },
+        ]),
+        safeHomeV2Query('ideas', [
+          {
+            sql: `SELECT i.id, i.title, i.description, i.stage, i.updated_at, COUNT(t.id) as task_count
+                  FROM ideas i
+                  LEFT JOIN tasks t ON t.idea_id = i.id
+                  WHERE i.organization_id = ? AND i.created_by = ?
+                  GROUP BY i.id, i.title, i.description, i.stage, i.updated_at
+                  ORDER BY i.updated_at DESC
+                  LIMIT 4`,
+            params: [orgId, userId],
+          },
+          {
+            sql: `SELECT i.id, i.title, NULL::text as description, i.stage, i.updated_at, 0::int as task_count
+                  FROM ideas i
+                  WHERE i.organization_id = ? AND i.created_by = ?
+                  ORDER BY i.updated_at DESC
+                  LIMIT 4`,
+            params: [orgId, userId],
+          },
+        ]),
+        safeHomeV2Query('notes', [
+          {
+            sql: `SELECT id, title, content, updated_at
+                  FROM notebook_pages
+                  WHERE organization_id = ? AND user_id = ?
+                  ORDER BY updated_at DESC
+                  LIMIT 3`,
+            params: [orgId, userId],
+          },
+          {
+            sql: `SELECT id, title, NULL::text as content, updated_at
+                  FROM notebook_pages
+                  WHERE organization_id = ? AND user_id = ?
+                  ORDER BY updated_at DESC
+                  LIMIT 3`,
+            params: [orgId, userId],
+          },
+        ]),
       ]);
 
       const overdueTasks = tasks.filter((task: any) => task.due_date && new Date(task.due_date) < now);

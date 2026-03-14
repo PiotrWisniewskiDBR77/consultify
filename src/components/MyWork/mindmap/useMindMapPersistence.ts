@@ -13,6 +13,26 @@ import { normalizeMindMapNodes } from './mindMapNodeModel';
 
 type PersistenceStatus = 'online' | 'no_route' | 'missing_table' | 'offline';
 
+function stableSerialize(value: unknown): string {
+  try {
+    return JSON.stringify(value ?? null);
+  } catch {
+    return '';
+  }
+}
+
+function shouldBootstrapStarterGraph(
+  runtimeNodes: Node[],
+  runtimeEdges: Edge[],
+  runtimeVersion: number | null
+) {
+  if (runtimeNodes.length === 0 && runtimeEdges.length === 0) return true;
+  if (runtimeVersion !== null && runtimeVersion > 1) return false;
+  if (runtimeEdges.length > 0) return false;
+  if (runtimeNodes.length !== 1) return false;
+  return String(runtimeNodes[0]?.id || '') === 'root';
+}
+
 function buildLocalDefaultIdeaMap(
   ideaId: string,
   ideaTitle: string,
@@ -27,7 +47,65 @@ function buildLocalDefaultIdeaMap(
       hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
     },
   };
-  return { nodes: [rootNode], edges: [] };
+  const branchSpecs = [
+    {
+      id: 'branch-problem',
+      branchKey: 'problem',
+      label: isPolish ? 'Problem' : 'Problem',
+      position: { x: -320, y: -180 },
+      selected: false,
+    },
+    {
+      id: 'branch-options',
+      branchKey: 'options',
+      label: isPolish ? 'Opcje' : 'Options',
+      position: { x: 320, y: -180 },
+      selected: true,
+    },
+    {
+      id: 'branch-evidence',
+      branchKey: 'evidence',
+      label: isPolish ? 'Dowody' : 'Evidence',
+      position: { x: -320, y: 20 },
+      selected: false,
+    },
+    {
+      id: 'branch-risks',
+      branchKey: 'risks',
+      label: isPolish ? 'Ryzyka' : 'Risks',
+      position: { x: 320, y: 20 },
+      selected: false,
+    },
+    {
+      id: 'branch-experiments',
+      branchKey: 'experiments',
+      label: isPolish ? 'Eksperymenty' : 'Experiments',
+      position: { x: 0, y: 240 },
+      selected: false,
+    },
+  ] as const;
+
+  const branchNodes: Node[] = branchSpecs.map((branch) => ({
+    id: branch.id,
+    type: 'branch',
+    position: branch.position,
+    selected: branch.selected === true,
+    data: {
+      label: branch.label,
+      branchKey: branch.branchKey,
+      hint: isPolish ? 'Wybierz gałąź i naciśnij Tab' : 'Select branch and press Tab',
+    },
+  }));
+
+  const branchEdges: Edge[] = branchSpecs.map((branch) => ({
+    id: `edge-root-${branch.branchKey}`,
+    source: 'root',
+    target: branch.id,
+    type: 'smoothstep',
+    data: { edgeRole: 'structural' },
+  }));
+
+  return { nodes: [rootNode, ...branchNodes], edges: branchEdges };
 }
 
 export interface UseMindMapPersistenceOpts {
@@ -104,6 +182,8 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
   const saveTimerRef = useRef<number | null>(null);
   const isHydratingRef = useRef(true);
   const lastHydratedRuntimeVersionRef = useRef<number | null>(null);
+  const skipNextAutoSaveRef = useRef(false);
+  const lastScheduledPayloadKeyRef = useRef('');
   const runtimeVersion = externalRuntime?.version ?? null;
   const runtimeLoading = externalRuntime?.loading ?? false;
   const runtimeSaving = externalRuntime?.saving ?? false;
@@ -113,6 +193,47 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
   const runtimeEdges = externalRuntime?.edges ?? null;
   const runtimeExtensions = externalRuntime?.extensions ?? null;
   const runtimeCaptureGraph = externalRuntime?.captureGraph;
+  const scheduleSaveStateRef = useRef({
+    collapsedNodeIds,
+    extensions,
+    externalRuntime,
+    locked,
+    onViewportReport,
+    persistence,
+    preferredTool,
+    runtimeCaptureGraph,
+    runtimeEdges,
+    runtimeExtensions,
+    runtimeNodes,
+  });
+
+  useEffect(() => {
+    scheduleSaveStateRef.current = {
+      collapsedNodeIds,
+      extensions,
+      externalRuntime,
+      locked,
+      onViewportReport,
+      persistence,
+      preferredTool,
+      runtimeCaptureGraph,
+      runtimeEdges,
+      runtimeExtensions,
+      runtimeNodes,
+    };
+  }, [
+    collapsedNodeIds,
+    extensions,
+    externalRuntime,
+    locked,
+    onViewportReport,
+    persistence,
+    preferredTool,
+    runtimeCaptureGraph,
+    runtimeEdges,
+    runtimeExtensions,
+    runtimeNodes,
+  ]);
 
   useEffect(() => {
     if (runtimeVersion === null) return;
@@ -124,8 +245,17 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
 
   const hydrate = useCallback(async () => {
     if (externalRuntime) {
-      const nextNodes = Array.isArray(runtimeNodes) ? runtimeNodes : [];
-      const nextEdges = Array.isArray(runtimeEdges) ? runtimeEdges : [];
+      const runtimeNodesSafe = Array.isArray(runtimeNodes) ? runtimeNodes : [];
+      const runtimeEdgesSafe = Array.isArray(runtimeEdges) ? runtimeEdges : [];
+      const defaultGraph = shouldBootstrapStarterGraph(
+        runtimeNodesSafe as Node[],
+        runtimeEdgesSafe as Edge[],
+        runtimeVersion
+      )
+        ? buildLocalDefaultIdeaMap(ideaId, ideaTitle, isPolish)
+        : null;
+      const nextNodes = defaultGraph ? defaultGraph.nodes : runtimeNodesSafe;
+      const nextEdges = defaultGraph ? defaultGraph.edges : runtimeEdgesSafe;
       const safeRuntimeExtensions =
         runtimeExtensions && typeof runtimeExtensions === 'object' ? runtimeExtensions : {};
       const viewState = (safeRuntimeExtensions as any)?.mindmap?.viewState;
@@ -149,7 +279,19 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
         ideaTitle,
         isPolish
       );
+      if (defaultGraph) {
+        runtimeCaptureGraph?.(
+          {
+            nodes: depthPatchedNodes,
+            edges: nextEdges,
+            extensions: safeRuntimeExtensions,
+          },
+          { reason: 'draft' }
+        );
+      }
       isHydratingRef.current = true;
+      skipNextAutoSaveRef.current = true;
+      lastScheduledPayloadKeyRef.current = '';
       setNodes(depthPatchedNodes);
       setEdges(nextEdges);
       clearUndoHistory();
@@ -212,6 +354,8 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       );
 
       isHydratingRef.current = true;
+      skipNextAutoSaveRef.current = true;
+      lastScheduledPayloadKeyRef.current = '';
       setNodes(depthPatchedNodes);
       setEdges(nextEdges);
       clearUndoHistory();
@@ -262,6 +406,8 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
 
       const def = buildLocalDefaultIdeaMap(ideaId, ideaTitle, isPolish);
       isHydratingRef.current = true;
+      skipNextAutoSaveRef.current = true;
+      lastScheduledPayloadKeyRef.current = '';
       setNodes(def.nodes);
       setEdges(def.edges);
       setTimeout(() => {
@@ -305,19 +451,28 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
 
   useEffect(() => {
     const label = ideaTitle || (isPolish ? 'Mój pomysł' : 'My idea');
-    setNodes((prev: Node[]) =>
-      (prev || []).map((n: any) => {
+    const hint = isPolish ? 'Kliknij, aby edytować' : 'Click to edit';
+    setNodes((prev: Node[]) => {
+      let hasChanges = false;
+      const next = (prev || []).map((n: any) => {
         if (String(n?.id) !== 'root') return n;
+        const currentLabel = String(n?.data?.label || '');
+        const currentHint = String(n?.data?.hint || '');
+        if (currentLabel === label && currentHint === hint) {
+          return n;
+        }
+        hasChanges = true;
         return {
           ...n,
           data: {
             ...(n.data || {}),
             label,
-            hint: isPolish ? 'Kliknij, aby edytować' : 'Click to edit',
+            hint,
           },
         };
-      })
-    );
+      });
+      return hasChanges ? next : prev;
+    });
   }, [ideaTitle, isPolish, setNodes]);
 
   useEffect(() => {
@@ -342,16 +497,33 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
   const scheduleSave = useCallback(
     (nextNodes: Node[], nextEdges: Edge[]) => {
       if (isHydratingRef.current) return;
-      if (locked) return;
-      if (externalRuntime) {
+      if (skipNextAutoSaveRef.current) {
+        skipNextAutoSaveRef.current = false;
+        return;
+      }
+      const {
+        collapsedNodeIds: latestCollapsedNodeIds,
+        extensions: latestExtensions,
+        externalRuntime: latestExternalRuntime,
+        locked: latestLocked,
+        onViewportReport: latestOnViewportReport,
+        persistence: latestPersistence,
+        preferredTool: latestPreferredTool,
+        runtimeCaptureGraph: latestRuntimeCaptureGraph,
+        runtimeEdges: latestRuntimeEdges,
+        runtimeExtensions: latestRuntimeExtensions,
+        runtimeNodes: latestRuntimeNodes,
+      } = scheduleSaveStateRef.current;
+
+      if (latestLocked) return;
+      if (latestExternalRuntime) {
         const currentViewport = getViewport();
-        onViewportReport?.(currentViewport);
         const ext = {
-          ...(extensions || {}),
+          ...(latestExtensions || {}),
           mindmap: {
-            ...((extensions as any)?.mindmap || {}),
+            ...((latestExtensions as any)?.mindmap || {}),
             viewState: {
-              collapsedNodeIds: Array.from(collapsedNodeIds),
+              collapsedNodeIds: Array.from(latestCollapsedNodeIds),
               viewport: currentViewport,
             },
           },
@@ -361,7 +533,36 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
           const { _interactionMode, _canAddSibling, ...cleanData } = n.data || {};
           return { ...n, data: cleanData };
         });
-        runtimeCaptureGraph?.(
+        const payloadKey = stableSerialize({
+          nodes: cleanNodes,
+          edges: nextEdges,
+          extensions: ext,
+        });
+        const runtimeExt = {
+          ...(latestRuntimeExtensions && typeof latestRuntimeExtensions === 'object'
+            ? latestRuntimeExtensions
+            : {}),
+          mindmap: {
+            ...((latestRuntimeExtensions as any)?.mindmap || {}),
+            viewState: {
+              collapsedNodeIds: Array.from(latestCollapsedNodeIds),
+              viewport: currentViewport,
+            },
+          },
+        };
+        if (
+          stableSerialize(cleanNodes) === stableSerialize(latestRuntimeNodes || []) &&
+          stableSerialize(nextEdges) === stableSerialize(latestRuntimeEdges || []) &&
+          stableSerialize(ext) === stableSerialize(runtimeExt)
+        ) {
+          return;
+        }
+        if (payloadKey === lastScheduledPayloadKeyRef.current) {
+          return;
+        }
+        lastScheduledPayloadKeyRef.current = payloadKey;
+        latestOnViewportReport?.(currentViewport);
+        latestRuntimeCaptureGraph?.(
           {
             nodes: cleanNodes as Node[],
             edges: nextEdges,
@@ -371,19 +572,19 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
         );
         return;
       }
-      if (persistence !== 'online') return;
+      if (latestPersistence !== 'online') return;
       if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
       saveTimerRef.current = window.setTimeout(async () => {
         setSaving(true);
         try {
           const currentViewport = getViewport();
-          onViewportReport?.(currentViewport);
+          latestOnViewportReport?.(currentViewport);
           const ext = {
-            ...(extensions || {}),
+            ...(latestExtensions || {}),
             mindmap: {
-              ...((extensions as any)?.mindmap || {}),
+              ...((latestExtensions as any)?.mindmap || {}),
               viewState: {
-                collapsedNodeIds: Array.from(collapsedNodeIds),
+                collapsedNodeIds: Array.from(latestCollapsedNodeIds),
                 viewport: currentViewport,
               },
             },
@@ -393,10 +594,20 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
             const { _interactionMode, _canAddSibling, ...cleanData } = n.data || {};
             return { ...n, data: cleanData };
           });
+          const payloadKey = stableSerialize({
+            nodes: cleanNodes,
+            edges: nextEdges,
+            extensions: ext,
+          });
+          if (payloadKey === lastScheduledPayloadKeyRef.current) {
+            setSaving(false);
+            return;
+          }
+          lastScheduledPayloadKeyRef.current = payloadKey;
           await Api.saveMyIdeaMap(ideaId, {
             nodes: cleanNodes,
             edges: nextEdges,
-            preferredTool: preferredTool || undefined,
+            preferredTool: latestPreferredTool || undefined,
             extensions: ext,
           });
           setLastSavedAt(Date.now());
@@ -409,18 +620,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
         }
       }, 700);
     },
-    [
-      collapsedNodeIds,
-      extensions,
-      getViewport,
-      ideaId,
-      isPolish,
-      locked,
-      onViewportReport,
-      persistence,
-      preferredTool,
-      runtimeCaptureGraph,
-    ]
+    [getViewport, ideaId, isPolish]
   );
 
   useEffect(() => {

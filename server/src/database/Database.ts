@@ -393,19 +393,29 @@ function createMockDatabase(): MockDatabase {
     if (!table) return null;
     const allRows = store.tables.get(table) || [];
 
-    // Very small filter support: id = ?, is_active, organization_id scope.
+    // Very small filter support for simple equality predicates with positional params.
     let rows = [...allRows];
     if (s.includes('where')) {
-      if (s.match(/\bid\s*=\s*\?/i)) {
-        const id = params?.[0];
-        rows = rows.filter((r) => String(r.id) === String(id));
+      const wherePart = normalizeSql(sql).split(/\bwhere\b/i)[1] || '';
+      const equalityMatches = Array.from(
+        wherePart.matchAll(/\b(id|idea_id|user_id|organization_id)\s*=\s*\?/gi)
+      );
+
+      equalityMatches.forEach((match, index) => {
+        const column = String(match[1] || '').toLowerCase();
+        const expected = params?.[index];
+        rows = rows.filter((row) => {
+          const actual = row[column];
+          return actual != null && String(actual) === String(expected);
+        });
+      });
+
+      if (!equalityMatches.length && s.includes('organization_id = ?')) {
+        const orgId = params?.[0];
+        rows = rows.filter((r) => r.organization_id != null && String(r.organization_id) === String(orgId));
       }
       if (s.includes('is_active = true') || s.includes('is_active = 1')) {
         rows = rows.filter((r) => r.is_active === true || r.is_active === 1 || String(r.is_active) === 'true');
-      }
-      if (s.includes('organization_id = ?')) {
-        const orgId = params?.[0];
-        rows = rows.filter((r) => r.organization_id == null || String(r.organization_id) === String(orgId));
       }
     }
 

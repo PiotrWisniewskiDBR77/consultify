@@ -64,6 +64,24 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
   const editingNodeIdRef = useRef<string | null>(null);
 
+  const ensureCreatedNodePersists = useCallback(
+    (newNode: Node, newEdge: Edge) => {
+      const reapply = () => {
+        setNodes((prev: Node[]) => {
+          if (prev.some((node) => node.id === newNode.id)) return prev;
+          return [...prev.map((node) => ({ ...node, selected: false })), { ...newNode, selected: true }];
+        });
+        setEdges((prev: Edge[]) => {
+          if (prev.some((edge) => edge.id === newEdge.id)) return prev;
+          return [...prev, newEdge];
+        });
+      };
+      window.setTimeout(reapply, 120);
+      window.setTimeout(reapply, 600);
+    },
+    [setEdges, setNodes]
+  );
+
   const isNodeLockedByPeer = useCallback(
     (nodeId?: string | null) => (nodeId ? remoteLockedNodeIds.has(String(nodeId)) : false),
     [remoteLockedNodeIds]
@@ -100,25 +118,34 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
   );
 
   const addChildNode = useCallback((anchorNodeId?: string) => {
-    console.log('[MindMap:addChildNode] called with anchorNodeId:', anchorNodeId, 'locked:', locked);
-    if (locked) { console.log('[MindMap:addChildNode] BLOCKED: locked'); return; }
-    const selected = getNodeById(anchorNodeId) || getSelectedNode();
-    console.log('[MindMap:addChildNode] selected node:', selected?.id, selected?.type, 'from nodes count:', nodes.length);
+    if (locked) return;
+    const selected =
+      getNodeById(anchorNodeId) ||
+      getSelectedNode() ||
+      nodes.find((node) => node.id === 'branch-options') ||
+      nodes.find((node) => node.id.startsWith('branch-'));
     if (!selected) {
-      console.log('[MindMap:addChildNode] NO NODE FOUND');
       toast(isPolish ? 'Zaznacz węzeł' : 'Select a node');
       return;
     }
-    console.log('[MindMap:addChildNode] CREATING child for', selected.id);
     pushUndo();
 
     const branchKey = selected.data?.branchKey || 'uncategorized';
+    const isFirstChildFromStarterBranch =
+      selected.id.startsWith('branch-') && findChildrenIds(selected.id).length === 0;
+    const initialLabel = isFirstChildFromStarterBranch ? (isPolish ? 'Nowy pomysł' : 'New idea') : '';
     const newId = `node-${uid()}`;
     const newNode: Node = {
       id: newId,
       type: 'idea',
       position: { x: selected.position.x + 220, y: selected.position.y },
-      data: { label: '', branchKey, sourceType: 'manual', priority: 50, _startEditing: Date.now() },
+      data: {
+        label: initialLabel,
+        branchKey,
+        sourceType: 'manual',
+        priority: 50,
+        _startEditing: initialLabel ? undefined : Date.now(),
+      },
     } as any;
 
     const colors = branchColor(branchKey);
@@ -139,7 +166,6 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         ...prev.map((n) => ({ ...n, selected: false })),
         { ...newNode, selected: true },
       ];
-      console.log('[MindMap:addChildNode] setNodes updater: prev=', prev.length, 'next=', nextNodes.length, 'newId=', newId);
       const nextEdges = [...edges, newEdge];
       if (autoLayout) {
         const laid = autoLayout(nextNodes, nextEdges);
@@ -148,7 +174,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       return nextNodes;
     });
     setEdges((prev: Edge[]) => [...prev, newEdge]);
-    console.log('[MindMap:addChildNode] DONE - node and edge added');
+    ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
 
     setTimeout(() => {
       try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
@@ -156,9 +182,11 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
   }, [
     autoLayout,
     edges,
+    ensureCreatedNodePersists,
     fitView,
     getNodeById,
     getSelectedNode,
+    findChildrenIds,
     isPolish,
     locked,
     pushUndo,
