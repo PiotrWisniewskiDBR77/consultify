@@ -713,8 +713,8 @@ function inferNodeAccentColor(data: Record<string, any> | undefined): string | u
 
 // ─────── Node Types ───────
 
-const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data }) => (
-  <div className="flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 shadow-2xl shadow-amber-500/30 border-4 border-white dark:border-navy-800 center-node-glow center-node-animated-border transition-transform duration-200 hover:scale-105">
+const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => (
+  <div className="relative flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500 shadow-2xl shadow-amber-500/30 border-4 border-white dark:border-navy-800 center-node-glow center-node-animated-border transition-transform duration-200 hover:scale-105">
     <Handle type="source" position={Position.Top} id="top" className="!opacity-0 !w-1 !h-1" />
     <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
     <Handle type="source" position={Position.Bottom} id="bottom" className="!opacity-0 !w-1 !h-1" />
@@ -722,10 +722,19 @@ const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data }) => (
     <div className="text-center px-2">
       <Flower2 size={32} className="text-white mx-auto drop-shadow-sm" />
       <div className="text-[11px] font-semibold text-white mt-1.5 line-clamp-2 drop-shadow-sm">{data.label}</div>
-      {data.hint && (
-        <div className="text-[9px] text-white/80 mt-0.5 center-node-hint">{data.hint}</div>
-      )}
     </div>
+    {selected && (
+      <button
+        type="button"
+        className="nodrag absolute left-full top-1/2 z-20 ml-3 -translate-y-1/2 h-10 w-10 rounded-full bg-white text-amber-600 shadow-lg shadow-amber-500/25 hover:bg-amber-50 hover:scale-110 transition-all flex items-center justify-center border-2 border-amber-200"
+        onClick={(e) => {
+          e.stopPropagation();
+          window.dispatchEvent(new CustomEvent('idea-mindmap-node-quick-action', { detail: { action: 'add_child', nodeId: id } }));
+        }}
+      >
+        <Plus size={20} strokeWidth={2.5} />
+      </button>
+    )}
   </div>
 ));
 CenterNodeComponent.displayName = 'RecommendationCenterNode';
@@ -3290,8 +3299,8 @@ function MindMapInner({
       if (action === 'ctx_drill_down') {
         if (ctxNode) handleDrillDown(ctxNode.id);
       }
-      if (action === 'ctx_add_child') addChildNode();
-      if (action === 'ctx_add_sibling') addSiblingNode();
+      if (action === 'ctx_add_child') addChildNode(ctxNode?.id);
+      if (action === 'ctx_add_sibling') addSiblingNode(ctxNode?.id);
       if (action === 'ctx_ai_expand' || action === 'ctx_ai_deepen') {
         handleAIExpand(ctxNode?.id);
       }

@@ -3855,6 +3855,26 @@ function buildDefaultIdeaMap(idea: { id: string; title: string }, isPl: boolean)
   };
 }
 
+function parseIdeaMapArray(raw: unknown): any[] {
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function parseIdeaMapObject(raw: unknown): Record<string, unknown> {
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
 /**
  * GET /api/my-work/my-ideas/:id/map
  * Returns per-idea working map (nodes + edges). If missing, returns a default skeleton.
@@ -4122,7 +4142,7 @@ router.put(
       add('nodes_json', JSON.stringify(normalizedNodes));
       add('edges_json', JSON.stringify(normalizedEdges));
       add('version', nextVersion);
-      add('schema_version', 2);
+      add('schema_version', 3);
       if (preferredTool) add('preferred_tool', preferredTool);
       if (mergedExtensions) add('extensions_json', JSON.stringify(mergedExtensions));
       add('created_at', now);
@@ -4142,7 +4162,7 @@ router.put(
       set('nodes_json', JSON.stringify(normalizedNodes));
       set('edges_json', JSON.stringify(normalizedEdges));
       set('version', nextVersion);
-      set('schema_version', 2);
+      set('schema_version', 3);
       if (preferredTool !== null) set('preferred_tool', preferredTool);
       if (mergedExtensions !== null) set('extensions_json', JSON.stringify(mergedExtensions));
       set('updated_at', now);
@@ -4190,6 +4210,169 @@ router.put(
       .catch((err: any) => logger.warn('[IdeaMap] Audit log failed:', err?.message));
 
     res.json({ success: true, version: nextVersion });
+  })
+);
+
+router.post(
+  '/my-ideas/:id/map/sync',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+    if (!(await requireTables(res, ['my_ideas', 'my_idea_maps']))) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
+
+    const nodes = Array.isArray(req.body?.nodes) ? req.body.nodes : null;
+    const edges = Array.isArray(req.body?.edges) ? req.body.edges : null;
+    if (!nodes || !edges) {
+      return res.status(400).json({ error: 'nodes and edges are required arrays' });
+    }
+
+    const preferredToolRaw = req.body?.preferredTool ?? req.body?.preferred_tool ?? null;
+    const preferredTool =
+      typeof preferredToolRaw === 'string' && preferredToolRaw.trim()
+        ? preferredToolRaw.trim()
+        : null;
+    const extensionsRaw = req.body?.extensions ?? req.body?.extensions_json ?? null;
+    const extensions =
+      extensionsRaw && typeof extensionsRaw === 'object' && !Array.isArray(extensionsRaw)
+        ? extensionsRaw
+        : null;
+    const baseVersionRaw = req.body?.baseVersion ?? req.body?.version ?? null;
+    const baseVersion =
+      baseVersionRaw == null || baseVersionRaw === ''
+        ? null
+        : Number.isFinite(Number(baseVersionRaw))
+          ? Number(baseVersionRaw)
+          : null;
+
+    const validation = validateAndNormalizeGraph({
+      nodes,
+      edges,
+      extensions: extensions ?? {},
+      preferredTool,
+    });
+    if (!validation.valid) {
+      return res.status(400).json({
+        error: 'Invalid graph schema',
+        details: validation.errors,
+      });
+    }
+
+    const ideaOk = await queryHelpers.queryOne<any>(
+      `SELECT id FROM my_ideas WHERE id = ? AND user_id = ? AND organization_id = ? LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+    if (!ideaOk) return res.status(404).json({ error: 'Idea not found' });
+
+    const mapCols = await getTableColumns('my_idea_maps');
+    const preferredToolSelect = mapCols.has('preferred_tool')
+      ? `, preferred_tool as "preferredTool"`
+      : `, NULL as "preferredTool"`;
+    const extColSelect = mapCols.has('extensions_json')
+      ? `, extensions_json as "extensionsJson"`
+      : `, '{}' as "extensionsJson"`;
+    const schemaVersionSelect = mapCols.has('schema_version')
+      ? `, schema_version as "schemaVersion"`
+      : `, 1 as "schemaVersion"`;
+    const existing = await queryHelpers.queryOne<any>(
+      `SELECT id, version, nodes_json as "nodesJson", edges_json as "edgesJson"${preferredToolSelect}${extColSelect}${schemaVersionSelect}
+       FROM my_idea_maps
+       WHERE idea_id = ? AND user_id = ? AND organization_id = ?
+       LIMIT 1`,
+      [ideaId, userId, orgId]
+    );
+
+    const currentVersion = existing ? Number(existing.version || 1) : 1;
+    const hasVersionConflict =
+      baseVersion !== null &&
+      ((existing && baseVersion !== currentVersion) || (!existing && baseVersion > 1));
+    if (hasVersionConflict) {
+      const currentGraph = existing
+        ? ensureLatestSchema({
+            nodes: parseIdeaMapArray(existing.nodesJson),
+            edges: parseIdeaMapArray(existing.edgesJson),
+            extensions: parseIdeaMapObject(existing.extensionsJson),
+            preferredTool: existing?.preferredTool ? String(existing.preferredTool) : null,
+            schemaVersion: Number(existing?.schemaVersion || 1),
+          } as any)
+        : buildDefaultIdeaMap({ id: ideaId, title: '' }, false);
+      return res.status(409).json({
+        error: 'Idea map conflict',
+        code: 'IDEA_MAP_CONFLICT',
+        currentVersion,
+        map: {
+          ...currentGraph,
+          version: currentVersion,
+        },
+      });
+    }
+
+    let mergedExtensions = extensions;
+    if (existing?.extensionsJson && extensions) {
+      mergedExtensions = { ...parseIdeaMapObject(existing.extensionsJson), ...extensions };
+    } else if (existing?.extensionsJson) {
+      mergedExtensions = parseIdeaMapObject(existing.extensionsJson);
+    }
+
+    const normalizedNodes = validation.normalized.nodes;
+    const normalizedEdges = validation.normalized.edges;
+    const now = new Date().toISOString();
+    const nextVersion = existing ? currentVersion + 1 : 1;
+
+    if (!existing) {
+      const id = uuidv4();
+      const insertCols: string[] = ['id'];
+      const insertVals: string[] = ['?'];
+      const insertParams: any[] = [id];
+      const add = (col: string, val: any) => {
+        if (!mapCols.has(col)) return;
+        insertCols.push(col);
+        insertVals.push('?');
+        insertParams.push(val);
+      };
+      add('idea_id', ideaId);
+      add('user_id', userId);
+      add('organization_id', orgId);
+      add('nodes_json', JSON.stringify(normalizedNodes));
+      add('edges_json', JSON.stringify(normalizedEdges));
+      add('version', nextVersion);
+      add('schema_version', 3);
+      if (preferredTool) add('preferred_tool', preferredTool);
+      if (mergedExtensions) add('extensions_json', JSON.stringify(mergedExtensions));
+      add('created_at', now);
+      add('updated_at', now);
+      await queryHelpers.queryRun(
+        `INSERT INTO my_idea_maps (${insertCols.join(', ')}) VALUES (${insertVals.join(', ')})`,
+        insertParams
+      );
+    } else {
+      const setParts: string[] = [];
+      const params: any[] = [];
+      const set = (col: string, val: any) => {
+        if (!mapCols.has(col)) return;
+        setParts.push(`${col} = ?`);
+        params.push(val);
+      };
+      set('nodes_json', JSON.stringify(normalizedNodes));
+      set('edges_json', JSON.stringify(normalizedEdges));
+      set('version', nextVersion);
+      set('schema_version', 3);
+      if (preferredTool !== null) set('preferred_tool', preferredTool);
+      if (mergedExtensions !== null) set('extensions_json', JSON.stringify(mergedExtensions));
+      set('updated_at', now);
+      params.push(ideaId, userId, orgId);
+      await queryHelpers.queryRun(
+        `UPDATE my_idea_maps
+         SET ${setParts.join(', ')}
+         WHERE idea_id = ? AND user_id = ? AND organization_id = ?`,
+        params
+      );
+    }
+
+    res.json({ ok: true, version: nextVersion, updatedAt: now });
   })
 );
 
@@ -5032,7 +5215,9 @@ router.post(
     nodes[nodeIdx] = node;
 
     await queryHelpers.queryRun(
-      `UPDATE my_idea_maps SET nodes_json = ?, updated_at = ${nowSql()} WHERE id = ?`,
+      `UPDATE my_idea_maps
+       SET nodes_json = ?, version = COALESCE(version, 1) + 1, updated_at = ${nowSql()}
+       WHERE id = ?`,
       [JSON.stringify(nodes), map.id]
     );
 
@@ -5106,7 +5291,9 @@ router.delete(
     nodes[nodeIdx] = node;
 
     await queryHelpers.queryRun(
-      `UPDATE my_idea_maps SET nodes_json = ?, updated_at = ${nowSql()} WHERE id = ?`,
+      `UPDATE my_idea_maps
+       SET nodes_json = ?, version = COALESCE(version, 1) + 1, updated_at = ${nowSql()}
+       WHERE id = ?`,
       [JSON.stringify(nodes), map.id]
     );
 
@@ -10688,9 +10875,13 @@ function computeRecommendedSize(
 router.get(
   '/home/v2',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const db = req.db!;
+    const db = req.db;
     const userId = req.userId!;
     const orgId = req.organizationId!;
+
+    if (!db) {
+      return res.status(503).json({ error: 'Database not ready', cards: [], meta: {} });
+    }
 
     try {
       const now = new Date();
