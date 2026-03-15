@@ -12,6 +12,11 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { z } from 'zod';
 
+import {
+  assertNoLocalDatabaseOutsideTests,
+  assertNoPrivateRailwayDbHostOutsideRailway,
+  resolveReachableDatabaseUrl,
+} from './databaseTargetResolver.js';
 import logger from '../utils/Logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -70,7 +75,14 @@ function getDatabaseUrl(): string | undefined {
     logger.warn('[DB Config] Falling back to individual DB_* variables');
     return undefined;
   }
-  return url;
+  const resolved = resolveReachableDatabaseUrl({
+    databaseUrl: url,
+    publicDatabaseUrl: process.env.DATABASE_PUBLIC_URL,
+  });
+  if (resolved.reason) {
+    logger.warn(`[DB Config] ${resolved.reason}`);
+  }
+  return resolved.databaseUrl;
 }
 
 /**
@@ -79,41 +91,17 @@ function getDatabaseUrl(): string | undefined {
 export function getDatabaseType(): 'postgres' {
   // Re-read environment variables inside the function for testing support
   const databaseUrl = getDatabaseUrl();
+  try {
+    assertNoLocalDatabaseOutsideTests(process.env);
+    assertNoPrivateRailwayDbHostOutsideRailway(process.env);
+  } catch (error) {
+    logger.error('\n\x1b[31m%s\x1b[0m', (error as Error).message);
+    process.exit(1);
+  }
 
   // Debug logging
   logger.info(`[DB Config] DATABASE_URL: ${databaseUrl ? 'SET' : 'NOT SET'}`);
   logger.info(`[DB Config] DB_TYPE: ${process.env.DB_TYPE || 'NOT SET'}`);
-
-  // Safety: never allow staging/prod-like runs to point to localhost.
-  // This prevents accidental writes to local DB when you intended to use staging.
-  if (databaseUrl) {
-    try {
-      const parsed = new URL(databaseUrl);
-      const host = (parsed.hostname || '').toLowerCase();
-      const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
-      const envFile = String(process.env.ENV_FILE || process.env.DOTENV_PATH || '').toLowerCase();
-      const isStagingLike =
-        process.env.NODE_ENV === 'staging' ||
-        process.env.NODE_ENV === 'production' ||
-        envFile.includes('staging') ||
-        process.env.DISALLOW_LOCALHOST_DB === 'true' ||
-        process.env.DISALLOW_LOCALHOST_DB === '1';
-
-      if (isStagingLike && isLocalHost) {
-        logger.error(
-          '\n\x1b[31m%s\x1b[0m',
-          'FATAL ERROR: DATABASE_URL points to localhost, but this run is staging/prod-like.'
-        );
-        logger.error('Refusing to start to prevent accidental local DB usage.');
-        logger.error(
-          'Fix: set DATABASE_URL to staging/remote Postgres or unset ENV_FILE=*.staging*.\n'
-        );
-        process.exit(1);
-      }
-    } catch {
-      // ignore URL parse errors here; they will be handled by downstream validation
-    }
-  }
 
   // Validate database configuration (will crash in production if invalid)
   // validateDatabaseConfig();
@@ -124,7 +112,7 @@ export function getDatabaseType(): 'postgres' {
       '\n\x1b[31m%s\x1b[0m',
       'FATAL ERROR: PostgreSQL required. Set DATABASE_URL or DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD.'
     );
-    logger.error('Example: DATABASE_URL=postgresql://user:pass@localhost:5432/consultify\n');
+    logger.error('Example: DATABASE_URL=postgresql://user:pass@external-db-host:5432/consultify\n');
     process.exit(1);
   }
 
@@ -193,6 +181,14 @@ function getPostgresConfig(): PostgresConfig {
     // If parsing failed, fall through to individual env vars
   }
 
+  try {
+    assertNoLocalDatabaseOutsideTests(process.env);
+    assertNoPrivateRailwayDbHostOutsideRailway(process.env);
+  } catch (error) {
+    logger.error('\n\x1b[31m%s\x1b[0m', (error as Error).message);
+    process.exit(1);
+  }
+
   // Determine SSL configuration
   let sslConfig: boolean | { rejectUnauthorized?: boolean } = false;
   if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'require') {
@@ -216,10 +212,10 @@ function getPostgresConfig(): PostgresConfig {
   })();
 
   return {
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || '',
     port: parseInt(process.env.DB_PORT || '5432'),
-    database: process.env.DB_NAME || 'consultify',
-    user: process.env.DB_USER || 'postgres',
+    database: process.env.DB_NAME || '',
+    user: process.env.DB_USER || '',
     password: process.env.DB_PASSWORD || '',
     ssl: sslConfig,
     max: parseInt(process.env.DB_POOL_SIZE || '10'),

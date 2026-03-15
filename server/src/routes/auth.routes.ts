@@ -256,6 +256,38 @@ router.get(
         }
       }
 
+      let remappedUserId = false;
+      if (!user && req.user?.email) {
+        const normalizedEmail = String(req.user.email).trim().toLowerCase();
+        if (normalizedEmail) {
+          try {
+            user = await dbGet<{
+              id: string;
+              email: string;
+              role: string;
+              organization_id: string;
+              first_name: string;
+              last_name: string;
+              avatar_url: string | null;
+              impersonator_id: string | null;
+              organization_name: string | null;
+              organization_plan: string | null;
+              organization_status: string | null;
+            }>(
+              `SELECT u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name, u.avatar_url, NULL as impersonator_id,
+                              o.name as organization_name, o.plan as organization_plan, o.status as organization_status
+                       FROM users u
+                       LEFT JOIN organizations o ON u.organization_id = o.id
+                       WHERE lower(u.email) = lower(?)`,
+              [normalizedEmail]
+            );
+            remappedUserId = Boolean(user && user.id !== req.user!.id);
+          } catch {
+            // ignore fallback lookup failures and return the original 404 below
+          }
+        }
+      }
+
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
@@ -281,7 +313,8 @@ router.get(
 
       // Check if role changed in database - if so, generate new token
       let newToken: string | null = null;
-      if (user.role !== req.user!.role) {
+      let newRefreshToken: string | null = null;
+      if (user.role !== req.user!.role || remappedUserId) {
         const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
         const tokenPair = await refreshTokenService.generateTokenPair(
           {
@@ -297,6 +330,15 @@ router.get(
           }
         );
         newToken = tokenPair.accessToken;
+        newRefreshToken = tokenPair.refreshToken;
+      }
+
+      if (newToken) {
+        try {
+          setAuthCookies(res, newToken, newRefreshToken || req.cookies?.[REFRESH_TOKEN_COOKIE]);
+        } catch {
+          // ignore cookie write failures
+        }
       }
 
       const response: {
@@ -315,7 +357,9 @@ router.get(
           accessLevel: 'free' | 'full';
         };
         token?: string;
+        refreshToken?: string;
         roleChanged?: boolean;
+        userRemapped?: boolean;
       } = {
         user: {
           id: user.id,
@@ -340,7 +384,13 @@ router.get(
       // Include new token if role changed
       if (newToken) {
         response.token = newToken;
-        response.roleChanged = true;
+        if (newRefreshToken) {
+          response.refreshToken = newRefreshToken;
+        }
+        response.roleChanged = user.role !== req.user!.role;
+      }
+      if (remappedUserId) {
+        response.userRemapped = true;
       }
 
       return res.json(response);

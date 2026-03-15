@@ -37,6 +37,8 @@ import {
   normalizeGraphForStorage,
   validateAndNormalizeGraph,
 } from '../validators/ideaWorkspaceGraph.validators.js';
+import { featureFlags } from '../config/FeatureFlags.js';
+import projectionService from '../services/tablePlatform/ProjectionService.js';
 
 const router = Router();
 
@@ -4054,11 +4056,27 @@ router.get(
     };
     const upgraded = ensureLatestSchema(rawGraph as any);
 
+    const responseMap: any = {
+      ...upgraded,
+      version: Number(row.version || 1),
+    };
+
+    if (featureFlags.ENABLE_TABLE_PLATFORM_METADATA_FIRST) {
+      try {
+        const projection = await projectionService.getFullProjection(ideaId, orgId, userId);
+        if (projection) {
+          responseMap.nodes = [...(responseMap.nodes || []), ...projection.nodes];
+          responseMap.edges = [...(responseMap.edges || []), ...projection.edges];
+          if (!responseMap.extensions) responseMap.extensions = {};
+          responseMap.extensions.table = projection.extensions.table;
+        }
+      } catch (projErr) {
+        logger.error('[ProjectionService] Failed to project table data:', projErr);
+      }
+    }
+
     res.json({
-      map: {
-        ...upgraded,
-        version: Number(row.version || 1),
-      },
+      map: responseMap,
       isDefault: false,
       updatedAt: row.updatedAt,
     });

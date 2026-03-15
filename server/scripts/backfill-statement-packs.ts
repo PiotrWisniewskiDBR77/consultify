@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import pg from 'pg';
 
+import { resolveReachableDatabaseUrl } from '../src/config/databaseTargetResolver.js';
 import { syncStatementToPack } from '../src/services/financialStatementPackService.js';
 import logger from '../src/utils/Logger.js';
 
@@ -11,9 +12,16 @@ function env(name: string): string | undefined {
 
 async function main(): Promise<void> {
   const orgId = env('ORG_ID');
-  const databaseUrl = env('DATABASE_URL');
+  const resolvedDb = resolveReachableDatabaseUrl({
+    databaseUrl: env('DATABASE_URL'),
+    publicDatabaseUrl: env('DATABASE_PUBLIC_URL'),
+  });
+  const databaseUrl = resolvedDb.databaseUrl;
   if (!databaseUrl) {
     throw new Error('DATABASE_URL is required for statement pack backfill');
+  }
+  if (resolvedDb.reason) {
+    logger.warn(`[backfill-statement-packs] ${resolvedDb.reason}`);
   }
 
   const client = new pg.Client({ connectionString: databaseUrl });

@@ -246,15 +246,15 @@ const trackSessionActivity = (req: AuthRequest, res: Response): void => {
 
   (async () => {
     try {
-      const session = await dbGet<{ id: string; is_active: number }>(
+      const session = await dbGet<{ id: string; is_active: boolean | number | null }>(
         `SELECT id, is_active FROM user_sessions
-         WHERE user_id = ? AND is_active = 1
+         WHERE user_id = ? AND COALESCE(is_active, FALSE) IS TRUE
          ORDER BY last_activity_at DESC LIMIT 1`,
         [userId],
       );
 
       if (session) {
-        if (!session.is_active) return;
+        if (session.is_active !== true && session.is_active !== 1) return;
         res.setHeader('X-Session-Id', session.id);
         await dbRun(
           `UPDATE user_sessions SET last_activity_at = datetime('now') WHERE id = ?`,

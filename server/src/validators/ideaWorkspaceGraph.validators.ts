@@ -274,6 +274,8 @@ export function normalizeNodeForStorage(node: any): CanonicalNode {
     'riskNote',
     'evidenceLinks',
     'semanticType',
+    'status',
+    'tags',
     'aiExpansionHistory',
   ];
   const dataPayload: Record<string, unknown> = {};

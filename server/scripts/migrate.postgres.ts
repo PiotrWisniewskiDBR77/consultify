@@ -25,6 +25,11 @@ import { pathToFileURL } from 'url';
 import dotenv from 'dotenv';
 import { Pool } from 'pg';
 
+import {
+  assertNoPrivateRailwayDbHostOutsideRailway,
+  resolveReachableDatabaseUrl,
+} from '../src/config/databaseTargetResolver.js';
+
 type Args = {
   dir?: string;
   'dry-run'?: boolean;
@@ -261,9 +266,18 @@ async function main() {
   const from = args.from ? String(args.from) : null;
 
   process.env.DB_TYPE = 'postgres';
-  const databaseUrl = process.env.DATABASE_URL;
+  assertNoPrivateRailwayDbHostOutsideRailway(process.env);
+  const resolvedDb = resolveReachableDatabaseUrl({
+    databaseUrl: process.env.DATABASE_URL,
+    publicDatabaseUrl: process.env.DATABASE_PUBLIC_URL,
+  });
+  const databaseUrl = resolvedDb.databaseUrl;
   if (!databaseUrl) {
     throw new Error('DATABASE_URL is required');
+  }
+  if (resolvedDb.reason) {
+    // eslint-disable-next-line no-console
+    console.warn(`[migrate.postgres] ${resolvedDb.reason}`);
   }
 
   const pool = new Pool({ connectionString: databaseUrl });

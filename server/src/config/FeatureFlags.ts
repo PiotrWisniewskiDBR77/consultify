@@ -20,6 +20,8 @@ const FeatureFlagsSchema = z.object({
   ENABLE_METRICS_DASHBOARD: z.boolean().default(true),
   ENABLE_AI_COACH: z.boolean().default(true),
   ENABLE_HELP_SYSTEM: z.boolean().default(true),
+  ENABLE_TABLE_PLATFORM_METADATA_FIRST: z.boolean().default(false),
+  ENABLE_TABLE_PLATFORM_RECORDS_API: z.boolean().default(false),
 });
 
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
@@ -47,6 +49,12 @@ export function loadFeatureFlags(): FeatureFlags {
 
     // Enable self-serve help system
     ENABLE_HELP_SYSTEM: process.env.ENABLE_HELP_SYSTEM !== 'false', // Default true
+
+    // Table Platform: metadata-first backend
+    ENABLE_TABLE_PLATFORM_METADATA_FIRST: process.env.ENABLE_TABLE_PLATFORM_METADATA_FIRST !== 'false',
+
+    // Table Platform: Records API
+    ENABLE_TABLE_PLATFORM_RECORDS_API: process.env.ENABLE_TABLE_PLATFORM_RECORDS_API !== 'false',
   };
 
   // Validate configuration

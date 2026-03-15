@@ -7,8 +7,21 @@
  */
 import { Pool } from 'pg';
 
-const DATABASE_URL =
-  process.env.DATABASE_URL || 'postgresql://consultinity:consultinity@localhost:5432/consultinity';
+import {
+  assertNoLocalDatabaseOutsideTests,
+  resolveReachableDatabaseUrl,
+} from '../src/config/databaseTargetResolver.js';
+
+const resolvedDatabase = resolveReachableDatabaseUrl();
+assertNoLocalDatabaseOutsideTests(process.env);
+
+if (!resolvedDatabase.databaseUrl) {
+  throw new Error(
+    'DATABASE_URL or DATABASE_PUBLIC_URL is required. This script only supports the external Postgres target.'
+  );
+}
+
+const DATABASE_URL = resolvedDatabase.databaseUrl;
 
 const USER_EMAIL = process.argv.includes('--user')
   ? process.argv[process.argv.indexOf('--user') + 1]

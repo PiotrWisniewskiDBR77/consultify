@@ -217,6 +217,8 @@ import superAdminRoutes from './routes/superadmin.routes.js';
 import syncHubRoutes from './routes/syncHub.routes.js';
 import systemConfigRoutes from './routes/systemConfig.routes.js';
 import systemHealthRoutes from './routes/systemHealth.routes.js';
+import tablePlatformRoutes, { publicFormRouter } from './routes/table-platform.routes.js';
+import dataCollectionRoutes from './routes/data-collection.routes.js';
 import taskAdvisorRoutes from './routes/task-advisor.routes.js';
 import testSupportRoutes from './routes/testSupport.routes.js';
 import toolsRoutes from './routes/tools.routes.js';
@@ -659,6 +661,9 @@ export class ApiGateway {
       mountStub('/api/features', featureFlagRoutes, 'featureFlagRoutes');
       app.use('/api/webhooks/subscriptions', webhookSubRoutes);
       app.use('/api/sync-hub', syncHubRoutes);
+      app.use('/api/table-platform', tablePlatformRoutes);
+      app.use('/api/table-platform', publicFormRouter);
+      app.use('/api/table-platform', dataCollectionRoutes);
       app.use('/api/studio', studioRoutes);
       app.use('/api/intelligence', intelligenceRoutes);
       app.use('/api/sponsor-reports', sponsorReportsRoutes);

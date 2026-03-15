@@ -183,6 +183,8 @@ function createMockDatabase(): MockDatabase {
       .map((x) => x.trim())
       .filter(Boolean);
 
+  const countPlaceholders = (value: string) => (String(value || '').match(/\?/g) || []).length;
+
   const parseTableNameAfter = (sql: string, keyword: string): string | null => {
     const s = normalizeSql(sql);
     const re = new RegExp(`${keyword}\\s+IF\\s+NOT\\s+EXISTS\\s+([a-zA-Z0-9_]+)`, 'i');
@@ -240,25 +242,24 @@ function createMockDatabase(): MockDatabase {
 
   const applyCreateTable = (mock: MockDatabase, sql: string) => {
     const store = ensureStore(mock);
-    const table = parseTableNameAfter(sql, 'CREATE\\s+TABLE') || null;
+    const tableMatch = normalizeSql(sql).match(
+      /create\s+table(?:\s+if\s+not\s+exists)?\s+["'`]?([a-zA-Z0-9_]+)["'`]?/i
+    );
+    const table = tableMatch?.[1]?.toLowerCase() || null;
     if (!table) return false;
     if (!store.tables.has(table)) store.tables.set(table, []);
 
-    // Best-effort: extract column names from CREATE TABLE (...) statement.
-    const colsBlock = extractParenContentAfter(sql, 'create table');
-    if (colsBlock) {
-      const cols = colsBlock
-        .split('\n')
-        .map((l) => l.trim())
-        .filter(Boolean)
-        .map((l) => l.replace(/--.*$/g, '').trim())
-        .filter(Boolean)
-        .map((l) => l.replace(/\s+/g, ' '))
-        .filter((l) => !/^foreign key/i.test(l) && !/^unique\s*\(/i.test(l))
-        .map((l) => l.split(' ')[0].replace(/["'`]/g, ''))
-        .filter((v) => /^[a-zA-Z0-9_]+$/.test(v));
-      if (cols.length) store.columns.set(table, cols);
-    }
+    // Best-effort: extract column names from CREATE TABLE definition.
+    const cols = Array.from(
+      normalizeSql(sql).matchAll(/(?:\(|,)\s*["'`]?([a-zA-Z0-9_]+)["'`]?\s+[a-zA-Z]+/g)
+    )
+      .map((match) => String(match[1] || '').trim())
+      .filter(
+        (name) =>
+          !!name &&
+          !['foreign', 'primary', 'unique', 'constraint', 'check'].includes(name.toLowerCase())
+      );
+    if (cols.length) store.columns.set(table, Array.from(new Set(cols)));
     return true;
   };
 
@@ -334,15 +335,26 @@ function createMockDatabase(): MockDatabase {
     const setPart = normalizeSql(sql).slice(setIdx + 5, whereIdx);
     const assigns = splitCsv(setPart);
 
-    // Only support WHERE id = ? patterns.
     const wherePart = normalizeSql(sql).slice(whereIdx + 7);
-    const idMatch = wherePart.match(/\bid\s*=\s*\?/i);
-    if (!idMatch) return false;
-    const idParam = params?.[params.length - 1];
-    if (idParam == null) return true;
-
     const rows = store.tables.get(table)!;
-    const idx = rows.findIndex((r) => String(r.id) === String(idParam));
+    const whereMatches = Array.from(wherePart.matchAll(/\b([a-zA-Z0-9_]+)\s*=\s*\?/gi));
+    if (!whereMatches.length) return false;
+
+    let setParamCount = 0;
+    for (const a of assigns) {
+      const mm = a.match(/^\s*([a-zA-Z0-9_]+)\s*=\s*(.+)\s*$/);
+      if (!mm) continue;
+      setParamCount += countPlaceholders(mm[2]);
+    }
+
+    const idx = rows.findIndex((row) =>
+      whereMatches.every((match, index) => {
+        const column = String(match[1] || '').toLowerCase();
+        const expected = params?.[setParamCount + index];
+        const actual = row[column];
+        return actual != null && String(actual) === String(expected);
+      })
+    );
     if (idx < 0) return true;
 
     let pIdx = 0;
@@ -431,94 +443,101 @@ function createMockDatabase(): MockDatabase {
       });
     }
 
-    return rows;
+    const selectMatch = normalizeSql(sql).match(/^\s*select\s+(.+?)\s+from\b/i);
+    const selectPart = selectMatch?.[1] || '';
+    const aliasSpecs = Array.from(
+      selectPart.matchAll(/\b([a-zA-Z0-9_.]+)\s+as\s+"?([a-zA-Z0-9_]+)"?/gi)
+    ).map((match) => ({
+      source: String(match[1] || '').split('.').pop() || '',
+      alias: String(match[2] || ''),
+    }));
+
+    if (!aliasSpecs.length) return rows;
+
+    return rows.map((row) => {
+      const next = { ...row };
+      for (const spec of aliasSpecs) {
+        if (!spec.alias || !spec.source) continue;
+        if (Object.prototype.hasOwnProperty.call(row, spec.source)) {
+          next[spec.alias] = row[spec.source];
+        }
+      }
+      return next;
+    });
   };
 
   const mock: MockDatabase = {
     isMock: true,
     get: (_sql, _params, callback) => {
-      // sqlite3 compatibility: support (sql, cb) and (sql, params, cb)
-      if (typeof _params === 'function') {
-        // @ts-ignore
-        _params(null, null);
-        return mock;
-      }
       const sql = normalizeSql(_sql as any);
+      const cb = typeof _params === 'function' ? (_params as any) : callback;
       const params = Array.isArray(_params) ? _params : [];
 
       const pragma = handlePragmaTableInfo(mock, sql);
       if (pragma) {
-        if (callback) callback(null, (pragma as any)[0] || null);
+        if (cb) cb(null, (pragma as any)[0] || null);
         return mock;
       }
 
       const sqliteMaster = handleSelectSqliteMaster(mock, sql, params);
       if (sqliteMaster !== null) {
-        if (callback) callback(null, sqliteMaster as any);
+        if (cb) cb(null, sqliteMaster as any);
         return mock;
       }
 
       const rows = selectFromTable(mock, sql, params);
       if (rows) {
-        if (callback) callback(null, (rows as any)[0] || null);
+        if (cb) cb(null, (rows as any)[0] || null);
         return mock;
       }
 
-      if (callback) callback(null, null);
+      if (cb) cb(null, null);
       return mock;
     },
     all: (_sql, _params, callback) => {
-      if (typeof _params === 'function') {
-        // @ts-ignore
-        _params(null, []);
-        return mock;
-      }
       const sql = normalizeSql(_sql as any);
+      const cb = typeof _params === 'function' ? (_params as any) : callback;
       const params = Array.isArray(_params) ? _params : [];
 
       const pragma = handlePragmaTableInfo(mock, sql);
       if (pragma) {
-        if (callback) callback(null, pragma as any);
+        if (cb) cb(null, pragma as any);
         return mock;
       }
 
       const sqliteMaster = handleSelectSqliteMaster(mock, sql, params);
       if (sqliteMaster !== null) {
-        if (callback) callback(null, sqliteMaster ? [sqliteMaster] : []);
+        if (cb) cb(null, sqliteMaster ? [sqliteMaster] : []);
         return mock;
       }
 
       const rows = selectFromTable(mock, sql, params);
       if (rows) {
-        if (callback) callback(null, rows as any);
+        if (cb) cb(null, rows as any);
         return mock;
       }
 
-      if (callback) callback(null, []);
+      if (cb) cb(null, []);
       return mock;
     },
     run(_sql, _params, callback) {
-      if (typeof _params === 'function') {
-        // @ts-ignore
-        _params.call({ lastID: 0, changes: 0 }, null);
-        return mock;
-      }
       const sql = normalizeSql(_sql as any);
+      const cb = typeof _params === 'function' ? (_params as any) : callback;
       const params = Array.isArray(_params) ? _params : [];
 
       // DDL / indexes / alters
       if (/^\s*create\s+table/i.test(sql)) {
         applyCreateTable(mock, sql);
-        if (callback) {
+        if (cb) {
           // @ts-ignore
-          callback.call({ lastID: 0, changes: 0 }, null);
+          cb.call({ lastID: 0, changes: 0 }, null);
         }
         return mock;
       }
       if (/^\s*create\s+index/i.test(sql) || /^\s*alter\s+table/i.test(sql)) {
-        if (callback) {
+        if (cb) {
           // @ts-ignore
-          callback.call({ lastID: 0, changes: 0 }, null);
+          cb.call({ lastID: 0, changes: 0 }, null);
         }
         return mock;
       }
@@ -528,13 +547,34 @@ function createMockDatabase(): MockDatabase {
       const didUpdate = didInsert ? false : applyUpdate(mock, sql, params);
       const didDelete = didInsert || didUpdate ? false : applyDelete(mock, sql, params);
 
-      if (callback) {
+      if (cb) {
         // @ts-ignore
-        callback.call({ lastID: 0, changes: didInsert || didUpdate || didDelete ? 1 : 0 }, null);
+        cb.call({ lastID: 0, changes: didInsert || didUpdate || didDelete ? 1 : 0 }, null);
       }
       return mock;
     },
     exec(_sql, callback) {
+      const sql = normalizeSql(_sql as any);
+      const statements = sql
+        .split(';')
+        .map((part) => normalizeSql(part))
+        .filter(Boolean);
+
+      for (const statement of statements) {
+        if (/^\s*create\s+table/i.test(statement)) {
+          applyCreateTable(mock, statement);
+          continue;
+        }
+        if (/^\s*create\s+index/i.test(statement) || /^\s*alter\s+table/i.test(statement)) {
+          continue;
+        }
+        const didInsert = applyInsert(mock, statement, []);
+        const didUpdate = didInsert ? false : applyUpdate(mock, statement, []);
+        if (!didInsert && !didUpdate) {
+          applyDelete(mock, statement, []);
+        }
+      }
+
       if (callback) callback(null);
       return mock;
     },

@@ -27,7 +27,7 @@ export interface DetectionResult {
   periodLabel: string | null;
   currency: string;
   scaling: 'units' | 'thousands' | 'millions' | 'billions';
-  language: 'en' | 'pl' | 'de' | 'unknown';
+  language: 'en' | 'pl' | 'de' | 'fr' | 'unknown';
   containedStatementTypes?: Array<'P&L' | 'BS' | 'CF'>;
   containsMultipleStatements?: boolean;
 }
@@ -353,6 +353,16 @@ const TYPE_KEYWORDS: Record<string, { keywords: string[]; weight: number }[]> = 
   ],
 };
 
+function matchesTypeKeyword(text: string, keyword: string): boolean {
+  const normalizedKeyword = String(keyword || '').trim().toLowerCase();
+  if (!normalizedKeyword) return false;
+  if (/^[\p{L}\d]+$/u.test(normalizedKeyword)) {
+    const escaped = normalizedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(^|[^\\p{L}\\d])${escaped}([^\\p{L}\\d]|$)`, 'iu').test(text);
+  }
+  return text.includes(normalizedKeyword);
+}
+
 export function detectStatementType(text: string): DetectionResult {
   const lower = text.toLowerCase();
 
@@ -361,7 +371,7 @@ export function detectStatementType(text: string): DetectionResult {
   for (const [type, patterns] of Object.entries(TYPE_KEYWORDS)) {
     for (const { keywords, weight } of patterns) {
       for (const kw of keywords) {
-        if (lower.includes(kw)) {
+        if (matchesTypeKeyword(lower, kw)) {
           scores[type] += weight;
           break;
         }
@@ -410,7 +420,7 @@ export function detectContainedStatementTypes(text: string): Array<'P&L' | 'BS' 
   >) {
     for (const { keywords, weight } of patterns) {
       for (const kw of keywords) {
-        if (lower.includes(kw)) {
+        if (matchesTypeKeyword(lower, kw)) {
           scores[type] += weight;
           break;
         }
@@ -775,10 +785,11 @@ function normalizeAliasText(value: string): string {
   return String(value || '')
     .toLowerCase()
     .replace(/[–—-]/g, ' ')
-    .replace(/\bnota\b\.?\s*[0-9ivxlcdm]+[a-z]?/giu, ' ')
-    .replace(/\bnote\b\.?\s*[0-9ivxlcdm]+[a-z]?/giu, ' ')
+    .replace(/\bnota\b\.?\s*[0-9ivxlcdm]+(?:\.[0-9ivxlcdm]+)*[a-z]?/giu, ' ')
+    .replace(/\bnote\b\.?\s*[0-9ivxlcdm]+(?:\.[0-9ivxlcdm]+)*[a-z]?/giu, ' ')
     .replace(/^[ivxlcdm]+\.\s+/giu, ' ')
     .replace(/^\d+[a-z]?[.)]\s+/giu, ' ')
+    .replace(/^[.]?\d{1,2}(?:\.\d{1,3})+\s+/giu, ' ')
     .replace(/[^\p{L}\p{N}% ]/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -786,9 +797,10 @@ function normalizeAliasText(value: string): string {
 
 function cleanupExtractedLabel(value: string): string {
   return String(value || '')
-    .replace(/\b(?:nota|note)\b\.?\s*[0-9ivxlcdm]+[a-z]?/giu, ' ')
+    .replace(/\b(?:nota|note)\b\.?\s*[0-9ivxlcdm]+(?:\.[0-9ivxlcdm]+)*[a-z]?/giu, ' ')
     .replace(/^[ivxlcdm]+\.\s+/giu, ' ')
     .replace(/^\d+[a-z]?[.)]\s+/giu, ' ')
+    .replace(/^[.]?\d{1,2}(?:\.\d{1,3})+\s+/giu, ' ')
     .replace(/\s*[-–—]+\s*$/, '')
     .replace(/\s*\d{1,2}\.\d{1,3}\s*$/, '')
     .replace(/\s+/g, ' ')
@@ -820,8 +832,11 @@ export function locateStatementSections(
       start: [
         /\bbilans\b/i,
         /sprawozdanie z sytuacji finansowej/i,
-        /statement of financial position/i,
-        /balance sheet/i,
+        /\bconsolidated\s+balance\s+sheets?\b/i,
+        /\bconsolidated\s+statements?\s+of\s+financial\s+position\b/i,
+        /\bgroup\s+balance\s+sheets?\b/i,
+        /\bstatement\s+of\s+financial\s+position\b/i,
+        /\bbalance\s+sheets?\b/i,
         /\bkonzernbilanz\b/i,
         /\bbilanz\b/i,
         /vermögensaufstellung/i,
@@ -835,11 +850,14 @@ export function locateStatementSections(
         /sprawozdanie z całkowitych dochodów/i,
         /statement of profit or loss/i,
         /income statement/i,
+        /\b(?:consolidated\s+)?statements?\s+of\s+(?:operations|income|earnings)\b/i,
+        /\b(?:consolidated\s+)?(?:income\s+statements?|profit\s+and\s+loss)\b/i,
         /cash flow/i,
         /rachunek przepływów pieniężnych/i,
         /sprawozdanie z przepływów pieniężnych/i,
         /zestawienie zmian w kapitale/i,
         /sprawozdanie ze zmian w kapitale/i,
+        /\b(?:consolidated\s+)?statements?\s+of\s+(?:stockholders'?|shareholders'?|changes\s+in)\s*equity\b/i,
         /gewinn-?\s*und\s+verlustrechnung/i,
         /gesamtergebnisrechnung/i,
         /kapitalflussrechnung/i,
@@ -852,11 +870,15 @@ export function locateStatementSections(
     'P&L': {
       start: [
         /rachunek zysków i strat/i,
-        /sprawozdanie z zysków lub strat/i,
-        /sprawozdanie z całkowitych dochodów/i,
-        /statement of profit or loss/i,
-        /\bprofit and loss\b/i,
-        /\bincome statement\b/i,
+        /^(?:\d+(?:\.\d+)*\.?\s*)?(?:skonsolidowane |jednostkowe )?sprawozdanie z wyniku\b/i,
+        /^(?:\d+(?:\.\d+)*\.?\s*)?(?:skonsolidowane |jednostkowe )?sprawozdanie z zysków lub strat\b/i,
+        /^(?:\d+(?:\.\d+)*\.?\s*)?(?:skonsolidowane |jednostkowe )?sprawozdanie z całkowitych dochodów\b/i,
+        /\b(?:consolidated\s+)?statements?\s+of\s+(?:operations|income|earnings)\b/i,
+        /\b(?:consolidated\s+)?statements?\s+of\s+comprehensive\s+income\b/i,
+        /\b(?:consolidated\s+)?(?:income\s+statements?|profit\s+and\s+loss\s+accounts?)\b/i,
+        /\b(?:consolidated\s+|separate\s+)?statement\s+of\s+profit\s+or\s+loss\b/i,
+        /\bgroup\s+income\s+statements?\b/i,
+        /\bprofit\s+and\s+loss\b/i,
         /gewinn-?\s*und\s+verlustrechnung/i,
         /konzern-gewinn-?\s*und\s+verlustrechnung/i,
         /gesamtergebnisrechnung/i,
@@ -872,12 +894,19 @@ export function locateStatementSections(
         /sprawozdanie ze zmian w kapitale/i,
         /\bbilans\b/i,
         /sprawozdanie z sytuacji finansowej/i,
+        /\b(?:consolidated\s+)?balance\s+sheets?\b/i,
+        /\b(?:consolidated\s+)?statements?\s+of\s+financial\s+position\b/i,
+        /\b(?:consolidated\s+)?statements?\s+of\s+(?:stockholders'?|shareholders'?|changes\s+in)\s*equity\b/i,
+        /^A\s*S\s*S\s*E\s*T\s*S\s*$/i,
         /kapitalflussrechnung/i,
         /\bbilanz\b/i,
         /eigenkapitalveränderungsrechnung/i,
         /tableau des flux de trésorerie/i,
         /\bbilan\b/i,
         /tableau de variation des capitaux propres/i,
+        /\b(?:consolidated\s+)?statements?\s+of\s+redeemable\b/i,
+        /\bnotes\s+to\s+(?:the\s+)?(?:consolidated\s+)?financial\s+statements\b/i,
+        /\bsee\s+accompanying\s+notes\b/i,
       ],
     },
     CF: {
@@ -885,7 +914,10 @@ export function locateStatementSections(
         /^(?:3\.\d\.?\s*)?(?:jednostkowe |skonsolidowane )?sprawozdanie z przepływów pieniężnych/i,
         /^(?:3\.\d\.?\s*)?rachunek przepływów pieniężnych/i,
         /^przepływy środków pieniężnych z działalności/i,
-        /^(?:statement of )?cash flows?\b/i,
+        /\b(?:consolidated\s+)?statements?\s+of\s+cash\s+flows\b/i,
+        /\bgroup\s+(?:statement|cash\s+flow\s+statement)\b/i,
+        /\bcash\s+flow\s+statements?\b/i,
+        /^(?:statement\s+of\s+)?cash\s+flows?\b/i,
         /kapitalflussrechnung/i,
         /konzern-kapitalflussrechnung/i,
         /cashflow-rechnung/i,
@@ -895,16 +927,31 @@ export function locateStatementSections(
       end: [
         /zestawienie zmian w kapitale/i,
         /sprawozdanie ze zmian w kapitale/i,
-        /\bnotes\b/i,
+        /\bnotes\s+to\s+(?:the\s+)?(?:consolidated\s+)?financial\s+statements\b/i,
+        /\bnotes\s+to\s+(?:the\s+)?accounts\b/i,
+        /^notes$/i,
         /\binformacje dodatkowe\b/i,
         /\bobjaśnienia\b/i,
         /\bnoty objaśniające\b/i,
+        /\b(?:consolidated\s+)?statements?\s+of\s+(?:stockholders'?|shareholders'?|changes\s+in)\s*equity\b/i,
+        /\bbilans\b/i,
+        /sprawozdanie z sytuacji finansowej/i,
+        /\b(?:consolidated\s+)?balance\s+sheets?\b/i,
+        /\b(?:consolidated\s+)?statements?\s+of\s+financial\s+position\b/i,
+        /rachunek zysków i strat/i,
+        /\b(?:consolidated\s+)?(?:income\s+statements?|profit\s+and\s+loss)\b/i,
+        /\b(?:consolidated\s+)?statements?\s+of\s+(?:operations|income|earnings)\b/i,
+        /\b(?:consolidated\s+)?statements?\s+of\s+comprehensive\s+income\b/i,
         /eigenkapitalveränderungsrechnung/i,
         /\banhang\b/i,
         /erläuterungen zum konzernabschluss/i,
         /tableau de variation des capitaux propres/i,
         /\bannexe\b/i,
         /notes aux états financiers/i,
+        /\bkonzernbilanz\b/i,
+        /gewinn-?\s*und\s+verlustrechnung/i,
+        /\bbilan\s+consolidé/i,
+        /compte de résultat/i,
       ],
     },
   };
@@ -936,6 +983,26 @@ export function locateStatementSections(
     const line = rawLines[index];
     if (!markers.start.some((pattern) => pattern.test(line))) continue;
     if (isStandardsRefLine(line)) continue;
+    if (/\.{4,}/.test(line)) continue;
+    if (/\b(?:see|refer\s+to|accompanying|see\s+also|described\s+in|included\s+in|presented\s+in|recognized\s+in|reclassified\s+to|expensed\s+in|charged\s+to|reported\s+in)\b/i.test(line)) continue;
+    const trimmedStartLine = line.trim();
+    if (/^[a-ząćęłńóśźżäöüàâéèêëïîôûùüÿçñ•·\-–—]/.test(trimmedStartLine)) continue;
+    if (trimmedStartLine.length > 150) continue;
+
+    const otherTypeKeys = Object.keys(sectionMarkers).filter((k) => k !== normalizedType);
+    const matchesOtherType = otherTypeKeys.some((otherType) =>
+      sectionMarkers[otherType].start.some((p) => p.test(line))
+    );
+    if (matchesOtherType) continue;
+
+    const precedingLines = rawLines.slice(Math.max(0, index - 6), index);
+    const inNumberedNote = precedingLines.some((pl) =>
+      /^\s*(?:\d{1,2})\.\s+[A-ZĄĆĘŁŃÓŚŹŻ]/i.test(pl.trim())
+    );
+    if (inNumberedNote && !/^(?:Consolidated|Group|Skonsolidowan)/i.test(trimmedStartLine)) continue;
+
+    if (/\b(?:other\s+income\s+statement\s+items|from\s+group\s+income\s+statement)\b/i.test(trimmedStartLine)) continue;
+    if (/\b(?:income\s+statement|profit\s+and\s+loss)\s+analysis\b/i.test(trimmedStartLine)) continue;
 
     const start = Math.max(0, index - 4);
     let end = Math.min(rawLines.length, index + 220);
@@ -948,12 +1015,26 @@ export function locateStatementSections(
 
     const windowLines = rawLines.slice(start, end);
     const windowText = windowLines.join('\n').toLowerCase();
+    if (
+      /(kwartalna informacja finansowa|quarterly (?:financial )?information|interim financial information)/i.test(
+        windowText
+      )
+    ) {
+      continue;
+    }
+    const isExhibitOrTOCSection =
+      /\b(?:exhibit\s+index|table\s+of\s+contents|form\s+8-k|certificate\s+of\s+incorporation|supplemental\s+indenture)\b/i.test(windowText) &&
+      !/\b(?:net\s+(?:income|revenue|sales|profit)|total\s+assets|total\s+liabilities|operating\s+(?:income|expenses))\b/i.test(windowText);
+    if (isExhibitOrTOCSection) {
+      continue;
+    }
     const tocLines = windowLines.filter((candidate) =>
       /\.{4,}/.test(candidate) || /\.\s*\d{1,3}\s*$/.test(candidate.trim())
     ).length;
+    const financialNumericPattern = /\d{1,3}[,. \u00A0]\d{3}/;
     const numericLines = windowLines.filter((candidate) => {
       const matches = candidate.match(numericGroupRegex) || [];
-      return matches.length >= 2;
+      return matches.length >= 2 && financialNumericPattern.test(candidate);
     }).length;
     const semanticLines = windowLines.filter((candidate) =>
       /(aktywa|pasywa|kapitał|equity|liabilities|assets|cash|należności|zobowiązania|revenue|przychody|profit|ebitda|flow|zysk|koszt|amortyzacja|depreciation|przepływy)/i.test(
@@ -964,24 +1045,31 @@ export function locateStatementSections(
 
     const statementAnchors: Record<string, RegExp[]> = {
       'P&L': [
-        /przychody ze sprzedaży|revenue|sales|umsatzerlöse|umsatz|chiffre d'affaires|produits des ventes/,
-        /koszt własny|cost of goods|cogs|herstellungskosten|umsatzkosten|coût des ventes|coût de revient/,
-        /zysk brutto|gross profit|bruttoergebnis|rohertrag|marge brute/,
-        /zysk.*operacyjn|operating profit|ebit\b|betriebsergebnis|résultat opérationnel/,
-        /zysk netto|net (?:income|profit)|jahresüberschuss|konzernergebnis|résultat net/,
-        /podatek dochodowy|income tax|ertragsteuern|impôt sur les (?:sociétés|bénéfices)/,
+        /przychody ze sprzedaży|revenue|(?:net |total )?sales|umsatzerlöse|umsatz|chiffre d'affaires|produits des ventes/,
+        /koszt własny|cost of (?:goods|revenues|sales|products)|cogs|herstellungskosten|umsatzkosten|coût des ventes|coût de revient/,
+        /zysk brutto|gross profit|gross margin|bruttoergebnis|rohertrag|marge brute/,
+        /zysk.*operacyjn|operating (?:profit|income|loss)|income from operations|ebit\b|betriebsergebnis|résultat opérationnel/,
+        /zysk netto|net (?:income|profit|loss|earnings)|jahresüberschuss|konzernergebnis|résultat net/,
+        /podatek dochodowy|income tax|provision for (?:income )?taxes|tax (?:expense|charge)|ertragsteuern|impôt sur les (?:sociétés|bénéfices)/,
+        /zysk przed opodatkowaniem|(?:income|profit|loss) before (?:income )?tax|earnings before tax|ergebnis vor steuern|résultat avant impôt/,
+        /selling.*general.*administrative|sg&a|research and development|r&d/,
       ],
       BS: [
         /aktywa razem|total assets|bilanzsumme|summe aktiva|total actif|total de l'actif/,
-        /pasywa razem|total liabilities|summe passiva|summe verbindlichkeiten|total passif/,
+        /pasywa razem|total liabilities(?:\s+and\s+equity)?|summe passiva|summe verbindlichkeiten|total passif/,
         /aktywa trwałe|non.?current assets|anlagevermögen|langfristige vermögenswerte|actif non courant|immobilisations/,
-        /aktywa obrotowe|current assets|umlaufvermögen|kurzfristige vermögenswerte|actif courant/,
-        /kapitał własny|equity|eigenkapital|capitaux propres/,
+        /aktywa obrotowe|(?:total )?current assets|umlaufvermögen|kurzfristige vermögenswerte|actif courant/,
+        /kapitał własny|(?:total )?(?:stockholders'?|shareholders'?)\s*equity|eigenkapital|capitaux propres/,
+        /(?:total )?(?:current|non-current)\s+liabilities|zobowiązania (?:krótko|długo)terminowe/,
+        /property.*plant.*equipment|rzeczowe aktywa trwałe|goodwill|wartość firmy/,
+        /cash and cash equivalents|środki pieniężne|inventories|zapasy/,
       ],
       CF: [
-        /środki pieniężne.*(?:netto|wygenerowane).*operacyjn|operating cash|cashflow aus (?:betrieblicher|laufender)|flux.*(?:activités?\s+)?(?:opérationnelles?|d'exploitation)/,
-        /środki pieniężne.*(?:netto|wykorzystane).*inwestycyjn|investing cash|cashflow aus investitionstätigkeit|flux.*(?:activités?\s+)?d'investissement/,
-        /środki pieniężne.*(?:netto|wykorzystane).*finansow|financing cash|cashflow aus finanzierungstätigkeit|flux.*(?:activités?\s+)?de\s+financement/,
+        /środki pieniężne.*(?:netto|wygenerowane).*operacyjn|(?:net )?cash (?:provided by|from|used in) operating|operating (?:activities|cash)|cashflow aus (?:betrieblicher|laufender)|flux.*(?:activités?\s+)?(?:opérationnelles?|d'exploitation)/,
+        /środki pieniężne.*(?:netto|wykorzystane).*inwestycyjn|(?:net )?cash (?:provided by|from|used in) investing|investing (?:activities|cash)|cashflow aus investitionstätigkeit|flux.*(?:activités?\s+)?d'investissement/,
+        /środki pieniężne.*(?:netto|wykorzystane).*finansow|(?:net )?cash (?:provided by|from|used in) financing|financing (?:activities|cash)|cashflow aus finanzierungstätigkeit|flux.*(?:activités?\s+)?de\s+financement/,
+        /depreciation.*amortization|amortyzacja|interest paid|taxes paid|dividends? (?:paid|received)/,
+        /capital expenditure|capex|purchases? of property/,
       ],
     };
     const anchors = statementAnchors[normalizedType] || [];
@@ -993,13 +1081,68 @@ export function locateStatementSections(
 
     const isNumberedStatementSection = /^3\.\d/.test(line.trim());
     const isNoteSection = /^(?:4|5|6|7|8|9)\.\d/.test(line.trim());
+    const headingLine = line.trim();
+    const isStandaloneStatementHeading =
+      headingLine.length > 0 &&
+      headingLine.length <= 80 &&
+      !/\d/.test(headingLine) &&
+      headingLine === headingLine.toUpperCase() &&
+      /[A-ZĄĆĘŁŃÓŚŹŻ]/.test(headingLine);
+    const isTitleCaseStatementHeading =
+      headingLine.length > 10 &&
+      headingLine.length <= 100 &&
+      /^(?:Consolidated\s+|Group\s+)?(?:Balance\s+Sheet|Statement|Income\s+Statement|Cash\s+Flow)/i.test(headingLine);
     const statementSectionBonus = isNumberedStatementSection ? 60 : 0;
+    const headingBonus = isStandaloneStatementHeading ? 120 : (isTitleCaseStatementHeading ? 90 : 0);
     const notesSectionPenalty = isNoteSection ? 50 : 0;
+
+    const isNotesOrMDASection =
+      /\bnotes?\s+to\s+(?:the\s+)?(?:consolidated\s+)?financial\s+statements/i.test(windowText) &&
+      !/(balance sheet|income statement|statement of (?:operations|income|cash flow|financial position))/i.test(line);
+    const isMDASection = /management'?s?\s+discussion\s+and\s+analysis/i.test(windowText);
+    const isSegmentSection = /\bsegment\s+(?:information|reporting|results)\b/i.test(windowText) &&
+      anchorHits < 3;
+    const isNoteDetailSection = /\bnote\s+\d{1,2}\b/i.test(line) && numericLines < 10;
+    const segmentHeaderCount = windowLines.filter((l) =>
+      /\bsegment\s+(?:revenues?|results?|assets|liabilities)\b/i.test(l)
+    ).length;
+    const hasSegmentBreakdownHeaders = segmentHeaderCount >= 2;
+    const hasGeographicOrProductLines = windowLines.filter((l) =>
+      /^\s*(?:crude\s+oil|oil\s+products|natural\s+gas|lng|non-oil|upstream|downstream|refining|petrochemicals|chemicals|exploration|production)\s*$/i.test(l.trim()) ||
+      /^\s*(?:us\s*$|non-us\s*$|europe\s*$|asia\s*$|rest\s+of\s+(?:the\s+)?world)\s*$/i.test(l.trim())
+    ).length;
+    const hasSegmentData = hasSegmentBreakdownHeaders || hasGeographicOrProductLines >= 3;
+
+    const contextPenalty =
+      (isNotesOrMDASection ? 80 : 0) +
+      (isMDASection ? 100 : 0) +
+      (isSegmentSection ? 60 : 0) +
+      (isNoteDetailSection ? 40 : 0) +
+      (hasSegmentData ? 120 : 0);
+
+    const tooFewNumericLinesPenalty = numericLines < 5 ? (5 - numericLines) * 30 : 0;
+
+    const windowSize = end - start;
+    const numericDensity = windowSize > 0 ? numericLines / windowSize : 0;
+    const densityBonus = numericDensity >= 0.3 ? 60 : numericDensity >= 0.15 ? 30 : 0;
+
+    const cappedNumericLines = Math.min(numericLines, 50);
+    const cappedSemanticLines = Math.min(semanticLines, 30);
 
     candidateWindows.push({
       start,
       end,
-      score: numericLines * 2 + semanticLines - tocPenalty + anchorBonus + statementSectionBonus - notesSectionPenalty,
+      score:
+        cappedNumericLines * 2 +
+        cappedSemanticLines -
+        tocPenalty +
+        anchorBonus +
+        statementSectionBonus +
+        headingBonus +
+        densityBonus -
+        notesSectionPenalty -
+        contextPenalty -
+        tooFewNumericLinesPenalty,
       sectionLabel: line.trim().slice(0, 120) || normalizedType,
     });
   }
@@ -1063,7 +1206,7 @@ function classifyNonFinancialLine(label: string): { isNonFinancial: boolean; rea
   if (normalized.length > 140) return { isNonFinancial: true, reason: 'NARRATIVE_LABEL_TOO_LONG' };
   if (normalized.length < 4) return { isNonFinancial: true, reason: 'FRAGMENT_TOO_SHORT' };
   if (
-    /(sytuacja|sytuacji|szczegóły|w związku|na dzień publikacji|see note|refer to note|objaśnienia|komentarz|commentary|stanowiącymi|integralną część|należy analizować łącznie|dodatkowe informacje|informacje dodatkowe|podstawa sporządzenia|zasady rachunkowości|polityka rachunkowości|accounting policies|basis of preparation)/.test(
+    /(sytuacja|sytuacji|szczegóły|w związku|na dzień publikacji|see note|refer to note|objaśnienia|komentarz|commentary|stanowiącymi|integralną część|należy analizować łącznie|dodatkowe informacje|informacje dodatkowe|podstawa sporządzenia|zasady rachunkowości|polityka rachunkowości|accounting policies|basis of preparation|the company is currently evaluating|will be applied prospectively|we believe|we expect|we anticipate|management believes|the following table|as discussed in|pursuant to)/.test(
       normalized
     )
   ) {
@@ -1077,6 +1220,16 @@ function classifyNonFinancialLine(label: string): { isNonFinancial: boolean; rea
   }
   if (/^(?:ciąg\s+dalszy|continued|kontynuacja|c\.d\.|fortgesetzt|fortsetzung|suite|suite du|voir note)/i.test(normalized)) {
     return { isNonFinancial: true, reason: 'CONTINUATION_MARKER' };
+  }
+  if (/\b(?:average\s+shares?\s+outstanding|weighted\s+average\s+(?:number\s+of\s+)?(?:common\s+)?shares?|shares?\s+used\s+in\s+computing|(?:basic|diluted)\s+(?:earnings|loss|income)\s+per\s+(?:share|common)|(?:earnings|loss|net\s+income)\s+per\s+(?:share|common\s+share)|zysk\s+na\s+(?:jedną?\s+)?akcj[ęe]|(?:liczba|ilość)\s+akcji|verwässert|unverwässert|ergebnis\s+je\s+aktie|nombre\s+(?:moyen\s+)?d[e'']actions|résultat\s+par\s+action)\b/i.test(normalized)) {
+    return { isNonFinancial: true, reason: 'PER_SHARE_DATA' };
+  }
+  if (/\b(?:thereof\s+relating\s+to|of\s+which\s+attributable\s+to|at\s+\d{1,2}\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)|adjustments?\s+for\s+prior\s+periods?\s+from\s+adopting)/i.test(normalized)) {
+    return { isNonFinancial: true, reason: 'EQUITY_TABLE_ANNOTATION' };
+  }
+  const dashSequenceCount = (normalized.match(/\s*[-–—]\s*[-–—]/g) || []).length;
+  if (dashSequenceCount >= 2) {
+    return { isNonFinancial: true, reason: 'EQUITY_TABLE_COLUMN_PATTERN' };
   }
   if (normalized.split(' ').length > 14) {
     return { isNonFinancial: true, reason: 'LONG_SENTENCE_LINE' };
@@ -1188,6 +1341,11 @@ export function extractFinancialLines(
     /^(?:gesamt|summe|insgesamt)\s*$/i,
     /^(?:geprüft|ungeprüft)\s*$/i,
     /^(?:erläuterungen|siehe\s+anhang)/i,
+    /^(?:the\s+following|see\s+note|refer\s+to|as\s+discussed)/i,
+    /^(?:management'?s?\s+discussion|risk\s+factors|item\s+\d)/i,
+    /^(?:in\s+accordance\s+with|pursuant\s+to|under\s+the)/i,
+    /\bwe\s+(?:believe|expect|anticipate|estimate|intend|continue)\b/i,
+    /\bthe\s+company\s+(?:believes|expects|has|is|was|will|may|should)\b/i,
   ];
 
   const isNoiseLine = (line: string): boolean =>
@@ -1264,9 +1422,15 @@ export function extractFinancialLines(
     return merged;
   };
   const isLikelyNoteRef = (raw: string): boolean => {
-    if (!/^\d{1,2}\.\d{1,3}$/.test(raw)) return false;
-    const val = parseFloat(raw);
-    return Number.isFinite(val) && val >= 1 && val < 100;
+    if (/^\d{1,2}\.\d{1,3}$/.test(raw)) {
+      const val = parseFloat(raw);
+      return Number.isFinite(val) && val >= 1 && val < 100;
+    }
+    if (/^\d{1,2}$/.test(raw)) {
+      const val = parseInt(raw, 10);
+      return val >= 1 && val <= 60;
+    }
+    return false;
   };
 
   const normalizeNumericToken = (
@@ -1380,7 +1544,13 @@ export function extractFinancialLines(
   for (let i = 0; i < rawLines.length; i++) {
     const line = rawLines[i].trim();
     if (!line) continue;
-    if (isNoiseLine(line)) {
+    const isTabularNoteRow =
+      /^(?:nota|note)\b/i.test(line) &&
+      ((line.match(/\(?-?\d[\d.,\s\u00A0]*\)?/g) || []).length >= 3 ||
+        /\b\d{1,2}\.\d{1,3}\b.*\b\d{1,3}(?:[ \u00A0]\d{3})+\b.*\b\d{1,3}(?:[ \u00A0]\d{3})+\b/.test(
+          line
+        ));
+    if (isNoiseLine(line) && !isTabularNoteRow) {
       pendingLabel = null;
       continue;
     }
@@ -1433,8 +1603,8 @@ export function extractFinancialLines(
       confidence: lineClassification.isNonFinancial ? 0.2 : 0.6,
       sectionKey: sections[0]?.sectionKey,
       rawValue,
-      selectedPeriodLabel: targetPeriodLabel,
-      comparisonPeriodLabel,
+      selectedPeriodLabel: targetPeriodLabel || undefined,
+      comparisonPeriodLabel: comparisonPeriodLabel || undefined,
       sourceRow: lineOffset + i + 1,
       rowType: lineClassification.isNonFinancial ? 'nonFinancial' : deriveRowType(label),
       hierarchyDepth: Math.max(0, (rawLines[i].match(/^\s+/)?.[0].length || 0) / 2),
@@ -1463,17 +1633,25 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   // ── P&L ──
   'fsl-pl-revenue': [
     'revenue',
+    'revenues',
     'przychody ze sprzedaży',
+    'przychody z umów z klientami',
     'przychody ze sprzedaży dóbr i usług',
     'przychody ze sprzedaży produktów',
     'przychody ze sprzedaży ogółem',
     'razem przychody',
     'net revenue',
+    'net revenues',
     'sales',
     'sprzedaż',
     'total revenue',
+    'total revenues',
     'total net sales',
+    'total sales',
     'net sales',
+    'net operating revenues',
+    'sales and other operating revenues',
+    'total sales and other operating revenues',
     'umsatzerlöse',
     'umsatz',
     'erlöse',
@@ -1485,13 +1663,20 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-pl-cogs': [
     'cost of goods',
+    'cost of goods sold',
     'cogs',
     'koszt sprzedanych',
     'koszt własny',
     'koszt własny sprzedaży',
     'koszt sprzedanych towarów i materiałów',
+    'koszty sprzedanych produktów towarów i materiałów',
     'cost of sales',
     'total cost of sales',
+    'purchases',
+    'manufacturing costs',
+    'cost of revenues',
+    'total cost of revenues',
+    'cost of products sold',
     'herstellungskosten',
     'umsatzkosten',
     'herstellungskosten der zur erzielung der umsatzerlöse erbrachten leistungen',
@@ -1526,6 +1711,13 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-pl-gna': [
     'general and administrative',
+    'general and administrative expenses',
+    'selling and administrative expenses',
+    'selling general and administrative',
+    'selling general and administrative expenses',
+    'sg a expenses',
+    'distribution and administration expenses',
+    'distribution and administrative expenses',
     'koszty ogólnego zarządu',
     'koszty administracyjne',
     'administrative expenses',
@@ -1560,6 +1752,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'ebit',
     'operating profit',
     'operating income',
+    'operating loss',
     'zysk operacyjny',
     'zysk z działalności operacyjnej',
     'strata z działalności operacyjnej',
@@ -1568,6 +1761,11 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'ergebnis der betrieblichen tätigkeit',
     'income from operations',
     'loss from operations',
+    'profit before financial result',
+    'profit loss before financial result',
+    'profit loss before interest and taxation',
+    'profit before interest and taxation',
+    'profit before interest and tax',
     'résultat opérationnel',
     'résultat opérationnel courant',
     "résultat d'exploitation",
@@ -1575,6 +1773,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-pl-ebt': [
     'profit before tax',
+    'profit before taxation',
+    'profit loss before tax',
+    'profit loss before taxation',
     'earnings before tax',
     'zysk przed opodatkowaniem',
     'zysk brutto',
@@ -1586,10 +1787,13 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     "résultat avant impôt sur les sociétés",
     'bénéfice avant impôt',
     'income before provision for income taxes',
+    'income before income taxes',
+    'group profit before tax',
   ],
   'fsl-pl-net': [
     'net income',
     'net profit',
+    'net loss',
     'zysk netto',
     'zysk/strata netto',
     'net earnings',
@@ -1602,7 +1806,12 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'ergebnis nach steuern',
     'net income loss',
     'net income attributable to',
-    'net loss',
+    'consolidated net income',
+    'profit for the year',
+    'profit for the period',
+    'profit loss for the year',
+    'profit loss for the period',
+    'net profit loss',
     'résultat net',
     'résultat net consolidé',
     'bénéfice net',
@@ -1639,7 +1848,10 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-pl-tax': [
     'income tax',
+    'income taxes',
+    'income tax expense',
     'tax expense',
+    'tax charge',
     'podatek dochodowy',
     'podatek',
     'obciążenie podatkowe',
@@ -1651,6 +1863,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'impôt sur les bénéfices',
     'charge d\'impôt',
     'provision for income taxes',
+    'provision for benefit from income taxes',
+    'tax charge on profit',
+    'taxation',
   ],
   'fsl-pl-tax-deferred': [
     'deferred tax expense',
@@ -1671,6 +1886,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   'fsl-pl-other-income': [
     'other income',
     'other revenue',
+    'other operating income',
+    'other income loss net',
     'pozostałe przychody operacyjne',
     'inne przychody',
     'sonstige betriebliche erträge',
@@ -1755,6 +1972,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'aktywa z tytułu prawa do użytkowania',
     'prawo do użytkowania aktywów',
     'lease right of use',
+    'leased products',
+    'operating lease right of use assets',
     'nutzungsrechte',
     'nutzungsrechte an vermögenswerten',
     "droits d'utilisation",
@@ -1920,9 +2139,11 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-bs-equity-parent': [
     'equity attributable to parent',
+    'equity attributable to shareholders',
+    'equity attributable to owners of the parent',
+    'equity attributable to shareowners',
     'kapitał własny przypadający akcjonariuszom jednostki dominującej',
     'kapitał własny przypadający akcjonariuszom',
-    'equity attributable to owners of the parent',
     'eigenkapital der anteilseigner des mutterunternehmens',
     'den aktionären des mutterunternehmens zuzurechnendes eigenkapital',
     'capitaux propres part du groupe',
@@ -1946,6 +2167,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-bs-retained-earnings': [
     'retained earnings',
+    'reinvested earnings',
+    'revenue reserves',
+    'accumulated deficit',
     'zyski zatrzymane',
     'niepodzielony wynik finansowy',
     'wynik z lat ubiegłych',
@@ -2004,6 +2228,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   // ── CF ──
   'fsl-cf-change-wc-ar': [
     'change in receivables',
+    'change in trade receivables',
+    'increase decrease in accounts receivable',
+    'accounts receivable',
     'zmiana stanu należności',
     'zmiana należności',
     'veränderung der forderungen',
@@ -2011,6 +2238,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-change-wc-inventory': [
     'change in inventory',
+    'change in inventories',
+    'increase decrease in inventories',
+    'inventory',
     'zmiana stanu zapasów',
     'zmiana zapasów',
     'veränderung der vorräte',
@@ -2018,6 +2248,10 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-change-wc-ap': [
     'change in payables',
+    'change in trade payables',
+    'increase decrease in accounts payable',
+    'accounts payable accrued and other liabilities',
+    'increase decrease in other current and non-current liabilities',
     'zmiana stanu zobowiązań',
     'zmiana zobowiązań',
     'zmiana stanu zobowiązań handlowych',
@@ -2043,6 +2277,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'activités opérationnelles',
     'net cash provided by operating activities',
     'net cash provided by used in operating activities',
+    'net cash used in operating activities',
+    'cash inflow outflow from operating activities',
   ],
   'fsl-cf-investing': [
     'investing cash flow',
@@ -2059,6 +2295,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     "flux net de trésorerie lié aux activités d'investissement",
     "activités d'investissement",
     'net cash provided by used in investing activities',
+    'net cash used in investing activities',
+    'cash inflow outflow from investing activities',
   ],
   'fsl-cf-financing': [
     'financing cash flow',
@@ -2075,12 +2313,22 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'flux net de trésorerie lié aux activités de financement',
     'activités de financement',
     'net cash provided by used in financing activities',
+    'net cash used in financing activities',
+    'cash inflow outflow from financing activities',
   ],
   'fsl-cf-capex': [
     'capital expenditures',
     'capex',
     'nakłady inwestycyjne',
     'purchases of property',
+    'purchases of property plant and equipment',
+    'purchases of property and equipment',
+    'purchases of property and equipment net of proceeds',
+    'expenditure on property plant and equipment',
+    'expenditure on property plant and equipment intangible and other assets',
+    'total investment in intangible assets and property plant and equipment',
+    'total cash capital expenditure',
+    'additions to non current assets',
     'wydatki na nabycie rzeczowych aktywów trwałych',
     'wydatki na nabycie wartości niematerialnych',
     'investitionen in sachanlagen',
@@ -2089,8 +2337,6 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'auszahlungen für den erwerb immaterieller vermögenswerte und sachanlagen',
     "acquisitions d'immobilisations corporelles",
     "acquisitions d'immobilisations",
-    'purchases of property and equipment',
-    'purchases of property and equipment net of proceeds',
   ],
   'fsl-cf-fcf': [
     'free cash flow', 'fcf', 'wolne przepływy', 'wolne przepływy pieniężne',
@@ -2098,12 +2344,16 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-change-wc-provisions': [
     'change in provisions',
+    'net charge for provisions',
+    'net charge for provisions less payments',
     'zmiana stanu rezerw',
     'zmiana rezerw',
     'veränderung der rückstellungen',
   ],
   'fsl-cf-change-wc-other': [
     'change in other working capital',
+    'change in other operating assets and liabilities',
+    'increase decrease in other current and non-current assets',
     'zmiana stanu pozostałych aktywów',
     'zmiana stanu rozliczeń międzyokresowych',
     'zmiana stanu amortyzowanego aktywa kontraktowego',
@@ -2112,7 +2362,13 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-operating-depreciation': [
     'depreciation and amortization',
+    'depreciation and amortisation',
+    'depreciation depletion and amortization',
+    'depreciation depletion and amortisation',
+    'depreciation and amortisation of tangible and intangible assets',
+    'depreciation depletion and impairment',
     'amortyzacja',
+    'amortyzacja ujęta w wyniku finansowym',
     'amortyzacja wartości niematerialnych',
     'amortyzacja rzeczowych aktywów trwałych',
     'amortyzacja aktywów z tytułu prawa do użytkowania',
@@ -2122,9 +2378,12 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-operating-interest-cost': [
     'interest cost',
+    'finance costs',
+    'finance expense',
+    'net finance expense',
     'koszty odsetek',
     'koszty odsetkowe',
-    'przychody z tytułu odsetek',
+    'koszty finansowe',
     'zinsaufwendungen',
     'gezahlte zinsen',
   ],
@@ -2143,6 +2402,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'augmentation nette de la trésorerie',
     'net increase decrease in cash',
     'net increase in cash cash equivalents',
+    'increase decrease in cash and cash equivalents',
+    'change in cash and cash equivalents',
   ],
   'fsl-cf-opening-cash': [
     'opening cash balance',
@@ -2154,6 +2415,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'trésorerie en début de période',
     "trésorerie à l'ouverture",
     'cash cash equivalents and restricted cash beginning of period',
+    'cash and cash equivalents at beginning of year',
+    'cash and cash equivalents as at 1 january',
+    'cash and cash equivalents at beginning of period',
   ],
   'fsl-cf-closing-cash': [
     'closing cash balance',
@@ -2165,6 +2429,10 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'trésorerie en fin de période',
     'trésorerie à la clôture',
     'cash cash equivalents and restricted cash end of period',
+    'cash and cash equivalents at end of year',
+    'cash and cash equivalents as at 31 december',
+    'cash and cash equivalents at end of period',
+    'cash and cash equivalents at end of year',
   ],
   // ── NEW BS HINTS ──
   'fsl-bs-lt-receivables': [
@@ -2176,6 +2444,11 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-bs-lt-financial-assets': [
     'long-term financial assets',
+    'other investments',
+    'other financial assets',
+    'instrumenty finansowe razem',
+    'financial instruments total',
+    'derivative financial instruments',
     'długoterminowe aktywa finansowe',
     'aktywa finansowe długoterminowe',
     'inwestycje długoterminowe',
@@ -2229,6 +2502,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-bs-treasury-shares': [
     'treasury shares',
+    'treasury stock',
+    'treasury stock at cost',
     'akcje własne',
     'udziały własne',
     'eigene anteile',
@@ -2347,9 +2622,14 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'total passif et capitaux propres',
     'total du passif et des capitaux propres',
     "total liabilities and shareholders' equity",
+    "total liabilities and stockholders' equity",
+    'total liabilities and equity',
+    'total equity and liabilities',
   ],
   'fsl-bs-share-premium': [
     'share premium',
+    'capital surplus',
+    'capital reserves',
     'kapitał zapasowy',
     'nadwyżka ze sprzedaży akcji',
     'agio',
@@ -2435,14 +2715,30 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   // ── NEW P&L HINTS ──
   'fsl-pl-net-parent': [
     'net income attributable to parent',
+    'net income attributable to shareholders',
+    'net income attributable to common stockholders',
+    'net income attributable to common shareowners',
+    'net income attributable to shareholders of',
+    'net income attributable to shareowners',
+    'attributable to shareholders',
+    'attributable to owners of the parent',
+    'comprehensive income attributable to common stockholders',
     'zysk netto przypadający akcjonariuszom jednostki dominującej',
     'zysk przypadający akcjonariuszom podmiotu dominującego',
     'zysk netto jednostki dominującej',
+    'zysk netto przypadający akcjonariuszom',
     'den anteilseignern des mutterunternehmens zuzurechnendes ergebnis',
     'ergebnis anteilseigner mutterunternehmen',
     'part du groupe',
     'résultat net part du groupe',
-    'net income attributable to common stockholders',
+    'profit attributable to shareholders',
+    'profit attributable to owners of the parent',
+    'profit for the year attributable to',
+    'net income attributable to shareowners of the coca-cola company',
+    'net income attributable to shareowners of',
+    'net income attributable to common stockholders $',
+    'attributable to bp shareholders',
+    'łączne całkowite dochody przypadające akcjonariuszom jednostki dominującej',
   ],
   'fsl-pl-net-minority': [
     'net income attributable to non-controlling interests',
@@ -2477,6 +2773,12 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   'fsl-pl-equity-method-income': [
     'share of profit of associates',
     'equity method income',
+    'earnings from associates after interest and tax',
+    'earnings from associates',
+    'income from associates',
+    'share of results of associates',
+    'share of profit loss of associates',
+    'equity income loss net',
     'udział w zyskach jednostek stowarzyszonych',
     'udział w zyskach jednostek wycenianych metodą praw własności',
     'udział w wynikach jednostek stowarzyszonych',
@@ -2491,6 +2793,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'przychody finansowe',
     'przychody z tytułu odsetek',
     'finance income',
+    'interest income',
+    'interest and similar income',
     'finanzerträge',
     'zinserträge',
     'sonstige finanzerträge',
@@ -2504,6 +2808,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'koszty finansowe',
     'finance costs',
     'financial costs',
+    'interest expense',
+    'interest and similar expenses',
     'finanzaufwendungen',
     'zinsaufwendungen',
     'sonstige finanzaufwendungen',
@@ -2531,9 +2837,14 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-pl-oci-reclassifiable': [
     'items that may be reclassified',
+    'items that can be reclassified to the income statement in the future',
+    'currency translation foreign operations',
+    'exchange differences on translation of foreign operations',
+    'derivative financial instruments oci',
     'pozycje które mogą być przeklasyfikowane',
     'pozycje przeklasyfikowywalne do wyniku',
     'pozycje podlegające przeklasyfikowaniu',
+    'różnice kursowe z przeliczenia jednostek zagranicznych',
     'posten die in die gewinn- und verlustrechnung umgegliedert werden können',
   ],
   'fsl-pl-oci-non-reclassifiable': [
@@ -2593,6 +2904,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-pl-eps-diluted': [
     'diluted earnings per share',
+    'diluted',
+    'per ads dollars diluted',
+    'per ordinary share cents diluted',
     'zysk na jedną akcję rozwodniony',
     'rozwodniony zysk na jedną akcję',
     'rozwodniony zysk na akcję',
@@ -2657,6 +2971,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-operating-gain-disposal': [
     'gain on disposal of assets',
+    'impairment and gain loss on sale of businesses and fixed assets',
+    'significant gains losses net',
     'zyski straty na sprzedaży aktywów',
     'zysk strata ze sprzedaży niefinansowych aktywów trwałych',
     'zysk strata ze zbycia aktywów trwałych',
@@ -2694,12 +3010,17 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-dividends-received': [
     'dividends received',
+    'dividends received from joint ventures',
+    'dividends received from joint ventures and associates',
     'dywidendy otrzymane',
     'otrzymane dywidendy',
     'erhaltene dividenden',
   ],
   'fsl-cf-operating-other-adj': [
     'other adjustments',
+    'other items',
+    'other non-cash income and expense items',
+    'non-cash interest and other operating activities',
     'inne korekty',
     'pozostałe korekty',
     'sonstige anpassungen',
@@ -2707,12 +3028,21 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-operating-equity-method': [
     'equity method cf',
+    'result from equity accounted investments',
+    'earnings from joint ventures',
+    'earnings from joint ventures and associates',
+    'earnings from associates',
+    'share of profit of associates',
+    'equity income loss',
     'udział w zyskach jednostek stowarzyszonych',
     'udział w wyniku jednostek wycenianych metodą praw własności',
     'ergebnis aus at equity bilanzierten beteiligungen',
   ],
   'fsl-cf-operating-interest-income': [
     'interest income cf',
+    'interest received',
+    'interest receivable',
+    'interest and similar income',
     'przychody z odsetek',
     'przychody z tytułu odsetek',
     'przychody odsetkowe',
@@ -2756,6 +3086,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'wpływ zmian kursów walut',
     'wechselkursbedingte veränderung des finanzmittelbestands',
     'währungskurseffekte auf zahlungsmittel',
+    'effect of exchange rate on cash and cash equivalents',
+    'effect of exchange rate changes on cash',
+    'effect of exchange rate changes on cash and cash equivalents',
   ],
   'fsl-cf-tax-refund': [
     'tax refund',
@@ -2766,9 +3099,15 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-dividends': [
     'dividends paid',
+    'dividends',
+    'payment of dividends',
+    'payment of dividends to shareholders',
+    'dividends paid bp shareholders',
     'dywidendy wypłacone',
     'wypłata dywidend',
     'dywidendy zapłacone',
+    'wydatki z tytułu dywidend',
+    'wydatki z tytułu dywidend wypłaconych akcjonariuszom',
     'gezahlte dividenden',
     'dividendenzahlungen',
     'ausschüttung an aktionäre',
@@ -2788,6 +3127,11 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'émission d\'emprunts',
     'proceeds from long-term debt',
     'proceeds from short-term debt',
+    'proceeds from long-term financing',
+    'proceeds from issue of non-current financial liabilities',
+    'proceeds from issuances of debt',
+    'issuances of loans notes payable and long-term debt',
+    'issuances of debt',
   ],
   'fsl-cf-debt-repayment': [
     'debt repayment',
@@ -2802,6 +3146,10 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'remboursement d\'emprunts',
     'repayments of long-term debt',
     'repayments of short-term debt',
+    'repayments of long-term financing',
+    'repayment of non-current financial liabilities',
+    'payments of loans notes payable and long-term debt',
+    'repayments of debt',
   ],
   'fsl-cf-lease-repayment': [
     'lease repayment',
@@ -2815,6 +3163,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-taxes-paid': [
     'taxes paid',
+    'income taxes paid',
     'zapłacony podatek dochodowy',
     'podatek zapłacony',
     'podatek dochodowy zapłacony',
@@ -3034,6 +3383,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-pl-other-opex': [
     'other operating expenses',
+    'other operating charges',
     'pozostałe koszty operacyjne',
     'inne koszty operacyjne',
     'other operational costs',
@@ -3051,6 +3401,10 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'utrata wartości aktywów',
     'wertminderungsaufwand',
     'außerplanmäßige abschreibungen',
+    'net impairment and losses on sale of businesses and fixed assets',
+    'impairment and gain loss on sale of businesses and fixed assets',
+    'net impairment charges',
+    'impairment losses on financial assets',
   ],
   'fsl-pl-other-opex-provisions': [
     'provisions expense',
@@ -3095,12 +3449,16 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-pl-other-fin': [
     'other financial result',
+    'financial result',
     'pozostałe przychody koszty finansowe',
     'wynik finansowy netto',
     'inne przychody koszty finansowe',
     'other finance result',
     'sonstiges finanzergebnis',
     'übriges finanzergebnis',
+    'sundry other financial result',
+    'other financial result net',
+    'exploration expense',
   ],
   // ── MISSING BS SUB-LINES ──
   'fsl-bs-cash-operating': [
@@ -3370,6 +3728,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   // ── MISSING CF SUB-LINES ──
   'fsl-cf-operating-net-income': [
     'net income in operating cash flow',
+    'profit before taxation',
+    'profit loss before taxation',
+    'consolidated net income',
     'wynik netto',
     'zysk netto',
     'strata netto',
@@ -3380,6 +3741,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-change-wc': [
     'change in working capital',
+    'changes in working capital',
+    'changes in operating assets and liabilities',
+    'net change in operating assets and liabilities',
     'zmiana kapitału obrotowego',
     'zmiany w kapitale obrotowym netto',
     'zmiana kapitału pracującego',
@@ -3442,6 +3806,610 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'lease liability repayment',
     'tilgung von leasingverbindlichkeiten',
     'rückzahlung von leasingverbindlichkeiten',
+  ],
+  // ── EXTENDED ENGLISH CF ALIASES ──
+  'fsl-cf-operating-net-income': [
+    'net income cf',
+    'consolidated net income',
+    'net income',
+    'net income loss',
+    'net profit loss',
+    'profit loss before tax',
+    'profit before tax',
+    'profit loss for the year',
+    'profit for the year',
+  ],
+  'fsl-cf-operating-sbc': [
+    'stock based compensation',
+    'stock based compensation expense',
+    'share based compensation',
+    'share based payments',
+    'share based payment expense',
+    'wynagrodzenie w formie akcji',
+    'aktienbasierte vergütung',
+  ],
+  'fsl-cf-share-buyback': [
+    'repurchase of shares',
+    'repurchase of ordinary share capital',
+    'purchases of stock for treasury',
+    'treasury shares acquired',
+    'share buyback',
+    'skup akcji własnych',
+    'nabycie akcji własnych',
+    'rückkauf eigener aktien',
+    'repurchase of common stock',
+    'buybacks of common stock',
+  ],
+  'fsl-cf-investing-disposal-proceeds': [
+    'disposal proceeds',
+    'wpływy ze sprzedaży aktywów',
+    'wpływy ze sprzedaży rzeczowych aktywów trwałych',
+    'wpływy ze sprzedaży aktywów trwałych',
+    'wpływy ze zbycia aktywów trwałych',
+    'einzahlungen aus dem abgang von anlagevermögen',
+    'erlöse aus dem verkauf von sachanlagen',
+    'proceeds from disposals of fixed assets',
+    'proceeds from disposals of businesses',
+    'proceeds from disposals of businesses net of cash disposed',
+    'proceeds from disposals of property plant and equipment',
+    'proceeds from disposal of intangible assets and property plant and equipment',
+    'proceeds from disposals of investments',
+    'proceeds from maturities of investments',
+    'proceeds from sales of investments',
+  ],
+  // ── EXTENDED ENGLISH P&L ALIASES ──
+  'fsl-pl-equity-method-income': [
+    'share of profit of associates',
+    'equity method income',
+    'equity income',
+    'equity income loss net',
+    'earnings from joint ventures',
+    'earnings from joint ventures and associates',
+    'earnings from associates',
+    'result from equity accounted investments',
+    'udział w zyskach jednostek stowarzyszonych',
+    'udział w wyniku jednostek wycenianych metodą praw własności',
+    'udział w wynikach jednostek stowarzyszonych',
+    'ergebnis aus at equity bilanzierten beteiligungen',
+    'ergebnis aus nach der equity-methode bilanzierten beteiligungen',
+    'quote-part du résultat net des sociétés mises en équivalence',
+    'résultat des sociétés mises en équivalence',
+    'net income loss from equity affiliates',
+  ],
+  'fsl-pl-other-opex': [
+    'other operating expenses',
+    'other operating charges',
+    'pozostałe koszty operacyjne',
+    'research and development',
+    'research and development expenses',
+    'research and development expenditure',
+    'restructuring and other',
+    'restructuring charges',
+    'sonstige betriebliche aufwendungen',
+    'autres charges opérationnelles',
+  ],
+  'fsl-pl-other-opex-provisions': [
+    'expense for additions to provisions',
+    'provision expense',
+    'dotacja na rezerwy',
+  ],
+  'fsl-pl-other-fin': [
+    'other financial result',
+    'other financial income and expense',
+    'net financial result',
+    'wynik na działalności finansowej',
+    'sonstiges finanzergebnis',
+  ],
+  'fsl-pl-cbn-inventory-change': [
+    'change in inventory of finished goods',
+    'zmiana stanu produktów',
+    'zmiana stanu zapasów produktów gotowych',
+    'bestandsveränderung',
+    'veränderung des bestands an fertigen und unfertigen erzeugnissen',
+  ],
+  // ── EXTENDED ENGLISH BS ALIASES ──
+  'fsl-bs-equity-method-investments': [
+    'equity method investments',
+    'investments in joint ventures',
+    'investments in associates',
+    'investments in joint ventures and associates',
+    'investments accounted for using the equity method',
+    'inwestycje w jednostkach stowarzyszonych',
+    'inwestycje wyceniane metodą praw własności',
+    'udziały w jednostkach zależnych',
+    'udziały i akcje w jednostkach zależnych',
+    'udziały w jednostkach podporządkowanych',
+    'anteile an assoziierten unternehmen',
+    'nach der equity-methode bilanzierte beteiligungen',
+    'at equity bilanzierte beteiligungen',
+  ],
+  'fsl-bs-other-non-current-assets': [
+    'other non-current assets',
+    'other noncurrent assets',
+    'pozostałe aktywa trwałe',
+    'inne aktywa trwałe',
+    'sonstige langfristige vermögenswerte',
+  ],
+  'fsl-bs-other-current-liabilities-accruals': [
+    'accrued expenses',
+    'accruals',
+    'accrued liabilities',
+    'accounts payable and accrued expenses',
+    'rozliczenia międzyokresowe bierne',
+    'bierne rozliczenia międzyokresowe',
+    'abgrenzungsverbindlichkeiten',
+    'rückstellungen und abgrenzungen',
+  ],
+  'fsl-bs-ap-trade': [
+    'trade payables',
+    'trade and other payables',
+    'zobowiązania handlowe',
+    'zobowiązania z tytułu dostaw i usług',
+    'accounts payable trade',
+    'verbindlichkeiten aus lieferungen und leistungen',
+  ],
+  'fsl-bs-ar-trade': [
+    'trade receivables',
+    'trade and other receivables',
+    'trade accounts receivable',
+    'należności handlowe',
+    'należności z tytułu dostaw i usług',
+    'forderungen aus lieferungen und leistungen',
+  ],
+  // ── NEW CANONICAL IDS ALIASES ──
+  'fsl-pl-rnd': [
+    'research and development',
+    'research and development expenses',
+    'research and development expenditure',
+    'research and development costs',
+    'r&d expenses',
+    'r&d costs',
+    'koszty badań i rozwoju',
+    'nakłady na badania i rozwój',
+    'forschung und entwicklung',
+    'forschungs- und entwicklungskosten',
+    'frais de recherche et développement',
+  ],
+  'fsl-pl-sga': [
+    'selling general and administrative',
+    'selling and administrative expenses',
+    'selling general and administrative expenses',
+    'sg&a',
+    'sga',
+    'koszty sprzedaży i ogólnego zarządu',
+  ],
+  'fsl-bs-st-investments': [
+    'short-term investments',
+    'marketable securities',
+    'total cash cash equivalents and short-term investments',
+    'inwestycje krótkoterminowe',
+    'lokaty krótkoterminowe',
+    'kurzfristige finanzanlagen',
+    'kurzfristige wertpapiere',
+    'placements à court terme',
+  ],
+  'fsl-bs-deferred-revenue-current': [
+    'deferred revenue',
+    'deferred revenue current',
+    'unearned revenue',
+    'przychody przyszłych okresów',
+    'przychody przyszłych okresów krótkoterminowe',
+    'abgegrenzte erlöse',
+    'abgegrenzte umsatzerlöse',
+    'produits constatés d\'avance',
+  ],
+  'fsl-bs-deferred-revenue-non-current': [
+    'deferred revenue net of current portion',
+    'deferred revenue non-current',
+    'long-term deferred revenue',
+    'przychody przyszłych okresów długoterminowe',
+    'langfristige abgegrenzte erlöse',
+  ],
+  'fsl-bs-pension-surplus': [
+    'defined benefit pension plan surpluses',
+    'pension surplus',
+    'nadwyżka programu emerytalnego',
+    'nadwyżka programu określonych świadczeń',
+    'pensionsüberschuss',
+    'leistungsorientierter pensionsüberschuss',
+  ],
+  'fsl-bs-pension-deficit': [
+    'defined benefit pension plan and other post-employment benefit plan deficits',
+    'defined benefit pension plan deficits',
+    'pension deficit',
+    'pension obligations',
+    'niedobór programu emerytalnego',
+    'pensionsdefizit',
+    'pensionsverpflichtungen',
+  ],
+  'fsl-cf-investing-acquisitions': [
+    'acquisitions net of cash acquired',
+    'acquisitions net of cash',
+    'acquisitions of businesses',
+    'acquisitions of businesses equity method investments and nonmarketable securities',
+    'business combinations net of cash acquired',
+    'przejęcia',
+    'nabycie przedsiębiorstw',
+    'unternehmenserwerbe',
+    'erwerb von unternehmen',
+    'acquisitions de sociétés',
+    'acquisitions d\'entreprises',
+  ],
+  'fsl-cf-investing-securities': [
+    'purchases of investments',
+    'proceeds from sales and maturities of investments',
+    'investments in marketable securities and investment funds',
+    'proceeds from the disposal of marketable securities and investment funds',
+    'nabycie i sprzedaż papierów wartościowych',
+    'zakup inwestycji',
+    'erwerb von wertpapieren',
+    'kauf von wertpapieren und investmentfonds',
+  ],
+  'fsl-cf-investing-jv': [
+    'investment in joint ventures',
+    'investment in associates',
+    'investments in joint ventures and associates',
+    'inwestycje we wspólne przedsięwzięcia',
+    'investitionen in gemeinschaftsunternehmen',
+  ],
+  'fsl-cf-share-issuance': [
+    'issuances of stock',
+    'proceeds from issuance of common stock',
+    'proceeds from stock issuance',
+    'proceeds from exercise of stock options',
+    'wpływy z emisji akcji',
+    'emisja akcji',
+    'einzahlungen aus der ausgabe von aktien',
+    'ausgabe von anteilen',
+  ],
+  'fsl-cf-other-financing': [
+    'other financing activities',
+    'other financing cash flow',
+    'pozostałe działalność finansowa',
+    'pozostałe przepływy z działalności finansowej',
+    'sonstige finanzierungstätigkeit',
+    'sonstige finanzierungsaktivitäten',
+    'autres activités de financement',
+  ],
+  // ── EXTENDED ALIASES for commonly unmapped items ──
+  'fsl-pl-other-opex': [
+    'other operating expenses',
+    'other cost of sales',
+    'warranty expenditure',
+    'other operating charges',
+    'restructuring and other',
+    'restructuring charges',
+    'restructuring costs',
+    'pozostałe koszty operacyjne',
+    'inne koszty operacyjne',
+    'sonstige betriebliche aufwendungen',
+  ],
+  'fsl-pl-other-fin': [
+    'other financial result',
+    'net interest impact on other long-term provisions',
+    'other interest and similar expenses',
+    'sundry other financial result',
+    'income from investments in subsidiaries and participations',
+    'expenses from investments in subsidiaries and participations',
+    'exchange losses',
+    'exchange gains and losses',
+    'pozostałe przychody koszty finansowe',
+    'sonstiges finanzergebnis',
+  ],
+  'fsl-bs-other-current-liabilities-tax': [
+    'tax payables',
+    'current tax payable',
+    'accrued income taxes',
+    'income tax payable',
+    'zobowiązania podatkowe',
+    'zobowiązania z tytułu podatku dochodowego',
+    'ertragsteuerverbindlichkeiten',
+  ],
+  'fsl-bs-other-non-current-liabilities': [
+    'other noncurrent liabilities',
+    'other non-current liabilities',
+    'pozostałe zobowiązania długoterminowe',
+    'sonstige langfristige verbindlichkeiten',
+  ],
+  'fsl-bs-other-current-assets-prepaids': [
+    'prepaid expenses',
+    'prepaid expenses and other current assets',
+    'rozliczenia międzyokresowe',
+    'krótkoterminowe rozliczenia międzyokresowe',
+  ],
+  'fsl-cf-operating-net-income': [
+    'net income',
+    'net income loss',
+    'cash flows from operating activities net income',
+    'net income in operating cash flow',
+    'zysk netto',
+    'wynik netto',
+    'jahresüberschuss',
+    'konzernergebnis',
+  ],
+  'fsl-cf-operating-other-adj': [
+    'other adjustments',
+    'other items',
+    'deferred income taxes',
+    'other operating charges',
+    'inventory and purchase commitments write-downs',
+    'operating lease vehicles',
+    'inne korekty',
+    'pozostałe korekty',
+    'deferred tax',
+    'sonstige anpassungen',
+  ],
+  'fsl-cf-investing-disposal-proceeds': [
+    'disposal proceeds',
+    'proceeds from disposals of fixed assets',
+    'proceeds from disposals of businesses equity method investments and nonmarketable securities',
+    'proceeds from disposals of property plant and equipment',
+    'proceeds from disposal of property plant and equipment',
+    'proceeds from disposals of subsidiaries',
+    'wpływy ze sprzedaży aktywów',
+    'wpływy ze sprzedaży aktywów trwałych',
+    'wpływy ze zbycia aktywów trwałych',
+  ],
+  'fsl-cf-closing-cash': [
+    'closing cash balance',
+    'cash cash equivalents restricted cash and restricted cash equivalents at end of year',
+    'cash and cash equivalents at end of year',
+    'cash and cash equivalents at end of period',
+    'cash at end of year',
+    'środki pieniężne na koniec okresu',
+    'stan środków pieniężnych na koniec okresu',
+  ],
+  'fsl-cf-debt-drawdown': [
+    'debt drawdown',
+    'proceeds from issuances of debt',
+    'issuances of loans notes payable and long-term debt',
+    'net increase decrease in short-term debt',
+    'net increase in short-term debt',
+    'issue of perpetual hybrid bonds',
+    'wpływy z zaciągnięcia kredytów',
+    'zaciągnięcie kredytów i pożyczek',
+  ],
+  'fsl-cf-debt-repayment': [
+    'debt repayment',
+    'repayments of debt',
+    'payments of loans notes payable and long-term debt',
+    'repayment of non-current financial liabilities',
+    'repayments of long-term financing',
+    'redemption of perpetual hybrid bonds',
+    'spłata kredytów i pożyczek',
+    'spłaty kredytów i pożyczek',
+  ],
+  'fsl-pl-revenue-product': [
+    'product revenue',
+    'automotive sales',
+    'automotive revenues',
+    'total automotive revenues',
+    'sales of products previously leased to customers',
+    'revenues automotive sales',
+    'przychody ze sprzedaży produktów',
+    'przychody z produktów',
+    'erlöse aus produktverkäufen',
+  ],
+  'fsl-pl-revenue-service': [
+    'service revenue',
+    'services and other',
+    'energy generation and storage',
+    'revenues from service contracts telematics and roadside assistance',
+    'interest income on credit financing and finance leases',
+    'automotive leasing',
+    'przychody z usług',
+    'przychody usługowe',
+  ],
+  'fsl-pl-revenue-other': [
+    'other revenue',
+    'automotive regulatory credits',
+    'other operating revenue',
+    'other operating revenues',
+    'remaining revenue',
+    'pozostałe przychody',
+    'sonstige umsatzerlöse',
+  ],
+  'fsl-pl-cogs': [
+    'cost of goods sold',
+    'cogs',
+    'cost of sales',
+    'total cost of revenues',
+    'total cost of sales',
+    'cost of revenues',
+    'manufacturing costs',
+    'cost of sales relating to financial services business',
+    'total automotive cost of revenues',
+    'automotive cost of revenues',
+    'koszt sprzedanych towarów',
+    'koszt własny sprzedaży',
+    'herstellungskosten',
+    'umsatzkosten',
+  ],
+  'fsl-pl-comprehensive-income-parent': [
+    'total comprehensive income attributable to shareholders',
+    'comprehensive income attributable to common stockholders',
+    'comprehensive income attributable to shareholders',
+    'łączne całkowite dochody przypadające akcjonariuszom jednostki dominującej',
+    'comprehensive income attributable to owners of the parent',
+  ],
+  'fsl-pl-total-revenue-and-income': [
+    'total revenues and other income',
+    'total revenue and other income',
+    'przychody i inne dochody razem',
+  ],
+  'fsl-pl-production-costs': [
+    'production and manufacturing expenses',
+    'production and similar taxes',
+    'koszty produkcji i wytworzenia',
+  ],
+  'fsl-pl-gains-disposals': [
+    'gains on sale of businesses and fixed assets',
+    'gain on disposal of businesses',
+    'zyski ze sprzedaży przedsiębiorstw i aktywów trwałych',
+  ],
+  'fsl-pl-revenue-segment': [
+    'energy generation and storage',
+    'services and other',
+    'segment revenue',
+    'przychody segmentu',
+  ],
+  'fsl-pl-cogs-segment': [
+    'cost of revenues automotive sales',
+    'segment cost of revenue',
+    'koszty segmentu',
+  ],
+  'fsl-pl-oci-derivatives': [
+    'derivative financial instruments oci',
+    'instrumenty pochodne oci',
+  ],
+  'fsl-pl-oci-pension-remeasurement': [
+    'remeasurement of the net liability for defined benefit pension plans',
+    'remeasurement of pension plans',
+    'przeszacowanie programów emerytalnych',
+  ],
+  'fsl-pl-financial-result-net': [
+    'financial result',
+    'net financial result',
+    'wynik finansowy',
+    'wynik finansowy netto',
+    'finanzergebnis',
+  ],
+  'fsl-bs-intangibles': [
+    'intangible assets',
+    'intangibles',
+    'trademarks with indefinite lives',
+    'trademarks',
+    'other intangible assets',
+    'wartości niematerialne',
+    'wartości niematerialne i prawne',
+    'immaterielle vermögenswerte',
+  ],
+  'fsl-bs-equity-parent': [
+    'equity attributable to parent',
+    'equity attributable to shareholders',
+    'equity attributable to shareowners',
+    'equity bp shareholders equity',
+    'equity stockholders equity',
+    'kapitał własny przypadający akcjonariuszom jednostki dominującej',
+  ],
+  'fsl-bs-short-term-debt': [
+    'short-term debt',
+    'current portion of debt and finance leases',
+    'current portion of long-term debt',
+    'loans and notes payable',
+    'krótkoterminowe zobowiązania finansowe',
+    'kurzfristige finanzverbindlichkeiten',
+  ],
+  'fsl-bs-long-term-debt': [
+    'long-term debt',
+    'debt and finance leases net of current portion',
+    'long-term debt net of current portion',
+    'finance debt',
+    'non-current liabilities',
+    'zobowiązania długoterminowe',
+    'langfristige verbindlichkeiten',
+  ],
+  'fsl-bs-investments-associates': [
+    'investments in associates',
+    'inwestycje w jednostki stowarzyszone',
+    'anteile an assoziierten unternehmen',
+    'participations dans les entreprises associées',
+  ],
+  'fsl-bs-current-tax-receivable': [
+    'current tax receivable',
+    'current tax',
+    'current income tax receivable',
+    'należności z tytułu podatku dochodowego',
+    'bieżące należności podatkowe',
+  ],
+  'fsl-bs-current-portion-ltd': [
+    'current maturities of long-term debt',
+    'current portion of long-term debt',
+    'current portion of debt and finance leases',
+    'bieżąca część zobowiązań długoterminowych',
+  ],
+  'fsl-bs-marketable-securities': [
+    'marketable securities',
+    'zbywalne papiery wartościowe',
+    'papiery wartościowe przeznaczone do obrotu',
+  ],
+  'fsl-bs-derivative-instruments': [
+    'derivative financial instruments',
+    'instrumenty pochodne',
+    'financial instruments derivatives',
+    'dérivés financiers',
+    'derivative finanzinstrumente',
+  ],
+  'fsl-bs-liabilities-held-for-sale': [
+    'liabilities directly associated with assets classified as held for sale',
+    'liabilities associated with assets held for sale',
+    'zobowiązania związane z aktywami przeznaczonymi do sprzedaży',
+  ],
+  'fsl-bs-other-provisions': [
+    'other provisions',
+    'pozostałe rezerwy',
+    'sonstige rückstellungen',
+    'autres provisions',
+  ],
+  'fsl-cf-change-wc': [
+    'change in working capital',
+    'changes in operating assets and liabilities',
+    'changes in assets and liabilities',
+    'zmiana kapitału obrotowego',
+    'zmiana stanu kapitału obrotowego',
+    'veränderung des working capital',
+  ],
+  'fsl-cf-investing-associates': [
+    'investment in associates',
+    'investments in associates',
+    'inwestycje w jednostki stowarzyszone cf',
+  ],
+  'fsl-cf-investing-disposal-business': [
+    'proceeds from disposals of businesses net of cash disposed',
+    'proceeds from disposals of businesses',
+    'wpływy ze sprzedaży przedsiębiorstw',
+  ],
+  'fsl-cf-investing-disposal-investments': [
+    'proceeds from disposals of investments',
+    'proceeds from disposal of investments',
+    'wpływy ze sprzedaży inwestycji',
+  ],
+  'fsl-cf-financing-short-term-debt': [
+    'net increase decrease in short-term debt',
+    'net change in short-term debt',
+    'zmiana netto zobowiązań krótkoterminowych',
+  ],
+  'fsl-cf-financing-hybrid-bonds': [
+    'issue of perpetual hybrid bonds',
+    'redemption of perpetual hybrid bonds',
+    'payments relating to perpetual hybrid bonds',
+    'obligacje hybrydowe',
+  ],
+  'fsl-cf-dividends-minority': [
+    'payment of dividends to non-controlling interests',
+    'dividends paid to non-controlling interests',
+    'dividends paid to minority interests',
+    'dywidendy wypłacone udziałom niekontrolującym',
+  ],
+  'fsl-cf-financing-nci': [
+    'payments relating to transactions involving non-controlling interests',
+    'receipts relating to transactions involving non-controlling interests',
+    'transactions with non-controlling interests',
+    'transakcje z udziałami niekontrolującymi',
+  ],
+  'fsl-cf-operating-write-downs': [
+    'inventory and purchase commitments write-downs',
+    'write-downs and write-offs',
+    'odpisy i umorzenia cf',
+  ],
+  'fsl-cf-investing-disposal-ppe': [
+    'proceeds from disposals of property plant and equipment',
+    'proceeds from disposal of property plant and equipment',
+    'wpływy ze sprzedaży rzeczowych aktywów trwałych',
+  ],
+  'fsl-cf-investing-maturity-proceeds': [
+    'proceeds from maturities of investments',
+    'wpływy z zapadalności inwestycji',
   ],
 };
 
@@ -3858,6 +4826,98 @@ export async function autoMapLines(
         if (canonicalId === 'fsl-cf-other-investing') return { delta: 0.6, reason: 'cf_other_investing_anchor' };
         if (canonicalId === 'fsl-cf-investing') return { delta: -0.2, reason: 'cf_other_investing_vs_total' };
       }
+      if (/deferred\s+(?:income\s+)?tax|odroczony\s+podatek/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-operating-other-adj') return { delta: 0.7, reason: 'cf_deferred_tax_is_adj' };
+        if (canonicalId === 'fsl-cf-taxes-paid') return { delta: -0.7, reason: 'cf_deferred_tax_not_paid' };
+      }
+      if (/(?:income\s+)?taxes?\s+paid|cash\s+paid.*income\s+tax/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-taxes-paid') return { delta: 0.7, reason: 'cf_taxes_paid_en_anchor' };
+      }
+      if (/purchases?\s+of\s+(?:property|investments)|expenditure\s+on\s+property|total\s+(?:cash\s+)?capital\s+expenditure/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-capex') return { delta: 0.7, reason: 'cf_capex_purchases_anchor' };
+      }
+      if (/(?:investing\s+activities?\s+)?expenditure\s+on\s+property/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-capex') return { delta: 0.8, reason: 'cf_capex_expenditure_property_anchor' };
+      }
+      if (/repayments?\s+of\s+(?:long.?term|debt)|repayment\s+of\s+non.?current/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: 0.6, reason: 'cf_debt_repayment_en_anchor' };
+        if (canonicalId === 'fsl-cf-dividends') return { delta: -0.4, reason: 'cf_repayment_not_dividends' };
+      }
+      if (/dividends?\s+paid/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-dividends') return { delta: 0.7, reason: 'cf_dividends_paid_en_anchor' };
+        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: -0.4, reason: 'cf_dividends_not_repayment' };
+      }
+      if (/payment\s+of\s+dividends/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-dividends') return { delta: 0.7, reason: 'cf_dividends_payment_anchor' };
+        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: -0.4, reason: 'cf_dividends_not_repayment' };
+      }
+      if (/cash\s+flows?\s+from\s+operating|net\s+cash\s+(?:provided\s+by|from)\s+operating/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-operating') return { delta: 0.8, reason: 'cf_operating_total_en_anchor' };
+      }
+      if (/cash\s+flows?\s+from\s+investing|net\s+cash\s+(?:provided\s+by|used\s+in)\s+investing/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-investing') return { delta: 0.8, reason: 'cf_investing_total_en_anchor' };
+      }
+      if (/cash\s+flows?\s+from\s+financing|net\s+cash\s+(?:provided\s+by|used\s+in)\s+financing/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-financing') return { delta: 0.8, reason: 'cf_financing_total_en_anchor' };
+      }
+      if (/stock.based\s+compensation|share.based\s+(?:compensation|payments?)/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-operating-sbc') return { delta: 0.8, reason: 'cf_sbc_en_anchor' };
+        if (canonicalId === 'fsl-cf-operating-other-adj') return { delta: 0.2, reason: 'cf_sbc_as_other_adj' };
+      }
+      if (/repurchase\s+of\s+(?:shares|ordinary\s+share|common\s+stock)|purchases?\s+of\s+stock\s+for\s+treasury|treasury\s+shares?\s+acquired|buybacks?\s+of\s+common/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-share-buyback') return { delta: 0.8, reason: 'cf_share_buyback_en_anchor' };
+        if (canonicalId === 'fsl-cf-dividends') return { delta: -0.4, reason: 'cf_buyback_not_dividends' };
+      }
+      if (/(?:increase|decrease|net\s+increase|net\s+decrease)\s+in\s+cash/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-net-change-cash') return { delta: 0.7, reason: 'cf_net_change_en_anchor' };
+      }
+      if (/effect\s+of\s+exchange\s+rate/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-fx-on-cash') return { delta: 0.7, reason: 'cf_fx_effect_en_anchor' };
+        if (canonicalId === 'fsl-cf-opening-cash') return { delta: -0.5, reason: 'cf_fx_not_opening' };
+      }
+      if (/(?:at|as\s+at)\s+(?:1\s+january|beginning\s+of)/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-opening-cash') return { delta: 0.7, reason: 'cf_opening_cash_en_anchor' };
+        if (canonicalId === 'fsl-cf-closing-cash') return { delta: -0.5, reason: 'cf_opening_not_closing' };
+      }
+      if (/(?:at|as\s+at)\s+(?:31\s+december|end\s+of)/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-closing-cash') return { delta: 0.7, reason: 'cf_closing_cash_en_anchor' };
+        if (canonicalId === 'fsl-cf-opening-cash') return { delta: -0.5, reason: 'cf_closing_not_opening' };
+      }
+      if (/proceeds\s+from\s+(?:disposals?|sales?\s+of)/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-investing-disposal-proceeds') return { delta: 0.6, reason: 'cf_disposal_proceeds_en_anchor' };
+      }
+      if (/issuances?\s+of\s+(?:loans|debt|notes)|proceeds\s+from\s+(?:issuances?\s+of\s+debt|long.term\s+financing)/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-debt-drawdown') return { delta: 0.7, reason: 'cf_debt_drawdown_issuance_en' };
+      }
+      if (/payments?\s+of\s+(?:loans|debt|notes)|repayments?\s+of\s+debt/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: 0.7, reason: 'cf_debt_repayment_payments_en' };
+      }
+      if (/principal\s+(?:repayments?|payments?)\s+(?:of|on)\s+finance\s+leases?/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-lease-repayment') return { delta: 0.8, reason: 'cf_lease_repayment_en_anchor' };
+        if (canonicalId === 'fsl-cf-debt-repayment') return { delta: -0.3, reason: 'cf_lease_not_debt_repayment' };
+      }
+      if (/lease\s+liability\s+payments/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-debt-repayment-lease') return { delta: 0.8, reason: 'cf_lease_payments_en_anchor' };
+        if (canonicalId === 'fsl-cf-lease-repayment') return { delta: 0.5, reason: 'cf_lease_payments_alt' };
+      }
+      if (/changes?\s+in\s+operating\s+assets|net\s+change\s+in\s+operating/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-change-wc') return { delta: 0.7, reason: 'cf_wc_changes_en_anchor' };
+      }
+      if (/equity\s+income|earnings\s+from\s+(?:joint\s+ventures|associates)/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-operating-equity-method') return { delta: 0.6, reason: 'cf_equity_method_en_anchor' };
+      }
+      if (/impairment\s+and\s+(?:gain|loss)\s+on\s+sale/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-operating-gain-disposal') return { delta: 0.7, reason: 'cf_impairment_gain_en_anchor' };
+      }
+      if (/finance\s+costs?\b/i.test(normalizedLabel) && !/interest\s+expense/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-operating-interest-cost') return { delta: 0.5, reason: 'cf_finance_costs_en_anchor' };
+      }
+      if (/interest\s+(?:receivable|received)/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-operating-interest-income') return { delta: 0.6, reason: 'cf_interest_received_en_anchor' };
+      }
+      if (/net\s+(?:charge|provision)\s+for\s+provisions/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-change-wc-provisions') return { delta: 0.6, reason: 'cf_provisions_en_anchor' };
+      }
     }
 
     if (normalizedType === 'BS') {
@@ -3866,12 +4926,17 @@ export async function autoMapLines(
           ? { delta: 0.6, reason: 'balance_sheet_total_anchor' }
           : { delta: -0.2, reason: 'balance_sheet_total_conflict' };
       }
+      if (/(total\s+(?:liabilities\s+and\s+(?:stockholders'?\s+|shareholders'?\s+)?equity|equity\s+and\s+liabilities)|pasywa\s+razem|razem\s+pasywa|razem\s+zobowiązania\s+i\s+kapitał)/.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-bs-total-liabilities-equity') return { delta: 0.8, reason: 'bs_total_liabilities_equity_exact' };
+        if (canonicalId === 'fsl-bs-total-liabilities') return { delta: -0.5, reason: 'bs_total_le_vs_total_l' };
+        return { delta: -0.2, reason: 'balance_sheet_total_le_conflict' };
+      }
       if (/^zobowiązania\s*$/i.test(normalizedLabel) || /^liabilities\s*$/i.test(normalizedLabel) || /^verbindlichkeiten\s*$/i.test(normalizedLabel) || /^dettes\s*$/i.test(normalizedLabel)) {
         if (canonicalId === 'fsl-bs-total-liabilities') return { delta: 0.8, reason: 'bs_total_liabilities_exact_anchor' };
         if (canonicalId === 'fsl-bs-current-liabilities') return { delta: -0.3, reason: 'bs_generic_liabilities_vs_current' };
         if (canonicalId === 'fsl-bs-long-term-debt') return { delta: -0.3, reason: 'bs_generic_liabilities_vs_lt' };
       }
-      if (/(zobowiazania razem|zobowiązania razem|total liabilities|pasywa razem|summe\s+verbindlichkeiten|gesamtverbindlichkeiten|total\s+(?:des\s+)?dettes|total\s+passif)/.test(normalizedLabel)) {
+      if (/(zobowiazania razem|zobowiązania razem|total liabilities|summe\s+verbindlichkeiten|gesamtverbindlichkeiten|total\s+(?:des\s+)?dettes|total\s+passif)/.test(normalizedLabel) && !/and\s+(?:equity|stockholders|shareholders)/.test(normalizedLabel)) {
         return canonicalId === 'fsl-bs-total-liabilities'
           ? { delta: 0.6, reason: 'balance_sheet_total_anchor' }
           : { delta: -0.2, reason: 'balance_sheet_total_conflict' };
@@ -4142,7 +5207,16 @@ export async function autoMapLines(
       }
       if (/(pozostałe przychody operacyjne|przychody operacyjne|other (?:operating )?income)/.test(normalizedLabel)) {
         if (canonicalId === 'fsl-pl-revenue') return { delta: -0.4, reason: 'profit_loss_other_income_vs_revenue' };
-        if (canonicalId === 'fsl-pl-other-income') return { delta: 0.4, reason: 'profit_loss_other_income_anchor' };
+        if (canonicalId === 'fsl-pl-ebit') return { delta: -0.6, reason: 'profit_loss_other_income_not_ebit' };
+        if (canonicalId === 'fsl-pl-other-income') return { delta: 0.5, reason: 'profit_loss_other_income_anchor' };
+      }
+      if (/(pozostałe koszty operacyjne|other operating (?:expenses|charges))/.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-other-opex') return { delta: 0.5, reason: 'profit_loss_other_opex_anchor' };
+        if (canonicalId === 'fsl-pl-ebit') return { delta: -0.6, reason: 'profit_loss_other_opex_not_ebit' };
+        if (canonicalId === 'fsl-pl-opex') return { delta: -0.3, reason: 'profit_loss_other_opex_vs_total_opex' };
+      }
+      if (/profit.*?loss before financial result/.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-ebit') return { delta: 0.6, reason: 'profit_loss_ebit_before_fin_result' };
       }
       if (/(przychody finansowe|koszty finansowe|wynik.*finansow|finance costs|financial)/.test(normalizedLabel)) {
         if (canonicalId === 'fsl-pl-revenue') return { delta: -0.4, reason: 'profit_loss_finance_vs_revenue' };
@@ -4151,8 +5225,8 @@ export async function autoMapLines(
       if (/(zysk netto|net income|net profit)/.test(normalizedLabel)) {
         return canonicalId === 'fsl-pl-net' ? { delta: 0.45, reason: 'profit_loss_net_anchor' } : { delta: 0 };
       }
-      if (/(zysk przed opodatkowaniem|profit before tax|earnings before tax)/.test(normalizedLabel)) {
-        return canonicalId === 'fsl-pl-ebt' ? { delta: 0.45, reason: 'profit_loss_ebt_anchor' } : { delta: 0 };
+      if (/(zysk przed opodatkowaniem|profit before tax|earnings before tax|income before (?:income )?tax|profit.*?loss before tax)/.test(normalizedLabel)) {
+        return canonicalId === 'fsl-pl-ebt' ? { delta: 0.6, reason: 'profit_loss_ebt_anchor' } : { delta: -0.2, reason: 'not_ebt' };
       }
       if (/(koszt własny sprzedaży|cost of sales|cost of goods)/.test(normalizedLabel)) {
         return canonicalId === 'fsl-pl-cogs' ? { delta: 0.45, reason: 'profit_loss_cogs_anchor' } : { delta: 0 };
@@ -4316,6 +5390,125 @@ export async function autoMapLines(
         if (canonicalId === 'fsl-pl-other-opex-provisions') return { delta: 0.5, reason: 'pl_provisions_anchor' };
         if (canonicalId === 'fsl-pl-other-opex') return { delta: -0.2, reason: 'pl_provisions_vs_opex' };
       }
+      if (/research\s+and\s+development|r\s*&\s*d\s+(?:expense|cost)/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-rnd') return { delta: 0.8, reason: 'pl_rnd_anchor' };
+        if (canonicalId === 'fsl-pl-opex') return { delta: -0.3, reason: 'pl_rnd_vs_total_opex' };
+        if (canonicalId === 'fsl-pl-gna') return { delta: -0.3, reason: 'pl_rnd_vs_gna' };
+      }
+      if (/(?:selling|sales)\s+(?:general\s+)?and\s+administrative/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-sga') return { delta: 0.7, reason: 'pl_sga_anchor' };
+        if (canonicalId === 'fsl-pl-gna') return { delta: 0.3, reason: 'pl_sga_as_gna' };
+        if (canonicalId === 'fsl-pl-opex') return { delta: -0.3, reason: 'pl_sga_vs_opex' };
+      }
+      if (/total\s+(?:cost\s+of|cost)\s+revenues?/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-cogs') return { delta: 0.7, reason: 'pl_total_cost_of_revenues_anchor' };
+      }
+      if (/total\s+operating\s+expenses/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-opex') return { delta: 0.7, reason: 'pl_total_opex_anchor' };
+        if (canonicalId === 'fsl-pl-cogs') return { delta: -0.4, reason: 'pl_total_opex_vs_cogs' };
+      }
+      if (/net\s+income\s+(?:loss\s+)?attributable\s+to\s+(?:common\s+)?(?:stockholders?|shareowners?|shareholders?|owners)/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-net-parent') return { delta: 0.8, reason: 'pl_net_parent_en_anchor' };
+        if (canonicalId === 'fsl-pl-net') return { delta: -0.3, reason: 'pl_net_parent_vs_net' };
+      }
+      if (/consolidated\s+net\s+income/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-net') return { delta: 0.6, reason: 'pl_consolidated_net_anchor' };
+      }
+      if (/automotive\s+sales\b/i.test(normalizedLabel) && !/cost/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-revenue-product') return { delta: 0.7, reason: 'pl_automotive_sales_anchor' };
+        if (canonicalId === 'fsl-pl-revenue') return { delta: -0.3, reason: 'pl_auto_sales_vs_total_rev' };
+      }
+      if (/(?:total\s+)?automotive\s+(?:cost\s+of\s+)?revenues/i.test(normalizedLabel) && !/cost\s+of/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-revenue-product') return { delta: 0.6, reason: 'pl_auto_rev_total_anchor' };
+        if (canonicalId === 'fsl-pl-revenue') return { delta: -0.3, reason: 'pl_auto_rev_vs_total' };
+      }
+      if (/automotive\s+cost\s+of\s+revenues/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-cogs') return { delta: 0.6, reason: 'pl_auto_cogs_anchor' };
+      }
+      if (/services?\s+and\s+other/i.test(normalizedLabel) && /revenue/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-revenue-service') return { delta: 0.6, reason: 'pl_services_other_anchor' };
+        if (canonicalId === 'fsl-pl-revenue') return { delta: -0.3, reason: 'pl_services_vs_total_rev' };
+      }
+      if (/manufacturing\s+costs?/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-cogs') return { delta: 0.5, reason: 'pl_manufacturing_costs_anchor' };
+      }
+    }
+
+    if (normalizedType === 'CF') {
+      if (/acquisition|net\s+of\s+cash\s+acquired/i.test(normalizedLabel) && /invest/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-investing-acquisitions') return { delta: 0.7, reason: 'cf_acquisitions_anchor' };
+        if (canonicalId === 'fsl-cf-capex') return { delta: -0.3, reason: 'cf_acquisitions_vs_capex' };
+      }
+      if (/investment\s+in\s+(?:joint\s+ventures|associates)/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-investing-jv') return { delta: 0.7, reason: 'cf_investing_jv_anchor' };
+        if (canonicalId === 'fsl-cf-investing-subsidiaries') return { delta: -0.2, reason: 'cf_jv_vs_subsidiaries' };
+      }
+      if (/purchases?\s+of\s+investments|investments?\s+in\s+marketable\s+securities/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-investing-securities') return { delta: 0.7, reason: 'cf_securities_purchase_anchor' };
+        if (canonicalId === 'fsl-cf-capex') return { delta: -0.3, reason: 'cf_securities_vs_capex' };
+      }
+      if (/issuances?\s+of\s+(?:common\s+)?stock|proceeds\s+from\s+(?:issuance|exercise)\s+of\s+(?:stock|options)/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-share-issuance') return { delta: 0.7, reason: 'cf_share_issuance_anchor' };
+        if (canonicalId === 'fsl-cf-debt-drawdown') return { delta: -0.4, reason: 'cf_issuance_vs_drawdown' };
+      }
+      if (/other\s+financing\s+activities/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-other-financing') return { delta: 0.7, reason: 'cf_other_financing_anchor' };
+        if (canonicalId === 'fsl-cf-financing') return { delta: -0.3, reason: 'cf_other_fin_vs_total_fin' };
+      }
+      if (/inventory.*write.?down|write.?down.*inventory/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-operating-other-adj') return { delta: 0.6, reason: 'cf_inventory_writedown_adj' };
+        if (canonicalId === 'fsl-cf-change-wc-inventory') return { delta: -0.4, reason: 'cf_writedown_not_wc' };
+      }
+      if (/operating\s+lease\s+vehicles/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-cf-operating-other-adj') return { delta: 0.5, reason: 'cf_lease_vehicles_adj' };
+      }
+    }
+
+    if (normalizedType === 'BS') {
+      if (/finance\s+debt/i.test(normalizedLabel) && !/current\s+portion/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-bs-long-term-debt') return { delta: 0.6, reason: 'bs_finance_debt_anchor' };
+        if (canonicalId === 'fsl-bs-short-term-debt') return { delta: -0.3, reason: 'bs_finance_debt_vs_st' };
+      }
+      if (/current\s+portion\s+of\s+(?:debt|finance\s+leases?|long.term)/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-bs-short-term-debt') return { delta: 0.7, reason: 'bs_current_debt_portion_anchor' };
+        if (canonicalId === 'fsl-bs-long-term-debt') return { delta: -0.4, reason: 'bs_current_vs_lt_debt' };
+      }
+      if (/debt\s+and\s+finance\s+leases?\s*,?\s*net\s+of\s+current/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-bs-long-term-debt') return { delta: 0.7, reason: 'bs_lt_debt_net_of_current_anchor' };
+        if (canonicalId === 'fsl-bs-short-term-debt') return { delta: -0.4, reason: 'bs_lt_not_st' };
+      }
+      if (/deferred\s+revenue/i.test(normalizedLabel)) {
+        if (/non.?current|net\s+of\s+current/i.test(normalizedLabel)) {
+          if (canonicalId === 'fsl-bs-deferred-revenue-non-current') return { delta: 0.8, reason: 'bs_deferred_rev_nc_anchor' };
+          if (canonicalId === 'fsl-bs-deferred-revenue-current') return { delta: -0.4, reason: 'bs_deferred_rev_nc_not_current' };
+        } else {
+          if (canonicalId === 'fsl-bs-deferred-revenue-current') return { delta: 0.6, reason: 'bs_deferred_rev_current_anchor' };
+          if (canonicalId === 'fsl-bs-contract-liabilities') return { delta: 0.2, reason: 'bs_deferred_rev_as_contract' };
+        }
+      }
+      if (/defined\s+benefit\s+pension.*surplus/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-bs-pension-surplus') return { delta: 0.8, reason: 'bs_pension_surplus_anchor' };
+      }
+      if (/defined\s+benefit\s+pension.*deficit|post.employment\s+benefit.*deficit/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-bs-pension-deficit') return { delta: 0.8, reason: 'bs_pension_deficit_anchor' };
+      }
+      if (/net\s+assets\b/i.test(normalizedLabel) && !/held\s+for\s+sale/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-bs-equity') return { delta: 0.4, reason: 'bs_net_assets_as_equity' };
+      }
+      if (/prepaid\s+expenses?\s+and\s+other\s+current/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-bs-other-current-assets') return { delta: 0.6, reason: 'bs_prepaid_other_current_anchor' };
+        if (canonicalId === 'fsl-bs-other-current-assets-prepaids') return { delta: 0.3, reason: 'bs_prepaid_as_prepaids' };
+      }
+      if (/trademarks?\s+(?:with\s+)?indefinite/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-bs-intangibles') return { delta: 0.6, reason: 'bs_trademarks_as_intangibles' };
+      }
+      if (/equity\s+(?:attributable\s+to\s+)?(?:bp\s+)?shareholders/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-bs-equity-parent') return { delta: 0.7, reason: 'bs_equity_shareholders_anchor' };
+        if (canonicalId === 'fsl-bs-equity') return { delta: -0.2, reason: 'bs_shareholders_vs_total' };
+      }
+      if (/(?:stockholders?|shareholders?)\s+equity/i.test(normalizedLabel) && /preferred\s+stock|common\s+stock/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-bs-equity') return { delta: 0.5, reason: 'bs_stockholders_equity_header' };
+      }
     }
 
     return { delta: 0 };
@@ -4475,6 +5668,90 @@ export function resolveDuplicateSuggestedMappings(extractedLines: ExtractedLine[
 // ---------------------------------------------------------------------------
 // Validation
 // ---------------------------------------------------------------------------
+
+function hasCanonicalLineCoverage(
+  lineId: string,
+  presentLineIds: Set<string>,
+  getValue: (lineId: string) => number | null
+): boolean {
+  if (presentLineIds.has(lineId)) return true;
+
+  const hasAnyPresentPrefix = (prefix: string): boolean =>
+    Array.from(presentLineIds).some((presentId) => presentId.startsWith(prefix));
+
+  if (lineId === 'fsl-pl-tax') {
+    return getValue('fsl-pl-tax-current') !== null || getValue('fsl-pl-tax-deferred') !== null;
+  }
+
+  if (lineId === 'fsl-pl-net') {
+    return (
+      getValue('fsl-pl-net-continuing') !== null ||
+      (getValue('fsl-pl-ebt') !== null &&
+        (getValue('fsl-pl-tax') !== null ||
+          getValue('fsl-pl-tax-current') !== null ||
+          getValue('fsl-pl-tax-deferred') !== null))
+    );
+  }
+
+  if (lineId === 'fsl-pl-depreciation') {
+    return (
+      getValue('fsl-pl-depreciation-ppe') !== null ||
+      getValue('fsl-pl-depreciation-intangibles') !== null
+    );
+  }
+
+  if (lineId === 'fsl-pl-opex') {
+    return (
+      getValue('fsl-pl-selling') !== null ||
+      getValue('fsl-pl-gna') !== null ||
+      getValue('fsl-pl-other-opex') !== null
+    );
+  }
+
+  if (lineId === 'fsl-pl-ebitda') {
+    return (
+      getValue('fsl-pl-ebit') !== null &&
+      (getValue('fsl-pl-depreciation') !== null ||
+        getValue('fsl-pl-depreciation-ppe') !== null ||
+        getValue('fsl-pl-depreciation-intangibles') !== null)
+    );
+  }
+
+  if (lineId === 'fsl-cf-operating') {
+    return (
+      getValue('fsl-cf-operating-generated') !== null ||
+      hasAnyPresentPrefix('fsl-cf-operating-') ||
+      (getValue('fsl-cf-net-change-cash') !== null &&
+        getValue('fsl-cf-investing') !== null &&
+        getValue('fsl-cf-financing') !== null)
+    );
+  }
+
+  if (lineId === 'fsl-pl-interest') {
+    return (
+      getValue('fsl-pl-fin-expense') !== null ||
+      getValue('fsl-pl-interest-bank') !== null ||
+      getValue('fsl-pl-interest-lease') !== null
+    );
+  }
+
+  if (lineId === 'fsl-cf-financing') {
+    return hasAnyPresentPrefix('fsl-cf-debt-') || presentLineIds.has('fsl-cf-dividends') || presentLineIds.has('fsl-cf-lease-repayment');
+  }
+
+  return false;
+}
+
+function getMissingRequiredCanonicalLineIds(
+  statementType: CanonicalStatementType | null,
+  presentLineIds: Set<string>,
+  getValue: (lineId: string) => number | null
+): string[] {
+  if (!statementType) return [];
+  return getRequiredCanonicalLineIds(statementType).filter(
+    (lineId) => !hasCanonicalLineCoverage(lineId, presentLineIds, getValue)
+  );
+}
 
 export function validateStatement(
   lines: Array<{
@@ -4665,8 +5942,10 @@ export function validateStatement(
         .map((line) => String(line.canonicalLineId || '').trim())
         .filter(Boolean)
     );
-    const missingRequiredLineIds = getRequiredCanonicalLineIds(canonicalStatementType).filter(
-      (lineId) => !presentLineIds.has(lineId)
+    const missingRequiredLineIds = getMissingRequiredCanonicalLineIds(
+      canonicalStatementType,
+      presentLineIds,
+      getValue
     );
     if (missingRequiredLineIds.length > 0) {
       const missingCodes = missingRequiredLineIds
@@ -4717,9 +5996,18 @@ export function evaluateStatementReadiness(params: {
       .map((value) => String(value.canonicalLineId || '').trim())
       .filter(Boolean)
   );
-  const missingRequiredLineCount = canonicalStatementType
-    ? getRequiredCanonicalLineIds(canonicalStatementType).filter((lineId) => !presentLineIds.has(lineId)).length
-    : 0;
+  const getValue = (lineId: string): number | null => {
+    const values = activeValues
+      .filter((value) => value.canonicalLineId === lineId)
+      .map((value) => Number(value.value || 0));
+    if (values.length === 0) return null;
+    return values.reduce((sum, value) => sum + value, 0);
+  };
+  const missingRequiredLineCount = getMissingRequiredCanonicalLineIds(
+    canonicalStatementType,
+    presentLineIds,
+    getValue
+  ).length;
   const hardFailCount =
     validationMessages.filter((message) => message.type === 'error').length +
     (normalizedValidation === 'needs_review' || normalizedValidation === 'failed' ? 1 : 0);
@@ -5307,14 +6595,23 @@ export async function persistStatementValidationLedger(params: {
   const eligibleCount = activeValues.length;
   const coveragePct = eligibleCount > 0 ? mappedCount / eligibleCount : 0;
   const canonicalStatementType = toCanonicalStatementType(params.statementType);
+  const getValue = (lineId: string): number | null => {
+    const values = activeValues
+      .filter((value) => value.canonicalLineId === lineId)
+      .map((value) => Number(value.value || 0));
+    if (values.length === 0) return null;
+    return values.reduce((sum, value) => sum + value, 0);
+  };
   const presentLineIds = new Set(
     activeValues
       .map((value) => String(value.canonicalLineId || '').trim())
       .filter(Boolean)
   );
-  const missingRequired = canonicalStatementType
-    ? getRequiredCanonicalLineIds(canonicalStatementType).filter((lineId) => !presentLineIds.has(lineId))
-    : [];
+  const missingRequired = getMissingRequiredCanonicalLineIds(
+    canonicalStatementType,
+    presentLineIds,
+    getValue
+  );
 
   await dbRun(
     `INSERT INTO financial_statement_validations

@@ -70,11 +70,24 @@ import {
   searchStatementDocumentIntelligence,
   upsertStatementDocumentIntelligence,
 } from '../services/documentIntelligenceService.js';
+import { ensureCanonicalRegistryInDatabase } from '../services/financeCanonicalRegistrySyncService.js';
 import PDFParserService from '../services/pdfParserService.js';
 import {
   extractFinancialLinesWithAnthropic,
   extractFinancialLinesWithOpenAI,
 } from '../services/openAIFinancialExtractionService.js';
+import {
+  mapUnmappedLinesWithLLM,
+  applyLlmProposals,
+  mapDuplicateConflictLinesWithLLM,
+  applySecondPassProposals,
+} from '../services/llmFinancialMappingService.js';
+import {
+  classifyMappingTier,
+  assessCoverage,
+  isNonFinancialByPolicy,
+  isLikelySubtotalOrAggregate,
+} from '../services/financeMappingPolicy.js';
 import {
   computeGrowthRatios,
   computeRatios,
@@ -267,6 +280,8 @@ router.post(
     if (!file) return res.status(400).json({ error: 'File required (PDF, XLSX, XLS, or CSV)' });
     if (!userId || !orgId) return res.status(401).json({ error: 'Unauthorized' });
     const traceId = getFinanceTraceId((req as any).correlationId);
+
+    await ensureCanonicalRegistryInDatabase();
 
     logFinanceEvent('statement.upload.started', {
       traceId,
@@ -863,12 +878,66 @@ router.post(
       return res.status(400).json({ error: 'No extracted candidate rows available for mapping' });
     }
 
-    const mapped = resolveDuplicateSuggestedMappings(
-      await autoMapLines(sourceLines, stmt.statement_type, {
+    const heuristicMapped = await autoMapLines(sourceLines, stmt.statement_type, {
       organizationId: orgId,
       templateFamily: stmt.template_family,
-      })
-    );
+    });
+
+    const unmappedCount = heuristicMapped.filter(
+      (l) => !l.suggestedCanonicalId && !l.isNonFinancial && l.originalLabel
+    ).length;
+
+    let llmMappingResult = null;
+    if (unmappedCount > 0) {
+      try {
+        llmMappingResult = await mapUnmappedLinesWithLLM({
+          allLines: heuristicMapped,
+          statementType: stmt.statement_type,
+          traceId,
+        });
+        if (llmMappingResult.proposals.length > 0) {
+          const { applied, skipped } = applyLlmProposals(heuristicMapped, llmMappingResult.proposals);
+          logFinanceEvent('statement.mapping.llm_applied', {
+            traceId,
+            statementId,
+            provider: llmMappingResult.provider,
+            applied,
+            skipped,
+            durationMs: llmMappingResult.durationMs,
+          });
+        }
+      } catch (llmErr) {
+        logFinanceError('statement.mapping.llm_error', llmErr, { traceId, statementId });
+      }
+    }
+
+    const mapped = resolveDuplicateSuggestedMappings(heuristicMapped);
+
+    const conflictCount = mapped.filter((l) => l.mappingReason === 'duplicate_candidate_conflict').length;
+    let llmSecondPassResult = null;
+    if (conflictCount > 0) {
+      try {
+        llmSecondPassResult = await mapDuplicateConflictLinesWithLLM({
+          allLines: mapped,
+          statementType: stmt.statement_type,
+          traceId,
+        });
+        if (llmSecondPassResult.proposals.length > 0) {
+          const { applied, skipped } = applySecondPassProposals(mapped, llmSecondPassResult.proposals);
+          logFinanceEvent('statement.mapping.llm_second_pass_applied', {
+            traceId,
+            statementId,
+            provider: llmSecondPassResult.provider,
+            applied,
+            skipped,
+            durationMs: llmSecondPassResult.durationMs,
+          });
+        }
+      } catch (llm2Err) {
+        logFinanceError('statement.mapping.llm_second_pass_error', llm2Err, { traceId, statementId });
+      }
+    }
+
     const candidateRows = await persistStatementCandidateRows({
       statementId,
       ingestRunId,
@@ -909,6 +978,10 @@ router.post(
       summary: {
         total: mapped.length,
         suggested: mapped.filter((line) => line.suggestedCanonicalId).length,
+        heuristicMapped: mapped.filter((l) => l.suggestedCanonicalId && !l.mappingReason?.startsWith('llm_mapping')).length,
+        llmMapped: mapped.filter((l) => l.mappingReason?.startsWith('llm_mapping')).length,
+        llmProvider: llmMappingResult?.provider || null,
+        llmDurationMs: llmMappingResult?.durationMs || 0,
       },
     });
     if (orgId) {
@@ -932,7 +1005,28 @@ router.post(
       });
     }
 
-    res.json({ statementId, ingestRunId, mappedLines: mapped });
+    for (const line of mapped) {
+      if (!line.isNonFinancial && isNonFinancialByPolicy(line.originalLabel)) {
+        line.isNonFinancial = true;
+        line.classificationReason = 'policy_non_financial';
+      }
+      if (!line.isNonFinancial && !line.suggestedCanonicalId && isLikelySubtotalOrAggregate(line.originalLabel)) {
+        line.isNonFinancial = true;
+        line.classificationReason = 'policy_subtotal_aggregate';
+      }
+    }
+
+    const tierResults = mapped.map((line) =>
+      classifyMappingTier({
+        suggestedCanonicalId: line.suggestedCanonicalId,
+        mappingReason: line.mappingReason,
+        isNonFinancial: line.isNonFinancial,
+        originalLabel: line.originalLabel,
+      })
+    );
+    const policyAssessment = assessCoverage(tierResults, mapped.length);
+
+    res.json({ statementId, ingestRunId, mappedLines: mapped, policyAssessment });
   })
 );
 
@@ -1232,14 +1326,15 @@ router.post(
     let valueRows: any[];
     try {
       valueRows = (await dbAll(
-        `SELECT canonical_line_id as canonicalLineId, value, is_non_financial as isNonFinancial
+        `SELECT canonical_line_id as "canonicalLineId", value, is_non_financial as "isNonFinancial"
          FROM financial_statement_values WHERE statement_id = ?`,
-        [statementId]
+        [statementId],
+        { fallback: false }
       )) as any[];
     } catch (error) {
       if (!isSchemaCompatError(error)) throw error;
       valueRows = (await dbAll(
-        `SELECT canonical_line_id as canonicalLineId, value, FALSE as isNonFinancial
+        `SELECT canonical_line_id as "canonicalLineId", value, FALSE as "isNonFinancial"
          FROM financial_statement_values WHERE statement_id = ?`,
         [statementId]
       )) as any[];
@@ -1352,15 +1447,16 @@ router.post(
     let valueRows: any[];
     try {
       valueRows = (await dbAll(
-        `SELECT canonical_line_id as canonicalLineId, value, is_non_financial as isNonFinancial
+        `SELECT canonical_line_id as "canonicalLineId", value, is_non_financial as "isNonFinancial"
          FROM financial_statement_values
          WHERE statement_id = ?`,
-        [statementId]
+        [statementId],
+        { fallback: false }
       )) as any[];
     } catch (error) {
       if (!isSchemaCompatError(error)) throw error;
       valueRows = (await dbAll(
-        `SELECT canonical_line_id as canonicalLineId, value, FALSE as isNonFinancial
+        `SELECT canonical_line_id as "canonicalLineId", value, FALSE as "isNonFinancial"
          FROM financial_statement_values
          WHERE statement_id = ?`,
         [statementId]
@@ -1472,7 +1568,8 @@ router.get(
          GROUP BY fs.id
          ORDER BY fs.period_end DESC, fs.created_at DESC
          LIMIT 100`,
-        [orgId, readinessFilter, readinessFilter]
+        [orgId, readinessFilter, readinessFilter],
+        { fallback: false }
       );
     } catch (error) {
       if (!isSchemaCompatError(error)) throw error;
@@ -1719,7 +1816,8 @@ router.get(
        FROM financial_statement_values fsv
        LEFT JOIN financial_statement_lines fsl ON fsv.canonical_line_id = fsl.id
        WHERE fsv.statement_id = ? ORDER BY fsv.source_row`,
-        [statementId]
+        [statementId],
+        { fallback: false }
       );
       qualityRuns = await dbAll(
         `SELECT stage, result_status, readiness_status, strategy, summary, reason_codes, created_at
@@ -1727,7 +1825,8 @@ router.get(
          WHERE statement_id = ?
          ORDER BY created_at DESC
          LIMIT 8`,
-        [statementId]
+        [statementId],
+        { fallback: false }
       );
       ingestRuns = await dbAll(
         `SELECT id, run_status, current_stage, source_file_name, parse_method, document_class, extraction_strategy,
@@ -1736,7 +1835,8 @@ router.get(
          WHERE statement_id = ?
          ORDER BY started_at DESC
          LIMIT 6`,
-        [statementId]
+        [statementId],
+        { fallback: false }
       );
       extractedSections = await dbAll(
         `SELECT section_key, section_label, statement_type, line_start, line_end, confidence, text_excerpt, metadata_json, created_at
@@ -1744,7 +1844,8 @@ router.get(
          WHERE statement_id = ?
          ORDER BY created_at DESC, confidence DESC
          LIMIT 12`,
-        [statementId]
+        [statementId],
+        { fallback: false }
       );
       repairSessions = await dbAll(
         `SELECT id, repair_status, summary, payload_json, started_by, created_at, updated_at
@@ -1752,7 +1853,8 @@ router.get(
          WHERE statement_id = ?
          ORDER BY created_at DESC
          LIMIT 6`,
-        [statementId]
+        [statementId],
+        { fallback: false }
       );
       mappingCandidates = await dbAll(
         `SELECT candidate_row_id, canonical_line_id, score, match_reason, is_selected, selected_by, metadata_json, created_at
@@ -1760,7 +1862,8 @@ router.get(
          WHERE statement_id = ?
          ORDER BY created_at DESC, score DESC
          LIMIT 150`,
-        [statementId]
+        [statementId],
+        { fallback: false }
       );
       validationLedger = await dbAll(
         `SELECT validation_scope, check_code, check_name, severity, status, expected_value, actual_value, difference,
@@ -1768,7 +1871,8 @@ router.get(
          FROM financial_statement_validations
          WHERE statement_id = ?
          ORDER BY computed_at DESC, check_code ASC`,
-        [statementId]
+        [statementId],
+        { fallback: false }
       );
       versions = await dbAll(
         `SELECT version_no, version_kind, readiness_status, change_summary, created_at
@@ -1776,7 +1880,8 @@ router.get(
          WHERE statement_id = ?
          ORDER BY version_no DESC
          LIMIT 12`,
-        [statementId]
+        [statementId],
+        { fallback: false }
       );
     } catch (error) {
       if (!isSchemaCompatError(error)) throw error;

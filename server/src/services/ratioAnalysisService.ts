@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { normalizeCanonicalLineCode, withCanonicalAliases } from './financeCanonicalResolver.js';
+import { computeAllCompositeScores, type CompositeScoresSummary } from './financeCompositeScores.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,6 +62,7 @@ export interface RatioAnalysisResult {
   ratios: ComputedRatio[];
   categories: Record<RatioCategory, ComputedRatio[]>;
   coverageSummary: { total: number; computed: number; na: number; coveragePct: number };
+  compositeScores?: CompositeScoresSummary;
 }
 
 function deriveStatementReadiness(row: {
@@ -137,8 +139,65 @@ const safe = (
 
 const div = (a: number, b: number) => a / b;
 
+/**
+ * Derive computed lines from components.
+ * Runs after raw values are loaded — fills in EBITDA, Net Debt, NOPAT etc.
+ * Also resolves cross-statement references (D&A from CF when missing in P&L).
+ */
+function deriveComputedValues(v: Record<string, number>): Record<string, number> {
+  const r = { ...v };
+
+  if (r.DEPRECIATION === undefined) {
+    const cfDa =
+      (r.DEPRECIATION_ADDBACK ?? 0) ||
+      (r.DEPRECIATION_INTANGIBLES_CF ?? 0) +
+        (r.DEPRECIATION_PPE_CF ?? 0) +
+        (r.DEPRECIATION_ROU_CF ?? 0);
+    if (cfDa > 0) r.DEPRECIATION = cfDa;
+  }
+
+  if (r.EBITDA === undefined && r.EBIT !== undefined && r.DEPRECIATION !== undefined) {
+    r.EBITDA = r.EBIT + Math.abs(r.DEPRECIATION);
+  }
+
+  if (r.NET_INCOME === undefined && r.NET_INCOME_CONTINUING !== undefined) {
+    r.NET_INCOME = r.NET_INCOME_CONTINUING;
+  }
+
+  const totalDebt = (r.LONG_TERM_DEBT ?? 0) + (r.SHORT_TERM_DEBT ?? 0);
+  if (r.TOTAL_DEBT === undefined && (r.LONG_TERM_DEBT !== undefined || r.SHORT_TERM_DEBT !== undefined)) {
+    r.TOTAL_DEBT = totalDebt;
+  }
+
+  if (r.NET_DEBT === undefined && r.TOTAL_DEBT !== undefined && r.CASH !== undefined) {
+    r.NET_DEBT = r.TOTAL_DEBT - r.CASH;
+  }
+
+  if (r.INVESTED_CAPITAL === undefined && r.TOTAL_EQUITY !== undefined && r.NET_DEBT !== undefined) {
+    r.INVESTED_CAPITAL = r.TOTAL_EQUITY + r.NET_DEBT;
+  }
+
+  if (r.CAPITAL_EMPLOYED === undefined && r.TOTAL_ASSETS !== undefined && r.CURRENT_LIABILITIES !== undefined) {
+    r.CAPITAL_EMPLOYED = r.TOTAL_ASSETS - r.CURRENT_LIABILITIES;
+  }
+
+  if (r.FREE_CASH_FLOW === undefined && r.OPERATING_CF !== undefined && r.CAPEX !== undefined) {
+    r.FREE_CASH_FLOW = r.OPERATING_CF + r.CAPEX;
+  }
+
+  if (r.NOPAT === undefined && r.EBIT !== undefined) {
+    const ebt = r.EBT ?? 0;
+    const taxRate = ebt !== 0 ? Math.abs(r.TAX_EXPENSE ?? 0) / Math.abs(ebt) : 0.19;
+    r.NOPAT = r.EBIT * (1 - taxRate);
+  }
+
+  return r;
+}
+
 export const RATIO_CATALOG: RatioDefinition[] = [
-  // ── Liquidity ──
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LIQUIDITY (4)
+  // ═══════════════════════════════════════════════════════════════════════════
   {
     code: 'CURRENT_RATIO',
     name: 'Current Ratio',
@@ -146,8 +205,7 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     category: 'liquidity',
     formula: 'Current Assets / Current Liabilities',
     formulaDescription: 'Measures ability to cover short-term obligations with current assets',
-    formulaDescriptionPl:
-      'Mierzy zdolność pokrycia zobowiązań krótkoterminowych aktywami obrotowymi',
+    formulaDescriptionPl: 'Mierzy zdolność pokrycia zobowiązań krótkoterminowych aktywami obrotowymi',
     requiredLines: ['CURRENT_ASSETS', 'CURRENT_LIABILITIES'],
     compute: (v) => safe(v.CURRENT_ASSETS, v.CURRENT_LIABILITIES, div),
     thresholds: { warn: 1.2, critical: 1.0, direction: 'higher_better' },
@@ -182,14 +240,32 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     thresholds: { warn: 0.2, critical: 0.1, direction: 'higher_better' },
     unit: 'x',
   },
+  {
+    code: 'WC_TO_REVENUE',
+    name: 'Working Capital to Revenue',
+    namePl: 'Kapitał obrotowy do przychodów',
+    category: 'liquidity',
+    formula: '(Current Assets − Current Liabilities) / Revenue × 100',
+    formulaDescription: 'Working capital adequacy relative to sales volume',
+    formulaDescriptionPl: 'Adekwatność kapitału obrotowego względem skali sprzedaży',
+    requiredLines: ['CURRENT_ASSETS', 'CURRENT_LIABILITIES', 'REVENUE'],
+    compute: (v) => {
+      const wc = (v.CURRENT_ASSETS ?? 0) - (v.CURRENT_LIABILITIES ?? 0);
+      return safe(wc, v.REVENUE, (a, b) => (a / b) * 100);
+    },
+    thresholds: { warn: 5, critical: 0, direction: 'higher_better' },
+    unit: '%',
+  },
 
-  // ── Profitability ──
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROFITABILITY (10)
+  // ═══════════════════════════════════════════════════════════════════════════
   {
     code: 'GROSS_MARGIN',
     name: 'Gross Margin',
     namePl: 'Marża brutto',
     category: 'profitability',
-    formula: 'Gross Margin / Revenue × 100',
+    formula: 'Gross Profit / Revenue × 100',
     formulaDescription: 'Percentage of revenue retained after direct costs',
     formulaDescriptionPl: 'Procent przychodu pozostający po kosztach bezpośrednich',
     requiredLines: ['GROSS_PROFIT', 'REVENUE'],
@@ -221,6 +297,19 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     requiredLines: ['NET_INCOME', 'REVENUE'],
     compute: (v) => safe(v.NET_INCOME, v.REVENUE, (a, b) => (a / b) * 100),
     thresholds: { warn: 3, critical: 0, direction: 'higher_better' },
+    unit: '%',
+  },
+  {
+    code: 'EBT_MARGIN',
+    name: 'EBT Margin',
+    namePl: 'Marża zysku brutto (przed opodatkowaniem)',
+    category: 'profitability',
+    formula: 'EBT / Revenue × 100',
+    formulaDescription: 'Pre-tax profitability as percentage of revenue',
+    formulaDescriptionPl: 'Rentowność przed opodatkowaniem jako procent przychodu',
+    requiredLines: ['EBT', 'REVENUE'],
+    compute: (v) => safe(v.EBT, v.REVENUE, (a, b) => (a / b) * 100),
+    thresholds: { warn: 5, critical: 0, direction: 'higher_better' },
     unit: '%',
   },
   {
@@ -262,8 +351,63 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     thresholds: { warn: 8, critical: 3, direction: 'higher_better' },
     unit: '%',
   },
+  {
+    code: 'ROCE',
+    name: 'Return on Capital Employed',
+    namePl: 'Zwrot z kapitału zaangażowanego (ROCE)',
+    category: 'profitability',
+    formula: 'EBIT / (Total Assets − Current Liabilities) × 100',
+    formulaDescription: 'Return generated on all long-term capital (equity + long-term debt)',
+    formulaDescriptionPl: 'Zwrot z całego kapitału długoterminowego (kapitał własny + dług długoterminowy)',
+    requiredLines: ['EBIT', 'TOTAL_ASSETS', 'CURRENT_LIABILITIES'],
+    compute: (v) => {
+      const ce = (v.TOTAL_ASSETS ?? 0) - (v.CURRENT_LIABILITIES ?? 0);
+      return ce > 0 ? safe(v.EBIT, ce, (a, b) => (a / b) * 100) : null;
+    },
+    thresholds: { warn: 8, critical: 4, direction: 'higher_better' },
+    unit: '%',
+  },
+  {
+    code: 'ROIC',
+    name: 'Return on Invested Capital',
+    namePl: 'Zwrot z kapitału zainwestowanego (ROIC)',
+    category: 'profitability',
+    formula: 'NOPAT / Invested Capital × 100',
+    formulaDescription: 'After-tax operating return on all investor capital',
+    formulaDescriptionPl: 'Zwrot operacyjny po opodatkowaniu na kapitale wszystkich inwestorów',
+    requiredLines: ['EBIT', 'TAX_EXPENSE', 'EBT', 'TOTAL_EQUITY', 'LONG_TERM_DEBT', 'SHORT_TERM_DEBT', 'CASH'],
+    compute: (v) => {
+      const ebt = v.EBT ?? 0;
+      const taxRate = ebt !== 0 ? Math.abs(v.TAX_EXPENSE ?? 0) / Math.abs(ebt) : 0.19;
+      const nopat = (v.EBIT ?? 0) * (1 - taxRate);
+      const totalDebt = (v.LONG_TERM_DEBT ?? 0) + (v.SHORT_TERM_DEBT ?? 0);
+      const netDebt = totalDebt - (v.CASH ?? 0);
+      const investedCapital = (v.TOTAL_EQUITY ?? 0) + netDebt;
+      return investedCapital > 0 ? (nopat / investedCapital) * 100 : null;
+    },
+    thresholds: { warn: 8, critical: 4, direction: 'higher_better' },
+    unit: '%',
+  },
+  {
+    code: 'EFFECTIVE_TAX_RATE',
+    name: 'Effective Tax Rate',
+    namePl: 'Efektywna stopa podatkowa',
+    category: 'profitability',
+    formula: '|Tax Expense| / |EBT| × 100',
+    formulaDescription: 'Actual tax burden as percentage of pre-tax profit',
+    formulaDescriptionPl: 'Rzeczywiste obciążenie podatkowe jako procent zysku przed opodatkowaniem',
+    requiredLines: ['TAX_EXPENSE', 'EBT'],
+    compute: (v) => {
+      const ebt = Math.abs(v.EBT ?? 0);
+      return ebt > 0 ? (Math.abs(v.TAX_EXPENSE ?? 0) / ebt) * 100 : null;
+    },
+    thresholds: { warn: 30, critical: 40, direction: 'lower_better' },
+    unit: '%',
+  },
 
-  // ── Leverage ──
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LEVERAGE (7)
+  // ═══════════════════════════════════════════════════════════════════════════
   {
     code: 'DEBT_TO_EQUITY',
     name: 'Debt-to-Equity',
@@ -291,6 +435,48 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     unit: 'x',
   },
   {
+    code: 'EQUITY_RATIO',
+    name: 'Equity Ratio',
+    namePl: 'Wskaźnik autonomii finansowej',
+    category: 'leverage',
+    formula: 'Equity / Total Assets',
+    formulaDescription: 'Proportion of assets financed by equity',
+    formulaDescriptionPl: 'Udział kapitału własnego w finansowaniu aktywów',
+    requiredLines: ['TOTAL_EQUITY', 'TOTAL_ASSETS'],
+    compute: (v) => safe(v.TOTAL_EQUITY, v.TOTAL_ASSETS, div),
+    thresholds: { warn: 0.3, critical: 0.2, direction: 'higher_better' },
+    unit: 'x',
+  },
+  {
+    code: 'FINANCIAL_LEVERAGE',
+    name: 'Financial Leverage (DuPont)',
+    namePl: 'Dźwignia finansowa (DuPont)',
+    category: 'leverage',
+    formula: 'Total Assets / Equity',
+    formulaDescription: 'Equity multiplier — DuPont decomposition component',
+    formulaDescriptionPl: 'Mnożnik kapitałowy — składnik dekompozycji DuPont',
+    requiredLines: ['TOTAL_ASSETS', 'TOTAL_EQUITY'],
+    compute: (v) => safe(v.TOTAL_ASSETS, v.TOTAL_EQUITY, div),
+    thresholds: { warn: 3.0, critical: 5.0, direction: 'lower_better' },
+    unit: 'x',
+  },
+  {
+    code: 'NET_DEBT_TO_EBITDA',
+    name: 'Net Debt / EBITDA',
+    namePl: 'Dług netto / EBITDA',
+    category: 'leverage',
+    formula: '(LT Debt + ST Debt − Cash) / EBITDA',
+    formulaDescription: 'Key credit metric — years of EBITDA needed to repay net debt',
+    formulaDescriptionPl: 'Kluczowy wskaźnik kredytowy — lata EBITDA potrzebne do spłaty długu netto',
+    requiredLines: ['LONG_TERM_DEBT', 'SHORT_TERM_DEBT', 'CASH', 'EBITDA'],
+    compute: (v) => {
+      const netDebt = (v.LONG_TERM_DEBT ?? 0) + (v.SHORT_TERM_DEBT ?? 0) - (v.CASH ?? 0);
+      return safe(netDebt, v.EBITDA, div);
+    },
+    thresholds: { warn: 3.0, critical: 5.0, direction: 'lower_better' },
+    unit: 'x',
+  },
+  {
     code: 'INTEREST_COVERAGE',
     name: 'Interest Coverage',
     namePl: 'Wskaźnik pokrycia odsetek',
@@ -299,12 +485,72 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     formulaDescription: 'Ability to service debt from operating profit',
     formulaDescriptionPl: 'Zdolność obsługi długu z zysku operacyjnego',
     requiredLines: ['EBIT', 'INTEREST_EXPENSE'],
-    compute: (v) => safe(v.EBIT, v.INTEREST_EXPENSE, div),
+    compute: (v) => safe(v.EBIT, Math.abs(v.INTEREST_EXPENSE ?? 0), div),
     thresholds: { warn: 3.0, critical: 1.5, direction: 'higher_better' },
     unit: 'x',
   },
+  {
+    code: 'DEBT_SERVICE_COVERAGE',
+    name: 'Debt Service Coverage Ratio',
+    namePl: 'Wskaźnik pokrycia obsługi długu (DSCR)',
+    category: 'leverage',
+    formula: 'Operating CF / (Interest Paid + Debt Repayment)',
+    formulaDescription: 'Cash available to service total debt obligations',
+    formulaDescriptionPl: 'Gotówka dostępna na obsługę całkowitych zobowiązań dłużnych',
+    requiredLines: ['OPERATING_CF', 'INTEREST_PAID', 'DEBT_REPAYMENT'],
+    compute: (v) => {
+      const debtService = Math.abs(v.INTEREST_PAID ?? 0) + Math.abs(v.DEBT_REPAYMENT ?? 0);
+      return debtService > 0 ? (v.OPERATING_CF ?? 0) / debtService : null;
+    },
+    thresholds: { warn: 1.5, critical: 1.0, direction: 'higher_better' },
+    unit: 'x',
+  },
 
-  // ── Efficiency ──
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EFFICIENCY (8)
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    code: 'ASSET_TURNOVER',
+    name: 'Asset Turnover',
+    namePl: 'Obrotowość aktywów',
+    category: 'efficiency',
+    formula: 'Revenue / Total Assets',
+    formulaDescription: 'Revenue generated per unit of assets — DuPont component',
+    formulaDescriptionPl: 'Przychód generowany na jednostkę aktywów — składnik DuPont',
+    requiredLines: ['REVENUE', 'TOTAL_ASSETS'],
+    compute: (v) => safe(v.REVENUE, v.TOTAL_ASSETS, div),
+    thresholds: { warn: 0.5, critical: 0.3, direction: 'higher_better' },
+    unit: 'x',
+  },
+  {
+    code: 'FIXED_ASSET_TURNOVER',
+    name: 'Fixed Asset Turnover',
+    namePl: 'Obrotowość aktywów trwałych',
+    category: 'efficiency',
+    formula: 'Revenue / Fixed Assets',
+    formulaDescription: 'Revenue generated per unit of fixed assets',
+    formulaDescriptionPl: 'Przychód generowany na jednostkę aktywów trwałych',
+    requiredLines: ['REVENUE', 'FIXED_ASSETS'],
+    compute: (v) => safe(v.REVENUE, v.FIXED_ASSETS, div),
+    thresholds: { warn: 1.0, critical: 0.5, direction: 'higher_better' },
+    unit: 'x',
+  },
+  {
+    code: 'WC_TURNOVER',
+    name: 'Working Capital Turnover',
+    namePl: 'Obrotowość kapitału obrotowego',
+    category: 'efficiency',
+    formula: 'Revenue / Working Capital',
+    formulaDescription: 'Efficiency of working capital deployment',
+    formulaDescriptionPl: 'Efektywność wykorzystania kapitału obrotowego',
+    requiredLines: ['REVENUE', 'CURRENT_ASSETS', 'CURRENT_LIABILITIES'],
+    compute: (v) => {
+      const wc = (v.CURRENT_ASSETS ?? 0) - (v.CURRENT_LIABILITIES ?? 0);
+      return wc > 0 ? (v.REVENUE ?? 0) / wc : null;
+    },
+    thresholds: { warn: 3.0, critical: 1.5, direction: 'higher_better' },
+    unit: 'x',
+  },
   {
     code: 'INVENTORY_TURNOVER',
     name: 'Inventory Turnover',
@@ -319,8 +565,21 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     unit: 'x',
   },
   {
-    code: 'AR_DAYS',
-    name: 'AR Days (DSO)',
+    code: 'DIO',
+    name: 'Days Inventory Outstanding',
+    namePl: 'Dni rotacji zapasów (DIO)',
+    category: 'efficiency',
+    formula: '(Inventory / |COGS|) × 365',
+    formulaDescription: 'Average days inventory is held before sale',
+    formulaDescriptionPl: 'Średnia liczba dni trzymania zapasów przed sprzedażą',
+    requiredLines: ['INVENTORY', 'COGS'],
+    compute: (v) => safe(v.INVENTORY, Math.abs(v.COGS ?? 0), (a, b) => (a / b) * 365),
+    thresholds: { warn: 60, critical: 90, direction: 'lower_better' },
+    unit: 'days',
+  },
+  {
+    code: 'DSO',
+    name: 'Days Sales Outstanding',
     namePl: 'Dni rotacji należności (DSO)',
     category: 'efficiency',
     formula: '(AR / Revenue) × 365',
@@ -332,11 +591,11 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     unit: 'days',
   },
   {
-    code: 'AP_DAYS',
-    name: 'AP Days (DPO)',
+    code: 'DPO',
+    name: 'Days Payable Outstanding',
     namePl: 'Dni rotacji zobowiązań (DPO)',
     category: 'efficiency',
-    formula: '(AP / COGS) × 365',
+    formula: '(AP / |COGS|) × 365',
     formulaDescription: 'Average days to pay suppliers',
     formulaDescriptionPl: 'Średnia liczba dni na zapłatę dostawcom',
     requiredLines: ['AP', 'COGS'],
@@ -362,6 +621,81 @@ export const RATIO_CATALOG: RatioDefinition[] = [
     },
     thresholds: { warn: 60, critical: 90, direction: 'lower_better' },
     unit: 'days',
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CASH FLOW (5)
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    code: 'OCF_TO_NET_INCOME',
+    name: 'Operating CF / Net Income',
+    namePl: 'CF operacyjny / Zysk netto (jakość zysku)',
+    category: 'efficiency',
+    formula: 'Operating CF / Net Income',
+    formulaDescription: 'Quality of earnings — cash backing of reported profit',
+    formulaDescriptionPl: 'Jakość zysku — gotówkowe pokrycie raportowanego zysku',
+    requiredLines: ['OPERATING_CF', 'NET_INCOME'],
+    compute: (v) => safe(v.OPERATING_CF, v.NET_INCOME, div),
+    thresholds: { warn: 0.8, critical: 0.5, direction: 'higher_better' },
+    unit: 'x',
+  },
+  {
+    code: 'FCF_TO_REVENUE',
+    name: 'FCF / Revenue',
+    namePl: 'FCF / Przychody',
+    category: 'efficiency',
+    formula: '(Operating CF − Capex) / Revenue × 100',
+    formulaDescription: 'Free cash flow yield relative to revenue',
+    formulaDescriptionPl: 'Wydajność wolnych przepływów pieniężnych względem przychodów',
+    requiredLines: ['OPERATING_CF', 'CAPEX', 'REVENUE'],
+    compute: (v) => {
+      const fcf = (v.OPERATING_CF ?? 0) + (v.CAPEX ?? 0);
+      return safe(fcf, v.REVENUE, (a, b) => (a / b) * 100);
+    },
+    thresholds: { warn: 5, critical: 0, direction: 'higher_better' },
+    unit: '%',
+  },
+  {
+    code: 'CAPEX_TO_REVENUE',
+    name: 'Capex / Revenue',
+    namePl: 'Nakłady inwestycyjne / Przychody',
+    category: 'efficiency',
+    formula: '|Capex| / Revenue × 100',
+    formulaDescription: 'Capital intensity — investment rate relative to revenue',
+    formulaDescriptionPl: 'Intensywność kapitałowa — stopa inwestycji względem przychodów',
+    requiredLines: ['CAPEX', 'REVENUE'],
+    compute: (v) => safe(Math.abs(v.CAPEX ?? 0), v.REVENUE, (a, b) => (a / b) * 100),
+    thresholds: { warn: 15, critical: 25, direction: 'lower_better' },
+    unit: '%',
+  },
+  {
+    code: 'CAPEX_TO_DA',
+    name: 'Capex / D&A',
+    namePl: 'Nakłady / Amortyzacja',
+    category: 'efficiency',
+    formula: '|Capex| / Depreciation',
+    formulaDescription: 'Investment coverage — >1 means growth capex, <1 means underinvestment',
+    formulaDescriptionPl: 'Pokrycie inwestycyjne — >1 oznacza inwestowanie ponad odtworzenie',
+    requiredLines: ['CAPEX', 'DEPRECIATION'],
+    compute: (v) => safe(Math.abs(v.CAPEX ?? 0), Math.abs(v.DEPRECIATION ?? 0), div),
+    thresholds: { warn: 0.8, critical: 0.5, direction: 'higher_better' },
+    unit: 'x',
+  },
+  {
+    code: 'OCF_TO_TOTAL_DEBT',
+    name: 'Operating CF / Total Debt',
+    namePl: 'CF operacyjny / Dług ogółem',
+    category: 'leverage',
+    formula: 'Operating CF / (LT Debt + ST Debt)',
+    formulaDescription: 'Ability to repay total debt from cash operations',
+    formulaDescriptionPl: 'Zdolność spłaty całkowitego zadłużenia z operacji gotówkowych',
+    requiredLines: ['OPERATING_CF', 'LONG_TERM_DEBT', 'SHORT_TERM_DEBT'],
+    compute: (v) => {
+      const totalDebt = (v.LONG_TERM_DEBT ?? 0) + (v.SHORT_TERM_DEBT ?? 0);
+      return totalDebt > 0 ? (v.OPERATING_CF ?? 0) / totalDebt : null;
+    },
+    thresholds: { warn: 0.25, critical: 0.1, direction: 'higher_better' },
+    unit: 'x',
   },
 ];
 
@@ -392,7 +726,7 @@ export async function computeRatios(
       values[canonicalCode] = Number(row.value || 0);
     }
   }
-  const resolvedValues = withCanonicalAliases(values);
+  const resolvedValues = deriveComputedValues(withCanonicalAliases(values));
 
   // Load benchmarks
   const benchmarkRows = (await dbAll(
@@ -476,6 +810,8 @@ export async function computeRatios(
   // Persist snapshots
   await persistRatioSnapshots(statementId, organizationId, ratios);
 
+  const compositeScores = computeAllCompositeScores(resolvedValues);
+
   return {
     statementId,
     periodLabel: stmt.period_label || `${stmt.period_start} – ${stmt.period_end}`,
@@ -487,6 +823,7 @@ export async function computeRatios(
       na: ratios.length - computed,
       coveragePct: Math.round((computed / ratios.length) * 100),
     },
+    compositeScores,
   };
 }
 
@@ -517,8 +854,8 @@ export async function computeGrowthRatios(
     return withCanonicalAliases(map);
   };
 
-  const current = await loadValues(currentStatementId);
-  const previous = await loadValues(previousStatementId);
+  const current = deriveComputedValues(await loadValues(currentStatementId));
+  const previous = deriveComputedValues(await loadValues(previousStatementId));
 
   const growthRatios: ComputedRatio[] = [];
 
@@ -553,9 +890,13 @@ export async function computeGrowthRatios(
   };
 
   addGrowth('REVENUE', 'Revenue Growth', 'Wzrost przychodów');
-  addGrowth('NET_INCOME', 'Net Income Growth', 'Wzrost zysku netto');
+  addGrowth('GROSS_PROFIT', 'Gross Profit Growth', 'Wzrost marży brutto');
+  addGrowth('EBIT', 'EBIT Growth', 'Wzrost EBIT');
   addGrowth('EBITDA', 'EBITDA Growth', 'Wzrost EBITDA');
+  addGrowth('NET_INCOME', 'Net Income Growth', 'Wzrost zysku netto');
   addGrowth('TOTAL_ASSETS', 'Asset Growth', 'Wzrost aktywów');
+  addGrowth('TOTAL_EQUITY', 'Equity Growth', 'Wzrost kapitału własnego');
+  addGrowth('OPERATING_CF', 'Operating CF Growth', 'Wzrost CF operacyjnego');
 
   return growthRatios;
 }

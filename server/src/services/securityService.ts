@@ -257,11 +257,15 @@ class SecurityService {
       ip_address: string;
       geo_country: string;
       geo_city: string;
-      is_active: number;
+      is_active: boolean | number | null;
       created_at: string;
       last_activity_at: string;
     }>(
-      `SELECT * FROM user_sessions WHERE user_id = ? AND is_active = 1 ORDER BY last_activity_at DESC`,
+      `SELECT *
+       FROM user_sessions
+       WHERE user_id = ?
+         AND COALESCE(is_active, FALSE) IS TRUE
+       ORDER BY last_activity_at DESC`,
       [userId]
     );
 
@@ -275,7 +279,7 @@ class SecurityService {
       ipAddress: r.ip_address,
       geoCountry: r.geo_country,
       geoCity: r.geo_city,
-      isActive: r.is_active === 1,
+      isActive: r.is_active === true || r.is_active === 1,
       createdAt: r.created_at,
       lastActivityAt: r.last_activity_at,
       isCurrent: r.id === currentSessionId,
