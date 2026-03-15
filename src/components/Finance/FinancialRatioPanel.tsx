@@ -8,21 +8,16 @@
 
 import {
   AlertTriangle,
-  ArrowDownRight,
   ArrowUpRight,
   BarChart3,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
-  Download,
   HelpCircle,
-  Info,
   Loader2,
   Minus,
   RefreshCw,
-  Settings,
   Target,
-  TrendingDown,
   TrendingUp,
   XCircle,
 } from 'lucide-react';
@@ -87,33 +82,43 @@ interface Props {
 
 const CATEGORY_CONFIG: Record<
   string,
-  { label: string; labelPl: string; icon: React.ReactNode; color: string }
+  { label: string; labelPl: string; icon: React.ReactNode; iconBg: string; iconText: string }
 > = {
   liquidity: {
     label: 'Liquidity',
     labelPl: 'Płynność',
     icon: <BarChart3 size={16} />,
-    color: 'blue',
+    iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+    iconText: 'text-blue-600',
   },
   profitability: {
     label: 'Profitability',
     labelPl: 'Rentowność',
     icon: <TrendingUp size={16} />,
-    color: 'emerald',
+    iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
+    iconText: 'text-emerald-600',
   },
   leverage: {
     label: 'Leverage',
     labelPl: 'Zadłużenie',
     icon: <Target size={16} />,
-    color: 'amber',
+    iconBg: 'bg-amber-100 dark:bg-amber-900/30',
+    iconText: 'text-amber-600',
   },
   efficiency: {
     label: 'Efficiency',
     labelPl: 'Efektywność',
     icon: <RefreshCw size={16} />,
-    color: 'purple',
+    iconBg: 'bg-purple-100 dark:bg-purple-900/30',
+    iconText: 'text-purple-600',
   },
-  growth: { label: 'Growth', labelPl: 'Wzrost', icon: <ArrowUpRight size={16} />, color: 'sky' },
+  growth: {
+    label: 'Growth',
+    labelPl: 'Wzrost',
+    icon: <ArrowUpRight size={16} />,
+    iconBg: 'bg-sky-100 dark:bg-sky-900/30',
+    iconText: 'text-sky-600',
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -134,7 +139,7 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
     new Set(['liquidity', 'profitability', 'leverage', 'efficiency'])
   );
   const [showFormula, setShowFormula] = useState<string | null>(null);
-  const [showBenchmarkEditor, setShowBenchmarkEditor] = useState(false);
+
 
   // Load confirmed statements
   useEffect(() => {
@@ -409,9 +414,7 @@ export const FinancialRatioPanel: React.FC<Props> = () => {
                 className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-navy-800/50 transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className={`p-1.5 rounded-lg bg-${config.color}-100 dark:bg-${config.color}-900/30 text-${config.color}-600`}
-                  >
+                  <div className={`p-1.5 rounded-lg ${config.iconBg} ${config.iconText}`}>
                     {config.icon}
                   </div>
                   <span className="font-semibold text-slate-900 dark:text-white">
@@ -471,11 +474,15 @@ const SummaryCard: React.FC<{ label: string; value: string; icon: React.ReactNod
   value,
   icon,
 }) => (
-  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 flex items-center gap-3">
-    <div className="p-2 bg-slate-50 dark:bg-navy-800 rounded-lg">{icon}</div>
-    <div>
-      <p className="text-xl font-bold text-slate-900 dark:text-white">{value}</p>
-      <p className="text-xs text-slate-500">{label}</p>
+  <div className="rounded-xl border border-slate-200/70 bg-white/90 p-4 backdrop-blur-sm dark:border-white/[0.08] dark:bg-navy-900/80">
+    <div className="flex items-center gap-3">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 dark:bg-white/[0.05]">
+        {icon}
+      </div>
+      <div>
+        <p className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">{value}</p>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">{label}</p>
+      </div>
     </div>
   </div>
 );

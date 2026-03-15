@@ -1,3 +1,4 @@
+import { AlertTriangle, BarChart3, Calculator, ChevronDown, ChevronRight, Eye, EyeOff, FileText, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -172,7 +173,7 @@ function mapStatementDetail(detail: any): FinanceStatementDetailV1 {
               mappingConfidence: Number(value.mapping_confidence ?? value.confidence ?? 0),
               isNonFinancial: Boolean(value.is_non_financial),
               classificationReason: value.classification_reason ? String(value.classification_reason) : null,
-            aggregationLevel: value.aggregation_level != null ? Number(value.aggregation_level) : null,
+              aggregationLevel: value.aggregation_level != null ? Number(value.aggregation_level) : null,
               requiredLevel: value.required_level ? String(value.required_level) : null,
               signConvention: value.sign_convention ? String(value.sign_convention) : null,
               isTotal: Boolean(value.is_total),
@@ -193,9 +194,64 @@ function mapStatementDetail(detail: any): FinanceStatementDetailV1 {
   };
 }
 
+function ReadinessRing({ score, size = 36 }: { score: number; size?: number }) {
+  const pct = Math.round(score * 100);
+  const radius = (size - 6) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (pct / 100) * circumference;
+  const color =
+    pct >= 80 ? 'stroke-emerald-500' : pct >= 50 ? 'stroke-amber-500' : 'stroke-rose-500';
+  const textColor =
+    pct >= 80 ? 'text-emerald-600 dark:text-emerald-400' : pct >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400';
+
+  return (
+    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={3}
+          className="stroke-slate-200/60 dark:stroke-white/[0.08]"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className={`${color} transition-all duration-700 ease-out`}
+        />
+      </svg>
+      <span className={`absolute text-[9px] font-bold tabular-nums ${textColor}`}>{pct}</span>
+    </div>
+  );
+}
+
+function SkeletonRows() {
+  return (
+    <div className="space-y-2 p-4">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-4">
+          <div className="h-4 flex-[2] animate-pulse rounded bg-slate-200/60 dark:bg-white/[0.06]" />
+          <div className="h-4 flex-1 animate-pulse rounded bg-slate-200/60 dark:bg-white/[0.06]" />
+          <div className="h-4 w-16 animate-pulse rounded bg-slate-200/60 dark:bg-white/[0.06]" />
+          <div className="h-4 w-16 animate-pulse rounded bg-slate-200/60 dark:bg-white/[0.06]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   statementPackId,
   onStatementChanged,
+  onCreateModelFromPack,
+  onCreateAnalysisFromPack,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -211,6 +267,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   const [aggregationLevel, setAggregationLevel] = useState<1 | 2 | 3>(2);
   const [analyticsRows, setAnalyticsRows] = useState<FinanceStatementTableRow[]>([]);
   const [analyticsPeriods, setAnalyticsPeriods] = useState<Array<{ label: string; index: number }>>([]);
+  const [showValidations, setShowValidations] = useState(false);
   const statementRequestSeq = useRef(0);
   const explainRequestSeq = useRef(0);
 
@@ -327,9 +384,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   }, [loadStatement, selectedStatement?.id]);
 
   useEffect(() => {
-    if (!selectedStatement?.id) {
-      return;
-    }
+    if (!selectedStatement?.id) return;
     void loadAnalytics(selectedStatement.id, aggregationLevel);
   }, [aggregationLevel, loadAnalytics, selectedStatement?.id]);
 
@@ -340,169 +395,276 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
       setSelectedExplain(null);
     }
   }, [analyticsRows, selectedValueId]);
-  const headerTitle =
-    selectedStatement?.sourceFileName ||
-    (isPl ? `Sprawozdanie ${activeTab}` : `${activeTab} statement`);
-  const titleWithPeriods =
-    analyticsPeriods.length > 0
-      ? `${headerTitle} • ${analyticsPeriods.map((period) => period.label).join(' / ')}`
-      : headerTitle;
+
+  const failCount = packValidations.filter((v) => v.status === 'fail').length;
+  const warnCount = packValidations.filter((v) => v.status === 'warning').length;
 
   if (loading && !detail) {
-    return <div className="p-6 text-sm text-slate-500 dark:text-slate-400">{t('common.loading', 'Loading…')}</div>;
+    return (
+      <div className="space-y-4 p-4">
+        <div className="h-16 animate-pulse rounded-2xl bg-slate-200/40 dark:bg-white/[0.04]" />
+        <SkeletonRows />
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="p-6 text-sm text-rose-600 dark:text-rose-300">{error}</div>;
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 p-8">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 dark:bg-rose-500/10">
+          <AlertTriangle size={20} className="text-rose-500" />
+        </div>
+        <div className="text-sm text-rose-600 dark:text-rose-300">{error}</div>
+        <button
+          type="button"
+          onClick={() => void loadPack()}
+          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-200 dark:hover:bg-white/[0.04]"
+        >
+          <RefreshCw size={12} />
+          {isPl ? 'Ponów' : 'Retry'}
+        </button>
+      </div>
+    );
   }
 
   if (!detail || !packRow) {
-    return <div className="p-6 text-sm text-slate-500 dark:text-slate-400">{t('finance.pack.notFound', 'Statement pack not found')}</div>;
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 p-8">
+        <FileText size={24} className="text-slate-400" />
+        <div className="text-sm text-slate-500 dark:text-slate-400">
+          {t('finance.pack.notFound', 'Statement pack not found')}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-3 dark:border-white/[0.08] dark:bg-white/[0.04]">
-        <div className="text-base font-semibold text-slate-900 dark:text-white">{titleWithPeriods}</div>
-        <div className="mt-2 flex flex-wrap gap-2">
+    <div className="space-y-3 p-4">
+      {/* Compact header */}
+      <div className="rounded-2xl border border-slate-200/70 bg-white/90 backdrop-blur-sm dark:border-white/[0.08] dark:bg-navy-900/80">
+        <div className="flex items-center gap-4 px-4 py-3">
+          {/* Readiness ring */}
+          <ReadinessRing score={packRow.readinessScore || 0} />
+
+          {/* Title & metadata */}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                {packRow.entityName || packRow.title}
+              </span>
+              <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                packRow.status === 'APPROVED'
+                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                  : packRow.status === 'REVIEW'
+                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300'
+                    : 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-400'
+              }`}>
+                {packRow.status === 'APPROVED'
+                  ? (isPl ? 'Gotowy' : 'Ready')
+                  : packRow.status === 'REVIEW'
+                    ? (isPl ? 'Do naprawy' : 'Recovery')
+                    : (isPl ? 'Szkic' : 'Draft')}
+              </span>
+            </div>
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+              <span>{packRow.periodLabel || `${packRow.periodStart} → ${packRow.periodEnd}`}</span>
+              <span>{packRow.currency}</span>
+              <span>{packRow.scaling}</span>
+              <span>{childStatements.length} {isPl ? 'dok.' : 'docs'}</span>
+            </div>
+          </div>
+
+          {/* Quick actions */}
+          <div className="flex items-center gap-2">
+            {onCreateModelFromPack && packRow.isWorkable && (
+              <button
+                type="button"
+                onClick={() => onCreateModelFromPack(packRow)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-200 dark:hover:bg-white/[0.04]"
+              >
+                <Calculator size={12} />
+                <span className="hidden sm:inline">{isPl ? 'Model' : 'Model'}</span>
+              </button>
+            )}
+            {onCreateAnalysisFromPack && packRow.isWorkable && (
+              <button
+                type="button"
+                onClick={() => onCreateAnalysisFromPack(packRow)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-200 dark:hover:bg-white/[0.04]"
+              >
+                <BarChart3 size={12} />
+                <span className="hidden sm:inline">{isPl ? 'Analiza' : 'Analysis'}</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* P&L / BS / CF tabs with line count badges */}
+        <div className="flex items-center gap-1 border-t border-slate-200/50 px-4 py-2 dark:border-white/[0.05]" role="tablist">
           {(['P&L', 'BS', 'CF'] as const).map((tab) => {
-            const hasDocument = statementsByType.has(tab);
+            const child = statementsByType.get(tab);
+            const hasDocument = !!child;
             const isActive = activeTab === tab;
+            const mapped = child?.mappedLineCount ?? 0;
+            const total = (child?.mappedLineCount ?? 0) + (child?.unmappedLineCount ?? 0);
+
             return (
               <button
                 key={tab}
                 type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-disabled={!hasDocument}
                 onClick={() => hasDocument && setActiveTab(tab)}
                 disabled={!hasDocument}
-                className={`h-9 rounded-full px-4 text-sm transition-colors ${
+                className={`relative flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   isActive && hasDocument
-                    ? 'bg-cyan-600 text-white'
+                    ? 'bg-cyan-600 text-white shadow-sm'
                     : hasDocument
-                      ? 'border border-slate-200/70 bg-white/80 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-200'
-                      : 'border border-dashed border-slate-200/70 bg-slate-50/60 text-slate-400 dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-slate-500'
+                      ? 'text-slate-700 hover:bg-slate-100/70 dark:text-slate-200 dark:hover:bg-white/[0.05]'
+                      : 'text-slate-400 dark:text-slate-500'
                 }`}
               >
                 {tab}
-                {!hasDocument && <span className="ml-2">{isPl ? 'Brak' : 'Missing'}</span>}
+                {hasDocument && total > 0 && (
+                  <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums leading-none ${
+                    isActive
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-200/70 text-slate-500 dark:bg-white/[0.08] dark:text-slate-400'
+                  }`}>
+                    {mapped}/{total}
+                  </span>
+                )}
+                {!hasDocument && (
+                  <span className="text-[10px] font-normal italic">
+                    {isPl ? 'brak' : 'n/a'}
+                  </span>
+                )}
               </button>
             );
           })}
+
+          {/* Missing types warning */}
+          {missingStatementTypes.length > 0 && (
+            <span className="ml-2 inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400">
+              <AlertTriangle size={10} />
+              {isPl ? 'Brakuje:' : 'Missing:'} {missingStatementTypes.join(', ')}
+            </span>
+          )}
+
+          {/* Validation toggle */}
+          {packValidations.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowValidations((prev) => !prev)}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-medium text-slate-500 transition-colors hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.04]"
+            >
+              {failCount > 0 && (
+                <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-100 px-1 text-[9px] font-bold text-rose-600 dark:bg-rose-500/15 dark:text-rose-400">
+                  {failCount}
+                </span>
+              )}
+              {warnCount > 0 && (
+                <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-100 px-1 text-[9px] font-bold text-amber-600 dark:bg-amber-500/15 dark:text-amber-400">
+                  {warnCount}
+                </span>
+              )}
+              {showValidations ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+            </button>
+          )}
         </div>
-        <details className="mt-2 rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2 dark:border-white/[0.08] dark:bg-white/[0.02]">
-          <summary className="cursor-pointer list-none text-xs font-medium text-slate-600 dark:text-slate-300">
-            {isPl ? 'Szczegóły pakietu' : 'Pack details'}
-          </summary>
-          <div className="mt-3 space-y-3">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="text-sm text-slate-600 dark:text-slate-300">
-                {packRow.entityName ? (
-                  <div>{packRow.entityName}</div>
-                ) : null}
-                <div>{packRow.periodLabel || `${packRow.periodStart} → ${packRow.periodEnd}`} • {packRow.currency} • {packRow.scaling}</div>
-              </div>
-              <div className="rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-right dark:border-white/[0.08] dark:bg-white/[0.03]">
-                <div className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Liczba plików' : 'Files loaded'}
-                </div>
-                <div className="mt-0.5 text-lg font-semibold text-slate-900 dark:text-white">
-                  {childStatements.length}
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {childStatements.map((statement) => (
-                <div
-                  key={statement.id}
-                  className="rounded-full border border-slate-200/70 bg-white/80 px-3 py-1 text-xs text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.03] dark:text-slate-200"
-                >
-                  <span className="font-medium">{statement.statementType}</span>
-                  <span className="mx-1 text-slate-400">•</span>
-                  <span className="break-all">{statement.sourceFileName || statement.id}</span>
-                </div>
-              ))}
-            </div>
-            {missingStatementTypes.length > 0 && (
-              <div className="text-xs text-amber-600 dark:text-amber-400">
-                {isPl ? 'Brakuje:' : 'Missing:'} {missingStatementTypes.join(', ')}
-              </div>
-            )}
+
+        {/* Collapsible validations */}
+        {showValidations && packValidations.length > 0 && (
+          <div className="border-t border-slate-200/50 px-4 py-2 dark:border-white/[0.05]">
             <StatementValidationBadges
               validations={packValidations}
               emptyLabel={isPl ? 'Brak walidacji pakietu.' : 'No pack validations.'}
             />
           </div>
-        </details>
+        )}
       </div>
 
+      {/* Statement detail area */}
       {selectedStatement ? (
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="rounded-2xl border border-slate-200/70 bg-white/80 dark:border-white/[0.08] dark:bg-white/[0.04]">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 px-3 py-2 dark:border-white/[0.08]">
-              <div>
-                <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{activeTab}</div>
-                <div className="mt-0.5 text-sm font-medium text-slate-900 dark:text-white">
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_320px]">
+          {/* Main table area */}
+          <div className="rounded-2xl border border-slate-200/70 bg-white/90 backdrop-blur-sm dark:border-white/[0.08] dark:bg-navy-900/80">
+            {/* Table header with controls */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/60 px-4 py-2.5 dark:border-white/[0.06]">
+              <div className="min-w-0">
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  {activeTab}
+                </div>
+                <div className="mt-0.5 truncate text-sm font-medium text-slate-900 dark:text-white">
                   {selectedStatement.sourceFileName || selectedStatement.id}
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Agregacja' : 'Aggregation'}
+              <div className="flex items-center gap-2">
+                {/* Aggregation segmented control */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    {isPl ? 'Agregacja' : 'Aggregation'}
+                  </span>
+                  <div className="inline-flex items-center rounded-lg border border-slate-200/70 bg-slate-50/80 p-0.5 dark:border-white/[0.08] dark:bg-white/[0.03]">
+                    {([1, 2, 3] as const).map((level) => {
+                      const isActive = aggregationLevel === level;
+                      return (
+                        <button
+                          key={level}
+                          type="button"
+                          onClick={() => setAggregationLevel(level)}
+                          className={`h-6 min-w-7 rounded-md px-2 text-[11px] font-medium transition-all ${
+                            isActive
+                              ? 'bg-cyan-600 text-white shadow-sm'
+                              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                          }`}
+                          title={
+                            level === 1
+                              ? (isPl ? 'Tylko grupy główne' : 'Primary groups only')
+                              : level === 2
+                                ? (isPl ? 'Grupy i podgrupy' : 'Groups and subgroups')
+                                : (isPl ? 'Pełna analityka' : 'Full analytics')
+                          }
+                        >
+                          {level}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="inline-flex items-center rounded-full border border-slate-200/70 bg-slate-50/80 p-1 dark:border-white/[0.08] dark:bg-white/[0.03]">
-                  {[1, 2, 3].map((level) => {
-                    const isActive = aggregationLevel === level;
-                    return (
-                      <button
-                        key={level}
-                        type="button"
-                        onClick={() => setAggregationLevel(level as 1 | 2 | 3)}
-                        className={`h-6 min-w-7 rounded-full px-2 text-[11px] font-medium transition-colors ${
-                          isActive
-                            ? 'bg-cyan-600 text-white'
-                            : 'text-slate-600 hover:bg-white dark:text-slate-300 dark:hover:bg-white/[0.06]'
-                        }`}
-                        title={
-                          level === 1
-                            ? isPl
-                              ? 'Tylko grupy główne'
-                              : 'Primary groups only'
-                            : level === 2
-                              ? isPl
-                                ? 'Grupy i podgrupy'
-                                : 'Groups and subgroups'
-                              : isPl
-                                ? 'Pełna analityka'
-                                : 'Full analytics'
-                        }
-                      >
-                        {level}
-                      </button>
-                    );
-                  })}
-                </div>
+
+                {/* Technical details toggle */}
                 <button
                   type="button"
                   onClick={() => setShowAdvancedDetail((current) => !current)}
-                  className="h-8 rounded-full border border-slate-200/70 px-3 text-xs text-slate-700 dark:border-white/[0.08] dark:text-slate-200"
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200/70 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
+                  aria-pressed={showAdvancedDetail}
                 >
-                  {showAdvancedDetail
-                    ? isPl
-                      ? 'Ukryj szczegóły techniczne'
-                      : 'Hide technical details'
-                    : isPl
-                      ? 'Pokaż szczegóły techniczne'
-                      : 'Show technical details'}
+                  {showAdvancedDetail ? <EyeOff size={12} /> : <Eye size={12} />}
+                  <span className="hidden sm:inline">
+                    {showAdvancedDetail
+                      ? (isPl ? 'Ukryj techniczne' : 'Hide technical')
+                      : (isPl ? 'Pokaż techniczne' : 'Show technical')}
+                  </span>
                 </button>
               </div>
             </div>
-            <div className="space-y-2 p-3">
-              <StatementValidationBadges
-                validations={statementDetail?.validationLedger || []}
-                emptyLabel={isPl ? 'Brak walidacji tej tabeli.' : 'No table validations.'}
-              />
 
+            {/* Statement validations (inline, compact) */}
+            {statementDetail?.validationLedger && statementDetail.validationLedger.length > 0 && (
+              <div className="border-b border-slate-200/50 px-4 py-2 dark:border-white/[0.04]">
+                <StatementValidationBadges
+                  validations={statementDetail.validationLedger}
+                  emptyLabel=""
+                />
+              </div>
+            )}
+
+            {/* Table content */}
+            <div className="p-3">
               {detailLoading ? (
-                <div className="py-8 text-sm text-slate-500 dark:text-slate-400">{t('common.loading', 'Loading…')}</div>
+                <SkeletonRows />
               ) : statementDetail ? (
                 <CanonicalStatementTable
                   rows={analyticsRows}
@@ -516,13 +678,27 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                   valueLabel={isPl ? 'Wartość' : 'Value'}
                   mappingLabel={isPl ? 'Mapowanie' : 'Mapping'}
                   originLabel={isPl ? 'Pochodzenie' : 'Origin'}
+                  currency={packRow.currency}
                 />
               ) : (
-                <div className="py-8 text-sm text-slate-500 dark:text-slate-400">
-                  {isPl ? 'Nie udało się załadować tabeli dokumentu.' : 'Could not load document table.'}
+                <div className="flex flex-col items-center justify-center gap-2 py-12">
+                  <FileText size={20} className="text-slate-400" />
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    {isPl ? 'Nie udało się załadować tabeli dokumentu.' : 'Could not load document table.'}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => selectedStatement && void loadStatement(selectedStatement.id)}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200/70 px-3 py-1 text-xs text-slate-600 hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300"
+                  >
+                    <RefreshCw size={10} />
+                    {isPl ? 'Ponów' : 'Retry'}
+                  </button>
                 </div>
               )}
             </div>
+
+            {/* Advanced/technical detail */}
             {showAdvancedDetail && (
               <div className="border-t border-slate-200/70 dark:border-white/[0.08]">
                 <FinancialStatementWorkspace
@@ -537,9 +713,10 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
             )}
           </div>
 
+          {/* Explain panel */}
           <StatementExplainPanel
             explain={selectedExplain}
-            title={isPl ? 'Wyjaśnienie mapowania' : 'Explain mapping'}
+            title={isPl ? 'Wyjaśnienie mapowania' : 'Mapping explain'}
             emptyLabel={isPl ? 'Kliknij wiersz, aby zobaczyć źródło i logikę mapowania.' : 'Select a row to inspect evidence and mapping logic.'}
             mappingLabel={isPl ? 'Mapowanie' : 'Mapping'}
             originLabel={isPl ? 'Pochodzenie' : 'Origin'}
@@ -549,8 +726,11 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
           />
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-slate-200/70 p-6 text-sm text-slate-500 dark:border-white/[0.08] dark:text-slate-400">
-          {isPl ? 'Brak wybranego dokumentu dla tej tabeli.' : 'No document selected for this table.'}
+        <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200/70 py-12 dark:border-white/[0.08]">
+          <FileText size={20} className="text-slate-400" />
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            {isPl ? 'Brak wybranego dokumentu dla tej tabeli.' : 'No document selected for this table.'}
+          </div>
         </div>
       )}
     </div>

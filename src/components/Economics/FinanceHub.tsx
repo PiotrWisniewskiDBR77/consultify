@@ -514,22 +514,6 @@ export const FinanceHub: React.FC = () => {
   }, [searchParams, setSearchParams]);
 
   useEffect(() => {
-    if (activeTab !== 'statements') return;
-    setActiveFilters((prev) => {
-      if (prev.some((filter) => filter.column === 'status')) return prev;
-      return [
-        ...prev,
-        {
-          id: 'status-APPROVED',
-          column: 'status',
-          value: 'APPROVED',
-          label: t('finance.counters.readyStatements', 'Ready Statements'),
-        },
-      ];
-    });
-  }, [activeTab, t]);
-
-  useEffect(() => {
     if (!showAnalyzeMenu) return;
     const handlePointerDown = (event: MouseEvent) => {
       if (analyzeMenuRef.current?.contains(event.target as Node)) return;
@@ -954,9 +938,9 @@ export const FinanceHub: React.FC = () => {
             setShowValuationCreateModal(true);
           }
         }}
-        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors duration-150 active:scale-[0.98]"
+        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-cyan-600 text-white shadow-sm hover:bg-cyan-700 transition-all duration-150 active:scale-[0.97]"
       >
-        <Plus size={16} />
+        <Plus size={14} strokeWidth={2.5} />
         <span>{labels[currentKind] || labels.models}</span>
       </button>
     );
@@ -1175,6 +1159,16 @@ export const FinanceHub: React.FC = () => {
     t,
   ]);
 
+  const analyzeActionIcons: Record<string, React.ReactNode> = useMemo(
+    () => ({
+      model: <Calculator size={14} className="text-blue-500" />,
+      budget: <TrendingUp size={14} className="text-purple-500" />,
+      analysis: <BarChart3 size={14} className="text-emerald-500" />,
+      valuation: <Target size={14} className="text-amber-500" />,
+    }),
+    []
+  );
+
   const rightControls = useMemo(() => {
     if (analyzeActions.length === 0) return null;
 
@@ -1182,29 +1176,46 @@ export const FinanceHub: React.FC = () => {
       <div ref={analyzeMenuRef} className="relative">
         <button
           onClick={() => setShowAnalyzeMenu((prev) => !prev)}
-          className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium border border-cyan-200/70 dark:border-cyan-400/20 bg-cyan-50/80 dark:bg-cyan-500/10 text-cyan-700 dark:text-cyan-300"
+          aria-expanded={showAnalyzeMenu}
+          aria-haspopup="menu"
+          className={`inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium border transition-all duration-150 ${
+            showAnalyzeMenu
+              ? 'border-cyan-400/40 bg-cyan-100/80 text-cyan-800 dark:border-cyan-400/30 dark:bg-cyan-500/15 dark:text-cyan-200'
+              : 'border-cyan-200/70 bg-cyan-50/80 text-cyan-700 hover:bg-cyan-100/60 dark:border-cyan-400/20 dark:bg-cyan-500/10 dark:text-cyan-300 dark:hover:bg-cyan-500/15'
+          }`}
         >
+          <Sparkles size={13} />
           <span>{t('finance.analyze.cta', 'Analyze')}</span>
-          <ChevronDown size={14} className={showAnalyzeMenu ? 'rotate-180 transition-transform' : 'transition-transform'} />
+          <ChevronDown size={13} className={`transition-transform duration-200 ${showAnalyzeMenu ? 'rotate-180' : ''}`} />
         </button>
         {showAnalyzeMenu && (
-          <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-navy-900 shadow-xl p-2 z-20">
-            <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <div
+            className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200/80 bg-white/95 backdrop-blur-lg shadow-xl dark:border-white/[0.08] dark:bg-navy-900/95 p-1.5 z-20"
+            role="menu"
+          >
+            <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               {t('finance.analyze.menuTitle', 'Choose next step')}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {analyzeActions.map((action) => (
                 <button
                   key={action.id}
+                  role="menuitem"
                   onClick={action.onSelect}
                   disabled={action.disabled}
-                  className="w-full text-left rounded-xl px-3 py-3 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04] disabled:opacity-50 disabled:hover:bg-transparent"
+                  title={action.disabled ? (isPl ? 'Wymaga gotowego statementu lub modelu' : 'Requires a ready statement or model') : undefined}
+                  className="group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.04] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 >
-                  <div className="text-sm font-medium text-slate-900 dark:text-white">
-                    {action.label}
-                  </div>
-                  <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    {action.description}
+                  <span className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100/80 transition-colors group-hover:bg-slate-200/60 dark:bg-white/[0.06] dark:group-hover:bg-white/[0.08]">
+                    {analyzeActionIcons[action.id] || <BarChart3 size={14} className="text-slate-500" />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] font-medium text-slate-900 dark:text-white">
+                      {action.label}
+                    </div>
+                    <div className="mt-0.5 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                      {action.description}
+                    </div>
                   </div>
                 </button>
               ))}
@@ -1213,24 +1224,31 @@ export const FinanceHub: React.FC = () => {
         )}
       </div>
     );
-  }, [analyzeActions, showAnalyzeMenu, t]);
+  }, [analyzeActions, showAnalyzeMenu, analyzeActionIcons, isPl, t]);
 
   const aiControl = useMemo(
     () => (
       <button
         onClick={() => navigate('/chat?context=finance')}
-        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-sm font-medium bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 hover:bg-purple-500/15 transition-colors duration-150"
+        className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full text-sm font-medium bg-gradient-to-r from-purple-500/10 to-violet-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 hover:from-purple-500/15 hover:to-violet-500/15 hover:border-purple-500/30 transition-all duration-150"
+        aria-label={isPl ? 'Otwórz AI Chat w kontekście finansów' : 'Open AI Chat in finance context'}
       >
-        <Sparkles size={14} />
+        <Sparkles size={13} />
         <span>AI</span>
       </button>
     ),
-    [navigate]
+    [navigate, isPl]
   );
 
   // ---- Command Row ----
   const commandRowContent = useMemo(() => {
     const total = rowsForActiveTab.length;
+    const dotColors: Record<string, string> = {
+      all: 'bg-slate-400',
+      DRAFT: 'bg-slate-400',
+      REVIEW: 'bg-amber-400',
+      APPROVED: 'bg-emerald-400',
+    };
     const chips: Array<{
       id: 'all' | 'DRAFT' | 'REVIEW' | 'APPROVED';
       label: string;
@@ -1272,7 +1290,7 @@ export const FinanceHub: React.FC = () => {
       },
     ];
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 overflow-x-auto">
         {chips.map((chip) => (
           <button
             key={chip.id}
@@ -1298,18 +1316,19 @@ export const FinanceHub: React.FC = () => {
                 },
               ]);
             }}
-            className={`h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap ${
+            className={`h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border transition-all duration-150 whitespace-nowrap ${
               chip.active
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                ? 'bg-cyan-50/80 text-cyan-700 border-cyan-300/60 shadow-sm dark:bg-cyan-500/10 dark:text-cyan-200 dark:border-cyan-400/30'
+                : 'bg-white/60 text-slate-600 border-slate-200/60 hover:bg-slate-50 hover:border-slate-300/60 dark:bg-white/[0.02] dark:text-slate-400 dark:border-white/[0.06] dark:hover:bg-white/[0.04]'
             }`}
           >
+            <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotColors[chip.id] || dotColors.all}`} />
             <span>{chip.label}</span>
             <span
-              className={`px-1.5 py-0.5 text-[10px] rounded-full font-semibold tabular-nums leading-none ${
+              className={`ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none ${
                 chip.active
-                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
+                  ? 'bg-cyan-200/60 text-cyan-800 dark:bg-cyan-500/20 dark:text-cyan-200'
+                  : 'bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400'
               }`}
             >
               {chip.count}

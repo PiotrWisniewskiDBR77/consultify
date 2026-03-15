@@ -432,31 +432,49 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         )}
       </div>
 
-      {/* Steps indicator */}
-      <div className="flex items-center gap-2 mb-8">
-        {STEPS.map((s, i) => (
-          <React.Fragment key={s}>
-            <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                i < stepIdx
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                  : i === stepIdx
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                    : 'bg-slate-100 text-slate-400 dark:bg-navy-800 dark:text-navy-400'
-              }`}
-            >
-              {i < stepIdx ? (
-                <Check size={14} />
-              ) : (
-                <span className="w-5 h-5 flex items-center justify-center rounded-full text-xs border border-current">
-                  {i + 1}
+      {/* Steps indicator with progress line */}
+      <div className="flex items-center mb-8" role="navigation" aria-label={isPl ? 'Kroki importu' : 'Import steps'}>
+        {STEPS.map((s, i) => {
+          const isCompleted = i < stepIdx;
+          const isCurrent = i === stepIdx;
+          return (
+            <React.Fragment key={s}>
+              <div className="flex items-center gap-2">
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
+                    isCompleted
+                      ? 'bg-emerald-500 text-white shadow-sm'
+                      : isCurrent
+                        ? 'bg-cyan-600 text-white shadow-sm ring-4 ring-cyan-100 dark:ring-cyan-500/20'
+                        : 'border-2 border-slate-200 text-slate-400 dark:border-white/[0.1] dark:text-slate-500'
+                  }`}
+                  aria-current={isCurrent ? 'step' : undefined}
+                >
+                  {isCompleted ? <Check size={14} strokeWidth={3} /> : i + 1}
+                </div>
+                <span
+                  className={`text-sm font-medium transition-colors ${
+                    isCompleted
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : isCurrent
+                        ? 'text-slate-900 dark:text-white'
+                        : 'text-slate-400 dark:text-slate-500'
+                  } hidden sm:inline`}
+                >
+                  {stepLabels[i]}
                 </span>
+              </div>
+              {i < STEPS.length - 1 && (
+                <div className="mx-3 h-0.5 flex-1 rounded-full bg-slate-200 dark:bg-white/[0.08]">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                    style={{ width: isCompleted ? '100%' : isCurrent ? '50%' : '0%' }}
+                  />
+                </div>
               )}
-              <span className="hidden sm:inline">{stepLabels[i]}</span>
-            </div>
-            {i < STEPS.length - 1 && <ChevronRight size={16} className="text-slate-300" />}
-          </React.Fragment>
-        ))}
+            </React.Fragment>
+          );
+        })}
       </div>
 
       {error && (
@@ -470,16 +488,32 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       {step === 'upload' && (
         <div className="max-w-xl mx-auto">
           <div
-            className="border-2 border-dashed border-slate-300 dark:border-navy-600 rounded-2xl p-12 text-center hover:border-blue-400 transition-colors cursor-pointer"
+            className={`group relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-200 cursor-pointer ${
+              file
+                ? 'border-cyan-400/60 bg-cyan-50/30 dark:border-cyan-500/30 dark:bg-cyan-500/5'
+                : 'border-slate-300 hover:border-cyan-400 hover:bg-cyan-50/20 dark:border-white/[0.1] dark:hover:border-cyan-500/40 dark:hover:bg-cyan-500/5'
+            }`}
             onClick={() => fileInputRef.current?.click()}
             onDrop={handleDrop}
-            onDragOver={(e) => e.preventDefault()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.currentTarget.classList.add('border-cyan-400', 'bg-cyan-50/30');
+            }}
+            onDragLeave={(e) => {
+              e.currentTarget.classList.remove('border-cyan-400', 'bg-cyan-50/30');
+            }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+            aria-label={isPl ? 'Upuść plik lub kliknij aby wybrać' : 'Drop file or click to browse'}
           >
-            <Upload size={48} className="mx-auto text-slate-400 mb-4" />
-            <p className="text-lg font-medium text-slate-700 dark:text-slate-300 mb-2">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100/80 transition-colors group-hover:bg-cyan-100/60 dark:bg-white/[0.05] dark:group-hover:bg-cyan-500/10">
+              <Upload size={28} className="text-slate-400 transition-colors group-hover:text-cyan-500" />
+            </div>
+            <p className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-1">
               {t('finance.importWizard.dropOrClick', 'Drop file here or click to browse')}
             </p>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-400 dark:text-slate-500">
               {t(
                 'finance.importWizard.supportedFormats',
                 'Supported: PDF, Excel (XLSX/XLS), CSV financial statements'
@@ -491,26 +525,37 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
               accept=".pdf,.xlsx,.xls,.csv"
               onChange={handleFileSelect}
               className="hidden"
+              aria-hidden="true"
             />
           </div>
 
           {file && (
-            <div className="mt-6 p-4 bg-slate-50 dark:bg-navy-900 rounded-xl flex items-center gap-3">
-              <FileText
-                size={20}
-                className={file.name.endsWith('.pdf') ? 'text-red-500' : 'text-green-500'}
-              />
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-200/70 bg-white/80 p-3 shadow-sm dark:border-white/[0.08] dark:bg-navy-900/80">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                file.name.endsWith('.pdf')
+                  ? 'bg-rose-50 dark:bg-rose-500/10'
+                  : 'bg-emerald-50 dark:bg-emerald-500/10'
+              }`}>
+                <FileText
+                  size={18}
+                  className={file.name.endsWith('.pdf') ? 'text-rose-500' : 'text-emerald-500'}
+                />
+              </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                   {file.name}
                 </p>
-                <p className="text-xs text-slate-400">{(file.size / 1024).toFixed(1)} KB</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                  {(file.size / 1024).toFixed(1)} KB
+                  {file.type && <span className="ml-2">{file.type.split('/').pop()?.toUpperCase()}</span>}
+                </p>
               </div>
               <button
-                onClick={() => setFile(null)}
-                className="p-1 hover:bg-slate-200 dark:hover:bg-navy-700 rounded"
+                onClick={(e) => { e.stopPropagation(); setFile(null); }}
+                className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
+                aria-label={isPl ? 'Usuń plik' : 'Remove file'}
               >
-                <X size={16} className="text-slate-400" />
+                <X size={14} className="text-slate-400" />
               </button>
             </div>
           )}
@@ -518,9 +563,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
           <button
             onClick={handleUpload}
             disabled={!file || loading}
-            className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 disabled:opacity-50 transition-colors"
+            className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3 bg-cyan-600 text-white font-medium rounded-xl shadow-sm hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-[0.98]"
           >
-            {loading ? <Loader2 size={18} className="animate-spin" /> : <ArrowRight size={18} />}
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
             {t('finance.importWizard.uploadAndDetect', 'Upload & Detect')}
           </button>
         </div>
@@ -791,73 +836,106 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
       {/* Step 4: Confirm */}
       {step === 'confirm' && validation && (
         <div className="max-w-2xl mx-auto space-y-6">
-          {/* Validation summary */}
+          {/* Readiness gauge + validation summary */}
           <div
-            className={`p-6 rounded-xl border ${
+            className={`overflow-hidden rounded-2xl border ${
               isReadyForConfirm
-                ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
+                ? 'border-emerald-200 dark:border-emerald-800'
                 : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
-                  ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800'
-                  : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
+                  ? 'border-amber-200 dark:border-amber-800'
+                  : 'border-red-200 dark:border-red-800'
             }`}
           >
-            <div className="flex items-center gap-3 mb-4">
-              {isReadyForConfirm ? (
-                <CheckCircle2 size={24} className="text-emerald-500" />
-              ) : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings' ? (
-                <AlertTriangle size={24} className="text-amber-500" />
-              ) : (
-                <XCircle size={24} className="text-red-500" />
-              )}
-              <div>
-                <h3 className="font-semibold text-slate-900 dark:text-white">
-                  {isReadyForConfirm
-                    ? t('finance.importWizard.validationPass', 'All validations passed')
+            {/* Gauge bar at top */}
+            <div className={`h-1.5 ${
+              isReadyForConfirm
+                ? 'bg-emerald-500'
+                : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
+                  ? 'bg-amber-500'
+                  : 'bg-rose-500'
+            }`} />
+
+            <div className={`p-6 ${
+              isReadyForConfirm
+                ? 'bg-emerald-50/80 dark:bg-emerald-900/10'
+                : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
+                  ? 'bg-amber-50/80 dark:bg-amber-900/10'
+                  : 'bg-rose-50/80 dark:bg-rose-900/10'
+            }`}>
+              <div className="flex items-start gap-4 mb-4">
+                <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl ${
+                  isReadyForConfirm
+                    ? 'bg-emerald-100 dark:bg-emerald-500/15'
                     : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
-                      ? t('finance.importWizard.validationWarnings', 'Imported with warnings')
-                      : t('finance.importWizard.validationErrors', 'Review required')}
-                </h3>
-                <p className="text-sm text-slate-500">
-                  {mappedValues.filter((v) => v.canonicalLineId).length}{' '}
-                  {t('finance.importWizard.linesMapped', 'lines mapped')}
-                </p>
-              </div>
-            </div>
-
-            {readiness?.summary && (
-              <div className="mb-4 rounded-lg bg-white/70 dark:bg-navy-950/30 px-3 py-2 text-sm text-slate-700 dark:text-slate-300">
-                {readiness.summary}
-              </div>
-            )}
-
-            {validation.messages.length > 0 && (
-              <div className="space-y-2">
-                {validation.messages.map((msg, i) => (
-                  <div key={i} className="flex items-start gap-2 text-sm">
-                    {validationIcon(msg.type)}
-                    <div>
-                      <span className="text-slate-700 dark:text-slate-300">{msg.message}</span>
-                      {msg.details && (
-                        <p className="text-xs text-slate-400 mt-0.5">{msg.details}</p>
-                      )}
-                    </div>
+                      ? 'bg-amber-100 dark:bg-amber-500/15'
+                      : 'bg-rose-100 dark:bg-rose-500/15'
+                }`}>
+                  {isReadyForConfirm ? (
+                    <CheckCircle2 size={24} className="text-emerald-500" />
+                  ) : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings' ? (
+                    <AlertTriangle size={24} className="text-amber-500" />
+                  ) : (
+                    <XCircle size={24} className="text-rose-500" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                    {isReadyForConfirm
+                      ? t('finance.importWizard.validationPass', 'All validations passed')
+                      : readiness?.readinessStatus === 'recoverable' || validation.status === 'warnings'
+                        ? t('finance.importWizard.validationWarnings', 'Imported with warnings')
+                        : t('finance.importWizard.validationErrors', 'Review required')}
+                  </h3>
+                  <div className="mt-1 flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                    <span>
+                      {mappedValues.filter((v) => v.canonicalLineId).length}/{mappedValues.length}{' '}
+                      {t('finance.importWizard.linesMapped', 'lines mapped')}
+                    </span>
+                    <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                    <span>
+                      {validation.messages.filter((m) => m.type === 'error').length} {isPl ? 'błędów' : 'errors'}
+                      {validation.messages.filter((m) => m.type === 'warning').length > 0 &&
+                        `, ${validation.messages.filter((m) => m.type === 'warning').length} ${isPl ? 'ostrzeżeń' : 'warnings'}`}
+                    </span>
                   </div>
-                ))}
+                </div>
               </div>
-            )}
 
-            {!!readiness?.reasonCodes?.length && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {readiness.reasonCodes.map((code) => (
-                  <span
-                    key={code}
-                    className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600 dark:bg-navy-800 dark:text-slate-300"
-                  >
-                    {code}
-                  </span>
-                ))}
-              </div>
-            )}
+              {readiness?.summary && (
+                <div className="mb-4 rounded-xl bg-white/70 px-4 py-3 text-sm text-slate-700 dark:bg-navy-950/30 dark:text-slate-300">
+                  {readiness.summary}
+                </div>
+              )}
+
+              {validation.messages.length > 0 && (
+                <div className="space-y-2">
+                  {validation.messages.map((msg, i) => (
+                    <div key={i} className="flex items-start gap-2.5 rounded-lg bg-white/50 px-3 py-2 text-sm dark:bg-white/[0.03]">
+                      {validationIcon(msg.type)}
+                      <div className="min-w-0 flex-1">
+                        <span className="text-slate-700 dark:text-slate-300">{msg.message}</span>
+                        {msg.details && (
+                          <p className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">{msg.details}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!!readiness?.reasonCodes?.length && (
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {readiness.reasonCodes.map((code) => (
+                    <span
+                      key={code}
+                      className="rounded-md bg-white/70 px-2 py-1 text-[10px] font-medium text-slate-600 dark:bg-white/[0.06] dark:text-slate-300"
+                    >
+                      {code}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Statement summary */}

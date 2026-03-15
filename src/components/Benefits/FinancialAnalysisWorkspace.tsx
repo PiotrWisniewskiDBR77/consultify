@@ -231,6 +231,11 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
     [liveRatios, t, fetchAnalyses, selectAnalysis, onAnalysisChanged]
   );
 
+  const fmtNumber = useMemo(
+    () => new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    []
+  );
+
   const activeRatios = liveMode ? liveRatios : ratios;
 
   const groupedRatios = useMemo(() => {
@@ -319,7 +324,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                   className={`w-full text-left p-2 rounded-lg text-sm transition ${selected?.id === a.id ? 'bg-purple-500/20 text-purple-400' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
                 >
                   <div className="font-medium truncate">{a.title}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">{a.status}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 capitalize">{a.status}</div>
                 </button>
               ))
             )}
@@ -371,10 +376,18 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                 </button>
               </div>
             </div>
-            <div className="border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 flex gap-1">
+            <div
+              className="border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 flex gap-1"
+              role="tablist"
+              aria-label={t('finance.analysis.tabsLabel', 'Analysis views')}
+            >
               {tabItems.map((tab) => (
                 <button
                   key={tab.id}
+                  role="tab"
+                  aria-selected={activeTab === tab.id}
+                  aria-controls={`tabpanel-${tab.id}`}
+                  id={`tab-${tab.id}`}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 px-3 py-2 text-sm border-b-2 transition ${activeTab === tab.id ? 'border-purple-500 text-purple-500' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                 >
@@ -382,7 +395,12 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                 </button>
               ))}
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div
+              className="flex-1 overflow-y-auto p-4"
+              role="tabpanel"
+              id={`tabpanel-${activeTab}`}
+              aria-labelledby={`tab-${activeTab}`}
+            >
               {(insightsByType['quality_note'] || []).length > 0 && (
                 <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
                   <div className="flex items-center gap-2 mb-1.5">
@@ -553,24 +571,31 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                                   </td>
                                   <td className="px-4 py-2 text-slate-500">{r.period}</td>
                                   <td className="px-4 py-2 text-right font-mono text-slate-900 dark:text-white">
-                                    {r.value?.toFixed(2) ?? '—'}
+                                    {r.value != null ? fmtNumber.format(r.value) : '—'}
                                   </td>
                                   <td className="px-4 py-2 text-right font-mono text-slate-500">
-                                    {bv != null ? bv.toFixed(2) : '—'}
+                                    {bv != null ? fmtNumber.format(bv) : '—'}
                                   </td>
                                   <td className="px-4 py-2">
                                     {bv != null ? (
                                       <div className="flex items-center gap-2">
-                                        <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+                                        <div className="relative flex-1 h-2.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                                           <div
-                                            className={`h-full rounded-full ${bandColor}`}
+                                            className={`h-full rounded-full transition-all duration-300 ${bandColor}`}
                                             style={{ width: bandWidth }}
+                                          />
+                                          <div
+                                            className="absolute top-0 h-full w-px bg-slate-900/30 dark:bg-white/30"
+                                            style={{ left: '100%' }}
+                                            title={`Benchmark: ${new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(bv)}`}
                                           />
                                         </div>
                                         <span
-                                          className={`text-[10px] font-bold uppercase ${bandStatus === 'ok' ? 'text-emerald-500' : bandStatus === 'warn' ? 'text-amber-500' : bandStatus === 'crit' ? 'text-red-500' : 'text-slate-400'}`}
+                                          className={`text-[10px] font-bold min-w-[3rem] text-right ${bandStatus === 'ok' ? 'text-emerald-600 dark:text-emerald-400' : bandStatus === 'warn' ? 'text-amber-600 dark:text-amber-400' : bandStatus === 'crit' ? 'text-red-600 dark:text-red-400' : 'text-slate-400'}`}
                                         >
-                                          {bandStatus === 'none' ? '' : bandStatus.toUpperCase()}
+                                          {bv > 0
+                                            ? `${Math.round((r.value / bv) * 100)}%`
+                                            : '—'}
                                         </span>
                                       </div>
                                     ) : (
@@ -601,7 +626,7 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <span
-                            className={`px-2 py-0.5 text-xs rounded-full font-medium ${ins.insight_type === 'driver' ? 'bg-blue-500/20 text-blue-400' : ins.insight_type === 'risk' ? 'bg-amber-500/20 text-amber-400' : ins.insight_type === 'action' ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400'}`}
+                            className={`px-2 py-0.5 text-xs rounded-lg font-medium capitalize ${ins.insight_type === 'driver' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300' : ins.insight_type === 'risk' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300' : ins.insight_type === 'action' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400'}`}
                           >
                             {ins.insight_type}
                           </span>
@@ -677,11 +702,21 @@ export const FinancialAnalysisWorkspace: React.FC<FinancialAnalysisWorkspaceProp
                                     key={p}
                                     className="px-3 py-2 text-right font-mono text-slate-900 dark:text-white"
                                   >
-                                    {values.get(p)?.toFixed(2) ?? '—'}
+                                    {values.has(p) ? fmtNumber.format(values.get(p)!) : '—'}
                                   </td>
                                 ))}
                                 <td
-                                  className={`px-3 py-2 text-right font-mono font-semibold ${pctChange != null && pctChange > 0 ? 'text-emerald-500' : pctChange != null && pctChange < 0 ? 'text-red-500' : 'text-slate-400'}`}
+                                  className={`px-3 py-2 text-right font-mono font-semibold ${
+                                    pctChange != null && Math.abs(pctChange) > 10
+                                      ? pctChange > 0
+                                        ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20'
+                                        : 'text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20'
+                                      : pctChange != null && pctChange > 0
+                                        ? 'text-emerald-500'
+                                        : pctChange != null && pctChange < 0
+                                          ? 'text-red-500'
+                                          : 'text-slate-400'
+                                  }`}
                                 >
                                   {pctChange != null
                                     ? `${pctChange > 0 ? '+' : ''}${pctChange.toFixed(1)}%`
@@ -749,6 +784,10 @@ const LivePreviewPanel: React.FC<{
 }> = ({ ratios, groupedRatios, onSave, onClose, t }) => {
   const [saveTitle, setSaveTitle] = useState('');
   const [saving, setSaving] = useState(false);
+  const fmtNumber = useMemo(
+    () => new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    []
+  );
 
   const handleSave = async () => {
     if (!saveTitle.trim()) return;
@@ -824,7 +863,7 @@ const LivePreviewPanel: React.FC<{
                           </td>
                           <td className="px-4 py-2 text-slate-500">{r.period}</td>
                           <td className="px-4 py-2 text-right font-mono text-slate-900 dark:text-white">
-                            {r.value?.toFixed(2)}
+                            {r.value != null ? fmtNumber.format(r.value) : '—'}
                           </td>
                         </tr>
                       ))}

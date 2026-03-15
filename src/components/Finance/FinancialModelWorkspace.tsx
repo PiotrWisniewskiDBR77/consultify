@@ -169,10 +169,25 @@ const EVENT_TYPES = [
   { value: 'dividend', label: 'Dividend', labelPl: 'Dywidenda', cf: 'financing', icon: '🎯' },
 ];
 
-const STATUS_CONFIG: Record<string, { color: string; icon: React.ReactNode }> = {
-  draft: { color: 'slate', icon: <Edit3 size={12} /> },
-  review: { color: 'amber', icon: <AlertTriangle size={12} /> },
-  approved: { color: 'emerald', icon: <CheckCircle2 size={12} /> },
+const STATUS_CONFIG: Record<
+  string,
+  { badgeClass: string; icon: React.ReactNode }
+> = {
+  draft: {
+    badgeClass:
+      'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400',
+    icon: <Edit3 size={12} />,
+  },
+  review: {
+    badgeClass:
+      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    icon: <AlertTriangle size={12} />,
+  },
+  approved: {
+    badgeClass:
+      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    icon: <CheckCircle2 size={12} />,
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -429,7 +444,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
     const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.draft;
     return (
       <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-${cfg.color}-100 text-${cfg.color}-700 dark:bg-${cfg.color}-900/30 dark:text-${cfg.color}-400`}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.badgeClass}`}
       >
         {cfg.icon} {status.toUpperCase()}
       </span>
@@ -442,11 +457,28 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
     return <AlertTriangle size={14} className="text-amber-500" />;
   };
 
-  const formatAmount = (n: number) =>
-    n.toLocaleString(isPl ? 'pl-PL' : 'en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
+  const formatAmount = (n: number, opts?: { decimals?: number }) => {
+    const decimals = opts?.decimals ?? 0;
+    return new Intl.NumberFormat(isPl ? 'pl-PL' : 'en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+      signDisplay: 'auto',
+    }).format(n);
+  };
+
+  const formatCurrency = (n: number) => {
+    const currency = selectedModel?.currency || 'PLN';
+    try {
+      return new Intl.NumberFormat(isPl ? 'pl-PL' : 'en-US', {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(n);
+    } catch {
+      return `${formatAmount(n)} ${currency}`;
+    }
+  };
 
   const seedSource = selectedModel?.assumptions_json?.seedSource || null;
   const seedStatus = selectedModel?.assumptions_json?.seedStatus || null;
@@ -654,10 +686,18 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
             )}
 
             {/* Tabs */}
-            <div className="px-6 pt-3 flex gap-1 border-b border-slate-200 dark:border-navy-700">
+            <div
+              role="tablist"
+              aria-label={t('finance.model.tabs', 'Model sections')}
+              className="px-6 pt-3 flex gap-1 border-b border-slate-200 dark:border-navy-700"
+            >
               {TABS.map((tab) => (
                 <button
                   key={tab.key}
+                  role="tab"
+                  aria-selected={activeTab === tab.key}
+                  aria-controls={`tabpanel-${tab.key}`}
+                  id={`tab-${tab.key}`}
                   onClick={() => setActiveTab(tab.key)}
                   className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
                     activeTab === tab.key
@@ -676,7 +716,12 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
             </div>
 
             {/* Tab content */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div
+              role="tabpanel"
+              id={`tabpanel-${activeTab}`}
+              aria-labelledby={`tab-${activeTab}`}
+              className="flex-1 overflow-y-auto p-6"
+            >
               {/* ── Inputs tab ── */}
               {activeTab === 'inputs' && (
                 <div className="max-w-2xl space-y-6">
@@ -807,7 +852,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                             <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
                               <span>{isPl ? cfg?.labelPl : cfg?.label}</span>
                               <span className="font-mono">
-                                {formatAmount(ev.amount)} {selectedModel.currency}
+                                {formatCurrency(ev.amount)}
                               </span>
                               <span>{ev.recurrence}</span>
                               {ev.growth_rate !== 0 && (
@@ -1043,7 +1088,7 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                       <table className="w-full text-sm border-collapse">
                         <thead>
                           <tr className="bg-slate-50 dark:bg-navy-800">
-                            <th className="text-left px-3 py-2 font-medium text-slate-500 sticky left-0 bg-slate-50 dark:bg-navy-800 z-10">
+                            <th className="text-left px-3 py-2 font-medium text-slate-500 sticky left-0 bg-slate-50 dark:bg-navy-800 z-10 border-r border-slate-200 dark:border-navy-700 min-w-[180px]">
                               {t('finance.model.line', 'Line')}
                             </th>
                             {Object.keys(outputs).map((period) => (
@@ -1085,7 +1130,13 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
                                       : ''
                                   }
                                 >
-                                  <td className="px-3 py-2 text-slate-700 dark:text-slate-300 sticky left-0 bg-white dark:bg-navy-950 z-10 whitespace-nowrap">
+                                  <td
+                                    className={`px-3 py-2 text-slate-700 dark:text-slate-300 sticky left-0 z-10 whitespace-nowrap border-r border-slate-100 dark:border-navy-700 ${
+                                      isSummaryLine
+                                        ? 'bg-slate-50 dark:bg-navy-800/50'
+                                        : 'bg-white dark:bg-navy-950'
+                                    }`}
+                                  >
                                     {line.lineName}
                                   </td>
                                   {Object.entries(outputs).map(([period, stmts]) => {
@@ -1116,26 +1167,48 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
               {activeTab === 'validation' && (
                 <div className="space-y-4">
                   {/* Summary cards */}
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <SummaryCard
                       label={t('finance.model.totalChecks', 'Total Checks')}
                       value={String(validationSummary.total)}
-                      icon={<Shield size={16} className="text-blue-500" />}
+                      icon={<Shield size={18} className="text-blue-500" />}
+                      accentClass="border-l-blue-500"
                     />
                     <SummaryCard
                       label={t('finance.model.passed', 'Passed')}
                       value={String(validationSummary.pass)}
-                      icon={<CheckCircle2 size={16} className="text-emerald-500" />}
+                      icon={<CheckCircle2 size={18} className="text-emerald-500" />}
+                      accentClass="border-l-emerald-500"
+                      ratio={
+                        validationSummary.total > 0
+                          ? validationSummary.pass / validationSummary.total
+                          : 0
+                      }
+                      ratioColor="bg-emerald-500"
                     />
                     <SummaryCard
                       label={t('finance.model.failed', 'Failed')}
                       value={String(validationSummary.fail)}
-                      icon={<XCircle size={16} className="text-red-500" />}
+                      icon={<XCircle size={18} className="text-red-500" />}
+                      accentClass="border-l-red-500"
+                      ratio={
+                        validationSummary.total > 0
+                          ? validationSummary.fail / validationSummary.total
+                          : 0
+                      }
+                      ratioColor="bg-red-500"
                     />
                     <SummaryCard
                       label={t('finance.model.warnings', 'Warnings')}
                       value={String(validationSummary.warning)}
-                      icon={<AlertTriangle size={16} className="text-amber-500" />}
+                      icon={<AlertTriangle size={18} className="text-amber-500" />}
+                      accentClass="border-l-amber-500"
+                      ratio={
+                        validationSummary.total > 0
+                          ? validationSummary.warning / validationSummary.total
+                          : 0
+                      }
+                      ratioColor="bg-amber-500"
                     />
                   </div>
 
@@ -1348,17 +1421,32 @@ export const FinancialModelWorkspace: React.FC<Props> = ({
 };
 
 // ── Sub-components ──
-const SummaryCard: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({
-  label,
-  value,
-  icon,
-}) => (
-  <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 flex items-center gap-3">
-    <div className="p-2 bg-slate-50 dark:bg-navy-800 rounded-lg">{icon}</div>
-    <div>
-      <p className="text-xl font-bold text-slate-900 dark:text-white">{value}</p>
-      <p className="text-xs text-slate-500">{label}</p>
+const SummaryCard: React.FC<{
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  accentClass?: string;
+  ratio?: number;
+  ratioColor?: string;
+}> = ({ label, value, icon, accentClass, ratio, ratioColor }) => (
+  <div
+    className={`bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 border-l-4 ${accentClass || 'border-l-slate-300'}`}
+  >
+    <div className="flex items-center gap-3">
+      <div className="p-2 bg-slate-50 dark:bg-navy-800 rounded-lg shrink-0">{icon}</div>
+      <div className="min-w-0">
+        <p className="text-2xl font-bold text-slate-900 dark:text-white leading-none">{value}</p>
+        <p className="text-xs text-slate-500 mt-1">{label}</p>
+      </div>
     </div>
+    {ratio != null && ratio > 0 && (
+      <div className="mt-3 h-1.5 bg-slate-100 dark:bg-navy-800 rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${ratioColor || 'bg-slate-400'}`}
+          style={{ width: `${Math.min(ratio * 100, 100)}%` }}
+        />
+      </div>
+    )}
   </div>
 );
 

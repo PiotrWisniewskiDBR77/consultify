@@ -65,6 +65,20 @@ const SCENARIO_COLORS: Record<string, string> = {
   conservative: 'text-amber-400 bg-amber-500/20 border-amber-500/30',
 };
 
+const STATUS_BADGE_COLORS: Record<string, string> = {
+  draft: 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300',
+  active: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  approved: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  archived: 'bg-slate-100 dark:bg-navy-700 text-slate-500 dark:text-slate-400',
+  in_progress: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+  completed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  planned: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+};
+
+const getStatusBadgeClass = (status: string): string =>
+  STATUS_BADGE_COLORS[status.toLowerCase().replace(/[\s-]/g, '_')] ||
+  'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-300';
+
 interface BudgetWorkspaceProps {
   initialBudgetId?: string;
   hideSidebar?: boolean;
@@ -360,6 +374,16 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
   );
   const projectionPeriods = activeScenario?.projections?.periods || [];
 
+  const fmtNumber = useMemo(
+    () => new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }),
+    []
+  );
+
+  const baseScenario = useMemo(
+    () => scenarios.find((s) => s.scenarioType === 'base'),
+    [scenarios]
+  );
+
   const tabItems = [
     { id: 'inputs' as const, label: t('finance.budget.tabs.inputs', 'Inputs') },
     { id: 'projections' as const, label: t('finance.budget.tabs.projections', 'Projections') },
@@ -412,7 +436,10 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                       </span>
                     )}
                     {line.source === 'kpi' && (
-                      <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-500 font-semibold uppercase">
+                      <span
+                        className="text-[9px] px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-500 font-semibold uppercase cursor-default"
+                        title={t('finance.budget.kpiHint', 'Driven by linked KPI — updates automatically') as string}
+                      >
                         KPI
                       </span>
                     )}
@@ -422,9 +449,16 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   <input
                     type="number"
                     value={line.baselineValue}
-                    onChange={(e) => handleLineUpdate(line.id, Number(e.target.value))}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      if (!Number.isFinite(val)) return;
+                      handleLineUpdate(line.id, val);
+                    }}
+                    min={0}
+                    step={1000}
                     disabled={line.isLocked}
-                    className="w-32 text-right px-2 py-1 rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm disabled:opacity-50"
+                    aria-label={`${line.lineName} baseline value`}
+                    className="w-32 text-right px-2 py-1 rounded border border-slate-300 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-900 dark:text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-shadow"
                   />
                 </td>
                 <td className="px-4 py-2">
@@ -482,8 +516,11 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                   className={`w-full text-left p-2 rounded-lg text-sm transition ${selected?.id === b.id ? 'bg-purple-500/20 text-purple-400' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'}`}
                 >
                   <div className="font-medium truncate">{b.title}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">
-                    {b.status} · v{b.version}
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${getStatusBadgeClass(b.status)}`}>
+                      {b.status}
+                    </span>
+                    <span className="text-xs text-slate-500">v{b.version}</span>
                   </div>
                 </button>
               ))
@@ -529,7 +566,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                     const linesSummary = lines
                       .map(
                         (l) =>
-                          `${l.lineName} (${l.statementType}): ${l.baselineValue.toLocaleString()} ${selected?.currency}`
+                          `${l.lineName} (${l.statementType}): ${fmtNumber.format(l.baselineValue)} ${selected?.currency}`
                       )
                       .join('\n');
                     const prompt = encodeURIComponent(
@@ -553,10 +590,12 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                 </button>
               </div>
             </div>
-            <div className="border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 flex gap-1">
+            <div role="tablist" className="border-b border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 flex gap-1">
               {tabItems.map((tab) => (
                 <button
                   key={tab.id}
+                  role="tab"
+                  aria-selected={activeTab === tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-3 py-2 text-sm border-b-2 transition ${activeTab === tab.id ? 'border-purple-500 text-purple-500' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
                 >
@@ -606,9 +645,9 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                 key={p}
                                 className="px-3 py-2 text-right font-mono text-slate-900 dark:text-white"
                               >
-                                {(
+                                {fmtNumber.format(
                                   activeScenario?.projections?.lines?.[line.lineCode]?.[p] ?? 0
-                                ).toLocaleString()}
+                                )}
                               </td>
                             ))}
                           </tr>
@@ -620,41 +659,63 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
               {activeTab === 'scenarios' && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 gap-4">
-                    {scenarios.map((sc) => (
-                      <div
-                        key={sc.id}
-                        className={`rounded-xl p-4 border ${SCENARIO_COLORS[sc.scenarioType] || 'border-slate-200 dark:border-navy-700'}`}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="font-semibold text-slate-900 dark:text-white">
-                            {sc.name}
-                          </h4>
-                          {sc.isActive && (
-                            <span className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full">
-                              Active
-                            </span>
-                          )}
-                        </div>
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-slate-500">
-                              {t('finance.budget.totalRevenue', 'Revenue')}
-                            </span>
-                            <span className="font-mono text-slate-900 dark:text-white">
-                              {(sc.summaryMetrics?.totalRevenue ?? 0).toLocaleString()}
-                            </span>
+                    {scenarios.map((sc) => {
+                      const baseRevenue = baseScenario?.summaryMetrics?.totalRevenue ?? 0;
+                      const baseNetIncome = baseScenario?.summaryMetrics?.netIncome ?? 0;
+                      const revenueDelta = (sc.summaryMetrics?.totalRevenue ?? 0) - baseRevenue;
+                      const netIncomeDelta = (sc.summaryMetrics?.netIncome ?? 0) - baseNetIncome;
+                      const isBase = sc.scenarioType === 'base';
+
+                      return (
+                        <div
+                          key={sc.id}
+                          className={`rounded-xl p-4 border ${SCENARIO_COLORS[sc.scenarioType] || 'border-slate-200 dark:border-navy-700'}`}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-semibold text-slate-900 dark:text-white">
+                              {sc.name}
+                            </h4>
+                            {sc.isActive && (
+                              <span className="text-xs font-medium px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded-full">
+                                Active
+                              </span>
+                            )}
                           </div>
-                          <div className="flex justify-between">
-                            <span className="text-slate-500">
-                              {t('finance.budget.netIncome', 'Net Income')}
-                            </span>
-                            <span className="font-mono text-slate-900 dark:text-white">
-                              {(sc.summaryMetrics?.netIncome ?? 0).toLocaleString()}
-                            </span>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between items-baseline">
+                              <span className="text-slate-500">
+                                {t('finance.budget.totalRevenue', 'Revenue')}
+                              </span>
+                              <div className="text-right">
+                                <span className="font-mono text-slate-900 dark:text-white">
+                                  {fmtNumber.format(sc.summaryMetrics?.totalRevenue ?? 0)}
+                                </span>
+                                {!isBase && revenueDelta !== 0 && (
+                                  <span className={`ml-2 text-xs font-medium ${revenueDelta > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                    {revenueDelta > 0 ? '+' : ''}{fmtNumber.format(revenueDelta)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex justify-between items-baseline">
+                              <span className="text-slate-500">
+                                {t('finance.budget.netIncome', 'Net Income')}
+                              </span>
+                              <div className="text-right">
+                                <span className="font-mono text-slate-900 dark:text-white">
+                                  {fmtNumber.format(sc.summaryMetrics?.netIncome ?? 0)}
+                                </span>
+                                {!isBase && netIncomeDelta !== 0 && (
+                                  <span className={`ml-2 text-xs font-medium ${netIncomeDelta > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                    {netIncomeDelta > 0 ? '+' : ''}{fmtNumber.format(netIncomeDelta)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   {scenarios.length > 0 && (
                     <div className="bg-slate-50 dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
@@ -682,24 +743,37 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                             'netIncome',
                             'operatingCF',
                             'fcf',
-                          ].map((metric) => (
-                            <tr
-                              key={metric}
-                              className="border-b border-slate-200 dark:border-navy-700 last:border-0"
-                            >
-                              <td className="px-4 py-2 font-medium text-slate-700 dark:text-slate-300 capitalize">
-                                {metric.replace(/([A-Z])/g, ' $1').trim()}
-                              </td>
-                              {scenarios.map((sc) => (
-                                <td
-                                  key={sc.id}
-                                  className="px-4 py-2 text-right font-mono text-slate-900 dark:text-white"
-                                >
-                                  {((sc.summaryMetrics as any)?.[metric] ?? 0).toLocaleString()}
+                          ].map((metric) => {
+                            const baseVal = (baseScenario?.summaryMetrics as any)?.[metric] ?? 0;
+                            return (
+                              <tr
+                                key={metric}
+                                className="border-b border-slate-200 dark:border-navy-700 last:border-0"
+                              >
+                                <td className="px-4 py-2 font-medium text-slate-700 dark:text-slate-300 capitalize">
+                                  {metric.replace(/([A-Z])/g, ' $1').trim()}
                                 </td>
-                              ))}
-                            </tr>
-                          ))}
+                                {scenarios.map((sc) => {
+                                  const val = (sc.summaryMetrics as any)?.[metric] ?? 0;
+                                  const delta = val - baseVal;
+                                  const isBase = sc.scenarioType === 'base';
+                                  return (
+                                    <td
+                                      key={sc.id}
+                                      className="px-4 py-2 text-right font-mono text-slate-900 dark:text-white"
+                                    >
+                                      {fmtNumber.format(val)}
+                                      {!isBase && delta !== 0 && (
+                                        <span className={`ml-1.5 text-xs ${delta > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                          ({delta > 0 ? '+' : ''}{fmtNumber.format(delta)})
+                                        </span>
+                                      )}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -729,7 +803,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                           {t('finance.budget.totalRevenueUplift', 'Revenue Uplift')}
                         </div>
                         <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300 font-mono">
-                          +{initiativeImpactTotal.revenueUplift.toLocaleString()}
+                          +{fmtNumber.format(initiativeImpactTotal.revenueUplift)}
                         </div>
                       </div>
                       <div className="rounded-xl p-4 border border-blue-500/30 bg-blue-500/5">
@@ -737,7 +811,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                           {t('finance.budget.totalCostSavings', 'Cost Savings')}
                         </div>
                         <div className="text-xl font-bold text-blue-700 dark:text-blue-300 font-mono">
-                          +{initiativeImpactTotal.costSavings.toLocaleString()}
+                          +{fmtNumber.format(initiativeImpactTotal.costSavings)}
                         </div>
                       </div>
                       <div className="rounded-xl p-4 border border-amber-500/30 bg-amber-500/5">
@@ -745,7 +819,7 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                           {t('finance.budget.totalCapex', 'CAPEX Required')}
                         </div>
                         <div className="text-xl font-bold text-amber-700 dark:text-amber-300 font-mono">
-                          {initiativeImpactTotal.capexRequired.toLocaleString()}
+                          {fmtNumber.format(initiativeImpactTotal.capexRequired)}
                         </div>
                       </div>
                     </div>
@@ -802,18 +876,18 @@ export const BudgetWorkspace: React.FC<BudgetWorkspaceProps> = ({
                                 </button>
                               </td>
                               <td className="px-4 py-2">
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-300">
+                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getStatusBadgeClass(ini.status)}`}>
                                   {ini.status}
                                 </span>
                               </td>
                               <td className="px-4 py-2 text-right font-mono text-emerald-600 dark:text-emerald-400">
-                                {ini.revenueUplift ? `+${ini.revenueUplift.toLocaleString()}` : '—'}
+                                {ini.revenueUplift ? `+${fmtNumber.format(ini.revenueUplift)}` : '—'}
                               </td>
                               <td className="px-4 py-2 text-right font-mono text-blue-600 dark:text-blue-400">
-                                {ini.costSavings ? `+${ini.costSavings.toLocaleString()}` : '—'}
+                                {ini.costSavings ? `+${fmtNumber.format(ini.costSavings)}` : '—'}
                               </td>
                               <td className="px-4 py-2 text-right font-mono text-amber-600 dark:text-amber-400">
-                                {ini.capexRequired ? ini.capexRequired.toLocaleString() : '—'}
+                                {ini.capexRequired ? fmtNumber.format(ini.capexRequired) : '—'}
                               </td>
                               <td className="px-4 py-2">
                                 <button
