@@ -93,389 +93,253 @@ function makeMap(title, body, tags, nodes, edges, extensions = {}) {
 }
 
 function showcaseMaps() {
+  // ═══════════════════════════════════════════════════════════════════════
+  // MAP 1 — Strategy: 3-branch compact decision tree (simple, focused)
+  // Theme: Product pricing pivot
+  // ═══════════════════════════════════════════════════════════════════════
   const map1 = (() => {
-    const base = starterFrame('Revenue growth is stalling because CAC payback is above 6 months.', [
-      { id: 'branch-signals', label: 'Signals', x: -360, y: -200, branchKey: 'signals' },
-      { id: 'branch-options', label: 'Options', x: 360, y: -220, branchKey: 'options' },
-      { id: 'branch-constraints', label: 'Constraints', x: 420, y: 30, branchKey: 'constraints' },
-      { id: 'branch-experiments', label: 'Experiments', x: 60, y: 300, branchKey: 'experiments' },
-      { id: 'branch-proof', label: 'Proof', x: -420, y: 60, branchKey: 'proof' },
+    const base = starterFrame('Conversion rate dropped 40% after the last pricing change.', [
+      { id: 'b-causes', label: 'Root Causes', x: -380, y: -160, branchKey: 'causes' },
+      { id: 'b-options', label: 'Options', x: 380, y: -160, branchKey: 'options' },
+      { id: 'b-validation', label: 'Validation', x: 0, y: 260, branchKey: 'validation' },
     ]);
     const nodes = [
-      base.root,
-      ...base.branches,
-      ideaNode('signal-pipeline', 'Pipeline quality dropped after broadening ICP', -620, -250, 'signals', {
-        semanticType: 'signal',
-        context: 'Win rate fell while top-of-funnel volume increased.',
+      base.root, ...base.branches,
+      ideaNode('c-anchor', 'Price anchor shifted from $49 to $89 without value framing', -620, -220, 'causes', {
+        semanticType: 'hypothesis', status: 'exploring', tags: ['pricing', 'ux'],
+        context: 'Landing page still shows old value props that matched the $49 tier.',
       }),
-      ideaNode('signal-payback', 'Average CAC payback moved from 4.5 to 7.2 months', -600, -130, 'signals', {
-        semanticType: 'metric',
+      ideaNode('c-segment', 'SMB segment is price-sensitive; enterprise is not', -580, -80, 'causes', {
+        semanticType: 'insight', tags: ['segments'],
+        notes: 'Churn concentrated in accounts under $500 MRR.',
       }),
-      ideaNode('opt-pl', 'Launch in Poland first with one beachhead vertical', 560, -260, 'options', {
-        semanticType: 'option',
-        status: 'candidate',
-        tags: ['market', 'launch', 'vertical'],
-        context: 'Fastest path to sharper positioning and shorter learning loops.',
-        artifactLinks: [{ artifactRef: { type: 'decision', id: 'DEC-PL-LAUNCH' }, label: 'Launch decision' }],
+      ideaNode('c-competitor', 'Competitor launched a free tier the same week', -640, 50, 'causes', {
+        semanticType: 'signal', status: 'validated',
+        evidenceLinks: [{ id: 'ev-comp', type: 'url', title: 'Competitor launch post', url: 'https://example.com/competitor-free-tier' }],
       }),
-      ideaNode('opt-de', 'Pilot in Germany with channel partner', 600, -140, 'options', {
-        semanticType: 'option',
-        status: 'candidate',
-        tags: ['partner', 'pilot'],
-        context: 'Could unlock larger contracts, but adds partner dependency.',
+      ideaNode('o-revert', 'Revert to $49 with annual commitment', 580, -220, 'options', {
+        semanticType: 'option', status: 'candidate', priority: 70,
       }),
-      ideaNode('constraint-compliance', 'German expansion adds compliance and localization overhead', 610, 20, 'constraints', {
-        semanticType: 'risk',
-        riskNote: 'Need local accounting and tax partner.',
+      ideaNode('o-tiered', 'Introduce a $29 starter tier with usage caps', 620, -80, 'options', {
+        semanticType: 'option', status: 'candidate', priority: 85,
+        goal: 'Recapture SMB segment without cannibalizing enterprise.',
       }),
-      ideaNode('constraint-team', 'Team can only support one new motion in the next 90 days', 460, 130, 'constraints', {
-        semanticType: 'constraint',
+      ideaNode('o-value', 'Rebuild value page to justify $89 with ROI calculator', 560, 50, 'options', {
+        semanticType: 'action', tags: ['marketing', 'ux'],
       }),
-      ideaNode('exp-smb', 'Run 3-week outbound sprint in one Polish niche', 120, 380, 'experiments', {
-        semanticType: 'action',
-        goal: 'Validate demand and close 5 discovery calls with one segment.',
+      ideaNode('v-ab', 'A/B test $29 tier vs current pricing for 2 weeks', -160, 330, 'validation', {
+        semanticType: 'action', goal: 'Measure conversion lift and revenue impact.',
       }),
-      ideaNode('exp-pricing', 'Test value-based pricing in current market before expansion', -40, 320, 'experiments', {
-        semanticType: 'action',
-        goal: 'Check whether growth issue is positioning vs. geography.',
+      ideaNode('v-interviews', 'Run 10 exit interviews with churned SMB accounts', 160, 330, 'validation', {
+        semanticType: 'action', goal: 'Confirm price is the primary churn driver.',
       }),
-      cardNode('knowledge-growth', 'knowledgeCard', 'Benchmarks show one beachhead market beats simultaneous country launches.', -160, -350, 'proof', {
-        notes: 'Use one market as a proof layer before cross-border scaling.',
-        tags: ['benchmark', 'growth'],
-      }),
-      cardNode('note-team', 'noteCard', 'CEO prefers the lower-complexity path that can show traction in one quarter.', 260, -20, 'options', {
-        notes: 'Keep team overhead low in the first 90 days.',
-      }),
-      cardNode('evidence-report', 'evidenceCard', 'Desk research on market attractiveness', -560, 150, 'proof', {
-        evidenceLinks: [{ id: 'ev-1', type: 'url', title: 'Research memo', url: 'https://example.com/research' }],
+      cardNode('k-benchmark', 'knowledgeCard', 'SaaS pricing benchmarks show 3x conversion lift from adding a starter tier.', -300, 140, 'causes', {
+        notes: 'Source: OpenView 2025 SaaS Benchmarks report.', tags: ['benchmark'],
       }),
     ];
     const edges = [
       ...base.branchEdges,
-      edge('branch-signals', 'signal-pipeline'),
-      edge('branch-signals', 'signal-payback'),
-      edge('branch-options', 'opt-pl'),
-      edge('branch-options', 'opt-de'),
-      edge('branch-constraints', 'constraint-compliance'),
-      edge('branch-constraints', 'constraint-team'),
-      edge('branch-experiments', 'exp-smb'),
-      edge('branch-experiments', 'exp-pricing'),
-      edge('branch-proof', 'knowledge-growth'),
-      edge('branch-proof', 'evidence-report'),
-      edge('opt-pl', 'note-team'),
-      edge('signal-payback', 'opt-pl', 'relation', { data: { relation: 'supports', label: 'supports' } }),
-      edge('constraint-compliance', 'opt-de', 'relation', { data: { relation: 'blocks', label: 'blocks' } }),
-      edge('exp-smb', 'opt-pl', 'relation', { data: { relation: 'validates', label: 'validates' } }),
-      edge('exp-pricing', 'signal-payback', 'relation', { data: { relation: 'tests', label: 'tests' } }),
+      edge('b-causes', 'c-anchor'), edge('b-causes', 'c-segment'), edge('b-causes', 'c-competitor'),
+      edge('b-options', 'o-revert'), edge('b-options', 'o-tiered'), edge('b-options', 'o-value'),
+      edge('b-validation', 'v-ab'), edge('b-validation', 'v-interviews'),
+      edge('c-segment', 'k-benchmark'),
+      edge('c-anchor', 'o-value', 'relation', { data: { relation: 'supports', label: 'supports' } }),
+      edge('c-segment', 'o-tiered', 'relation', { data: { relation: 'supports', label: 'supports' } }),
+      edge('v-ab', 'o-tiered', 'relation', { data: { relation: 'validates', label: 'validates' } }),
     ];
-    return makeMap(
-      'Market Expansion Decision',
-      'Problem-centered growth map with signals, strategic options, constraints and experiments.',
-      ['showcase', 'strategy', 'growth'],
-      nodes,
-      edges,
-      { mindmap: { viewState: { collapsedNodeIds: [], viewport: { x: 50, y: 80, zoom: 0.92 } } } }
-    );
+    return makeMap('Pricing Pivot Analysis', 'Compact 3-branch decision tree analyzing a pricing drop with root causes, options and validation experiments.', ['showcase', 'pricing', 'strategy'], nodes, edges,
+      { mindmap: { viewState: { collapsedNodeIds: [], viewport: { x: 0, y: 0, zoom: 0.95 } } } });
   })();
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // MAP 2 — Research: 5-branch deep interview synthesis
+  // Theme: Customer discovery for new product line
+  // ═══════════════════════════════════════════════════════════════════════
   const map2 = (() => {
-    const base = starterFrame('New customers do not reach first value during the first week.', [
-      { id: 'branch-segments', label: 'Segments', x: -420, y: -220, branchKey: 'segments' },
-      { id: 'branch-friction', label: 'Friction', x: -420, y: 20, branchKey: 'friction' },
-      { id: 'branch-quotes', label: 'Quotes', x: 0, y: -320, branchKey: 'quotes' },
-      { id: 'branch-opportunities', label: 'Opportunities', x: 420, y: -160, branchKey: 'opportunities' },
-      { id: 'branch-next', label: 'Next Interviews', x: 140, y: 320, branchKey: 'next' },
+    const base = starterFrame('We do not know which jobs-to-be-done justify building a second product line.', [
+      { id: 'b-personas', label: 'Personas', x: -440, y: -200, branchKey: 'personas' },
+      { id: 'b-jtbd', label: 'Jobs-to-be-Done', x: 0, y: -300, branchKey: 'jtbd' },
+      { id: 'b-evidence', label: 'Evidence', x: 440, y: -200, branchKey: 'evidence' },
+      { id: 'b-gaps', label: 'Gaps', x: -380, y: 120, branchKey: 'gaps' },
+      { id: 'b-next', label: 'Next Steps', x: 380, y: 120, branchKey: 'next' },
     ]);
     const nodes = [
-      base.root,
-      ...base.branches,
-      ideaNode('seg-smb', 'SMB operators need proof of value in 3 days', -650, -260, 'segments', {
-        context: 'Small teams do not have time for multi-session onboarding.',
+      base.root, ...base.branches,
+      ideaNode('p-ops', 'Operations Manager', -660, -260, 'personas', { semanticType: 'topic', tags: ['persona'], notes: 'Manages 5-15 people, needs workflow automation.' }),
+      ideaNode('p-analyst', 'Business Analyst', -640, -130, 'personas', { semanticType: 'topic', tags: ['persona'], notes: 'Spends 60% of time on data prep, wants self-service.' }),
+      ideaNode('p-exec', 'VP of Strategy', -680, 0, 'personas', { semanticType: 'topic', tags: ['persona'], notes: 'Needs board-ready outputs, not raw data.' }),
+      ideaNode('j-automate', 'Automate repetitive intake without losing control', -180, -400, 'jtbd', { semanticType: 'hypothesis', status: 'exploring' }),
+      ideaNode('j-synthesize', 'Synthesize scattered inputs into one decision view', 180, -400, 'jtbd', { semanticType: 'hypothesis', status: 'validated' }),
+      ideaNode('j-report', 'Generate stakeholder-ready reports from working artifacts', 0, -200, 'jtbd', { semanticType: 'hypothesis', status: 'exploring' }),
+      cardNode('ev-quote1', 'noteCard', '"I spend Monday mornings copying data between 4 tools."', 580, -260, 'evidence', { notes: 'Ops Manager, Interview #3', tags: ['quote'] }),
+      cardNode('ev-quote2', 'noteCard', '"The board deck takes me 2 days because nothing connects."', 620, -130, 'evidence', { notes: 'VP Strategy, Interview #7', tags: ['quote'] }),
+      cardNode('ev-survey', 'evidenceCard', 'Survey: 78% of analysts say data prep is their biggest time sink', 560, 0, 'evidence', {
+        evidenceLinks: [{ id: 'ev-s1', type: 'url', title: 'Survey results', url: 'https://example.com/survey-2025' }],
       }),
-      ideaNode('seg-enterprise', 'Enterprise champions want guided rollout templates', -630, -150, 'segments', {
-        context: 'They need repeatability across teams.',
-      }),
-      ideaNode('friction-manual', 'Setup feels too manual and workshop-heavy', -620, 0, 'friction', {
-        context: 'Repeated in 7/10 interviews.',
-        tags: ['interviews', 'ops'],
-      }),
-      ideaNode('friction-reporting', 'Teams cannot see ROI quickly', -620, 120, 'friction', {
-        context: 'Exec buyers want week-one visibility.',
-      }),
-      cardNode('quote-ops', 'noteCard', '"We loved the idea, but setup still took two workshops."', -120, -450, 'quotes', {
-        notes: 'Interview quote from operations lead.',
-        tags: ['quote'],
-      }),
-      cardNode('quote-cfo', 'noteCard', '"If I cannot show a before/after report in week one, the pilot dies."', 140, -410, 'quotes', {
-        notes: 'Quote from CFO buyer interview.',
-      }),
-      ideaNode('opp-guided', 'Build guided setup flow with progress checklist', 560, -230, 'opportunities', {
-        semanticType: 'option',
-      }),
-      ideaNode('opp-templates', 'Offer role-based starter templates', 610, -110, 'opportunities', {
-        semanticType: 'option',
-      }),
-      ideaNode('opp-report', 'Ship a default 7-day value report', 520, 20, 'opportunities', {
-        semanticType: 'option',
-      }),
-      ideaNode('next-concierge', 'Run concierge onboarding for 5 pilots', 30, 390, 'next', {
-        goal: 'Validate which setup tasks must be automated first.',
-      }),
-      cardNode('knowledge-pattern', 'knowledgeCard', 'Pattern: value realization requires a visible 7-day success artifact.', -300, 220, 'friction', {
-        notes: 'Strong signal across buyers and champions.',
-      }),
-      cardNode('evidence-call', 'evidenceCard', 'Interview recording index', 250, 300, 'next', {
-        artifactLinks: [{ artifactRef: { type: 'meeting', id: 'MTG-CUST-07' }, label: 'Interview call' }],
-      }),
+      ideaNode('g-integration', 'No clear integration story between intake and reporting', -560, 180, 'gaps', { semanticType: 'risk', riskNote: 'Could fragment the product further.' }),
+      ideaNode('g-positioning', 'Unclear whether this is an add-on or standalone product', -520, 300, 'gaps', { semanticType: 'question' }),
+      ideaNode('n-prototype', 'Build a clickable prototype of the synthesis view', 520, 180, 'next', { semanticType: 'action', goal: 'Test with 5 analysts in 2 weeks.' }),
+      ideaNode('n-pricing', 'Run willingness-to-pay study with existing customers', 560, 300, 'next', { semanticType: 'action', goal: 'Determine if add-on or standalone pricing works.' }),
+      ideaNode('n-compete', 'Map competitive landscape for synthesis tools', 480, 60, 'next', { semanticType: 'action' }),
     ];
     const edges = [
       ...base.branchEdges,
-      edge('branch-segments', 'seg-smb'),
-      edge('branch-segments', 'seg-enterprise'),
-      edge('branch-friction', 'friction-manual'),
-      edge('branch-friction', 'friction-reporting'),
-      edge('branch-friction', 'knowledge-pattern'),
-      edge('branch-quotes', 'quote-ops'),
-      edge('branch-quotes', 'quote-cfo'),
-      edge('branch-opportunities', 'opp-guided'),
-      edge('branch-opportunities', 'opp-templates'),
-      edge('branch-opportunities', 'opp-report'),
-      edge('branch-next', 'next-concierge'),
-      edge('branch-next', 'evidence-call'),
-      edge('quote-ops', 'friction-manual', 'relation', { data: { relation: 'evidence_for', label: 'evidence' } }),
-      edge('quote-cfo', 'friction-reporting', 'relation', { data: { relation: 'evidence_for', label: 'evidence' } }),
-      edge('knowledge-pattern', 'opp-report', 'relation', { data: { relation: 'supports', label: 'supports' } }),
-      edge('next-concierge', 'opp-guided', 'relation', { data: { relation: 'validates', label: 'validates' } }),
-      edge('seg-enterprise', 'opp-templates', 'relation', { data: { relation: 'supports', label: 'supports' } }),
+      edge('b-personas', 'p-ops'), edge('b-personas', 'p-analyst'), edge('b-personas', 'p-exec'),
+      edge('b-jtbd', 'j-automate'), edge('b-jtbd', 'j-synthesize'), edge('b-jtbd', 'j-report'),
+      edge('b-evidence', 'ev-quote1'), edge('b-evidence', 'ev-quote2'), edge('b-evidence', 'ev-survey'),
+      edge('b-gaps', 'g-integration'), edge('b-gaps', 'g-positioning'),
+      edge('b-next', 'n-prototype'), edge('b-next', 'n-pricing'), edge('b-next', 'n-compete'),
+      edge('ev-quote1', 'j-automate', 'relation', { data: { relation: 'evidence_for', label: 'evidence' } }),
+      edge('ev-quote2', 'j-report', 'relation', { data: { relation: 'evidence_for', label: 'evidence' } }),
+      edge('ev-survey', 'j-synthesize', 'relation', { data: { relation: 'supports', label: 'supports' } }),
+      edge('p-analyst', 'j-automate', 'relation', { data: { relation: 'needs', label: 'needs' } }),
+      edge('g-positioning', 'n-pricing', 'relation', { data: { relation: 'requires', label: 'requires' } }),
+      edge('j-synthesize', 'n-prototype', 'relation', { data: { relation: 'validates', label: 'validates' } }),
     ];
-    return makeMap(
-      'Customer Interview Synthesis',
-      'Research map centered on onboarding problem with segments, quotes and solution opportunities.',
-      ['showcase', 'research', 'customer'],
-      nodes,
-      edges,
-      { mindmap: { viewState: { collapsedNodeIds: ['branch-quotes'], viewport: { x: -40, y: 60, zoom: 0.88 } } } }
-    );
+    return makeMap('Product Discovery: Second Product Line', 'Deep research map with personas, jobs-to-be-done, evidence quotes, gaps and next steps.', ['showcase', 'research', 'discovery'], nodes, edges,
+      { mindmap: { viewState: { collapsedNodeIds: [], viewport: { x: 0, y: 0, zoom: 0.85 } } } });
   })();
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // MAP 3 — Execution: 4-branch with deep nesting (3 levels)
+  // Theme: Platform migration project
+  // ═══════════════════════════════════════════════════════════════════════
   const map3 = (() => {
-    const base = starterFrame('Analysts lose too much time on repetitive intake and triage work.', [
-      { id: 'branch-current', label: 'Current Work', x: -430, y: -220, branchKey: 'current' },
-      { id: 'branch-automation', label: 'Automation Bets', x: 420, y: -220, branchKey: 'automation' },
-      { id: 'branch-guardrails', label: 'Guardrails', x: 520, y: 20, branchKey: 'guardrails' },
-      { id: 'branch-dependencies', label: 'Dependencies', x: -420, y: 80, branchKey: 'dependencies' },
-      { id: 'branch-pilot', label: 'Pilot Metrics', x: 80, y: 320, branchKey: 'pilot' },
+    const base = starterFrame('Legacy platform migration is blocked because data integrity checks keep failing.', [
+      { id: 'b-blockers', label: 'Blockers', x: -400, y: -180, branchKey: 'blockers' },
+      { id: 'b-workstreams', label: 'Workstreams', x: 400, y: -180, branchKey: 'workstreams' },
+      { id: 'b-risks', label: 'Risks', x: -340, y: 180, branchKey: 'risks' },
+      { id: 'b-milestones', label: 'Milestones', x: 340, y: 180, branchKey: 'milestones' },
     ]);
     const nodes = [
-      base.root,
-      ...base.branches,
-      ideaNode('current-copy', 'Analysts repeat the same intake checklist 20+ times per week', -660, -250, 'current', {
-        status: 'active',
-      }),
-      ideaNode('current-routing', 'Triage routing decisions are manual and inconsistent', -600, -130, 'current', {
-        status: 'at_risk',
-      }),
-      ideaNode('option-ai-brief', 'Generate draft brief from uploaded docs', 610, -260, 'automation', {
-        semanticType: 'action',
-        artifactLinks: [{ artifactRef: { type: 'tool', id: 'TOOL-DOC-PARSER' }, label: 'Doc parser' }],
-      }),
-      ideaNode('option-routing', 'Route items by semantic tags', 640, -120, 'automation', { semanticType: 'action' }),
-      ideaNode('option-summary', 'Auto-summarize key context before analyst review', 520, 20, 'automation', {
-        semanticType: 'action',
-      }),
-      ideaNode('guardrail-review', 'Every AI step must remain propose -> preview -> accept', 660, 20, 'guardrails', {
-        riskNote: 'Must keep accept/reject governance.',
-      }),
-      ideaNode('guardrail-confidence', 'Confidence score required on every AI-generated step', 560, 140, 'guardrails', {
-        semanticType: 'constraint',
-      }),
-      cardNode('dep-parser', 'evidenceCard', 'Existing parser service can feed structured intake fields', -500, 170, 'dependencies', {
-        artifactLinks: [{ artifactRef: { type: 'tool', id: 'TOOL-DOC-PARSER' }, label: 'Doc parser' }],
-      }),
-      cardNode('dep-audit', 'knowledgeCard', 'Audit requirement: generated output must be reviewable and attributable.', -260, 260, 'dependencies', {
-        notes: 'Keeps the automation acceptable for operations and governance.',
-      }),
-      ideaNode('pilot-shadow', 'Shadow-run automation for 2 weeks', -20, 380, 'pilot', {
-        goal: 'Measure time saved before operational rollout.',
-      }),
-      ideaNode('pilot-target', 'Target: save 30% analyst handling time without hidden auto-actions', 170, 320, 'pilot', {
-        semanticType: 'metric',
-      }),
-      cardNode('note-ops', 'noteCard', 'Ops wants confidence score on every generated step.', 300, 110, 'automation'),
-      cardNode('evidence-audit', 'evidenceCard', 'AI audit checklist', 240, 430, 'pilot', {
-        artifactLinks: [{ artifactRef: { type: 'report', id: 'REP-AI-AUDIT' }, label: 'AI audit report' }],
-      }),
+      base.root, ...base.branches,
+      ideaNode('bl-schema', 'Schema drift between legacy and target DB', -620, -240, 'blockers', { status: 'blocked', semanticType: 'risk' }),
+      ideaNode('bl-orphan', 'Orphaned records with no foreign key match', -600, -100, 'blockers', { status: 'at_risk' }),
+      ideaNode('bl-schema-fix', 'Write migration script to reconcile schema differences', -820, -300, 'blockers', { semanticType: 'action', goal: 'Automate schema alignment.' }),
+      ideaNode('bl-schema-test', 'Validate migration script against staging copy', -840, -180, 'blockers', { semanticType: 'action' }),
+      ideaNode('bl-orphan-audit', 'Audit orphaned records and classify: migrate, archive, or delete', -800, -40, 'blockers', { semanticType: 'action' }),
+      ideaNode('ws-data', 'Data migration workstream', 600, -240, 'workstreams', { semanticType: 'topic', tags: ['workstream'] }),
+      ideaNode('ws-api', 'API compatibility layer', 640, -100, 'workstreams', { semanticType: 'topic', tags: ['workstream'] }),
+      ideaNode('ws-data-etl', 'Build ETL pipeline with checksums', 800, -300, 'workstreams', { semanticType: 'action' }),
+      ideaNode('ws-data-validate', 'Run row-count and hash validation post-migration', 820, -180, 'workstreams', { semanticType: 'action' }),
+      ideaNode('ws-api-shim', 'Deploy backward-compatible API shim for 90 days', 840, -60, 'workstreams', { semanticType: 'action', rationale: 'Gives consumers time to migrate without breaking.' }),
+      ideaNode('r-downtime', 'Extended downtime during cutover', -520, 240, 'risks', { riskNote: 'Max acceptable: 4 hours. Current estimate: 8 hours.' }),
+      ideaNode('r-rollback', 'No tested rollback procedure', -520, 360, 'risks', { riskNote: 'Must have verified rollback before go-live.', semanticType: 'risk' }),
+      ideaNode('m-staging', 'Staging migration complete', 520, 240, 'milestones', { semanticType: 'decision_point', status: 'exploring' }),
+      ideaNode('m-golive', 'Production go-live', 520, 360, 'milestones', { semanticType: 'decision_point', status: 'idea' }),
+      cardNode('k-pattern', 'knowledgeCard', 'Blue-green deployment reduces cutover risk to near-zero downtime.', -200, 320, 'risks', { notes: 'Requires parallel infrastructure budget.', tags: ['pattern'] }),
     ];
     const edges = [
       ...base.branchEdges,
-      edge('branch-current', 'current-copy'),
-      edge('branch-current', 'current-routing'),
-      edge('branch-automation', 'option-ai-brief'),
-      edge('branch-automation', 'option-routing'),
-      edge('branch-automation', 'option-summary'),
-      edge('branch-guardrails', 'guardrail-review'),
-      edge('branch-guardrails', 'guardrail-confidence'),
-      edge('branch-dependencies', 'dep-parser'),
-      edge('branch-dependencies', 'dep-audit'),
-      edge('branch-pilot', 'pilot-shadow'),
-      edge('branch-pilot', 'pilot-target'),
-      edge('branch-pilot', 'evidence-audit'),
-      edge('option-ai-brief', 'note-ops'),
-      edge('dep-audit', 'guardrail-review', 'relation', { data: { relation: 'supports', label: 'supports' } }),
-      edge('pilot-shadow', 'option-ai-brief', 'relation', { data: { relation: 'validates', label: 'validates' } }),
-      edge('current-routing', 'option-routing', 'relation', { data: { relation: 'supports', label: 'supports' } }),
-      edge('guardrail-confidence', 'option-summary', 'relation', { data: { relation: 'constrains', label: 'constrains' } }),
+      edge('b-blockers', 'bl-schema'), edge('b-blockers', 'bl-orphan'),
+      edge('bl-schema', 'bl-schema-fix'), edge('bl-schema', 'bl-schema-test'),
+      edge('bl-orphan', 'bl-orphan-audit'),
+      edge('b-workstreams', 'ws-data'), edge('b-workstreams', 'ws-api'),
+      edge('ws-data', 'ws-data-etl'), edge('ws-data', 'ws-data-validate'),
+      edge('ws-api', 'ws-api-shim'),
+      edge('b-risks', 'r-downtime'), edge('b-risks', 'r-rollback'), edge('b-risks', 'k-pattern'),
+      edge('b-milestones', 'm-staging'), edge('b-milestones', 'm-golive'),
+      edge('bl-schema-fix', 'ws-data-etl', 'relation', { data: { relation: 'blocks', label: 'blocks' } }),
+      edge('r-downtime', 'm-golive', 'relation', { data: { relation: 'constrains', label: 'constrains' } }),
+      edge('k-pattern', 'r-downtime', 'relation', { data: { relation: 'mitigates', label: 'mitigates' } }),
+      edge('ws-data-validate', 'm-staging', 'relation', { data: { relation: 'validates', label: 'validates' } }),
     ];
-    return makeMap(
-      'AI Workflow Automation Blueprint',
-      'Automation map with current-state pain, governance guardrails, dependencies and pilot metrics.',
-      ['showcase', 'automation', 'ai'],
-      nodes,
-      edges,
-      {
-        governance: {
-          replay: [{ action: 'seeded_showcase', at: new Date().toISOString(), summary: 'Initial governed automation blueprint' }],
-        },
-        mindmap: { viewState: { collapsedNodeIds: [], viewport: { x: 30, y: 40, zoom: 0.94 } } },
-      }
-    );
+    return makeMap('Platform Migration War Room', 'Execution map with deep nesting (3 levels), blockers, workstreams, risks and milestone gates.', ['showcase', 'migration', 'execution'], nodes, edges,
+      { mindmap: { viewState: { collapsedNodeIds: [], viewport: { x: 0, y: 0, zoom: 0.88 } } } });
   })();
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // MAP 4 — Governance: 6-branch wide map with many cross-links
+  // Theme: AI rollout governance
+  // ═══════════════════════════════════════════════════════════════════════
   const map4 = (() => {
-    const base = starterFrame('Q2 delivery is slipping because dependencies have no clear owners.', [
-      { id: 'branch-breakdowns', label: 'Breakdowns', x: -430, y: -220, branchKey: 'breakdowns' },
-      { id: 'branch-recovery', label: 'Recovery Plays', x: 430, y: -220, branchKey: 'recovery' },
-      { id: 'branch-owners', label: 'Owners', x: 500, y: 40, branchKey: 'owners' },
-      { id: 'branch-metrics', label: 'Metrics', x: -320, y: 210, branchKey: 'metrics' },
-      { id: 'branch-risks', label: 'Risks', x: 120, y: 330, branchKey: 'risks' },
-      { id: 'branch-comms', label: 'Comms', x: -540, y: 20, branchKey: 'comms' },
+    const base = starterFrame('AI features are shipping without consistent governance, creating compliance risk.', [
+      { id: 'b-inventory', label: 'AI Inventory', x: -440, y: -220, branchKey: 'inventory' },
+      { id: 'b-controls', label: 'Controls', x: 0, y: -300, branchKey: 'controls' },
+      { id: 'b-owners', label: 'Owners', x: 440, y: -220, branchKey: 'owners' },
+      { id: 'b-gaps', label: 'Gaps', x: -440, y: 80, branchKey: 'gaps' },
+      { id: 'b-actions', label: 'Actions', x: 440, y: 80, branchKey: 'actions' },
+      { id: 'b-metrics', label: 'Metrics', x: 0, y: 300, branchKey: 'metrics' },
     ]);
     const nodes = [
-      base.root,
-      ...base.branches,
-      ideaNode('break-milestones', 'Critical milestones slipped by 3 weeks', -650, -260, 'breakdowns', { status: 'blocked' }),
-      ideaNode('break-handoffs', 'Cross-team handoffs fail without a DRI', -620, -120, 'breakdowns', { status: 'at_risk' }),
-      ideaNode('recovery-warroom', 'Create daily recovery war room for the top dependency chain', 610, -250, 'recovery', { priority: 80 }),
-      ideaNode('recovery-scope', 'Freeze lower-priority scope until forecast stabilizes', 610, -110, 'recovery', { priority: 75 }),
-      ideaNode('owner-dri', 'Assign one DRI for each dependency cluster', 620, 50, 'owners', {
-        semanticType: 'action',
-      }),
-      ideaNode('owner-pmo', 'PMO owns escalation cadence and unblock decisions', 500, 170, 'owners', {
-        semanticType: 'action',
-      }),
-      cardNode('knowledge-kpi', 'knowledgeCard', 'Recovery success metric: restore forecast confidence above 80%.', -320, 300, 'metrics', {
-        artifactLinks: [{ artifactRef: { type: 'kpi', id: 'KPI-DELIVERY-CONFIDENCE' }, label: 'Delivery confidence KPI' }],
-      }),
-      ideaNode('metric-backlog', 'Track open blockers older than 48 hours', -520, 220, 'metrics', {
-        semanticType: 'metric',
-      }),
-      ideaNode('risk-morale', 'Recovery pace could burn out the team', 40, 430, 'risks', { riskNote: 'Need explicit workload guardrails.' }),
-      ideaNode('risk-quality', 'Compressed recovery could increase defect leakage', 220, 360, 'risks', { riskNote: 'Protect quality gates.' }),
-      cardNode('note-standup', 'noteCard', 'Daily exec-ready status note must be generated by 16:00.', -640, 70, 'comms'),
-      cardNode('evidence-plan', 'evidenceCard', 'Recovery worksheet', -450, 120, 'comms', {
-        artifactLinks: [{ artifactRef: { type: 'project', id: 'PRJ-Q2-RECOVERY' }, label: 'Recovery project' }],
-      }),
+      base.root, ...base.branches,
+      ideaNode('inv-chat', 'AI Chat assistant', -660, -280, 'inventory', { semanticType: 'topic', tags: ['ai', 'chat'] }),
+      ideaNode('inv-suggest', 'AI Suggestion engine', -640, -160, 'inventory', { semanticType: 'topic', tags: ['ai', 'suggestions'] }),
+      ideaNode('inv-expand', 'AI Branch expander', -660, -40, 'inventory', { semanticType: 'topic', tags: ['ai', 'mindmap'] }),
+      ideaNode('ctrl-review', 'Propose-preview-accept on every AI output', -180, -380, 'controls', { semanticType: 'constraint' }),
+      ideaNode('ctrl-audit', 'Audit trail for every AI action', 180, -380, 'controls', { semanticType: 'constraint' }),
+      ideaNode('ctrl-confidence', 'Confidence score visible to user', 0, -220, 'controls', { semanticType: 'constraint' }),
+      ideaNode('own-product', 'Product team owns AI feature flags', 620, -280, 'owners', { semanticType: 'action' }),
+      ideaNode('own-legal', 'Legal reviews AI disclosure language quarterly', 640, -160, 'owners', { semanticType: 'action' }),
+      ideaNode('own-eng', 'Engineering owns audit log infrastructure', 620, -40, 'owners', { semanticType: 'action' }),
+      ideaNode('gap-disclosure', 'No user-facing AI disclosure in 3 of 5 features', -620, 140, 'gaps', { semanticType: 'risk', riskNote: 'Regulatory exposure.' }),
+      ideaNode('gap-replay', 'AI replay log not exposed in UI for 2 features', -600, 260, 'gaps', { semanticType: 'risk' }),
+      ideaNode('act-disclosure', 'Add AI disclosure badge to all AI-powered surfaces', 600, 140, 'actions', { semanticType: 'action', priority: 90 }),
+      ideaNode('act-panel', 'Ship AI governance panel in workspace', 620, 260, 'actions', { semanticType: 'action', priority: 85 }),
+      ideaNode('met-coverage', 'AI governance coverage: % of features with full controls', -160, 380, 'metrics', { semanticType: 'metric' }),
+      ideaNode('met-incidents', 'AI incident count per quarter', 160, 380, 'metrics', { semanticType: 'metric' }),
     ];
     const edges = [
       ...base.branchEdges,
-      edge('branch-breakdowns', 'break-milestones'),
-      edge('branch-breakdowns', 'break-handoffs'),
-      edge('branch-recovery', 'recovery-warroom'),
-      edge('branch-recovery', 'recovery-scope'),
-      edge('branch-owners', 'owner-dri'),
-      edge('branch-owners', 'owner-pmo'),
-      edge('branch-metrics', 'knowledge-kpi'),
-      edge('branch-metrics', 'metric-backlog'),
-      edge('branch-risks', 'risk-morale'),
-      edge('branch-risks', 'risk-quality'),
-      edge('branch-comms', 'note-standup'),
-      edge('branch-comms', 'evidence-plan'),
-      edge('break-handoffs', 'owner-dri', 'relation', { data: { relation: 'mitigates', label: 'mitigates' } }),
-      edge('owner-pmo', 'recovery-warroom', 'relation', { data: { relation: 'supports', label: 'supports' } }),
-      edge('risk-morale', 'recovery-warroom', 'relation', { data: { relation: 'constrains', label: 'constrains' } }),
-      edge('metric-backlog', 'break-handoffs', 'relation', { data: { relation: 'tracks', label: 'tracks' } }),
+      edge('b-inventory', 'inv-chat'), edge('b-inventory', 'inv-suggest'), edge('b-inventory', 'inv-expand'),
+      edge('b-controls', 'ctrl-review'), edge('b-controls', 'ctrl-audit'), edge('b-controls', 'ctrl-confidence'),
+      edge('b-owners', 'own-product'), edge('b-owners', 'own-legal'), edge('b-owners', 'own-eng'),
+      edge('b-gaps', 'gap-disclosure'), edge('b-gaps', 'gap-replay'),
+      edge('b-actions', 'act-disclosure'), edge('b-actions', 'act-panel'),
+      edge('b-metrics', 'met-coverage'), edge('b-metrics', 'met-incidents'),
+      edge('gap-disclosure', 'act-disclosure', 'relation', { data: { relation: 'mitigates', label: 'mitigates' } }),
+      edge('gap-replay', 'act-panel', 'relation', { data: { relation: 'mitigates', label: 'mitigates' } }),
+      edge('ctrl-audit', 'own-eng', 'relation', { data: { relation: 'requires', label: 'requires' } }),
+      edge('ctrl-review', 'inv-chat', 'relation', { data: { relation: 'constrains', label: 'constrains' } }),
+      edge('ctrl-review', 'inv-suggest', 'relation', { data: { relation: 'constrains', label: 'constrains' } }),
+      edge('act-disclosure', 'met-coverage', 'relation', { data: { relation: 'tracks', label: 'tracks' } }),
+      edge('inv-expand', 'gap-replay', 'relation', { data: { relation: 'blocks', label: 'blocks' } }),
     ];
-    return makeMap(
-      'Q2 Delivery Recovery Plan',
-      'Execution recovery map with owner assignment, metrics, risks and communication plan.',
-      ['showcase', 'delivery', 'execution'],
-      nodes,
-      edges,
-      { mindmap: { viewState: { collapsedNodeIds: ['branch-comms'], viewport: { x: 80, y: 30, zoom: 0.9 } } } }
-    );
+    return makeMap('AI Governance Framework', 'Wide 6-branch governance map with inventory, controls, owners, gaps, actions and metrics — heavy cross-linking.', ['showcase', 'governance', 'ai'], nodes, edges,
+      {
+        canvasGovernance: { status: 'draft', aiReplayLog: [{ id: 'seed-1', tool: 'mindmap', generatorType: 'seed', proposalIds: [], rationale: ['Initial governance framework seed'], citations: [], acceptedAt: new Date().toISOString() }] },
+        mindmap: { viewState: { collapsedNodeIds: [], viewport: { x: 0, y: 0, zoom: 0.82 } } },
+      });
   })();
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // MAP 5 — Lean: 2-branch minimal map with deep sub-branches
+  // Theme: Personal OKR planning
+  // ═══════════════════════════════════════════════════════════════════════
   const map5 = (() => {
-    const base = starterFrame('Statement imports fail because issuer data is inconsistent and weakly controlled.', [
-      { id: 'branch-defects', label: 'Source Defects', x: -430, y: -220, branchKey: 'defects' },
-      { id: 'branch-controls', label: 'Controls', x: 430, y: -220, branchKey: 'controls' },
-      { id: 'branch-model', label: 'Model Changes', x: 520, y: 20, branchKey: 'model' },
-      { id: 'branch-validation', label: 'Validation', x: -350, y: 210, branchKey: 'validation' },
-      { id: 'branch-rollout', label: 'Rollout', x: 80, y: 330, branchKey: 'rollout' },
+    const base = starterFrame('Q3 personal OKRs are unclear because team priorities shifted mid-quarter.', [
+      { id: 'b-objectives', label: 'Objectives', x: -400, y: 0, branchKey: 'objectives' },
+      { id: 'b-blockers', label: 'Blockers & Risks', x: 400, y: 0, branchKey: 'blockers' },
     ]);
     const nodes = [
-      base.root,
-      ...base.branches,
-      ideaNode('defect-ifrs', 'IFRS labels vary by issuer and language', -650, -260, 'defects', {
-        tags: ['finance', 'imports'],
-      }),
-      ideaNode('defect-missing', 'Some issuers omit or reorder required lines', -620, -120, 'defects', {
-        tags: ['finance', 'quality'],
-      }),
-      ideaNode('control-registry', 'Enforce canonical line registry', 620, -250, 'controls', { semanticType: 'decision' }),
-      ideaNode('control-scorecard', 'Add quality scorecard per import batch', 620, -120, 'controls', { semanticType: 'option' }),
-      ideaNode('model-locale', 'Store locale-aware aliases under one canonical concept', 580, 40, 'model', {
-        semanticType: 'decision',
-      }),
-      ideaNode('model-exceptions', 'Persist explicit exception handling for ambiguous mappings', 620, 160, 'model', {
-        semanticType: 'decision',
-      }),
-      cardNode('knowledge-ifrs', 'knowledgeCard', 'IFRS imports need locale-aware canonical mapping and reviewable exceptions.', -340, 290, 'validation', {
-        notes: 'Polish and English variants should map to one concept where possible.',
-      }),
-      cardNode('evidence-json', 'evidenceCard', 'Real corpus audit JSON', -520, 180, 'validation', {
-        artifactLinks: [{ artifactRef: { type: 'report', id: 'REP-REAL-CORPUS' }, label: 'Real corpus report' }],
-      }),
-      ideaNode('validation-corpus', 'Run real-corpus audit on 20 statements', -110, 380, 'rollout', {
-        goal: 'Verify scorecard coverage against real data.',
-      }),
-      ideaNode('validation-gate', 'Ship only after exception review workflow is visible in UI', 120, 310, 'rollout', {
-        semanticType: 'constraint',
-      }),
-      cardNode('note-audit', 'noteCard', 'Attach every generated audit artifact back to the map.', 300, 420, 'rollout', {
-        artifactLinks: [{ artifactRef: { type: 'analysis', id: 'ANL-FINANCE-V3' }, label: 'Import analysis' }],
-      }),
-      ideaNode('risk-false-positive', 'Aggressive normalization can hide real defects', 300, -20, 'controls', {
-        riskNote: 'Need explicit audit and exception review.',
-      }),
+      base.root, ...base.branches,
+      ideaNode('obj-ship', 'Ship mindmap module to production', -620, -140, 'objectives', { semanticType: 'decision', status: 'exploring', priority: 95 }),
+      ideaNode('obj-ship-kr1', 'KR: 5 test maps pass full QA on Railway', -820, -200, 'objectives', { semanticType: 'metric', goal: 'All 5 maps load, edit, save, reload without errors.' }),
+      ideaNode('obj-ship-kr2', 'KR: Zero silent AI overwrites in production', -840, -80, 'objectives', { semanticType: 'metric' }),
+      ideaNode('obj-adopt', 'Drive internal adoption across 3 teams', -620, 60, 'objectives', { semanticType: 'decision', status: 'idea', priority: 80 }),
+      ideaNode('obj-adopt-kr1', 'KR: 10 real maps created by non-engineering users', -820, 0, 'objectives', { semanticType: 'metric' }),
+      ideaNode('obj-adopt-kr2', 'KR: Positive NPS from 3 pilot teams', -840, 120, 'objectives', { semanticType: 'metric' }),
+      ideaNode('obj-learn', 'Complete AI governance certification', -620, 240, 'objectives', { semanticType: 'action', status: 'idea', priority: 60 }),
+      ideaNode('obj-learn-kr1', 'KR: Pass internal AI safety review', -820, 200, 'objectives', { semanticType: 'metric' }),
+      ideaNode('bl-scope', 'Scope creep from adjacent modules', 620, -140, 'blockers', { semanticType: 'risk', riskNote: 'Finance and table modules keep pulling attention.' }),
+      ideaNode('bl-data', 'Test data quality on Railway is inconsistent', 640, 0, 'blockers', { semanticType: 'risk', riskNote: 'Seeded maps sometimes have stale schema.' }),
+      ideaNode('bl-time', 'Only 3 weeks left in the quarter', 620, 140, 'blockers', { semanticType: 'constraint' }),
+      cardNode('k-focus', 'knowledgeCard', 'Rule of 3: never pursue more than 3 objectives simultaneously.', 200, -200, 'blockers', { notes: 'From "Measure What Matters" — Doerr.', tags: ['okr', 'focus'] }),
     ];
     const edges = [
       ...base.branchEdges,
-      edge('branch-defects', 'defect-ifrs'),
-      edge('branch-defects', 'defect-missing'),
-      edge('branch-controls', 'control-registry'),
-      edge('branch-controls', 'control-scorecard'),
-      edge('branch-controls', 'risk-false-positive'),
-      edge('branch-model', 'model-locale'),
-      edge('branch-model', 'model-exceptions'),
-      edge('branch-validation', 'knowledge-ifrs'),
-      edge('branch-validation', 'evidence-json'),
-      edge('branch-rollout', 'validation-corpus'),
-      edge('branch-rollout', 'validation-gate'),
-      edge('branch-rollout', 'note-audit'),
-      edge('knowledge-ifrs', 'control-registry', 'relation', { data: { relation: 'supports', label: 'supports' } }),
-      edge('risk-false-positive', 'control-registry', 'relation', { data: { relation: 'constrains', label: 'constrains' } }),
-      edge('validation-corpus', 'control-scorecard', 'relation', { data: { relation: 'validates', label: 'validates' } }),
-      edge('model-exceptions', 'validation-gate', 'relation', { data: { relation: 'requires', label: 'requires' } }),
+      edge('b-objectives', 'obj-ship'), edge('b-objectives', 'obj-adopt'), edge('b-objectives', 'obj-learn'),
+      edge('obj-ship', 'obj-ship-kr1'), edge('obj-ship', 'obj-ship-kr2'),
+      edge('obj-adopt', 'obj-adopt-kr1'), edge('obj-adopt', 'obj-adopt-kr2'),
+      edge('obj-learn', 'obj-learn-kr1'),
+      edge('b-blockers', 'bl-scope'), edge('b-blockers', 'bl-data'), edge('b-blockers', 'bl-time'),
+      edge('b-blockers', 'k-focus'),
+      edge('bl-scope', 'obj-ship', 'relation', { data: { relation: 'blocks', label: 'blocks' } }),
+      edge('bl-data', 'obj-ship-kr1', 'relation', { data: { relation: 'blocks', label: 'blocks' } }),
+      edge('bl-time', 'obj-learn', 'relation', { data: { relation: 'constrains', label: 'constrains' } }),
     ];
-    return makeMap(
-      'Finance Reporting Modernization',
-      'Finance modernization map with source defects, control design, validation and rollout gates.',
-      ['showcase', 'finance', 'reporting'],
-      nodes,
-      edges,
-      { mindmap: { viewState: { collapsedNodeIds: [], viewport: { x: 0, y: 70, zoom: 0.91 } } } }
-    );
+    return makeMap('Q3 Personal OKR Planning', 'Lean 2-branch map with deep sub-branches (3 levels) for personal OKR planning with blockers.', ['showcase', 'okr', 'personal'], nodes, edges,
+      { mindmap: { viewState: { collapsedNodeIds: ['obj-learn'], viewport: { x: 0, y: 0, zoom: 0.9 } } } });
   })();
 
   return [map1, map2, map3, map4, map5];
