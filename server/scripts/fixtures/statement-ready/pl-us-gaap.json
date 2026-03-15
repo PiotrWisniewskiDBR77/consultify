@@ -1,0 +1,9 @@
+{
+  "name": "us-gaap-income-statement",
+  "fileName": "us-gaap-pl.pdf",
+  "expectedStatementType": "P&L",
+  "expectedDocumentClass": "native_pdf",
+  "expectedMinExtracted": 14,
+  "expectedMinMapped": 12,
+  "text": "Consolidated Statements of Income\nFor the Year Ended December 31, 2024\n(In thousands of USD)\n\nNet revenue 2024 5,200,000 2023 4,800,000\nCost of goods sold 2024 -3,100,000 2023 -2,850,000\nGross profit 2024 2,100,000 2023 1,950,000\nSelling, general and administrative expenses 2024 -850,000 2023 -800,000\nResearch and development expenses 2024 -180,000 2023 -160,000\nDepreciation and amortization 2024 -120,000 2023 -110,000\nOther operating income 2024 15,000 2023 12,000\nIncome from operations 2024 965,000 2023 892,000\nInterest expense 2024 -55,000 2023 -50,000\nOther financial income 2024 18,000 2023 15,000\nIncome before income taxes 2024 928,000 2023 857,000\nIncome tax expense 2024 -230,000 2023 -210,000\nNet income 2024 698,000 2023 647,000\nNet income attributable to common stockholders 2024 680,000 2023 630,000\nNet income attributable to non-controlling interests 2024 18,000 2023 17,000\nOther comprehensive income loss 2024 -25,000 2023 -18,000\nTotal comprehensive income 2024 673,000 2023 629,000\nBasic earnings per share 2024 6.80 2023 6.30\nDiluted earnings per share 2024 6.75 2023 6.25"
+}

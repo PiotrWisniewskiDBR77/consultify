@@ -7,6 +7,7 @@ Ten folder zawiera **kompletny pakiet walidacyjny** dla V3 “narzędzia budowan
 - `SSOT_COMPLIANCE_MATRIX.md`: macierz zgodności wymagań SSOT (MUST/SHOULD) vs. aktualna implementacja + evidence + sposób walidacji.
 - `SMOKE_CHECKLIST.md`: scenariusze “user journey” do ręcznego smoke (dev/staging).
 - `AUTOMATION.md`: zestaw poleceń testowych + sugerowane profile (fast vs full).
+- `generated/FINANCE_IMPORT_MULTI_STANDARD_HANDOFF_2026-03-13.md`: handoff stanu prac dla rozszerzenia wielojęzycznego i wielostandardowego importu sprawozdań.
 
 ### Jak używać
 

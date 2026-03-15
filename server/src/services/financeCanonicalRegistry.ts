@@ -93,6 +93,17 @@ const PL_LINES = makeLines('P&L', [
   { id: 'fsl-pl-eps-basic', code: 'EPS_BASIC', labelEn: 'Basic Earnings Per Share', labelPl: 'Zysk na akcję podstawowy', sortOrder: 150, aggregationLevel: 1, requiredLevel: 'optional', signConvention: 'positive_normal' },
   { id: 'fsl-pl-eps-diluted', code: 'EPS_DILUTED', labelEn: 'Diluted Earnings Per Share', labelPl: 'Zysk na akcję rozwodniony', sortOrder: 151, aggregationLevel: 1, requiredLevel: 'optional', signConvention: 'positive_normal' },
   { id: 'fsl-pl-shares-outstanding', code: 'SHARES_OUTSTANDING', labelEn: 'Weighted Average Shares Outstanding', labelPl: 'Średnia ważona liczba akcji', sortOrder: 152, aggregationLevel: 1, requiredLevel: 'optional', signConvention: 'positive_normal' },
+  // Cost-by-nature P&L variant (HGB Gesamtkostenverfahren / Polish UoR wariant porównawczy)
+  { id: 'fsl-pl-cbn-inventory-change', code: 'INVENTORY_CHANGE', labelEn: 'Change in Inventories of Finished Goods and WIP', labelPl: 'Zmiana stanu produktów', sortOrder: 160, aggregationLevel: 1, requiredLevel: 'optional', signConvention: 'positive_normal' },
+  { id: 'fsl-pl-cbn-own-work-capitalised', code: 'OWN_WORK_CAPITALISED', labelEn: 'Own Work Capitalised', labelPl: 'Koszt wytworzenia produktów na własne potrzeby jednostki', sortOrder: 161, aggregationLevel: 1, requiredLevel: 'optional', signConvention: 'positive_normal' },
+  { id: 'fsl-pl-cbn-materials-energy', code: 'MATERIALS_AND_ENERGY', labelEn: 'Materials and Energy', labelPl: 'Zużycie materiałów i energii', sortOrder: 162, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'display_absolute' },
+  { id: 'fsl-pl-cbn-external-services', code: 'EXTERNAL_SERVICES', labelEn: 'External Services', labelPl: 'Usługi obce', sortOrder: 163, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'display_absolute' },
+  { id: 'fsl-pl-cbn-taxes-fees', code: 'TAXES_AND_FEES', labelEn: 'Taxes and Fees', labelPl: 'Podatki i opłaty', sortOrder: 164, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'display_absolute' },
+  { id: 'fsl-pl-cbn-payroll', code: 'PAYROLL_COST', labelEn: 'Payroll / Wages and Salaries', labelPl: 'Wynagrodzenia', sortOrder: 165, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'display_absolute' },
+  { id: 'fsl-pl-cbn-social-security', code: 'SOCIAL_SECURITY', labelEn: 'Social Security and Other Benefits', labelPl: 'Ubezpieczenia społeczne i inne świadczenia', sortOrder: 166, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'display_absolute' },
+  { id: 'fsl-pl-cbn-other-by-nature', code: 'OTHER_COSTS_BY_NATURE', labelEn: 'Other Operating Costs by Nature', labelPl: 'Pozostałe koszty rodzajowe', sortOrder: 167, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'display_absolute' },
+  { id: 'fsl-pl-cbn-total-by-nature', code: 'TOTAL_COSTS_BY_NATURE', labelEn: 'Total Operating Costs by Nature', labelPl: 'Koszty działalności operacyjnej razem', sortOrder: 168, aggregationLevel: 1, requiredLevel: 'optional', signConvention: 'display_absolute', isSubtotal: true },
+  { id: 'fsl-pl-cbn-operating-result', code: 'OPERATING_RESULT_CBN', labelEn: 'Operating Result (Cost by Nature)', labelPl: 'Wynik na działalności operacyjnej', sortOrder: 169, aggregationLevel: 1, requiredLevel: 'optional', signConvention: 'positive_normal' },
 ]);
 
 const BS_LINES = makeLines('BS', [

@@ -1,0 +1,9 @@
+{
+  "name": "polish-uor-cost-by-nature-income-statement",
+  "fileName": "uor-porownawczy-pl.pdf",
+  "expectedStatementType": "P&L",
+  "expectedDocumentClass": "native_pdf",
+  "expectedMinExtracted": 14,
+  "expectedMinMapped": 12,
+  "text": "Rachunek zysków i strat (wariant porównawczy)\nZa rok obrotowy 2024\nW tysiącach PLN\n\nPrzychody ze sprzedaży 2024 850.000 2023 780.000\nZmiana stanu produktów 2024 15.000 2023 -8.000\nKoszt wytworzenia produktów na własne potrzeby jednostki 2024 5.000 2023 4.000\nPozostałe przychody operacyjne 2024 12.000 2023 10.000\nZużycie materiałów i energii 2024 -280.000 2023 -260.000\nUsługi obce 2024 -95.000 2023 -88.000\nPodatki i opłaty 2024 -18.000 2023 -16.000\nWynagrodzenia 2024 -185.000 2023 -170.000\nUbezpieczenia społeczne i inne świadczenia 2024 -42.000 2023 -38.000\nAmortyzacja 2024 -55.000 2023 -50.000\nPozostałe koszty rodzajowe 2024 -22.000 2023 -20.000\nKoszty działalności operacyjnej razem 2024 -697.000 2023 -642.000\nZysk z działalności operacyjnej 2024 185.000 2023 144.000\nPrzychody finansowe 2024 8.000 2023 6.000\nKoszty finansowe 2024 -25.000 2023 -22.000\nZysk przed opodatkowaniem 2024 168.000 2023 128.000\nPodatek dochodowy 2024 -32.000 2023 -24.000\nZysk netto 2024 136.000 2023 104.000"
+}

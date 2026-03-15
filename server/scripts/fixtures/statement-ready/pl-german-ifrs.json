@@ -1,0 +1,9 @@
+{
+  "name": "german-ifrs-income-statement",
+  "fileName": "german-ifrs-pl.pdf",
+  "expectedStatementType": "P&L",
+  "expectedDocumentClass": "native_pdf",
+  "expectedMinExtracted": 16,
+  "expectedMinMapped": 14,
+  "text": "Konzern-Gewinn- und Verlustrechnung\nFür das Geschäftsjahr 2024\nIn Tsd. EUR\n\nUmsatzerlöse 2024 2.500.000 2023 2.300.000\nHerstellungskosten 2024 -1.750.000 2023 -1.600.000\nBruttoergebnis vom Umsatz 2024 750.000 2023 700.000\nVertriebskosten 2024 -150.000 2023 -140.000\nVerwaltungskosten 2024 -120.000 2023 -110.000\nSonstige betriebliche Erträge 2024 25.000 2023 20.000\nSonstige betriebliche Aufwendungen 2024 -35.000 2023 -30.000\nErgebnis aus at equity bilanzierten Beteiligungen 2024 8.000 2023 7.000\nBetriebsergebnis 2024 478.000 2023 447.000\nFinanzerträge 2024 12.000 2023 10.000\nFinanzaufwendungen 2024 -45.000 2023 -42.000\nErgebnis vor Steuern 2024 445.000 2023 415.000\nErtragsteuern 2024 -110.000 2023 -100.000\nJahresüberschuss 2024 335.000 2023 315.000\n\nDen Anteilseignern des Mutterunternehmens zuzurechnendes Ergebnis 2024 310.000 2023 290.000\nErgebnis nicht beherrschende Anteile 2024 25.000 2023 25.000\n\nSonstiges Ergebnis 2024 -15.000 2023 -10.000\nWährungsumrechnungsdifferenzen 2024 -8.000 2023 -5.000\nErgebnis aus Cashflow-Hedges 2024 -3.000 2023 -2.000\nVersicherungsmathematische Gewinne und Verluste 2024 -4.000 2023 -3.000\nGesamtergebnis der Periode 2024 320.000 2023 305.000\n\nUnverwässertes Ergebnis je Aktie 2024 3,10 2023 2,90\nVerwässertes Ergebnis je Aktie 2024 3,08 2023 2,88\n\nAbschreibungen 2024 85.000 2023 80.000"
+}

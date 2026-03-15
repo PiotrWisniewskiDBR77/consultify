@@ -1,0 +1,9 @@
+{
+  "name": "totalenergies-compte-de-resultat-2024",
+  "fileName": "TotalEnergies-Document-Enregistrement-Universel-2024.pdf",
+  "expectedStatementType": "P&L",
+  "expectedDocumentClass": "native_pdf",
+  "expectedMinExtracted": 20,
+  "expectedMinMapped": 16,
+  "text": "TotalEnergies SE\nCompte de résultat consolidé\nExercice clos le 31 décembre 2024\n(en millions de dollars)\n\n2024 2023\n\nChiffre d'affaires 237.128 218.945\nDroits d'accises -18.540 -17.230\nProduits des ventes 218.588 201.715\n\nAchats, nets de variation de stocks -155.320 -140.650\nAutres charges opérationnelles -28.450 -26.800\nCharges d'exploration -1.890 -1.720\nAmortissements et dépréciations des immobilisations corporelles et droits miniers -18.200 -16.950\nDépréciation d'actifs 0 -3.710\nAutres produits 2.340 1.980\nAutres charges -1.250 -1.120\n\nCoût de l'endettement financier net -2.680 -2.450\nProduits et charges de trésorerie et d'équivalents de trésorerie 890 720\nCoût de l'endettement financier net -1.790 -1.730\n\nAutres produits financiers 1.250 980\nAutres charges financières -890 -720\n\nQuote-part du résultat net des sociétés mises en équivalence 3.100 2.870\n\nRésultat avant impôt sur les sociétés 18.478 14.845\n\nImpôt sur les sociétés -7.890 -6.540\n\nRésultat net consolidé 10.588 8.305\n\nPart du Groupe 9.468 7.615\nPart des intérêts minoritaires 1.120 690\n\nRésultat net par action (en dollars) 3.92 3.12\nRésultat net dilué par action (en dollars) 3.89 3.09"
+}
