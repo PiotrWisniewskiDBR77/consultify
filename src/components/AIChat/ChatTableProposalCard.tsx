@@ -1,0 +1,221 @@
+/**
+ * ChatTableProposalCard — displays a schema proposal inline in chat
+ * with Accept / Reject / Refine actions.
+ */
+import { Check, Loader2, MessageSquare, Table2, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import * as TablePlatformApi from '@/services/api/tablePlatform.api';
+
+interface ProposalOperation {
+  id: string;
+  operationType: string;
+  target?: Record<string, string>;
+  payload?: Record<string, unknown>;
+}
+
+export interface SchemaProposal {
+  id: string;
+  intent: string;
+  confidence: number;
+  summary: string;
+  operations: ProposalOperation[];
+  warnings: Array<{ message: string }>;
+  status: string;
+}
+
+interface Props {
+  proposal: SchemaProposal;
+  onStatusChange: (status: 'executed' | 'rejected' | 'refining') => void;
+  onNavigateToTable?: (baseId: string) => void;
+}
+
+export const ChatTableProposalCard: React.FC<Props> = ({
+  proposal,
+  onStatusChange,
+  onNavigateToTable,
+}) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+  const [loading, setLoading] = useState(false);
+  const [refineMode, setRefineMode] = useState(false);
+  const [refineText, setRefineText] = useState('');
+  const [currentProposal, setCurrentProposal] = useState(proposal);
+  const [executed, setExecuted] = useState(false);
+  const [rejected, setRejected] = useState(false);
+
+  const handleAccept = async () => {
+    setLoading(true);
+    try {
+      const result = await TablePlatformApi.executeSchemaProposal(currentProposal.id);
+      setExecuted(true);
+      onStatusChange('executed');
+      if (result?.createdIds?.baseId && onNavigateToTable) {
+        onNavigateToTable(result.createdIds.baseId);
+      }
+    } catch (err) {
+      console.error('Execute failed', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    setLoading(true);
+    try {
+      await TablePlatformApi.rejectSchemaProposal(currentProposal.id);
+      setRejected(true);
+      onStatusChange('rejected');
+    } catch (err) {
+      console.error('Reject failed', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefine = async () => {
+    if (!refineText.trim()) return;
+    setLoading(true);
+    try {
+      const refined = await TablePlatformApi.refineSchemaProposal(
+        currentProposal.id,
+        refineText
+      );
+      if (refined) {
+        setCurrentProposal(refined as SchemaProposal);
+      }
+      setRefineMode(false);
+      setRefineText('');
+      onStatusChange('refining');
+    } catch (err) {
+      console.error('Refine failed', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (executed) {
+    return (
+      <div className="rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-4 my-2">
+        <div className="flex items-center gap-2 text-green-700 dark:text-green-400 text-sm font-medium">
+          <Check size={16} />
+          {isPl ? 'Tabela utworzona pomyślnie!' : 'Table created successfully!'}
+        </div>
+      </div>
+    );
+  }
+
+  if (rejected) {
+    return (
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/30 p-4 my-2 opacity-60">
+        <div className="flex items-center gap-2 text-slate-500 text-sm">
+          <X size={16} />
+          {isPl ? 'Propozycja odrzucona' : 'Proposal rejected'}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 p-4 my-2">
+      <div className="flex items-center gap-2 mb-3">
+        <Table2 size={16} className="text-violet-600 dark:text-violet-400" />
+        <span className="text-sm font-semibold text-violet-800 dark:text-violet-300">
+          {isPl ? 'Propozycja schematu tabeli' : 'Table Schema Proposal'}
+        </span>
+        <span className="ml-auto text-xs text-slate-500">
+          {Math.round(currentProposal.confidence * 100)}%{' '}
+          {isPl ? 'pewności' : 'confidence'}
+        </span>
+      </div>
+
+      <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">
+        {currentProposal.summary}
+      </p>
+
+      {currentProposal.operations.length > 0 && (
+        <div className="space-y-1 mb-3">
+          {currentProposal.operations.map((op) => (
+            <div
+              key={op.id}
+              className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400"
+            >
+              <span className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 font-mono">
+                {op.operationType}
+              </span>
+              <span>{op.target?.name || op.target?.tableName || ''}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {currentProposal.warnings.length > 0 && (
+        <div className="mb-3 text-xs text-amber-600 dark:text-amber-400">
+          {currentProposal.warnings.map((w, i) => (
+            <div key={i}>⚠ {w.message}</div>
+          ))}
+        </div>
+      )}
+
+      {refineMode ? (
+        <div className="flex gap-2 mt-2">
+          <input
+            value={refineText}
+            onChange={(e) => setRefineText(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleRefine()}
+            placeholder={isPl ? 'Opisz zmiany...' : 'Describe changes...'}
+            className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-navy-900 text-sm"
+            autoFocus
+          />
+          <button
+            onClick={handleRefine}
+            disabled={loading}
+            className="px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-medium hover:bg-violet-700 disabled:opacity-50"
+          >
+            {loading ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : isPl ? (
+              'Wyślij'
+            ) : (
+              'Send'
+            )}
+          </button>
+          <button
+            onClick={() => setRefineMode(false)}
+            className="px-2 py-1.5 rounded-lg text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            {isPl ? 'Anuluj' : 'Cancel'}
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={handleAccept}
+            disabled={loading}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-700 disabled:opacity-50"
+          >
+            {loading ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+            {isPl ? 'Akceptuj' : 'Accept'}
+          </button>
+          <button
+            onClick={() => setRefineMode(true)}
+            disabled={loading}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-violet-100 dark:bg-violet-800/30 text-violet-700 dark:text-violet-300 text-xs font-medium hover:bg-violet-200 dark:hover:bg-violet-800/50 disabled:opacity-50"
+          >
+            <MessageSquare size={12} />
+            {isPl ? 'Doprecyzuj' : 'Refine'}
+          </button>
+          <button
+            onClick={handleReject}
+            disabled={loading}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+          >
+            <X size={12} />
+            {isPl ? 'Odrzuć' : 'Reject'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};

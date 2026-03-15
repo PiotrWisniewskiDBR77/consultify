@@ -14,3 +14,11 @@ export { parseFormula, evaluateFormula, extractFieldDependencies, recomputeAffec
 export { default as FormService } from './FormService.js';
 export { default as ProjectionService } from './ProjectionService.js';
 export { DependencyGraph } from './dependencyGraph.js';
+export { TablePlatformRealtimeService, tablePlatformRealtime } from './RealtimeService.js';
+export { InterfaceService, interfaceService } from './InterfaceService.js';
+export { ScheduledAutomationExecutor, scheduledAutomationExecutor, validateCronExpression } from './ScheduledAutomationExecutor.js';
+export { ExtensionService, extensionService } from './ExtensionService.js';
+export { SSOService, ssoService } from './SSOService.js';
+export { ServiceAccountService, serviceAccountService } from './ServiceAccountService.js';
+export { SCIMService, scimService } from './SCIMService.js';
+export { default as GovernedModelService } from './GovernedModelService.js';

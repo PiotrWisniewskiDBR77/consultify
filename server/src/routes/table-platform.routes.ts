@@ -12,6 +12,14 @@ import RecordsService from '../services/tablePlatform/RecordsService.js';
 import PermissionsService from '../services/tablePlatform/PermissionsService.js';
 import ProjectionService from '../services/tablePlatform/ProjectionService.js';
 import { handleRouteError } from '../services/tablePlatform/ErrorHandling.js';
+import { automationService } from '../services/tablePlatform/AutomationService.js';
+import { scheduledAutomationExecutor, validateCronExpression } from '../services/tablePlatform/ScheduledAutomationExecutor.js';
+import { webhookDispatcher } from '../services/tablePlatform/WebhookDispatcherService.js';
+import { interfaceService } from '../services/tablePlatform/InterfaceService.js';
+import { extensionService } from '../services/tablePlatform/ExtensionService.js';
+import { ssoService } from '../services/tablePlatform/SSOService.js';
+import { serviceAccountService } from '../services/tablePlatform/ServiceAccountService.js';
+import { scimService } from '../services/tablePlatform/SCIMService.js';
 import logger from '../utils/Logger.js';
 
 const upload = multer({
@@ -1505,6 +1513,571 @@ router.get('/forms/:formId/submissions', async (req: Request, res: Response) => 
 });
 
 // ==========================================
+// AUTOMATIONS API
+// ==========================================
+
+router.post('/tables/:tableId/automations', requireTableAccess, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { tableId } = req.params;
+    const { baseId, name, description, triggerType, triggerConfig, actions } = req.body ?? {};
+    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    if (!baseId) return res.status(400).json({ error: 'baseId is required' });
+    if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name is required' });
+    if (!triggerType || typeof triggerType !== 'string') return res.status(400).json({ error: 'triggerType is required' });
+    if (!Array.isArray(actions) || actions.length === 0) return res.status(400).json({ error: 'actions array is required' });
+
+    const automation = await automationService.createAutomation(baseId, tableId, {
+      name,
+      description,
+      triggerType,
+      triggerConfig: triggerConfig ?? {},
+      actions,
+      createdBy: authReq.userId,
+    });
+    return res.status(201).json(automation);
+  } catch (err) {
+    handleRouteError(err, res, 'createAutomation');
+  }
+});
+
+router.get('/tables/:tableId/automations', requireTableAccess, async (req: Request, res: Response) => {
+  try {
+    const { tableId } = req.params;
+    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    const automations = await automationService.listAutomations(tableId);
+    return res.status(200).json(automations);
+  } catch (err) {
+    handleRouteError(err, res, 'listAutomations');
+  }
+});
+
+router.patch('/automations/:automationId/toggle', async (req: Request, res: Response) => {
+  try {
+    const { automationId } = req.params;
+    const { enabled } = req.body ?? {};
+    if (!automationId) return res.status(400).json({ error: 'automationId is required' });
+    if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'enabled (boolean) is required' });
+    await automationService.toggleAutomation(automationId, enabled);
+    return res.status(200).json({ success: true, enabled });
+  } catch (err) {
+    handleRouteError(err, res, 'toggleAutomation');
+  }
+});
+
+router.delete('/automations/:automationId', async (req: Request, res: Response) => {
+  try {
+    const { automationId } = req.params;
+    if (!automationId) return res.status(400).json({ error: 'automationId is required' });
+    await automationService.deleteAutomation(automationId);
+    return res.status(204).send();
+  } catch (err) {
+    handleRouteError(err, res, 'deleteAutomation');
+  }
+});
+
+router.get('/automations/:automationId/runs', async (req: Request, res: Response) => {
+  try {
+    const { automationId } = req.params;
+    const limit = req.query.limit ? parseInt(String(req.query.limit), 10) : 20;
+    if (!automationId) return res.status(400).json({ error: 'automationId is required' });
+    const runs = await automationService.getRunHistory(automationId, Math.min(limit, 100));
+    return res.status(200).json(runs);
+  } catch (err) {
+    handleRouteError(err, res, 'getAutomationRuns');
+  }
+});
+
+router.get('/automations/:automationId/next-run', async (req: Request, res: Response) => {
+  try {
+    const { automationId } = req.params;
+    if (!automationId) return res.status(400).json({ error: 'automationId is required' });
+    const automation = await scheduledAutomationExecutor.getAutomation(automationId);
+    if (!automation) return res.status(404).json({ error: 'Automation not found' });
+    if (automation.trigger_type !== 'scheduled') {
+      return res.status(400).json({ error: 'Automation is not a scheduled type' });
+    }
+    const config = automation.trigger_config as { cron?: string; timezone?: string; lastRunAt?: string; nextRunAt?: string };
+    if (!config.cron) return res.status(400).json({ error: 'No cron expression configured' });
+
+    const validation = validateCronExpression(config.cron);
+    const nextRun = scheduledAutomationExecutor.calculateNextRun(config.cron, config.timezone);
+    return res.status(200).json({
+      automationId,
+      cron: config.cron,
+      timezone: config.timezone || 'UTC',
+      cronDescription: validation.description,
+      lastRunAt: config.lastRunAt ?? null,
+      nextRunAt: nextRun.toISOString(),
+    });
+  } catch (err) {
+    handleRouteError(err, res, 'getNextRun');
+  }
+});
+
+router.post('/automations/:automationId/run-now', async (req: Request, res: Response) => {
+  try {
+    const { automationId } = req.params;
+    if (!automationId) return res.status(400).json({ error: 'automationId is required' });
+    const result = await scheduledAutomationExecutor.runNow(automationId);
+    return res.status(200).json(result);
+  } catch (err: any) {
+    if (err?.message === 'Automation not found') {
+      return res.status(404).json({ error: err.message });
+    }
+    if (err?.message === 'Automation is not a scheduled type') {
+      return res.status(400).json({ error: err.message });
+    }
+    handleRouteError(err, res, 'runNow');
+  }
+});
+
+router.post('/automations/validate-cron', async (req: Request, res: Response) => {
+  try {
+    const { cron } = req.body ?? {};
+    if (!cron || typeof cron !== 'string') {
+      return res.status(400).json({ error: 'cron string is required' });
+    }
+    const result = validateCronExpression(cron);
+    if (result.valid) {
+      const nextRun = scheduledAutomationExecutor.calculateNextRun(cron, (req.body as any).timezone);
+      return res.status(200).json({ ...result, nextRunAt: nextRun.toISOString() });
+    }
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'validateCron');
+  }
+});
+
+// ==========================================
+// INTERFACE DESIGNER API
+// ==========================================
+
+router.post('/bases/:baseId/interfaces', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { baseId } = req.params;
+    const { name, description } = req.body ?? {};
+    if (!baseId) return res.status(400).json({ error: 'baseId is required' });
+    if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name is required' });
+    const iface = await interfaceService.createInterface(baseId, {
+      name,
+      description,
+      createdBy: authReq.userId,
+    });
+    return res.status(201).json(iface);
+  } catch (err) {
+    handleRouteError(err, res, 'createInterface');
+  }
+});
+
+router.get('/bases/:baseId/interfaces', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const { baseId } = req.params;
+    if (!baseId) return res.status(400).json({ error: 'baseId is required' });
+    const interfaces = await interfaceService.listInterfaces(baseId);
+    return res.status(200).json(interfaces);
+  } catch (err) {
+    handleRouteError(err, res, 'listInterfaces');
+  }
+});
+
+router.get('/interfaces/:interfaceId', async (req: Request, res: Response) => {
+  try {
+    const { interfaceId } = req.params;
+    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+    const iface = await interfaceService.getInterface(interfaceId);
+    if (!iface) return res.status(404).json({ error: 'Interface not found' });
+    return res.status(200).json(iface);
+  } catch (err) {
+    handleRouteError(err, res, 'getInterface');
+  }
+});
+
+router.put('/interfaces/:interfaceId/layout', async (req: Request, res: Response) => {
+  try {
+    const { interfaceId } = req.params;
+    const { blocks, theme } = req.body ?? {};
+    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+    if (!Array.isArray(blocks)) return res.status(400).json({ error: 'blocks array is required' });
+    const iface = await interfaceService.updateLayout(interfaceId, { blocks, theme });
+    if (!iface) return res.status(404).json({ error: 'Interface not found' });
+    return res.status(200).json(iface);
+  } catch (err) {
+    handleRouteError(err, res, 'updateInterfaceLayout');
+  }
+});
+
+router.post('/interfaces/:interfaceId/publish', async (req: Request, res: Response) => {
+  try {
+    const { interfaceId } = req.params;
+    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+    const result = await interfaceService.publishInterface(interfaceId);
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'publishInterface');
+  }
+});
+
+router.post('/interfaces/:interfaceId/unpublish', async (req: Request, res: Response) => {
+  try {
+    const { interfaceId } = req.params;
+    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+    await interfaceService.unpublishInterface(interfaceId);
+    return res.status(204).send();
+  } catch (err) {
+    handleRouteError(err, res, 'unpublishInterface');
+  }
+});
+
+router.delete('/interfaces/:interfaceId', async (req: Request, res: Response) => {
+  try {
+    const { interfaceId } = req.params;
+    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+    await interfaceService.deleteInterface(interfaceId);
+    return res.status(204).send();
+  } catch (err) {
+    handleRouteError(err, res, 'deleteInterface');
+  }
+});
+
+router.patch('/interfaces/:interfaceId/roles', async (req: Request, res: Response) => {
+  try {
+    const { interfaceId } = req.params;
+    const { roles } = req.body ?? {};
+    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+    if (!Array.isArray(roles)) return res.status(400).json({ error: 'roles array is required' });
+    await interfaceService.updateAllowedRoles(interfaceId, roles);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    handleRouteError(err, res, 'updateInterfaceRoles');
+  }
+});
+
+// ==========================================
+// GOVERNED MODELS
+// ==========================================
+
+router.post('/bases/:baseId/governed-models', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { baseId } = req.params;
+    const { name, description } = req.body ?? {};
+    if (!baseId) return res.status(400).json({ error: 'baseId is required' });
+    if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const model = await GovernedModelService.createModel(baseId, name, description, authReq.userId);
+    return res.status(201).json(model);
+  } catch (e) {
+    handleRouteError(e, res, 'createGovernedModel');
+  }
+});
+
+router.get('/bases/:baseId/governed-models', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const { baseId } = req.params;
+    if (!baseId) return res.status(400).json({ error: 'baseId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const models = await GovernedModelService.listModels(baseId);
+    return res.status(200).json(models);
+  } catch (e) {
+    handleRouteError(e, res, 'listGovernedModels');
+  }
+});
+
+router.get('/governed-models/:modelId', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const model = await GovernedModelService.getModel(modelId);
+    if (!model) return res.status(404).json({ error: 'Governed model not found' });
+    return res.status(200).json(model);
+  } catch (e) {
+    handleRouteError(e, res, 'getGovernedModel');
+  }
+});
+
+router.patch('/governed-models/:modelId', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    const { name, description, status } = req.body ?? {};
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const model = await GovernedModelService.updateModel(modelId, { name, description, status });
+    if (!model) return res.status(404).json({ error: 'Governed model not found' });
+    return res.status(200).json(model);
+  } catch (e) {
+    handleRouteError(e, res, 'updateGovernedModel');
+  }
+});
+
+router.delete('/governed-models/:modelId', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const ok = await GovernedModelService.deleteModel(modelId);
+    if (!ok) return res.status(404).json({ error: 'Governed model not found' });
+    return res.status(204).send();
+  } catch (e) {
+    handleRouteError(e, res, 'deleteGovernedModel');
+  }
+});
+
+router.post('/governed-models/:modelId/kpis', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    const { code, labelEn, labelPl, formulaType, formulaConfig, sourceTableId, sourceFieldId, unit, format } = req.body ?? {};
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    if (!code || typeof code !== 'string') return res.status(400).json({ error: 'code is required' });
+    if (!labelEn || typeof labelEn !== 'string') return res.status(400).json({ error: 'labelEn is required' });
+    if (!formulaType || typeof formulaType !== 'string') return res.status(400).json({ error: 'formulaType is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const kpi = await GovernedModelService.addKpi(modelId, {
+      code, labelEn, labelPl, formulaType, formulaConfig, sourceTableId, sourceFieldId, unit, format,
+    });
+    return res.status(201).json(kpi);
+  } catch (e) {
+    handleRouteError(e, res, 'addKpi');
+  }
+});
+
+router.get('/governed-models/:modelId/kpis', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const kpis = await GovernedModelService.listKpis(modelId);
+    return res.status(200).json(kpis);
+  } catch (e) {
+    handleRouteError(e, res, 'listKpis');
+  }
+});
+
+router.delete('/kpis/:kpiId', async (req: Request, res: Response) => {
+  try {
+    const { kpiId } = req.params;
+    if (!kpiId) return res.status(400).json({ error: 'kpiId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const ok = await GovernedModelService.removeKpi(kpiId);
+    if (!ok) return res.status(404).json({ error: 'KPI not found' });
+    return res.status(204).send();
+  } catch (e) {
+    handleRouteError(e, res, 'removeKpi');
+  }
+});
+
+router.post('/governed-models/:modelId/dimensions', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    const { name, sourceTableId, sourceFieldId, dimensionType } = req.body ?? {};
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const dim = await GovernedModelService.addDimension(modelId, { name, sourceTableId, sourceFieldId, dimensionType });
+    return res.status(201).json(dim);
+  } catch (e) {
+    handleRouteError(e, res, 'addDimension');
+  }
+});
+
+router.get('/governed-models/:modelId/dimensions', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const dims = await GovernedModelService.listDimensions(modelId);
+    return res.status(200).json(dims);
+  } catch (e) {
+    handleRouteError(e, res, 'listDimensions');
+  }
+});
+
+router.delete('/dimensions/:dimensionId', async (req: Request, res: Response) => {
+  try {
+    const { dimensionId } = req.params;
+    if (!dimensionId) return res.status(400).json({ error: 'dimensionId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const ok = await GovernedModelService.removeDimension(dimensionId);
+    if (!ok) return res.status(404).json({ error: 'Dimension not found' });
+    return res.status(204).send();
+  } catch (e) {
+    handleRouteError(e, res, 'removeDimension');
+  }
+});
+
+router.post('/governed-models/:modelId/sources', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    const { tableId, trusted, requiredProvenance } = req.body ?? {};
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    if (!tableId || typeof tableId !== 'string') return res.status(400).json({ error: 'tableId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const source = await GovernedModelService.addModelSource(modelId, tableId, trusted ?? false, requiredProvenance);
+    return res.status(201).json(source);
+  } catch (e) {
+    handleRouteError(e, res, 'addModelSource');
+  }
+});
+
+router.get('/governed-models/:modelId/sources', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const sources = await GovernedModelService.listModelSources(modelId);
+    return res.status(200).json(sources);
+  } catch (e) {
+    handleRouteError(e, res, 'listModelSources');
+  }
+});
+
+router.patch('/model-sources/:id/trust', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { trusted } = req.body ?? {};
+    if (!id) return res.status(400).json({ error: 'id is required' });
+    if (typeof trusted !== 'boolean') return res.status(400).json({ error: 'trusted (boolean) is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const source = await GovernedModelService.setSourceTrust(id, trusted);
+    if (!source) return res.status(404).json({ error: 'Model source not found' });
+    return res.status(200).json(source);
+  } catch (e) {
+    handleRouteError(e, res, 'setSourceTrust');
+  }
+});
+
+router.post('/kpis/:kpiId/compute', async (req: Request, res: Response) => {
+  try {
+    const { kpiId } = req.params;
+    if (!kpiId) return res.status(400).json({ error: 'kpiId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const result = await GovernedModelService.computeKpi(kpiId);
+    return res.status(200).json(result);
+  } catch (e) {
+    handleRouteError(e, res, 'computeKpi');
+  }
+});
+
+// ==========================================
+// EXTENSIONS / MARKETPLACE API
+// ==========================================
+
+router.get('/extensions/marketplace', async (req: Request, res: Response) => {
+  try {
+    const category = typeof req.query.category === 'string' ? req.query.category : undefined;
+    const extensions = await extensionService.listPublishedExtensions(category);
+    return res.status(200).json(extensions);
+  } catch (err) {
+    handleRouteError(err, res, 'listMarketplaceExtensions');
+  }
+});
+
+router.post('/extensions', async (req: Request, res: Response) => {
+  try {
+    const { name, description, version, author, sourceUrl, scopes, category } = req.body ?? {};
+    if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name is required' });
+    if (!sourceUrl || typeof sourceUrl !== 'string') return res.status(400).json({ error: 'sourceUrl is required' });
+    const ext = await extensionService.registerExtension({
+      name,
+      description,
+      version,
+      author,
+      sourceUrl,
+      scopes,
+      category,
+    });
+    return res.status(201).json(ext);
+  } catch (err) {
+    handleRouteError(err, res, 'registerExtension');
+  }
+});
+
+router.get('/extensions/:extensionId', async (req: Request, res: Response) => {
+  try {
+    const { extensionId } = req.params;
+    if (!extensionId) return res.status(400).json({ error: 'extensionId is required' });
+    const ext = await extensionService.getExtension(extensionId);
+    if (!ext) return res.status(404).json({ error: 'Extension not found' });
+    return res.status(200).json(ext);
+  } catch (err) {
+    handleRouteError(err, res, 'getExtension');
+  }
+});
+
+router.post('/extensions/:extensionId/submit', async (req: Request, res: Response) => {
+  try {
+    const { extensionId } = req.params;
+    if (!extensionId) return res.status(400).json({ error: 'extensionId is required' });
+    await extensionService.submitForReview(extensionId);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    handleRouteError(err, res, 'submitExtensionForReview');
+  }
+});
+
+router.post('/extensions/:extensionId/publish', async (req: Request, res: Response) => {
+  try {
+    const { extensionId } = req.params;
+    if (!extensionId) return res.status(400).json({ error: 'extensionId is required' });
+    await extensionService.publishExtension(extensionId);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    handleRouteError(err, res, 'publishExtension');
+  }
+});
+
+router.post('/bases/:baseId/extensions/:extensionId/install', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { baseId, extensionId } = req.params;
+    if (!baseId || !extensionId) return res.status(400).json({ error: 'baseId and extensionId are required' });
+    const install = await extensionService.installExtension(extensionId, baseId, authReq.userId);
+    if (!install) return res.status(200).json({ message: 'Already installed' });
+    return res.status(201).json(install);
+  } catch (err) {
+    handleRouteError(err, res, 'installExtension');
+  }
+});
+
+router.delete('/bases/:baseId/extensions/:extensionId/uninstall', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const { baseId, extensionId } = req.params;
+    if (!baseId || !extensionId) return res.status(400).json({ error: 'baseId and extensionId are required' });
+    const ok = await extensionService.uninstallExtension(extensionId, baseId);
+    if (!ok) return res.status(404).json({ error: 'Extension install not found' });
+    return res.status(204).send();
+  } catch (err) {
+    handleRouteError(err, res, 'uninstallExtension');
+  }
+});
+
+router.get('/bases/:baseId/extensions', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const { baseId } = req.params;
+    if (!baseId) return res.status(400).json({ error: 'baseId is required' });
+    const extensions = await extensionService.getInstalledExtensions(baseId);
+    return res.status(200).json(extensions);
+  } catch (err) {
+    handleRouteError(err, res, 'listInstalledExtensions');
+  }
+});
+
+router.patch('/bases/:baseId/extensions/:extensionId/config', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const { baseId, extensionId } = req.params;
+    const { config } = req.body ?? {};
+    if (!baseId || !extensionId) return res.status(400).json({ error: 'baseId and extensionId are required' });
+    if (!config || typeof config !== 'object') return res.status(400).json({ error: 'config object is required' });
+    await extensionService.updateExtensionConfig(extensionId, baseId, config);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    handleRouteError(err, res, 'updateExtensionConfig');
+  }
+});
+
+// ==========================================
 // PUBLIC FORMS API (no auth required)
 // ==========================================
 
@@ -1553,6 +2126,385 @@ publicFormRouter.post('/public/forms/:slug/submit', async (req: Request, res: Re
     return res.status(201).json(result);
   } catch (err) {
     handleRouteError(err, res, 'submitPublicForm');
+  }
+});
+
+// ==========================================
+// PUBLIC INTERFACES API (no auth required)
+// ==========================================
+
+publicFormRouter.get('/public/interfaces/:shareToken', async (req: Request, res: Response) => {
+  try {
+    const { shareToken } = req.params;
+    if (!shareToken || typeof shareToken !== 'string') {
+      return res.status(400).json({ error: 'shareToken is required' });
+    }
+    const iface = await interfaceService.getPublicInterface(shareToken);
+    if (!iface) {
+      return res.status(404).json({ error: 'Interface not found or not published' });
+    }
+    return res.status(200).json(iface);
+  } catch (err) {
+    handleRouteError(err, res, 'getPublicInterface');
+  }
+});
+
+// ==========================================
+// OUTBOUND WEBHOOKS API
+// ==========================================
+
+router.post('/bases/:baseId/webhooks', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { baseId } = req.params;
+    const { notificationUrl, specification } = req.body ?? {};
+    if (!baseId) return res.status(400).json({ error: 'baseId is required' });
+    if (!notificationUrl || typeof notificationUrl !== 'string') {
+      return res.status(400).json({ error: 'notificationUrl is required' });
+    }
+    const result = await webhookDispatcher.createWebhook(
+      baseId,
+      notificationUrl,
+      specification ?? { options: { filters: {} } },
+      authReq.userId
+    );
+    return res.status(201).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'createWebhook');
+  }
+});
+
+router.get('/bases/:baseId/webhooks', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const { baseId } = req.params;
+    if (!baseId) return res.status(400).json({ error: 'baseId is required' });
+    const webhooks = await webhookDispatcher.listWebhooks(baseId);
+    return res.status(200).json({ webhooks });
+  } catch (err) {
+    handleRouteError(err, res, 'listWebhooks');
+  }
+});
+
+router.delete('/webhooks/:webhookId', async (req: Request, res: Response) => {
+  try {
+    const { webhookId } = req.params;
+    if (!webhookId) return res.status(400).json({ error: 'webhookId is required' });
+    await webhookDispatcher.deleteWebhook(webhookId);
+    return res.status(204).send();
+  } catch (err) {
+    handleRouteError(err, res, 'deleteWebhook');
+  }
+});
+
+router.post('/webhooks/:webhookId/refresh', async (req: Request, res: Response) => {
+  try {
+    const { webhookId } = req.params;
+    if (!webhookId) return res.status(400).json({ error: 'webhookId is required' });
+    const result = await webhookDispatcher.refreshWebhook(webhookId);
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'refreshWebhook');
+  }
+});
+
+router.get('/webhooks/:webhookId/payloads', async (req: Request, res: Response) => {
+  try {
+    const { webhookId } = req.params;
+    if (!webhookId) return res.status(400).json({ error: 'webhookId is required' });
+    const cursor = req.query.cursor ? parseInt(String(req.query.cursor), 10) : undefined;
+    const limit = req.query.limit ? Math.min(parseInt(String(req.query.limit), 10), 100) : 50;
+    const result = await webhookDispatcher.listPayloads(webhookId, cursor, limit);
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'listWebhookPayloads');
+  }
+});
+
+// ==========================================
+// SSO (SAML 2.0 / OIDC) ADMIN API
+// ==========================================
+
+router.post('/admin/sso/saml', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const organizationId = authReq.organizationId;
+    if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    const { entityId, ssoUrl, certificate, signatureAlgorithm, nameIdFormat } = req.body ?? {};
+    if (!entityId || !ssoUrl || !certificate) {
+      return res.status(400).json({ error: 'entityId, ssoUrl, and certificate are required' });
+    }
+    const config = await ssoService.configureSAML(organizationId, {
+      entityId, ssoUrl, certificate, signatureAlgorithm, nameIdFormat,
+    });
+    return res.status(200).json(config);
+  } catch (err) {
+    handleRouteError(err, res, 'configureSAML');
+  }
+});
+
+router.post('/admin/sso/oidc', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const organizationId = authReq.organizationId;
+    if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    const { issuer, clientId, clientSecret, authorizationUrl, tokenUrl, userInfoUrl, scopes } = req.body ?? {};
+    if (!issuer || !clientId || !clientSecret || !authorizationUrl || !tokenUrl || !userInfoUrl) {
+      return res.status(400).json({ error: 'issuer, clientId, clientSecret, authorizationUrl, tokenUrl, userInfoUrl are required' });
+    }
+    const config = await ssoService.configureOIDC(organizationId, {
+      issuer, clientId, clientSecret, authorizationUrl, tokenUrl, userInfoUrl, scopes,
+    });
+    return res.status(200).json(config);
+  } catch (err) {
+    handleRouteError(err, res, 'configureOIDC');
+  }
+});
+
+router.get('/admin/sso', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const organizationId = authReq.organizationId;
+    if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    const config = await ssoService.getSSOConfig(organizationId);
+    if (!config) return res.status(404).json({ error: 'No SSO configuration found' });
+    return res.status(200).json(config);
+  } catch (err) {
+    handleRouteError(err, res, 'getSSOConfig');
+  }
+});
+
+router.patch('/admin/sso/toggle', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const organizationId = authReq.organizationId;
+    if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    const { enabled } = req.body ?? {};
+    if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'enabled (boolean) is required' });
+    await ssoService.toggleSSO(organizationId, enabled);
+    return res.status(200).json({ success: true, enabled });
+  } catch (err) {
+    handleRouteError(err, res, 'toggleSSO');
+  }
+});
+
+router.get('/sso/login/:orgSlug', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const organizationId = authReq.organizationId;
+    if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    const config = await ssoService.getSSOConfig(organizationId);
+    if (!config || !config.enabled) {
+      return res.status(404).json({ error: 'SSO is not configured or not enabled for this organization' });
+    }
+    if (config.provider === 'saml') {
+      const callbackUrl = `${req.protocol}://${req.get('host')}/api/table-platform/sso/callback`;
+      const authUrl = ssoService.generateSAMLAuthUrl(config.config as any, callbackUrl);
+      return res.status(200).json({ redirectUrl: authUrl });
+    }
+    return res.status(400).json({ error: `SSO provider '${config.provider}' login not yet implemented via this endpoint` });
+  } catch (err) {
+    handleRouteError(err, res, 'ssoLogin');
+  }
+});
+
+router.post('/sso/callback', async (req: Request, res: Response) => {
+  try {
+    const { SAMLResponse, RelayState } = req.body ?? {};
+    if (!SAMLResponse) return res.status(400).json({ error: 'SAMLResponse is required' });
+    const organizationId = RelayState || (req as AuthRequest).organizationId;
+    if (!organizationId) return res.status(400).json({ error: 'Cannot determine organization from callback' });
+    const result = await ssoService.validateSAMLResponse(organizationId, SAMLResponse);
+    if (!result.valid) return res.status(401).json({ error: 'Invalid SAML response' });
+    return res.status(200).json({
+      email: result.email,
+      nameId: result.nameId,
+      attributes: result.attributes,
+    });
+  } catch (err) {
+    handleRouteError(err, res, 'ssoCallback');
+  }
+});
+
+// ==========================================
+// SERVICE ACCOUNTS API
+// ==========================================
+
+router.post('/admin/service-accounts', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const organizationId = authReq.organizationId;
+    if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    const { name, description, scopes, expiresInDays } = req.body ?? {};
+    if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name is required' });
+    if (!Array.isArray(scopes) || scopes.length === 0) {
+      return res.status(400).json({ error: 'scopes array is required' });
+    }
+    const result = await serviceAccountService.createServiceAccount(organizationId, {
+      name,
+      description,
+      scopes,
+      expiresInDays,
+      createdBy: authReq.userId,
+    });
+    return res.status(201).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'createServiceAccount');
+  }
+});
+
+router.get('/admin/service-accounts', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const organizationId = authReq.organizationId;
+    if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    const accounts = await serviceAccountService.listServiceAccounts(organizationId);
+    return res.status(200).json(accounts);
+  } catch (err) {
+    handleRouteError(err, res, 'listServiceAccounts');
+  }
+});
+
+router.delete('/admin/service-accounts/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: 'id is required' });
+    await serviceAccountService.revokeServiceAccount(id);
+    return res.status(204).send();
+  } catch (err) {
+    handleRouteError(err, res, 'revokeServiceAccount');
+  }
+});
+
+// ==========================================
+// SCIM 2.0 PROVISIONING API
+// ==========================================
+
+const scimRouter = Router();
+
+async function verifySCIMAuth(req: Request, res: Response, next: () => void) {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      detail: 'Bearer token required',
+      status: '401',
+    });
+  }
+  const token = authHeader.slice(7);
+  const validation = await scimService.validateSCIMToken(token);
+  if (!validation.valid || !validation.organizationId) {
+    return res.status(401).json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      detail: 'Invalid SCIM token',
+      status: '401',
+    });
+  }
+  (req as any).scimOrganizationId = validation.organizationId;
+  next();
+}
+
+scimRouter.use(verifySCIMAuth);
+
+scimRouter.get('/Users', async (req: Request, res: Response) => {
+  try {
+    const organizationId = (req as any).scimOrganizationId;
+    const filter = typeof req.query.filter === 'string' ? req.query.filter : undefined;
+    const startIndex = req.query.startIndex ? parseInt(String(req.query.startIndex), 10) : 1;
+    const count = req.query.count ? parseInt(String(req.query.count), 10) : 100;
+    const result = await scimService.listUsers(organizationId, filter, startIndex, count);
+    return res.status(200).json(result);
+  } catch (err) {
+    logger.error('[SCIM] listUsers failed', { error: (err as Error).message });
+    return res.status(500).json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      detail: 'Internal server error',
+      status: '500',
+    });
+  }
+});
+
+scimRouter.get('/Users/:id', async (req: Request, res: Response) => {
+  try {
+    const user = await scimService.getUser(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        detail: 'User not found',
+        status: '404',
+      });
+    }
+    return res.status(200).json(user);
+  } catch (err) {
+    logger.error('[SCIM] getUser failed', { error: (err as Error).message });
+    return res.status(500).json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      detail: 'Internal server error',
+      status: '500',
+    });
+  }
+});
+
+scimRouter.post('/Users', async (req: Request, res: Response) => {
+  try {
+    const organizationId = (req as any).scimOrganizationId;
+    const user = await scimService.createUser(organizationId, req.body);
+    return res.status(201).json(user);
+  } catch (err) {
+    logger.error('[SCIM] createUser failed', { error: (err as Error).message });
+    return res.status(500).json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      detail: 'Internal server error',
+      status: '500',
+    });
+  }
+});
+
+scimRouter.put('/Users/:id', async (req: Request, res: Response) => {
+  try {
+    const user = await scimService.updateUser(req.params.id, req.body);
+    if (!user) {
+      return res.status(404).json({
+        schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+        detail: 'User not found',
+        status: '404',
+      });
+    }
+    return res.status(200).json(user);
+  } catch (err) {
+    logger.error('[SCIM] updateUser failed', { error: (err as Error).message });
+    return res.status(500).json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      detail: 'Internal server error',
+      status: '500',
+    });
+  }
+});
+
+scimRouter.delete('/Users/:id', async (req: Request, res: Response) => {
+  try {
+    await scimService.deactivateUser(req.params.id);
+    return res.status(204).send();
+  } catch (err) {
+    logger.error('[SCIM] deactivateUser failed', { error: (err as Error).message });
+    return res.status(500).json({
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:Error'],
+      detail: 'Internal server error',
+      status: '500',
+    });
+  }
+});
+
+router.use('/scim/v2', scimRouter);
+
+router.post('/admin/scim/token', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const organizationId = authReq.organizationId;
+    if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    const result = await scimService.generateSCIMToken(organizationId);
+    return res.status(201).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'generateSCIMToken');
   }
 });
 

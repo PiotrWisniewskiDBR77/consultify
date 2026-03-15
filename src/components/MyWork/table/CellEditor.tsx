@@ -210,7 +210,7 @@ const SingleSelectEditor: React.FC<CellEditorProps> = ({
     <div ref={ref} className="relative">
       <div className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1 max-h-48 overflow-auto">
         {options.map((opt) => {
-          const optVal = opt.name ?? opt.id;
+          const optVal = String(opt.name ?? opt.id);
           return (
             <button
               key={opt.id}
@@ -293,7 +293,7 @@ const MultiSelectEditor: React.FC<CellEditorProps> = ({
     <div ref={ref} className="relative">
       <div className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1 max-h-48 overflow-auto">
         {options.map((opt) => {
-          const optVal = opt.name ?? opt.id;
+          const optVal = String(opt.name ?? opt.id);
           const isSelected = selected.includes(optVal);
           return (
             <button
@@ -317,7 +317,7 @@ const MultiSelectEditor: React.FC<CellEditorProps> = ({
                   style={{ backgroundColor: opt.color }}
                 />
               )}
-              {optVal}
+              {String(optVal)}
             </button>
           );
         })}

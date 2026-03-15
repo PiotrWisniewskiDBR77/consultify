@@ -1,10 +1,12 @@
 import React from 'react';
+import { ShieldCheck } from 'lucide-react';
 
 interface ProvenanceBadgeProps {
   source?: string;
   syncedAt?: string;
   manuallyOverridden?: boolean;
   connectorName?: string;
+  trusted?: boolean;
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -32,6 +34,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
   syncedAt,
   manuallyOverridden,
   connectorName,
+  trusted,
 }) => {
   if (!source) return null;
 
@@ -41,6 +44,7 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
   const titleParts = [`Synced from ${label}`];
   if (timeAgo) titleParts.push(timeAgo);
   if (manuallyOverridden) titleParts.push('Manually overridden');
+  if (trusted !== undefined) titleParts.push(trusted ? 'Trusted source' : 'Untrusted source');
 
   return (
     <span
@@ -51,6 +55,12 @@ export const ProvenanceBadge: React.FC<ProvenanceBadgeProps> = ({
       }}
       title={titleParts.join(' \u2022 ')}
     >
+      {trusted !== undefined && (
+        <ShieldCheck
+          size={12}
+          style={{ color: trusted ? '#16a34a' : '#d97706' }}
+        />
+      )}
       {manuallyOverridden && <span className="text-[10px]">&#9998;</span>}
       <span>{label}</span>
       {timeAgo && (

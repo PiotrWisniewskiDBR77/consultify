@@ -74,6 +74,8 @@ import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
+import { detectTableIntent } from './tableIntentDetector';
+import { generateSchemaProposal } from '@/services/api/tablePlatform.api';
 
 // ============================================================================
 // Types
@@ -1238,6 +1240,76 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
       }
 
+      // Table Platform: intercept table creation/modification intents
+      if (detectTableIntent(text)) {
+        const userMessage: ChatMessage = {
+          id: `user-${Date.now()}`,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        };
+        addChatMessage(userMessage);
+
+        if (activeConversationId) {
+          try {
+            await addMessageToConversation({
+              conversationId: activeConversationId,
+              role: 'user',
+              content,
+              messageType: 'text',
+            });
+          } catch { /* best-effort persist */ }
+        }
+
+        setIsBotTyping(true);
+        try {
+          const wsId = workspaceContext?.workspaceId || workspaceContext?.entityId || '';
+          const language = (i18n.language || 'en').split('-')[0];
+          const proposal = await generateSchemaProposal(wsId, text, undefined, language);
+
+          const proposalMsg: ChatMessage = {
+            id: `table-proposal-${Date.now()}`,
+            role: 'ai',
+            content: '',
+            timestamp: new Date(),
+            metadata: {
+              type: 'table_proposal',
+              proposal,
+            },
+          };
+          addChatMessage(proposalMsg);
+
+          if (activeConversationId) {
+            try {
+              await addMessageToConversation({
+                conversationId: activeConversationId,
+                role: 'ai',
+                content: `[Table Schema Proposal] ${proposal?.summary || ''}`,
+                messageType: 'text',
+                metadata: { type: 'table_proposal', proposal } as any,
+              });
+            } catch { /* best-effort persist */ }
+          }
+        } catch (err) {
+          const uiLang = (i18n.language || 'en').split('-')[0];
+          addChatMessage({
+            id: `table-error-${Date.now()}`,
+            role: 'ai',
+            content:
+              uiLang === 'pl'
+                ? 'Nie udało się wygenerować propozycji tabeli. Spróbuj ponownie.'
+                : 'Failed to generate table proposal. Please try again.',
+            timestamp: new Date(),
+          });
+          console.error('[UnifiedChatPanel] Table proposal generation failed:', err);
+        } finally {
+          setIsBotTyping(false);
+        }
+
+        onMessageSent?.(content);
+        return;
+      }
+
       const saveIntent = parseChatSaveIntent(content);
       const effectivePrompt = saveIntent?.cleanPrompt || content;
       pendingChatSaveIntentRef.current = null;
@@ -1708,6 +1780,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       aiConfig,
       dtConfirmBusy,
       addMessageToConversation,
+      i18n.language,
+      setIsBotTyping,
     ]
   );
 

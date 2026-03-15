@@ -39,6 +39,7 @@ import { ArtifactBadge } from './ArtifactBadge';
 import { CitationList } from './CitationList';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
 import { ResearchProgress } from './ResearchProgress';
+import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { ThinkingStatusLine } from './ThinkingStatusLine';
 
 // ============================================================================
@@ -331,7 +332,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             {/* AI Message Content */}
             {msg.role === 'ai' ? (
               <div
-                className={`${isDeepThinkingConfirm ? 'not-prose' : `prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert`} max-w-none`}
+                className={`${isDeepThinkingConfirm || (msg as any).metadata?.type === 'table_proposal' ? 'not-prose' : `prose ${isCompact ? 'prose-xs' : 'prose-sm'} dark:prose-invert`} max-w-none`}
               >
                 {/* Deep Thinking: Research progress (SSE events) */}
                 {(msg as any).metadata?.researchVisibility?.items && (
@@ -385,7 +386,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </div>
                 )}
 
-                {isDeepThinkingConfirm ? (
+                {(msg as any).metadata?.type === 'table_proposal' ? (
+                  <div className="not-prose">
+                    <ChatTableProposalCard
+                      proposal={(msg as any).metadata.proposal}
+                      onStatusChange={() => {}}
+                    />
+                  </div>
+                ) : isDeepThinkingConfirm ? (
                   <div className="space-y-3">
                     <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                       Confirm Understanding (Deep Thinking)

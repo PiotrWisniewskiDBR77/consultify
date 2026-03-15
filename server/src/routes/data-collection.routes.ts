@@ -41,10 +41,10 @@ router.post('/webhook/:connectorId/receive', async (req: Request, res: Response)
     const expectedSecret = credentials?.webhookSecret as string | undefined;
     if (expectedSecret) {
       const { validateWebhookSecret } = await import('../services/dataCollection/connectors/webhook.js');
-      const providedSecret =
-        (req.headers['x-webhook-secret'] as string) ??
-        (req.query.secret as string) ??
-        '';
+      const raw = req.headers['x-webhook-secret'] ?? req.query.secret;
+      const providedSecret = String(
+        Array.isArray(raw) ? raw[0] ?? '' : raw ?? ''
+      );
       if (!validateWebhookSecret(providedSecret, expectedSecret)) {
         return res.status(401).json({ error: 'Invalid webhook secret' });
       }
@@ -316,9 +316,10 @@ router.get('/connectors/:id/runs', async (req: Request, res: Response) => {
       [id]
     );
 
+    const countRow = countResult.rows[0] as { total?: string } | undefined;
     return res.status(200).json({
       runs: result.rows,
-      total: Number(countResult.rows[0]?.total ?? 0),
+      total: Number(countRow?.total ?? 0),
       limit,
       offset,
     });

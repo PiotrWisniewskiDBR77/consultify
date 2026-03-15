@@ -3,7 +3,7 @@
  * and Table Platform API types.
  */
 
-import type { TablePlatformField, TablePlatformView } from '@/types/tablePlatform';
+import type { FieldType, TablePlatformField, TablePlatformView } from '@/types/tablePlatform';
 import type {
   ColumnDef,
   ColumnType,
@@ -82,7 +82,7 @@ export function columnToField(column: ColumnDef): Partial<TablePlatformField> {
   }
   return {
     name: column.header,
-    fieldType,
+    fieldType: fieldType as FieldType,
     options,
   };
 }

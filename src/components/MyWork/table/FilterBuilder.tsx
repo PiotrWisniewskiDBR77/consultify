@@ -165,7 +165,7 @@ const TextValueInput: React.FC<ValueInputProps> = ({ value, onChange }) => (
 const NumberValueInput: React.FC<ValueInputProps> = ({ value, onChange }) => (
   <input
     type="number"
-    value={value ?? ''}
+    value={value != null && typeof value === 'number' ? value : ''}
     onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
     placeholder="0"
     className={`${inputCls} tabular-nums`}

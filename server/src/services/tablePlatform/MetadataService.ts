@@ -9,6 +9,7 @@ import logger from '../../utils/Logger.js';
 import auditService from './AuditService.js';
 import { PermissionError } from './ErrorHandling.js';
 import projectionService from './ProjectionService.js';
+import { webhookDispatcher } from './WebhookDispatcherService.js';
 
 async function bumpSchemaVersion(
   baseId: string,
@@ -194,6 +195,13 @@ const metadataService = {
       if (baseId) {
         await bumpSchemaVersion(baseId, { action: 'deleteTable', tableId }, deletedBy);
         await this.notifySchemaMutated(baseId, [tableId]);
+
+        webhookDispatcher.dispatchEvent(baseId, {
+          source: 'publicApi',
+          sourceMetadata: { userId: deletedBy },
+          actionType: 'deleteTable',
+          tableId,
+        }).catch(() => {});
       }
       return true;
     } catch (e) {
@@ -216,6 +224,14 @@ const metadataService = {
         if (tableRow?.base_id) {
           await bumpSchemaVersion(tableRow.base_id, { action: 'deleteField', fieldId, tableId }, deletedBy);
           await this.notifySchemaMutated(tableRow.base_id, [tableId]);
+
+          webhookDispatcher.dispatchEvent(tableRow.base_id, {
+            source: 'publicApi',
+            sourceMetadata: { userId: deletedBy },
+            actionType: 'deleteField',
+            tableId,
+            fieldId,
+          }).catch(() => {});
         }
       }
       return true;
@@ -280,6 +296,14 @@ const metadataService = {
       await auditService.logEvent('create', 'table', tableId, createdBy, undefined, table, { base_id: baseId });
       await bumpSchemaVersion(baseId, { action: 'createTable', tableId, name }, createdBy);
       await this.notifySchemaMutated(baseId, [tableId]);
+
+      webhookDispatcher.dispatchEvent(baseId, {
+        source: 'publicApi',
+        sourceMetadata: { userId: createdBy },
+        actionType: 'createTable',
+        tableId,
+      }).catch(() => {});
+
       return table;
     } catch (e) {
       logger.error('[MetadataService] createTable failed', { baseId, name, error: (e as Error).message });
@@ -336,6 +360,14 @@ const metadataService = {
       if (tableRow?.base_id) {
         await bumpSchemaVersion(tableRow.base_id, { action: 'createField', fieldId: id, tableId, name, fieldType }, createdBy);
         await this.notifySchemaMutated(tableRow.base_id, [tableId]);
+
+        webhookDispatcher.dispatchEvent(tableRow.base_id, {
+          source: 'publicApi',
+          sourceMetadata: { userId: createdBy },
+          actionType: 'createField',
+          tableId,
+          fieldId: id,
+        }).catch(() => {});
       }
       return (field ?? null) as Record<string, unknown> | null;
     } catch (e) {
@@ -379,6 +411,13 @@ const metadataService = {
         if (tableRow?.base_id) {
           await bumpSchemaVersion(tableRow.base_id, { action: 'updateField', fieldId, updates });
           await this.notifySchemaMutated(tableRow.base_id, [tableId]);
+
+          webhookDispatcher.dispatchEvent(tableRow.base_id, {
+            source: 'publicApi',
+            actionType: 'updateField',
+            tableId,
+            fieldId,
+          }).catch(() => {});
         }
       }
       return (after ?? null) as Record<string, unknown> | null;

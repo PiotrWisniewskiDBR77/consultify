@@ -13,6 +13,9 @@ import attachmentService from './AttachmentService.js';
 import { ValidationError, ConflictError, PermissionError } from './ErrorHandling.js';
 import { recomputeAffectedFields } from './formulaEngine.js';
 import { fieldPermissionService } from './FieldPermissionService.js';
+import { automationService } from './AutomationService.js';
+import { tablePlatformRealtime } from './RealtimeService.js';
+import { webhookDispatcher } from './WebhookDispatcherService.js';
 
 const MAX_BATCH_SIZE = 10;
 const CURSOR_DELIM = '|';
@@ -197,6 +200,12 @@ async function enrichAttachmentFields(
   }
 }
 
+async function getBaseIdForTable(tableId: string): Promise<string | null> {
+  const db = getDatabase();
+  const r = await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]);
+  return (r.rows[0] as { base_id?: string } | undefined)?.base_id ?? null;
+}
+
 const recordsService = {
   async createRecord(
     tableId: string,
@@ -251,6 +260,26 @@ const recordsService = {
           error: (recomputeErr as Error).message,
         });
       }
+
+      try { tablePlatformRealtime.notifyRecordCreated(tableId, row); } catch { /* non-blocking */ }
+
+      if (row) {
+        automationService.evaluateTriggers(tableId, 'record_created', row).catch((err) =>
+          logger.warn('[Automations] trigger evaluation failed after create', { error: (err as Error).message })
+        );
+      }
+
+      getBaseIdForTable(tableId).then((baseId) => {
+        if (!baseId) return;
+        webhookDispatcher.dispatchEvent(baseId, {
+          source: 'publicApi',
+          sourceMetadata: { userId: createdBy },
+          actionType: 'createRecord',
+          tableId,
+          recordId: id,
+          newCellValues: enrichedData,
+        }).catch(() => {});
+      }).catch(() => {});
 
       return row ?? null;
     } catch (e) {
@@ -384,6 +413,27 @@ const recordsService = {
         });
       }
 
+      try { tablePlatformRealtime.notifyRecordUpdated(tableId, recordId, after); } catch { /* non-blocking */ }
+
+      if (after) {
+        automationService.evaluateTriggers(tableId, 'record_updated', after).catch((err) =>
+          logger.warn('[Automations] trigger evaluation failed after update', { error: (err as Error).message })
+        );
+      }
+
+      getBaseIdForTable(tableId).then((baseId) => {
+        if (!baseId) return;
+        webhookDispatcher.dispatchEvent(baseId, {
+          source: 'publicApi',
+          sourceMetadata: { userId: updatedBy },
+          actionType: 'updateRecord',
+          tableId,
+          recordId,
+          oldCellValues: existingData,
+          newCellValues: enrichedData,
+        }).catch(() => {});
+      }).catch(() => {});
+
       return after ?? null;
     } catch (e) {
       logger.error('[RecordsService] updateRecord failed', { recordId, error: (e as Error).message });
@@ -396,9 +446,24 @@ const recordsService = {
     try {
       const before = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId])).rows[0];
       if (!before) return false;
+      const tableId = (before as { table_id: string }).table_id;
       await relationService.onRecordDeleted(recordId);
       await db.query('DELETE FROM tp_records WHERE id = $1', [recordId]);
       await auditService.logEvent('delete', 'record', recordId, deletedBy, before, undefined, undefined);
+
+      try { tablePlatformRealtime.notifyRecordDeleted(tableId, recordId); } catch { /* non-blocking */ }
+
+      getBaseIdForTable(tableId).then((baseId) => {
+        if (!baseId) return;
+        webhookDispatcher.dispatchEvent(baseId, {
+          source: 'publicApi',
+          sourceMetadata: { userId: deletedBy },
+          actionType: 'deleteRecord',
+          tableId,
+          recordId,
+        }).catch(() => {});
+      }).catch(() => {});
+
       return true;
     } catch (e) {
       logger.error('[RecordsService] deleteRecord failed', { recordId, error: (e as Error).message });

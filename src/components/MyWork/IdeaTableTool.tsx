@@ -31,6 +31,7 @@ import {
   History,
   KanbanSquare,
   Keyboard,
+  Layout,
   Layers,
   LayoutGrid,
   Link2,
@@ -103,6 +104,7 @@ import { batchEvaluateFormulas } from './table/FormulaEngineV2';
 import { FrameworkGenerator } from './table/FrameworkGenerator';
 import { GridView } from './table/GridView';
 import { IdeaPipeline } from './table/IdeaPipeline';
+import { InterfaceDesigner } from './table/InterfaceDesigner';
 import { IdeaScoringModel } from './table/IdeaScoringModel';
 import { BatchAIFillButton, InlineAIFill } from './table/InlineAIFill';
 import { KanbanView } from './table/KanbanView';
@@ -144,6 +146,8 @@ import { ConnectorWizard } from './table/connectors/ConnectorWizard';
 import { ConnectorList } from './table/connectors/ConnectorList';
 import { RunHistoryPanel } from './table/connectors/RunHistoryPanel';
 import { useConnectors, type Connector } from './table/connectors/useConnectors';
+import { useTableRealtime } from './table/useTableRealtime';
+import { PresenceIndicators } from './table/PresenceIndicators';
 
 interface IdeaTableToolProps {
   open: boolean;
@@ -193,6 +197,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
   // When the new platform is active, override legacy hook outputs
   const usePlatform = platformIntegration.active;
+
+  // ── Table Platform real-time collaboration ─────────────────────────────────
+  const realtime = useTableRealtime({
+    tableId: usePlatform ? ideaId : null,
+    userId: 'current-user',
+    userName: 'Me',
+  });
 
   // ── Domain hooks (Stage 1 extraction) ───────────────────────────────────────
   const schema = useTableSchema(isPl, ideaId);
@@ -456,6 +467,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [showSnapshotManager, setShowSnapshotManager] = useState(false);
   const [showConnectorWizard, setShowConnectorWizard] = useState(false);
   const [showConnectorList, setShowConnectorList] = useState(false);
+  const [showInterfaceDesigner, setShowInterfaceDesigner] = useState(false);
   const [connectorHistoryTarget, setConnectorHistoryTarget] = useState<Connector | null>(null);
   const [colContextMenu, setColContextMenu] = useState<{
     colKey: string;
@@ -773,7 +785,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     [columns, ideaId, locked, nodes, nodesUndo]
   );
 
-  // ── "/" key for AI assistant ───────────────────────────────────────────────
+  // ── "/" key for AI assistant, Ctrl+Shift+S for AI Schema ────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (
@@ -785,10 +797,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         e.preventDefault();
         setShowAIAssistant(true);
       }
+      if (e.ctrlKey && e.shiftKey && e.key === 'S' && usePlatform) {
+        e.preventDefault();
+        setShowChatToSchema(true);
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [showAIAssistant]);
+  }, [showAIAssistant, usePlatform]);
 
   // Save, toggleColumn, cycleSort, applyView now handled by hooks
 
@@ -957,6 +973,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             enabled={true}
             onPresenceUpdate={setRemotePresenceUsers}
           />
+          {usePlatform && realtime.presence.length > 0 && (
+            <PresenceIndicators presence={realtime.presence} currentUserId="current-user" />
+          )}
 
           {/* View tabs */}
           <div className="flex items-center gap-0.5 mr-2">
@@ -1372,6 +1391,29 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             <BarChart3 size={12} />
           </button>
 
+          {/* Interface Designer */}
+          {usePlatform && (
+            <button
+              onClick={() => setShowInterfaceDesigner(true)}
+              className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+              title={isPl ? 'Projektant interfejsu' : 'Interface Designer'}
+            >
+              <Layout size={12} />
+            </button>
+          )}
+
+          {/* AI Schema Builder */}
+          {!locked && usePlatform && (
+            <button
+              onClick={() => setShowChatToSchema(true)}
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors"
+              title="AI Schema Builder"
+            >
+              <Sparkles size={12} />
+              AI Schema
+            </button>
+          )}
+
           {/* CSV import/export + Connectors */}
           <div className="flex items-center gap-0.5">
             {!locked && (
@@ -1605,6 +1647,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             setAiProposal(p);
             setShowAIAssistant(false);
           }}
+          usePlatform={usePlatform}
+          workspaceId={ideaId}
         />
 
         {/* AI Table Proposal overlay */}
@@ -2283,6 +2327,27 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         baseId={ideaId}
       />
 
+      {/* Chat-to-Schema Panel */}
+      {showChatToSchema && usePlatform && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
+          <div className="w-[600px] max-w-[90vw] max-h-[80vh] overflow-y-auto bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl">
+            <ChatToSchemaPanel
+              workspaceId={ideaId}
+              existingSchema={effectiveColumns.map(c => ({
+                key: c.key,
+                header: c.header,
+                type: c.type,
+              }))}
+              onExecuted={() => {
+                setShowChatToSchema(false);
+                platformIntegration.refresh();
+              }}
+              onClose={() => setShowChatToSchema(false)}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Data Connector Wizard */}
       <ConnectorWizard
         open={showConnectorWizard}
@@ -2296,6 +2361,35 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         create={connectors.create}
         isCreating={connectors.isCreating}
       />
+
+      {/* Interface Designer */}
+      {showInterfaceDesigner && (
+        <div className="fixed inset-0 z-[160] flex items-stretch bg-black/20 backdrop-blur-[2px]" onClick={() => setShowInterfaceDesigner(false)}>
+          <div className="flex-1 m-4 bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
+              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                {isPl ? 'Projektant interfejsu' : 'Interface Designer'}
+              </h3>
+              <button onClick={() => setShowInterfaceDesigner(false)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800">
+                <X size={14} className="text-slate-400" />
+              </button>
+            </div>
+            <InterfaceDesigner
+              interfaceId={`iface-${ideaId}`}
+              baseId={ideaId}
+              layout={{ blocks: [] }}
+              tables={[{
+                id: ideaId,
+                name: isPl ? 'Bieżąca tabela' : 'Current table',
+                fields: _cols.map((c) => ({ id: c.key, name: c.header })),
+              }]}
+              onSave={() => {
+                setShowInterfaceDesigner(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Connector List Panel */}
       {showConnectorList && (

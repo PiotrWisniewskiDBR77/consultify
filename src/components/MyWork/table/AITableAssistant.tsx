@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
+import { generateSchemaProposal } from '@/services/api/tablePlatform.api';
 
 import type { TableProposal } from './AITableProposal';
 import type { ColumnDef, FilterGroup, SortConfig, TableNode } from './tableTypes';
@@ -31,6 +32,8 @@ interface AITableAssistantProps {
   onAddColumn: (col: ColumnDef) => void;
   onAddRows: (rows: TableNode[]) => void;
   onProposal?: (proposal: TableProposal) => void;
+  usePlatform?: boolean;
+  workspaceId?: string;
 }
 
 const EXAMPLE_COMMANDS = {
@@ -68,6 +71,8 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
   onAddColumn,
   onAddRows,
   onProposal,
+  usePlatform,
+  workspaceId,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -86,6 +91,45 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
     if (!command.trim() || loading) return;
     setLoading(true);
     setLastResult(null);
+
+    if (usePlatform && workspaceId) {
+      try {
+        const schema = columns.map((c) => ({ key: c.key, header: c.header, type: c.type }));
+        const proposal = await generateSchemaProposal(
+          workspaceId,
+          command.trim(),
+          schema,
+          i18n.language,
+        );
+
+        if (onProposal && proposal) {
+          const mapped: TableProposal = {
+            title: proposal.summary || command.trim(),
+            description: proposal.summary || '',
+            columns: (proposal.operations || [])
+              .filter((op: any) => op.operationType === 'create_field')
+              .map((op: any, idx: number) => ({
+                key: op.payload?.name || `col_${idx}`,
+                header: op.payload?.name || `Column ${idx + 1}`,
+                type: op.payload?.fieldType || 'text',
+                visible: true,
+                width: 160,
+              })),
+            views: [],
+            rows: [],
+          };
+          onProposal(mapped);
+          toast.success(isPl ? 'Propozycja wygenerowana (nowy backend)' : 'Proposal generated (new backend)');
+        }
+        setCommand('');
+        return;
+      } catch (err: any) {
+        toast.error(err?.message || 'Schema proposal failed');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
 
     try {
       const schema = columns.map((c) => ({ key: c.key, header: c.header, type: c.type }));
@@ -222,7 +266,10 @@ export const AITableAssistant: React.FC<AITableAssistantProps> = ({
     onAddRows,
     onFilter,
     onGroup,
+    onProposal,
     onSort,
+    usePlatform,
+    workspaceId,
   ]);
 
   if (!open) return null;

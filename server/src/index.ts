@@ -334,6 +334,17 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
     }
   })();
 
+  // Scheduled Automations Executor (cron-based) - non-blocking
+  (async () => {
+    try {
+      const { scheduledAutomationExecutor } = await import('./services/tablePlatform/ScheduledAutomationExecutor.js');
+      scheduledAutomationExecutor.start(60_000);
+      logger.info('[Server] ✅ Scheduled Automation Executor started (60s interval)');
+    } catch (err: any) {
+      logger.error('[Server] Scheduled Automation Executor failed:', err?.message);
+    }
+  })();
+
   // ============================================================
   // LLM CONFIG INITIALIZATION - Create tables & sync providers
   // ============================================================
@@ -1025,6 +1036,20 @@ if (startServer && shouldStartHttpServer) {
       logger.info('[Server] Idea collab WebSocket /ws/collab/:ideaId initialized');
     } catch (err: any) {
       logger.warn('[Server] Idea collab WebSocket not available:', err?.message);
+    }
+
+    // Table Platform real-time collaboration (Socket.IO /table-platform namespace)
+    try {
+      const { Server: SocketIOServer } = await import('socket.io');
+      const io = new SocketIOServer(server, {
+        cors: { origin: '*', methods: ['GET', 'POST'] },
+        path: '/socket.io',
+      });
+      const { tablePlatformRealtime } = await import('./services/tablePlatform/RealtimeService.js');
+      tablePlatformRealtime.init(io);
+      logger.info('[Server] Table Platform Realtime (Socket.IO /table-platform) initialized');
+    } catch (err: any) {
+      logger.warn('[Server] Table Platform Realtime not available:', err?.message);
     }
 
     // ShutdownManager will be used in graceful shutdown handler

@@ -125,7 +125,7 @@ export const LinkedRecordDisplay: React.FC<LinkedRecordDisplayProps> = React.mem
     const [loading, setLoading] = useState(false);
     const [hoveredId, setHoveredId] = useState<string | null>(null);
     const [fieldsMeta, setFieldsMeta] = useState<Array<{ id: string; name: string }>>([]);
-    const hoverTimerRef = useRef<ReturnType<typeof setTimeout>>();
+    const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
     useEffect(() => {
       if (!recordId || !fieldId) return;
