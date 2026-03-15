@@ -174,7 +174,7 @@ export function useFinanceData(
           return {
             id: String(s.id),
             title: String(
-              s.period_label || s.entity_name || `${t('finance.pack.titleFallback', 'Statement Pack')} ${s.period_end || ''}`
+              s.entity_name || s.period_label || `${t('finance.pack.titleFallback', 'Statement Pack')} ${s.period_end || ''}`
             ),
             kind: 'statements',
             status:

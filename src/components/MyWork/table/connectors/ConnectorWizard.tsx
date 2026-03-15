@@ -500,6 +500,77 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
         </>
       )}
 
+      {connectorType === 'jira' && (
+        <>
+          <div>
+            <label className={labelCls}>{isPl ? 'Domena Jira' : 'Jira domain'}</label>
+            <input
+              className={inputCls}
+              value={config.domain ?? ''}
+              onChange={(e) => setConfig((p) => ({ ...p, domain: e.target.value }))}
+              placeholder="mycompany (for mycompany.atlassian.net)"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Email</label>
+              <input
+                className={inputCls}
+                value={config.email ?? ''}
+                onChange={(e) => setConfig((p) => ({ ...p, email: e.target.value }))}
+                placeholder="user@company.com"
+              />
+            </div>
+            <div>
+              <label className={labelCls}>API Token</label>
+              <input
+                className={inputCls}
+                type="password"
+                value={config.jiraApiToken ?? ''}
+                onChange={(e) => setConfig((p) => ({ ...p, jiraApiToken: e.target.value }))}
+                placeholder="ATATT..."
+              />
+            </div>
+          </div>
+          <div>
+            <label className={labelCls}>{isPl ? 'Projekt (opcjonalnie)' : 'Project (optional)'}</label>
+            <input
+              className={inputCls}
+              value={config.project ?? ''}
+              onChange={(e) => setConfig((p) => ({ ...p, project: e.target.value }))}
+              placeholder="PROJ"
+            />
+          </div>
+          <div>
+            <label className={labelCls}>JQL ({isPl ? 'opcjonalnie' : 'optional'})</label>
+            <input
+              className={inputCls}
+              value={config.jql ?? ''}
+              onChange={(e) => setConfig((p) => ({ ...p, jql: e.target.value }))}
+              placeholder='project = "PROJ" AND status != Done ORDER BY created DESC'
+            />
+          </div>
+        </>
+      )}
+
+      {connectorType === 'webhook' && (
+        <div>
+          <label className={labelCls}>{isPl ? 'Sekret webhooka (opcjonalnie)' : 'Webhook secret (optional)'}</label>
+          <input
+            className={inputCls}
+            type="password"
+            value={config.webhookSecret ?? ''}
+            onChange={(e) => setConfig((p) => ({ ...p, webhookSecret: e.target.value }))}
+            placeholder={isPl ? 'Współdzielony sekret do walidacji' : 'Shared secret for validation'}
+          />
+          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+            {isPl
+              ? 'Po utworzeniu konektora otrzymasz URL webhooka do wysyłania danych.'
+              : 'After creating the connector you will receive a webhook URL to send data to.'}
+          </p>
+        </div>
+      )}
+
       {/* Test connection */}
       <div className="flex items-center gap-3 pt-2">
         <button
