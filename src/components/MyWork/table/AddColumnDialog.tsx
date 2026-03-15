@@ -3,6 +3,7 @@
  * and type-specific configuration panels driven by PropertyRegistry.
  */
 import {
+  AlertCircle,
   Calculator,
   Calendar,
   CheckSquare,
@@ -31,6 +32,7 @@ import {
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { FormulaEditor } from './FormulaEditor';
 import { getPropertyGroups, getPropertySpec } from './PropertyRegistry';
 import type { ColumnDef, ColumnType } from './tableTypes';
 import { SELECT_COLORS } from './tableTypes';
@@ -68,6 +70,8 @@ interface AddColumnDialogProps {
   onClose: () => void;
   onAdd: (column: ColumnDef) => void;
   existingKeys: string[];
+  tableId?: string;
+  tableFields?: Array<{ id: string; name: string; fieldType: string }>;
 }
 
 export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
@@ -75,6 +79,8 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
   onClose,
   onAdd,
   existingKeys,
+  tableId,
+  tableFields = [],
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -89,6 +95,12 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
   const [relationTarget, setRelationTarget] = useState('');
   const [rollupSource, setRollupSource] = useState('');
   const [rollupFunction, setRollupFunction] = useState<string>('count');
+  const [formulaValidation, setFormulaValidation] = useState<{
+    valid: boolean;
+    error?: string;
+    dependencies?: string[];
+    resultType?: string;
+  } | null>(null);
 
   const reset = useCallback(() => {
     setName('');
@@ -135,7 +147,13 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
             ),
           }
         : {}),
-      ...(type === 'formula' ? { formula: formula || '{col1} + {col2}' } : {}),
+      ...(type === 'formula'
+        ? {
+            formula: formula || '{col1} + {col2}',
+            formulaDependencies: formulaValidation?.dependencies,
+            formulaResultType: formulaValidation?.resultType,
+          }
+        : {}),
       ...(type === 'ai_generated' ? { aiPrompt: aiPrompt || 'Analyze this row' } : {}),
       ...(type === 'relation' && relationTarget ? { relationTarget } : {}),
       ...(type === 'rollup' ? { rollupSource: rollupSource || undefined, rollupFunction: (rollupFunction as ColumnDef['rollupFunction']) || 'count' } : {}),
@@ -250,20 +268,40 @@ export const AddColumnDialog: React.FC<AddColumnDialogProps> = ({
 
           {type === 'formula' && (
             <div>
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
-                {isPl ? 'Formuła' : 'Formula'}
-              </label>
-              <input
-                value={formula}
-                onChange={(e) => setFormula(e.target.value)}
-                placeholder="{impact} * {effort}"
-                className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
-              />
-              <p className="mt-1 text-[9px] text-slate-400">
-                {isPl
-                  ? 'Użyj {nazwa_kolumny} aby odwołać się do wartości'
-                  : 'Use {column_key} to reference values'}
-              </p>
+              {tableId ? (
+                <FormulaEditor
+                  tableId={tableId}
+                  value={formula}
+                  onChange={setFormula}
+                  fields={tableFields}
+                  onValidationChange={setFormulaValidation}
+                />
+              ) : (
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                    {isPl ? 'Formuła' : 'Formula'}
+                  </label>
+                  <input
+                    value={formula}
+                    onChange={(e) => setFormula(e.target.value)}
+                    placeholder="{impact} * {effort}"
+                    className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-violet-500/30"
+                  />
+                  <p className="mt-1 text-[9px] text-slate-400">
+                    {isPl
+                      ? 'Użyj {nazwa_kolumny} aby odwołać się do wartości'
+                      : 'Use {column_key} to reference values'}
+                  </p>
+                </div>
+              )}
+              {formulaValidation && !formulaValidation.valid && formulaValidation.error?.toLowerCase().includes('cycle') && (
+                <div className="mt-2 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-900/20">
+                  <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-600" />
+                  <span className="text-[10px] text-amber-700 dark:text-amber-300">
+                    {isPl ? 'Formuła tworzy cykl zależności!' : 'Formula creates a dependency cycle!'}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 

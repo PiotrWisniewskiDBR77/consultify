@@ -131,6 +131,11 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
 
     if (action === 'mm_add_knowledge' || action === 'mm_add_note' || action === 'mm_add_evidence') {
       if (locked) return;
+      const sel = handlers.getSelectedNode();
+      if (!sel) {
+        toast(isPolish ? 'Zaznacz węzeł, do którego chcesz dodać' : 'Select a node to attach to', { icon: 'ℹ️' });
+        return;
+      }
       handlers.pushUndo();
       const typeMap: Record<string, string> = {
         mm_add_knowledge: 'knowledgeCard',
@@ -143,15 +148,12 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         mm_add_evidence: isPolish ? 'Dowód' : 'Evidence',
       };
       const newId = `${typeMap[action]}-${Date.now()}`;
-      const sel = handlers.getSelectedNode();
-      const baseX = sel ? sel.position.x + 200 : 300;
-      const baseY = sel ? sel.position.y : 200;
       setters.setNodes((prev) => [
         ...prev,
         {
           id: newId,
           type: typeMap[action],
-          position: { x: baseX, y: baseY },
+          position: { x: sel.position.x + 200, y: sel.position.y },
           data: {
             label: labelMap[action],
             kind: typeMap[action],
@@ -164,18 +166,16 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           },
         },
       ]);
-      if (sel) {
-        setters.setEdges((prev) => [
-          ...prev,
-          {
-            id: `e-${sel.id}-${newId}`,
-            source: sel.id,
-            target: newId,
-            type: 'labeled',
-            data: {},
-          },
-        ]);
-      }
+      setters.setEdges((prev) => [
+        ...prev,
+        {
+          id: `e-${sel.id}-${newId}`,
+          source: sel.id,
+          target: newId,
+          type: 'labeled',
+          data: {},
+        },
+      ]);
     }
 
     if (action === 'mm_auto_layout') {
@@ -294,7 +294,6 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
 
     // ── AddNodePopover: Semantic node inserts ──────────────────────────────
     const SEMANTIC_INSERT_MAP: Record<string, { kind: string; labelPl: string; labelEn: string }> = {
-      mm_add_root: { kind: 'topic', labelPl: 'Nowy temat', labelEn: 'New topic' },
       mm_insert_topic: { kind: 'topic', labelPl: 'Temat', labelEn: 'Topic' },
       mm_insert_hypothesis: { kind: 'hypothesis', labelPl: 'Hipoteza', labelEn: 'Hypothesis' },
       mm_insert_risk: { kind: 'risk', labelPl: 'Ryzyko', labelEn: 'Risk' },
@@ -304,13 +303,18 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     };
     if (SEMANTIC_INSERT_MAP[action]) {
       if (locked) return;
+      const sel = handlers.getSelectedNode();
+      const parentId = sel?.id || 'root';
+      const parentNode = sel || nodes.find((n) => n.id === 'root');
+      if (!parentNode) {
+        toast.error(isPolish ? 'Brak korzenia mapy' : 'Map root is missing');
+        return;
+      }
       handlers.pushUndo();
       const spec = SEMANTIC_INSERT_MAP[action];
       const newId = `${spec.kind}-${Date.now()}`;
-      const sel = handlers.getSelectedNode();
-      const isRoot = false;
-      const baseX = isRoot ? Math.random() * 400 + 100 : (sel ? sel.position.x + 220 : 300);
-      const baseY = isRoot ? Math.random() * 300 + 100 : (sel ? sel.position.y + 20 : 200);
+      const baseX = parentNode.position.x + 220;
+      const baseY = parentNode.position.y + 20;
       setters.setNodes((prev) => [
         ...prev,
         {
@@ -329,12 +333,16 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           },
         },
       ]);
-      if (sel && !isRoot) {
-        setters.setEdges((prev) => [
-          ...prev,
-          { id: `e-${sel.id}-${newId}`, source: sel.id, target: newId, type: 'gradient', data: {} },
-        ]);
-      }
+      setters.setEdges((prev) => [
+        ...prev,
+        {
+          id: `e-${parentId}-${newId}`,
+          source: parentId,
+          target: newId,
+          type: 'gradient',
+          data: { userCreated: true, edgeRole: 'structural' },
+        },
+      ]);
     }
 
     // ── CanvasLeftToolbar direct slots ─────────────────────────────────────
@@ -505,6 +513,24 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         { icon: 'ℹ️', duration: 2500 }
       );
     }
+    if (
+      [
+        'mm_background',
+        'mm_governance',
+        'mm_timers',
+        'mm_cross_tool',
+        'mm_collaboration',
+        'mm_kanban_view',
+      ].includes(action)
+    ) {
+      toast(
+        isPolish
+          ? 'To narzędzie nie jest już aktywne w obecnym widoku mindmap.'
+          : 'This tool is no longer active in the current mindmap view.',
+        { icon: 'ℹ️', duration: 2200 }
+      );
+      return;
+    }
 
     // ── MoreToolsPanel actions ─────────────────────────────────────────────
     if (action === 'mm_change_layout') {
@@ -528,27 +554,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     if (action === 'mm_fit_view') {
       handlers.fitView({ padding: 0.3, duration: 400 });
     }
-    if (action === 'mm_background') {
-      if (setters.setShowBackgroundSettings) {
-        setters.setShowBackgroundSettings(true);
-      }
-    }
     if (action === 'mm_activity') setters.setShowActivityFeed(true);
-    if (action === 'mm_governance') {
-      if (setters.setShowGovernancePanel) {
-        setters.setShowGovernancePanel(true);
-      }
-    }
-    if (action === 'mm_timers') {
-      if (setters.setShowTimerPanel) {
-        setters.setShowTimerPanel(true);
-      }
-    }
-    if (action === 'mm_cross_tool') {
-      if (setters.setShowCrossToolPanel) {
-        setters.setShowCrossToolPanel(true);
-      }
-    }
     if (action === 'mm_share') {
       const url = `${window.location.origin}${window.location.pathname}?ideaId=${ideaId}`;
       navigator.clipboard?.writeText(url).then(() => {
@@ -556,11 +562,6 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       }).catch(() => {
         toast(isPolish ? 'Nie udało się skopiować' : 'Copy failed', { icon: '⚠️' });
       });
-    }
-    if (action === 'mm_collaboration') {
-      if (setters.setShowCollaboration) {
-        setters.setShowCollaboration(true);
-      }
     }
     if (action === 'mm_embed') {
       const embedUrl = `${window.location.origin}/embed/idea/${ideaId}`;
@@ -572,11 +573,6 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       });
     }
     if (action === 'mm_branch_analysis') setters.setShowBranchComparison(true);
-    if (action === 'mm_kanban_view') {
-      if (setters.setShowKanbanView) {
-        setters.setShowKanbanView(true);
-      }
-    }
   };
 
   useEffect(() => {

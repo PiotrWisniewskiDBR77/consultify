@@ -16,8 +16,12 @@ function getEdgeRole(edge: Edge): 'structural' | 'relation' {
   return 'structural';
 }
 
-function isStructuralEdge(edge: Edge) {
+export function isStructuralEdge(edge: Edge): boolean {
   return getEdgeRole(edge) === 'structural';
+}
+
+export function isRelationEdge(edge: Edge): boolean {
+  return getEdgeRole(edge) === 'relation';
 }
 
 export const BRANCH_COLORS: Record<string, { bg: string; text: string; edge: string; glow: string }> = {
@@ -111,6 +115,25 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     [edges]
   );
 
+  const getSubtreeNodeIds = useCallback(
+    (nodeId: string): string[] => {
+      const result: string[] = [nodeId];
+      const stack = [nodeId];
+      while (stack.length > 0) {
+        const current = stack.pop()!;
+        const children = edges
+          .filter((e) => e.source === current && isStructuralEdge(e))
+          .map((e) => e.target);
+        for (const child of children) {
+          result.push(child);
+          stack.push(child);
+        }
+      }
+      return result;
+    },
+    [edges]
+  );
+
   const getNodeById = useCallback(
     (nodeId?: string | null): Node | undefined =>
       nodeId ? nodes.find((n: any) => n?.id === nodeId && !isNodeLockedByPeer(n.id)) : undefined,
@@ -144,6 +167,17 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         branchKey,
         sourceType: 'manual',
         priority: 50,
+        notes: '',
+        context: '',
+        goal: '',
+        rationale: '',
+        riskNote: '',
+        tags: [],
+        semanticType: '',
+        status: 'idea',
+        evidenceLinks: [],
+        artifactLinks: [],
+        aiExpansionHistory: [],
         _startEditing: initialLabel ? undefined : Date.now(),
       },
     } as any;
@@ -214,7 +248,24 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       id: newId,
       type: 'idea',
       position: { x: selected.position.x, y: selected.position.y + 70 },
-      data: { label: '', branchKey, sourceType: 'manual', priority: 50, _startEditing: Date.now() },
+      data: {
+        label: '',
+        branchKey,
+        sourceType: 'manual',
+        priority: 50,
+        notes: '',
+        context: '',
+        goal: '',
+        rationale: '',
+        riskNote: '',
+        tags: [],
+        semanticType: '',
+        status: 'idea',
+        evidenceLinks: [],
+        artifactLinks: [],
+        aiExpansionHistory: [],
+        _startEditing: Date.now(),
+      },
     } as any;
 
     const colors = branchColor(branchKey);
@@ -410,6 +461,16 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
         semanticType: 'topic',
         sourceType: 'manual',
         priority: 50,
+        notes: '',
+        context: '',
+        goal: '',
+        rationale: '',
+        riskNote: '',
+        tags: [],
+        status: 'idea',
+        evidenceLinks: [],
+        artifactLinks: [],
+        aiExpansionHistory: [],
         _startEditing: Date.now(),
       },
     } as any;
@@ -439,6 +500,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     selectedNodeIds,
     findParentId,
     findChildrenIds,
+    getSubtreeNodeIds,
     addChildNode,
     addSiblingNode,
     deleteSelected,

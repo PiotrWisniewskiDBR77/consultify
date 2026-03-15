@@ -89,6 +89,30 @@ export function getNodeArtifactLinks(node: Node | null | undefined): ArtifactLin
   return [];
 }
 
+const DEPTH_HYDRATION_FIELDS = [
+  'notes',
+  'context',
+  'goal',
+  'rationale',
+  'riskNote',
+  'evidenceLinks',
+  'semanticType',
+  'status',
+  'tags',
+  'aiExpansionHistory',
+] as const;
+
+function hydrateDepthFields(node: any): Record<string, unknown> {
+  const data = node?.data || {};
+  const payload = node?.payload || {};
+  const result: Record<string, unknown> = {};
+  for (const field of DEPTH_HYDRATION_FIELDS) {
+    const val = data[field] ?? payload[field];
+    if (val != null) result[field] = val;
+  }
+  return result;
+}
+
 export function normalizeMindMapNodes(
   nodes: any[],
   edges: Edge[],
@@ -107,13 +131,18 @@ export function normalizeMindMapNodes(
       ? node.data.artifactLinks
       : Array.isArray(node?.artifactLinks)
         ? node.artifactLinks
-        : undefined;
+        : Array.isArray(node?.payload?.artifactLinks)
+          ? node.payload.artifactLinks
+          : undefined;
+
+    const depthFields = hydrateDepthFields(node);
 
     return {
       ...node,
       type: inferredType,
       data: {
         ...(node?.data || {}),
+        ...depthFields,
         label:
           node?.id === 'root'
             ? ideaTitle || (isPolish ? 'Moj pomysl' : 'My idea')
@@ -126,7 +155,7 @@ export function normalizeMindMapNodes(
             : node?.data?.hint,
         branchKey: node?.data?.branchKey || 'uncategorized',
         _depth: getNodeDepth(node.id, edges),
-        tags: sanitizeTags(node?.data?.tags),
+        tags: sanitizeTags(depthFields.tags ?? node?.data?.tags),
         ...(mergedArtifactLinks ? { artifactLinks: mergedArtifactLinks } : {}),
       },
     };

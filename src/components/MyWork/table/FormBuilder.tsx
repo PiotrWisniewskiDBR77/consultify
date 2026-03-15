@@ -1,0 +1,802 @@
+/**
+ * FormBuilder — Drag-and-drop form builder for Table Platform forms.
+ * Allows configuring field visibility, ordering, validation, and form settings.
+ */
+
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  ClipboardCopy,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  GripVertical,
+  Hash,
+  Calendar,
+  CheckSquare,
+  Link2,
+  Mail,
+  Phone,
+  Type,
+  AlignLeft,
+  List,
+  Percent,
+  DollarSign,
+  Paperclip,
+  Globe,
+  Loader2,
+  Save,
+  Trash2,
+} from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import type { FieldType, TablePlatformField } from '@/types/tablePlatform';
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface FormFieldConfig {
+  fieldId: string;
+  label?: string;
+  required?: boolean;
+  helpText?: string;
+  defaultValue?: unknown;
+  hidden?: boolean;
+}
+
+interface FormConfig {
+  fields: FormFieldConfig[];
+  submitMessage?: string;
+  redirectUrl?: string;
+  allowMultiple?: boolean;
+  requireAuth?: boolean;
+  styling?: Record<string, unknown>;
+}
+
+interface FormData {
+  id: string;
+  table_id: string;
+  name: string;
+  description: string | null;
+  slug: string;
+  is_published: boolean;
+  config: FormConfig;
+  submit_count: number;
+}
+
+export interface FormBuilderProps {
+  form: FormData;
+  tableFields: TablePlatformField[];
+  onSave: (updates: {
+    name?: string;
+    description?: string;
+    slug?: string;
+    is_published?: boolean;
+    config?: Partial<FormConfig>;
+  }) => Promise<void>;
+  onDelete?: () => Promise<void>;
+  baseUrl?: string;
+}
+
+// ── Field type icons ─────────────────────────────────────────────────────────
+
+const FIELD_TYPE_ICON: Record<string, React.ReactNode> = {
+  singleLineText: <Type className="h-4 w-4" />,
+  longText: <AlignLeft className="h-4 w-4" />,
+  number: <Hash className="h-4 w-4" />,
+  currency: <DollarSign className="h-4 w-4" />,
+  percent: <Percent className="h-4 w-4" />,
+  checkbox: <CheckSquare className="h-4 w-4" />,
+  date: <Calendar className="h-4 w-4" />,
+  singleSelect: <List className="h-4 w-4" />,
+  multiSelect: <List className="h-4 w-4" />,
+  url: <Globe className="h-4 w-4" />,
+  email: <Mail className="h-4 w-4" />,
+  phone: <Phone className="h-4 w-4" />,
+  attachment: <Paperclip className="h-4 w-4" />,
+  linkedRecord: <Link2 className="h-4 w-4" />,
+};
+
+// ── Component ────────────────────────────────────────────────────────────────
+
+export default function FormBuilder({
+  form,
+  tableFields,
+  onSave,
+  onDelete,
+  baseUrl = window.location.origin,
+}: FormBuilderProps) {
+  const { t } = useTranslation();
+
+  const [name, setName] = useState(form.name);
+  const [description, setDescription] = useState(form.description ?? '');
+  const [slug, setSlug] = useState(form.slug);
+  const [isPublished, setIsPublished] = useState(form.is_published);
+  const [submitMessage, setSubmitMessage] = useState(
+    form.config?.submitMessage ?? 'Thank you for your submission!'
+  );
+  const [redirectUrl, setRedirectUrl] = useState(form.config?.redirectUrl ?? '');
+  const [allowMultiple, setAllowMultiple] = useState(form.config?.allowMultiple ?? true);
+  const [requireAuth, setRequireAuth] = useState(form.config?.requireAuth ?? false);
+
+  const [fieldConfigs, setFieldConfigs] = useState<FormFieldConfig[]>(() => {
+    const existing = form.config?.fields ?? [];
+    const existingMap = new Map(existing.map((f) => [f.fieldId, f]));
+    return tableFields
+      .filter((f) => !isComputedField(f.fieldType))
+      .map((f) => existingMap.get(f.id) ?? { fieldId: f.id, required: false, hidden: false });
+  });
+
+  const [saving, setSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<'fields' | 'settings' | 'preview'>('fields');
+
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  const fieldMap = useMemo(
+    () => new Map(tableFields.map((f) => [f.id, f])),
+    [tableFields]
+  );
+
+  const publicUrl = `${baseUrl}/forms/${slug}`;
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    try {
+      await onSave({
+        name,
+        description: description || undefined,
+        slug,
+        is_published: isPublished,
+        config: {
+          fields: fieldConfigs,
+          submitMessage,
+          redirectUrl: redirectUrl || undefined,
+          allowMultiple,
+          requireAuth,
+        },
+      });
+    } finally {
+      setSaving(false);
+    }
+  }, [name, description, slug, isPublished, fieldConfigs, submitMessage, redirectUrl, allowMultiple, requireAuth, onSave]);
+
+  const handleCopyUrl = useCallback(() => {
+    navigator.clipboard.writeText(publicUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [publicUrl]);
+
+  const updateFieldConfig = useCallback(
+    (fieldId: string, updates: Partial<FormFieldConfig>) => {
+      setFieldConfigs((prev) =>
+        prev.map((fc) => (fc.fieldId === fieldId ? { ...fc, ...updates } : fc))
+      );
+    },
+    []
+  );
+
+  const moveField = useCallback((fromIdx: number, toIdx: number) => {
+    setFieldConfigs((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return next;
+    });
+  }, []);
+
+  const handleDragStart = useCallback((idx: number) => {
+    setDragIdx(idx);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    setDragOverIdx(idx);
+  }, []);
+
+  const handleDrop = useCallback(
+    (idx: number) => {
+      if (dragIdx !== null && dragIdx !== idx) {
+        moveField(dragIdx, idx);
+      }
+      setDragIdx(null);
+      setDragOverIdx(null);
+    },
+    [dragIdx, moveField]
+  );
+
+  const handleDragEnd = useCallback(() => {
+    setDragIdx(null);
+    setDragOverIdx(null);
+  }, []);
+
+  return (
+    <div className="flex h-full flex-col bg-white dark:bg-navy-950">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-navy-700">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {t('formBuilder.title', 'Form Builder')}
+          </h2>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {form.submit_count} {t('formBuilder.submissions', 'submissions')}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Publish toggle */}
+          <button
+            onClick={() => setIsPublished(!isPublished)}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              isPublished
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                : 'bg-gray-100 text-gray-600 dark:bg-navy-800 dark:text-gray-400'
+            }`}
+          >
+            {isPublished
+              ? t('formBuilder.published', 'Published')
+              : t('formBuilder.draft', 'Draft')}
+          </button>
+
+          {/* Share button */}
+          {isPublished && (
+            <button
+              onClick={handleCopyUrl}
+              className="flex items-center gap-1.5 rounded-lg bg-purple-100 px-3 py-1.5 text-sm font-medium text-purple-700 transition-colors hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50"
+            >
+              {copied ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <ClipboardCopy className="h-3.5 w-3.5" />
+              )}
+              {copied
+                ? t('formBuilder.copied', 'Copied!')
+                : t('formBuilder.shareLink', 'Share link')}
+            </button>
+          )}
+
+          {/* Save button */}
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+          >
+            {saving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
+            {t('formBuilder.save', 'Save')}
+          </button>
+
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+              title={t('formBuilder.delete', 'Delete form')}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200 px-6 dark:border-navy-700">
+        {(['fields', 'settings', 'preview'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+              activeTab === tab
+                ? 'border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+            }`}
+          >
+            {tab === 'fields' && t('formBuilder.tabFields', 'Fields')}
+            {tab === 'settings' && t('formBuilder.tabSettings', 'Settings')}
+            {tab === 'preview' && t('formBuilder.tabPreview', 'Preview')}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        {activeTab === 'fields' && (
+          <FieldListPanel
+            fieldConfigs={fieldConfigs}
+            fieldMap={fieldMap}
+            onUpdate={updateFieldConfig}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onDragEnd={handleDragEnd}
+            dragIdx={dragIdx}
+            dragOverIdx={dragOverIdx}
+          />
+        )}
+
+        {activeTab === 'settings' && (
+          <SettingsPanel
+            name={name}
+            description={description}
+            slug={slug}
+            submitMessage={submitMessage}
+            redirectUrl={redirectUrl}
+            allowMultiple={allowMultiple}
+            requireAuth={requireAuth}
+            publicUrl={publicUrl}
+            isPublished={isPublished}
+            onNameChange={setName}
+            onDescriptionChange={setDescription}
+            onSlugChange={setSlug}
+            onSubmitMessageChange={setSubmitMessage}
+            onRedirectUrlChange={setRedirectUrl}
+            onAllowMultipleChange={setAllowMultiple}
+            onRequireAuthChange={setRequireAuth}
+          />
+        )}
+
+        {activeTab === 'preview' && (
+          <FormPreview
+            name={name}
+            description={description}
+            fieldConfigs={fieldConfigs}
+            fieldMap={fieldMap}
+            submitMessage={submitMessage}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Sub-components ───────────────────────────────────────────────────────────
+
+function isComputedField(fieldType: FieldType | string): boolean {
+  return [
+    'createdTime', 'createdBy', 'lastModifiedTime', 'lastModifiedBy',
+    'autoNumber', 'formula', 'count', 'lookup', 'rollup',
+  ].includes(fieldType);
+}
+
+interface FieldListPanelProps {
+  fieldConfigs: FormFieldConfig[];
+  fieldMap: Map<string, TablePlatformField>;
+  onUpdate: (fieldId: string, updates: Partial<FormFieldConfig>) => void;
+  onDragStart: (idx: number) => void;
+  onDragOver: (e: React.DragEvent, idx: number) => void;
+  onDrop: (idx: number) => void;
+  onDragEnd: () => void;
+  dragIdx: number | null;
+  dragOverIdx: number | null;
+}
+
+function FieldListPanel({
+  fieldConfigs,
+  fieldMap,
+  onUpdate,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  dragIdx,
+  dragOverIdx,
+}: FieldListPanelProps) {
+  const { t } = useTranslation();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-2">
+      <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+        {t('formBuilder.fieldListHint', 'Drag to reorder. Toggle visibility and configure each field.')}
+      </p>
+      {fieldConfigs.map((fc, idx) => {
+        const field = fieldMap.get(fc.fieldId);
+        if (!field) return null;
+        const isExpanded = expandedId === fc.fieldId;
+        const isDragging = dragIdx === idx;
+        const isDragOver = dragOverIdx === idx;
+
+        return (
+          <div
+            key={fc.fieldId}
+            draggable
+            onDragStart={() => onDragStart(idx)}
+            onDragOver={(e) => onDragOver(e, idx)}
+            onDrop={() => onDrop(idx)}
+            onDragEnd={onDragEnd}
+            className={`rounded-xl border transition-all ${
+              isDragging
+                ? 'opacity-50'
+                : isDragOver
+                  ? 'border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-900/20'
+                  : fc.hidden
+                    ? 'border-gray-200 bg-gray-50 dark:border-navy-700 dark:bg-navy-900'
+                    : 'border-gray-200 bg-white dark:border-navy-700 dark:bg-navy-800'
+            }`}
+          >
+            {/* Field row */}
+            <div className="flex items-center gap-3 px-4 py-3">
+              <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-gray-400" />
+              <span className="shrink-0 text-gray-500 dark:text-gray-400">
+                {FIELD_TYPE_ICON[field.fieldType] ?? <Type className="h-4 w-4" />}
+              </span>
+              <span
+                className={`flex-1 text-sm font-medium ${
+                  fc.hidden
+                    ? 'text-gray-400 line-through dark:text-gray-500'
+                    : 'text-gray-900 dark:text-white'
+                }`}
+              >
+                {fc.label || field.name}
+              </span>
+
+              {/* Required toggle */}
+              <button
+                onClick={() => onUpdate(fc.fieldId, { required: !fc.required })}
+                className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+                  fc.required
+                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                    : 'bg-gray-100 text-gray-500 dark:bg-navy-700 dark:text-gray-400'
+                }`}
+                title={t('formBuilder.toggleRequired', 'Toggle required')}
+              >
+                {fc.required ? t('formBuilder.required', 'Required') : t('formBuilder.optional', 'Optional')}
+              </button>
+
+              {/* Visibility toggle */}
+              <button
+                onClick={() => onUpdate(fc.fieldId, { hidden: !fc.hidden })}
+                className="rounded p-1 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
+                title={
+                  fc.hidden
+                    ? t('formBuilder.showField', 'Show field')
+                    : t('formBuilder.hideField', 'Hide field')
+                }
+              >
+                {fc.hidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+
+              {/* Expand/collapse */}
+              <button
+                onClick={() => setExpandedId(isExpanded ? null : fc.fieldId)}
+                className="rounded p-1 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                {isExpanded ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+
+            {/* Expanded config */}
+            {isExpanded && (
+              <div className="border-t border-gray-100 px-4 py-3 dark:border-navy-700">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                      {t('formBuilder.customLabel', 'Custom label')}
+                    </label>
+                    <input
+                      type="text"
+                      value={fc.label ?? ''}
+                      onChange={(e) => onUpdate(fc.fieldId, { label: e.target.value || undefined })}
+                      placeholder={field.name}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                      {t('formBuilder.helpText', 'Help text')}
+                    </label>
+                    <input
+                      type="text"
+                      value={fc.helpText ?? ''}
+                      onChange={(e) =>
+                        onUpdate(fc.fieldId, { helpText: e.target.value || undefined })
+                      }
+                      placeholder={t('formBuilder.helpTextPlaceholder', 'Instructions for this field...')}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+                {fc.hidden && (
+                  <div className="mt-3">
+                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                      {t('formBuilder.defaultValue', 'Default value (for hidden fields)')}
+                    </label>
+                    <input
+                      type="text"
+                      value={String(fc.defaultValue ?? '')}
+                      onChange={(e) =>
+                        onUpdate(fc.fieldId, {
+                          defaultValue: e.target.value || undefined,
+                        })
+                      }
+                      className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+interface SettingsPanelProps {
+  name: string;
+  description: string;
+  slug: string;
+  submitMessage: string;
+  redirectUrl: string;
+  allowMultiple: boolean;
+  requireAuth: boolean;
+  publicUrl: string;
+  isPublished: boolean;
+  onNameChange: (v: string) => void;
+  onDescriptionChange: (v: string) => void;
+  onSlugChange: (v: string) => void;
+  onSubmitMessageChange: (v: string) => void;
+  onRedirectUrlChange: (v: string) => void;
+  onAllowMultipleChange: (v: boolean) => void;
+  onRequireAuthChange: (v: boolean) => void;
+}
+
+function SettingsPanel({
+  name,
+  description,
+  slug,
+  submitMessage,
+  redirectUrl,
+  allowMultiple,
+  requireAuth,
+  publicUrl,
+  isPublished,
+  onNameChange,
+  onDescriptionChange,
+  onSlugChange,
+  onSubmitMessageChange,
+  onRedirectUrlChange,
+  onAllowMultipleChange,
+  onRequireAuthChange,
+}: SettingsPanelProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="mx-auto max-w-xl space-y-6">
+      {/* Form name */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('formBuilder.formName', 'Form name')}
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => onNameChange(e.target.value)}
+          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+        />
+      </div>
+
+      {/* Description */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('formBuilder.formDescription', 'Description')}
+        </label>
+        <textarea
+          value={description}
+          onChange={(e) => onDescriptionChange(e.target.value)}
+          rows={3}
+          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+        />
+      </div>
+
+      {/* Slug */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('formBuilder.slug', 'URL slug')}
+        </label>
+        <input
+          type="text"
+          value={slug}
+          onChange={(e) => onSlugChange(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-mono dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+        />
+        {isPublished && (
+          <p className="mt-1 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+            <ExternalLink className="h-3 w-3" />
+            {publicUrl}
+          </p>
+        )}
+      </div>
+
+      {/* Submit message */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('formBuilder.submitMessage', 'Success message')}
+        </label>
+        <input
+          type="text"
+          value={submitMessage}
+          onChange={(e) => onSubmitMessageChange(e.target.value)}
+          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+        />
+      </div>
+
+      {/* Redirect URL */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('formBuilder.redirectUrl', 'Redirect URL (optional)')}
+        </label>
+        <input
+          type="url"
+          value={redirectUrl}
+          onChange={(e) => onRedirectUrlChange(e.target.value)}
+          placeholder="https://..."
+          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+        />
+      </div>
+
+      {/* Toggles */}
+      <div className="space-y-3">
+        <ToggleRow
+          label={t('formBuilder.allowMultiple', 'Allow multiple submissions')}
+          checked={allowMultiple}
+          onChange={onAllowMultipleChange}
+        />
+        <ToggleRow
+          label={t('formBuilder.requireAuth', 'Require authentication')}
+          checked={requireAuth}
+          onChange={onRequireAuthChange}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ToggleRow({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center justify-between rounded-xl border border-gray-200 px-4 py-3 dark:border-navy-700">
+      <span className="text-sm text-gray-700 dark:text-gray-300">{label}</span>
+      <div
+        onClick={() => onChange(!checked)}
+        className={`relative h-5 w-9 rounded-full transition-colors ${
+          checked ? 'bg-blue-600' : 'bg-gray-300 dark:bg-navy-600'
+        }`}
+      >
+        <div
+          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+            checked ? 'translate-x-4' : 'translate-x-0.5'
+          }`}
+        />
+      </div>
+    </label>
+  );
+}
+
+// ── Form Preview ─────────────────────────────────────────────────────────────
+
+interface FormPreviewProps {
+  name: string;
+  description: string;
+  fieldConfigs: FormFieldConfig[];
+  fieldMap: Map<string, TablePlatformField>;
+  submitMessage: string;
+}
+
+function FormPreview({ name, description, fieldConfigs, fieldMap, submitMessage }: FormPreviewProps) {
+  const { t } = useTranslation();
+  const visibleFields = fieldConfigs.filter((fc) => !fc.hidden);
+
+  return (
+    <div className="mx-auto max-w-lg">
+      <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm dark:border-navy-700 dark:bg-navy-800">
+        <h3 className="mb-1 text-xl font-semibold text-gray-900 dark:text-white">{name}</h3>
+        {description && (
+          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">{description}</p>
+        )}
+
+        <div className="space-y-5">
+          {visibleFields.map((fc) => {
+            const field = fieldMap.get(fc.fieldId);
+            if (!field) return null;
+            return (
+              <PreviewField
+                key={fc.fieldId}
+                field={field}
+                config={fc}
+              />
+            );
+          })}
+        </div>
+
+        <button
+          disabled
+          className="mt-6 w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white opacity-80"
+        >
+          {t('formBuilder.submit', 'Submit')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PreviewField({
+  field,
+  config,
+}: {
+  field: TablePlatformField;
+  config: FormFieldConfig;
+}) {
+  const label = config.label || field.name;
+
+  return (
+    <div>
+      <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+        {label}
+        {config.required && <span className="ml-1 text-red-500">*</span>}
+      </label>
+      {config.helpText && (
+        <p className="mb-1 text-xs text-gray-400">{config.helpText}</p>
+      )}
+      {renderPreviewInput(field.fieldType)}
+    </div>
+  );
+}
+
+function renderPreviewInput(fieldType: FieldType | string) {
+  const base =
+    'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white';
+
+  switch (fieldType) {
+    case 'longText':
+      return <textarea disabled rows={3} className={base} />;
+    case 'checkbox':
+      return (
+        <input
+          type="checkbox"
+          disabled
+          className="h-4 w-4 rounded border-gray-300"
+        />
+      );
+    case 'date':
+      return <input type="date" disabled className={base} />;
+    case 'number':
+    case 'currency':
+    case 'percent':
+      return <input type="number" disabled className={base} />;
+    case 'email':
+      return <input type="email" disabled placeholder="email@example.com" className={base} />;
+    case 'url':
+      return <input type="url" disabled placeholder="https://..." className={base} />;
+    case 'phone':
+      return <input type="tel" disabled placeholder="+1..." className={base} />;
+    case 'singleSelect':
+      return (
+        <select disabled className={base}>
+          <option>Select...</option>
+        </select>
+      );
+    case 'multiSelect':
+      return (
+        <select disabled multiple className={base}>
+          <option>Select...</option>
+        </select>
+      );
+    default:
+      return <input type="text" disabled className={base} />;
+  }
+}

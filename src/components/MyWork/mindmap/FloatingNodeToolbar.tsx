@@ -1,12 +1,18 @@
 import {
   Bold,
   CircleDot,
+  GitBranch,
+  GitPullRequest,
   Link2,
   CheckSquare,
+  ListChecks,
   Lock,
   MoreVertical,
   Paperclip,
+  Plus,
+  Rocket,
   Sparkles,
+  Star,
   ToggleRight,
   Tags,
   Unlock,
@@ -26,12 +32,14 @@ import { SemanticControlsPopover } from './floating-toolbar/SemanticControlsPopo
 import { SemanticTypeDropdown } from './floating-toolbar/SemanticTypeDropdown';
 import { QuickTaskPopover } from './floating-toolbar/QuickTaskPopover';
 
-type DropdownId = 'semanticType' | 'semantic' | 'branchTheme' | 'color' | 'fontSize' | 'artifacts' | 'task' | 'ai' | null;
+type DropdownId = 'semanticType' | 'semantic' | 'branchTheme' | 'color' | 'fontSize' | 'artifacts' | 'task' | 'convertBranch' | 'ai' | null;
 
 export interface FloatingNodeToolbarProps {
   nodeId: string;
   nodeData?: Record<string, any>;
   disabled?: boolean;
+  isProtected?: boolean;
+  hasChildren?: boolean;
   style?: {
     color?: string;
     fillOpacity?: number;
@@ -45,6 +53,8 @@ export interface FloatingNodeToolbarProps {
   };
   position: { x: number; y: number };
   onUpdate: (patch: Record<string, any>) => void;
+  onAddChild: () => void;
+  onAddSibling: () => void;
   onOpenContextMenu: (pos: { x: number; y: number }) => void;
   onOpenArtifactModal: () => void;
   onOpenNodeDetail: () => void;
@@ -58,9 +68,13 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
   nodeId,
   nodeData,
   disabled = false,
+  isProtected = false,
+  hasChildren = false,
   style = {},
   position,
   onUpdate,
+  onAddChild,
+  onAddSibling,
   onOpenContextMenu,
   onOpenArtifactModal,
   onOpenNodeDetail,
@@ -112,6 +126,32 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
       }}
     >
       <div className="flex items-center gap-0.5 rounded-2xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-navy-700/60 shadow-xl px-1 py-0.5">
+        {/* 0a. Add child — primary growth affordance */}
+        <button
+          onClick={onAddChild}
+          disabled={disabled}
+          title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
+          className={`flex h-7 items-center gap-1 px-1.5 rounded-lg transition-all duration-150 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
+        >
+          <Plus size={14} strokeWidth={2.5} />
+          <span className="text-[10px] font-semibold">{isPl ? 'Gałąź' : 'Child'}</span>
+        </button>
+
+        {/* 0b. Add sibling — secondary growth affordance */}
+        {!isProtected && (
+          <button
+            onClick={onAddSibling}
+            disabled={disabled}
+            title={isPl ? 'Dodaj sąsiada (Enter)' : 'Add sibling (Enter)'}
+            className={`flex h-7 items-center gap-1 px-1.5 rounded-lg transition-all duration-150 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
+          >
+            <GitBranch size={13} />
+            <span className="text-[10px] font-medium">{isPl ? 'Sąsiad' : 'Sibling'}</span>
+          </button>
+        )}
+
+        <div className="w-px h-4 bg-slate-200/50 dark:bg-white/[0.06] mx-0.5" />
+
         {/* 1. Semantic Type */}
         <div className="relative">
           <button
@@ -299,6 +339,43 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             </div>
           )}
         </div>
+
+        {/* 8b. Convert branch */}
+        {hasChildren && !isProtected && (
+          <div className="relative">
+            <button
+              onClick={() => toggle('convertBranch')}
+              disabled={disabled}
+              title={isPl ? 'Konwertuj gałąź na...' : 'Convert branch to...'}
+              className={btnClass(openDropdown === 'convertBranch')}
+            >
+              <GitPullRequest size={13} />
+            </button>
+            {openDropdown === 'convertBranch' && (
+              <div className="absolute top-full right-0 mt-1 z-[100] min-w-[180px] py-1.5 px-1 rounded-xl bg-white/95 dark:bg-navy-900/95 backdrop-blur-xl border border-slate-200/60 dark:border-navy-700/60 shadow-2xl animate-in fade-in zoom-in-95 duration-100">
+                <div className="px-3 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  {isPl ? 'Konwertuj gałąź na...' : 'Convert branch to...'}
+                </div>
+                {([
+                  { id: 'ctx_subtree_convert_decision', label: isPl ? 'Decyzja' : 'Decision', icon: Star },
+                  { id: 'ctx_subtree_convert_tasks', label: isPl ? 'Zadania' : 'Tasks', icon: ListChecks },
+                  { id: 'ctx_subtree_convert_task_set', label: isPl ? 'Zestaw zadań' : 'Task set', icon: ListChecks },
+                  { id: 'ctx_subtree_convert_initiative', label: isPl ? 'Inicjatywa' : 'Initiative', icon: Rocket },
+                ] as const).map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => { onAction(item.id); closeDD(); }}
+                    className="w-full flex items-center gap-2 px-3 py-[6px] text-left text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/[0.04] rounded-md transition-colors"
+                  >
+                    <item.icon size={13} className="shrink-0 text-slate-400 dark:text-slate-500" />
+                    <span className="flex-1 truncate">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 9. Lock */}
         <button

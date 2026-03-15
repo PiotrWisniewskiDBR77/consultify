@@ -1,7 +1,6 @@
 import {
   Bot,
   CheckCircle2,
-  CheckSquare,
   ChevronDown,
   ChevronRight,
   Flower2,
@@ -10,14 +9,12 @@ import {
   Link2,
   Loader2,
   MessageSquarePlus,
-  Minus,
   Network,
   PenTool,
   Plus,
   Rocket,
   Sparkles,
   Sprout,
-  Square,
   Star,
   Table2,
   Tag,
@@ -31,11 +28,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import type { FilterOption, TableFilters } from '@/components/ui/ResizableTable';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { IdeasTableContent } from './IdeasTableContent';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 
@@ -66,7 +65,7 @@ export type MyIdea = {
   preferredTool?: string | null;
 };
 
-export type IdeasViewMode = 'list' | 'cards' | 'garden';
+export type IdeasViewMode = 'table' | 'grid' | 'garden';
 
 export type IdeasBulkBarPayload = {
   selectedCount: number;
@@ -215,11 +214,65 @@ function mapRawStageToStage(raw?: string | null): IdeaStage {
   return 'spark';
 }
 
-type SortField = 'title' | 'stage' | 'tool' | 'date' | 'tags';
-type SortDir = 'asc' | 'desc';
+export type SortField = 'title' | 'stage' | 'tool' | 'date' | 'tags';
+export type SortDir = 'asc' | 'desc';
+
+const IDEAS_TABLE_VIEW_STORAGE_KEY = 'consultify.mywork.ideas.tableView';
+const DEFAULT_IDEAS_TABLE_FILTERS: TableFilters = {};
+const DEFAULT_IDEAS_COLUMN_WIDTHS = {
+  select: 40,
+  stage: 140,
+  tags: 180,
+  tool: 170,
+  date: 120,
+  actions: 68,
+};
+
+function loadIdeasTableViewState(): {
+  sortField: SortField;
+  sortDir: SortDir;
+  tableFilters: TableFilters;
+  columnWidths: typeof DEFAULT_IDEAS_COLUMN_WIDTHS;
+} {
+  try {
+    const raw = window.localStorage.getItem(IDEAS_TABLE_VIEW_STORAGE_KEY);
+    if (!raw) {
+      return {
+        sortField: 'date',
+        sortDir: 'desc',
+        tableFilters: DEFAULT_IDEAS_TABLE_FILTERS,
+        columnWidths: DEFAULT_IDEAS_COLUMN_WIDTHS,
+      };
+    }
+
+    const parsed = JSON.parse(raw) as Partial<{
+      sortField: SortField;
+      sortDir: SortDir;
+      tableFilters: TableFilters;
+      columnWidths: Partial<typeof DEFAULT_IDEAS_COLUMN_WIDTHS>;
+    }>;
+
+    return {
+      sortField: parsed.sortField || 'date',
+      sortDir: parsed.sortDir || 'desc',
+      tableFilters: parsed.tableFilters || DEFAULT_IDEAS_TABLE_FILTERS,
+      columnWidths: {
+        ...DEFAULT_IDEAS_COLUMN_WIDTHS,
+        ...(parsed.columnWidths || {}),
+      },
+    };
+  } catch {
+    return {
+      sortField: 'date',
+      sortDir: 'desc',
+      tableFilters: DEFAULT_IDEAS_TABLE_FILTERS,
+      columnWidths: DEFAULT_IDEAS_COLUMN_WIDTHS,
+    };
+  }
+}
 
 export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
-  viewMode = 'list',
+  viewMode = 'table',
   searchQuery,
   stageFilter = 'all',
   onIdeaClick,
@@ -230,6 +283,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
+  const persistedTableView = useMemo(() => loadIdeasTableViewState(), []);
   const [ideas, setIdeas] = useState<MyIdea[]>([]);
   const [loading, setLoading] = useState(true);
   // activeTag is only used in the Tags (garden) view
@@ -241,8 +295,10 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   const [tagModalOpen, setTagModalOpen] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [bulkBusy, setBulkBusy] = useState(false);
-  const [sortField, setSortField] = useState<SortField>('date');
-  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [sortField, setSortField] = useState<SortField>(persistedTableView.sortField);
+  const [sortDir, setSortDir] = useState<SortDir>(persistedTableView.sortDir);
+  const [tableFilters, setTableFilters] = useState<TableFilters>(persistedTableView.tableFilters);
+  const [columnWidths, setColumnWidths] = useState(persistedTableView.columnWidths);
   const [collapsedTags, setCollapsedTags] = useState<Set<string>>(new Set());
   const [mapMetrics, setMapMetrics] = useState<
     Record<string, { items: number; nodes: number; edges: number }>
@@ -309,7 +365,29 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     onCountsChange(counts);
   }, [ideas, onCountsChange]);
 
-  const filteredIdeas = useMemo(() => {
+  useEffect(() => {
+    if (viewMode !== 'table') {
+      setTableFilters({});
+    }
+  }, [viewMode]);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        IDEAS_TABLE_VIEW_STORAGE_KEY,
+        JSON.stringify({
+          sortField,
+          sortDir,
+          tableFilters,
+          columnWidths,
+        })
+      );
+    } catch {
+      /* ignore persistence errors */
+    }
+  }, [sortField, sortDir, tableFilters, columnWidths]);
+
+  const baseFilteredIdeas = useMemo(() => {
     let list = ideas;
     if (viewMode !== 'garden' && stageFilter !== 'all') {
       list = list.filter((i) => (i.stage || 'spark') === stageFilter);
@@ -321,6 +399,90 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
     return list;
   }, [ideas, stageFilter, activeTag, viewMode]);
+
+  const availableStageOptions = useMemo<FilterOption[]>(() => {
+    const seen = new Set<string>();
+    const order: IdeaStage[] = ['spark', 'incubating', 'shaping', 'ready', 'promoted'];
+    const labels: Record<IdeaStage, { en: string; pl: string }> = {
+      spark: { en: 'Spark', pl: 'Iskra' },
+      incubating: { en: 'Growing', pl: 'Rosnie' },
+      shaping: { en: 'Shaping', pl: 'Ksztaltuje' },
+      ready: { en: 'Ready', pl: 'Gotowy' },
+      promoted: { en: 'Promoted', pl: 'Promowany' },
+    };
+    for (const idea of baseFilteredIdeas) {
+      seen.add((idea.stage || 'spark') as IdeaStage);
+    }
+    return order
+      .filter((stage) => seen.has(stage))
+      .map((stage) => ({
+        value: stage,
+        label: isPolish ? labels[stage].pl : labels[stage].en,
+      }));
+  }, [baseFilteredIdeas, isPolish]);
+
+  const availableToolOptions = useMemo<FilterOption[]>(() => {
+    const labels: Record<string, { en: string; pl: string }> = {
+      mindmap: { en: 'Recommendation map', pl: 'Mapa rekomendacji' },
+      table: { en: 'Table', pl: 'Tabela' },
+      process_flow: { en: 'Process Flow', pl: 'Proces' },
+      whiteboard: { en: 'Whiteboard', pl: 'Whiteboard' },
+    };
+    const seen = new Set<string>();
+    for (const idea of baseFilteredIdeas) {
+      const tool = String(idea.preferredTool || 'mindmap').toLowerCase();
+      seen.add(tool);
+    }
+    return Array.from(seen).map((tool) => ({
+      value: tool,
+      label: isPolish ? labels[tool]?.pl || tool : labels[tool]?.en || tool,
+    }));
+  }, [baseFilteredIdeas, isPolish]);
+
+  const availableTagOptions = useMemo<FilterOption[]>(() => {
+    const counts = new Map<string, number>();
+    for (const idea of baseFilteredIdeas) {
+      for (const tag of idea.tags || []) {
+        const normalized = String(tag).trim();
+        if (!normalized) continue;
+        counts.set(normalized, (counts.get(normalized) || 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([tag, count]) => ({
+        value: tag.toLowerCase(),
+        label: `${tag} (${count})`,
+      }));
+  }, [baseFilteredIdeas]);
+
+  const filteredIdeas = useMemo(() => {
+    let list = baseFilteredIdeas;
+    if (viewMode !== 'table') return list;
+
+    const stageValues = (tableFilters.stage as string[] | undefined) || [];
+    const tagValues = (tableFilters.tags as string[] | undefined) || [];
+    const toolValues = (tableFilters.tool as string[] | undefined) || [];
+
+    if (stageValues.length > 0) {
+      list = list.filter((idea) => stageValues.includes(String(idea.stage || 'spark')));
+    }
+
+    if (toolValues.length > 0) {
+      list = list.filter((idea) =>
+        toolValues.includes(String(idea.preferredTool || 'mindmap').toLowerCase())
+      );
+    }
+
+    if (tagValues.length > 0) {
+      list = list.filter((idea) => {
+        const normalizedTags = (idea.tags || []).map((tag) => String(tag).toLowerCase());
+        return tagValues.some((value) => normalizedTags.includes(value));
+      });
+    }
+
+    return list;
+  }, [baseFilteredIdeas, tableFilters, viewMode]);
 
   const sortedIdeas = useMemo(() => {
     const list = [...filteredIdeas];
@@ -893,21 +1055,11 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 
   // ── Sort indicator ──
 
-  const SortIndicator: React.FC<{ field: SortField }> = ({ field }) => {
-    if (sortField !== field) return null;
-    return (
-      <ChevronDown
-        size={10}
-        className={`ml-0.5 transition-transform ${sortDir === 'asc' ? 'rotate-180' : ''}`}
-      />
-    );
-  };
-
   // ════════════════════════════════════════════════════════════════════════════
-  // ── LIST VIEW (Inbox-style table) ──
+  // ── TABLE VIEW (App Table + Preview) ──
   // ════════════════════════════════════════════════════════════════════════════
 
-  if (viewMode === 'list') {
+  if (viewMode === 'table') {
     if (sortedIdeas.length === 0) {
       return (
         <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950 p-4">
@@ -924,161 +1076,42 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {convertModal}
         {tagModal}
         {confirmDialog}
-
-        <div className="overflow-x-auto">
-          <table className="w-full table-fixed" style={{ minWidth: 800 }}>
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-navy-700/50 bg-slate-50 dark:bg-navy-900/50 sticky top-0 z-10">
-                <th className="w-10 px-2 py-2">
-                  <button
-                    onClick={() => {
-                      if (allSelected) clearSelection();
-                      else selectAllVisible();
-                    }}
-                    className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                      allSelected
-                        ? 'bg-primary-500 border-primary-500 text-white'
-                        : someSelected
-                          ? 'bg-primary-500/50 border-primary-500 text-white'
-                          : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
-                    }`}
-                  >
-                    {allSelected ? (
-                      <CheckSquare size={14} />
-                    ) : someSelected ? (
-                      <Minus size={14} />
-                    ) : (
-                      <Square size={14} />
-                    )}
-                  </button>
-                </th>
-                <th
-                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 w-[40%]"
-                  onClick={() => handleSort('title')}
-                >
-                  <span className="inline-flex items-center">
-                    {isPolish ? 'Tytuł' : 'Title'}
-                    <SortIndicator field="title" />
-                  </span>
-                </th>
-                <th
-                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 w-[12%]"
-                  onClick={() => handleSort('stage')}
-                >
-                  <span className="inline-flex items-center">
-                    {isPolish ? 'Etap' : 'Stage'}
-                    <SortIndicator field="stage" />
-                  </span>
-                </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-[15%]">
-                  {isPolish ? 'Tagi' : 'Tags'}
-                </th>
-                <th
-                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 w-[12%]"
-                  onClick={() => handleSort('tool')}
-                >
-                  <span className="inline-flex items-center">
-                    {isPolish ? 'Narzędzie' : 'Tool'}
-                    <SortIndicator field="tool" />
-                  </span>
-                </th>
-                <th
-                  className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 w-[11%]"
-                  onClick={() => handleSort('date')}
-                >
-                  <span className="inline-flex items-center">
-                    {isPolish ? 'Data' : 'Date'}
-                    <SortIndicator field="date" />
-                  </span>
-                </th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider w-[10%]" />
-              </tr>
-            </thead>
-            <tbody>
-              {sortedIdeas.map((idea, idx) => {
-                const stage = (idea.stage || 'spark') as IdeaStage;
-                const tc = getToolConfig(idea.preferredTool);
-                const isFocused = focusedIndex === idx;
-                const isSelected = selectedIds.has(idea.id);
-
-                return (
-                  <tr
-                    key={idea.id}
-                    onClick={() => onIdeaClick(idea.id, idea)}
-                    className={`border-b border-slate-100 dark:border-navy-800/50 cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-navy-800/40 ${
-                      isSelected
-                        ? 'bg-primary-50/50 dark:bg-primary-900/10'
-                        : isFocused
-                          ? 'bg-amber-50/30 dark:bg-amber-900/5'
-                          : ''
-                    }`}
-                  >
-                    <td className="px-2 py-2.5">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          toggleSelect(idea.id);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                        className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-primary-500 focus:ring-primary-500/30"
-                      />
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                        {idea.title}
-                      </div>
-                      {idea.body && (
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                          {idea.body}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-2.5">{renderStageBadge(stage)}</td>
-                    <td className="px-3 py-2.5">{renderTagBadges(idea.tags)}</td>
-                    <td className="px-3 py-2.5">{renderToolBadge(idea.preferredTool)}</td>
-                    <td className="px-3 py-2.5 text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                      {idea.updatedAt
-                        ? new Date(idea.updatedAt).toLocaleDateString()
-                        : idea.createdAt
-                          ? new Date(idea.createdAt).toLocaleDateString()
-                          : ''}
-                    </td>
-                    <td className="px-3 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => setConvertIdea(idea)}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-semibold hover:bg-purple-500/15 transition-colors"
-                          title={isPolish ? 'Konwertuj' : 'Convert'}
-                        >
-                          <Sparkles size={10} />
-                          {isPolish ? 'Konwertuj' : 'Convert'}
-                        </button>
-                        <button
-                          onClick={() => openIdeaInProcessFlow(idea)}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-semibold hover:bg-blue-500/15 transition-colors"
-                          title={isPolish ? 'Otwórz w Process Flow' : 'Open in Process Flow'}
-                        >
-                          <Workflow size={10} />
-                          {isPolish ? 'Flow' : 'Flow'}
-                        </button>
-                        <ConvertToOutputMenu
-                          sourceType="idea"
-                          sourceId={idea.id}
-                          sourceTitle={idea.title || ''}
-                          onConvertComplete={() => fetchIdeas()}
-                          variant="dropdown"
-                          className="shrink-0"
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <IdeasTableContent
+          ideas={sortedIdeas}
+          isPolish={isPolish}
+          tableFilters={tableFilters}
+          availableStageOptions={availableStageOptions}
+          availableTagOptions={availableTagOptions}
+          availableToolOptions={availableToolOptions}
+          columnWidths={columnWidths}
+          selectedIds={selectedIds}
+          allSelected={allSelected}
+          someSelected={someSelected}
+          focusedIndex={focusedIndex}
+          sortField={sortField}
+          sortDir={sortDir}
+          onSort={handleSort}
+          onFocusIndexChange={setFocusedIndex}
+          onToggleSelect={toggleSelect}
+          onSelectAllVisible={selectAllVisible}
+          onClearSelection={clearSelection}
+          onColumnResize={(columnId, value) =>
+            setColumnWidths((prev) => ({
+              ...prev,
+              [columnId]: value,
+            }))
+          }
+          onTableFilterChange={(columnId, value) =>
+            setTableFilters((prev) => ({
+              ...prev,
+              [columnId]: value.length > 0 ? value : undefined,
+            }))
+          }
+          onOpenIdea={(idea) => onIdeaClick(idea.id, idea)}
+          onOpenIdeaInProcessFlow={openIdeaInProcessFlow}
+          onStartConvert={setConvertIdea}
+          onRefresh={fetchIdeas}
+        />
 
         <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
       </div>
@@ -1089,7 +1122,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   // ── CARDS VIEW (tool-colored cards) ──
   // ════════════════════════════════════════════════════════════════════════════
 
-  if (viewMode === 'cards') {
+  if (viewMode === 'grid') {
     if (sortedIdeas.length === 0) {
       return (
         <div className="w-full h-full overflow-y-auto bg-white dark:bg-navy-950 p-4">

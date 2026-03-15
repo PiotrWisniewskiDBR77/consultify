@@ -13,11 +13,9 @@ import {
   ChevronUp,
   ExternalLink,
   FileText,
-  GitBranch,
   GripVertical,
   Lightbulb,
   Link2,
-  Loader2,
   MessageSquare,
   Paperclip,
   Plus,
@@ -60,9 +58,17 @@ interface IdeaContextPanelProps {
   refreshToken?: number;
   onInsertToCanvas?: (item: { text: string; type: string; detail?: string }) => void;
   liveGraphNodes?: any[];
+  liveGraphEdges?: any[];
+  mapExtensions?: Record<string, any>;
+  activeTool?: string;
+  stage?: string;
+  seedText?: string;
 }
 
 type SectionKey =
+  | 'selected_node'
+  | 'map_stats'
+  | 'warnings'
   | 'notes'
   | 'evidence'
   | 'artifacts'
@@ -104,6 +110,11 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
   refreshToken,
   onInsertToCanvas,
   liveGraphNodes,
+  liveGraphEdges,
+  mapExtensions,
+  activeTool,
+  stage,
+  seedText,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -113,7 +124,7 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
   const [contextItems, setContextItems] = useState<ContextItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<SectionKey>>(
-    new Set(['notes', 'evidence', 'artifacts', 'initiatives', 'gaps', 'insights'])
+    new Set(['selected_node', 'map_stats', 'warnings', 'notes', 'evidence', 'artifacts', 'initiatives', 'gaps', 'insights'])
   );
 
   // V5-IDEA-28: Notes, evidence, artifacts
@@ -195,7 +206,95 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
     return nodeArtifactMap.filter((a) => a.nodeId === selectedNodeId);
   }, [linkedArtifacts, nodeArtifactMap, selectedNodeId]);
 
-  const subtitle = useMemo(() => (isPl ? 'Kontekst firmy' : 'Company context'), [isPl]);
+  // ── MM-10: Selected node full detail ──────────────────────────────────────
+  const selectedNodeData = useMemo(() => {
+    if (!selectedNodeId || !liveGraphNodes) return null;
+    const node = liveGraphNodes.find((n: any) => String(n?.id) === String(selectedNodeId));
+    if (!node) return null;
+    const d = node.data || {};
+    return {
+      id: node.id,
+      label: d.label || node.label || '',
+      notes: d.notes || '',
+      context: d.context || '',
+      goal: d.goal || '',
+      rationale: d.rationale || '',
+      riskNote: d.riskNote || '',
+      description: d.description || '',
+      tags: Array.isArray(d.tags) ? d.tags : [],
+      status: d.status || 'idea',
+      semanticType: d.semanticType || '',
+      owner: d.owner || '',
+      priority: d.priority ?? null,
+      artifactLinks: Array.isArray(d.artifactLinks) ? d.artifactLinks : [],
+      evidenceLinks: Array.isArray(d.evidenceLinks) ? d.evidenceLinks : [],
+      branchKey: d.branchKey || '',
+    };
+  }, [selectedNodeId, liveGraphNodes]);
+
+  // ── MM-10: Map statistics ────────────────────────────────────────────────
+  const mapStats = useMemo(() => {
+    const nodes = liveGraphNodes || [];
+    const edges = liveGraphEdges || [];
+    const total = nodes.length;
+    const byType: Record<string, number> = {};
+    const byStatus: Record<string, number> = {};
+    for (const n of nodes) {
+      const t = n?.data?.semanticType || n?.type || 'default';
+      byType[t] = (byType[t] || 0) + 1;
+      const s = n?.data?.status || 'idea';
+      byStatus[s] = (byStatus[s] || 0) + 1;
+    }
+    return { total, edges: edges.length, byType, byStatus };
+  }, [liveGraphNodes, liveGraphEdges]);
+
+  // ── MM-10: Warnings ──────────────────────────────────────────────────────
+  const warnings = useMemo(() => {
+    const nodes = liveGraphNodes || [];
+    const edges = liveGraphEdges || [];
+    const result: Array<{ type: 'orphan' | 'no_label' | 'broken_link'; message: string; nodeId?: string }> = [];
+
+    const connectedIds = new Set<string>();
+    for (const e of edges) {
+      if (e?.source) connectedIds.add(String(e.source));
+      if (e?.target) connectedIds.add(String(e.target));
+    }
+
+    for (const n of nodes) {
+      const nid = String(n?.id || '');
+      const label = String(n?.data?.label || n?.label || '').trim();
+      if (!label) {
+        result.push({
+          type: 'no_label',
+          message: isPl ? `Węzeł bez etykiety: ${nid.slice(0, 12)}` : `Node without label: ${nid.slice(0, 12)}`,
+          nodeId: nid,
+        });
+      }
+      if (nodes.length > 1 && !connectedIds.has(nid)) {
+        result.push({
+          type: 'orphan',
+          message: isPl ? `Osierocony węzeł: "${label || nid.slice(0, 12)}"` : `Orphan node: "${label || nid.slice(0, 12)}"`,
+          nodeId: nid,
+        });
+      }
+    }
+
+    const nodeIdSet = new Set(nodes.map((n: any) => String(n?.id || '')));
+    for (const e of edges) {
+      const src = String(e?.source || '');
+      const tgt = String(e?.target || '');
+      if (src && !nodeIdSet.has(src)) {
+        result.push({ type: 'broken_link', message: isPl ? `Uszkodzony link: źródło ${src.slice(0, 12)} nie istnieje` : `Broken link: source ${src.slice(0, 12)} missing` });
+      }
+      if (tgt && !nodeIdSet.has(tgt)) {
+        result.push({ type: 'broken_link', message: isPl ? `Uszkodzony link: cel ${tgt.slice(0, 12)} nie istnieje` : `Broken link: target ${tgt.slice(0, 12)} missing` });
+      }
+    }
+
+    return result;
+  }, [liveGraphNodes, liveGraphEdges, isPl]);
+
+  const subtitle = useMemo(() => (isPl ? 'Kontekst i statystyki' : 'Context & statistics'), [isPl]);
 
   const toggleSection = useCallback((key: SectionKey) => {
     setExpandedSections((prev) => {
@@ -462,9 +561,207 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
       </div>
 
       <div className="px-3 py-2 flex-1 overflow-auto space-y-3">
-        {/* Node properties panel — shown when a single node is selected */}
-        {selectedNodeId && selectionMeta && (
-          <NodePropertiesSection nodeId={selectedNodeId} meta={selectionMeta} isPl={!!isPl} />
+        {/* MM-10: Selected node detail — reactive to selection changes */}
+        {selectedNodeData ? (
+          <div className="rounded-xl border border-primary-500/20 bg-primary-500/5 p-2.5 space-y-2">
+            <button
+              type="button"
+              onClick={() => toggleSection('selected_node')}
+              className="flex items-center gap-1.5 w-full text-left"
+            >
+              <Target size={12} className="text-primary-500" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400 flex-1">
+                {isPl ? 'Wybrany węzeł' : 'Selected Node'}
+              </span>
+              {expandedSections.has('selected_node') ? (
+                <ChevronUp size={12} className="text-primary-400" />
+              ) : (
+                <ChevronDown size={12} className="text-primary-400" />
+              )}
+            </button>
+            {expandedSections.has('selected_node') && (
+              <div className="space-y-1.5">
+                <div className="text-[12px] font-semibold text-slate-800 dark:text-slate-200">
+                  {selectedNodeData.label || (isPl ? 'Bez etykiety' : 'No label')}
+                </div>
+                {selectedNodeData.semanticType && (
+                  <span className="inline-block text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
+                    {selectedNodeData.semanticType}
+                  </span>
+                )}
+                {selectedNodeData.status && (
+                  <span className="inline-block ml-1 text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-500">
+                    {selectedNodeData.status}
+                  </span>
+                )}
+                {selectedNodeData.owner && (
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                    {isPl ? 'Właściciel' : 'Owner'}: {selectedNodeData.owner}
+                  </div>
+                )}
+                {selectedNodeData.description && (
+                  <div className="text-[10px] text-slate-600 dark:text-slate-300 bg-white/40 dark:bg-navy-950/30 rounded-lg p-2">
+                    {selectedNodeData.description.slice(0, 200)}{selectedNodeData.description.length > 200 ? '…' : ''}
+                  </div>
+                )}
+                {selectedNodeData.notes && (
+                  <div className="text-[10px] text-slate-600 dark:text-slate-300">
+                    <span className="font-semibold text-slate-500">{isPl ? 'Notatki: ' : 'Notes: '}</span>
+                    {selectedNodeData.notes.slice(0, 150)}{selectedNodeData.notes.length > 150 ? '…' : ''}
+                  </div>
+                )}
+                {selectedNodeData.context && (
+                  <div className="text-[10px] text-slate-600 dark:text-slate-300">
+                    <span className="font-semibold text-slate-500">{isPl ? 'Kontekst: ' : 'Context: '}</span>
+                    {selectedNodeData.context.slice(0, 150)}{selectedNodeData.context.length > 150 ? '…' : ''}
+                  </div>
+                )}
+                {selectedNodeData.goal && (
+                  <div className="text-[10px] text-slate-600 dark:text-slate-300">
+                    <span className="font-semibold text-slate-500">{isPl ? 'Cel: ' : 'Goal: '}</span>
+                    {selectedNodeData.goal.slice(0, 150)}
+                  </div>
+                )}
+                {selectedNodeData.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {selectedNodeData.tags.map((tag: string) => (
+                      <span key={tag} className="text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {selectedNodeData.artifactLinks.length > 0 && (
+                  <div className="text-[10px] text-slate-500">
+                    <Paperclip size={9} className="inline mr-1" />
+                    {selectedNodeData.artifactLinks.length} {isPl ? 'artefaktów' : 'artifacts'}
+                  </div>
+                )}
+                {selectedNodeData.evidenceLinks.length > 0 && (
+                  <div className="text-[10px] text-slate-500">
+                    <Link2 size={9} className="inline mr-1" />
+                    {selectedNodeData.evidenceLinks.length} {isPl ? 'dowodów' : 'evidence links'}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-slate-200/40 dark:border-navy-700/40 bg-slate-50/30 dark:bg-navy-900/20 p-2.5 text-center">
+            <div className="text-[10px] text-slate-400 dark:text-slate-500">
+              {isPl ? 'Kliknij węzeł, aby zobaczyć szczegóły' : 'Click a node to see details'}
+            </div>
+          </div>
+        )}
+
+        {/* MM-10: Map statistics */}
+        <div className="rounded-xl border border-slate-200/40 dark:border-navy-700/40 bg-slate-50/30 dark:bg-navy-900/10 p-2.5">
+          <button
+            type="button"
+            onClick={() => toggleSection('map_stats')}
+            className="flex items-center gap-1.5 w-full text-left"
+          >
+            <BarChart3 size={12} className="text-slate-500" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 flex-1">
+              {isPl ? 'Statystyki mapy' : 'Map Statistics'}
+            </span>
+            {expandedSections.has('map_stats') ? (
+              <ChevronUp size={12} className="text-slate-400" />
+            ) : (
+              <ChevronDown size={12} className="text-slate-400" />
+            )}
+          </button>
+          {expandedSections.has('map_stats') && (
+            <div className="mt-2 space-y-1.5">
+              <div className="grid grid-cols-2 gap-1.5">
+                <div className="rounded-lg bg-white/50 dark:bg-white/[0.03] p-2 border border-slate-200/30 dark:border-navy-700/30">
+                  <div className="text-[16px] font-bold text-slate-800 dark:text-slate-200">{mapStats.total}</div>
+                  <div className="text-[9px] text-slate-400">{isPl ? 'Węzłów' : 'Nodes'}</div>
+                </div>
+                <div className="rounded-lg bg-white/50 dark:bg-white/[0.03] p-2 border border-slate-200/30 dark:border-navy-700/30">
+                  <div className="text-[16px] font-bold text-slate-800 dark:text-slate-200">{mapStats.edges}</div>
+                  <div className="text-[9px] text-slate-400">{isPl ? 'Połączeń' : 'Edges'}</div>
+                </div>
+              </div>
+              {Object.keys(mapStats.byStatus).length > 0 && (
+                <div>
+                  <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    {isPl ? 'Wg statusu' : 'By status'}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(mapStats.byStatus).map(([s, count]) => (
+                      <span key={s} className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                        {s}: {count}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {Object.keys(mapStats.byType).length > 1 && (
+                <div>
+                  <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                    {isPl ? 'Wg typu' : 'By type'}
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {Object.entries(mapStats.byType).slice(0, 8).map(([t, count]) => (
+                      <span key={t} className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300">
+                        {t}: {count}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {stage && (
+                <div className="text-[10px] text-slate-500">
+                  {isPl ? 'Etap' : 'Stage'}: <span className="font-semibold">{stage}</span>
+                </div>
+              )}
+              {activeTool && (
+                <div className="text-[10px] text-slate-500">
+                  {isPl ? 'Narzędzie' : 'Tool'}: <span className="font-semibold">{activeTool}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* MM-10: Warnings */}
+        {warnings.length > 0 && (
+          <div className="rounded-xl border border-amber-200/40 dark:border-amber-800/30 bg-amber-50/30 dark:bg-amber-900/10 p-2.5">
+            <button
+              type="button"
+              onClick={() => toggleSection('warnings')}
+              className="flex items-center gap-1.5 w-full text-left"
+            >
+              <AlertTriangle size={12} className="text-amber-500" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex-1">
+                {isPl ? 'Ostrzeżenia' : 'Warnings'} ({warnings.length})
+              </span>
+              {expandedSections.has('warnings') ? (
+                <ChevronUp size={12} className="text-amber-400" />
+              ) : (
+                <ChevronDown size={12} className="text-amber-400" />
+              )}
+            </button>
+            {expandedSections.has('warnings') && (
+              <div className="mt-2 space-y-1">
+                {warnings.slice(0, 10).map((w, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-1.5 text-[10px] text-amber-700 dark:text-amber-300 bg-white/40 dark:bg-white/[0.02] rounded-lg p-1.5"
+                  >
+                    <AlertTriangle size={10} className="text-amber-500 mt-0.5 shrink-0" />
+                    <span>{w.message}</span>
+                  </div>
+                ))}
+                {warnings.length > 10 && (
+                  <div className="text-[9px] text-amber-500">
+                    +{warnings.length - 10} {isPl ? 'więcej' : 'more'}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {/* V4-IDEA-09: EmbeddedView for "Used in" parity with Notebook/Tools/Initiatives */}
@@ -922,102 +1219,6 @@ export const IdeaContextPanel: React.FC<IdeaContextPanelProps> = ({
         )}
       </div>
     </ToolsPanelShell>
-  );
-};
-
-const NODE_STATUS_OPTIONS = [
-  { value: 'todo', labelEn: 'To Do', labelPl: 'Do zrobienia' },
-  { value: 'in_progress', labelEn: 'In Progress', labelPl: 'W toku' },
-  { value: 'done', labelEn: 'Done', labelPl: 'Gotowe' },
-  { value: 'blocked', labelEn: 'Blocked', labelPl: 'Zablokowane' },
-];
-
-const NodePropertiesSection: React.FC<{
-  nodeId: string;
-  meta: Record<string, any>;
-  isPl: boolean;
-}> = ({ nodeId, meta, isPl }) => {
-  const [description, setDescription] = useState(meta?.description || '');
-  const [owner, setOwner] = useState(meta?.owner || '');
-  const [status, setStatus] = useState(meta?.status || 'todo');
-  const [tags, setTags] = useState(meta?.tags?.join(', ') || '');
-
-  const dispatch = useCallback(
-    (data: Record<string, any>) => {
-      window.dispatchEvent(
-        new CustomEvent('idea-workspace-node-update', { detail: { nodeId, data } })
-      );
-    },
-    [nodeId]
-  );
-
-  const handleBlur = useCallback(
-    (field: string, value: any) => dispatch({ [field]: value }),
-    [dispatch]
-  );
-
-  return (
-    <div className="p-2.5 rounded-xl bg-primary-500/5 border border-primary-500/10 space-y-2">
-      <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-primary-600/80 dark:text-primary-400/80">
-        {isPl ? 'Właściwości węzła' : 'Node Properties'}
-      </div>
-      <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
-        {meta?.label || nodeId}
-      </div>
-      <div>
-        <label className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-          {isPl ? 'Opis' : 'Description'}
-        </label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          onBlur={() => handleBlur('description', description)}
-          rows={2}
-          className="w-full mt-0.5 px-2 py-1 text-[11px] rounded-lg border border-slate-200/60 dark:border-navy-600/60 bg-white/60 dark:bg-navy-800/60 text-slate-700 dark:text-slate-200 outline-none focus:border-primary-400 resize-none"
-          placeholder={isPl ? 'Opis…' : 'Description…'}
-        />
-      </div>
-      <div>
-        <label className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-          {isPl ? 'Właściciel' : 'Owner'}
-        </label>
-        <input
-          type="text"
-          value={owner}
-          onChange={(e) => setOwner(e.target.value)}
-          onBlur={() => handleBlur('owner', owner)}
-          className="w-full mt-0.5 px-2 py-1 text-[11px] rounded-lg border border-slate-200/60 dark:border-navy-600/60 bg-white/60 dark:bg-navy-800/60 text-slate-700 dark:text-slate-200 outline-none focus:border-primary-400"
-          placeholder={isPl ? 'Osoba' : 'Person'}
-        />
-      </div>
-      <div>
-        <label className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-          Status
-        </label>
-        <select
-          value={status}
-          onChange={(e) => { setStatus(e.target.value); handleBlur('status', e.target.value); }}
-          className="w-full mt-0.5 px-2 py-1 text-[11px] rounded-lg border border-slate-200/60 dark:border-navy-600/60 bg-white/60 dark:bg-navy-800/60 text-slate-700 dark:text-slate-200 outline-none focus:border-primary-400"
-        >
-          {NODE_STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{isPl ? opt.labelPl : opt.labelEn}</option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="text-[9px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-          {isPl ? 'Tagi' : 'Tags'}
-        </label>
-        <input
-          type="text"
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          onBlur={() => handleBlur('tags', tags.split(',').map((t: string) => t.trim()).filter(Boolean))}
-          className="w-full mt-0.5 px-2 py-1 text-[11px] rounded-lg border border-slate-200/60 dark:border-navy-600/60 bg-white/60 dark:bg-navy-800/60 text-slate-700 dark:text-slate-200 outline-none focus:border-primary-400"
-          placeholder="tag1, tag2"
-        />
-      </div>
-    </div>
   );
 };
 

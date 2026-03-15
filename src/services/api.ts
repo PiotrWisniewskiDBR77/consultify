@@ -566,6 +566,9 @@ export const Api = {
     // Use fetchWithRetry so a stale/expired token triggers refresh and/or auth:token-expired.
     const res = await fetchWithRetry(`${API_URL}/auth/me`, { headers: getHeaders() });
     const data = await handleResponse(res, 'Failed to fetch profile');
+    if (data?.token) {
+      tokenService.saveTokens(data.token, data.refreshToken);
+    }
     return data?.user ?? null;
   },
 

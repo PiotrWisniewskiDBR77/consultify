@@ -37,20 +37,16 @@ interface QueueGraphSyncOptions {
   snapshotLabel?: string;
 }
 
-const EXTENSION_BUCKETS = new Set([
-  'mindmap',
-  'whiteboard',
-  'processFlow',
-  'table',
-  'surfaceState',
-  'canvasGovernance',
-  'interop',
-]);
-
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
+/**
+ * Recursively deep-merges extension objects so that no tool-specific key
+ * clobbers another tool's nested state.  Arrays are treated as atomic values
+ * (replaced, not concatenated) to keep collapse-id lists and replay logs
+ * deterministic.
+ */
 export function mergeWorkspaceExtensions(
   existing: Record<string, unknown>,
   patch?: Record<string, unknown> | null
@@ -60,8 +56,11 @@ export function mergeWorkspaceExtensions(
   for (const [key, value] of Object.entries(patch)) {
     if (!Object.prototype.hasOwnProperty.call(patch, key)) continue;
     if (value === undefined) continue;
-    if (EXTENSION_BUCKETS.has(key) && isPlainObject(existing[key]) && isPlainObject(value)) {
-      next[key] = mergeWorkspaceExtensions(existing[key] as Record<string, unknown>, value);
+    if (isPlainObject(existing[key]) && isPlainObject(value)) {
+      next[key] = mergeWorkspaceExtensions(
+        existing[key] as Record<string, unknown>,
+        value as Record<string, unknown>,
+      );
       continue;
     }
     next[key] = value as unknown;

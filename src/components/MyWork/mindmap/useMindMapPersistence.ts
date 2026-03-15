@@ -1,5 +1,29 @@
 /**
- * useMindMapPersistence — Extracted hydrate/save logic for the Mind Map.
+ * useMindMapPersistence — Hydrate/save logic for the Mind Map.
+ *
+ * ## Graph ownership model (MM-01)
+ *
+ * The single canonical runtime owner of mindmap graph state is the ReactFlow
+ * local state (`nodes`, `edges`) held inside `IdeaRecommendationMap`.
+ *
+ * Data flow:
+ *   ReactFlow state (canonical owner)
+ *     → useMindMapPersistence.scheduleSave()
+ *       → externalRuntime.captureGraph() (workspace graph runtime)
+ *         → useIdeaMapSync.queueSync()
+ *           → POST /map/sync (conflict-safe, version-based)
+ *
+ * `IdeaMapWorkspace` exposes `graphNodes` / `graphEdges` / `mapExtensions`
+ * derived from `workspaceGraphRuntime.graph` — these are READ-ONLY mirrors
+ * used by panels (Tools, Context, AI Suggestions) and cross-tool transforms.
+ * They are NOT competing write owners.
+ *
+ * ## Persistence model (MM-02)
+ *
+ * All mindmap saves go through `POST /map/sync` with version-based conflict
+ * detection (same path as whiteboard, process_flow, and table).
+ * On version conflict (HTTP 409): toast notification + reload from server.
+ * No silent overwrites.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -9,6 +33,7 @@ import { Api } from '@/services/api';
 
 import type { CanvasToolType } from '../ideaSelectionTypes';
 import type { IdeaMapSyncState } from '../canvas/useIdeaMapSync';
+import { mergeWorkspaceExtensions } from '../canvas/workspaceGraphRuntime';
 import { normalizeMindMapNodes } from './mindMapNodeModel';
 
 type PersistenceStatus = 'online' | 'no_route' | 'missing_table' | 'offline';
@@ -236,13 +261,26 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     runtimeNodes,
   ]);
 
+  const prevSyncStateRef = useRef<IdeaMapSyncState | null>(null);
+
   useEffect(() => {
     if (runtimeVersion === null) return;
     setLoading(runtimeLoading);
     setSaving(runtimeSaving);
     setLastSavedAt(runtimeLastSavedAt);
     setPersistence(runtimeSyncState === 'offline' ? 'offline' : 'online');
-  }, [runtimeLastSavedAt, runtimeLoading, runtimeSaving, runtimeSyncState, runtimeVersion]);
+
+    // MM-02: On version conflict, reload the latest graph from the server.
+    // The workspace-level onConflict handler shows the toast; here we trigger
+    // the actual data refresh so ReactFlow state gets the server version.
+    if (
+      runtimeSyncState === 'conflict' &&
+      prevSyncStateRef.current !== 'conflict'
+    ) {
+      externalRuntime?.refresh?.();
+    }
+    prevSyncStateRef.current = runtimeSyncState;
+  }, [runtimeLastSavedAt, runtimeLoading, runtimeSaving, runtimeSyncState, runtimeVersion, externalRuntime]);
 
   const hydrate = useCallback(async () => {
     if (externalRuntime) {
@@ -522,16 +560,18 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       if (latestLocked) return;
       if (latestExternalRuntime) {
         const currentViewport = getViewport();
-        const ext = {
-          ...(latestExtensions || {}),
+        const mindmapViewStatePatch = {
           mindmap: {
-            ...((latestExtensions as any)?.mindmap || {}),
             viewState: {
               collapsedNodeIds: Array.from(latestCollapsedNodeIds),
               viewport: currentViewport,
             },
           },
         };
+        const ext = mergeWorkspaceExtensions(
+          (latestExtensions || {}) as Record<string, unknown>,
+          mindmapViewStatePatch,
+        );
         const cleanNodes = nextNodes.map((n: any) => {
           if (!n.data?._interactionMode && !n.data?._canAddSibling) return n;
           const { _interactionMode, _canAddSibling, ...cleanData } = n.data || {};
@@ -542,18 +582,12 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
           edges: nextEdges,
           extensions: ext,
         });
-        const runtimeExt = {
-          ...(latestRuntimeExtensions && typeof latestRuntimeExtensions === 'object'
+        const runtimeExt = mergeWorkspaceExtensions(
+          (latestRuntimeExtensions && typeof latestRuntimeExtensions === 'object'
             ? latestRuntimeExtensions
-            : {}),
-          mindmap: {
-            ...((latestRuntimeExtensions as any)?.mindmap || {}),
-            viewState: {
-              collapsedNodeIds: Array.from(latestCollapsedNodeIds),
-              viewport: currentViewport,
-            },
-          },
-        };
+            : {}) as Record<string, unknown>,
+          mindmapViewStatePatch,
+        );
         if (
           stableSerialize(cleanNodes) === stableSerialize(latestRuntimeNodes || []) &&
           stableSerialize(nextEdges) === stableSerialize(latestRuntimeEdges || []) &&
@@ -583,16 +617,17 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
         try {
           const currentViewport = getViewport();
           latestOnViewportReport?.(currentViewport);
-          const ext = {
-            ...(latestExtensions || {}),
-            mindmap: {
-              ...((latestExtensions as any)?.mindmap || {}),
-              viewState: {
-                collapsedNodeIds: Array.from(latestCollapsedNodeIds),
-                viewport: currentViewport,
+          const ext = mergeWorkspaceExtensions(
+            (latestExtensions || {}) as Record<string, unknown>,
+            {
+              mindmap: {
+                viewState: {
+                  collapsedNodeIds: Array.from(latestCollapsedNodeIds),
+                  viewport: currentViewport,
+                },
               },
             },
-          };
+          );
           const cleanNodes = nextNodes.map((n: any) => {
             if (!n.data?._interactionMode && !n.data?._canAddSibling) return n;
             const { _interactionMode, _canAddSibling, ...cleanData } = n.data || {};
@@ -654,5 +689,6 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     isHydratingRef,
     hydrate,
     scheduleSave,
+    localVersionRef,
   };
 }

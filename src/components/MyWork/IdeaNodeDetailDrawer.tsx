@@ -34,7 +34,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import { generateAIProposal } from '@/services/ideaAIGenerator';
-import { getArtifactLabel, getArtifactPath } from '@/utils/artifactLinks';
+import { getArtifactLabel } from '@/utils/artifactLinks';
 
 import type { AIProposalBatch, CanvasToolType } from './ideaSelectionTypes';
 
@@ -230,8 +230,12 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
   const [artifactLinks, setArtifactLinks] = useState<any[]>([]);
   const [artifactLoading, setArtifactLoading] = useState(false);
 
+  const [showEvidenceForm, setShowEvidenceForm] = useState(false);
+  const [newEvidenceTitle, setNewEvidenceTitle] = useState('');
+  const [newEvidenceUrl, setNewEvidenceUrl] = useState('');
+
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['description', 'tags', 'ai_context', 'attachments', 'artifact_links', 'comments', 'links'])
+    new Set(['description', 'tags', 'ai_context', 'attachments', 'artifact_links', 'evidence_links', 'comments', 'links'])
   );
 
   useEffect(() => {
@@ -367,6 +371,34 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
     },
     [ideaId, locked, nodeId]
   );
+
+  const handleAddEvidence = useCallback(() => {
+    if (locked || !newEvidenceTitle.trim()) return;
+    const evidenceLink: NodeEvidenceLink = {
+      id: `ev-${Date.now()}`,
+      type: newEvidenceUrl.trim().startsWith('http') ? 'url' : 'note',
+      title: newEvidenceTitle.trim(),
+      url: newEvidenceUrl.trim() || undefined,
+      addedAt: new Date().toISOString(),
+    };
+    const evidenceLinks = [...(nodeData.evidenceLinks || []), evidenceLink];
+    onNodeDataChange(nodeId, { evidenceLinks });
+    setNewEvidenceTitle('');
+    setNewEvidenceUrl('');
+    setShowEvidenceForm(false);
+  }, [locked, newEvidenceTitle, newEvidenceUrl, nodeData.evidenceLinks, nodeId, onNodeDataChange]);
+
+  const handleEvidenceLinkClick = useCallback((item: NodeEvidenceLink) => {
+    if (item.type === 'url' && item.url) {
+      window.open(item.url, '_blank', 'noopener,noreferrer');
+    } else if (item.type === 'artifact' && item.artifactId) {
+      window.dispatchEvent(
+        new CustomEvent('mywork-open-item', {
+          detail: { type: 'artifact', id: item.artifactId, name: item.title },
+        })
+      );
+    }
+  }, []);
 
   const handleAddComment = useCallback(() => {
     if (!newComment.trim()) return;
@@ -1008,7 +1040,16 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                 return (
                   <div
                     key={`${artifactType}:${artifactId}`}
-                    className="flex items-center gap-2 rounded-lg bg-slate-50 p-2 dark:bg-navy-800"
+                    className="flex items-center gap-2 rounded-lg bg-slate-50 p-2 dark:bg-navy-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                    onClick={() => {
+                      if (artifactType && artifactId) {
+                        window.dispatchEvent(
+                          new CustomEvent('mywork-open-item', {
+                            detail: { type: artifactType, id: artifactId, name: label },
+                          })
+                        );
+                      }
+                    }}
                   >
                     <div className="min-w-0 flex-1">
                       <div className="text-[10px] font-medium text-slate-700 dark:text-slate-200 truncate">
@@ -1020,17 +1061,12 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                       </div>
                     </div>
                     {artifactType && artifactId && (
-                      <a
-                        href={getArtifactPath(artifactType as any, artifactId)}
-                        className="text-slate-400 hover:text-primary-500 shrink-0"
-                      >
-                        <ExternalLink size={12} />
-                      </a>
+                      <ExternalLink size={12} className="text-slate-400 shrink-0" />
                     )}
                     {!locked && artifactType && artifactId && (
                       <button
                         type="button"
-                        onClick={() => handleDetachArtifact(artifactType, artifactId)}
+                        onClick={(e) => { e.stopPropagation(); handleDetachArtifact(artifactType, artifactId); }}
                         className="text-slate-400 hover:text-red-500 shrink-0"
                       >
                         <X size={12} />
@@ -1039,6 +1075,96 @@ export const IdeaNodeDetailDrawer: React.FC<IdeaNodeDetailDrawerProps> = ({
                   </div>
                 );
               })}
+            </div>
+          </SectionToggle>
+
+          {/* Evidence Links */}
+          <SectionToggle
+            title={isPl ? 'Dowody i źródła' : 'Evidence & Sources'}
+            icon={ExternalLink}
+            expanded={expandedSections.has('evidence_links')}
+            onToggle={() => toggleSection('evidence_links')}
+            count={nodeData.evidenceLinks?.length}
+          >
+            <div className="space-y-1.5">
+              {(nodeData.evidenceLinks || []).map((item) => {
+                const isClickable = (item.type === 'url' && item.url) || (item.type === 'artifact' && item.artifactId);
+                return (
+                  <div
+                    key={item.id}
+                    className={`flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-navy-800 ${isClickable ? 'cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors' : ''}`}
+                    onClick={() => handleEvidenceLinkClick(item)}
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-navy-700 flex items-center justify-center shrink-0">
+                      {item.type === 'url' ? (
+                        <ExternalLink size={12} className="text-slate-500" />
+                      ) : (
+                        <FileText size={12} className="text-slate-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate">
+                        {item.title}
+                      </div>
+                      {item.url && (
+                        <div className="text-[9px] text-slate-400 truncate">{item.url}</div>
+                      )}
+                    </div>
+                    <span className="text-[8px] font-bold uppercase text-slate-400 shrink-0">
+                      {item.type}
+                    </span>
+                  </div>
+                );
+              })}
+              {!locked && !showEvidenceForm && (
+                <button
+                  type="button"
+                  onClick={() => setShowEvidenceForm(true)}
+                  className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-medium text-cyan-600 dark:text-cyan-400 bg-cyan-500/5 hover:bg-cyan-500/10 transition-colors"
+                >
+                  <Plus size={12} />
+                  {isPl ? 'Dodaj dowód / źródło' : 'Add evidence / source'}
+                </button>
+              )}
+              {!locked && showEvidenceForm && (
+                <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-navy-800 space-y-2">
+                  <input
+                    autoFocus
+                    value={newEvidenceTitle}
+                    onChange={(e) => setNewEvidenceTitle(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddEvidence(); if (e.key === 'Escape') setShowEvidenceForm(false); }}
+                    placeholder={isPl ? 'Tytuł dowodu...' : 'Evidence title...'}
+                    className="w-full text-[10px] bg-white dark:bg-navy-900 rounded-lg px-2.5 py-1.5 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400"
+                  />
+                  <input
+                    value={newEvidenceUrl}
+                    onChange={(e) => setNewEvidenceUrl(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddEvidence(); if (e.key === 'Escape') setShowEvidenceForm(false); }}
+                    placeholder={isPl ? 'URL (opcjonalnie)' : 'URL (optional)'}
+                    className="w-full text-[10px] bg-white dark:bg-navy-900 rounded-lg px-2.5 py-1.5 border border-slate-200 dark:border-navy-700 outline-none text-slate-600 dark:text-slate-400 placeholder:text-slate-400"
+                  />
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={handleAddEvidence}
+                      disabled={!newEvidenceTitle.trim()}
+                      className="flex-1 h-7 rounded-lg text-[10px] font-semibold bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/20 transition-colors disabled:opacity-40"
+                    >
+                      {isPl ? 'Dodaj' : 'Add'}
+                    </button>
+                    <button
+                      onClick={() => { setShowEvidenceForm(false); setNewEvidenceTitle(''); setNewEvidenceUrl(''); }}
+                      className="h-7 px-3 rounded-lg text-[10px] text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors"
+                    >
+                      {isPl ? 'Anuluj' : 'Cancel'}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {(nodeData.evidenceLinks || []).length === 0 && !showEvidenceForm && (
+                <div className="text-[10px] text-slate-400 py-1">
+                  {isPl ? 'Brak dowodów' : 'No evidence yet'}
+                </div>
+              )}
             </div>
           </SectionToggle>
 

@@ -40,6 +40,7 @@ export interface NodeContextMenuProps {
   isLocked: boolean;
   isPl: boolean;
   canPasteStyle?: boolean;
+  hasChildren?: boolean;
   onClose: () => void;
   onAction: (action: string) => void;
 }
@@ -58,6 +59,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   isLocked,
   isPl,
   canPasteStyle = false,
+  hasChildren = false,
   onClose,
   onAction,
 }) => {
@@ -140,6 +142,16 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         { id: 'ctx_convert_tasks', labelPl: '→ Zadania', labelEn: '→ Tasks', icon: ListChecks, disabled: isLocked },
       ],
     },
+    ...(hasChildren ? [{
+      titlePl: 'Konwertuj gałąź na...',
+      titleEn: 'Convert branch to...',
+      items: [
+        { id: 'ctx_subtree_convert_decision', labelPl: '→ Decyzja (gałąź)', labelEn: '→ Decision (branch)', icon: Star, disabled: isLocked },
+        { id: 'ctx_subtree_convert_tasks', labelPl: '→ Zadania (gałąź)', labelEn: '→ Tasks (branch)', icon: ListChecks, disabled: isLocked },
+        { id: 'ctx_subtree_convert_task_set', labelPl: '→ Zestaw zadań (gałąź)', labelEn: '→ Task set (branch)', icon: ListChecks, disabled: isLocked },
+        { id: 'ctx_subtree_convert_initiative', labelPl: '→ Inicjatywa (gałąź)', labelEn: '→ Initiative (branch)', icon: Rocket, disabled: isLocked },
+      ] as MenuItemBase[],
+    }] as MenuGroup[] : []),
     {
       titlePl: 'Wygląd i dane',
       titleEn: 'Style & data',
@@ -166,7 +178,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         { id: 'ctx_delete', labelPl: 'Usuń', labelEn: 'Delete', icon: Trash2, shortcut: 'Del', danger: true, disabled: isLocked || isProtected },
       ],
     },
-  ], [canPasteStyle, isLocked, isProtected]);
+  ], [canPasteStyle, hasChildren, isLocked, isProtected]);
 
   const clampedX = Math.min(x, window.innerWidth - 260);
   const clampedY = Math.min(y, window.innerHeight - 400);

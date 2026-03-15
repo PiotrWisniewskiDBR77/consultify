@@ -830,6 +830,12 @@ export const DecisionDetailView: React.FC<DecisionDetailViewProps> = ({
   });
   const reducedMotion = useReducedMotion();
 
+  useEffect(() => {
+    if (presentationMode === 'c' && import.meta.env.VITE_ENABLE_LEGACY_C_MODE !== 'true') {
+      setPresentationMode('n');
+    }
+  }, [presentationMode, setPresentationMode]);
+
   // Motion helpers: respect prefers-reduced-motion (DBR77 §9.2)
   const motionDuration = reducedMotion ? 0 : 0.18; // 180ms base
   const sectionMotionProps = reducedMotion
@@ -4432,24 +4438,6 @@ Context: ${JSON.stringify(projectContext)}`;
             onPresentationModeChange={setPresentationMode}
             buildArtifactCode={buildArtifactCode}
           />
-
-          {/* Temporary: C-mode placeholder */}
-          {presentationMode === 'c' && (
-            <div className="col-span-full mt-4">
-              <Callout
-                variant="warning"
-                title={isPolish ? 'Tryb C jest w budowie' : 'C mode is under construction'}
-                action={{
-                  label: isPolish ? 'Przełącz na N' : 'Switch to N',
-                  onClick: () => setPresentationMode('n'),
-                }}
-              >
-                {isPolish
-                  ? 'Ten widok zostanie przebudowany. Na teraz korzystaj z trybu N (page-first).'
-                  : 'This view will be rebuilt. For now, please use N mode (page-first).'}
-              </Callout>
-            </div>
-          )}
 
           {/* ═══════════ N MODE (page-first, 2-pane) ═════════════════════════
                Layout per docs/ui-standards/01-shell-layout/presentation-modes.md §2.5:

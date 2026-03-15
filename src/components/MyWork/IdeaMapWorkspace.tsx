@@ -65,6 +65,7 @@ import { IdeaWhiteboardTool } from './IdeaWhiteboardTool';
 import { IdeaWorkspaceToolbar } from './IdeaWorkspaceToolbar';
 import { IdeaWorkspaceTools } from './IdeaWorkspaceTools';
 import type { MyIdea } from './MyIdeasListContent';
+import { AIGovernanceBadge, AIGovernancePanel } from './mindmap/AIGovernancePanel';
 import { applyAIProposalRuntime } from './aiProposalRuntime';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
@@ -75,6 +76,10 @@ import {
   mergeWorkspaceExtensions,
   useWorkspaceGraphRuntime,
 } from './canvas/workspaceGraphRuntime';
+
+// React StrictMode can remount brand-new workspaces in development.
+// Keep one creation request per temporary draft id to avoid duplicate ideas.
+const draftIdeaBootstrapPromises = new Map<string, Promise<MyIdea>>();
 
 class CanvasToolErrorBoundary extends React.Component<
   { children: React.ReactNode; toolName: string; onRetry?: () => void },
@@ -248,6 +253,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
   const [mapOpen, setMapOpen] = useState(Boolean(initialOpenMap));
+  // MM-01: Read-only mirrors for non-reactive access (AI generation, cross-tool transforms).
+  // Canonical graph owner is ReactFlow state inside IdeaRecommendationMap.
   const graphNodesRef = useRef<any[]>([]);
   const graphEdgesRef = useRef<any[]>([]);
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
@@ -266,6 +273,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   );
   const [votingActive, setVotingActive] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [governancePanelOpen, setGovernancePanelOpen] = useState(false);
 
   // V5-IDEA-15: Focus modes
   type FocusMode = 'full' | 'system' | 'object';
@@ -378,13 +386,28 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     [activeTool, externalOnSelectionChange]
   );
 
+  const handleGraphConflict = useCallback(
+    (serverVersion: number, serverMap?: any) => {
+      toast(
+        isPolish
+          ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
+          : 'Change conflict detected. Refreshing map from server.',
+        { icon: '⚠️' }
+      );
+    },
+    [isPolish]
+  );
+
   const graphRuntime = useWorkspaceGraphRuntime({
     ideaId: realId,
     open: Boolean(realId && (!isNewInitial || realId !== ideaId)),
     locked: canvasLocked,
     preferredTool: activeTool,
     language: i18n.language || 'en',
+    onConflict: handleGraphConflict,
   });
+  // MM-01: These are READ-ONLY derived state from the workspace graph runtime.
+  // The canonical graph owner is ReactFlow state inside IdeaRecommendationMap.
   const graphNodes = graphRuntime.graph.nodes as any[];
   const graphEdges = graphRuntime.graph.edges as any[];
   const mapExtensions = graphRuntime.graph.extensions;
@@ -809,14 +832,25 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           template,
           isPl: isPolish,
           activeTool,
+          baseVersion: graphRuntime.graph.version,
         });
         setMapRefreshToken((v) => v + 1);
         toast.success(isPolish ? 'Szablon zastosowany' : 'Template applied', { duration: 1200 });
       } catch (error: any) {
-        toast.error(error?.message || (isPolish ? 'Nie udało się zastosować szablonu' : 'Failed to apply template'));
+        if (error?.status === 409) {
+          toast(
+            isPolish
+              ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
+              : 'Change conflict detected. Refreshing map from server.',
+            { icon: '⚠️' }
+          );
+          setMapRefreshToken((v) => v + 1);
+        } else {
+          toast.error(error?.message || (isPolish ? 'Nie udało się zastosować szablonu' : 'Failed to apply template'));
+        }
       }
     },
-    [activeTool, isPolish, realId]
+    [activeTool, graphRuntime.graph.version, isPolish, realId]
   );
 
   const handleGenerateCanvasAI = useCallback(
@@ -925,6 +959,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               ...governance,
               status: nextStatus,
               lastReviewedAt: timestamp,
+              reviewedBy: update.actor || 'Canvas OS',
+              reviewedAt: timestamp,
+              reviewNote: update.note || null,
               activeTool,
               reviewLog: [...reviewLog, entry].slice(-40),
             },
@@ -1035,14 +1072,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     setLoading(true);
     try {
       if (isNewInitial) {
-        const created = await Api.createMyIdea({
-          title: initialIdeaTitle || (isPolish ? 'Nowe wyzwanie' : 'New challenge'),
-          body: initialIdeaBody,
-          tags: creationPayload?.tags || [],
-          sourceType: creationPayload?.sourceType || 'manual',
-          sourceConversationId: creationPayload?.sourceConversationId || null,
-          sourceMessageId: creationPayload?.sourceMessageId || null,
-        });
+        let createdRequest = draftIdeaBootstrapPromises.get(ideaId);
+        if (!createdRequest) {
+          createdRequest = Api.createMyIdea({
+            title: initialIdeaTitle || (isPolish ? 'Nowe wyzwanie' : 'New challenge'),
+            body: initialIdeaBody,
+            tags: creationPayload?.tags || [],
+            sourceType: creationPayload?.sourceType || 'manual',
+            sourceConversationId: creationPayload?.sourceConversationId || null,
+            sourceMessageId: creationPayload?.sourceMessageId || null,
+          }).catch((error) => {
+            draftIdeaBootstrapPromises.delete(ideaId);
+            throw error;
+          });
+          draftIdeaBootstrapPromises.set(ideaId, createdRequest);
+        }
+        const created = await createdRequest;
         const nextId = String(created?.id || ideaId);
         setRealId(nextId);
         setTitle(
@@ -1069,11 +1114,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           const map = res?.map || {};
           const nodes = Array.isArray(map.nodes) ? map.nodes : [];
           const edges = Array.isArray(map.edges) ? map.edges : [];
-          await Api.saveMyIdeaMap(nextId, {
+          await Api.syncMyIdeaMap(nextId, {
             nodes,
             edges,
+            baseVersion: Number(map.version || 1),
             preferredTool: preferredSeedSystem || undefined,
             extensions: buildStartupExtensions(seedIntent, creationPayload),
+            reason: 'manual',
           });
         } catch {
           /* best-effort */
@@ -1230,22 +1277,6 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // ── Graph data sync (for AI panels) ────────────────────────────────────────
   // ── V5-IDEA-14: Object-family coexistence tracking ─────────────────────────
   const familyCounts = useMemo(() => countNodesByFamily(graphNodes), [graphNodes]);
-  const governanceSummary = useMemo(() => {
-    const governance =
-      mapExtensions.canvasGovernance &&
-      typeof mapExtensions.canvasGovernance === 'object' &&
-      !Array.isArray(mapExtensions.canvasGovernance)
-        ? (mapExtensions.canvasGovernance as Record<string, unknown>)
-        : null;
-    if (!governance) return null;
-    const reviewLog = Array.isArray(governance.reviewLog) ? governance.reviewLog : [];
-    const latest = reviewLog.length > 0 ? (reviewLog[reviewLog.length - 1] as Record<string, unknown>) : null;
-    return {
-      status: String(governance.status || 'draft'),
-      actor: latest?.actor ? String(latest.actor) : null,
-      note: latest?.note ? String(latest.note) : null,
-    };
-  }, [mapExtensions]);
   const activeFamilies = useMemo(() => {
     const families: ObjectFamily[] = [];
     for (const [family, count] of Object.entries(familyCounts)) {
@@ -1265,7 +1296,22 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     }
     lastViewportRef.current = vp;
     setRuntimeViewport(vp);
-  }, [setRuntimeViewport]);
+    if (!realId || isDraft) return;
+    applyRuntimeExtensionsPatch(
+      {
+        surfaceState: {
+          ...latestSurfaceStateRef.current,
+          viewport: vp,
+        },
+        mindmap: {
+          viewState: {
+            viewport: vp,
+          },
+        },
+      },
+      { reason: 'draft' }
+    );
+  }, [applyRuntimeExtensionsPatch, isDraft, realId, setRuntimeViewport]);
 
   useEffect(() => {
     graphNodesRef.current = graphNodes;
@@ -1526,6 +1572,15 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 outputId,
                 nodeIds,
               },
+            })
+          );
+        }
+
+        // MM-15: Mark converted nodes with visual indicator
+        if (nodeIds?.length) {
+          window.dispatchEvent(
+            new CustomEvent('idea-mindmap-mark-converted', {
+              detail: { ideaId: realId, nodeIds, target },
             })
           );
         }
@@ -2227,18 +2282,13 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           onOpenTemplateGallery={() => setTemplateGalleryOpen(true)}
         />
 
-        {governanceSummary && (
-          <div className="absolute left-[4.5rem] top-4 z-[56] rounded-2xl border border-slate-200/70 bg-white/95 px-3 py-2 text-[11px] shadow-lg dark:border-navy-700/70 dark:bg-navy-900/95">
-            <div className="font-semibold text-slate-700 dark:text-slate-200">
-              {isPolish ? 'Review state' : 'Review state'}: {governanceSummary.status}
-            </div>
-            {(governanceSummary.actor || governanceSummary.note) && (
-              <div className="mt-0.5 text-slate-500 dark:text-slate-400">
-                {[governanceSummary.actor, governanceSummary.note].filter(Boolean).join(' • ')}
-              </div>
-            )}
-          </div>
-        )}
+        {/* MM-12: AI Governance badge — opens governance panel */}
+        <div className="absolute left-[4.5rem] top-4 z-[56]">
+          <AIGovernanceBadge
+            mapExtensions={mapExtensions}
+            onClick={() => setGovernancePanelOpen(true)}
+          />
+        </div>
 
         <IdeaWorkspaceToolbar
           activeTool={activeTool}
@@ -2353,6 +2403,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         selectionMeta={selection.type === 'node' && selection.count === 1 ? selection.meta : null}
         refreshToken={mapRefreshToken}
         liveGraphNodes={graphNodes}
+        liveGraphEdges={graphEdges}
+        mapExtensions={mapExtensions}
+        activeTool={activeTool}
+        stage={stage}
+        seedText={seedText}
         onInsertToCanvas={(item) => {
           window.dispatchEvent(
             new CustomEvent('idea-workspace-insert', { detail: { items: [item], ideaId: realId } })
@@ -2433,12 +2488,23 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         graphEdges={graphEdges}
       />
 
+      {/* MM-12: AI Governance Panel */}
+      <AIGovernancePanel
+        open={governancePanelOpen}
+        onClose={() => setGovernancePanelOpen(false)}
+        mapExtensions={mapExtensions}
+        graphNodes={graphNodes}
+        currentUserName={String(currentUser?.name || currentUser?.email || 'User')}
+        onGovernanceUpdate={handleGovernanceUpdate}
+      />
+
       <IdeaTemplateGallery
         open={templateGalleryOpen}
         onClose={() => setTemplateGalleryOpen(false)}
         ideaId={realId}
         activeTool={activeTool}
         onApplied={() => setMapRefreshToken((v) => v + 1)}
+        baseVersion={graphRuntime.graph.version}
       />
 
       <IdeaExportMenu

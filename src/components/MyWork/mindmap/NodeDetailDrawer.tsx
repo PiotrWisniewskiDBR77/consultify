@@ -1,10 +1,11 @@
 /**
  * NodeDetailDrawer — Slideout panel for deep-diving into a mind map node.
  *
- * Sections: Rich notes, AI expand, company context, related nodes,
- * attachments, comments, status flow, convert button.
+ * Sections: Basic Info, Notes & Context, Tags & Classification,
+ * Evidence & Artifacts, AI Expand, Company Context, Related Nodes.
  */
 import {
+  AlertTriangle,
   ArrowRight,
   Bot,
   ChevronDown,
@@ -12,6 +13,8 @@ import {
   ExternalLink,
   FileText,
   GitBranch,
+  Hash,
+  Info,
   Lightbulb,
   Link2,
   Loader2,
@@ -21,6 +24,8 @@ import {
   Rocket,
   Sparkles,
   Star,
+  StickyNote,
+  Tag,
   Target,
   X,
   Zap,
@@ -158,6 +163,20 @@ const STATUS_ORDER: NodeStatus[] = [
   'ready_to_convert',
   'converted',
 ];
+
+const SEMANTIC_TYPE_OPTIONS = [
+  { value: '', labelPl: '— brak —', labelEn: '— none —' },
+  { value: 'topic', labelPl: 'Temat', labelEn: 'Topic' },
+  { value: 'subtopic', labelPl: 'Podtemat', labelEn: 'Subtopic' },
+  { value: 'hypothesis', labelPl: 'Hipoteza', labelEn: 'Hypothesis' },
+  { value: 'option', labelPl: 'Opcja', labelEn: 'Option' },
+  { value: 'risk', labelPl: 'Ryzyko', labelEn: 'Risk' },
+  { value: 'action', labelPl: 'Akcja', labelEn: 'Action' },
+  { value: 'decision_point', labelPl: 'Punkt decyzyjny', labelEn: 'Decision Point' },
+  { value: 'insight', labelPl: 'Insight', labelEn: 'Insight' },
+  { value: 'question', labelPl: 'Pytanie', labelEn: 'Question' },
+  { value: 'evidence', labelPl: 'Dowód', labelEn: 'Evidence' },
+] as const;
 
 export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
   open,
@@ -391,172 +410,240 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
-        {/* Status Flow */}
-        <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
-          <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2">
-            Status
-          </div>
-          <div className="flex items-center gap-1">
-            {STATUS_ORDER.map((s, idx) => {
-              const cfg = STATUS_CONFIG[s];
-              const isActive = s === status;
-              const isPast = STATUS_ORDER.indexOf(status) > idx;
-              return (
-                <React.Fragment key={s}>
-                  {idx > 0 && (
-                    <div
-                      className={`w-4 h-0.5 rounded-full ${isPast || isActive ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-navy-700'}`}
-                    />
-                  )}
-                  <button
-                    onClick={() => handleStatusChange(s)}
-                    disabled={locked || isProtected}
-                    className={`px-2 py-1 rounded-lg text-[9px] font-bold transition-all ${
-                      isActive
-                        ? cfg.color + ' ring-1 ring-current/20 shadow-sm'
-                        : isPast
-                          ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
-                          : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
-                    } disabled:opacity-40`}
-                    title={isPl ? cfg.labelPl : cfg.labelEn}
-                  >
-                    {isPl ? cfg.labelPl : cfg.labelEn}
-                  </button>
-                </React.Fragment>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Notes */}
-        <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
-          <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2">
-            {isPl ? 'Notatki' : 'Notes'}
-          </div>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            onBlur={handleNotesBlur}
-            disabled={locked || isProtected}
-            rows={4}
-            placeholder={
-              isPl ? 'Dodaj notatki, kontekst, szczegóły...' : 'Add notes, context, details...'
-            }
-            className="w-full px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-amber-500/30 resize-none transition-all disabled:opacity-50"
-          />
-        </div>
-
-        {/* V5-IDEA-18: Depth model fields */}
-        <DepthField
-          label={isPl ? 'Kontekst' : 'Context'}
-          value={nodeData?.context || ''}
-          placeholder={isPl ? 'Jaki jest kontekst?' : 'What is the context?'}
-          disabled={locked || isProtected}
-          onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { context: val })}
-        />
-        <DepthField
-          label={isPl ? 'Cel' : 'Goal'}
-          value={nodeData?.goal || ''}
-          placeholder={isPl ? 'Jaki jest cel?' : 'What is the goal?'}
-          disabled={locked || isProtected}
-          onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { goal: val })}
-        />
-        <DepthField
-          label={isPl ? 'Uzasadnienie' : 'Rationale'}
-          value={nodeData?.rationale || ''}
-          placeholder={isPl ? 'Dlaczego to ważne?' : 'Why is this important?'}
-          disabled={locked || isProtected}
-          onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { rationale: val })}
-        />
-        <DepthField
-          label={isPl ? 'Ryzyko' : 'Risk'}
-          value={nodeData?.riskNote || ''}
-          placeholder={isPl ? 'Jakie są ryzyka?' : 'What are the risks?'}
-          disabled={locked || isProtected}
-          onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { riskNote: val })}
-        />
-        <DepthField
-          label={isPl ? 'Typ semantyczny' : 'Semantic type'}
-          value={nodeData?.semanticType || ''}
-          placeholder={isPl ? 'np. hipoteza, decyzja, insight' : 'e.g. hypothesis, decision, insight'}
-          disabled={locked || isProtected}
-          onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { semanticType: val })}
-        />
-
-        <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
-          <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-2">
-            {isPl ? 'Tagi' : 'Tags'}
-          </div>
-          <div className="flex flex-wrap gap-1.5 mb-2">
-            {(nodeData.tags || []).map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                disabled={locked || isProtected}
-                onClick={() => handleRemoveTag(tag)}
-                className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 disabled:opacity-50"
-              >
-                <span>{tag}</span>
-                <span className="text-slate-400">x</span>
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddTag();
-                }
-              }}
-              disabled={locked || isProtected}
-              placeholder={isPl ? 'Dodaj tag' : 'Add tag'}
-              className="flex-1 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
-            />
-            <button
-              type="button"
-              onClick={handleAddTag}
-              disabled={locked || isProtected || !tagInput.trim()}
-              className="px-3 py-2 rounded-xl text-[11px] font-semibold bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 disabled:opacity-40"
-            >
-              {isPl ? 'Dodaj' : 'Add'}
-            </button>
-          </div>
-        </div>
-
+        {/* ── Section 1: Basic Info (Status + Semantic Type) ── */}
         <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
           <ToggleBlock
-            title={isPl ? 'Dowody i zrodla' : 'Evidence and sources'}
+            title={isPl ? 'Informacje podstawowe' : 'Basic Info'}
+            icon={<Info size={14} />}
+            defaultOpen
+          >
+            <div className="space-y-3 mt-2">
+              {/* Status Flow */}
+              <div>
+                <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">
+                  Status
+                </div>
+                <div className="flex items-center gap-1 flex-wrap">
+                  {STATUS_ORDER.map((s, idx) => {
+                    const cfg = STATUS_CONFIG[s];
+                    const isActive = s === status;
+                    const isPast = STATUS_ORDER.indexOf(status) > idx;
+                    return (
+                      <React.Fragment key={s}>
+                        {idx > 0 && (
+                          <div
+                            className={`w-3 h-0.5 rounded-full ${isPast || isActive ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-navy-700'}`}
+                          />
+                        )}
+                        <button
+                          onClick={() => handleStatusChange(s)}
+                          disabled={locked || isProtected}
+                          className={`px-2 py-1 rounded-lg text-[9px] font-bold transition-all ${
+                            isActive
+                              ? cfg.color + ' ring-1 ring-current/20 shadow-sm'
+                              : isPast
+                                ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                          } disabled:opacity-40`}
+                          title={isPl ? cfg.labelPl : cfg.labelEn}
+                        >
+                          {isPl ? cfg.labelPl : cfg.labelEn}
+                        </button>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Semantic Type — dropdown */}
+              <div>
+                <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">
+                  {isPl ? 'Typ semantyczny' : 'Semantic Type'}
+                </div>
+                <select
+                  value={nodeData?.semanticType || ''}
+                  onChange={(e) =>
+                    nodeData && onUpdateNode(nodeData.nodeId, { semanticType: e.target.value })
+                  }
+                  disabled={locked || isProtected}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition-all disabled:opacity-50"
+                >
+                  {SEMANTIC_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {isPl ? opt.labelPl : opt.labelEn}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </ToggleBlock>
+        </div>
+
+        {/* ── Section 2: Notes & Context ── */}
+        <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
+          <ToggleBlock
+            title={isPl ? 'Notatki i kontekst' : 'Notes & Context'}
+            icon={<StickyNote size={14} />}
+            badge={
+              [notes, nodeData?.context, nodeData?.goal, nodeData?.rationale, nodeData?.riskNote].filter(Boolean).length > 0
+                ? String([notes, nodeData?.context, nodeData?.goal, nodeData?.rationale, nodeData?.riskNote].filter(Boolean).length)
+                : undefined
+            }
+            defaultOpen
+          >
+            <div className="space-y-2 mt-2">
+              <div>
+                <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">
+                  {isPl ? 'Notatki' : 'Notes'}
+                </div>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  onBlur={handleNotesBlur}
+                  disabled={locked || isProtected}
+                  rows={3}
+                  placeholder={
+                    isPl ? 'Dodaj notatki, szczegóły...' : 'Add notes, details...'
+                  }
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-amber-500/30 resize-none transition-all disabled:opacity-50"
+                />
+              </div>
+              <DepthField
+                label={isPl ? 'Kontekst' : 'Context'}
+                value={nodeData?.context || ''}
+                placeholder={isPl ? 'Jaki jest kontekst?' : 'What is the context?'}
+                disabled={locked || isProtected}
+                onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { context: val })}
+              />
+              <DepthField
+                label={isPl ? 'Cel' : 'Goal'}
+                value={nodeData?.goal || ''}
+                placeholder={isPl ? 'Jaki jest cel?' : 'What is the goal?'}
+                disabled={locked || isProtected}
+                onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { goal: val })}
+              />
+              <DepthField
+                label={isPl ? 'Uzasadnienie' : 'Rationale'}
+                value={nodeData?.rationale || ''}
+                placeholder={isPl ? 'Dlaczego to ważne?' : 'Why is this important?'}
+                disabled={locked || isProtected}
+                onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { rationale: val })}
+              />
+              <DepthField
+                label={isPl ? 'Ryzyko' : 'Risk'}
+                value={nodeData?.riskNote || ''}
+                placeholder={isPl ? 'Jakie są ryzyka?' : 'What are the risks?'}
+                disabled={locked || isProtected}
+                onChange={(val) => nodeData && onUpdateNode(nodeData.nodeId, { riskNote: val })}
+              />
+            </div>
+          </ToggleBlock>
+        </div>
+
+        {/* ── Section 3: Tags & Classification ── */}
+        <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
+          <ToggleBlock
+            title={isPl ? 'Tagi i klasyfikacja' : 'Tags & Classification'}
+            icon={<Tag size={14} />}
+            badge={(nodeData.tags?.length || 0) > 0 ? String(nodeData.tags!.length) : undefined}
+            defaultOpen={(nodeData.tags?.length || 0) > 0}
+          >
+            <div className="mt-2">
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {(nodeData.tags || []).map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    disabled={locked || isProtected}
+                    onClick={() => handleRemoveTag(tag)}
+                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                  >
+                    <Hash size={9} className="shrink-0" />
+                    <span>{tag}</span>
+                    <X size={9} className="text-slate-400 shrink-0" />
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  disabled={locked || isProtected}
+                  placeholder={isPl ? 'Dodaj tag...' : 'Add tag...'}
+                  className="flex-1 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white/50 dark:bg-navy-950/30 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400/60 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddTag}
+                  disabled={locked || isProtected || !tagInput.trim()}
+                  className="px-3 py-2 rounded-xl text-[11px] font-semibold bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 disabled:opacity-40 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
+                >
+                  <Plus size={12} />
+                </button>
+              </div>
+            </div>
+          </ToggleBlock>
+        </div>
+
+        {/* ── Section 4: Evidence & Artifacts ── */}
+        <div className="px-5 py-3 border-b border-slate-200/30 dark:border-navy-700/30">
+          <ToggleBlock
+            title={isPl ? 'Dowody i źródła' : 'Evidence & Sources'}
             badge={String(nodeData.evidenceLinks?.length || 0)}
             defaultOpen={(nodeData.evidenceLinks?.length || 0) > 0}
             icon={<Link2 size={14} />}
           >
             <div className="space-y-2 mt-1">
-              {(nodeData.evidenceLinks || []).map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-xl border border-slate-200/40 dark:border-navy-700/40 px-3 py-2 bg-white/40 dark:bg-navy-950/20"
-                >
-                  <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
-                    {item.title}
-                  </div>
-                  {(item.url || item.artifactId) && (
-                    <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 break-all">
-                      {item.url || item.artifactId}
+              {(nodeData.evidenceLinks || []).map((item) => {
+                const isUrl = item.type === 'url' && item.url;
+                const isArtifact = item.type === 'artifact' && item.artifactId;
+                const isClickable = isUrl || isArtifact;
+                return (
+                  <div
+                    key={item.id}
+                    className={`rounded-xl border border-slate-200/40 dark:border-navy-700/40 px-3 py-2 bg-white/40 dark:bg-navy-950/20 flex items-center gap-2 ${isClickable ? 'cursor-pointer hover:bg-slate-50/60 dark:hover:bg-navy-900/40 transition-colors' : ''}`}
+                    onClick={() => {
+                      if (isUrl) {
+                        window.open(item.url!, '_blank', 'noopener,noreferrer');
+                      } else if (isArtifact) {
+                        window.dispatchEvent(
+                          new CustomEvent('mywork-open-item', {
+                            detail: { type: 'artifact', id: item.artifactId, name: item.title },
+                          })
+                        );
+                      }
+                    }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                        {item.title}
+                      </div>
+                      {(item.url || item.artifactId) && (
+                        <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 break-all truncate">
+                          {item.url || item.artifactId}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))}
+                    {isClickable && (
+                      <ExternalLink size={11} className="text-slate-400 shrink-0" />
+                    )}
+                  </div>
+                );
+              })}
               <button
                 type="button"
                 onClick={() => setShowEvidenceModal(true)}
                 disabled={locked || isProtected}
-                className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-[11px] font-semibold bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 disabled:opacity-40 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
               >
                 <Plus size={12} />
-                {isPl ? 'Dodaj dowod' : 'Add evidence'}
+                {isPl ? 'Dodaj dowód' : 'Add evidence'}
               </button>
             </div>
           </ToggleBlock>
@@ -894,7 +981,6 @@ export const NodeDetailDrawer: React.FC<NodeDetailDrawerProps> = ({
   );
 };
 
-// V5-IDEA-18: Depth field inline component
 const DepthField: React.FC<{
   label: string;
   value: string;
@@ -911,7 +997,7 @@ const DepthField: React.FC<{
 
   if (!expanded && !localVal) {
     return (
-      <div className="px-5 py-1.5">
+      <div className="py-0.5">
         <button
           onClick={() => setExpanded(true)}
           className="text-[10px] font-semibold text-slate-400 hover:text-primary-500 transition-colors"
@@ -923,7 +1009,7 @@ const DepthField: React.FC<{
   }
 
   return (
-    <div className="px-5 py-2 border-b border-slate-200/30 dark:border-navy-700/30">
+    <div>
       <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-400 mb-1.5">
         {label}
       </div>

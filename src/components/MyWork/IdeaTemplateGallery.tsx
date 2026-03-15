@@ -2,7 +2,7 @@
  * IdeaTemplateGallery — Template selection for Idea Workspace canvas tools.
  *
  * Provides pre-built templates for Process Flow and Mind Map tools.
- * Templates are loaded into the workspace graph via Api.saveMyIdeaMap.
+ * Templates are loaded into the workspace graph via Api.syncMyIdeaMap.
  */
 import {
   ArrowRight,
@@ -1758,9 +1758,10 @@ export async function applyIdeaTemplate(params: {
   template: TemplateDefinition;
   isPl?: boolean;
   activeTool?: CanvasToolType;
-}): Promise<void> {
-  const { ideaId, template, activeTool = template.tool, isPl } = params;
-  await Api.saveMyIdeaMap(ideaId, {
+  baseVersion?: number;
+}): Promise<any> {
+  const { ideaId, template, activeTool = template.tool, isPl, baseVersion } = params;
+  return Api.syncMyIdeaMap(ideaId, {
     nodes: template.nodes,
     edges: template.edges,
     preferredTool: template.tool,
@@ -1779,6 +1780,8 @@ export async function applyIdeaTemplate(params: {
         }),
       },
     },
+    ...(baseVersion != null ? { baseVersion } : {}),
+    reason: 'manual',
   });
 }
 
@@ -1790,6 +1793,7 @@ interface IdeaTemplateGalleryProps {
   ideaId: string;
   activeTool: CanvasToolType;
   onApplied: () => void;
+  baseVersion?: number;
 }
 
 export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
@@ -1798,6 +1802,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
   ideaId,
   activeTool,
   onApplied,
+  baseVersion,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -1823,6 +1828,7 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
           template,
           isPl,
           activeTool,
+          baseVersion,
         });
 
         if (withAIFill && template.nodes.length > 0) {
@@ -1857,14 +1863,25 @@ export const IdeaTemplateGallery: React.FC<IdeaTemplateGalleryProps> = ({
         onApplied();
         onClose();
       } catch (err: any) {
-        toast.error(
-          err?.message || (isPl ? 'Nie udało się zastosować szablonu' : 'Failed to apply template')
-        );
+        if (err?.status === 409) {
+          toast(
+            isPl
+              ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
+              : 'Change conflict detected. Refreshing map from server.',
+            { icon: '⚠️' }
+          );
+          onApplied();
+          onClose();
+        } else {
+          toast.error(
+            err?.message || (isPl ? 'Nie udało się zastosować szablonu' : 'Failed to apply template')
+          );
+        }
       } finally {
         setApplying(null);
       }
     },
-    [activeTool, i18n.language, ideaId, isPl, onApplied, onClose]
+    [activeTool, baseVersion, i18n.language, ideaId, isPl, onApplied, onClose]
   );
 
   if (!open) return null;

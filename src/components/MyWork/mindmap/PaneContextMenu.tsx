@@ -63,8 +63,8 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
   const items: MenuItemBase[] = [
     {
       id: 'pane_add_node',
-      labelPl: 'Dodaj węzeł tutaj',
-      labelEn: 'Add node here',
+      labelPl: 'Dodaj temat (do korzenia)',
+      labelEn: 'Add topic (to root)',
       icon: Plus,
       shortcut: 'N',
       disabled: isLocked,

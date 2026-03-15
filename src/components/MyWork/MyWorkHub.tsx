@@ -130,7 +130,7 @@ const DecisionsTimelineContainer = React.lazy(() =>
 type ModuleTab = 'home' | 'ideas' | 'notebook' | 'inbox' | 'calendar' | 'tasks' | 'decisions' | 'manager';
 type TaskFilter = 'all' | 'overdue' | 'today' | 'week' | 'urgent';
 type TasksViewMode = 'table' | 'kanban' | 'calendar';
-type IdeasViewMode = 'list' | 'cards' | 'garden';
+type IdeasViewMode = 'table' | 'grid';
 type DecisionsViewMode = 'table' | 'kanban' | 'timeline';
 type InboxViewMode = 'flat' | 'sections';
 type DecisionFilter = 'all' | 'my' | 'awaiting';
@@ -264,6 +264,54 @@ interface OpenDocument {
   name: string;
   status: ItemStatus;
   data?: any;
+}
+
+const TRANSIENT_DOCUMENT_PREFIXES = ['new-task-', 'new-idea-', 'new-decision-'] as const;
+
+function isOpenDocument(value: unknown): value is OpenDocument {
+  if (!value || typeof value !== 'object') return false;
+  const doc = value as Partial<OpenDocument>;
+  return (
+    typeof doc.id === 'string' &&
+    typeof doc.name === 'string' &&
+    typeof doc.status === 'string' &&
+    (doc.type === 'task' || doc.type === 'idea' || doc.type === 'decision' || doc.type === 'notification')
+  );
+}
+
+function isTransientDocumentId(id: string): boolean {
+  return TRANSIENT_DOCUMENT_PREFIXES.some((prefix) => id.startsWith(prefix));
+}
+
+function readStoredMyWorkDocuments(): {
+  openDocuments: OpenDocument[];
+  activeDocumentId: string | null;
+} {
+  if (typeof window === 'undefined') {
+    return { openDocuments: [], activeDocumentId: null };
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem('moduleHub.openDocuments.mywork');
+    if (!raw) return { openDocuments: [], activeDocumentId: null };
+
+    const parsed = JSON.parse(raw);
+    const openDocuments: OpenDocument[] = Array.isArray(parsed?.openDocuments)
+      ? parsed.openDocuments
+          .filter(isOpenDocument)
+          // Temporary "new-*" placeholders should not survive a full page reload.
+          .filter((doc: OpenDocument) => !isTransientDocumentId(doc.id))
+      : [];
+    const activeDocumentId =
+      typeof parsed?.activeDocumentId === 'string' &&
+      openDocuments.some((doc: OpenDocument) => doc.id === parsed.activeDocumentId)
+        ? parsed.activeDocumentId
+        : null;
+
+    return { openDocuments, activeDocumentId };
+  } catch {
+    return { openDocuments: [], activeDocumentId: null };
+  }
 }
 
 function getDocumentTab(type: OpenDocument['type']): ModuleTab {
@@ -473,17 +521,23 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { isAdmin, isManager, isSuperAdmin } = useUserCan();
   const canViewManager = isAdmin || isManager || isSuperAdmin;
 
-  // Tab state — everyone lands on Home
-  const [activeTab, setActiveTab] = useState<ModuleTab>(() =>
-    getInitialMyWorkTab(searchParams, canViewManager)
-  );
+  const restoredDocumentState = useMemo(() => readStoredMyWorkDocuments(), []);
+  // Tab state — restore the last live document when possible, otherwise land on Home/path intent.
+  const [activeTab, setActiveTab] = useState<ModuleTab>(() => {
+    const restoredActiveDoc = restoredDocumentState.activeDocumentId
+      ? restoredDocumentState.openDocuments.find((doc) => doc.id === restoredDocumentState.activeDocumentId) || null
+      : null;
+    return restoredActiveDoc
+      ? getDocumentTab(restoredActiveDoc.type)
+      : getInitialMyWorkTab(searchParams, canViewManager);
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
 
   // Filter states
   const [taskFilter, setTaskFilter] = useState<TaskFilter>('all');
   const [tasksViewMode, setTasksViewMode] = useState<TasksViewMode>('table');
-  const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('list');
+  const [ideasViewMode, setIdeasViewMode] = useState<IdeasViewMode>('table');
   const [ideaActiveTool, setIdeaActiveTool] = useState<CanvasToolType>('mindmap');
   const [ideaActivePanel, setIdeaActivePanel] = useState<WorkspacePanelKey>(null);
   const [ideaSelection, setIdeaSelection] = useState<IdeaWorkspaceSelection>(EMPTY_SELECTION);
@@ -607,18 +661,10 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     | 'snoozeTomorrow'
   > | null>(null);
   // V3-A02: Dynamic documents state with sessionStorage persistence
-  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>(() => {
-    try {
-      const raw = window.sessionStorage.getItem('moduleHub.openDocuments.mywork');
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed?.openDocuments) ? parsed.openDocuments : [];
-    } catch {
-      return [];
-    }
-  });
-  // Always start on list view — workspace opens only via explicit user action (click idea / "New")
-  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>(() => restoredDocumentState.openDocuments);
+  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(
+    () => restoredDocumentState.activeDocumentId
+  );
   const [pendingDocument, setPendingDocument] = useState<OpenDocument | null>(null);
   const [pendingUrlCleanup, setPendingUrlCleanup] = useState<{
     documentId: string;
@@ -698,6 +744,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       if (prev.find((d) => d.id === doc.id)) return prev;
       return [...prev, doc];
     });
+    setActiveTab(getDocumentTab(doc.type));
     setActiveDocumentId(doc.id);
   }, []);
 
@@ -1753,7 +1800,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     const isListActive = activeDocumentId === null;
 
     return (
-      <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
+      <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto min-w-0 bg-slate-50 dark:bg-navy-900/50 border-b border-slate-200 dark:border-navy-700">
         {/* List button */}
         <button
           onClick={handleShowList}
@@ -1762,13 +1809,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               ? TAB_ACTIVE.replace('border-l-2', '')
               : TAB_INACTIVE.replace('border-l-2', '')
           }
+          style={{ flexShrink: 0 }}
         >
           <List size={14} />
           <span>{isPolish ? 'Lista' : 'List'}</span>
         </button>
 
         {/* Separator */}
-        <div className="w-px h-6 bg-slate-200 dark:bg-navy-600" />
+        <div className="w-px h-6 bg-slate-200 dark:bg-navy-600 shrink-0" />
 
         {/* Document Tabs */}
         {openDocuments.map((doc) => {
@@ -1779,7 +1827,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           return (
             <div
               key={doc.id}
-              className={`group ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor}`}
+              className={`group shrink-0 ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor}`}
               onClick={() => setActiveDocumentId(doc.id)}
             >
               {/* Type Icon */}
@@ -2458,6 +2506,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         return (
           <React.Suspense fallback={lazyFallback}>
             <IdeaMapWorkspace
+              key={`idea-workspace-${activeDoc.id}`}
               ideaId={activeDoc.id}
               initialOpenMap={Boolean((activeDoc as any)?.data?.openMap)}
               initialTool={(activeDoc as any)?.data?.initialTool}
@@ -3005,38 +3054,42 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               <WorkspacePanelStrip value={ideaActivePanel} onChange={handleIdeaPanelChange} />
             )}
 
-            {/* Ideas: view mode switcher — List / Cards / Tags */}
+            {/* Ideas: canonical view mode switcher — table / grid */}
             {activeTab === 'ideas' && !activeDocumentId && (
-              <div className="inline-flex items-center gap-0.5 p-0.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
+              <div
+                className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+                role="radiogroup"
+                aria-label={isPolish ? 'Tryb widoku pomyslow' : 'Ideas view mode'}
+              >
                 {(
                   [
                     {
-                      id: 'list' as IdeasViewMode,
+                      id: 'table' as IdeasViewMode,
                       icon: LayoutList,
-                      label: 'List',
-                      labelPl: 'Lista',
+                      label: 'Table',
+                      labelPl: 'Tabela',
                     },
                     {
-                      id: 'cards' as IdeasViewMode,
+                      id: 'grid' as IdeasViewMode,
                       icon: LayoutGrid,
-                      label: 'Cards',
-                      labelPl: 'Karty',
+                      label: 'Grid',
+                      labelPl: 'Siatka',
                     },
-                    { id: 'garden' as IdeasViewMode, icon: Tag, label: 'Tags', labelPl: 'Tagi' },
                   ] as const
                 ).map(({ id, icon: Icon, label, labelPl }) => (
                   <button
                     key={id}
                     onClick={() => setIdeasViewMode(id)}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
                       ideasViewMode === id
-                        ? 'bg-white dark:bg-navy-800 text-amber-600 dark:text-amber-400 shadow-sm'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                        ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
                     }`}
                     title={isPolish ? labelPl : label}
+                    role="radio"
+                    aria-checked={ideasViewMode === id}
                   >
-                    <Icon size={14} />
-                    {isPolish ? labelPl : label}
+                    <Icon size={16} />
                   </button>
                 ))}
               </div>

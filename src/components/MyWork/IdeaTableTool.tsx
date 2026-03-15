@@ -7,6 +7,7 @@
  * Data lives in shared IdeaWorkspaceGraph (nodes/edges/extensions.table).
  */
 import {
+  Activity,
   ArrowDown,
   ArrowRight,
   ArrowUp,
@@ -14,6 +15,7 @@ import {
   BarChart3,
   Brain,
   Calendar,
+  Camera,
   ChevronDown,
   ClipboardCopy,
   Columns3,
@@ -26,6 +28,7 @@ import {
   Grid3X3,
   GripVertical,
   Group,
+  History,
   KanbanSquare,
   Keyboard,
   Layers,
@@ -94,6 +97,7 @@ import {
   HeatmapControls,
 } from './table/EmbeddedAnalytics';
 import { ExportToPresentation } from './table/ExportToPresentation';
+import { FilterBuilder } from './table/FilterBuilder';
 import { FilterPanel } from './table/FilterPanel';
 import { batchEvaluateFormulas } from './table/FormulaEngineV2';
 import { FrameworkGenerator } from './table/FrameworkGenerator';
@@ -120,6 +124,12 @@ import type {
 import { computeAggregation } from './table/tableTypes';
 import { TimelineView } from './table/TimelineView';
 import { useTableKeyboard } from './table/useTableKeyboard';
+import { useTablePlatformIntegration } from './table/useTablePlatformIntegration';
+import { ActivityFeed } from './table/ActivityFeed';
+import { AuditTrailPanel } from './table/AuditTrailPanel';
+import { ChatToSchemaPanel } from './table/ChatToSchemaPanel';
+import { ViewRouter } from './table/views/ViewRouter';
+import type { ViewConfigState } from './table/views/ViewConfigPanel';
 // Domain hooks extracted from this file (Stage 1 refactor)
 import { useRollupComputation } from './table/useRollupComputation';
 import { useTablePersistence } from './table/useTablePersistence';
@@ -128,7 +138,12 @@ import { useTableRows } from './table/useTableRows';
 import { useTableSchema } from './table/useTableSchema';
 import { useTableViews } from './table/useTableViews';
 import { useUndoRedo } from './table/useUndoRedo';
+import { SnapshotManager } from './table/SnapshotManager';
 import { VoiceImageInput } from './table/VoiceImageInput';
+import { ConnectorWizard } from './table/connectors/ConnectorWizard';
+import { ConnectorList } from './table/connectors/ConnectorList';
+import { RunHistoryPanel } from './table/connectors/RunHistoryPanel';
+import { useConnectors, type Connector } from './table/connectors/useConnectors';
 
 interface IdeaTableToolProps {
   open: boolean;
@@ -164,6 +179,21 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
+  // ── Data connectors ────────────────────────────────────────────────────────
+  const connectors = useConnectors(ideaId);
+
+  // ── Table Platform integration (metadata-first) ──────────────────────────
+  const platformIntegration = useTablePlatformIntegration({
+    ideaId,
+    locked,
+    isPl,
+    open,
+    onSelectionChange,
+  });
+
+  // When the new platform is active, override legacy hook outputs
+  const usePlatform = platformIntegration.active;
+
   // ── Domain hooks (Stage 1 extraction) ───────────────────────────────────────
   const schema = useTableSchema(isPl, ideaId);
   const {
@@ -183,6 +213,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     dragColKey,
     mergePersistedColumns,
   } = schema;
+
+  // Platform override: columns
+  const effectiveColumns = usePlatform ? platformIntegration.columns : columns;
+  const effectiveVisibleColumns = usePlatform
+    ? platformIntegration.visibleColumns
+    : visibleColumns;
 
   const applyViewColumns = useCallback(
     (viewCols: { key: string; visible: boolean; width: number }[]) => {
@@ -223,6 +259,29 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     deleteSavedView,
     cycleSort,
   } = views;
+
+  // Platform override: views
+  const effectiveViewLayout = usePlatform ? platformIntegration.viewLayout : viewLayout;
+  const effectiveSetViewLayout = usePlatform ? platformIntegration.setViewLayout : setViewLayout;
+  const effectiveSavedViews = usePlatform ? platformIntegration.savedViews : savedViews;
+  const effectiveActiveViewId = usePlatform ? platformIntegration.activeViewId : activeViewId;
+  const effectiveSort = usePlatform ? platformIntegration.sort : sort;
+  const effectiveSetSort = usePlatform ? platformIntegration.setSort : setSort;
+  const effectiveFilters = usePlatform ? platformIntegration.filters : filters;
+  const effectiveSetFilters = usePlatform ? platformIntegration.setFilters : setFilters;
+  const effectiveGroupBy = usePlatform ? platformIntegration.groupBy : groupBy;
+  const effectiveSetGroupBy = usePlatform ? platformIntegration.setGroupBy : setGroupBy;
+
+  const effectiveCycleSort = useCallback(
+    (key: string) => {
+      const setter = usePlatform ? effectiveSetSort : setSort;
+      const current = usePlatform ? effectiveSort : sort;
+      if (!current || current.key !== key) setter({ key, direction: 'asc' });
+      else if (current.direction === 'asc') setter({ key, direction: 'desc' });
+      else setter(null);
+    },
+    [usePlatform, effectiveSetSort, setSort, effectiveSort, sort]
+  );
 
   // ── Core data state ──────────────────────────────────────────────────────────
   const [edges, setEdges] = useState<TableEdge[]>([]);
@@ -267,6 +326,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     setAddRowBtnRect,
   } = rowOps;
 
+  // Platform override: rows
+  const effectiveNodes = (usePlatform ? platformIntegration.nodes : nodes) ?? [];
+  const effectiveProcessedRows = (usePlatform ? platformIntegration.processedRows : processedRows) ?? [];
+  const effectiveGroupedRows = usePlatform ? platformIntegration.groupedRows : groupedRows;
+  const effectiveSelectedRowIds = usePlatform ? platformIntegration.selectedRowIds : selectedRowIds;
+  const effectiveSetSelectedRowIds = usePlatform ? platformIntegration.setSelectedRowIds : setSelectedRowIds;
+  const effectiveHandleFieldChange = usePlatform ? platformIntegration.handleFieldChange : handleFieldChange;
+  const effectiveHandleAddRow = usePlatform ? platformIntegration.handleAddRow : handleAddRow;
+  const effectiveHandleBulkDelete = usePlatform ? platformIntegration.handleBulkDelete : handleBulkDelete;
+
   useEffect(() => {
     onGraphChange?.({
       nodes: nodes as any[],
@@ -276,7 +345,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   }, [edges, extensions, nodes, onGraphChange]);
 
   // ── Rollup computation (inject aggregated values for rollup columns) ───────
-  const processedRowsWithRollups = useRollupComputation(processedRows, columns, nodes, edges);
+  const processedRowsWithRollups = useRollupComputation(
+    usePlatform ? effectiveProcessedRows : processedRows,
+    usePlatform ? effectiveColumns : columns,
+    usePlatform ? effectiveNodes : nodes,
+    edges
+  );
 
   // ── Persistence hook ────────────────────────────────────────────────────────
   const { loading, saving, saveStatusLabel, handleSave } = useTablePersistence({
@@ -307,6 +381,32 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     setFormatRules,
     setViewLayout,
   });
+
+  // Platform override: persistence
+  const effectiveLoading = usePlatform ? platformIntegration.loading : loading;
+  const effectiveSaving = usePlatform ? platformIntegration.saving : saving;
+  const effectiveSaveStatusLabel = usePlatform ? platformIntegration.saveStatusLabel : saveStatusLabel;
+  const effectiveHandleSave = usePlatform ? platformIntegration.handleSave : handleSave;
+
+  // ── Platform switch: alias effective values for JSX consumption ────────────
+  // When platform is active, these shadow the legacy values so the entire
+  // render tree uses the new backend without touching 1500+ lines of JSX.
+  const _cols = (usePlatform ? effectiveColumns : columns) ?? [];
+  const _visCols = (usePlatform ? effectiveVisibleColumns : visibleColumns) ?? [];
+  const _vl = usePlatform ? effectiveViewLayout : viewLayout;
+  const _sort = usePlatform ? effectiveSort : sort;
+  const _filters = (usePlatform ? effectiveFilters : filters) ?? { logic: 'and' as const, rules: [] };
+  const _groupBy = usePlatform ? effectiveGroupBy : groupBy;
+  const _savedViews = (usePlatform ? effectiveSavedViews : savedViews) ?? [];
+  const _activeViewId = usePlatform ? effectiveActiveViewId : activeViewId;
+  const _selIds = usePlatform ? effectiveSelectedRowIds : selectedRowIds;
+  const _fieldChange = usePlatform ? effectiveHandleFieldChange : handleFieldChange;
+  const _addRow = usePlatform ? effectiveHandleAddRow : handleAddRow;
+  const _bulkDel = usePlatform ? effectiveHandleBulkDelete : handleBulkDelete;
+  const _loading = usePlatform ? effectiveLoading : loading;
+  const _saving = usePlatform ? effectiveSaving : saving;
+  const _saveLabel = usePlatform ? effectiveSaveStatusLabel : saveStatusLabel;
+  const _save = usePlatform ? effectiveHandleSave : handleSave;
 
   // ── UI overlay state ────────────────────────────────────────────────────────
   const [showColumnConfig, setShowColumnConfig] = useState(false);
@@ -350,11 +450,23 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   } | null>(null);
   const [renamingViewId, setRenamingViewId] = useState<string | null>(null);
   const [renamingViewName, setRenamingViewName] = useState('');
+  const [showChatToSchema, setShowChatToSchema] = useState(false);
+  const [showAuditTrail, setShowAuditTrail] = useState(false);
+  const [showActivityFeed, setShowActivityFeed] = useState(false);
+  const [showSnapshotManager, setShowSnapshotManager] = useState(false);
+  const [showConnectorWizard, setShowConnectorWizard] = useState(false);
+  const [showConnectorList, setShowConnectorList] = useState(false);
+  const [connectorHistoryTarget, setConnectorHistoryTarget] = useState<Connector | null>(null);
   const [colContextMenu, setColContextMenu] = useState<{
     colKey: string;
     x: number;
     y: number;
   } | null>(null);
+  const [platformViewConfig, setPlatformViewConfig] = useState<ViewConfigState>({
+    viewType: 'grid',
+    visibleFieldIds: [],
+    galleryCardSize: 'medium',
+  });
   const csvInputRef = useRef<HTMLInputElement>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
@@ -545,8 +657,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
   const heatmapStyles = useMemo(() => {
     if (heatmapColumns.size === 0) return null;
-    return computeHeatmapStyles(nodes, columns, heatmapColumns, heatmapPalette);
-  }, [columns, heatmapColumns, heatmapPalette, nodes]);
+    return computeHeatmapStyles(effectiveNodes, _cols, heatmapColumns, heatmapPalette);
+  }, [_cols, effectiveNodes, heatmapColumns, heatmapPalette]);
 
   // ── Cell expand ───────────────────────────────────────────────────────────
   const handleCellExpand = useCallback((nodeId: string, colKey: string, rect: DOMRect) => {
@@ -554,10 +666,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   }, []);
 
   const cellExpandNode = cellExpandState
-    ? nodes.find((n) => n.id === cellExpandState.nodeId)
+    ? effectiveNodes.find((n) => n.id === cellExpandState.nodeId)
     : null;
   const cellExpandCol = cellExpandState
-    ? columns.find((c) => c.key === cellExpandState.colKey)
+    ? _cols.find((c) => c.key === cellExpandState.colKey)
     : null;
 
   // handleReorderNode, handleAddSubItem now from useTableRows
@@ -683,36 +795,36 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   // ── Keyboard ───────────────────────────────────────────────────────────────
   useTableKeyboard({
     rowCount: processedRowsWithRollups.length,
-    colCount: visibleColumns.length,
+    colCount: _visCols.length,
     onUndo: nodesUndo.undo,
     onRedo: nodesUndo.redo,
-    onDelete: handleBulkDelete,
+    onDelete: _bulkDel,
     onEscape: () => {
       setDetailNodeId(null);
-      setSelectedRowIds(new Set());
+      (usePlatform ? effectiveSetSelectedRowIds : setSelectedRowIds)(new Set());
       onSelectionChange?.(EMPTY_SELECTION);
       setShowKeyboardShortcuts(false);
     },
-    onSave: handleSave,
-    onAddRow: handleAddRow,
+    onSave: _save,
+    onAddRow: _addRow,
     onOpenAI: () => setShowAIAssistant(true),
     onShowShortcuts: () => setShowKeyboardShortcuts(true),
-    onSwitchView: (v) => setViewLayout(v as any),
+    onSwitchView: (v) => (usePlatform ? effectiveSetViewLayout : setViewLayout)(v as any),
     onToggleFilters: () => setShowFilterPanel((p) => !p),
     onToggleSummary: () => setShowSummaryDashboard((p) => !p),
     containerRef: tableRef,
   });
 
   const detailNode = useMemo(
-    () => (detailNodeId ? nodes.find((n) => n.id === detailNodeId) || null : null),
-    [detailNodeId, nodes]
+    () => (detailNodeId ? effectiveNodes.find((n) => n.id === detailNodeId) || null : null),
+    [detailNodeId, effectiveNodes]
   );
 
   if (!open) return null;
 
   // ── Render row ─────────────────────────────────────────────────────────────
   const renderRow = (row: TableNode, rowIdx: number) => {
-    const isSelected = selectedRowIds.has(row.id);
+    const isSelected = _selIds.has(row.id);
     const rowColor = row.data?.color;
     return (
       <tr
@@ -738,12 +850,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           <input
             type="checkbox"
             checked={isSelected}
-            onChange={() => toggleRowSelection(row.id)}
+            onChange={() => (usePlatform ? platformIntegration.toggleRowSelection : toggleRowSelection)(row.id)}
             onClick={(e) => e.stopPropagation()}
             className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
           />
         </td>
-        {visibleColumns.map((col, colIdx) => {
+        {_visCols.map((col, colIdx) => {
           const condStyle =
             formatRules.length > 0
               ? getConditionalStyle(formatRules, col.key, row?.data?.[col.key])
@@ -784,9 +896,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                           : row?.data?.[col.key]
                       }
                       rowData={row.data || {}}
-                      onChange={(val) => handleFieldChange(row.id, col.key, val)}
+                      onChange={(val) => _fieldChange(row.id, col.key, val)}
                       locked={locked}
-                      allNodes={nodes.map((n) => ({ id: n.id, label: n.data?.label }))}
+                      allNodes={effectiveNodes.map((n) => ({ id: n.id, label: n.data?.label }))}
                     />
                   )}
                 </div>
@@ -797,7 +909,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       node={row}
                       column={col}
                       ideaId={ideaId}
-                      onFill={handleFieldChange}
+                      onFill={_fieldChange}
                     />
                   )}
                 {col.key !== 'type' && (
@@ -996,30 +1108,43 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             <button
               onClick={() => setShowFilterPanel(!showFilterPanel)}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                filters.rules.length > 0
+                _filters.rules.length > 0
                   ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
                   : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
               }`}
             >
               <Filter size={12} />
-              {filters.rules.length > 0 && (
-                <span className="text-[9px]">({filters.rules.length})</span>
+              {_filters.rules.length > 0 && (
+                <span className="text-[9px]">({_filters.rules.length})</span>
               )}
             </button>
-            <FilterPanel
-              open={showFilterPanel}
-              onClose={() => setShowFilterPanel(false)}
-              filters={filters}
-              onChange={setFilters}
-              columns={visibleColumns}
-            />
+            {usePlatform ? (
+              <FilterBuilder
+                open={showFilterPanel}
+                onClose={() => setShowFilterPanel(false)}
+                filters={{ logic: _filters.logic, rules: _filters.rules.map((r) => ({ fieldId: (r as any).fieldId ?? (r as any).column, operator: (r as any).operator, value: (r as any).value })) }}
+                onChange={(pf) => {
+                  effectiveSetFilters({ logic: pf.logic, rules: pf.rules.map((r) => ({ id: `${r.fieldId}-${r.operator}`, column: r.fieldId, operator: r.operator as any, value: (r.value ?? '') as any })) });
+                  void platformIntegration.applyPlatformFilters(pf);
+                }}
+                fields={platformIntegration.platformFields}
+              />
+            ) : (
+              <FilterPanel
+                open={showFilterPanel}
+                onClose={() => setShowFilterPanel(false)}
+                filters={_filters}
+                onChange={setFilters}
+                columns={_visCols}
+              />
+            )}
           </div>
 
           {/* Group by */}
           <button
-            onClick={() => setGroupBy(groupBy ? null : 'status')}
+            onClick={() => (usePlatform ? effectiveSetGroupBy : setGroupBy)(_groupBy ? null : 'status')}
             className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-              groupBy
+              _groupBy
                 ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
                 : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
             }`}
@@ -1043,12 +1168,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             ).map((v) => (
               <button
                 key={v.id}
-                onClick={() => setViewLayout(v.id)}
-                className={`relative p-1.5 transition-colors ${viewLayout === v.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                onClick={() => (usePlatform ? effectiveSetViewLayout : setViewLayout)(v.id)}
+                className={`relative p-1.5 transition-colors ${_vl === v.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                 title={v.label}
               >
                 <v.icon size={12} />
-                {viewLayout === v.id && (
+                {_vl === v.id && (
                   <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full bg-primary-500" />
                 )}
               </button>
@@ -1068,10 +1193,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           {!locked && (
             <BatchAIFillButton
               nodes={processedRowsWithRollups}
-              columns={columns}
+              columns={_cols}
               ideaId={ideaId}
-              onFill={handleFieldChange}
-              selectedIds={selectedRowIds}
+              onFill={_fieldChange}
+              selectedIds={_selIds}
             />
           )}
 
@@ -1152,13 +1277,40 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             <HeatmapControls
               open={showHeatmap}
               onClose={() => setShowHeatmap(false)}
-              columns={columns}
+              columns={_cols}
               enabledColumns={heatmapColumns}
               onToggleColumn={toggleHeatmapColumn}
               palette={heatmapPalette}
               onPaletteChange={setHeatmapPalette}
             />
           </div>
+
+          {/* History / Audit */}
+          <button
+            onClick={() => setShowAuditTrail((p) => !p)}
+            className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+            title={isPl ? 'Historia zmian' : 'History'}
+          >
+            <History size={12} />
+          </button>
+
+          {/* Activity Feed */}
+          <button
+            onClick={() => setShowActivityFeed((p) => !p)}
+            className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+            title={isPl ? 'Aktywność' : 'Activity'}
+          >
+            <Activity size={12} />
+          </button>
+
+          {/* Snapshots */}
+          <button
+            onClick={() => setShowSnapshotManager(true)}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            title={isPl ? 'Migawki' : 'Snapshots'}
+          >
+            <Camera size={12} />
+          </button>
 
           {/* Keyboard shortcuts */}
           <button
@@ -1220,8 +1372,33 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             <BarChart3 size={12} />
           </button>
 
-          {/* CSV import/export */}
+          {/* CSV import/export + Connectors */}
           <div className="flex items-center gap-0.5">
+            {!locked && (
+              <button
+                onClick={() => setShowConnectorWizard(true)}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
+                title={isPl ? 'Importuj dane' : 'Import data'}
+              >
+                <Network size={12} />
+                {isPl ? 'Import' : 'Import'}
+              </button>
+            )}
+            {connectors.connectors.length > 0 && (
+              <button
+                onClick={() => setShowConnectorList((v) => !v)}
+                className="relative p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                title={isPl ? 'Konektory' : 'Connectors'}
+              >
+                <Layers size={12} />
+                {connectors.connectors.some((c) => c.lastRunStatus === 'running') && (
+                  <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                )}
+                {connectors.connectors.some((c) => c.lastRunStatus === 'failed') && (
+                  <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                )}
+              </button>
+            )}
             <input
               ref={csvInputRef}
               type="file"
@@ -1240,7 +1417,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             )}
             <button
               onClick={() => {
-                const csv = exportToCSV(columns, nodes);
+                const csv = exportToCSV(_cols, effectiveNodes);
                 downloadCSV(csv, `idea-${ideaId}.csv`);
               }}
               className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
@@ -1250,7 +1427,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             </button>
             <button
               onClick={() => {
-                copyTableToClipboard(columns, nodes);
+                copyTableToClipboard(_cols, effectiveNodes);
                 toast.success(isPl ? 'Skopiowano' : 'Copied');
               }}
               className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
@@ -1271,7 +1448,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             </button>
             {showColumnConfig && (
               <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-2">
-                {columns.map((col) => (
+                {_cols.map((col) => (
                   <button
                     key={col.key}
                     onClick={() => toggleColumn(col.key)}
@@ -1325,10 +1502,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           <div className="flex-1" />
 
           {/* Bulk actions */}
-          {selectedRowIds.size > 0 && (
+          {_selIds.size > 0 && (
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded-lg">
-                {selectedRowIds.size} {isPl ? 'zaznaczonych' : 'selected'}
+                {_selIds.size} {isPl ? 'zaznaczonych' : 'selected'}
               </span>
               {!locked && (
                 <>
@@ -1356,7 +1533,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     )}
                   </div>
                   <button
-                    onClick={handleBulkDelete}
+                    onClick={_bulkDel}
                     className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-red-600 bg-red-500/10 hover:bg-red-500/20 transition-colors"
                   >
                     <Trash2 size={11} />
@@ -1371,7 +1548,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           {!locked && (
             <div className="flex items-center rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
               <button
-                onClick={handleAddRow}
+                onClick={_addRow}
                 className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
                 title={isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
               >
@@ -1388,19 +1565,19 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             </div>
           )}
 
-          <span className="text-[11px] text-slate-500 dark:text-slate-400">{saveStatusLabel}</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400">{_saveLabel}</span>
           <button
             type="button"
-            onClick={handleSave}
-            disabled={saving || loading || locked}
+            onClick={_save}
+            disabled={_saving || _loading || locked}
             className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
-              saving || loading || locked
+              _saving || _loading || locked
                 ? 'bg-slate-200/60 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400'
                 : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100'
             }`}
           >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            {saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
+            {_saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            {_saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
           </button>
         </div>
 
@@ -1409,8 +1586,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           open={showAIAssistant}
           onClose={() => setShowAIAssistant(false)}
           ideaId={ideaId}
-          columns={columns}
-          artifactContext={nodes
+          columns={_cols}
+          artifactContext={effectiveNodes
             .filter((n) => n.data?.label)
             .slice(0, 20)
             .map((n) => ({
@@ -1419,9 +1596,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               title: String(n.data?.label || ''),
               snippet: String(n.data?.description || n.data?.bodyMarkdown || '').slice(0, 200),
             }))}
-          onSort={(s) => setSort(s)}
-          onFilter={(f) => setFilters(f)}
-          onGroup={(g) => setGroupBy(g)}
+          onSort={(s) => (usePlatform ? effectiveSetSort : setSort)(s)}
+          onFilter={(f) => (usePlatform ? effectiveSetFilters : setFilters)(f)}
+          onGroup={(g) => (usePlatform ? effectiveSetGroupBy : setGroupBy)(g)}
           onAddColumn={handleAddColumn}
           onAddRows={handleAIAddRows}
           onProposal={(p) => {
@@ -1453,85 +1630,125 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         )}
 
         {/* Content area */}
-        {loading ? (
+        {_loading ? (
           <div className="flex-1 flex items-center justify-center">
             <Loader2 className="animate-spin text-slate-400" size={24} />
           </div>
-        ) : viewLayout === 'timeline' ? (
+        ) : usePlatform && (_vl === 'kanban' || _vl === 'calendar' || _vl === 'grid') ? (
+          <ViewRouter
+            viewType={_vl === 'grid' ? 'gallery' : _vl as 'kanban' | 'calendar'}
+            records={processedRowsWithRollups}
+            columns={_cols}
+            viewConfig={{
+              ...platformViewConfig,
+              viewType: _vl === 'grid' ? 'gallery' : _vl as 'kanban' | 'calendar',
+              visibleFieldIds: platformViewConfig.visibleFieldIds.length > 0
+                ? platformViewConfig.visibleFieldIds
+                : _visCols.map((c) => c.key),
+              groupByFieldId: platformViewConfig.groupByFieldId || _groupBy || undefined,
+              dateFieldId: platformViewConfig.dateFieldId || _cols.find((c) => c.type === 'date')?.key,
+            }}
+            onRecordUpdate={_fieldChange}
+            onRecordClick={(id) => setDetailNodeId(id)}
+            onAddRecord={(defaults) => {
+              if (defaults) {
+                const id = `node-${Date.now()}`;
+                const now = new Date().toISOString();
+                const newNode = {
+                  id,
+                  type: 'idea',
+                  data: {
+                    label: '',
+                    status: 'todo',
+                    ...defaults,
+                    created_time: now,
+                    created_by: 'current-user',
+                    last_edited_time: now,
+                    last_edited_by: 'current-user',
+                  },
+                  position: { x: 0, y: 0 },
+                };
+                nodesUndo.push([...nodes, newNode]);
+              } else {
+                _addRow();
+              }
+            }}
+          />
+        ) : _vl === 'timeline' ? (
           <TimelineView
             nodes={processedRowsWithRollups}
             edges={edges}
-            columns={columns}
+            columns={_cols}
             locked={locked}
-            onFieldChange={handleFieldChange}
+            onFieldChange={_fieldChange}
             onNodeClick={(id) => setDetailNodeId(id)}
           />
-        ) : viewLayout === 'sticky' ? (
+        ) : _vl === 'sticky' ? (
           <StickyNoteView
             nodes={processedRowsWithRollups}
-            columns={columns}
+            columns={_cols}
             onNodeClick={(id) => setDetailNodeId(id)}
             onReorder={handleReorderNode}
-            onFieldChange={handleFieldChange}
-            groupBy={groupBy}
+            onFieldChange={_fieldChange}
+            groupBy={_groupBy}
           />
-        ) : viewLayout === 'kanban' ? (
+        ) : _vl === 'kanban' ? (
           <KanbanView
             nodes={processedRowsWithRollups}
             groupByColumn={
-              columns.find(
+              _cols.find(
                 (c) =>
-                  c.key === (groupBy || 'status') &&
+                  c.key === (_groupBy || 'status') &&
                   (c.type === 'select' || c.type === 'multiselect' || c.type === 'status')
               ) ||
-              columns.find((c) => c.type === 'status' || c.type === 'select') ||
-              columns[0]
+              _cols.find((c) => c.type === 'status' || c.type === 'select') ||
+              _cols[0]
             }
-            columns={columns}
+            columns={_cols}
             locked={locked}
-            onFieldChange={handleFieldChange}
-            onAddRow={handleAddRow}
+            onFieldChange={_fieldChange}
+            onAddRow={_addRow}
             onNodeClick={(id) => setDetailNodeId(id)}
           />
-        ) : viewLayout === 'calendar' ? (
+        ) : _vl === 'calendar' ? (
           <CalendarView
             rows={processedRowsWithRollups}
-            columns={columns}
+            columns={_cols}
             locked={locked}
             onNodeClick={(id) => setDetailNodeId(id)}
-            onFieldChange={handleFieldChange}
+            onFieldChange={_fieldChange}
             onAddEventAtDate={handleAddEventAtDate}
           />
-        ) : viewLayout === 'grid' ? (
+        ) : _vl === 'grid' ? (
           <GridView
             rows={processedRowsWithRollups}
-            columns={columns}
+            columns={_cols}
             onNodeClick={(id) => setDetailNodeId(id)}
           />
-        ) : viewLayout === 'matrix' ? (
+        ) : _vl === 'matrix' ? (
           <MatrixView
             nodes={processedRowsWithRollups}
-            columns={columns}
+            columns={_cols}
             xAxis={
-              (matrixAxisXKey && columns.find((c) => c.key === matrixAxisXKey)) ||
-              columns.find(
+              (matrixAxisXKey && _cols.find((c) => c.key === matrixAxisXKey)) ||
+              _cols.find(
                 (c) => c.key === 'impact' && (c.type === 'number' || c.type === 'rating')
               ) ||
-              columns.find((c) => c.type === 'rating') ||
-              columns[0]!
+              _cols.find((c) => c.type === 'rating') ||
+              _cols[0]!
             }
             yAxis={
-              (matrixAxisYKey && columns.find((c) => c.key === matrixAxisYKey)) ||
-              columns.find(
+              (matrixAxisYKey && _cols.find((c) => c.key === matrixAxisYKey)) ||
+              _cols.find(
                 (c) => c.key === 'effort' && (c.type === 'number' || c.type === 'rating')
               ) ||
-              columns.filter((c) => c.type === 'rating')[1] ||
-              columns[1] ||
-              columns[0]!
+              _cols.filter((c) => c.type === 'rating')[1] ||
+              _cols[1] ||
+              _cols[0]!
             }
             locked={locked}
             onNodeClick={(id) => setDetailNodeId(id)}
-            onFieldChange={handleFieldChange}
+            onFieldChange={_fieldChange}
             onAxisChange={(axis, col) => {
               if (axis === 'x') setMatrixAxisXKey(col.key);
               else setMatrixAxisYKey(col.key);
@@ -1542,12 +1759,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             <ConnectionLines
               selectedNodeId={selectedNodeForLines}
               edges={edges}
-              allNodes={nodes}
+              allNodes={effectiveNodes}
               containerRef={tableContainerRef}
             />
             <table
               className="w-full text-left"
-              style={{ minWidth: visibleColumns.reduce((s, c) => s + c.width, 40) }}
+              style={{ minWidth: _visCols.reduce((s, c) => s + c.width, 40) }}
             >
               <thead className="sticky top-0 bg-slate-50/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/60 z-10">
                 <tr>
@@ -1555,15 +1772,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     <input
                       type="checkbox"
                       checked={
-                        selectedRowIds.size === processedRowsWithRollups.length && processedRowsWithRollups.length > 0
+                        _selIds.size === processedRowsWithRollups.length && processedRowsWithRollups.length > 0
                       }
                       onChange={() => {
-                        if (selectedRowIds.size === processedRowsWithRollups.length) {
-                          setSelectedRowIds(new Set());
+                        const setSelFn = usePlatform ? effectiveSetSelectedRowIds : setSelectedRowIds;
+                        if (_selIds.size === processedRowsWithRollups.length) {
+                          setSelFn(new Set());
                           onSelectionChange?.(EMPTY_SELECTION);
                         } else {
                           const all = new Set(processedRowsWithRollups.map((r) => r.id));
-                          setSelectedRowIds(all);
+                          setSelFn(all);
                           onSelectionChange?.({
                             type: 'row',
                             count: all.size,
@@ -1574,7 +1792,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
                     />
                   </th>
-                  {visibleColumns.map((col) => (
+                  {_visCols.map((col) => (
                     <th
                       key={col.key}
                       style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
@@ -1605,7 +1823,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       ) : (
                         <div
                           className="flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200"
-                          onClick={() => cycleSort(col.key)}
+                          onClick={() => effectiveCycleSort(col.key)}
                           onDoubleClick={(e) => {
                             e.stopPropagation();
                             if (!locked) setEditingHeaderKey(col.key);
@@ -1620,8 +1838,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                             className="opacity-0 group-hover:opacity-40 cursor-grab"
                           />
                           {col.header}
-                          {sort?.key === col.key ? (
-                            sort.direction === 'asc' ? (
+                          {_sort?.key === col.key ? (
+                            _sort.direction === 'asc' ? (
                               <ArrowUp size={10} />
                             ) : (
                               <ArrowDown size={10} />
@@ -1646,7 +1864,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     <React.Fragment key={groupKey}>
                       <tr className="bg-slate-100/50 dark:bg-navy-800/50">
                         <td
-                          colSpan={visibleColumns.length + 1}
+                          colSpan={_visCols.length + 1}
                           className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                         >
                           {groupKey} ({rows.length})
@@ -1657,7 +1875,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   ))
                 ) : processedRowsWithRollups.length === 0 ? (
                   <tr>
-                    <td colSpan={visibleColumns.length + 1} className="px-4 py-12 text-center">
+                    <td colSpan={_visCols.length + 1} className="px-4 py-12 text-center">
                       <div className="mx-auto max-w-xl text-slate-400 dark:text-slate-500">
                         <div className="text-sm font-semibold mb-1">
                           {isPl ? 'Tabela jest jeszcze pusta' : 'This table is still empty'}
@@ -1670,7 +1888,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                         {!locked && (
                           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
                             <button
-                              onClick={handleAddRow}
+                              onClick={_addRow}
                               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors"
                             >
                               <Plus size={14} />
@@ -1701,11 +1919,11 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               </tbody>
               {/* Footer aggregations */}
               {processedRowsWithRollups.length > 0 &&
-                visibleColumns.some((c) => c.aggregation && c.aggregation !== 'none') && (
+                _visCols.some((c) => c.aggregation && c.aggregation !== 'none') && (
                   <tfoot className="border-t-2 border-slate-200/60 dark:border-navy-700/60">
                     <tr className="bg-slate-50/50 dark:bg-navy-900/50">
                       <td className="px-2 py-1.5" />
-                      {visibleColumns.map((col) => {
+                      {_visCols.map((col) => {
                         const agg = col.aggregation;
                         if (!agg || agg === 'none')
                           return <td key={col.key} className="px-2 py-1.5" />;
@@ -1773,14 +1991,14 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       {/* Analytics Summary Strip */}
       <AnalyticsSummaryStrip
         nodes={processedRowsWithRollups}
-        columns={columns}
+        columns={_cols}
         visible={processedRowsWithRollups.length > 0}
       />
 
       {/* Smart Suggestions Bar */}
       <SmartSuggestionsBar
         nodes={processedRowsWithRollups}
-        columns={columns}
+        columns={_cols}
         visible={showSmartSuggestions && processedRowsWithRollups.length > 0}
         onDismiss={() => setShowSmartSuggestions(false)}
         onApplySuggestion={handleApplySuggestion}
@@ -1792,7 +2010,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         open={showSummaryDashboard}
         onClose={() => setShowSummaryDashboard(false)}
         nodes={processedRowsWithRollups}
-        columns={columns}
+        columns={_cols}
         ideaId={ideaId}
       />
 
@@ -1810,7 +2028,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             >{isPl ? 'Zmień nazwę' : 'Rename'}</button>
             <button
               className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-              onClick={() => { cycleSort(colContextMenu.colKey); setColContextMenu(null); }}
+              onClick={() => { effectiveCycleSort(colContextMenu.colKey); setColContextMenu(null); }}
             >{isPl ? 'Sortuj' : 'Sort'}</button>
             <button
               className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
@@ -1834,13 +2052,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         open={!!detailNodeId}
         onClose={() => setDetailNodeId(null)}
         node={detailNode}
-        columns={visibleColumns}
+        columns={_visCols}
         edges={edges}
-        allNodes={nodes}
+        allNodes={effectiveNodes}
         locked={locked}
         mode={detailMode}
         onExpand={() => setDetailMode('full')}
-        onFieldChange={handleFieldChange}
+        onFieldChange={_fieldChange}
         onConvert={(target) => {
           if (detailNodeId) {
             const now = new Date().toISOString();
@@ -1888,7 +2106,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         open={showAddColumn}
         onClose={() => setShowAddColumn(false)}
         onAdd={handleAddColumn}
-        existingKeys={columns.map((c) => c.key)}
+        existingKeys={_cols.map((c) => c.key)}
       />
 
       {/* Framework Generator */}
@@ -1904,7 +2122,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         onClose={() => setShowConditionalFmt(false)}
         rules={formatRules}
         onChange={setFormatRules}
-        columns={columns}
+        columns={_cols}
       />
 
       {/* Cell Expand Popover */}
@@ -1917,7 +2135,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           rowData={cellExpandNode.data || {}}
           onChange={(val) => {
             if (val && typeof val === 'object' && val._noteUpdate) {
-              handleFieldChange(cellExpandNode.id, val._noteUpdate.key, val._noteUpdate.value);
+              _fieldChange(cellExpandNode.id, val._noteUpdate.key, val._noteUpdate.value);
             } else if (val && typeof val === 'object' && val._optionsUpdate) {
               setColumns((prev) =>
                 prev.map((c) =>
@@ -1925,7 +2143,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 )
               );
             } else {
-              handleFieldChange(cellExpandNode.id, cellExpandCol.key, val);
+              _fieldChange(cellExpandNode.id, cellExpandCol.key, val);
             }
           }}
           locked={locked}
@@ -1975,7 +2193,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         open={showScoringModel}
         onClose={() => setShowScoringModel(false)}
         nodes={processedRowsWithRollups}
-        columns={columns}
+        columns={_cols}
         ideaId={ideaId}
         onApplyScores={handleApplyScores}
       />
@@ -1985,9 +2203,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         open={showExportPresentation}
         onClose={() => setShowExportPresentation(false)}
         nodes={processedRowsWithRollups}
-        columns={columns}
+        columns={_cols}
         ideaTitle={extensions?.title ? String(extensions.title) : isPl ? 'Pomysły' : 'Ideas'}
-        viewLayout={viewLayout}
+        viewLayout={_vl}
       />
 
       {/* Idea Pipeline */}
@@ -2038,6 +2256,91 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         currentEdges={edges}
         onAddEdge={handleAddCrossEdge}
       />
+
+      {/* Audit Trail Panel (record history sidebar) */}
+      <AuditTrailPanel
+        open={showAuditTrail}
+        onClose={() => setShowAuditTrail(false)}
+        recordId={detailNodeId}
+        tableId={ideaId}
+      />
+
+      {/* Activity Feed (table-level) */}
+      <ActivityFeed
+        open={showActivityFeed}
+        onClose={() => setShowActivityFeed(false)}
+        tableId={ideaId}
+        onEventClick={(entityId) => {
+          setDetailNodeId(entityId);
+          setDetailMode('preview');
+        }}
+      />
+
+      {/* Snapshot Manager */}
+      <SnapshotManager
+        open={showSnapshotManager}
+        onClose={() => setShowSnapshotManager(false)}
+        baseId={ideaId}
+      />
+
+      {/* Data Connector Wizard */}
+      <ConnectorWizard
+        open={showConnectorWizard}
+        onClose={() => setShowConnectorWizard(false)}
+        workspaceId={ideaId}
+        tableId={ideaId}
+        targetFields={effectiveVisibleColumns.map((c) => c.key)}
+        onCreated={() => connectors.refetch()}
+        testConnection={connectors.testConnection}
+        autoMap={connectors.autoMap}
+        create={connectors.create}
+        isCreating={connectors.isCreating}
+      />
+
+      {/* Connector List Panel */}
+      {showConnectorList && (
+        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowConnectorList(false)}>
+          <div className="w-[420px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
+            {connectorHistoryTarget ? (
+              <RunHistoryPanel
+                connector={connectorHistoryTarget}
+                onBack={() => setConnectorHistoryTarget(null)}
+                runHistoryQueryOpts={connectors.useRunHistory(connectorHistoryTarget.id)}
+              />
+            ) : (
+              <ConnectorList
+                connectors={connectors.connectors}
+                isLoading={connectors.isLoading}
+                onAdd={() => {
+                  setShowConnectorList(false);
+                  setShowConnectorWizard(true);
+                }}
+                onEdit={() => {
+                  toast(isPl ? 'Edycja konektora — wkrótce' : 'Edit connector — coming soon');
+                }}
+                onDelete={async (c) => {
+                  try {
+                    await connectors.remove(c.id);
+                    toast.success(isPl ? 'Konektor usunięty' : 'Connector deleted');
+                  } catch {
+                    toast.error(isPl ? 'Nie udało się usunąć' : 'Failed to delete');
+                  }
+                }}
+                onRun={async (c) => {
+                  try {
+                    await connectors.run(c.id);
+                    toast.success(isPl ? 'Import uruchomiony' : 'Import started');
+                  } catch {
+                    toast.error(isPl ? 'Nie udało się uruchomić' : 'Failed to start');
+                  }
+                }}
+                onViewHistory={(c) => setConnectorHistoryTarget(c)}
+                isRunning={connectors.isRunning}
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

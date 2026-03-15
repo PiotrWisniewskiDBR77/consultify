@@ -556,6 +556,12 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({
   const motionDuration = reducedMotion ? 0 : 0.22;
   const [activeNSection, setActiveNSection] = useState('description-scope');
 
+  useEffect(() => {
+    if (presentationMode === 'c') {
+      setPresentationMode('n');
+    }
+  }, [presentationMode, setPresentationMode]);
+
   // N-mode comment state (for CommentsCanvas)
   const [nCommentDraft, setNCommentDraft] = useState('');
   const [nCommentPriority, setNCommentPriority] = useState<CommentPriority>('normal');
@@ -3431,58 +3437,6 @@ Return ONLY the final comment text.`;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // C-MODE PLACEHOLDER (TEMP)
-  // ═══════════════════════════════════════════════════════════════════════════
-  if (presentationMode === 'c') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
-        <div className="p-6">
-          <div className="max-w-6xl mx-auto space-y-0">
-            <NModeHeader
-              title={title}
-              onTitleChange={setTitle}
-              titlePlaceholder={{ en: 'Task title...', pl: 'Tytuł zadania...' }}
-              artifactId={taskId || undefined}
-              artifactType="task"
-              onSave={handleSave}
-              saving={saving}
-              isDirty={isDirty}
-              draftSavedLabel={
-                lastSavedAt
-                  ? isPolish
-                    ? `Zapisano ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                    : `Saved ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                  : undefined
-              }
-              onChat={handleOpenChat}
-              onClose={onClose}
-              statusDotColor={statusConfig.color}
-              presentationMode={presentationMode}
-              onPresentationModeChange={setPresentationMode}
-              buildArtifactCode={buildArtifactCode}
-            />
-
-            <div className="mt-4">
-              <Callout
-                variant="warning"
-                title={isPolish ? 'Tryb C jest w budowie' : 'C mode is under construction'}
-                action={{
-                  label: isPolish ? 'Przełącz na N' : 'Switch to N',
-                  onClick: () => setPresentationMode('n'),
-                }}
-              >
-                {isPolish
-                  ? 'Ten widok zostanie przebudowany. Na teraz korzystaj z trybu N (page-first).'
-                  : 'This view will be rebuilt. For now, please use N mode (page-first).'}
-              </Callout>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
   // N-MODE RENDER
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -4051,32 +4005,15 @@ Return ONLY the final comment text.`;
                       ? 'Edytuj osobę RACI'
                       : 'Edit RACI person'}
                 </h4>
-                <div className="inline-flex items-center gap-2">
-                  <button
-                    disabled={isSuggestingStakeholders}
-                    onClick={() => {
-                      /* AI stub for stakeholder draft – same pattern as Decision */
-                      toast(isPolish ? 'AI uzupełni formularz...' : 'AI will fill the form...');
-                    }}
-                    className="px-2.5 py-1 rounded-lg text-xs font-medium border border-purple-300/40 dark:border-purple-500/30 text-purple-500 hover:text-purple-600 hover:border-purple-400/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1"
-                  >
-                    {isSuggestingStakeholders ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <Sparkles size={12} />
-                    )}
-                    AI
-                  </button>
-                  <button
-                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
-                    onClick={() => {
-                      setEditingStakeholderId(null);
-                      setStakeholderDraft(null);
-                    }}
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
+                <button
+                  className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600"
+                  onClick={() => {
+                    setEditingStakeholderId(null);
+                    setStakeholderDraft(null);
+                  }}
+                >
+                  <X size={16} />
+                </button>
               </div>
               <div className={governanceModalHintClass}>
                 {isPolish

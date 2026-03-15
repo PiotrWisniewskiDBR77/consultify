@@ -2,17 +2,21 @@ import 'reactflow/dist/style.css';
 import './mindmap/mindmap-effects.css';
 
 import {
+  AlertTriangle,
   Bot,
   ChevronDown,
   ChevronRight,
+  ExternalLink,
   FileText,
   Flower2,
   GitBranch,
   Lightbulb,
+  Link2,
   Loader2,
   Pencil,
   Plus,
   Sparkles,
+  StickyNote,
   X,
 } from 'lucide-react';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -120,7 +124,7 @@ import { TimeHeatmap } from './mindmap/TimeHeatmap';
 import { TimelineView } from './mindmap/TimelineView';
 import { useAutoLayout } from './mindmap/useAutoLayout';
 import { useMapExport } from './mindmap/useMapExport';
-import { useMindMapNodes } from './mindmap/useMindMapNodes';
+import { isRelationEdge, isStructuralEdge, useMindMapNodes } from './mindmap/useMindMapNodes';
 import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { VoiceToNode } from './mindmap/VoiceToNode';
@@ -1028,6 +1032,17 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           </div>
         )}
 
+        {/* MM-15: Converted indicator */}
+        {nodeStatus === 'converted' && data._convertedTo && (
+          <div
+            className="absolute -bottom-1 -left-1 flex items-center gap-0.5 rounded-full bg-purple-500 text-white px-1.5 py-0.5 text-[7px] font-bold shadow-sm"
+            title={isPl ? `Skonwertowano na: ${data._convertedTo}` : `Converted to: ${data._convertedTo}`}
+          >
+            <ExternalLink size={8} />
+            <span className="uppercase">{String(data._convertedTo).replace('_', ' ')}</span>
+          </div>
+        )}
+
         <div className={innerRotate}>
           {/* Image thumbnail (R3.5) */}
           {data.imageUrl && !editing && (
@@ -1076,7 +1091,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                     </div>
                   )}
                   {(data.semanticType || (Array.isArray(data.tags) && data.tags.length > 0)) && (
-                    <div className="mt-1 flex flex-wrap gap-1">
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
                       {data.semanticType && (
                         <span
                           className="rounded-full border px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300"
@@ -1095,6 +1110,11 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                             #{tag}
                           </span>
                         ))}
+                      {Array.isArray(data.tags) && data.tags.length > 2 && (
+                        <span className="rounded-full bg-slate-200/80 dark:bg-white/[0.06] px-1.5 py-0.5 text-[7px] font-bold text-slate-400 dark:text-slate-500">
+                          +{data.tags.length - 2}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1126,6 +1146,19 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                   >
                     {String(data.assignee).charAt(0).toUpperCase()}
                   </div>
+                )}
+                {/* Depth model indicators */}
+                {data.notes && (
+                  <StickyNote size={9} className="text-amber-400 dark:text-amber-500 shrink-0" title={isPl ? 'Ma notatki' : 'Has notes'} />
+                )}
+                {data.riskNote && (
+                  <AlertTriangle size={9} className="text-red-400 dark:text-red-500 shrink-0" title={isPl ? 'Ma ryzyko' : 'Has risk note'} />
+                )}
+                {Array.isArray(data.evidenceLinks) && data.evidenceLinks.length > 0 && (
+                  <span className="inline-flex items-center gap-0.5 shrink-0" title={`${data.evidenceLinks.length} ${isPl ? 'dowodów' : 'evidence'}`}>
+                    <Link2 size={8} className="text-blue-400 dark:text-blue-500" />
+                    <span className="text-[7px] font-bold text-blue-400 dark:text-blue-500">{data.evidenceLinks.length}</span>
+                  </span>
                 )}
                 {depth > 0 && (
                   <div className="text-[8px] text-slate-400 dark:text-slate-500 ml-auto" title={`Depth ${depth}`}>
@@ -1248,6 +1281,8 @@ function MindMapInner({
   const { autoLayout } = useAutoLayout();
   const { exportAsPNG, exportAsSVG, exportAsJSON } = useMapExport();
   const interactionMode = externalInteractionMode;
+  const reactFlowNodeTypes = useRef(nodeTypes).current;
+  const reactFlowEdgeTypes = useRef(edgeTypes).current;
   const reactFlowFitViewOptions = useMemo(() => ({ padding: 0.3 }), []);
   const reactFlowProOptions = useMemo(() => ({ hideAttribution: true }), []);
   const reactFlowDefaultEdgeOptions = useMemo(
@@ -1726,8 +1761,8 @@ function MindMapInner({
       priority: node.data?.priority,
       notes: meta.notes || node.data?.notes || '',
       status: meta.status || node.data?.status || 'idea',
-      childNodeIds: edges.filter((e) => e.source === node.id).map((e) => e.target),
-      parentNodeId: edges.find((e) => e.target === node.id)?.source,
+      childNodeIds: edges.filter((e) => e.source === node.id && isStructuralEdge(e)).map((e) => e.target),
+      parentNodeId: edges.find((e) => e.target === node.id && isStructuralEdge(e))?.source,
       context: node.data?.context || '',
       goal: node.data?.goal || '',
       rationale: node.data?.rationale || '',
@@ -1915,6 +1950,7 @@ function MindMapInner({
     setSaving,
     setLastSavedAt,
     scheduleSave,
+    localVersionRef,
   } =
     useMindMapPersistence({
       ideaId,
@@ -2101,14 +2137,16 @@ function MindMapInner({
       });
       editingNodeIdRef.current = null;
 
-      const fallback = isPolish ? 'Nowy pomysł' : 'New idea';
+      const rollbackNode = (nid: string) => {
+        setNodes((prev: Node[]) => prev.filter((n) => n.id !== nid));
+        setEdges((prev: Edge[]) => prev.filter((edge) => edge.source !== nid && edge.target !== nid));
+      };
 
       if (cancelled) {
         const target = nodes.find((n) => n.id === nodeId);
-        const shouldRollback = !!target && !String(target.data?.label || '').trim();
-        if (shouldRollback) {
-          setNodes((prev: Node[]) => prev.filter((n) => n.id !== nodeId));
-          setEdges((prev: Edge[]) => prev.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+        const hadNoLabel = !!target && !String(target.data?.label || '').trim();
+        if (hadNoLabel) {
+          rollbackNode(nodeId);
         } else {
           setNodes((prev: Node[]) =>
             prev.map((n) =>
@@ -2119,12 +2157,18 @@ function MindMapInner({
         return;
       }
       if (!label) {
-        console.log('[MindMap:edit] empty label → assigning fallback label');
-        setNodes((prev: Node[]) =>
-          prev.map((n) =>
-            n.id === nodeId ? { ...n, data: { ...n.data, label: fallback, _startEditing: undefined } } : n
-          )
-        );
+        const target = nodes.find((n) => n.id === nodeId);
+        const hadNoLabel = !!target && !String(target.data?.label || '').trim();
+        if (hadNoLabel) {
+          console.log('[MindMap:edit] empty label on new node → rollback (delete node)');
+          rollbackNode(nodeId);
+        } else {
+          setNodes((prev: Node[]) =>
+            prev.map((n) =>
+              n.id === nodeId ? { ...n, data: { ...n.data, _startEditing: undefined } } : n
+            )
+          );
+        }
         return;
       }
       setNodes((prev: Node[]) =>
@@ -2163,6 +2207,27 @@ function MindMapInner({
     return () => window.removeEventListener('idea-mindmap-edge-label', handler);
   }, [debugLog, setEdges]);
 
+  // MM-15: Mark converted nodes with status: 'converted'
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (detail.ideaId && detail.ideaId !== ideaId) return;
+      const convertedIds = Array.isArray(detail.nodeIds) ? detail.nodeIds : [];
+      if (convertedIds.length === 0) return;
+      const convertedSet = new Set(convertedIds);
+      setNodes((prev: Node[]) =>
+        prev.map((n) =>
+          convertedSet.has(n.id)
+            ? { ...n, data: { ...n.data, status: 'converted', _convertedTo: detail.target } }
+            : n
+        )
+      );
+      scheduleSave();
+    };
+    window.addEventListener('idea-mindmap-mark-converted', handler);
+    return () => window.removeEventListener('idea-mindmap-mark-converted', handler);
+  }, [ideaId, scheduleSave, setNodes]);
+
   // Quick action listener is wired below (after all state declarations).
 
   // ── Insert from AI Suggestions panel ─────────────────────────────────────
@@ -2195,7 +2260,7 @@ function MindMapInner({
           'options';
         const branchNode = nodes.find((n) => n.data?.branchKey === branchKey);
         const sourceNode = anchorNode || branchNode || nodes.find((n) => n.id === 'root') || null;
-        const childrenOfSource = edges.filter((edge) => edge.source === sourceNode?.id);
+        const childrenOfSource = edges.filter((edge) => edge.source === sourceNode?.id && isStructuralEdge(edge));
         const yOffset = childrenOfSource.length * 70;
         const explicitPosition = item.position || detail.position;
         const defaultPosition = sourceNode
@@ -2494,8 +2559,6 @@ function MindMapInner({
   ]);
 
   // ── Connect ──────────────────────────────────────────────────────────────
-  const isRelationEdge = useCallback((edge: Edge) => edge?.data?.edgeRole === 'relation', []);
-
   const onConnect = useCallback(
     (connection: Connection) => {
       debugLog(`onConnect: ${connection.source} → ${connection.target}`, { source: 'handler' });
@@ -2583,7 +2646,7 @@ function MindMapInner({
           .filter(Boolean)
       );
     },
-    [isPolish, isRelationEdge, locked, pushUndo, setEdges]
+    [isPolish, locked, pushUndo, setEdges]
   );
 
   useEffect(() => {
@@ -2700,7 +2763,7 @@ function MindMapInner({
 
       setEdgeContextMenu(null);
     },
-    [edgeContextMenu, edges, isPolish, isRelationEdge, nodes, pushUndo, setEdges, setNodes],
+    [edgeContextMenu, edges, isPolish, nodes, pushUndo, setEdges, setNodes],
   );
 
   const selectedBranchKey = useMemo(() => {
@@ -2876,13 +2939,16 @@ function MindMapInner({
         );
         await externalRuntime.flushGraph({ reason: 'ai' });
       } else if (persistence === 'online') {
-        await Api.saveMyIdeaMap(ideaId, {
+        const response = await Api.syncMyIdeaMap(ideaId, {
           nodes: nextNodes as any,
           edges: nextEdges as any,
           preferredTool: preferredTool || undefined,
           extensions: extensions || undefined,
           fromAI: true,
+          baseVersion: localVersionRef.current,
+          reason: 'ai',
         });
+        localVersionRef.current = Math.max(1, Number(response?.version || localVersionRef.current || 1));
         setLastSavedAt(Date.now());
       }
 
@@ -2894,10 +2960,20 @@ function MindMapInner({
       );
       closeAIModal();
     } catch (err: any) {
-      toast.error(
-        err?.message ||
-          (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals')
-      );
+      if (err?.status === 409) {
+        toast(
+          isPolish
+            ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
+            : 'Change conflict detected. Refreshing map from server.',
+          { icon: '⚠️' }
+        );
+        closeAIModal();
+      } else {
+        toast.error(
+          err?.message ||
+            (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals')
+        );
+      }
     } finally {
       setSaving(false);
     }
@@ -2908,6 +2984,7 @@ function MindMapInner({
     extensions,
     ideaId,
     isPolish,
+    localVersionRef,
     locked,
     nodes,
     persistence,
@@ -2936,12 +3013,12 @@ function MindMapInner({
         const anchorLabel = anchor?.data?.label || '';
         const anchorBranch = anchor?.data?.branchKey || selectedBranchKey;
 
-        // Gather ancestor context for node-specific generation
+        // Gather ancestor context for node-specific generation (structural tree only)
         const ancestorLabels: string[] = [];
         if (anchor && anchor.id !== 'root') {
           let currentId = anchor.id;
           for (let depth = 0; depth < 5; depth++) {
-            const parentEdge = edges.find((e) => e.target === currentId);
+            const parentEdge = edges.find((e) => e.target === currentId && isStructuralEdge(e));
             if (!parentEdge) break;
             const parentNode = nodes.find((n) => n.id === parentEdge.source);
             if (parentNode?.data?.label) ancestorLabels.unshift(parentNode.data.label);
@@ -3281,8 +3358,8 @@ function MindMapInner({
         }
       }
 
-      // Connect duplicate root to the same parent as original
-      const parentEdge = (edges as Edge[]).find((e) => e.target === targetId);
+      // Connect duplicate root to the same structural parent as original
+      const parentEdge = (edges as Edge[]).find((e) => e.target === targetId && isStructuralEdge(e));
       if (parentEdge) {
         newEdges.push({
           ...parentEdge,
@@ -3468,6 +3545,11 @@ function MindMapInner({
       if (action === 'ctx_convert_tasks') convertBranch('task_set', ctxNode?.id);
       if (action === 'ctx_convert_initiative') convertBranch('initiative', ctxNode?.id);
       if (action === 'ctx_convert_decision') convertBranch('decision', ctxNode?.id);
+      // MM-15: Subtree conversion actions
+      if (action === 'ctx_subtree_convert_decision') convertBranch('decision', ctxNode?.id);
+      if (action === 'ctx_subtree_convert_tasks') convertBranch('task_set', ctxNode?.id);
+      if (action === 'ctx_subtree_convert_task_set') convertBranch('task_set', ctxNode?.id);
+      if (action === 'ctx_subtree_convert_initiative') convertBranch('initiative', ctxNode?.id);
       if (action === 'ctx_add_image') {
         if (ctxNode && ctxNode.type === 'idea') {
           setImageUrlNodeId(ctxNode.id);
@@ -3602,7 +3684,7 @@ function MindMapInner({
       if (action === 'pane_collapse_all') {
         const allBranchIds = (nodes as Node[])
           .filter((n) => {
-            const children = (edges as Edge[]).filter((e) => e.source === n.id);
+            const children = (edges as Edge[]).filter((e) => e.source === n.id && isStructuralEdge(e));
             return children.length > 0 && n.id !== 'root';
           })
           .map((n) => n.id);
@@ -3730,6 +3812,8 @@ function MindMapInner({
           nodeId={floatingToolbarInfo.nodeId}
           nodeData={floatingToolbarInfo.node.data}
           disabled={locked || !!floatingToolbarInfo.node.data?.locked}
+          isProtected={floatingToolbarInfo.nodeId === 'root' || floatingToolbarInfo.nodeId.startsWith('branch-')}
+          hasChildren={findChildrenIds(floatingToolbarInfo.nodeId).length > 0}
           style={{
             color: floatingToolbarInfo.node.data?.color,
             fillOpacity: floatingToolbarInfo.node.data?.fillOpacity,
@@ -3743,6 +3827,8 @@ function MindMapInner({
           }}
           position={floatingToolbarInfo.position}
           onUpdate={handleFloatingToolbarUpdate}
+          onAddChild={() => addChildNode(floatingToolbarInfo.nodeId)}
+          onAddSibling={() => addSiblingNode(floatingToolbarInfo.nodeId)}
           onOpenContextMenu={(pos) =>
             setContextMenu({
               nodeId: floatingToolbarInfo.nodeId,
@@ -3811,6 +3897,16 @@ function MindMapInner({
             );
           }}
           onAction={(action) => {
+            const SUBTREE_MAP: Record<string, string> = {
+              ctx_subtree_convert_decision: 'decision',
+              ctx_subtree_convert_tasks: 'task_set',
+              ctx_subtree_convert_task_set: 'task_set',
+              ctx_subtree_convert_initiative: 'initiative',
+            };
+            if (SUBTREE_MAP[action]) {
+              convertBranch(SUBTREE_MAP[action], floatingToolbarInfo.nodeId);
+              return;
+            }
             window.dispatchEvent(
               new CustomEvent('idea-workspace-quick-action', {
                 detail: { action, nodeId: floatingToolbarInfo.nodeId },
@@ -3830,6 +3926,7 @@ function MindMapInner({
           isLocked={locked}
           isPl={isPolish}
           canPasteStyle={!!styleClipboard}
+          hasChildren={findChildrenIds(contextMenu.nodeId).length > 0}
           onClose={() => setContextMenu(null)}
           onAction={handleContextAction}
         />
@@ -4062,6 +4159,9 @@ function MindMapInner({
           edges={focusFilteredEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onMoveEnd={(_event, viewport) => {
+            onViewportReport?.(viewport);
+          }}
           onNodeClick={onNodeClick}
           onNodeDoubleClick={onNodeDoubleClick}
           onNodeContextMenu={onNodeContextMenu}
@@ -4070,8 +4170,8 @@ function MindMapInner({
           onConnect={onConnect}
           onEdgeClick={onEdgeClick}
           onNodeDragStop={onNodeDragStop}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
+          nodeTypes={reactFlowNodeTypes}
+          edgeTypes={reactFlowEdgeTypes}
           nodesConnectable={!locked && interactionMode === 'connect'}
           nodesDraggable={!locked && interactionMode === 'select'}
           panOnDrag={interactionMode === 'pan'}
