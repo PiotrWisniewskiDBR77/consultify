@@ -374,7 +374,6 @@ const metadataService = {
       );
       const after = (await db.query('SELECT * FROM tp_fields WHERE id = $1', [fieldId])).rows[0];
       await auditService.logEvent('update', 'field', fieldId, undefined, before, after, undefined);
-      const tableId = (before as { table_id?: string }).table_id;
       if (tableId) {
         const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId])).rows[0] as { base_id?: string } | undefined;
         if (tableRow?.base_id) {
