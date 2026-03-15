@@ -9,9 +9,10 @@ import { useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
 
-import type { MindMapInteractionMode } from '../ideaSelectionTypes';
+import type { MapStructureType, MindMapInteractionMode } from '../ideaSelectionTypes';
 import { applyForceLayout } from './ForceDirectedLayout';
 import { applyRadialLayout } from './RadialTreeLayout';
+import { applyStructureLayout } from './StructureLayouts';
 
 export interface MindMapQuickActionHandlers {
   addChildNode: (nodeId?: string) => void;
@@ -21,6 +22,7 @@ export interface MindMapQuickActionHandlers {
   deleteSelected: () => void;
   getSelectedNode: () => Node | undefined;
   toggleCollapse: (nodeId: string) => void;
+  setFoldLevel?: (maxLevel: number) => void;
   focusSelectedNode: () => void;
   reparentSelectedPromote: () => void;
   reparentSelectedDemote: () => void;
@@ -34,6 +36,7 @@ export interface MindMapQuickActionHandlers {
   exportAsPNG: (filename: string) => void;
   exportAsJSON: (n: Node[], e: Edge[], ext: any, filename: string) => void;
   exportAsCSV?: (n: Node[], filename: string) => void;
+  exportAsMarkdown?: (n: Node[], e: Edge[], opts?: { includeMetadata?: boolean }, filename?: string) => string;
   onOpenChat?: (prompt?: string) => void;
 }
 
@@ -68,6 +71,8 @@ export interface MindMapQuickActionSetters {
   setShowImportExternalMap: React.Dispatch<React.SetStateAction<boolean>>;
   setShowMindMap3D: React.Dispatch<React.SetStateAction<boolean>>;
   setShowWebhookSettings: React.Dispatch<React.SetStateAction<boolean>>;
+  setStructureType?: React.Dispatch<React.SetStateAction<MapStructureType>>;
+  setShowStructurePicker?: React.Dispatch<React.SetStateAction<boolean>>;
   setCommentNodeId: React.Dispatch<React.SetStateAction<string | null>>;
   setExportMenuOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   setShowMiniMap?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -88,6 +93,7 @@ export interface UseMindMapQuickActionsOpts {
   nodes: Node[];
   edges: Edge[];
   layoutMode: string;
+  structureType?: MapStructureType;
   extensions?: Record<string, unknown>;
   handlers: MindMapQuickActionHandlers;
   setters: MindMapQuickActionSetters;
@@ -102,6 +108,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     nodes,
     edges,
     layoutMode,
+    structureType = 'mindmap',
     extensions,
     handlers,
     setters,
@@ -121,6 +128,15 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     if (action === 'mm_toggle_collapse') {
       const sel = handlers.getSelectedNode();
       if (sel) handlers.toggleCollapse(sel.id);
+    }
+    if (action === 'mm_fold_0' || action === 'mm_fold_1' || action === 'mm_fold_2' || action === 'mm_fold_3') {
+      const level = Number(action.split('_').pop());
+      handlers.setFoldLevel?.(level);
+      toast.success(isPolish ? `Widok: poziom ${level}` : `Showing level ${level}`, { duration: 1200 });
+    }
+    if (action === 'mm_expand_all') {
+      handlers.setFoldLevel?.(Infinity);
+      toast.success(isPolish ? 'Wszystko rozwinięte' : 'All expanded', { duration: 1200 });
     }
     if (action === 'mm_focus_selected') handlers.focusSelectedNode();
     if (action === 'mm_reparent_promote') handlers.reparentSelectedPromote();
@@ -289,6 +305,13 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
         a.click();
         URL.revokeObjectURL(url);
         toast.success(isPolish ? 'CSV wyeksportowany' : 'CSV exported');
+      }
+    }
+
+    if (action === 'mm_export_markdown') {
+      if (handlers.exportAsMarkdown) {
+        handlers.exportAsMarkdown(nodes, edges, { includeMetadata: true }, `${ideaTitle || 'mindmap'}.md`);
+        toast.success(isPolish ? 'Markdown skopiowany do schowka' : 'Markdown copied to clipboard');
       }
     }
 
@@ -539,6 +562,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       const curIdx = modes.indexOf(layoutMode);
       const nextMode = modes[(curIdx + 1) % modes.length];
       setters.setLayoutMode(nextMode);
+      if (setters.setStructureType) setters.setStructureType('mindmap');
       const laid = nextMode === 'radial'
         ? applyRadialLayout(nodes, edges)
         : nextMode === 'force'
@@ -547,6 +571,28 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       setters.setNodes(laid);
       setTimeout(() => { try { handlers.fitView({ padding: 0.3, duration: 400 }); } catch { /* */ } }, 50);
       toast.success(isPolish ? `Układ: ${nextMode}` : `Layout: ${nextMode}`, { duration: 1200 });
+    }
+    if (action === 'mm_structure_picker') {
+      if (setters.setShowStructurePicker) setters.setShowStructurePicker(true);
+    }
+    if (action === 'mm_set_structure') {
+      const newType = detail?.structureType as MapStructureType | undefined;
+      if (newType && setters.setStructureType) {
+        handlers.pushUndo();
+        setters.setStructureType(newType);
+        const laid = applyStructureLayout(newType, nodes, edges, handlers.autoLayout);
+        setters.setNodes(laid);
+        setTimeout(() => { try { handlers.fitView({ padding: 0.3, duration: 400 }); } catch { /* */ } }, 50);
+        const LABELS: Record<string, { pl: string; en: string }> = {
+          mindmap: { pl: 'Mapa myśli', en: 'Mind Map' },
+          org_chart: { pl: 'Schemat organizacyjny', en: 'Org Chart' },
+          tree_right: { pl: 'Drzewo (w prawo)', en: 'Tree (Right)' },
+          fishbone: { pl: 'Ishikawa (rybka)', en: 'Fishbone' },
+          timeline: { pl: 'Oś czasu', en: 'Timeline' },
+        };
+        const label = isPolish ? LABELS[newType]?.pl : LABELS[newType]?.en;
+        toast.success(isPolish ? `Struktura: ${label}` : `Structure: ${label}`, { duration: 1200 });
+      }
     }
     if (action === 'mm_toggle_minimap') {
       if (setters.setShowMiniMap) setters.setShowMiniMap((p) => !p);

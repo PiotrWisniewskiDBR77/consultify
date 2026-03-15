@@ -6,6 +6,41 @@ import { useCallback, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { Edge, Node } from 'reactflow';
 
+// ── Clipboard ────────────────────────────────────────────────────────────────
+
+interface SerializedNode {
+  id: string;
+  type?: string;
+  data: Record<string, any>;
+  position: { x: number; y: number };
+}
+
+interface SerializedEdge {
+  id: string;
+  source: string;
+  target: string;
+  type?: string;
+  data?: Record<string, any>;
+  style?: Record<string, any>;
+  animated?: boolean;
+}
+
+export interface MindMapClipboard {
+  nodes: SerializedNode[];
+  edges: SerializedEdge[];
+  sourceMapId?: string;
+}
+
+let _clipboard: MindMapClipboard | null = null;
+
+export function getMindMapClipboard(): MindMapClipboard | null {
+  return _clipboard;
+}
+
+export function hasMindMapClipboard(): boolean {
+  return !!_clipboard && _clipboard.nodes.length > 0;
+}
+
 function uid() {
   return `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
@@ -374,50 +409,161 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     }
   }, [fitView, getSelectedNode]);
 
-  const reparentSelectedPromote = useCallback(() => {
-    if (locked) return;
-    const selected = getSelectedNode();
-    if (!selected || selected.id === 'root' || selected.id.startsWith('branch-')) return;
-    const parentId = findParentId(selected.id);
-    if (!parentId) return;
-    const grandParentId = findParentId(parentId);
-    if (!grandParentId) return;
+  const isReparentable = useCallback(
+    (nodeId: string): boolean => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return false;
+      if (node.id === 'root' || node.id.startsWith('branch-')) return false;
+      if (node.type === 'center' || node.type === 'branch') return false;
+      if (node.data?.locked) return false;
+      if (remoteLockedNodeIds.has(nodeId)) return false;
+      return true;
+    },
+    [nodes, remoteLockedNodeIds]
+  );
 
-    pushUndo();
-    setEdges((prev: Edge[]) =>
-      prev.map((edge) => (edge.target === selected.id ? { ...edge, source: grandParentId } : edge))
-    );
-    setTimeout(() => focusSelectedNode(), 30);
-  }, [findParentId, focusSelectedNode, getSelectedNode, locked, pushUndo, setEdges]);
+  const reparentNode = useCallback(
+    (nodeId: string, newParentId: string): boolean => {
+      if (locked) return false;
+      if (!isReparentable(nodeId)) return false;
+      if (nodeId === newParentId) return false;
+
+      const currentParentId = findParentId(nodeId);
+      if (!currentParentId) return false;
+      if (currentParentId === newParentId) return false;
+
+      const subtree = getSubtreeNodeIds(nodeId);
+      if (subtree.includes(newParentId)) return false;
+
+      const newParent = nodes.find((n) => n.id === newParentId);
+      if (!newParent) return false;
+
+      pushUndo();
+      setEdges((prev: Edge[]) => {
+        const without = prev.filter(
+          (e) => !(e.target === nodeId && isStructuralEdge(e))
+        );
+        const branchKey =
+          nodes.find((n) => n.id === nodeId)?.data?.branchKey ||
+          newParent.data?.branchKey ||
+          'uncategorized';
+        const colors = branchColor(branchKey);
+        const newEdge: Edge = {
+          id: `edge-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+          source: newParentId,
+          target: nodeId,
+          type: 'gradient',
+          style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
+          animated: true,
+          data: { userCreated: true, edgeRole: 'structural' },
+        } as any;
+        return [...without, newEdge];
+      });
+      setTimeout(() => focusSelectedNode(), 30);
+      return true;
+    },
+    [
+      findParentId,
+      focusSelectedNode,
+      getSubtreeNodeIds,
+      isReparentable,
+      locked,
+      nodes,
+      pushUndo,
+      setEdges,
+    ]
+  );
+
+  const promoteNode = useCallback(
+    (nodeId: string): boolean => {
+      if (locked) return false;
+      if (!isReparentable(nodeId)) return false;
+      const parentId = findParentId(nodeId);
+      if (!parentId) {
+        toast(isPolish ? 'Już na najwyższym poziomie' : 'Already at top level');
+        return false;
+      }
+      const grandParentId = findParentId(parentId);
+      if (!grandParentId) {
+        toast(isPolish ? 'Już na najwyższym poziomie' : 'Already at top level');
+        return false;
+      }
+      return reparentNode(nodeId, grandParentId);
+    },
+    [findParentId, isPolish, isReparentable, locked, reparentNode]
+  );
+
+  const demoteNode = useCallback(
+    (nodeId: string): boolean => {
+      if (locked) return false;
+      if (!isReparentable(nodeId)) return false;
+      const parentId = findParentId(nodeId);
+      if (!parentId) return false;
+      const siblings = findChildrenIds(parentId);
+      const idx = siblings.indexOf(nodeId);
+      const previousSibling = idx > 0 ? siblings[idx - 1] : null;
+      if (!previousSibling) {
+        toast(isPolish ? 'Brak sąsiada do zagnieżdżenia' : 'No sibling to demote under');
+        return false;
+      }
+      return reparentNode(nodeId, previousSibling);
+    },
+    [findChildrenIds, findParentId, isPolish, isReparentable, locked, reparentNode]
+  );
+
+  const moveBetweenSiblings = useCallback(
+    (nodeId: string, direction: 'left' | 'right') => {
+      if (locked) return;
+      if (!isReparentable(nodeId)) return;
+      const parentId = findParentId(nodeId);
+      if (!parentId) return;
+
+      pushUndo();
+      setEdges((prev: Edge[]) => {
+        const siblingEdges = prev.filter(
+          (e) => e.source === parentId && isStructuralEdge(e)
+        );
+        const siblingTargets = siblingEdges.map((e) => e.target);
+        const idx = siblingTargets.indexOf(nodeId);
+        if (idx < 0) return prev;
+
+        const swapIdx = direction === 'left' ? idx - 1 : idx + 1;
+        if (swapIdx < 0 || swapIdx >= siblingTargets.length) return prev;
+
+        const edgeA = siblingEdges[idx];
+        const edgeB = siblingEdges[swapIdx];
+        if (!edgeA || !edgeB) return prev;
+
+        return prev.map((e) => {
+          if (e.id === edgeA.id) return { ...e, target: edgeB.target };
+          if (e.id === edgeB.id) return { ...e, target: edgeA.target };
+          return e;
+        });
+      });
+    },
+    [findParentId, isReparentable, locked, pushUndo, setEdges]
+  );
+
+  const clearDropTargets = useCallback(() => {
+    setNodes((prev: Node[]) => {
+      if (!prev.some((n) => n.data?._dropTarget)) return prev;
+      return prev.map((n) =>
+        n.data?._dropTarget ? { ...n, data: { ...n.data, _dropTarget: false } } : n
+      );
+    });
+  }, [setNodes]);
+
+  const reparentSelectedPromote = useCallback(() => {
+    const selected = getSelectedNode();
+    if (!selected) return;
+    promoteNode(selected.id);
+  }, [getSelectedNode, promoteNode]);
 
   const reparentSelectedDemote = useCallback(() => {
-    if (locked) return;
     const selected = getSelectedNode();
-    if (!selected || selected.id === 'root' || selected.id.startsWith('branch-')) return;
-    const parentId = findParentId(selected.id);
-    if (!parentId) return;
-    const siblings = findChildrenIds(parentId);
-    const selectedIndex = siblings.indexOf(selected.id);
-    if (selectedIndex <= 0) return;
-    const previousSiblingId = siblings[selectedIndex - 1];
-    if (!previousSiblingId) return;
-
-    pushUndo();
-    setEdges((prev: Edge[]) =>
-      prev.map((edge) =>
-        edge.target === selected.id ? { ...edge, source: previousSiblingId } : edge
-      )
-    );
-    setTimeout(() => focusSelectedNode(), 30);
-  }, [
-    findChildrenIds,
-    findParentId,
-    focusSelectedNode,
-    getSelectedNode,
-    locked,
-    pushUndo,
-    setEdges,
-  ]);
+    if (!selected) return;
+    demoteNode(selected.id);
+  }, [getSelectedNode, demoteNode]);
 
   const startEditingSelected = useCallback(() => {
     const selected = getSelectedNode();
@@ -440,6 +586,49 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
       });
     },
     []
+  );
+
+  /**
+   * Collapse/expand the tree to show only nodes up to `maxLevel` depth.
+   * maxLevel=0 → root only; maxLevel=1 → root + direct children; Infinity → expand all.
+   */
+  const setFoldLevel = useCallback(
+    (
+      maxLevel: number,
+      setCollapsedNodeIds: React.Dispatch<React.SetStateAction<Set<string>>>,
+    ) => {
+      const rootNode = nodes.find((n) => n.id === 'root') ?? nodes.find((n) => n.type === 'center');
+      if (!rootNode) return new Set<string>();
+
+      const depthMap = new Map<string, number>();
+      const queue: Array<{ id: string; depth: number }> = [{ id: rootNode.id, depth: 0 }];
+      const visited = new Set<string>();
+
+      while (queue.length > 0) {
+        const { id, depth } = queue.shift()!;
+        if (visited.has(id)) continue;
+        visited.add(id);
+        depthMap.set(id, depth);
+        const children = edges
+          .filter((e) => e.source === id && isStructuralEdge(e))
+          .map((e) => e.target);
+        for (const childId of children) {
+          if (!visited.has(childId)) queue.push({ id: childId, depth: depth + 1 });
+        }
+      }
+
+      const collapsed = new Set<string>();
+      for (const [nodeId, depth] of depthMap) {
+        const hasChildren = edges.some((e) => e.source === nodeId && isStructuralEdge(e));
+        if (hasChildren && depth >= maxLevel) {
+          collapsed.add(nodeId);
+        }
+      }
+
+      setCollapsedNodeIds(collapsed);
+      return collapsed;
+    },
+    [edges, nodes],
   );
 
   const addRootTopic = useCallback(() => {
@@ -492,6 +681,185 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     }, 60);
   }, [fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
 
+  // ── Copy / Cut / Paste ────────────────────────────────────────────────────
+
+  const copySelected = useCallback(() => {
+    const selected = nodes.filter((n) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-'));
+    if (selected.length === 0) {
+      toast(isPolish ? 'Zaznacz węzły do skopiowania' : 'Select nodes to copy');
+      return;
+    }
+
+    const selectedIds = new Set(selected.map((n) => n.id));
+    const internalEdges = edges.filter(
+      (e) => isStructuralEdge(e) && selectedIds.has(e.source) && selectedIds.has(e.target),
+    );
+
+    const serializedNodes: SerializedNode[] = selected.map((n) => ({
+      id: n.id,
+      type: n.type,
+      data: { ...n.data, _startEditing: undefined },
+      position: { x: n.position.x, y: n.position.y },
+    }));
+
+    const serializedEdges: SerializedEdge[] = internalEdges.map((e) => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      type: e.type,
+      data: e.data ? { ...e.data } : undefined,
+      style: e.style ? { ...(e.style as Record<string, any>) } : undefined,
+      animated: e.animated,
+    }));
+
+    const clip: MindMapClipboard = { nodes: serializedNodes, edges: serializedEdges };
+    _clipboard = clip;
+
+    try {
+      navigator.clipboard?.writeText(JSON.stringify(clip));
+    } catch { /* system clipboard may be blocked */ }
+
+    toast.success(
+      isPolish
+        ? `Skopiowano ${selected.length} ${selected.length === 1 ? 'węzeł' : 'węzłów'}`
+        : `Copied ${selected.length} node${selected.length === 1 ? '' : 's'}`,
+      { duration: 1200 },
+    );
+  }, [edges, isPolish, nodes]);
+
+  const cutSelected = useCallback(() => {
+    const selected = nodes.filter((n) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-'));
+    if (selected.length === 0) {
+      toast(isPolish ? 'Zaznacz węzły do wycięcia' : 'Select nodes to cut');
+      return;
+    }
+    if (locked) return;
+
+    copySelected();
+    pushUndo();
+
+    const removedIds = new Set(selected.map((n) => n.id));
+    setNodes((prev: Node[]) => prev.filter((n) => !removedIds.has(n.id)));
+    setEdges((prev: Edge[]) =>
+      prev.filter((e) => !removedIds.has(e.source) && !removedIds.has(e.target)),
+    );
+
+    toast.success(
+      isPolish
+        ? `Wycięto ${selected.length} ${selected.length === 1 ? 'węzeł' : 'węzłów'}`
+        : `Cut ${selected.length} node${selected.length === 1 ? '' : 's'}`,
+      { duration: 1200 },
+    );
+  }, [copySelected, isPolish, locked, nodes, pushUndo, setEdges, setNodes]);
+
+  const pasteNodes = useCallback(
+    (targetPosition?: { x: number; y: number }) => {
+      if (locked) return;
+
+      let clip = _clipboard;
+
+      if (!clip || clip.nodes.length === 0) {
+        try {
+          const text = (window as any).__mindmapClipboardFallback;
+          if (text) {
+            const parsed = JSON.parse(text) as MindMapClipboard;
+            if (parsed?.nodes?.length) clip = parsed;
+          }
+        } catch { /* ignore parse errors */ }
+      }
+
+      if (!clip || clip.nodes.length === 0) {
+        toast(isPolish ? 'Schowek jest pusty' : 'Clipboard is empty');
+        return;
+      }
+
+      pushUndo();
+
+      const idMap = new Map<string, string>();
+      for (const sn of clip.nodes) {
+        idMap.set(sn.id, `node-${uid()}`);
+      }
+
+      const anchorNode = nodes.find(
+        (n) => n.selected && n.id !== 'root' && !n.id.startsWith('branch-'),
+      );
+
+      const basePos = targetPosition
+        ?? (anchorNode
+          ? { x: anchorNode.position.x + 220, y: anchorNode.position.y }
+          : { x: 0, y: 0 });
+
+      const minX = Math.min(...clip.nodes.map((n) => n.position.x));
+      const minY = Math.min(...clip.nodes.map((n) => n.position.y));
+
+      const newNodes: Node[] = clip.nodes.map((sn) => ({
+        id: idMap.get(sn.id)!,
+        type: sn.type || 'idea',
+        position: {
+          x: basePos.x + (sn.position.x - minX),
+          y: basePos.y + (sn.position.y - minY),
+        },
+        data: { ...sn.data, _startEditing: undefined },
+        selected: true,
+      }));
+
+      const newEdges: Edge[] = clip.edges
+        .filter((se) => idMap.has(se.source) && idMap.has(se.target))
+        .map((se) => ({
+          id: `edge-${uid()}`,
+          source: idMap.get(se.source)!,
+          target: idMap.get(se.target)!,
+          type: se.type || 'gradient',
+          style: se.style,
+          animated: se.animated ?? true,
+          data: se.data ? { ...se.data } : { edgeRole: 'structural' },
+        }));
+
+      const pastedChildTargets = new Set(clip.edges.map((e) => e.target));
+      const topLevelOrigIds = clip.nodes
+        .filter((n) => !pastedChildTargets.has(n.id))
+        .map((n) => n.id);
+
+      const parentId = anchorNode?.id
+        ?? nodes.find((n) => n.id === 'root')?.id
+        ?? 'root';
+
+      for (const origId of topLevelOrigIds) {
+        const newId = idMap.get(origId)!;
+        const branchKey =
+          clip.nodes.find((n) => n.id === origId)?.data?.branchKey || 'uncategorized';
+        const colors = branchColor(branchKey);
+        newEdges.push({
+          id: `edge-${uid()}`,
+          source: parentId,
+          target: newId,
+          type: 'gradient',
+          style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
+          animated: true,
+          data: { userCreated: true, edgeRole: 'structural' },
+        } as any);
+      }
+
+      setNodes((prev: Node[]) => [
+        ...prev.map((n) => ({ ...n, selected: false })),
+        ...newNodes,
+      ]);
+      setEdges((prev: Edge[]) => [...prev, ...newEdges]);
+
+      toast.success(
+        isPolish
+          ? `Wklejono ${newNodes.length} ${newNodes.length === 1 ? 'węzeł' : 'węzłów'}`
+          : `Pasted ${newNodes.length} node${newNodes.length === 1 ? '' : 's'}`,
+        { duration: 1200 },
+      );
+
+      setTimeout(() => {
+        try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+      }, 60);
+    },
+    [fitView, isPolish, locked, nodes, pushUndo, setEdges, setNodes],
+  );
+
   return {
     editingNodeIdRef,
     isNodeLockedByPeer,
@@ -505,11 +873,21 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     addSiblingNode,
     deleteSelected,
     duplicateSelected,
+    copySelected,
+    cutSelected,
+    pasteNodes,
     focusSelectedNode,
+    reparentNode,
+    promoteNode,
+    demoteNode,
+    moveBetweenSiblings,
+    clearDropTargets,
+    isReparentable,
     reparentSelectedPromote,
     reparentSelectedDemote,
     startEditingSelected,
     toggleCollapse,
+    setFoldLevel,
     addRootTopic,
   };
 }

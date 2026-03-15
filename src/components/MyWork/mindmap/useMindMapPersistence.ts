@@ -140,6 +140,7 @@ export interface UseMindMapPersistenceOpts {
   locked: boolean;
   preferredTool?: CanvasToolType;
   extensions?: Record<string, unknown>;
+  structureType?: string;
   i18nLanguage: string;
   nodes: Node[];
   edges: Edge[];
@@ -183,6 +184,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     locked,
     preferredTool,
     extensions,
+    structureType,
     i18nLanguage,
     nodes,
     edges,
@@ -227,6 +229,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     onViewportReport,
     persistence,
     preferredTool,
+    structureType,
     runtimeCaptureGraph,
     runtimeEdges,
     runtimeExtensions,
@@ -242,6 +245,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       onViewportReport,
       persistence,
       preferredTool,
+      structureType,
       runtimeCaptureGraph,
       runtimeEdges,
       runtimeExtensions,
@@ -255,6 +259,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     onViewportReport,
     persistence,
     preferredTool,
+    structureType,
     runtimeCaptureGraph,
     runtimeEdges,
     runtimeExtensions,
@@ -551,6 +556,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
         onViewportReport: latestOnViewportReport,
         persistence: latestPersistence,
         preferredTool: latestPreferredTool,
+        structureType: latestStructureType,
         runtimeCaptureGraph: latestRuntimeCaptureGraph,
         runtimeEdges: latestRuntimeEdges,
         runtimeExtensions: latestRuntimeExtensions,
@@ -562,6 +568,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
         const currentViewport = getViewport();
         const mindmapViewStatePatch = {
           mindmap: {
+            ...(latestStructureType ? { structureType: latestStructureType } : {}),
             viewState: {
               collapsedNodeIds: Array.from(latestCollapsedNodeIds),
               viewport: currentViewport,

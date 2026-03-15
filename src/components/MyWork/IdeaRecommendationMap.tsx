@@ -64,6 +64,7 @@ import {
   IDEA_WORKSPACE_THEME_EVENT,
   IDEA_WORKSPACE_INSERT_EVENT,
   type IdeaWorkspaceInsertDetail,
+  type MapStructureType,
   type MindMapInteractionMode,
 } from './ideaSelectionTypes';
 import { knowledgeNodeTypes } from './knowledge/KnowledgeCardNodes';
@@ -122,9 +123,11 @@ import { SnapshotHistory } from './mindmap/SnapshotHistory';
 import { type BreadcrumbItem, SubMapBreadcrumb } from './mindmap/SubMapBreadcrumb';
 import { TimeHeatmap } from './mindmap/TimeHeatmap';
 import { TimelineView } from './mindmap/TimelineView';
+import { applyStructureLayout } from './mindmap/StructureLayouts';
+import { StructurePickerPopover } from './mindmap/toolbar-popovers/StructurePickerPopover';
 import { useAutoLayout } from './mindmap/useAutoLayout';
 import { useMapExport } from './mindmap/useMapExport';
-import { isRelationEdge, isStructuralEdge, useMindMapNodes } from './mindmap/useMindMapNodes';
+import { hasMindMapClipboard, isRelationEdge, isStructuralEdge, useMindMapNodes } from './mindmap/useMindMapNodes';
 import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { VoiceToNode } from './mindmap/VoiceToNode';
@@ -923,8 +926,10 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
         onDoubleClick={handleDoubleClick}
         style={nodeSurfaceStyle}
         className={`group px-3 py-2 ${shapeClass} border-2 ${colors.border} ${colors.bg} ${depthOpacity} ${
-          selected ? `ring-2 ${colors.ring}` : ''
-        } shadow-sm hover:shadow-lg cursor-pointer min-w-[120px] max-w-[210px] relative`}
+          data._dropTarget
+            ? 'ring-3 ring-primary-400 ring-offset-2 border-primary-500 shadow-lg shadow-primary-500/30'
+            : selected ? `ring-2 ${colors.ring}` : ''
+        } shadow-sm hover:shadow-lg cursor-pointer min-w-[120px] max-w-[210px] relative transition-shadow duration-150`}
       >
         <Handle type="target" position={Position.Left} id="target-left" className={handleTarget} />
         <Handle type="target" position={Position.Top} id="target-top" className={handleTarget} />
@@ -1277,9 +1282,9 @@ function MindMapInner({
   const currentUser = useAppStore((state) => state.currentUser);
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const debugEnabled = false;
-  const { fitView, getViewport, setViewport } = useReactFlow();
+  const { fitView, getViewport, setViewport, getIntersectingNodes } = useReactFlow();
   const { autoLayout } = useAutoLayout();
-  const { exportAsPNG, exportAsSVG, exportAsJSON } = useMapExport();
+  const { exportAsPNG, exportAsSVG, exportAsJSON, exportAsMarkdown } = useMapExport();
   const interactionMode = externalInteractionMode;
   const reactFlowNodeTypes = useRef(nodeTypes).current;
   const reactFlowEdgeTypes = useRef(edgeTypes).current;
@@ -1942,6 +1947,12 @@ function MindMapInner({
     [baseOnNodesChange, debugLog]
   );
 
+  // ── GAP-3: Map structure type ─────────────────────────────────────
+  const [structureType, setStructureType] = useState<MapStructureType>(
+    () => ((extensions as any)?.mindmap?.structureType as MapStructureType) || 'mindmap'
+  );
+  const [showStructurePicker, setShowStructurePicker] = useState(false);
+
   const {
     loading,
     saving,
@@ -1959,6 +1970,7 @@ function MindMapInner({
       locked,
       preferredTool,
       extensions,
+      structureType,
       i18nLanguage: i18n.language,
       nodes,
       edges,
@@ -1983,15 +1995,26 @@ function MindMapInner({
     selectedNodeIds,
     findParentId,
     findChildrenIds,
+    getSubtreeNodeIds,
     addChildNode,
     addSiblingNode,
     deleteSelected,
     duplicateSelected,
+    copySelected,
+    cutSelected,
+    pasteNodes,
     focusSelectedNode,
+    reparentNode,
+    promoteNode,
+    demoteNode,
+    moveBetweenSiblings,
+    clearDropTargets,
+    isReparentable,
     reparentSelectedPromote,
     reparentSelectedDemote,
     startEditingSelected,
     toggleCollapse: toggleCollapseNode,
+    setFoldLevel: setFoldLevelRaw,
     addRootTopic,
   } = useMindMapNodes({
     nodes,
@@ -2023,6 +2046,13 @@ function MindMapInner({
       }
       if (action === 'set_layout_mode' && detail.layoutMode) {
         setLayoutMode(detail.layoutMode as 'tree' | 'radial' | 'force');
+        setStructureType('mindmap');
+      }
+      if (action === 'set_structure_type' && detail.structureType) {
+        setStructureType(detail.structureType as MapStructureType);
+        const laid = applyStructureLayout(detail.structureType as MapStructureType, nodes as any, edges as any, autoLayout);
+        setNodes(laid);
+        setTimeout(() => { try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ } }, 50);
       }
       if (action === 'set_map_theme' && detail.theme) {
         window.dispatchEvent(
@@ -2050,10 +2080,41 @@ function MindMapInner({
     [toggleCollapseNode, setCollapsedNodeIds]
   );
 
+  const setFoldLevel = useCallback(
+    (maxLevel: number) => setFoldLevelRaw(maxLevel, setCollapsedNodeIds),
+    [setFoldLevelRaw, setCollapsedNodeIds]
+  );
+
   // ── Manual drag tracking (disables auto-relayout for the session) ────────
   const userDraggedRef = useRef(false);
+
+  const onNodeDrag = useCallback((_event: React.MouseEvent, node: Node) => {
+    if (!node || !isReparentable(node.id)) {
+      clearDropTargets();
+      return;
+    }
+    const intersecting = getIntersectingNodes(node);
+    const subtree = new Set(getSubtreeNodeIds(node.id));
+    const currentParent = findParentId(node.id);
+    const validTarget = intersecting.find(
+      (n) =>
+        n.id !== node.id &&
+        !subtree.has(n.id) &&
+        n.id !== currentParent &&
+        n.id !== 'root'
+    );
+    setNodes((prev: Node[]) =>
+      prev.map((n) => {
+        const shouldHighlight = validTarget?.id === n.id;
+        if (n.data?._dropTarget === shouldHighlight) return n;
+        return { ...n, data: { ...n.data, _dropTarget: shouldHighlight } };
+      })
+    );
+  }, [clearDropTargets, findParentId, getIntersectingNodes, getSubtreeNodeIds, isReparentable, setNodes]);
+
   const onNodeDragStop = useCallback((event?: React.MouseEvent, node?: Node) => {
     userDraggedRef.current = true;
+    clearDropTargets();
     debugLog('NODE_DRAG_STOP', {
       source: 'handler',
       detail: node ? `node:${node.id}` : undefined,
@@ -2061,7 +2122,29 @@ function MindMapInner({
     if (event?.target) {
       markInputHandled('click', event.target, 'onNodeDragStop', node ? `node:${node.id}` : undefined);
     }
-  }, [debugLog, markInputHandled]);
+    if (!node || !isReparentable(node.id)) return;
+
+    const intersecting = getIntersectingNodes(node);
+    const subtree = new Set(getSubtreeNodeIds(node.id));
+    const currentParent = findParentId(node.id);
+    const validTarget = intersecting.find(
+      (n) =>
+        n.id !== node.id &&
+        !subtree.has(n.id) &&
+        n.id !== currentParent &&
+        n.id !== 'root'
+    );
+    if (validTarget) {
+      const ok = reparentNode(node.id, validTarget.id);
+      if (ok) {
+        toast.success(
+          isPolish
+            ? `Przeniesiono pod „${validTarget.data?.label || validTarget.id}"`
+            : `Moved under "${validTarget.data?.label || validTarget.id}"`
+        );
+      }
+    }
+  }, [clearDropTargets, debugLog, findParentId, getIntersectingNodes, getSubtreeNodeIds, isPolish, isReparentable, markInputHandled, reparentNode]);
 
   const currentUserName = useMemo(() => {
     const fullName = [currentUser?.firstName, currentUser?.lastName]
@@ -2390,6 +2473,23 @@ function MindMapInner({
         return;
       }
 
+      // GAP-9: Fold levels — Alt+0/1/2/3/9
+      if (e.altKey && !e.metaKey && !e.ctrlKey && !e.shiftKey && /^[0-3]$/.test(e.key)) {
+        e.preventDefault();
+        const level = Number(e.key);
+        debugLog('KEY_HANDLED foldLevel', { source: 'keyboard', reaction: 'handled', detail: `Alt+${e.key} → level ${level}` });
+        setFoldLevel(level);
+        toast.success(isPolish ? `Widok: poziom ${level}` : `Showing level ${level}`, { duration: 1200 });
+        return;
+      }
+      if (e.altKey && !e.metaKey && !e.ctrlKey && e.key === '9') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED foldExpandAll', { source: 'keyboard', reaction: 'handled', detail: 'Alt+9 → expand all' });
+        setFoldLevel(Infinity);
+        toast.success(isPolish ? 'Wszystko rozwinięte' : 'All expanded', { duration: 1200 });
+        return;
+      }
+
       if (isEditing || isInput) {
         debugLog('KEY_IGNORED editing_or_input', {
           source: 'keyboard',
@@ -2397,6 +2497,25 @@ function MindMapInner({
           severity: 'warn',
           detail: `${keyLabel} | editing=${isEditing} input=${isInput}`,
         });
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED copy', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        copySelected();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'x') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED cut', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        cutSelected();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED paste', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        pasteNodes();
         return;
       }
 
@@ -2470,6 +2589,33 @@ function MindMapInner({
         return;
       }
 
+      // Alt+Arrow: reparent operations
+      if (e.altKey && e.key.startsWith('Arrow')) {
+        e.preventDefault();
+        const rSel = getSelectedNode();
+        if (!rSel) return;
+        if (e.key === 'ArrowUp') {
+          debugLog('KEY_HANDLED promoteNode', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+          promoteNode(rSel.id);
+          return;
+        }
+        if (e.key === 'ArrowDown') {
+          debugLog('KEY_HANDLED demoteNode', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+          demoteNode(rSel.id);
+          return;
+        }
+        if (e.key === 'ArrowLeft') {
+          debugLog('KEY_HANDLED moveSiblingLeft', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+          moveBetweenSiblings(rSel.id, 'left');
+          return;
+        }
+        if (e.key === 'ArrowRight') {
+          debugLog('KEY_HANDLED moveSiblingRight', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+          moveBetweenSiblings(rSel.id, 'right');
+          return;
+        }
+      }
+
       // Arrow key navigation
       const sel = getSelectedNode();
       if (!sel) {
@@ -2541,15 +2687,23 @@ function MindMapInner({
   }, [
     addChildNode,
     addSiblingNode,
+    copySelected,
+    cutSelected,
     debugLog,
     deleteSelected,
+    demoteNode,
     edges,
     findChildrenIds,
     findParentId,
     getSelectedNode,
+    isPolish,
+    moveBetweenSiblings,
     nodes,
+    pasteNodes,
+    promoteNode,
     redo,
     scheduleSave,
+    setFoldLevel,
     setNodes,
     startEditingSelected,
     trackInputEvent,
@@ -3083,6 +3237,7 @@ function MindMapInner({
     nodes,
     edges,
     layoutMode,
+    structureType,
     extensions,
     handlers: {
       addChildNode,
@@ -3092,6 +3247,7 @@ function MindMapInner({
       deleteSelected,
       getSelectedNode,
       toggleCollapse,
+      setFoldLevel,
       focusSelectedNode,
       reparentSelectedPromote,
       reparentSelectedDemote,
@@ -3104,6 +3260,7 @@ function MindMapInner({
       exportAsSVG,
       exportAsPNG,
       exportAsJSON,
+      exportAsMarkdown,
       onOpenChat,
     },
     setters: {
@@ -3141,6 +3298,8 @@ function MindMapInner({
       setCommentNodeId,
       setExportMenuOpen,
       setShowMiniMap,
+      setStructureType,
+      setShowStructurePicker,
     },
   });
 
@@ -3580,12 +3739,17 @@ function MindMapInner({
         }
       }
       if (action === 'ctx_duplicate') duplicateSelected();
+      if (action === 'ctx_copy_nodes') copySelected();
+      if (action === 'ctx_cut_nodes') cutSelected();
+      if (action === 'ctx_paste_nodes') pasteNodes();
       if (action === 'ctx_delete') deleteSelected();
     },
     [
       addChildNode,
       addSiblingNode,
       convertBranch,
+      copySelected,
+      cutSelected,
       deleteSelected,
       detachBranch,
       duplicateBranch,
@@ -3597,6 +3761,7 @@ function MindMapInner({
       isPolish,
       ideaId,
       nodes,
+      pasteNodes,
       setEdges,
       setNodes,
       styleClipboard,
@@ -3663,16 +3828,9 @@ function MindMapInner({
         setEdges((prev: Edge[]) => [...prev, rootEdge]);
       }
 
-      if (action === 'pane_paste') {
-        if (styleClipboard) {
-          const sel = getSelectedNode();
-          if (sel) {
-            setNodes((prev: Node[]) =>
-              prev.map((n) => (n.id === sel.id ? applyNodeStyle(n, styleClipboard) : n)),
-            );
-          }
-        }
-      }
+      if (action === 'pane_copy') copySelected();
+      if (action === 'pane_cut') cutSelected();
+      if (action === 'pane_paste') pasteNodes(paneContextMenu ? { x: paneContextMenu.canvasX, y: paneContextMenu.canvasY } : undefined);
 
       if (action === 'pane_undo') undo();
       if (action === 'pane_redo') redo();
@@ -3682,17 +3840,22 @@ function MindMapInner({
       }
 
       if (action === 'pane_collapse_all') {
-        const allBranchIds = (nodes as Node[])
-          .filter((n) => {
-            const children = (edges as Edge[]).filter((e) => e.source === n.id && isStructuralEdge(e));
-            return children.length > 0 && n.id !== 'root';
-          })
-          .map((n) => n.id);
-        setCollapsedNodeIds(new Set(allBranchIds));
+        setFoldLevel(0);
+        toast.success(isPolish ? 'Widok: poziom 0' : 'Showing level 0', { duration: 1200 });
       }
 
       if (action === 'pane_expand_all') {
-        setCollapsedNodeIds(new Set());
+        setFoldLevel(Infinity);
+        toast.success(isPolish ? 'Wszystko rozwinięte' : 'All expanded', { duration: 1200 });
+      }
+
+      if (action === 'pane_fold_1') {
+        setFoldLevel(1);
+        toast.success(isPolish ? 'Widok: poziom 1' : 'Showing level 1', { duration: 1200 });
+      }
+      if (action === 'pane_fold_2') {
+        setFoldLevel(2);
+        toast.success(isPolish ? 'Widok: poziom 2' : 'Showing level 2', { duration: 1200 });
       }
 
       if (action === 'pane_auto_layout') {
@@ -3734,6 +3897,8 @@ function MindMapInner({
     },
     [
       autoLayout,
+      copySelected,
+      cutSelected,
       edges,
       fitView,
       getSelectedNode,
@@ -3742,13 +3907,14 @@ function MindMapInner({
       isPolish,
       nodes,
       paneContextMenu,
+      pasteNodes,
       pushUndo,
       redo,
       setCollapsedNodeIds,
       setEdges,
+      setFoldLevel,
       setNodes,
       setViewport,
-      styleClipboard,
       undo,
     ],
   );
@@ -3926,6 +4092,7 @@ function MindMapInner({
           isLocked={locked}
           isPl={isPolish}
           canPasteStyle={!!styleClipboard}
+          canPasteNodes={hasMindMapClipboard()}
           hasChildren={findChildrenIds(contextMenu.nodeId).length > 0}
           onClose={() => setContextMenu(null)}
           onAction={handleContextAction}
@@ -3943,7 +4110,8 @@ function MindMapInner({
           isLocked={locked}
           canUndo={undoStackRef.current.length > 0}
           canRedo={redoStackRef.current.length > 0}
-          canPaste={!!styleClipboard}
+          canPaste={hasMindMapClipboard()}
+          hasSelection={selectedNodeIds.length > 0}
           onClose={() => setPaneContextMenu(null)}
           onAction={handlePaneContextAction}
         />
@@ -4169,6 +4337,7 @@ function MindMapInner({
           onPaneContextMenu={onPaneContextMenu}
           onConnect={onConnect}
           onEdgeClick={onEdgeClick}
+          onNodeDrag={onNodeDrag}
           onNodeDragStop={onNodeDragStop}
           nodeTypes={reactFlowNodeTypes}
           edgeTypes={reactFlowEdgeTypes}
@@ -4922,6 +5091,31 @@ function MindMapInner({
         />
       ) : null}
 
+      {/* GAP-3: Structure Picker Popover */}
+      {showStructurePicker && (
+        <div className="fixed inset-0 z-[90]" onClick={() => setShowStructurePicker(false)}>
+          <div
+            className="absolute top-16 left-1/2 -translate-x-1/2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <StructurePickerPopover
+              isPl={isPolish}
+              current={structureType}
+              onSelect={(type) => {
+                pushUndo();
+                setStructureType(type);
+                const laid = applyStructureLayout(type, nodes, edges, autoLayout);
+                setNodes(laid);
+                setTimeout(() => {
+                  try { fitView({ padding: 0.3, duration: 400 }); } catch { /* */ }
+                }, 50);
+              }}
+              onClose={() => setShowStructurePicker(false)}
+            />
+          </div>
+        </div>
+      )}
+
       {/* R3.3: 3D Mind Map View */}
       {showMindMap3D ? (
         <MindMap3DView
@@ -4970,6 +5164,7 @@ function MindMapInner({
               { key: 'png', label: 'PNG', fn: () => exportAsPNG(`${ideaTitle || 'mindmap'}.png`) },
               { key: 'svg', label: 'SVG', fn: () => exportAsSVG(`${ideaTitle || 'mindmap'}.svg`) },
               { key: 'json', label: 'JSON', fn: () => exportAsJSON(nodes, edges, extensions, `${ideaTitle || 'mindmap'}.json`) },
+              { key: 'md', label: isPolish ? 'Markdown (konspekt)' : 'Markdown outline', fn: () => { exportAsMarkdown(nodes, edges, { includeMetadata: true }, `${ideaTitle || 'mindmap'}.md`); toast.success(isPolish ? 'Markdown skopiowany do schowka' : 'Markdown copied to clipboard'); } },
             ].map((opt) => (
               <button
                 key={opt.key}

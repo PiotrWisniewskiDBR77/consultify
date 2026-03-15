@@ -1,9 +1,12 @@
 import {
+  ChevronDown,
   Clipboard,
+  ClipboardCopy,
   Grid3X3,
   Layout,
   Maximize,
   Plus,
+  Scissors,
   Sparkles,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef } from 'react';
@@ -20,6 +23,7 @@ export interface PaneContextMenuProps {
   canUndo: boolean;
   canRedo: boolean;
   canPaste: boolean;
+  hasSelection: boolean;
   onClose: () => void;
   onAction: (action: string) => void;
 }
@@ -32,6 +36,7 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
   canUndo,
   canRedo,
   canPaste,
+  hasSelection,
   onClose,
   onAction,
 }) => {
@@ -70,9 +75,25 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
       disabled: isLocked,
     },
     {
+      id: 'pane_copy',
+      labelPl: 'Kopiuj węzły',
+      labelEn: 'Copy nodes',
+      icon: ClipboardCopy,
+      shortcut: '⌘C',
+      disabled: !hasSelection,
+    },
+    {
+      id: 'pane_cut',
+      labelPl: 'Wytnij węzły',
+      labelEn: 'Cut nodes',
+      icon: Scissors,
+      shortcut: '⌘X',
+      disabled: isLocked || !hasSelection,
+    },
+    {
       id: 'pane_paste',
-      labelPl: 'Wklej',
-      labelEn: 'Paste',
+      labelPl: 'Wklej węzły',
+      labelEn: 'Paste nodes',
       icon: Clipboard,
       shortcut: '⌘V',
       disabled: isLocked || !canPaste,
@@ -98,6 +119,35 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
       labelEn: 'Auto layout',
       icon: Layout,
       shortcut: '⌘L',
+      dividerAfter: true,
+    },
+    {
+      id: 'pane_collapse_all',
+      labelPl: 'Zwiń wszystko',
+      labelEn: 'Collapse all',
+      icon: ChevronDown,
+      shortcut: 'Alt+0',
+    },
+    {
+      id: 'pane_fold_1',
+      labelPl: 'Pokaż poziom 1',
+      labelEn: 'Show level 1',
+      icon: ChevronDown,
+      shortcut: 'Alt+1',
+    },
+    {
+      id: 'pane_fold_2',
+      labelPl: 'Pokaż poziom 2',
+      labelEn: 'Show level 2',
+      icon: ChevronDown,
+      shortcut: 'Alt+2',
+    },
+    {
+      id: 'pane_expand_all',
+      labelPl: 'Rozwiń wszystko',
+      labelEn: 'Expand all',
+      icon: ChevronDown,
+      shortcut: 'Alt+9',
       dividerAfter: true,
     },
     {

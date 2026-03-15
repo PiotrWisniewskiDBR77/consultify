@@ -1,6 +1,8 @@
 import {
   BarChart3,
   Camera,
+  ChevronsDownUp,
+  ChevronsUpDown,
   Eye,
   Globe,
   History,
@@ -30,9 +32,15 @@ interface ToolItem {
 const ALL_TOOLS: ToolItem[] = [
   // Visual Modes
   { action: 'mm_change_layout', iconEl: Layout, labelPl: 'Zmień układ', labelEn: 'Change layout', category: 'visual' },
+  { action: 'mm_structure_picker', iconEl: LayoutGrid, labelPl: 'Typ struktury', labelEn: 'Structure type', category: 'visual' },
   { action: 'mm_toggle_minimap', iconEl: LayoutGrid, labelPl: 'Minimap', labelEn: 'Minimap', category: 'visual' },
   { action: 'mm_fit_view', iconEl: Maximize, labelPl: 'Dopasuj widok', labelEn: 'Fit view', category: 'visual' },
   { action: 'mm_presentation', iconEl: Eye, labelPl: 'Tryb prezentacji', labelEn: 'Presentation mode', category: 'visual' },
+  { action: 'mm_fold_0', iconEl: ChevronsDownUp, labelPl: 'Zwiń do korzenia (Alt+0)', labelEn: 'Collapse to root (Alt+0)', category: 'visual' },
+  { action: 'mm_fold_1', iconEl: ChevronsDownUp, labelPl: 'Pokaż poziom 1 (Alt+1)', labelEn: 'Show level 1 (Alt+1)', category: 'visual' },
+  { action: 'mm_fold_2', iconEl: ChevronsDownUp, labelPl: 'Pokaż poziom 2 (Alt+2)', labelEn: 'Show level 2 (Alt+2)', category: 'visual' },
+  { action: 'mm_fold_3', iconEl: ChevronsDownUp, labelPl: 'Pokaż poziom 3 (Alt+3)', labelEn: 'Show level 3 (Alt+3)', category: 'visual' },
+  { action: 'mm_expand_all', iconEl: ChevronsUpDown, labelPl: 'Rozwiń wszystko (Alt+9)', labelEn: 'Expand all (Alt+9)', category: 'visual' },
 
   // Workflow
   { action: 'mm_snapshots', iconEl: Camera, labelPl: 'Wersje / Snapshoty', labelEn: 'Snapshots / Versions', category: 'workflow' },

@@ -1,6 +1,8 @@
 import {
   BookOpen,
   ChevronRight,
+  Clipboard,
+  ClipboardCopy,
   Copy,
   Diamond,
   FoldVertical,
@@ -40,6 +42,7 @@ export interface NodeContextMenuProps {
   isLocked: boolean;
   isPl: boolean;
   canPasteStyle?: boolean;
+  canPasteNodes?: boolean;
   hasChildren?: boolean;
   onClose: () => void;
   onAction: (action: string) => void;
@@ -59,6 +62,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
   isLocked,
   isPl,
   canPasteStyle = false,
+  canPasteNodes = false,
   hasChildren = false,
   onClose,
   onAction,
@@ -106,6 +110,9 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         { id: 'ctx_add_child', labelPl: 'Dodaj gałąź', labelEn: 'Add child', icon: Plus, shortcut: 'Tab', disabled: isLocked },
         { id: 'ctx_add_sibling', labelPl: 'Dodaj sąsiada', labelEn: 'Add sibling', icon: GitBranch, shortcut: 'Enter', disabled: isLocked || isProtected },
         { id: 'ctx_duplicate', labelPl: 'Duplikuj', labelEn: 'Duplicate', icon: Copy, shortcut: '⌘D', disabled: isLocked || isProtected },
+        { id: 'ctx_copy_nodes', labelPl: 'Kopiuj', labelEn: 'Copy', icon: ClipboardCopy, shortcut: '⌘C', disabled: isProtected },
+        { id: 'ctx_cut_nodes', labelPl: 'Wytnij', labelEn: 'Cut', icon: Scissors, shortcut: '⌘X', disabled: isLocked || isProtected },
+        { id: 'ctx_paste_nodes', labelPl: 'Wklej', labelEn: 'Paste', icon: Clipboard, shortcut: '⌘V', disabled: isLocked || !canPasteNodes },
       ],
     },
     {
@@ -178,7 +185,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         { id: 'ctx_delete', labelPl: 'Usuń', labelEn: 'Delete', icon: Trash2, shortcut: 'Del', danger: true, disabled: isLocked || isProtected },
       ],
     },
-  ], [canPasteStyle, hasChildren, isLocked, isProtected]);
+  ], [canPasteNodes, canPasteStyle, hasChildren, isLocked, isProtected]);
 
   const clampedX = Math.min(x, window.innerWidth - 260);
   const clampedY = Math.min(y, window.innerHeight - 400);

@@ -1,6 +1,6 @@
 /**
- * ImportExternalMap — Import mind maps from FreeMind (.mm XML) and
- * XMind (.xmind ZIP with content.json) formats.
+ * ImportExternalMap — Import mind maps from FreeMind (.mm XML),
+ * XMind (.xmind ZIP with content.json), and OPML (.opml) formats.
  */
 import { FileUp, Loader2, Upload, X } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 interface ImportedNode {
   id: string;
   label: string;
+  notes?: string;
   children: ImportedNode[];
 }
 
@@ -17,8 +18,10 @@ interface ImportExternalMapProps {
   open: boolean;
   onClose: () => void;
   locked: boolean;
-  onImport: (nodes: Array<{ label: string; parentLabel?: string; branchKey?: string }>) => void;
+  onImport: (nodes: Array<{ label: string; parentLabel?: string; branchKey?: string; notes?: string }>) => void;
 }
+
+// ── FreeMind (.mm) parser ───────────────────────────────────────────────
 
 function parseFreeMindXML(xml: string): ImportedNode | null {
   try {
@@ -30,10 +33,12 @@ function parseFreeMindXML(xml: string): ImportedNode | null {
     let counter = 0;
     function parseNode(el: Element): ImportedNode {
       const label = el.getAttribute('TEXT') || el.getAttribute('text') || `Node ${++counter}`;
+      const richContent = el.querySelector(':scope > richcontent');
+      const notes = richContent?.textContent?.trim() || undefined;
       const children: ImportedNode[] = [];
       const childEls = el.querySelectorAll(':scope > node');
       childEls.forEach((child) => children.push(parseNode(child)));
-      return { id: `imported-${counter++}`, label, children };
+      return { id: `imported-${counter++}`, label, notes, children };
     }
 
     return parseNode(root);
@@ -41,6 +46,8 @@ function parseFreeMindXML(xml: string): ImportedNode | null {
     return null;
   }
 }
+
+// ── XMind (.xmind) parser ───────────────────────────────────────────────
 
 async function parseXMindZip(file: File): Promise<ImportedNode | null> {
   try {
@@ -50,12 +57,13 @@ async function parseXMindZip(file: File): Promise<ImportedNode | null> {
     let counter = 0;
     function parseTopic(topic: any): ImportedNode {
       const label = topic.title || `Topic ${++counter}`;
+      const notes = topic.notes?.plain?.content || topic.notes?.content || undefined;
       const children: ImportedNode[] = [];
       const attached = topic.children?.attached || topic.children || [];
       if (Array.isArray(attached)) {
         for (const child of attached) children.push(parseTopic(child));
       }
-      return { id: `imported-${counter++}`, label, children };
+      return { id: `imported-${counter++}`, label, notes, children };
     }
 
     // XMind 2020+ format: content.json at zip root
@@ -83,23 +91,75 @@ async function parseXMindZip(file: File): Promise<ImportedNode | null> {
   }
 }
 
+// ── OPML (.opml) parser ─────────────────────────────────────────────────
+
+function parseOPML(xml: string): ImportedNode | null {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, 'text/xml');
+    const body = doc.querySelector('body');
+    if (!body) return null;
+
+    let counter = 0;
+    function parseOutline(el: Element): ImportedNode {
+      const label = el.getAttribute('text') || el.getAttribute('title') || `Outline ${++counter}`;
+      const notes = el.getAttribute('_note') || el.getAttribute('note') || undefined;
+      const children: ImportedNode[] = [];
+      const childEls = el.querySelectorAll(':scope > outline');
+      childEls.forEach((child) => children.push(parseOutline(child)));
+      return { id: `imported-${counter++}`, label, notes, children };
+    }
+
+    const topOutlines = body.querySelectorAll(':scope > outline');
+    if (topOutlines.length === 0) return null;
+
+    if (topOutlines.length === 1) {
+      return parseOutline(topOutlines[0]);
+    }
+
+    const titleEl = doc.querySelector('head > title');
+    const rootLabel = titleEl?.textContent?.trim() || 'Imported OPML';
+    const children: ImportedNode[] = [];
+    topOutlines.forEach((outline) => children.push(parseOutline(outline)));
+    return { id: `imported-root`, label: rootLabel, children };
+  } catch {
+    return null;
+  }
+}
+
+// ── Flatten tree (unlimited depth) ──────────────────────────────────────
+
 function flattenTree(
   root: ImportedNode
-): Array<{ label: string; parentLabel?: string; branchKey?: string }> {
-  const result: Array<{ label: string; parentLabel?: string; branchKey?: string }> = [];
+): Array<{ label: string; parentLabel?: string; branchKey?: string; notes?: string }> {
+  const result: Array<{ label: string; parentLabel?: string; branchKey?: string; notes?: string }> = [];
+
+  function walk(node: ImportedNode, parentLabel?: string, isTopBranch?: boolean) {
+    result.push({
+      label: node.label,
+      parentLabel,
+      branchKey: isTopBranch ? 'options' : undefined,
+      notes: node.notes,
+    });
+    for (const child of node.children) {
+      walk(child, node.label, false);
+    }
+  }
 
   for (const branch of root.children) {
-    result.push({ label: branch.label, branchKey: 'options' });
-    for (const idea of branch.children) {
-      result.push({ label: idea.label, parentLabel: branch.label });
-      for (const sub of idea.children) {
-        result.push({ label: sub.label, parentLabel: idea.label });
-      }
-    }
+    walk(branch, undefined, true);
   }
 
   return result;
 }
+
+function countNodes(node: ImportedNode): number {
+  let count = 1;
+  for (const child of node.children) count += countNodes(child);
+  return count;
+}
+
+// ── Component ───────────────────────────────────────────────────────────
 
 export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
   open,
@@ -131,11 +191,14 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
           root = parseFreeMindXML(text);
         } else if (file.name.endsWith('.xmind')) {
           root = await parseXMindZip(file);
+        } else if (file.name.endsWith('.opml')) {
+          const text = await file.text();
+          root = parseOPML(text);
         } else {
           toast.error(
             isPl
-              ? 'Nieobsługiwany format. Użyj .mm lub .xmind'
-              : 'Unsupported format. Use .mm or .xmind'
+              ? 'Nieobsługiwany format. Użyj .mm, .xmind lub .opml'
+              : 'Unsupported format. Use .mm, .xmind, or .opml'
           );
           setLoading(false);
           return;
@@ -159,8 +222,9 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
     if (!preview) return;
     const flat = flattenTree(preview);
     onImport(flat);
+    const total = countNodes(preview);
     toast.success(
-      isPl ? `Zaimportowano ${flat.length} elementów` : `Imported ${flat.length} items`,
+      isPl ? `Zaimportowano ${total} węzłów` : `Imported ${total} nodes`,
       { duration: 1500 }
     );
     onClose();
@@ -173,12 +237,17 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
       >
         {depth > 0 && <span className="text-slate-300 mr-1">{'─'.repeat(Math.min(depth, 3))}</span>}
         {node.label}
+        {node.notes && (
+          <span className="ml-1 text-[8px] text-slate-400" title={node.notes}>📝</span>
+        )}
       </div>
       {node.children.map((child) => renderTree(child, depth + 1))}
     </div>
   );
 
   if (!open) return null;
+
+  const nodeCount = preview ? countNodes(preview) : 0;
 
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/40">
@@ -204,13 +273,13 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
               <Upload size={36} className="text-slate-300 dark:text-slate-600 mx-auto mb-3" />
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-4">
                 {isPl
-                  ? 'Importuj mapę z pliku .mm (FreeMind) lub .xmind (XMind).'
-                  : 'Import a map from .mm (FreeMind) or .xmind (XMind) file.'}
+                  ? 'Importuj mapę z pliku .mm (FreeMind), .xmind (XMind) lub .opml (OPML).'
+                  : 'Import a map from .mm (FreeMind), .xmind (XMind), or .opml (OPML) file.'}
               </p>
               <input
                 ref={fileRef}
                 type="file"
-                accept=".mm,.xmind"
+                accept=".mm,.xmind,.opml"
                 onChange={handleFile}
                 className="hidden"
               />
@@ -241,7 +310,7 @@ export const ImportExternalMap: React.FC<ImportExternalMapProps> = ({
                   {fileName}
                 </div>
                 <div className="text-[9px] text-slate-400">
-                  {preview.children.length} {isPl ? 'gałęzi' : 'branches'}
+                  {nodeCount} {isPl ? 'węzłów' : 'nodes'} · {preview.children.length} {isPl ? 'gałęzi' : 'branches'}
                 </div>
               </div>
               <div className="p-3 rounded-xl bg-slate-50/50 dark:bg-navy-950/20 border border-slate-200/30 dark:border-navy-700/30 max-h-[250px] overflow-y-auto">
