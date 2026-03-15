@@ -15,8 +15,12 @@ vi.mock('../AuditService.js', () => ({
 }));
 
 const mockValidateRecord = vi.fn();
+const mockValidateRecordSize = vi.fn();
 vi.mock('../SchemaValidationService.js', () => ({
-  default: { validateRecord: (...args: unknown[]) => mockValidateRecord(...args) },
+  default: {
+    validateRecord: (...args: unknown[]) => mockValidateRecord(...args),
+    validateRecordSize: (...args: unknown[]) => mockValidateRecordSize(...args),
+  },
 }));
 
 const mockOnRecordDeleted = vi.fn();
@@ -35,6 +39,7 @@ describe('RecordsService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockValidateRecord.mockResolvedValue({ valid: true, errors: [] });
+    mockValidateRecordSize.mockReturnValue(undefined);
     mockOnRecordDeleted.mockResolvedValue(undefined);
   });
 
@@ -42,14 +47,16 @@ describe('RecordsService', () => {
   it('createRecord calls validation, inserts, and returns record', async () => {
     const recordRow = { id: 'rec-uuid-001', table_id: 't-1', data: { Name: 'Test' } };
     mockQuery
+      .mockResolvedValueOnce({ rows: [] }) // loadAutoFields
       .mockResolvedValueOnce({ rows: [] }) // INSERT
-      .mockResolvedValueOnce({ rows: [recordRow] }); // SELECT after insert
+      .mockResolvedValueOnce({ rows: [recordRow] }) // SELECT after insert
+      .mockResolvedValueOnce({ rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }] }); // recomputeAffectedFields tp_fields
 
     const result = await recordsService.createRecord('t-1', { Name: 'Test' }, 'user-1');
 
     expect(mockValidateRecord).toHaveBeenCalledWith('t-1', { Name: 'Test' });
+    expect(mockValidateRecordSize).toHaveBeenCalledWith({ Name: 'Test' });
     expect(result).toEqual(recordRow);
-    expect(mockQuery).toHaveBeenCalledTimes(2);
   });
 
   // 2. createRecord with invalid data → throws ValidationError
@@ -72,12 +79,15 @@ describe('RecordsService', () => {
     const after = { id: 'r-1', table_id: 't-1', data: { Name: 'New' } };
     mockQuery
       .mockResolvedValueOnce({ rows: [before] }) // SELECT before
+      .mockResolvedValueOnce({ rows: [] }) // loadAutoFields
       .mockResolvedValueOnce({ rows: [] }) // UPDATE
-      .mockResolvedValueOnce({ rows: [after] }); // SELECT after
+      .mockResolvedValueOnce({ rows: [after] }) // SELECT after
+      .mockResolvedValueOnce({ rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }] }); // recomputeAffectedFields tp_fields
 
     const result = await recordsService.updateRecord('r-1', { Name: 'New' }, 'user-1');
 
     expect(mockValidateRecord).toHaveBeenCalledWith('t-1', { Name: 'New' });
+    expect(mockValidateRecordSize).toHaveBeenCalledWith({ Name: 'New' });
     expect(result).toEqual(after);
   });
 
@@ -104,7 +114,9 @@ describe('RecordsService', () => {
   // 5. getRecord → returns record with data
   it('getRecord returns record with data', async () => {
     const recordRow = { id: 'r-1', table_id: 't-1', data: { Name: 'Test' } };
-    mockQuery.mockResolvedValueOnce({ rows: [recordRow] });
+    mockQuery
+      .mockResolvedValueOnce({ rows: [recordRow] }) // SELECT record
+      .mockResolvedValueOnce({ rows: [] }); // getAttachmentFieldIds
 
     const result = await recordsService.getRecord('r-1');
     expect(result).toEqual(recordRow);
@@ -125,7 +137,8 @@ describe('RecordsService', () => {
     ];
     mockQuery
       .mockResolvedValueOnce({ rows: [{ total: '2' }] }) // COUNT
-      .mockResolvedValueOnce({ rows: records }); // SELECT records (no extra row → hasMore=false)
+      .mockResolvedValueOnce({ rows: records }) // SELECT records (runs before getAttachmentFieldIds)
+      .mockResolvedValueOnce({ rows: [] }); // getAttachmentFieldIds
 
     const result = await recordsService.listRecords('t-1', { pageSize: 10 });
 
@@ -143,7 +156,8 @@ describe('RecordsService', () => {
     }));
     mockQuery
       .mockResolvedValueOnce({ rows: [{ total: '10' }] }) // COUNT
-      .mockResolvedValueOnce({ rows: records }); // 4 rows returned for pageSize=3 → hasMore=true
+      .mockResolvedValueOnce({ rows: records }) // SELECT records (runs before getAttachmentFieldIds)
+      .mockResolvedValueOnce({ rows: [] }); // getAttachmentFieldIds
 
     const result = await recordsService.listRecords('t-1', { pageSize: 3 });
 

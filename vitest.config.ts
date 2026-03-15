@@ -227,6 +227,8 @@ export default defineConfig({
       'tests/security/**/*.{test,spec}.{js,ts,jsx,tsx}',
       // Performance tests (Agent 5)
       'tests/performance/**/*.{test,spec}.{js,ts,jsx,tsx}',
+      // Table Platform service tests
+      'server/src/services/**/__tests__/*.{test,spec}.{js,ts,jsx,tsx}',
       // server/tests excluded - require full DB schema
       // Run separately with specialized setup
       // 'server/tests/**/*.{test,spec}.{js,ts,jsx,tsx}',

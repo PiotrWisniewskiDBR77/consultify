@@ -125,6 +125,7 @@ describe('MetadataService', () => {
     const after = { id: 'f-1', name: 'New', options: '{"color":"red"}', table_id: 't-1' };
     mockQuery
       .mockResolvedValueOnce({ rows: [before] }) // SELECT before
+      .mockResolvedValueOnce({ rows: [{ governance_mode: 'operational' }] }) // assertNotGoverned
       .mockResolvedValueOnce({ rows: [] }) // UPDATE
       .mockResolvedValueOnce({ rows: [after] }) // SELECT after
       .mockResolvedValueOnce({ rows: [{ base_id: 'b-1' }] }) // SELECT table
@@ -140,6 +141,7 @@ describe('MetadataService', () => {
     const before = { id: 'f-1', name: 'Field', table_id: 't-1' };
     mockQuery
       .mockResolvedValueOnce({ rows: [before] }) // SELECT before
+      .mockResolvedValueOnce({ rows: [{ governance_mode: 'operational' }] }) // assertNotGoverned
       .mockResolvedValueOnce({ rows: [] }) // DELETE
       .mockResolvedValueOnce({ rows: [{ base_id: 'b-1' }] }) // SELECT table
       .mockResolvedValueOnce({ rows: [{ schema_version: 5 }] }) // bumpSchemaVersion
@@ -152,16 +154,29 @@ describe('MetadataService', () => {
   // 9. createView → returns view
   it('createView returns view object', async () => {
     const viewRow = { id: 'mock-uuid-001', name: 'Kanban', view_type: 'kanban', table_id: 't-1' };
-    mockQuery
-      .mockResolvedValueOnce({ rows: [] }) // INSERT
-      .mockResolvedValueOnce({ rows: [viewRow] }) // SELECT view
-      .mockResolvedValueOnce({ rows: [{ base_id: 'b-1' }] }) // SELECT table
-      .mockResolvedValueOnce({ rows: [{ schema_version: 6 }] }) // bumpSchemaVersion
-      .mockResolvedValueOnce({ rows: [] }); // bumpSchemaVersion INSERT
+    mockQuery.mockImplementation((sql: string) => {
+      if (typeof sql === 'string' && sql.includes('INSERT INTO tp_views') && sql.includes('config')) {
+        return Promise.resolve({ rows: [] });
+      }
+      if (typeof sql === 'string' && sql.includes('SELECT * FROM tp_views WHERE id')) {
+        return Promise.resolve({ rows: [viewRow] });
+      }
+      if (typeof sql === 'string' && sql.includes('SELECT base_id FROM tp_tables')) {
+        return Promise.resolve({ rows: [{ base_id: 'b-1' }] });
+      }
+      if (typeof sql === 'string' && sql.includes('schema_version = schema_version + 1')) {
+        return Promise.resolve({ rows: [{ schema_version: 6 }] });
+      }
+      if (typeof sql === 'string' && sql.includes('tp_schema_versions')) {
+        return Promise.resolve({ rows: [] });
+      }
+      return Promise.resolve({ rows: [] });
+    });
 
     const result = await metadataService.createView('t-1', 'Kanban', 'kanban', {}, 'user-1');
-    expect(result.name).toBe('Kanban');
-    expect(result.view_type).toBe('kanban');
+    expect(result).not.toBeNull();
+    expect(result?.name).toBe('Kanban');
+    expect(result?.view_type).toBe('kanban');
   });
 
   // 10. Schema versioning → version increments after createTable, createField

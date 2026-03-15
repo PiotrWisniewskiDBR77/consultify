@@ -215,4 +215,179 @@ describe('financialStatementService canonical layer', () => {
     ]);
     expect(mapped.every((line) => line.mappingReason === 'cash_flow_scope_match')).toBe(true);
   });
+
+  it('detects BS equation mismatch when Assets ≠ Liabilities + Equity', async () => {
+    const { validateStatement } = await import(
+      '../../../../server/src/services/financialStatementService.js'
+    );
+
+    const result = validateStatement(
+      [
+        { canonicalLineId: 'fsl-bs-total-assets', value: 1000 },
+        { canonicalLineId: 'fsl-bs-total-liabilities', value: 400 },
+        { canonicalLineId: 'fsl-bs-equity', value: 500 },
+        { canonicalLineId: 'fsl-bs-current-assets', value: 300 },
+        { canonicalLineId: 'fsl-bs-noncurrent-assets', value: 700 },
+      ],
+      'BS'
+    );
+
+    expect(result.messages.some((m) => m.code === 'BS_EQUATION_MISMATCH')).toBe(true);
+  });
+
+  it('passes BS equation check when Assets = Liabilities + Equity', async () => {
+    const { validateStatement } = await import(
+      '../../../../server/src/services/financialStatementService.js'
+    );
+
+    const result = validateStatement(
+      [
+        { canonicalLineId: 'fsl-bs-total-assets', value: 1000 },
+        { canonicalLineId: 'fsl-bs-total-liabilities', value: 400 },
+        { canonicalLineId: 'fsl-bs-equity', value: 600 },
+        { canonicalLineId: 'fsl-bs-current-assets', value: 300 },
+        { canonicalLineId: 'fsl-bs-noncurrent-assets', value: 700 },
+      ],
+      'BS'
+    );
+
+    expect(result.messages.some((m) => m.code === 'BS_EQUATION_OK')).toBe(true);
+    expect(result.messages.some((m) => m.code === 'BS_EQUATION_MISMATCH')).toBe(false);
+  });
+
+  it('detects asset sub-component mismatch', async () => {
+    const { validateStatement } = await import(
+      '../../../../server/src/services/financialStatementService.js'
+    );
+
+    const result = validateStatement(
+      [
+        { canonicalLineId: 'fsl-bs-total-assets', value: 1000 },
+        { canonicalLineId: 'fsl-bs-total-liabilities', value: 400 },
+        { canonicalLineId: 'fsl-bs-equity', value: 600 },
+        { canonicalLineId: 'fsl-bs-current-assets', value: 200 },
+        { canonicalLineId: 'fsl-bs-noncurrent-assets', value: 500 },
+      ],
+      'BS'
+    );
+
+    expect(result.messages.some((m) => m.code === 'BS_ASSETS_SUBCOMPONENT_MISMATCH')).toBe(true);
+  });
+
+  it('persists learned aliases via learnStatementAliases', async () => {
+    mockDb.all.mockImplementation(async (sql: string) => {
+      if (sql.includes('PRAGMA table_info')) {
+        return [
+          { name: 'id' },
+          { name: 'organization_id' },
+          { name: 'statement_line_id' },
+          { name: 'statement_type' },
+          { name: 'alias_text' },
+          { name: 'normalized_alias' },
+          { name: 'template_family' },
+          { name: 'source' },
+          { name: 'usage_count' },
+          { name: 'created_by' },
+        ];
+      }
+      return [];
+    });
+    mockDb.run.mockResolvedValue({ success: true });
+
+    const { learnStatementAliases } = await import(
+      '../../../../server/src/services/financialStatementService.js'
+    );
+
+    await learnStatementAliases({
+      organizationId: 'org-test',
+      statementType: 'BS',
+      templateFamily: 'apator',
+      values: [
+        { canonicalLineId: 'fsl-bs-total-assets', originalLabel: 'Aktywa razem' },
+        { canonicalLineId: 'fsl-bs-equity', originalLabel: 'Kapitał własny ogółem' },
+      ],
+      createdBy: 'test-user',
+    });
+
+    const insertCalls = mockDb.run.mock.calls.filter((call) =>
+      String(call[0]).includes('INSERT INTO financial_statement_line_aliases')
+    );
+    expect(insertCalls.length).toBe(2);
+
+    const firstInsert = insertCalls[0];
+    const params = firstInsert[1];
+    expect(params).toEqual(
+      expect.arrayContaining([
+        'org-test',
+        'fsl-bs-total-assets',
+        'BS',
+      ])
+    );
+
+    const secondInsert = insertCalls[1];
+    expect(secondInsert[1]).toEqual(
+      expect.arrayContaining([
+        'fsl-bs-equity',
+      ])
+    );
+  });
+
+  it('learned aliases boost heuristic score on next mapping', async () => {
+    const learnedAliases = [
+      {
+        statement_line_id: 'fsl-bs-total-assets',
+        normalized_alias: 'sumaaktywow',
+        template_family: '',
+      },
+    ];
+
+    mockDb.all.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM financial_statement_lines')) {
+        return [
+          {
+            id: 'fsl-bs-total-assets',
+            statement_type: 'BS',
+            line_code: 'TOTAL_ASSETS',
+            line_name: 'Total assets',
+            line_name_pl: 'Aktywa razem',
+          },
+          {
+            id: 'fsl-bs-equity',
+            statement_type: 'BS',
+            line_code: 'EQUITY',
+            line_name: 'Equity',
+            line_name_pl: 'Kapitał własny',
+          },
+        ];
+      }
+      if (sql.includes('financial_statement_line_aliases')) {
+        return learnedAliases;
+      }
+      if (sql.includes('information_schema.columns')) {
+        return [];
+      }
+      if (sql.includes('PRAGMA table_info')) {
+        return [
+          { name: 'id' },
+          { name: 'organization_id' },
+          { name: 'statement_line_id' },
+          { name: 'normalized_alias' },
+          { name: 'template_family' },
+        ];
+      }
+      return [];
+    });
+
+    const { autoMapLines } = await import(
+      '../../../../server/src/services/financialStatementService.js'
+    );
+
+    const mapped = await autoMapLines(
+      [{ originalLabel: 'Suma aktywów', value: 5000, confidence: 0.5 }],
+      'BS',
+      { organizationId: 'org-test', templateFamily: '' }
+    );
+
+    expect(mapped[0].suggestedCanonicalId).toBe('fsl-bs-total-assets');
+  });
 });
