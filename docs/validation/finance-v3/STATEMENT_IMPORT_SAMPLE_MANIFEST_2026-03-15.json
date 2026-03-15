@@ -1,0 +1,101 @@
+[
+  {
+    "label": "Apator SA Raport R 2024",
+    "filePath": "knowledge/Finanse/Apator SA Raport R 2024.pdf",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  },
+  {
+    "label": "Grupa Apator Raport RS 2023",
+    "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2023.pdf",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  },
+  {
+    "label": "Grupa Apator Raport RS 2024",
+    "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2024.pdf",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  },
+  {
+    "label": "Raport skonsolidowany Apator",
+    "filePath": "knowledge/Finanse/Raport-skonsolidowany-Apator.pdf",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  },
+  {
+    "label": "BMW Group Financial Statements 2024",
+    "filePath": "knowledge/Finanse/Samples/BMW-Group-Financial-Statements-2024-en.pdf",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  },
+  {
+    "label": "KGHM SRR 2024",
+    "filePath": "knowledge/Finanse/Samples/Skonsolidowane sprawozdanie finansowe KGHM SRR_2024.pdf",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  },
+  {
+    "label": "bp Annual Report 2025",
+    "filePath": "knowledge/Finanse/Samples/bp-annual-report-and-form-20f-2025.pdf",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  },
+  {
+    "label": "Coca-Cola 10-K 2025",
+    "filePath": "knowledge/Finanse/Samples/nyse-ko-2025-10K-25644916.pdf",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  },
+  {
+    "label": "Tesla 10-K 2024",
+    "filePath": "knowledge/Finanse/Samples/tsla-20241231-gen.pdf",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  },
+  {
+    "label": "BDG 2026 V1 XLSX",
+    "filePath": "knowledge/Finanse/BDG 2026 V1.xlsx",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  },
+  {
+    "label": "BDG 2026 V1 XLS",
+    "filePath": "knowledge/Finanse/BDG 2026 V1 old.xls",
+    "targets": [
+      { "statementType": "BS" },
+      { "statementType": "P&L" },
+      { "statementType": "CF" }
+    ]
+  }
+]

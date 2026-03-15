@@ -1,0 +1,4077 @@
+[
+  {
+    "label": "BMW Group Financial Statements 2024",
+    "filePath": "knowledge/Finanse/Samples/BMW-Group-Financial-Statements-2024-en.pdf",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "currency": "EUR",
+    "scaling": "millions",
+    "textLength": 289394,
+    "targets": [
+      {
+        "statementType": "BS",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 33,
+        "mappedLineCount": 22,
+        "nonFinancialLineCount": 1,
+        "coveragePct": 67,
+        "readinessStatus": "recoverable",
+        "readinessScore": 54,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES",
+          "MISSING_REQUIRED_CANONICAL_LINES"
+        ],
+        "warnings": [
+          "BS_EQUATION_INCOMPLETE",
+          "LOW_MAPPING_COVERAGE",
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "A S S E T S Intangible assets 21 2024",
+            "canonicalId": "fsl-bs-intangibles",
+            "value": 20.22
+          },
+          {
+            "label": "Property, plant and equipment 22 2024",
+            "canonicalId": "fsl-bs-ppe",
+            "value": 39.581
+          },
+          {
+            "label": "Investments accounted for using the equity method 2024",
+            "canonicalId": "fsl-bs-equity-method-investments",
+            "value": 24553
+          },
+          {
+            "label": "Receivables from sales financing 25 2024",
+            "canonicalId": "fsl-bs-ar",
+            "value": 55.149
+          },
+          {
+            "label": "Financial assets 2024",
+            "canonicalId": "fsl-bs-lt-financial-assets",
+            "value": 26834
+          },
+          {
+            "label": "Deferred tax 13 2024",
+            "canonicalId": "fsl-bs-other-non-current-assets-deferred-tax",
+            "value": 3.244
+          },
+          {
+            "label": "Non-current assets 2024",
+            "canonicalId": "fsl-bs-fixed",
+            "value": 171.345
+          },
+          {
+            "label": "Inventories 29 2024",
+            "canonicalId": "fsl-bs-inventory",
+            "value": 24.387
+          },
+          {
+            "label": "Trade receivables 30 2024",
+            "canonicalId": "fsl-bs-ar-trade",
+            "value": 2.834
+          },
+          {
+            "label": "Current tax 27 2024",
+            "canonicalId": "fsl-bs-other-current-liabilities-tax",
+            "value": 1.316
+          },
+          {
+            "label": "Cash and cash equivalents 2024",
+            "canonicalId": "fsl-bs-cash",
+            "value": 19.287
+          },
+          {
+            "label": "Current assets 2024",
+            "canonicalId": "fsl-bs-current-assets",
+            "value": 96.387
+          },
+          {
+            "label": "Total assets 2024",
+            "canonicalId": "fsl-bs-total-assets",
+            "value": 267.732
+          },
+          {
+            "label": "Accumulated other equity 31 2024",
+            "canonicalId": "fsl-bs-other-equity-reserves",
+            "value": 2.09
+          },
+          {
+            "label": "Treasury shares 31 2024",
+            "canonicalId": "fsl-bs-treasury-shares",
+            "value": 1.502
+          },
+          {
+            "label": "Equity attributable to shareholders of BMW AG 31 2024",
+            "canonicalId": "fsl-bs-equity-parent",
+            "value": 92.315
+          },
+          {
+            "label": "Non-controlling interests 2024",
+            "canonicalId": "fsl-bs-minority-interest",
+            "value": 2.688
+          },
+          {
+            "label": "Equity 2024",
+            "canonicalId": "fsl-bs-equity",
+            "value": 95.003
+          },
+          {
+            "label": "Pension provisions 2024",
+            "canonicalId": "fsl-bs-provisions",
+            "value": 33222
+          },
+          {
+            "label": "Other liabilities 37 2024",
+            "canonicalId": "fsl-bs-other-current-liabilities",
+            "value": 7.597
+          },
+          {
+            "label": "Non-current provisions and liabilities 2024",
+            "canonicalId": "fsl-bs-other-non-current-liabilities-provisions",
+            "value": 85.04
+          },
+          {
+            "label": "Trade payables 38 2024",
+            "canonicalId": "fsl-bs-ap",
+            "value": 14.126
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Leased products 23 2024",
+            "value": 48.838,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other investments 2024",
+            "value": 1.099,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other assets 28 2024",
+            "value": 1.827,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Financial assets 26 2024",
+            "value": 2.565,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Capital reserves 31 2024",
+            "value": 2.456,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Revenue reserves 31 2024",
+            "value": 92.812,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other provisions 34 2024",
+            "value": 7.83,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Financial liabilities 36 2024",
+            "value": 66.77,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current tax 35 2024",
+            "value": 1.131,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Current provisions and liabilities 2024",
+            "value": 87.689,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total equity and liabilities 2024",
+            "value": 267.732,
+            "reason": "duplicate_candidate_conflict"
+          }
+        ]
+      },
+      {
+        "statementType": "P&L",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 58,
+        "mappedLineCount": 22,
+        "nonFinancialLineCount": 1,
+        "coveragePct": 38,
+        "readinessStatus": "recoverable",
+        "readinessScore": 52,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES"
+        ],
+        "warnings": [
+          "LOW_MAPPING_COVERAGE"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Revenues 7 2024",
+            "canonicalId": "fsl-pl-revenue",
+            "value": 142.38
+          },
+          {
+            "label": "Cost of sales 8 2024",
+            "canonicalId": "fsl-pl-cogs",
+            "value": 119.485
+          },
+          {
+            "label": "Gross profit 2024",
+            "canonicalId": "fsl-pl-gross",
+            "value": 22.895
+          },
+          {
+            "label": "Selling and administrative expenses 9 2024",
+            "canonicalId": "fsl-pl-gna",
+            "value": 11.296
+          },
+          {
+            "label": "Other operating income 10 2024",
+            "canonicalId": "fsl-pl-ebit",
+            "value": 1.411
+          },
+          {
+            "label": "Other operating expenses 10 2024",
+            "canonicalId": "fsl-pl-other-opex",
+            "value": 1.501
+          },
+          {
+            "label": "Interest and similar income 2024",
+            "canonicalId": "fsl-pl-fin-income",
+            "value": 11655
+          },
+          {
+            "label": "Interest and similar expenses 11 2024",
+            "canonicalId": "fsl-pl-fin-expense",
+            "value": 573
+          },
+          {
+            "label": "Other financial result 12 2024",
+            "canonicalId": "fsl-pl-other-fin",
+            "value": 606
+          },
+          {
+            "label": "Profit/loss before tax 2024",
+            "canonicalId": "fsl-pl-ebt",
+            "value": 10.971
+          },
+          {
+            "label": "Income taxes 13 2024",
+            "canonicalId": "fsl-pl-tax",
+            "value": 3.293
+          },
+          {
+            "label": "Net profit/loss 2024",
+            "canonicalId": "fsl-pl-net",
+            "value": 7.678
+          },
+          {
+            "label": "Attributable to non-controlling interests 2024",
+            "canonicalId": "fsl-pl-net-minority",
+            "value": 388875
+          },
+          {
+            "label": "Attributable to shareholders of the BMW AG 2024",
+            "canonicalId": "fsl-pl-net-parent",
+            "value": 7.29
+          },
+          {
+            "label": "Items that can be reclassified to the income statement in the future 2024",
+            "canonicalId": "fsl-pl-oci-reclassifiable",
+            "value": 592
+          },
+          {
+            "label": "Other comprehensive income for the period after tax 19 2024",
+            "canonicalId": "fsl-pl-oci-total",
+            "value": 340
+          },
+          {
+            "label": "Total comprehensive income 2024",
+            "canonicalId": "fsl-pl-comprehensive-income",
+            "value": 7.338
+          },
+          {
+            "label": "A S S E T S Intangible assets 21 2024",
+            "canonicalId": "fsl-pl-depreciation-intangibles",
+            "value": 20.22
+          },
+          {
+            "label": "Property, plant and equipment 22 2024",
+            "canonicalId": "fsl-pl-depreciation-ppe",
+            "value": 39.581
+          },
+          {
+            "label": "Deferred tax 13 2024",
+            "canonicalId": "fsl-pl-tax-deferred",
+            "value": 3.244
+          },
+          {
+            "label": "Current tax 27 2024",
+            "canonicalId": "fsl-pl-tax-current",
+            "value": 1.316
+          },
+          {
+            "label": "Equity 2024",
+            "canonicalId": "fsl-pl-equity-method-income",
+            "value": 95.003
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Profit/loss before financial result 2024",
+            "value": 11.509,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Result from equity accounted investments 24 – 14 2024",
+            "value": 159,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Financial result 2024",
+            "value": 538,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Remeasurement of the net liability for defined benefit pension plans 2024",
+            "value": 33302,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Items not expected to be reclassified to the income statement in the future 2024",
+            "value": 252,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Derivative financial instruments 2024",
+            "value": 3.306,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Currency translation foreign operations 2024",
+            "value": 1.108,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total comprehensive income attributable to shareholders of BMW AG 2024",
+            "value": 7.014,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Leased products 23 2024",
+            "value": 48.838,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Investments accounted for using the equity method 2024",
+            "value": 24553,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Other investments 2024",
+            "value": 1.099,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Receivables from sales financing 25 2024",
+            "value": 55.149,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Financial assets 2024",
+            "value": 26834,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other assets 28 2024",
+            "value": 1.827,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Non-current assets 2024",
+            "value": 171.345,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Inventories 29 2024",
+            "value": 24.387,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Trade receivables 30 2024",
+            "value": 2.834,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Financial assets 26 2024",
+            "value": 2.565,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Cash and cash equivalents 2024",
+            "value": 19.287,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Current assets 2024",
+            "value": 96.387,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total assets 2024",
+            "value": 267.732,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Capital reserves 31 2024",
+            "value": 2.456,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Revenue reserves 31 2024",
+            "value": 92.812,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Accumulated other equity 31 2024",
+            "value": 2.09,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Treasury shares 31 2024",
+            "value": 1.502,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Equity attributable to shareholders of BMW AG 31 2024",
+            "value": 92.315,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Non-controlling interests 2024",
+            "value": 2.688,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pension provisions 2024",
+            "value": 33222,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other provisions 34 2024",
+            "value": 7.83,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Financial liabilities 36 2024",
+            "value": 66.77,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other liabilities 37 2024",
+            "value": 7.597,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Non-current provisions and liabilities 2024",
+            "value": 85.04,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current tax 35 2024",
+            "value": 1.131,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Trade payables 38 2024",
+            "value": 14.126,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current provisions and liabilities 2024",
+            "value": 87.689,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total equity and liabilities 2024",
+            "value": 267.732,
+            "reason": "duplicate_candidate_conflict"
+          }
+        ]
+      },
+      {
+        "statementType": "CF",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 93,
+        "mappedLineCount": 23,
+        "nonFinancialLineCount": 1,
+        "coveragePct": 25,
+        "readinessStatus": "recoverable",
+        "readinessScore": 42,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES"
+        ],
+        "warnings": [
+          "LOW_MAPPING_COVERAGE"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Other operating income 10 2024",
+            "canonicalId": "fsl-cf-operating-dividend-income",
+            "value": 1.411
+          },
+          {
+            "label": "Other operating expenses 10 2024",
+            "canonicalId": "fsl-cf-operating-other-adj",
+            "value": 1.501
+          },
+          {
+            "label": "Interest and similar income 2024",
+            "canonicalId": "fsl-cf-operating-interest-income",
+            "value": 11655
+          },
+          {
+            "label": "Profit/loss before tax 2024",
+            "canonicalId": "fsl-cf-operating-net-income",
+            "value": 10.971
+          },
+          {
+            "label": "A S S E T S Intangible assets 21 2024",
+            "canonicalId": "fsl-cf-operating-depreciation-intangibles",
+            "value": 20.22
+          },
+          {
+            "label": "Property, plant and equipment 22 2024",
+            "canonicalId": "fsl-cf-capex",
+            "value": 39.581
+          },
+          {
+            "label": "Equity 2024",
+            "canonicalId": "fsl-cf-operating-equity-method",
+            "value": 95.003
+          },
+          {
+            "label": "Income taxes paid 2024",
+            "canonicalId": "fsl-cf-taxes-paid",
+            "value": 3.794
+          },
+          {
+            "label": "Other non-cash income and expense items 2024",
+            "canonicalId": "fsl-cf-other-investing",
+            "value": 339179
+          },
+          {
+            "label": "Changes in working capital 2024",
+            "canonicalId": "fsl-cf-change-wc",
+            "value": 396
+          },
+          {
+            "label": "Change in trade receivables 2024",
+            "canonicalId": "fsl-cf-change-wc-ar",
+            "value": 1.379
+          },
+          {
+            "label": "Change in trade payables 2024",
+            "canonicalId": "fsl-cf-change-wc-ap",
+            "value": 1.647
+          },
+          {
+            "label": "Change in provisions 2024",
+            "canonicalId": "fsl-cf-change-wc-provisions",
+            "value": 726
+          },
+          {
+            "label": "Cash inflow/outflow from operating activities 2024",
+            "canonicalId": "fsl-cf-operating",
+            "value": 7.566
+          },
+          {
+            "label": "Investments in marketable securities and investment funds 2024",
+            "canonicalId": "fsl-cf-investing-subsidiaries",
+            "value": 1.062
+          },
+          {
+            "label": "Cash inflow/outflow from investing activities 2024",
+            "canonicalId": "fsl-cf-investing",
+            "value": 11.369
+          },
+          {
+            "label": "Payment of dividends to shareholders of BMW AG 2024",
+            "canonicalId": "fsl-cf-debt-repayment",
+            "value": 3.781
+          },
+          {
+            "label": "Interest paid * 2024",
+            "canonicalId": "fsl-cf-interest-paid",
+            "value": 196
+          },
+          {
+            "label": "Proceeds from issue of non-current financial liabilities 2024",
+            "canonicalId": "fsl-cf-debt-drawdown",
+            "value": 30.025
+          },
+          {
+            "label": "Change in other financial liabilities 2024",
+            "canonicalId": "fsl-cf-change-wc-other",
+            "value": 3.937
+          },
+          {
+            "label": "Cash inflow/outflow from financing activities 2024",
+            "canonicalId": "fsl-cf-financing",
+            "value": 5.766
+          },
+          {
+            "label": "Effect of exchange rate on cash and cash equivalents – 3 2024",
+            "canonicalId": "fsl-cf-opening-cash",
+            "value": 705
+          },
+          {
+            "label": "Change in cash and cash equivalents 2024",
+            "canonicalId": "fsl-cf-net-change-cash",
+            "value": 1.96
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Revenues 7 2024",
+            "value": 142.38,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Cost of sales 8 2024",
+            "value": 119.485,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Gross profit 2024",
+            "value": 22.895,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Selling and administrative expenses 9 2024",
+            "value": 11.296,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Profit/loss before financial result 2024",
+            "value": 11.509,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Result from equity accounted investments 24 – 14 2024",
+            "value": 159,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Interest and similar expenses 11 2024",
+            "value": 573,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other financial result 12 2024",
+            "value": 606,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Financial result 2024",
+            "value": 538,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Income taxes 13 2024",
+            "value": 3.293,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Net profit/loss 2024",
+            "value": 7.678,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Attributable to non-controlling interests 2024",
+            "value": 388875,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Attributable to shareholders of the BMW AG 2024",
+            "value": 7.29,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Remeasurement of the net liability for defined benefit pension plans 2024",
+            "value": 33302,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Items not expected to be reclassified to the income statement in the future 2024",
+            "value": 252,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Derivative financial instruments 2024",
+            "value": 3.306,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Currency translation foreign operations 2024",
+            "value": 1.108,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Items that can be reclassified to the income statement in the future 2024",
+            "value": 592,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Other comprehensive income for the period after tax 19 2024",
+            "value": 340,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total comprehensive income 2024",
+            "value": 7.338,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total comprehensive income attributable to shareholders of BMW AG 2024",
+            "value": 7.014,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Leased products 23 2024",
+            "value": 48.838,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Investments accounted for using the equity method 2024",
+            "value": 24553,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Other investments 2024",
+            "value": 1.099,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Receivables from sales financing 25 2024",
+            "value": 55.149,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Financial assets 2024",
+            "value": 26834,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Deferred tax 13 2024",
+            "value": 3.244,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other assets 28 2024",
+            "value": 1.827,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Non-current assets 2024",
+            "value": 171.345,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Inventories 29 2024",
+            "value": 24.387,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Trade receivables 30 2024",
+            "value": 2.834,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Financial assets 26 2024",
+            "value": 2.565,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current tax 27 2024",
+            "value": 1.316,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Cash and cash equivalents 2024",
+            "value": 19.287,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Current assets 2024",
+            "value": 96.387,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total assets 2024",
+            "value": 267.732,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Capital reserves 31 2024",
+            "value": 2.456,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Revenue reserves 31 2024",
+            "value": 92.812,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Accumulated other equity 31 2024",
+            "value": 2.09,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Treasury shares 31 2024",
+            "value": 1.502,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Equity attributable to shareholders of BMW AG 31 2024",
+            "value": 92.315,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Non-controlling interests 2024",
+            "value": 2.688,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pension provisions 2024",
+            "value": 33222,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other provisions 34 2024",
+            "value": 7.83,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Financial liabilities 36 2024",
+            "value": 66.77,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other liabilities 37 2024",
+            "value": 7.597,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Non-current provisions and liabilities 2024",
+            "value": 85.04,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current tax 35 2024",
+            "value": 1.131,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Trade payables 38 2024",
+            "value": 14.126,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current provisions and liabilities 2024",
+            "value": 87.689,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total equity and liabilities 2024",
+            "value": 267.732,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Interest received * 2024",
+            "value": 644683,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other interest and similar income/expenses * 2024",
+            "value": 433,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Depreciation and amortisation of tangible and intangible assets 2024",
+            "value": 8.65,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Result from equity accounted investments 2024",
+            "value": 14159,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Change in leased products 2024",
+            "value": 5.231,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Change in receivables from sales financing 2024",
+            "value": 4.144,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Change in inventories 2024",
+            "value": 128,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Change in other operating assets and liabilities 2024",
+            "value": 1.672,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total investment in intangible assets and property, plant and equipment 2024",
+            "value": 12.205,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Proceeds from subsidies for intangible assets and property, plant and equipment 2024",
+            "value": 192,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Proceeds from the disposal of intangible assets and property, plant and equipment 2024",
+            "value": 21116,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Expenditure for investment assets 2024",
+            "value": 162,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Proceeds from the disposal of marketable securities and investment funds 2024",
+            "value": 1.834,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Treasury shares acquired 2024",
+            "value": 1.002,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Payment of dividends to non-controlling interests 2024",
+            "value": 1.013,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Intragroup financing and equity transactions – 2024",
+            "value": 2.001,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Repayment of non-current financial liabilities 2024",
+            "value": 22.182,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Cash and cash equivalents as at 1 January 2024",
+            "value": 17.327,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Cash and cash equivalents as at 31 December 2024",
+            "value": 19.287,
+            "reason": "duplicate_candidate_conflict"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "label": "KGHM SRR 2024",
+    "filePath": "knowledge/Finanse/Samples/Skonsolidowane sprawozdanie finansowe KGHM SRR_2024.pdf",
+    "detectedStatementType": "CF",
+    "containedStatementTypes": [
+      "CF",
+      "BS",
+      "P&L"
+    ],
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "currency": "PLN",
+    "scaling": "millions",
+    "textLength": 511416,
+    "targets": [
+      {
+        "statementType": "BS",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 24,
+        "mappedLineCount": 16,
+        "nonFinancialLineCount": 0,
+        "coveragePct": 67,
+        "readinessStatus": "recoverable",
+        "readinessScore": 40,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES",
+          "MISSING_REQUIRED_CANONICAL_LINES",
+          "VALIDATION_HARD_FAIL"
+        ],
+        "warnings": [
+          "BS_EQUATION_MISMATCH",
+          "BS_CURRENT_LIABILITIES_EXCEED_TOTAL",
+          "LOW_MAPPING_COVERAGE",
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Rzeczowe i niematerialne aktywa górnicze i hutnicze 2024",
+            "canonicalId": "fsl-bs-intangibles",
+            "value": 26880
+          },
+          {
+            "label": "Pozostałe rzeczowe aktywa trwałe 2024",
+            "canonicalId": "fsl-bs-ppe",
+            "value": 3087
+          },
+          {
+            "label": "Aktywa trwałe 2024",
+            "canonicalId": "fsl-bs-fixed",
+            "value": 42285
+          },
+          {
+            "label": "Zapasy 2024",
+            "canonicalId": "fsl-bs-inventory",
+            "value": 8063
+          },
+          {
+            "label": "Aktywa obrotowe 2024",
+            "canonicalId": "fsl-bs-current-assets",
+            "value": 11607
+          },
+          {
+            "label": "RAZEM AKTYWA 2024",
+            "canonicalId": "fsl-bs-total-assets",
+            "value": 53892
+          },
+          {
+            "label": "niż z tytułu wyceny instrumentów finansowych 2024",
+            "canonicalId": "fsl-bs-ar",
+            "value": 1778
+          },
+          {
+            "label": "Kapitał własny akcjonariuszy Jednostki Dominującej 2024",
+            "canonicalId": "fsl-bs-equity-parent",
+            "value": 30990
+          },
+          {
+            "label": "Kapitał własny 2024",
+            "canonicalId": "fsl-bs-equity",
+            "value": 31058
+          },
+          {
+            "label": "Zobowiązania z tytułu świadczeń pracowniczych 2024",
+            "canonicalId": "fsl-bs-employee-benefits-st",
+            "value": 2784
+          },
+          {
+            "label": "Rezerwy na koszty likwidacji kopalń i innych obiektów technologicznych 2024",
+            "canonicalId": "fsl-bs-total-liabilities",
+            "value": 2084
+          },
+          {
+            "label": "Zobowiązania długoterminowe 2024",
+            "canonicalId": "fsl-bs-long-term-debt",
+            "value": 11828
+          },
+          {
+            "label": "Zobowiązania wobec dostawców i pozostałe 2024",
+            "canonicalId": "fsl-bs-other-current-liabilities",
+            "value": 5132
+          },
+          {
+            "label": "Pozostałe zobowiązania 2024",
+            "canonicalId": "fsl-bs-other-non-current-liabilities",
+            "value": 1061
+          },
+          {
+            "label": "Zobowiązania krótkoterminowe 2024",
+            "canonicalId": "fsl-bs-current-liabilities",
+            "value": 11006
+          },
+          {
+            "label": "Zobowiązanie długo i krótkoterminowe 2024",
+            "canonicalId": "fsl-bs-short-term-debt",
+            "value": 22834
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "AKTYWA Rzeczowe aktywa trwałe górnicze i hutnicze 2024",
+            "value": 24050,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Aktywa niematerialne górnicze i hutnicze 2024",
+            "value": 2830,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozostałe aktywa rzeczowe i niematerialne 2024",
+            "value": 3300,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zaangażowanie we wspólne przedsięwzięcia - udzielone pożyczki 2024",
+            "value": 9800,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Instrumenty finansowe razem 2024",
+            "value": 1726,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "ZOBOWIĄZANIA I KAPITAŁ WŁASNY Nota 2024",
+            "value": 8.2,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kapitał własny udziałowców niekontrolujących 2024",
+            "value": 68,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "RAZEM ZOBOWIĄZANIA I KAPITAŁ WŁASNY 2024",
+            "value": 53892,
+            "reason": "duplicate_candidate_conflict"
+          }
+        ]
+      },
+      {
+        "statementType": "P&L",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 15,
+        "mappedLineCount": 14,
+        "nonFinancialLineCount": 0,
+        "coveragePct": 93,
+        "readinessStatus": "recoverable",
+        "readinessScore": 84,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES",
+          "MISSING_REQUIRED_CANONICAL_LINES"
+        ],
+        "warnings": [
+          "PL_GROSS_MISMATCH",
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Przychody z umów z klientami 2024",
+            "canonicalId": "fsl-pl-revenue",
+            "value": 35320
+          },
+          {
+            "label": "Koszty sprzedanych produktów, towarów i materiałów 2024",
+            "canonicalId": "fsl-pl-cogs",
+            "value": -29348
+          },
+          {
+            "label": "Koszty sprzedaży i koszty ogólnego zarządu 2024",
+            "canonicalId": "fsl-pl-selling",
+            "value": -2205
+          },
+          {
+            "label": "Zysk/(strata) netto ze sprzedaży 2024",
+            "canonicalId": "fsl-pl-gross",
+            "value": 3767
+          },
+          {
+            "label": "Pozostałe koszty operacyjne, w tym: 2024",
+            "canonicalId": "fsl-pl-other-opex",
+            "value": -1118
+          },
+          {
+            "label": "straty z tytułu utraty wartości instrumentów finansowych ( 2024",
+            "canonicalId": "fsl-pl-impairment-receivables",
+            "value": 1
+          },
+          {
+            "label": "Koszty finansowe ( 2024",
+            "canonicalId": "fsl-pl-fin-expense",
+            "value": 516
+          },
+          {
+            "label": "Zysk/(strata) przed opodatkowaniem 2024",
+            "canonicalId": "fsl-pl-ebt",
+            "value": 4608
+          },
+          {
+            "label": "Podatek dochodowy 2024",
+            "canonicalId": "fsl-pl-tax",
+            "value": -1738
+          },
+          {
+            "label": "ZYSK/(STRATA) NETTO 2024",
+            "canonicalId": "fsl-pl-net",
+            "value": 2870
+          },
+          {
+            "label": "Zysk/(strata) netto przypadający: akcjonariuszom Jednostki Dominującej 2024",
+            "canonicalId": "fsl-pl-net-parent",
+            "value": 2868
+          },
+          {
+            "label": "Zysk/(strata) na akcję podstawowy i rozwodniony (w PLN) 2024",
+            "canonicalId": "fsl-pl-eps-basic",
+            "value": 14.34
+          },
+          {
+            "label": "Zyski/(straty) aktuarialne, po uwzględnieniu efektu podatkowego 2024",
+            "canonicalId": "fsl-pl-oci-actuarial",
+            "value": 271
+          },
+          {
+            "label": "ŁĄCZNE CAŁKOWITE DOCHODY 2024",
+            "canonicalId": "fsl-pl-comprehensive-income",
+            "value": 2726
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Łączne całkowite dochody przypadające: akcjonariuszom Jednostki Dominującej 2024",
+            "value": 2725,
+            "reason": "duplicate_candidate_conflict"
+          }
+        ]
+      },
+      {
+        "statementType": "CF",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 52,
+        "mappedLineCount": 17,
+        "nonFinancialLineCount": 4,
+        "coveragePct": 33,
+        "readinessStatus": "recoverable",
+        "readinessScore": 42,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES",
+          "MISSING_REQUIRED_CANONICAL_LINES"
+        ],
+        "warnings": [
+          "LOW_MAPPING_COVERAGE",
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Amortyzacja ujęta w wyniku finansowym 2024",
+            "canonicalId": "fsl-cf-operating-depreciation",
+            "value": 2006
+          },
+          {
+            "label": "Zysk z tytułu odwrócenia utraty wartości rzeczowych aktywów trwałych i wartości niematerialnych ( 2024",
+            "canonicalId": "fsl-cf-operating-gain-disposal",
+            "value": 74
+          },
+          {
+            "label": "Zmiana stanu pozostałych należności i zobowiązań innych niż kapitał obrotowy 2024",
+            "canonicalId": "fsl-cf-change-wc-other",
+            "value": 163
+          },
+          {
+            "label": "Podatek dochodowy, z tego: ( 2024",
+            "canonicalId": "fsl-cf-taxes-paid",
+            "value": 413
+          },
+          {
+            "label": "Zmiana stanu kapitału obrotowego, w tym: ( 2024",
+            "canonicalId": "fsl-cf-change-wc",
+            "value": 875
+          },
+          {
+            "label": "zmiana stanu zobowiązań handlowych objętych mechanizmami faktoringu odwrotnego 2024",
+            "canonicalId": "fsl-cf-change-wc-ap",
+            "value": -1007
+          },
+          {
+            "label": "Przepływy pieniężne netto z działalności operacyjnej 2024",
+            "canonicalId": "fsl-cf-operating",
+            "value": 4690
+          },
+          {
+            "label": "Wydatki na pozostałe rzeczowe aktywa trwałe i wartości niematerialne ( 2024",
+            "canonicalId": "fsl-cf-capex-intangibles",
+            "value": 679
+          },
+          {
+            "label": "Wydatki na nabycie jednostek zależnych ( 2024",
+            "canonicalId": "fsl-cf-capex",
+            "value": 63
+          },
+          {
+            "label": "Pozostałe ( 2024",
+            "canonicalId": "fsl-cf-operating-other-adj",
+            "value": 22
+          },
+          {
+            "label": "Przepływy pieniężne netto z działalności inwestycyjnej 2024",
+            "canonicalId": "fsl-cf-investing",
+            "value": -5506
+          },
+          {
+            "label": "Spłata odsetek, z tego: ( 2024",
+            "canonicalId": "fsl-cf-operating-interest-cost",
+            "value": 202
+          },
+          {
+            "label": "Wydatki z tytułu dywidend wypłaconych akcjonariuszom Jednostki Dominującej ( 2024",
+            "canonicalId": "fsl-cf-operating-dividend-income",
+            "value": 300
+          },
+          {
+            "label": "Przepływy pieniężne netto z działalności finansowej ( 2024",
+            "canonicalId": "fsl-cf-financing",
+            "value": 217
+          },
+          {
+            "label": "Stan środków pieniężnych i ich ekwiwalentów na początek okresu 2024",
+            "canonicalId": "fsl-cf-opening-cash",
+            "value": 1729
+          },
+          {
+            "label": "Stan środków pieniężnych i ich ekwiwalentów na koniec okresu, w tym: 2024",
+            "canonicalId": "fsl-cf-closing-cash",
+            "value": 715
+          },
+          {
+            "label": "Zobowiązania z tytułu świadczeń pracowniczych 2024",
+            "canonicalId": "fsl-cf-debt-drawdown",
+            "value": 2784
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Przepływy pieniężne z działalności operacyjnej Zysk/(strata) przed opodatkowaniem 2024",
+            "value": 4608,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Odsetki od pożyczek udzielonych wspólnemu przedsięwzięciu ( 2024",
+            "value": 552,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozostałe odsetki 2024",
+            "value": 183,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "i wartości niematerialnych 2024",
+            "value": 312,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "wspólnemu przedsięwzięciu ( 2024",
+            "value": 226,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "z działalności inwestycyjnej i wyceny środków pieniężnych ( 2024",
+            "value": 495,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "z działalności finansowej 2024",
+            "value": 84,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Razem wyłączenia przychodów i kosztów 2024",
+            "value": 1370,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "wydatki z tytułu zapłaty podatku dochodowego 2024",
+            "value": -1027,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Przepływy pieniężne z działalności inwestycyjnej Nota 2024",
+            "value": 9.1,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wydatki na aktywa finansowe przeznaczone na likwidację kopalń i innych obiektów technologicznych ( 2024",
+            "value": 45,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Udzielone zaliczki na rzeczowe aktywa trwałe i wartości niematerialne ( 2024",
+            "value": 31,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wpływy z tytułu instrumentów pochodnych związanych ze źródłami finansowania zewnętrznego 2024",
+            "value": 64,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wydatki z tytułu instrumentów pochodnych związanych ze źródłami finansowania zewnętrznego ( 2024",
+            "value": 75,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "od zobowiązań handlowych objętych mechanizmami faktoringu odwrotnego ( 2024",
+            "value": 164,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "AKTYWA Rzeczowe aktywa trwałe górnicze i hutnicze 2024",
+            "value": 24050,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Aktywa niematerialne górnicze i hutnicze 2024",
+            "value": 2830,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Rzeczowe i niematerialne aktywa górnicze i hutnicze 2024",
+            "value": 26880,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozostałe rzeczowe aktywa trwałe 2024",
+            "value": 3087,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozostałe aktywa rzeczowe i niematerialne 2024",
+            "value": 3300,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zaangażowanie we wspólne przedsięwzięcia - udzielone pożyczki 2024",
+            "value": 9800,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Instrumenty finansowe razem 2024",
+            "value": 1726,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "RAZEM AKTYWA 2024",
+            "value": 53892,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "ZOBOWIĄZANIA I KAPITAŁ WŁASNY Nota 2024",
+            "value": 8.2,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "niż z tytułu wyceny instrumentów finansowych 2024",
+            "value": 1778,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kapitał własny akcjonariuszy Jednostki Dominującej 2024",
+            "value": 30990,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Kapitał własny udziałowców niekontrolujących 2024",
+            "value": 68,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Kapitał własny 2024",
+            "value": 31058,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Rezerwy na koszty likwidacji kopalń i innych obiektów technologicznych 2024",
+            "value": 2084,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania długoterminowe 2024",
+            "value": 11828,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zobowiązania wobec dostawców i pozostałe 2024",
+            "value": 5132,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozostałe zobowiązania 2024",
+            "value": 1061,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zobowiązania krótkoterminowe 2024",
+            "value": 11006,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zobowiązanie długo i krótkoterminowe 2024",
+            "value": 22834,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "RAZEM ZOBOWIĄZANIA I KAPITAŁ WŁASNY 2024",
+            "value": 53892,
+            "reason": "no_alias_match"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "label": "bp Annual Report 2025",
+    "filePath": "knowledge/Finanse/Samples/bp-annual-report-and-form-20f-2025.pdf",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "currency": "EUR",
+    "scaling": "thousands",
+    "textLength": 1715848,
+    "targets": [
+      {
+        "statementType": "BS",
+        "selectedPeriodLabel": "2025",
+        "comparisonPeriodLabel": "2024",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 35,
+        "mappedLineCount": 14,
+        "nonFinancialLineCount": 4,
+        "coveragePct": 40,
+        "readinessStatus": "recoverable",
+        "readinessScore": 35,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES",
+          "MISSING_REQUIRED_CANONICAL_LINES"
+        ],
+        "warnings": [
+          "BS_EQUATION_INCOMPLETE",
+          "LOW_MAPPING_COVERAGE",
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Sales and other operating revenues 2025",
+            "canonicalId": "fsl-bs-ar-trade",
+            "value": 4.426
+          },
+          {
+            "label": "Other comprehensive income — — — Total comprehensive income 2025",
+            "canonicalId": "fsl-bs-other-equity-reserves",
+            "value": 812
+          },
+          {
+            "label": "Non-current assets 2025",
+            "canonicalId": "fsl-bs-fixed",
+            "value": 22.564
+          },
+          {
+            "label": "Total assets 2025",
+            "canonicalId": "fsl-bs-total-assets",
+            "value": 26.574
+          },
+          {
+            "label": "Total liabilities 2025",
+            "canonicalId": "fsl-bs-total-liabilities",
+            "value": 16.414
+          },
+          {
+            "label": "Less: non-controlling interests — 2025",
+            "canonicalId": "fsl-bs-minority-interest",
+            "value": 10.16
+          },
+          {
+            "label": "b Azule Energy includes cash and cash equivalents of $ 2025",
+            "canonicalId": "fsl-bs-cash",
+            "value": 596
+          },
+          {
+            "label": "c Azule Energy includes current financial liabilities of $ 2025",
+            "canonicalId": "fsl-bs-other-current-liabilities",
+            "value": 4.635
+          },
+          {
+            "label": "Current assets 2025",
+            "canonicalId": "fsl-bs-current-assets",
+            "value": 2.005
+          },
+          {
+            "label": "Current liabilities 2025",
+            "canonicalId": "fsl-bs-current-liabilities",
+            "value": 2.528
+          },
+          {
+            "label": "Non-current liabilities 2025",
+            "canonicalId": "fsl-bs-long-term-debt",
+            "value": 5.679
+          },
+          {
+            "label": "Group investment in joint ventures Group share of net assets (as above) 2025",
+            "canonicalId": "fsl-bs-rou-assets",
+            "value": 5.08
+          },
+          {
+            "label": "LNG, crude oil and oil products, natural gas, refinery operating costs, plant processing fees 2025",
+            "canonicalId": "fsl-bs-ppe",
+            "value": 2.23
+          },
+          {
+            "label": "charge and 2025",
+            "canonicalId": "fsl-bs-ar",
+            "value": 133
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Azule Energy 2025",
+            "value": 406504,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Profit (loss) before interest and taxation 2025",
+            "value": 1.266,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Finance costs 2025",
+            "value": 304512,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Profit (loss) before taxationa 2025",
+            "value": 962,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Taxation 2025",
+            "value": 150376,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Profit (loss) for the year 2025",
+            "value": 812,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Current assetsb 2025",
+            "value": 4.01,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Current liabilitiesc 2025",
+            "value": 5.056,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Non-current liabilitiesd 2025",
+            "value": 11.358,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Net assets 2025",
+            "value": 10.16,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "a Azule Energy includes depreciation and amortisation of $ 2025",
+            "value": 2.729,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "d Azule Energy includes non-current financial liabilities of $ 2025",
+            "value": 5.827,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Profit (loss) before taxation 2025",
+            "value": 481,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other comprehensive income — — — 2025",
+            "value": -3,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total comprehensive income 2025",
+            "value": 406,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Less: non-controlling interests 2025",
+            "value": -90,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Cumulative impairment charge 2025",
+            "value": -3.066,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Loans made by group companies to joint ventures 2025",
+            "value": -4,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "LNG, crude oil and oil products, natural gas 2025",
+            "value": 2.47,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "bp's share of net impairment charges recognized by joint ventures in 2025",
+            "value": 1.111,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "group's US offshore wind investments. 2025",
+            "value": 200,
+            "reason": "no_alias_match"
+          }
+        ]
+      },
+      {
+        "statementType": "P&L",
+        "selectedPeriodLabel": "2025",
+        "comparisonPeriodLabel": "2024",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 43,
+        "mappedLineCount": 15,
+        "nonFinancialLineCount": 5,
+        "coveragePct": 35,
+        "readinessStatus": "recoverable",
+        "readinessScore": 25,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES",
+          "MISSING_REQUIRED_CANONICAL_LINES"
+        ],
+        "warnings": [
+          "PL_NET_INCOME_OUTLIER",
+          "LOW_MAPPING_COVERAGE",
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Sales and other operating revenues 2025",
+            "canonicalId": "fsl-pl-revenue",
+            "value": 4.426
+          },
+          {
+            "label": "Finance costs 2025",
+            "canonicalId": "fsl-pl-fin-expense",
+            "value": 304512
+          },
+          {
+            "label": "Profit (loss) for the year 2025",
+            "canonicalId": "fsl-pl-net",
+            "value": 812
+          },
+          {
+            "label": "Other comprehensive income — — — Total comprehensive income 2025",
+            "canonicalId": "fsl-pl-oci-total",
+            "value": 812
+          },
+          {
+            "label": "Less: non-controlling interests — 2025",
+            "canonicalId": "fsl-pl-net-minority",
+            "value": 10.16
+          },
+          {
+            "label": "a Azule Energy includes depreciation and amortisation of $ 2025",
+            "canonicalId": "fsl-pl-depreciation-ppe",
+            "value": 2.729
+          },
+          {
+            "label": "b Azule Energy includes cash and cash equivalents of $ 2025",
+            "canonicalId": "fsl-pl-fin-income",
+            "value": 596
+          },
+          {
+            "label": "d Azule Energy includes non-current financial liabilities of $ 2025",
+            "canonicalId": "fsl-pl-depreciation",
+            "value": 5.827
+          },
+          {
+            "label": "Profit (loss) before taxation 2025",
+            "canonicalId": "fsl-pl-ebt",
+            "value": 481
+          },
+          {
+            "label": "Total comprehensive income 2025",
+            "canonicalId": "fsl-pl-comprehensive-income",
+            "value": 406
+          },
+          {
+            "label": "Group investment in joint ventures Group share of net assets (as above) 2025",
+            "canonicalId": "fsl-pl-depreciation-intangibles",
+            "value": 5.08
+          },
+          {
+            "label": "Group investment in associates Group share of net assets (as above) 2025",
+            "canonicalId": "fsl-pl-equity-method-income",
+            "value": 7.293
+          },
+          {
+            "label": "bp's share of impairment charges taken by associates in 2025",
+            "canonicalId": "fsl-pl-other-opex-impairment",
+            "value": 265
+          },
+          {
+            "label": "Current Non-current Current Non-current Equity investmentsa 2025",
+            "canonicalId": "fsl-pl-tax-current",
+            "value": 816
+          },
+          {
+            "label": "Other 2025",
+            "canonicalId": "fsl-pl-revenue-other",
+            "value": 98
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Azule Energy 2025",
+            "value": 406504,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Profit (loss) before interest and taxation 2025",
+            "value": 1.266,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Profit (loss) before taxationa 2025",
+            "value": 962,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Taxation 2025",
+            "value": 150376,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Non-current assets 2025",
+            "value": 22.564,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current assetsb 2025",
+            "value": 4.01,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total assets 2025",
+            "value": 26.574,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current liabilitiesc 2025",
+            "value": 5.056,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Non-current liabilitiesd 2025",
+            "value": 11.358,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total liabilities 2025",
+            "value": 16.414,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Net assets 2025",
+            "value": 10.16,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "c Azule Energy includes current financial liabilities of $ 2025",
+            "value": 4.635,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other comprehensive income — — — 2025",
+            "value": -3,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Current assets 2025",
+            "value": 2.005,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current liabilities 2025",
+            "value": 2.528,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Non-current liabilities 2025",
+            "value": 5.679,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Less: non-controlling interests 2025",
+            "value": -90,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Cumulative impairment charge 2025",
+            "value": -3.066,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Loans made by group companies to joint ventures 2025",
+            "value": -4,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "LNG, crude oil and oil products, natural gas 2025",
+            "value": 2.47,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "LNG, crude oil and oil products, natural gas, refinery operating costs, plant processing fees 2025",
+            "value": 2.23,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "bp's share of net impairment charges recognized by joint ventures in 2025",
+            "value": 1.111,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "charge and 2025",
+            "value": 133,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "group's US offshore wind investments. 2025",
+            "value": 200,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Profit before interest and taxation 2025",
+            "value": 1.94,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Other comprehensive income 2025",
+            "value": -4,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Crude oil and oil products, natural gas, transportation tariff 2025",
+            "value": 6.708,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "are related to various entities. bp has commitments amounting to $ 2025",
+            "value": 6.993,
+            "reason": "duplicate_candidate_conflict"
+          }
+        ]
+      },
+      {
+        "statementType": "CF",
+        "selectedPeriodLabel": "2025",
+        "comparisonPeriodLabel": "2024",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 108,
+        "mappedLineCount": 24,
+        "nonFinancialLineCount": 6,
+        "coveragePct": 22,
+        "readinessStatus": "recoverable",
+        "readinessScore": 41,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES"
+        ],
+        "warnings": [
+          "LOW_MAPPING_COVERAGE"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Intangible assets 15 2025",
+            "canonicalId": "fsl-cf-capex-intangibles",
+            "value": 8.197
+          },
+          {
+            "label": "Prepayments 2025",
+            "canonicalId": "fsl-cf-change-wc-prepaids",
+            "value": 3.422
+          },
+          {
+            "label": "Lease liabilities 28 2025",
+            "canonicalId": "fsl-cf-debt-drawdown-lease",
+            "value": 2.832
+          },
+          {
+            "label": "Equity bp shareholders’ equity 32 2025",
+            "canonicalId": "fsl-cf-operating-equity-method",
+            "value": 53.052
+          },
+          {
+            "label": "Operating activities Profit (loss) before taxation 2025",
+            "canonicalId": "fsl-cf-operating-net-income",
+            "value": 7.746
+          },
+          {
+            "label": "Depreciation, depletion and amortization 5 2025",
+            "canonicalId": "fsl-cf-operating-depreciation",
+            "value": 17.822
+          },
+          {
+            "label": "Impairment and (gain) loss on sale of businesses and fixed assets 4 2025",
+            "canonicalId": "fsl-cf-operating-gain-disposal",
+            "value": 5.05
+          },
+          {
+            "label": "Dividends received from joint ventures and associates 2025",
+            "canonicalId": "fsl-cf-dividends-received",
+            "value": 2.111
+          },
+          {
+            "label": "Interest paid 2025",
+            "canonicalId": "fsl-cf-interest-paid",
+            "value": -3.538
+          },
+          {
+            "label": "Income taxes paid 2025",
+            "canonicalId": "fsl-cf-taxes-paid",
+            "value": -6.589
+          },
+          {
+            "label": "Net cash provided by operating activities 2025",
+            "canonicalId": "fsl-cf-operating",
+            "value": 24.493
+          },
+          {
+            "label": "Investment in associates 2025",
+            "canonicalId": "fsl-cf-investing-subsidiaries",
+            "value": -110
+          },
+          {
+            "label": "Proceeds from disposals of businesses, net of cash disposed 4 2025",
+            "canonicalId": "fsl-cf-capex",
+            "value": 1.714
+          },
+          {
+            "label": "Proceeds from loan repayments 2025",
+            "canonicalId": "fsl-cf-debt-drawdown-bank",
+            "value": 173
+          },
+          {
+            "label": "Net cash used in investing activities 2025",
+            "canonicalId": "fsl-cf-investing",
+            "value": -11.504
+          },
+          {
+            "label": "Lease liability payments 2025",
+            "canonicalId": "fsl-cf-debt-repayment-lease",
+            "value": -3.091
+          },
+          {
+            "label": "Proceeds from long-term financing 2025",
+            "canonicalId": "fsl-cf-debt-drawdown",
+            "value": 2.724
+          },
+          {
+            "label": "Repayments of long-term financing 2025",
+            "canonicalId": "fsl-cf-debt-repayment",
+            "value": -5.695
+          },
+          {
+            "label": "Receipts relating to transactions involving non-controlling interests (other) 2025",
+            "canonicalId": "fsl-cf-other-receipts",
+            "value": 2.474
+          },
+          {
+            "label": "Dividends paid bp shareholders 10 2025",
+            "canonicalId": "fsl-cf-dividends",
+            "value": -5.059
+          },
+          {
+            "label": "Net cash provided by (used in) financing activities 2025",
+            "canonicalId": "fsl-cf-financing",
+            "value": -15.88
+          },
+          {
+            "label": "Increase (decrease) in cash and cash equivalents 2025",
+            "canonicalId": "fsl-cf-net-change-cash",
+            "value": -2.645
+          },
+          {
+            "label": "Cash and cash equivalents at beginning of year 2025",
+            "canonicalId": "fsl-cf-opening-cash",
+            "value": 39.269
+          },
+          {
+            "label": "Cash and cash equivalents at end of yeara 2025",
+            "canonicalId": "fsl-cf-closing-cash",
+            "value": 36.624
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "bp Annual Report and Form 20-F 2025",
+            "value": 155,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Profit (loss) for the year 2025",
+            "value": 1.295,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Cash flow hedges marked to market 2025",
+            "value": 30287,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Cash flow hedges reclassified to the income statement 2025",
+            "value": 30,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Costs of hedging marked to market 30 27 2025",
+            "value": -2,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Costs of hedging reclassified to the income statement 30 34 2025",
+            "value": -2,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Share of items relating to equity-accounted entities, net of tax 2025",
+            "value": 16,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Income tax relating to items that may be reclassified 9 2025",
+            "value": -22,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Remeasurements of equity investments 2025",
+            "value": -6,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Income tax relating to items that will not be reclassifieda 9 2025",
+            "value": 55734,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other comprehensive income 2025",
+            "value": 1.932,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total comprehensive income 2025",
+            "value": 3.227,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Attributable to bp shareholders 2025",
+            "value": 1.872,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Non-controlling interests 2025",
+            "value": 1.355,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "shareholders' equity Non-controlling interests Total equity Hybrid bonds Other interest At 1 January 2025",
+            "value": 48.229,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Profit for the year — — — — 55 2025",
+            "value": 55799,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other comprehensive income — 2025",
+            "value": 1.804,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total comprehensive income — 2025",
+            "value": 1.804,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Dividendsb — — — 2025",
+            "value": -5.087,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Cash flow hedges transferred to the balance sheet, net of tax — — 2025",
+            "value": -6,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Repurchase of ordinary share capital 2025",
+            "value": -3.558,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Share-based payments, net of tax 35 2025",
+            "value": 3.917,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Issue of perpetual hybrid bonds — — — — — 2025",
+            "value": 500,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Redemption of perpetual hybrid bonds, net of tax — — — — — 2025",
+            "value": -1.2,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Payments on perpetual hybrid bonds — 2025",
+            "value": -9,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Transactions involving non-controlling interests, net of tax — — — 2025",
+            "value": -65,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "At 31 December 2025",
+            "value": 48.264,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "At 1 January 2025",
+            "value": 48.013,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Profit for the year — — — 2025",
+            "value": 381381,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Repurchase of ordinary share capital — — — 2025",
+            "value": -7.302,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Share-based payments, net of tax 2025",
+            "value": 216,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Issue of perpetual hybrid bonds — — — 2025",
+            "value": -22,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Redemption of perpetual hybrid bonds, net of tax — — — — 9 9 2025",
+            "value": -1.3,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Payments on perpetual hybrid bonds — — — — — 2025",
+            "value": -610,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Non-current assets Property, plant and equipment 12 2025",
+            "value": 98.633,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Goodwill 14 2025",
+            "value": 10.3,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Investments in joint ventures 16 2025",
+            "value": 13.4,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Investments in associates 17 2025",
+            "value": 7.325,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other investments 2025",
+            "value": 18857,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Fixed assets 2025",
+            "value": 138.712,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Loans 2025",
+            "value": 1.991,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Trade and other receivables 20 2025",
+            "value": 2.376,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Derivative financial instruments 30 2025",
+            "value": 20.957,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Deferred tax assets 9 2025",
+            "value": 4.325,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Defined benefit pension plan surpluses 24 2025",
+            "value": 7.771,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Inventories 19 2025",
+            "value": 22.499,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current tax receivable 2025",
+            "value": 1.153,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Cash and cash equivalents 25 2025",
+            "value": 36.556,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Assets classified as held for sale 2 2025",
+            "value": 6.347,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total assets 2025",
+            "value": 278.526,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current liabilities Trade and other payables 22 2025",
+            "value": 56.843,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Accruals 2025",
+            "value": 5.572,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Finance debt 26 2025",
+            "value": 3.356,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current tax payable 2025",
+            "value": 1.262,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Provisions 23 2025",
+            "value": 4.709,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Liabilities directly associated with assets classified as held for sale 2 2025",
+            "value": 1.594,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Non-current liabilities Other payables 22 2025",
+            "value": 7.975,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Deferred tax liabilities 9 2025",
+            "value": 7.642,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Defined benefit pension plan and other post-employment benefit plan deficits 24 2025",
+            "value": 4.816,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total liabilities 2025",
+            "value": 204.526,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Net assets 2025",
+            "value": 74,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Non-controlling interests 32 2025",
+            "value": 20.948,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total equity 32 2025",
+            "value": 74,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Earnings from joint ventures and associates 2025",
+            "value": -618,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Interest receivable 2025",
+            "value": -1.352,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Interest received 2025",
+            "value": 1.223,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Finance costs 7 2025",
+            "value": 5.106,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Net finance expense relating to pensions and other post-employment benefits 2025",
+            "value": 24,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Share-based payments 2025",
+            "value": 1.077,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Net charge for provisions, less payments 2025",
+            "value": 1.294,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "(Increase) decrease in inventories 2025",
+            "value": 1.622,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "(Increase) decrease in other current and non-current assets 2025",
+            "value": -4.286,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Increase (decrease) in other current and non-current liabilities 2025",
+            "value": -2.156,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Investing activities Expenditure on property, plant and equipment, intangible and other assets 2025",
+            "value": -13.221,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Acquisitions, net of cash acquired 2025",
+            "value": 3,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Investment in joint ventures 2025",
+            "value": -267,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total cash capital expenditure 2025",
+            "value": -14.533,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Proceeds from disposals of fixed assets 4 2025",
+            "value": 1.142,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Financing activities Repurchase of shares 2025",
+            "value": -4.486,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Net increase (decrease) in short-term debt 2025",
+            "value": -343,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Issue of perpetual hybrid bonds 2025",
+            "value": 500,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Redemption of perpetual hybrid bonds 32 2025",
+            "value": -1.2,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Payments relating to perpetual hybrid bonds 2025",
+            "value": -1.196,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Payments relating to transactions involving non-controlling interests (other) 2025",
+            "value": -2,
+            "reason": "no_alias_match"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "label": "Coca-Cola 10-K 2025",
+    "filePath": "knowledge/Finanse/Samples/nyse-ko-2025-10K-25644916.pdf",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "currency": "EUR",
+    "scaling": "millions",
+    "textLength": 608897,
+    "targets": [
+      {
+        "statementType": "BS",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 54,
+        "mappedLineCount": 25,
+        "nonFinancialLineCount": 3,
+        "coveragePct": 46,
+        "readinessStatus": "recoverable",
+        "readinessScore": 25,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES",
+          "MISSING_REQUIRED_CANONICAL_LINES",
+          "VALIDATION_HARD_FAIL"
+        ],
+        "warnings": [
+          "BS_EQUATION_MISMATCH",
+          "LOW_MAPPING_COVERAGE",
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Other Comprehensive Income: Net foreign currency translation adjustments 2024",
+            "canonicalId": "fsl-bs-fx-reserve",
+            "value": -2.893
+          },
+          {
+            "label": "Net change in pension and other postretirement benefit liabilities 2024",
+            "canonicalId": "fsl-bs-ar-trade",
+            "value": 109
+          },
+          {
+            "label": "ASSETS Current Assets Cash and cash equivalents $ 2024",
+            "canonicalId": "fsl-bs-cash",
+            "value": 10.828
+          },
+          {
+            "label": "Short-term investments 2024",
+            "canonicalId": "fsl-bs-short-term-debt",
+            "value": 2.02
+          },
+          {
+            "label": "Trade accounts receivable, less allowances of $ 2024",
+            "canonicalId": "fsl-bs-ar",
+            "value": 506
+          },
+          {
+            "label": "Inventories 2024",
+            "canonicalId": "fsl-bs-inventory",
+            "value": 4.728
+          },
+          {
+            "label": "Total Current Assets 2024",
+            "canonicalId": "fsl-bs-current-assets",
+            "value": 25.997
+          },
+          {
+            "label": "Equity method investments 2024",
+            "canonicalId": "fsl-bs-equity-method-investments",
+            "value": 18.087
+          },
+          {
+            "label": "Deferred income tax assets 2024",
+            "canonicalId": "fsl-bs-other-non-current-assets-deferred-tax",
+            "value": 1.319
+          },
+          {
+            "label": "Property, plant and equipment — net 2024",
+            "canonicalId": "fsl-bs-ppe",
+            "value": 10.303
+          },
+          {
+            "label": "Goodwill 2024",
+            "canonicalId": "fsl-bs-intangibles-goodwill",
+            "value": 18.139
+          },
+          {
+            "label": "Other noncurrent assets 2024",
+            "canonicalId": "fsl-bs-other-non-current-assets",
+            "value": 13.403
+          },
+          {
+            "label": "Total Assets $ 2024",
+            "canonicalId": "fsl-bs-total-assets",
+            "value": 100.549
+          },
+          {
+            "label": "LIABILITIES AND EQUITY Current Liabilities Accounts payable and accrued expenses $ 2024",
+            "canonicalId": "fsl-bs-other-current-liabilities-accruals",
+            "value": 21.715
+          },
+          {
+            "label": "Loans and notes payable 2024",
+            "canonicalId": "fsl-bs-long-term-borrowings",
+            "value": 1.499
+          },
+          {
+            "label": "Current maturities of long-term debt 2024",
+            "canonicalId": "fsl-bs-long-term-debt-bank",
+            "value": 648
+          },
+          {
+            "label": "Total Current Liabilities 2024",
+            "canonicalId": "fsl-bs-current-liabilities",
+            "value": 25.249
+          },
+          {
+            "label": "Long-term debt 2024",
+            "canonicalId": "fsl-bs-long-term-debt",
+            "value": 42.375
+          },
+          {
+            "label": "Deferred income tax liabilities 2024",
+            "canonicalId": "fsl-bs-other-non-current-liabilities-deferred-tax",
+            "value": 2.469
+          },
+          {
+            "label": "The Coca-Cola Company Shareowners’ Equity Common stock, $ 2024",
+            "canonicalId": "fsl-bs-share-capital",
+            "value": 0.25
+          },
+          {
+            "label": "Capital surplus 2024",
+            "canonicalId": "fsl-bs-share-premium",
+            "value": 19.801
+          },
+          {
+            "label": "Accumulated other comprehensive income (loss) 2024",
+            "canonicalId": "fsl-bs-other-equity-reserves",
+            "value": -16.843
+          },
+          {
+            "label": "Equity attributable to noncontrolling interests 2024",
+            "canonicalId": "fsl-bs-equity-parent",
+            "value": 1.516
+          },
+          {
+            "label": "Total Equity 2024",
+            "canonicalId": "fsl-bs-equity",
+            "value": 26.372
+          },
+          {
+            "label": "Total Liabilities and Equity $ 2024",
+            "canonicalId": "fsl-bs-total-liabilities",
+            "value": 100.549
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Net Operating Revenues $ 2024",
+            "value": 47.061,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Cost of goods sold 2024",
+            "value": 18.324,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Gross Profit 2024",
+            "value": 28.737,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Selling, general and administrative expenses 2024",
+            "value": 14.582,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other operating charges 2024",
+            "value": 4.163,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Operating Income 2024",
+            "value": 9.992,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Interest income 2024",
+            "value": 988907,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Interest expense 2024",
+            "value": 1.656,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Equity income (loss) — net 2024",
+            "value": 1.77,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Other income (loss) — net 2024",
+            "value": 1.992,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Income Before Income Taxes 2024",
+            "value": 13.086,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Income taxes 2024",
+            "value": 2.437,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Consolidated Net Income 2024",
+            "value": 10.649,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Net Income Attributable to Shareowners of The Coca-Cola Company $ 2024",
+            "value": 10.631,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Average Shares Outstanding — Basic 2024",
+            "value": 4.309,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Average Shares Outstanding — Diluted 2024",
+            "value": 4.32,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Consolidated Net Income $ 2024",
+            "value": 10.649,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total Comprehensive Income 2024",
+            "value": 8.072,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Less: Comprehensive income (loss) attributable to noncontrolling interests 2024",
+            "value": 9,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total Comprehensive Income Attributable to Shareowners of The Coca-Cola Company $ 2024",
+            "value": 8.063,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total Cash, Cash Equivalents and Short-Term Investments 2024",
+            "value": 12.848,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Marketable securities 2024",
+            "value": 1.723,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Prepaid expenses and other current assets 2024",
+            "value": 3.129,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Trademarks with indefinite lives 2024",
+            "value": 13.301,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Accrued income taxes 2024",
+            "value": 1.387,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other noncurrent liabilities 2024",
+            "value": 4.084,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Reinvested earnings 2024",
+            "value": 76.054,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Treasury stock, at cost 2024",
+            "value": 2.738,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Equity Attributable to Shareowners of The Coca-Cola Company 2024",
+            "value": 24.856,
+            "reason": "duplicate_candidate_conflict"
+          }
+        ]
+      },
+      {
+        "statementType": "P&L",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 54,
+        "mappedLineCount": 22,
+        "nonFinancialLineCount": 3,
+        "coveragePct": 41,
+        "readinessStatus": "recoverable",
+        "readinessScore": 54,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES"
+        ],
+        "warnings": [
+          "LOW_MAPPING_COVERAGE"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Net Operating Revenues $ 2024",
+            "canonicalId": "fsl-pl-revenue",
+            "value": 47.061
+          },
+          {
+            "label": "Cost of goods sold 2024",
+            "canonicalId": "fsl-pl-cogs",
+            "value": 18.324
+          },
+          {
+            "label": "Gross Profit 2024",
+            "canonicalId": "fsl-pl-gross",
+            "value": 28.737
+          },
+          {
+            "label": "Selling, general and administrative expenses 2024",
+            "canonicalId": "fsl-pl-gna",
+            "value": 14.582
+          },
+          {
+            "label": "Other operating charges 2024",
+            "canonicalId": "fsl-pl-other-opex",
+            "value": 4.163
+          },
+          {
+            "label": "Operating Income 2024",
+            "canonicalId": "fsl-pl-ebit",
+            "value": 9.992
+          },
+          {
+            "label": "Interest income 2024",
+            "canonicalId": "fsl-pl-fin-income",
+            "value": 988907
+          },
+          {
+            "label": "Interest expense 2024",
+            "canonicalId": "fsl-pl-interest",
+            "value": 1.656
+          },
+          {
+            "label": "Other income (loss) — net 2024",
+            "canonicalId": "fsl-pl-other-income",
+            "value": 1.992
+          },
+          {
+            "label": "Income taxes 2024",
+            "canonicalId": "fsl-pl-tax",
+            "value": 2.437
+          },
+          {
+            "label": "Consolidated Net Income 2024",
+            "canonicalId": "fsl-pl-net",
+            "value": 10.649
+          },
+          {
+            "label": "Average Shares Outstanding — Basic 2024",
+            "canonicalId": "fsl-pl-shares-outstanding",
+            "value": 4.309
+          },
+          {
+            "label": "Net change in pension and other postretirement benefit liabilities 2024",
+            "canonicalId": "fsl-pl-cbn-inventory-change",
+            "value": 109
+          },
+          {
+            "label": "Total Comprehensive Income 2024",
+            "canonicalId": "fsl-pl-comprehensive-income",
+            "value": 8.072
+          },
+          {
+            "label": "Less: Comprehensive income (loss) attributable to noncontrolling interests 2024",
+            "canonicalId": "fsl-pl-net-minority",
+            "value": 9
+          },
+          {
+            "label": "Equity method investments 2024",
+            "canonicalId": "fsl-pl-equity-method-income",
+            "value": 18.087
+          },
+          {
+            "label": "Deferred income tax assets 2024",
+            "canonicalId": "fsl-pl-tax-deferred",
+            "value": 1.319
+          },
+          {
+            "label": "Property, plant and equipment — net 2024",
+            "canonicalId": "fsl-pl-depreciation-ppe",
+            "value": 10.303
+          },
+          {
+            "label": "LIABILITIES AND EQUITY Current Liabilities Accounts payable and accrued expenses $ 2024",
+            "canonicalId": "fsl-pl-opex",
+            "value": 21.715
+          },
+          {
+            "label": "Long-term debt 2024",
+            "canonicalId": "fsl-pl-ebt",
+            "value": 42.375
+          },
+          {
+            "label": "Accumulated other comprehensive income (loss) 2024",
+            "canonicalId": "fsl-pl-oci-total",
+            "value": -16.843
+          },
+          {
+            "label": "Equity Attributable to Shareowners of The Coca-Cola Company 2024",
+            "canonicalId": "fsl-pl-net-parent",
+            "value": 24.856
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Equity income (loss) — net 2024",
+            "value": 1.77,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Income Before Income Taxes 2024",
+            "value": 13.086,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Net Income Attributable to Shareowners of The Coca-Cola Company $ 2024",
+            "value": 10.631,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Average Shares Outstanding — Diluted 2024",
+            "value": 4.32,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Consolidated Net Income $ 2024",
+            "value": 10.649,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Other Comprehensive Income: Net foreign currency translation adjustments 2024",
+            "value": -2.893,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total Comprehensive Income Attributable to Shareowners of The Coca-Cola Company $ 2024",
+            "value": 8.063,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "ASSETS Current Assets Cash and cash equivalents $ 2024",
+            "value": 10.828,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Short-term investments 2024",
+            "value": 2.02,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total Cash, Cash Equivalents and Short-Term Investments 2024",
+            "value": 12.848,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Marketable securities 2024",
+            "value": 1.723,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Trade accounts receivable, less allowances of $ 2024",
+            "value": 506,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Inventories 2024",
+            "value": 4.728,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Prepaid expenses and other current assets 2024",
+            "value": 3.129,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total Current Assets 2024",
+            "value": 25.997,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Trademarks with indefinite lives 2024",
+            "value": 13.301,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Goodwill 2024",
+            "value": 18.139,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other noncurrent assets 2024",
+            "value": 13.403,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total Assets $ 2024",
+            "value": 100.549,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Loans and notes payable 2024",
+            "value": 1.499,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current maturities of long-term debt 2024",
+            "value": 648,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Accrued income taxes 2024",
+            "value": 1.387,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total Current Liabilities 2024",
+            "value": 25.249,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other noncurrent liabilities 2024",
+            "value": 4.084,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Deferred income tax liabilities 2024",
+            "value": 2.469,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "The Coca-Cola Company Shareowners’ Equity Common stock, $ 2024",
+            "value": 0.25,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Capital surplus 2024",
+            "value": 19.801,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Reinvested earnings 2024",
+            "value": 76.054,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Treasury stock, at cost 2024",
+            "value": 2.738,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Equity attributable to noncontrolling interests 2024",
+            "value": 1.516,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total Equity 2024",
+            "value": 26.372,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total Liabilities and Equity $ 2024",
+            "value": 100.549,
+            "reason": "duplicate_candidate_conflict"
+          }
+        ]
+      },
+      {
+        "statementType": "CF",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 18,
+        "mappedLineCount": 8,
+        "nonFinancialLineCount": 2,
+        "coveragePct": 44,
+        "readinessStatus": "recoverable",
+        "readinessScore": 50,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES",
+          "MISSING_REQUIRED_CANONICAL_LINES"
+        ],
+        "warnings": [
+          "LOW_MAPPING_COVERAGE",
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Operating Activities Consolidated net income $ 2024",
+            "canonicalId": "fsl-cf-operating-net-income",
+            "value": 10.649
+          },
+          {
+            "label": "Deferred income taxes 2024",
+            "canonicalId": "fsl-cf-taxes-paid",
+            "value": -11
+          },
+          {
+            "label": "Other operating charges 2024",
+            "canonicalId": "fsl-cf-operating-other-adj",
+            "value": 4
+          },
+          {
+            "label": "Net Cash Provided by Operating Activities 2024",
+            "canonicalId": "fsl-cf-operating",
+            "value": 6.805
+          },
+          {
+            "label": "Proceeds from disposals of investments 2024",
+            "canonicalId": "fsl-cf-debt-drawdown",
+            "value": 6.589
+          },
+          {
+            "label": "Purchases of property, plant and equipment 2024",
+            "canonicalId": "fsl-cf-capex",
+            "value": -2.064
+          },
+          {
+            "label": "Other investing activities 2024",
+            "canonicalId": "fsl-cf-other-investing",
+            "value": 194
+          },
+          {
+            "label": "Net Cash Provided by (Used in) Investing Activities 2024",
+            "canonicalId": "fsl-cf-investing",
+            "value": 2.524
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Stock-based compensation expense 2024",
+            "value": 286254,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Equity (income) loss — net of dividends 2024",
+            "value": -802,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Significant (gains) losses — net 2024",
+            "value": -1.737,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other items 2024",
+            "value": -311,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Net change in operating assets and liabilities 2024",
+            "value": -6.234,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Investing Activities Purchases of investments 2024",
+            "value": -5.64,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Acquisitions of businesses, equity method investments and nonmarketable securities 2024",
+            "value": -315,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Proceeds from disposals of businesses, equity method investments and nonmarketable securities 2024",
+            "value": 3.485,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Proceeds from disposals of property, plant and equipment 40 2024",
+            "value": 74,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Collateral (paid) received associated with hedging activities — net 2024",
+            "value": 235366,
+            "reason": "duplicate_candidate_conflict"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "label": "Tesla 10-K 2024",
+    "filePath": "knowledge/Finanse/Samples/tsla-20241231-gen.pdf",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "currency": "EUR",
+    "scaling": "millions",
+    "textLength": 479664,
+    "targets": [
+      {
+        "statementType": "BS",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 69,
+        "mappedLineCount": 24,
+        "nonFinancialLineCount": 0,
+        "coveragePct": 35,
+        "readinessStatus": "recoverable",
+        "readinessScore": 37,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES",
+          "MISSING_REQUIRED_CANONICAL_LINES"
+        ],
+        "warnings": [
+          "LOW_MAPPING_COVERAGE",
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Assets Current assets Cash and cash equivalents $ 2024",
+            "canonicalId": "fsl-bs-cash",
+            "value": 16.139
+          },
+          {
+            "label": "Short-term investments 2024",
+            "canonicalId": "fsl-bs-short-term-debt",
+            "value": 20.424
+          },
+          {
+            "label": "Accounts receivable, net 2024",
+            "canonicalId": "fsl-bs-ar",
+            "value": 4.418
+          },
+          {
+            "label": "Inventory 2024",
+            "canonicalId": "fsl-bs-inventory",
+            "value": 12.017
+          },
+          {
+            "label": "Total current assets 2024",
+            "canonicalId": "fsl-bs-current-assets",
+            "value": 58.36
+          },
+          {
+            "label": "Operating lease vehicles, net 2024",
+            "canonicalId": "fsl-bs-ppe-vehicles",
+            "value": 5.581
+          },
+          {
+            "label": "Property, plant and equipment, net 2024",
+            "canonicalId": "fsl-bs-ppe",
+            "value": 35.836
+          },
+          {
+            "label": "Operating lease right-of-use assets 2024",
+            "canonicalId": "fsl-bs-rou-assets",
+            "value": 5.16
+          },
+          {
+            "label": "Deferred tax assets 2024",
+            "canonicalId": "fsl-bs-other-non-current-assets-deferred-tax",
+            "value": 6.524
+          },
+          {
+            "label": "Other non-current assets 2024",
+            "canonicalId": "fsl-bs-other-non-current-assets",
+            "value": 4.215
+          },
+          {
+            "label": "Total assets $ 2024",
+            "canonicalId": "fsl-bs-total-assets",
+            "value": 122.07
+          },
+          {
+            "label": "Liabilities Current liabilities Accounts payable $ 2024",
+            "canonicalId": "fsl-bs-other-current-liabilities",
+            "value": 12.474
+          },
+          {
+            "label": "Accrued liabilities and other 2024",
+            "canonicalId": "fsl-bs-ar-trade",
+            "value": 10.723
+          },
+          {
+            "label": "Total current liabilities 2024",
+            "canonicalId": "fsl-bs-current-liabilities",
+            "value": 28.821
+          },
+          {
+            "label": "Deferred revenue, net of current portion 2024",
+            "canonicalId": "fsl-bs-other-non-current-liabilities-deferred-tax",
+            "value": 3.317
+          },
+          {
+            "label": "Other long-term liabilities 2024",
+            "canonicalId": "fsl-bs-long-term-debt",
+            "value": 10.495
+          },
+          {
+            "label": "Total liabilities 2024",
+            "canonicalId": "fsl-bs-total-liabilities",
+            "value": 48.39
+          },
+          {
+            "label": "Common stock; $ 2024",
+            "canonicalId": "fsl-bs-share-capital",
+            "value": 0.001
+          },
+          {
+            "label": "Additional paid-in capital 2024",
+            "canonicalId": "fsl-bs-share-premium",
+            "value": 38.371
+          },
+          {
+            "label": "Retained earnings 2024",
+            "canonicalId": "fsl-bs-retained-earnings",
+            "value": 35.209
+          },
+          {
+            "label": "Total stockholders’ equity 2024",
+            "canonicalId": "fsl-bs-equity",
+            "value": 72.913
+          },
+          {
+            "label": "Net income (loss) attributable to noncontrolling interests and redeemable noncontrolling interests in subsidiaries 2024",
+            "canonicalId": "fsl-bs-minority-interest",
+            "value": 62
+          },
+          {
+            "label": "Net income attributable to common stockholders $ 2024",
+            "canonicalId": "fsl-bs-equity-parent",
+            "value": 7.091
+          },
+          {
+            "label": "Other comprehensive income — — — 2024",
+            "canonicalId": "fsl-bs-other-equity-reserves",
+            "value": 218
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Prepaid expenses and other current assets 2024",
+            "value": 5.362,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Solar energy systems, net 2024",
+            "value": 4.924,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Digital assets, net 2024",
+            "value": 1.076,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Deferred revenue 2024",
+            "value": 3.168,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Current portion of debt and finance leases 2024",
+            "value": 2.456,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Debt and finance leases, net of current portion 2024",
+            "value": 5.757,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Equity Stockholders’ equity Preferred stock; $ 2024",
+            "value": 0.001,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "December 2024",
+            "value": 31,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total liabilities and equity $ 2024",
+            "value": 122.07,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Revenues Automotive sales $ 2024",
+            "value": 72.48,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Automotive regulatory credits 2024",
+            "value": 2.763,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Automotive leasing 2024",
+            "value": 1.827,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total automotive revenues 2024",
+            "value": 77.07,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Energy generation and storage 2024",
+            "value": 10.086,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Services and other 2024",
+            "value": 10.534,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total revenues 2024",
+            "value": 97.69,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Cost of revenues Automotive sales 2024",
+            "value": 61.87,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total automotive cost of revenues 2024",
+            "value": 62.873,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total cost of revenues 2024",
+            "value": 80.24,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Gross profit 2024",
+            "value": 17.45,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Operating expenses Research and development 2024",
+            "value": 4.54,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Selling, general and administrative 2024",
+            "value": 5.15,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Restructuring and other 2024",
+            "value": 684,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total operating expenses 2024",
+            "value": 10.374,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Income from operations 2024",
+            "value": 7.076,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Interest income 2024",
+            "value": 1.569,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Interest expense 2024",
+            "value": -350,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Other income (expense), net 2024",
+            "value": 695172,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Income before income taxes 2024",
+            "value": 8.99,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Provision for (benefit from) income taxes 2024",
+            "value": 1.837,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Net income 2024",
+            "value": 7.153,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Weighted average shares used in computing net income per share of common stock Basic 2024",
+            "value": 3.197,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Diluted 2024",
+            "value": 3.498,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Net income $ 2024",
+            "value": 7.153,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Comprehensive income 2024",
+            "value": 6.626,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Less: Comprehensive income (loss) attributable to noncontrolling interests and redeemable noncontrolling interests in subsidiaries 2024",
+            "value": 62,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Comprehensive income attributable to common stockholders $ 2024",
+            "value": 6.564,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Stock-based compensation — — 2024",
+            "value": 1.806,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Distributions to noncontrolling interests 2024",
+            "value": -46,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Buy-outs of noncontrolling interests 2024",
+            "value": -11,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Net (loss) income 2024",
+            "value": -102,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Other comprehensive loss — — — 2024",
+            "value": -415,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Adjustments for prior periods from adopting ASU 2024",
+            "value": -8,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "net of tax — — — — 2024",
+            "value": 236236,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Net income 6 — — — 2024",
+            "value": 7.091,
+            "reason": "no_alias_match"
+          }
+        ]
+      },
+      {
+        "statementType": "P&L",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 39,
+        "mappedLineCount": 16,
+        "nonFinancialLineCount": 0,
+        "coveragePct": 41,
+        "readinessStatus": "recoverable",
+        "readinessScore": 48,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES",
+          "MISSING_REQUIRED_CANONICAL_LINES"
+        ],
+        "warnings": [
+          "LOW_MAPPING_COVERAGE",
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Energy generation and storage 2024",
+            "canonicalId": "fsl-pl-cogs-materials",
+            "value": 10.086
+          },
+          {
+            "label": "Total revenues 2024",
+            "canonicalId": "fsl-pl-revenue",
+            "value": 97.69
+          },
+          {
+            "label": "Gross profit 2024",
+            "canonicalId": "fsl-pl-gross",
+            "value": 17.45
+          },
+          {
+            "label": "Operating expenses Research and development 2024",
+            "canonicalId": "fsl-pl-other-opex",
+            "value": 4.54
+          },
+          {
+            "label": "Selling, general and administrative 2024",
+            "canonicalId": "fsl-pl-opex",
+            "value": 5.15
+          },
+          {
+            "label": "Income from operations 2024",
+            "canonicalId": "fsl-pl-ebit",
+            "value": 7.076
+          },
+          {
+            "label": "Interest income 2024",
+            "canonicalId": "fsl-pl-fin-income",
+            "value": 1.569
+          },
+          {
+            "label": "Interest expense 2024",
+            "canonicalId": "fsl-pl-interest",
+            "value": -350
+          },
+          {
+            "label": "Other income (expense), net 2024",
+            "canonicalId": "fsl-pl-other-income",
+            "value": 695172
+          },
+          {
+            "label": "Provision for (benefit from) income taxes 2024",
+            "canonicalId": "fsl-pl-tax",
+            "value": 1.837
+          },
+          {
+            "label": "Net income 2024",
+            "canonicalId": "fsl-pl-net",
+            "value": 7.153
+          },
+          {
+            "label": "Diluted 2024",
+            "canonicalId": "fsl-pl-eps-diluted",
+            "value": 3.498
+          },
+          {
+            "label": "Comprehensive income 2024",
+            "canonicalId": "fsl-pl-comprehensive-income",
+            "value": 6.626
+          },
+          {
+            "label": "Less: Comprehensive income (loss) attributable to noncontrolling interests and redeemable noncontrolling interests in subsidiaries 2024",
+            "canonicalId": "fsl-pl-net-minority",
+            "value": 62
+          },
+          {
+            "label": "Comprehensive income attributable to common stockholders $ 2024",
+            "canonicalId": "fsl-pl-net-parent",
+            "value": 6.564
+          },
+          {
+            "label": "Other comprehensive income — — — 2024",
+            "canonicalId": "fsl-pl-oci-total",
+            "value": 218
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Revenues Automotive sales $ 2024",
+            "value": 72.48,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Automotive regulatory credits 2024",
+            "value": 2.763,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Automotive leasing 2024",
+            "value": 1.827,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Total automotive revenues 2024",
+            "value": 77.07,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Services and other 2024",
+            "value": 10.534,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Cost of revenues Automotive sales 2024",
+            "value": 61.87,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total automotive cost of revenues 2024",
+            "value": 62.873,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total cost of revenues 2024",
+            "value": 80.24,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Restructuring and other 2024",
+            "value": 684,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Total operating expenses 2024",
+            "value": 10.374,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Income before income taxes 2024",
+            "value": 8.99,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Net income (loss) attributable to noncontrolling interests and redeemable noncontrolling interests in subsidiaries 2024",
+            "value": 62,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Net income attributable to common stockholders $ 2024",
+            "value": 7.091,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Weighted average shares used in computing net income per share of common stock Basic 2024",
+            "value": 3.197,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Net income $ 2024",
+            "value": 7.153,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Stock-based compensation — — 2024",
+            "value": 1.806,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Distributions to noncontrolling interests 2024",
+            "value": -46,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Buy-outs of noncontrolling interests 2024",
+            "value": -11,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Net (loss) income 2024",
+            "value": -102,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Other comprehensive loss — — — 2024",
+            "value": -415,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Adjustments for prior periods from adopting ASU 2024",
+            "value": -8,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "net of tax — — — — 2024",
+            "value": 236236,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Net income 6 — — — 2024",
+            "value": 7.091,
+            "reason": "duplicate_candidate_conflict"
+          }
+        ]
+      },
+      {
+        "statementType": "CF",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 31,
+        "mappedLineCount": 14,
+        "nonFinancialLineCount": 3,
+        "coveragePct": 45,
+        "readinessStatus": "recoverable",
+        "readinessScore": 51,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES",
+          "MISSING_REQUIRED_CANONICAL_LINES"
+        ],
+        "warnings": [
+          "LOW_MAPPING_COVERAGE",
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Deferred income taxes 2024",
+            "canonicalId": "fsl-cf-taxes-paid",
+            "value": 477
+          },
+          {
+            "label": "Digital assets (gain) loss, net 2024",
+            "canonicalId": "fsl-cf-operating-gain-disposal",
+            "value": -589
+          },
+          {
+            "label": "Inventory 2024",
+            "canonicalId": "fsl-cf-change-wc-inventory",
+            "value": 937
+          },
+          {
+            "label": "Net cash provided by operating activities 2024",
+            "canonicalId": "fsl-cf-operating",
+            "value": 14.923
+          },
+          {
+            "label": "Purchases of investments 2024",
+            "canonicalId": "fsl-cf-capex",
+            "value": -35.955
+          },
+          {
+            "label": "Proceeds from maturities of investments 2024",
+            "canonicalId": "fsl-cf-debt-drawdown",
+            "value": 28.31
+          },
+          {
+            "label": "Net cash used in investing activities 2024",
+            "canonicalId": "fsl-cf-investing",
+            "value": -18.787
+          },
+          {
+            "label": "Repayments of debt 2024",
+            "canonicalId": "fsl-cf-debt-repayment",
+            "value": -2.5
+          },
+          {
+            "label": "Principal payments on finance leases 2024",
+            "canonicalId": "fsl-cf-lease-repayment",
+            "value": -381
+          },
+          {
+            "label": "Distributions paid to noncontrolling interests in subsidiaries 2024",
+            "canonicalId": "fsl-cf-investing-subsidiaries",
+            "value": -104
+          },
+          {
+            "label": "Net cash provided by (used in) financing activities 2024",
+            "canonicalId": "fsl-cf-financing",
+            "value": 3.853
+          },
+          {
+            "label": "Cash and cash equivalents and restricted cash, beginning of period 2024",
+            "canonicalId": "fsl-cf-opening-cash",
+            "value": 17.189
+          },
+          {
+            "label": "Cash and cash equivalents and restricted cash, end of period $ 2024",
+            "canonicalId": "fsl-cf-closing-cash",
+            "value": 17.037
+          },
+          {
+            "label": "Supplemental Disclosures Cash paid during the period for interest $ 2024",
+            "canonicalId": "fsl-cf-interest-paid",
+            "value": 277
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Cash Flows from Operating Activities Net income $ 2024",
+            "value": 7.153,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Stock-based compensation 2024",
+            "value": 1.999,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Inventory and purchase commitments write-downs 2024",
+            "value": 335463,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Foreign currency transaction net unrealized (gain) loss 2024",
+            "value": -73,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Non-cash interest and other operating activities 2024",
+            "value": 172,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Changes in operating assets and liabilities: Accounts receivable 2024",
+            "value": -1.083,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Operating lease vehicles 2024",
+            "value": -590,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Prepaid expenses and other assets 2024",
+            "value": -3.273,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Accounts payable, accrued and other liabilities 2024",
+            "value": 3.588,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Deferred revenue 2024",
+            "value": 502,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Purchases of solar energy systems, net of sales 2024",
+            "value": -3,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Cash Flows from Financing Activities Proceeds from issuances of debt 2024",
+            "value": 5.744,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Proceeds from exercises of stock options and other stock issuances 2024",
+            "value": 1.241,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Debt issuance costs 2024",
+            "value": -14,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Payments for buy-outs of noncontrolling interests in subsidiaries 2024",
+            "value": -133,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Effect of exchange rate changes on cash and cash equivalents and restricted cash 2024",
+            "value": -141,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Cash paid during the period for income taxes, net of refunds $ 2024",
+            "value": 1.331,
+            "reason": "duplicate_candidate_conflict"
+          }
+        ]
+      }
+    ]
+  }
+]

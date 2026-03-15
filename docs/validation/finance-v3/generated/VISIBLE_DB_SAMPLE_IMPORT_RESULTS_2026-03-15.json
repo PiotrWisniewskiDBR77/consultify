@@ -1,0 +1,656 @@
+[
+  {
+    "label": "BMW Group Financial Statements 2024",
+    "filePath": "knowledge/Finanse/Samples/BMW-Group-Financial-Statements-2024-en.pdf",
+    "statementType": "BS",
+    "statementId": "f93d8ea8-2025-41a8-b240-5577109c0c42",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 34,
+    "eligibleLineCount": 33,
+    "mappedLineCount": 25,
+    "coveragePct": 76,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 60,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "BS_EQUATION_INCOMPLETE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Leased products 23 2024",
+      "Other investments 2024",
+      "Other assets 28 2024",
+      "Financial assets 26 2024",
+      "Other provisions 34 2024",
+      "Financial liabilities 36 2024",
+      "Current tax 35 2024",
+      "Current provisions and liabilities 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "BMW Group Financial Statements 2024",
+    "filePath": "knowledge/Finanse/Samples/BMW-Group-Financial-Statements-2024-en.pdf",
+    "statementType": "P&L",
+    "statementId": "c1940630-f38f-4da2-9fe2-469f1667d2e4",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 44,
+    "eligibleLineCount": 40,
+    "mappedLineCount": 18,
+    "coveragePct": 45,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 51,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Sales of products previously leased to customers 2024",
+      "Interest income on credit financing and finance leases 2024",
+      "Revenues from service contracts, telematics and roadside assistance 2024",
+      "Manufacturing costs 2024",
+      "Cost of sales relating to financial services business 2024",
+      "Research and development expenses 2024",
+      "Expenses for service contracts, telematics and roadside assistance 2024",
+      "Warranty expenditure 2024",
+      "Other cost of sales 2024",
+      "Research and development expenditure 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "BMW Group Financial Statements 2024",
+    "filePath": "knowledge/Finanse/Samples/BMW-Group-Financial-Statements-2024-en.pdf",
+    "statementType": "CF",
+    "statementId": "1dee99e5-6ec5-4d5d-82d5-a6bb9a83c327",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 36,
+    "eligibleLineCount": 36,
+    "mappedLineCount": 21,
+    "coveragePct": 58,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 66,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE"
+    ],
+    "topUnmappedLabels": [
+      "Interest received * 2024",
+      "Result from equity accounted investments 2024",
+      "Change in leased products 2024",
+      "Change in receivables from sales financing 2024",
+      "Change in other operating assets and liabilities 2024",
+      "Total investment in intangible assets and property, plant and equipment 2024",
+      "Proceeds from subsidies for intangible assets and property, plant and equipment 2024",
+      "Expenditure for investment assets 2024",
+      "Payment of dividends to shareholders of BMW AG 2024",
+      "Payment of dividends to non-controlling interests 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "KGHM SRR 2024",
+    "filePath": "knowledge/Finanse/Samples/Skonsolidowane sprawozdanie finansowe KGHM SRR_2024.pdf",
+    "statementType": "BS",
+    "statementId": "6752943d-9aae-4d66-98ce-4d91eab03c31",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "CF",
+    "containedStatementTypes": [
+      "CF",
+      "BS",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 24,
+    "eligibleLineCount": 24,
+    "mappedLineCount": 14,
+    "coveragePct": 58,
+    "validationStatus": "needs_review",
+    "readinessStatus": "recoverable",
+    "readinessScore": 34,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES",
+      "VALIDATION_HARD_FAIL"
+    ],
+    "validationCodes": [
+      "BS_EQUATION_MISMATCH",
+      "BS_CURRENT_LIABILITIES_EXCEED_TOTAL",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "AKTYWA Rzeczowe aktywa trwałe górnicze i hutnicze 2024",
+      "Aktywa niematerialne górnicze i hutnicze 2024",
+      "Pozostałe aktywa rzeczowe i niematerialne 2024",
+      "Zaangażowanie we wspólne przedsięwzięcia - udzielone pożyczki 2024",
+      "Instrumenty finansowe razem 2024",
+      "ZOBOWIĄZANIA I KAPITAŁ WŁASNY Nota 2024",
+      "Kapitał własny udziałowców niekontrolujących 2024",
+      "Zobowiązania wobec dostawców i pozostałe 2024",
+      "Zobowiązanie długo i krótkoterminowe 2024",
+      "RAZEM ZOBOWIĄZANIA I KAPITAŁ WŁASNY 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "KGHM SRR 2024",
+    "filePath": "knowledge/Finanse/Samples/Skonsolidowane sprawozdanie finansowe KGHM SRR_2024.pdf",
+    "statementType": "P&L",
+    "statementId": "26a19bae-0bde-44dd-98c9-3a44a8ff0755",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "CF",
+    "containedStatementTypes": [
+      "CF",
+      "BS",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 15,
+    "eligibleLineCount": 15,
+    "mappedLineCount": 14,
+    "coveragePct": 93,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 84,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "PL_GROSS_MISMATCH",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Łączne całkowite dochody przypadające: akcjonariuszom Jednostki Dominującej 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "KGHM SRR 2024",
+    "filePath": "knowledge/Finanse/Samples/Skonsolidowane sprawozdanie finansowe KGHM SRR_2024.pdf",
+    "statementType": "CF",
+    "statementId": "129cc562-15cd-4345-b74a-ce313947de9a",
+    "parseMethod": "text_extraction",
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "detectedStatementType": "CF",
+    "containedStatementTypes": [
+      "CF",
+      "BS",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 32,
+    "eligibleLineCount": 31,
+    "mappedLineCount": 17,
+    "coveragePct": 55,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 57,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Przepływy pieniężne z działalności operacyjnej Zysk/(strata) przed opodatkowaniem 2024",
+      "Odsetki od pożyczek udzielonych wspólnemu przedsięwzięciu ( 2024",
+      "Pozostałe odsetki 2024",
+      "i wartości niematerialnych 2024",
+      "wspólnemu przedsięwzięciu ( 2024",
+      "z działalności inwestycyjnej i wyceny środków pieniężnych ( 2024",
+      "z działalności finansowej 2024",
+      "Razem wyłączenia przychodów i kosztów 2024",
+      "Przepływy pieniężne z działalności inwestycyjnej Nota 2024",
+      "Wydatki na aktywa finansowe przeznaczone na likwidację kopalń i innych obiektów technologicznych ( 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "bp Annual Report 2025",
+    "filePath": "knowledge/Finanse/Samples/bp-annual-report-and-form-20f-2025.pdf",
+    "statementType": "BS",
+    "statementId": "36c6af92-10d8-4d08-9249-cc1518184e78",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2025",
+    "comparisonPeriodLabel": "2024",
+    "extractedLineCount": 34,
+    "eligibleLineCount": 34,
+    "mappedLineCount": 20,
+    "coveragePct": 59,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 42,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "BS_EQUATION_OK",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "bp Annual Report and Form 20-F 2025",
+      "Investments in joint ventures 16 2025",
+      "Investments in associates 17 2025",
+      "Other investments 2025",
+      "Derivative financial instruments 30 2025",
+      "Defined benefit pension plan surpluses 24 2025",
+      "Prepayments 2025",
+      "Current tax receivable 2025",
+      "Finance debt 26 2025",
+      "Current tax payable 2025"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "bp Annual Report 2025",
+    "filePath": "knowledge/Finanse/Samples/bp-annual-report-and-form-20f-2025.pdf",
+    "statementType": "P&L",
+    "statementId": "2707dad7-f0fc-4a12-be8b-964bceac3f33",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2025",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 55,
+    "eligibleLineCount": 50,
+    "mappedLineCount": 19,
+    "coveragePct": 38,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 40,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "PL_NET_INCOME_OUTLIER",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Other income statement items Depreciation, depletion and amortization US 2025",
+      "Non-US 2025",
+      "Additions to non-current assetsa c 2025",
+      "group Segment revenues Sales and other operating revenues 2025",
+      "Less: sales and other operating revenues between segments 2025",
+      "Third party sales and other operating revenues 2025",
+      "Segment results Replacement cost profit (loss) before interest and taxation 2025",
+      "Profit (loss) before interest and taxation 2025",
+      "Other income statement items Production and similar taxes 2025",
+      "Non-current assets Non-current assetsb c 2025"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "bp Annual Report 2025",
+    "filePath": "knowledge/Finanse/Samples/bp-annual-report-and-form-20f-2025.pdf",
+    "statementType": "CF",
+    "statementId": "2a404154-071e-443e-9a57-939c2fa6b456",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2025",
+    "comparisonPeriodLabel": "2024",
+    "extractedLineCount": 44,
+    "eligibleLineCount": 42,
+    "mappedLineCount": 21,
+    "coveragePct": 50,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 60,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE"
+    ],
+    "topUnmappedLabels": [
+      "Earnings from joint ventures and associates 2025",
+      "Interest receivable 2025",
+      "Interest received 2025",
+      "Finance costs 7 2025",
+      "Net finance expense relating to pensions and other post-employment benefits 2025",
+      "Share-based payments 2025",
+      "Net charge for provisions, less payments 2025",
+      "(Increase) decrease in inventories 2025",
+      "(Increase) decrease in other current and non-current assets 2025",
+      "Increase (decrease) in other current and non-current liabilities 2025"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Coca-Cola 10-K 2025",
+    "filePath": "knowledge/Finanse/Samples/nyse-ko-2025-10K-25644916.pdf",
+    "statementType": "BS",
+    "statementId": "2b7aa129-63ab-46d8-abba-58f4dbf38df8",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 33,
+    "eligibleLineCount": 32,
+    "mappedLineCount": 25,
+    "coveragePct": 78,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 62,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "BS_EQUATION_INCOMPLETE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Total Cash, Cash Equivalents and Short-Term Investments 2024",
+      "Marketable securities 2024",
+      "Prepaid expenses and other current assets 2024",
+      "Trademarks with indefinite lives 2024",
+      "Accrued income taxes 2024",
+      "Other noncurrent liabilities 2024",
+      "Equity Attributable to Shareowners of The Coca-Cola Company 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Coca-Cola 10-K 2025",
+    "filePath": "knowledge/Finanse/Samples/nyse-ko-2025-10K-25644916.pdf",
+    "statementType": "P&L",
+    "statementId": "9b675d6b-df74-4a54-a99b-3c3dc0aad01d",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 24,
+    "eligibleLineCount": 22,
+    "mappedLineCount": 17,
+    "coveragePct": 77,
+    "validationStatus": "pass",
+    "readinessStatus": "recoverable",
+    "readinessScore": 84,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES"
+    ],
+    "validationCodes": [],
+    "topUnmappedLabels": [
+      "Equity income (loss) — net 2024",
+      "Net Income Attributable to Shareowners of The Coca-Cola Company $ 2024",
+      "Average Shares Outstanding — Diluted 2024",
+      "Consolidated Net Income $ 2024",
+      "Total Comprehensive Income Attributable to Shareowners of The Coca-Cola Company $ 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Coca-Cola 10-K 2025",
+    "filePath": "knowledge/Finanse/Samples/nyse-ko-2025-10K-25644916.pdf",
+    "statementType": "CF",
+    "statementId": "40d8bc59-76b7-450f-aea0-fce00c1cc47f",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 33,
+    "eligibleLineCount": 29,
+    "mappedLineCount": 13,
+    "coveragePct": 45,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 50,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Equity (income) loss — net of dividends 2024",
+      "Significant (gains) losses — net 2024",
+      "Other operating charges 2024",
+      "Other items 2024",
+      "Net change in operating assets and liabilities 2024",
+      "Investing Activities Purchases of investments 2024",
+      "Acquisitions of businesses, equity method investments and nonmarketable securities 2024",
+      "Proceeds from disposals of businesses, equity method investments and nonmarketable securities 2024",
+      "Proceeds from disposals of property, plant and equipment 40 2024",
+      "Collateral (paid) received associated with hedging activities — net 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Tesla 10-K 2024",
+    "filePath": "knowledge/Finanse/Samples/tsla-20241231-gen.pdf",
+    "statementType": "BS",
+    "statementId": "27880105-89b7-4568-9e6f-15e4e7fdd2ed",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 30,
+    "eligibleLineCount": 30,
+    "mappedLineCount": 20,
+    "coveragePct": 67,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 60,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "BS_EQUATION_OK",
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Prepaid expenses and other current assets 2024",
+      "Solar energy systems, net 2024",
+      "Digital assets, net 2024",
+      "Liabilities Current liabilities Accounts payable $ 2024",
+      "Deferred revenue 2024",
+      "Current portion of debt and finance leases 2024",
+      "Debt and finance leases, net of current portion 2024",
+      "Deferred revenue, net of current portion 2024",
+      "Equity Stockholders’ equity Preferred stock; $ 2024",
+      "December 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Tesla 10-K 2024",
+    "filePath": "knowledge/Finanse/Samples/tsla-20241231-gen.pdf",
+    "statementType": "P&L",
+    "statementId": "e9fea90f-3ce3-40ce-a795-e446fad7f3b5",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 39,
+    "eligibleLineCount": 39,
+    "mappedLineCount": 17,
+    "coveragePct": 44,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 50,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Revenues Automotive sales $ 2024",
+      "Automotive regulatory credits 2024",
+      "Automotive leasing 2024",
+      "Total automotive revenues 2024",
+      "Services and other 2024",
+      "Cost of revenues Automotive sales 2024",
+      "Total automotive cost of revenues 2024",
+      "Total cost of revenues 2024",
+      "Restructuring and other 2024",
+      "Total operating expenses 2024"
+    ],
+    "persistedStatus": "mapped"
+  },
+  {
+    "label": "Tesla 10-K 2024",
+    "filePath": "knowledge/Finanse/Samples/tsla-20241231-gen.pdf",
+    "statementType": "CF",
+    "statementId": "11cf526d-df0d-4e8b-9d36-ebf9bd2b5858",
+    "parseMethod": "text_extraction",
+    "documentClass": "native_pdf",
+    "extractionStrategy": "pdf_layout_primary",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "CF",
+      "P&L"
+    ],
+    "selectedPeriodLabel": "2024",
+    "comparisonPeriodLabel": "2023",
+    "extractedLineCount": 34,
+    "eligibleLineCount": 31,
+    "mappedLineCount": 15,
+    "coveragePct": 48,
+    "validationStatus": "warnings",
+    "readinessStatus": "recoverable",
+    "readinessScore": 53,
+    "reasonCodes": [
+      "UNMAPPED_FINANCIAL_LINES",
+      "MISSING_REQUIRED_CANONICAL_LINES"
+    ],
+    "validationCodes": [
+      "LOW_MAPPING_COVERAGE",
+      "REQUIRED_LINES_MISSING"
+    ],
+    "topUnmappedLabels": [
+      "Cash Flows from Operating Activities Net income $ 2024",
+      "Inventory and purchase commitments write-downs 2024",
+      "Foreign currency transaction net unrealized (gain) loss 2024",
+      "Deferred income taxes 2024",
+      "Non-cash interest and other operating activities 2024",
+      "Changes in operating assets and liabilities: Accounts receivable 2024",
+      "Operating lease vehicles 2024",
+      "Prepaid expenses and other assets 2024",
+      "Accounts payable, accrued and other liabilities 2024",
+      "Deferred revenue 2024"
+    ],
+    "persistedStatus": "mapped"
+  }
+]

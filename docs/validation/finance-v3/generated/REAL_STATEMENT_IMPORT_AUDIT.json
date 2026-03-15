@@ -1,0 +1,3350 @@
+[
+  {
+    "label": "Apator SA Raport R 2024",
+    "filePath": "knowledge/Finanse/Apator SA Raport R 2024.pdf",
+    "detectedStatementType": "P&L",
+    "containedStatementTypes": [
+      "P&L",
+      "BS",
+      "CF"
+    ],
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "currency": "PLN",
+    "scaling": "thousands",
+    "textLength": 222087,
+    "targets": [
+      {
+        "statementType": "BS",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 3,
+        "mappedLineCount": 3,
+        "nonFinancialLineCount": 0,
+        "coveragePct": 100,
+        "readinessStatus": "recoverable",
+        "readinessScore": 47,
+        "reasonCodes": [
+          "MISSING_REQUIRED_CANONICAL_LINES"
+        ],
+        "warnings": [
+          "BS_EQUATION_INCOMPLETE",
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Zobowiązania i rezerwy długoterminowe 2024",
+            "canonicalId": "fsl-bs-long-term-debt",
+            "value": 14826
+          },
+          {
+            "label": "Zobowiązania i rezerwy krótkoterminowe 2024",
+            "canonicalId": "fsl-bs-current-liabilities",
+            "value": 124818
+          },
+          {
+            "label": "Pozostałe zobowiązania krótkoterminowe 2024",
+            "canonicalId": "fsl-bs-other-current-liabilities",
+            "value": 9852
+          }
+        ],
+        "topUnmappedLines": [],
+        "policyAssessment": {
+          "effectiveCoveragePct": 100,
+          "tier1Auto": 3,
+          "tier2LlmConfirmed": 0,
+          "tier3ReviewRequired": 0,
+          "tier4Excluded": 0,
+          "meetsTarget": true,
+          "canAutoConfirm": true,
+          "summary": "100% coverage — all lines mapped with high confidence, auto-confirm eligible"
+        }
+      },
+      {
+        "statementType": "P&L",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 11,
+        "mappedLineCount": 11,
+        "nonFinancialLineCount": 1,
+        "coveragePct": 100,
+        "readinessStatus": "ready",
+        "readinessScore": 100,
+        "reasonCodes": [],
+        "warnings": [],
+        "topMappedLines": [
+          {
+            "label": "Przychody ze sprzedaży dóbr i usług 2024",
+            "canonicalId": "fsl-pl-revenue",
+            "value": 536578
+          },
+          {
+            "label": "Koszt własny sprzedaży 2024",
+            "canonicalId": "fsl-pl-cogs",
+            "value": -394861
+          },
+          {
+            "label": "Zysk brutto ze sprzedaży 2024",
+            "canonicalId": "fsl-pl-gross",
+            "value": 141717
+          },
+          {
+            "label": "Koszty sprzedaży 2024",
+            "canonicalId": "fsl-pl-selling",
+            "value": -19843
+          },
+          {
+            "label": "Koszty ogólnego zarządu 2024",
+            "canonicalId": "fsl-pl-gna",
+            "value": -64008
+          },
+          {
+            "label": "Zysk ze sprzedaży 2024",
+            "canonicalId": "fsl-pl-opex",
+            "value": 57866
+          },
+          {
+            "label": "Zysk z działalności operacyjnej 2024",
+            "canonicalId": "fsl-pl-ebit",
+            "value": 53426
+          },
+          {
+            "label": "Wynik na działalności finansowej 2024",
+            "canonicalId": "fsl-pl-interest",
+            "value": 13137
+          },
+          {
+            "label": "Zysk przed opodatkowaniem 2024",
+            "canonicalId": "fsl-pl-ebt",
+            "value": 66563
+          },
+          {
+            "label": "Podatek dochodowy 2024",
+            "canonicalId": "fsl-pl-tax",
+            "value": -3482
+          },
+          {
+            "label": "Całkowite dochody ogółem 2024",
+            "canonicalId": "fsl-pl-comprehensive-income",
+            "value": 63295
+          }
+        ],
+        "topUnmappedLines": [],
+        "policyAssessment": {
+          "effectiveCoveragePct": 100,
+          "tier1Auto": 11,
+          "tier2LlmConfirmed": 0,
+          "tier3ReviewRequired": 0,
+          "tier4Excluded": 1,
+          "meetsTarget": true,
+          "canAutoConfirm": true,
+          "summary": "100% coverage — all lines mapped with high confidence, auto-confirm eligible"
+        }
+      },
+      {
+        "statementType": "CF",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 28,
+        "mappedLineCount": 28,
+        "nonFinancialLineCount": 1,
+        "coveragePct": 100,
+        "readinessStatus": "ready",
+        "readinessScore": 100,
+        "reasonCodes": [],
+        "warnings": [],
+        "topMappedLines": [
+          {
+            "label": "Amortyzacja wartości niematerialnych 2024",
+            "canonicalId": "fsl-cf-operating-depreciation-intangibles",
+            "value": 6114
+          },
+          {
+            "label": "Amortyzacja rzeczowych aktywów trwałych 2024",
+            "canonicalId": "fsl-cf-operating-depreciation-ppe",
+            "value": 13336
+          },
+          {
+            "label": "Amortyzacja aktywów z tytułu prawa do użytkowania 2024",
+            "canonicalId": "fsl-cf-operating-depreciation-rou",
+            "value": 4129
+          },
+          {
+            "label": "Odpisy aktualizujące z tytułu utraty wartości rzeczowych aktywów trwałych i wartości niematerialnych 2024",
+            "canonicalId": "fsl-cf-operating-impairment",
+            "value": 62
+          },
+          {
+            "label": "Zysk na sprzedaży rzeczowych aktywów trwałych i wartości niematerialnych 2024",
+            "canonicalId": "fsl-cf-operating-gain-disposal",
+            "value": -526
+          },
+          {
+            "label": "Zyski z wyceny nieruchomości inwestycyjnych według wartości godziwej 2024",
+            "canonicalId": "fsl-cf-operating-fv-changes",
+            "value": -717
+          },
+          {
+            "label": "(Zyski) straty z tytułu zmiany wartości godziwej instrumentów pochodnych 2024",
+            "canonicalId": "fsl-cf-operating-fv-derivatives",
+            "value": -39
+          },
+          {
+            "label": "Koszty odsetek 2024",
+            "canonicalId": "fsl-cf-operating-interest-cost",
+            "value": 1322
+          },
+          {
+            "label": "Przychody z tytułu dywidend 2024",
+            "canonicalId": "fsl-cf-operating-dividend-income",
+            "value": -14134
+          },
+          {
+            "label": "Inne korekty 2024",
+            "canonicalId": "fsl-cf-operating-other-adj",
+            "value": -182
+          },
+          {
+            "label": "w kapitale obrotowym 2024",
+            "canonicalId": "fsl-cf-operating-before-wc",
+            "value": 77144
+          },
+          {
+            "label": "Zmiana stanu zapasów 2024",
+            "canonicalId": "fsl-cf-change-wc-inventory",
+            "value": 26187
+          },
+          {
+            "label": "Zmiana stanu należności 2024",
+            "canonicalId": "fsl-cf-change-wc-ar",
+            "value": -18938
+          },
+          {
+            "label": "Zmiana stanu zobowiązań 2024",
+            "canonicalId": "fsl-cf-change-wc-ap",
+            "value": 5126
+          },
+          {
+            "label": "Zmiana stanu rezerw 2024",
+            "canonicalId": "fsl-cf-change-wc-provisions",
+            "value": 3649
+          },
+          {
+            "label": "Zapłacony podatek dochodowy 2024",
+            "canonicalId": "fsl-cf-taxes-paid",
+            "value": -2696
+          },
+          {
+            "label": "Wydatki na nabycie rzeczowych aktywów trwałych 2024",
+            "canonicalId": "fsl-cf-capex",
+            "value": -30376
+          },
+          {
+            "label": "Wpływy ze sprzedaży rzeczowych aktywów trwałych 2024",
+            "canonicalId": "fsl-cf-investing-disposal-ppe",
+            "value": 774
+          },
+          {
+            "label": "Otrzymane dywidendy 2024",
+            "canonicalId": "fsl-cf-dividends-received",
+            "value": 624
+          },
+          {
+            "label": "Inne wydatki 2024",
+            "canonicalId": "fsl-cf-other-expenditure",
+            "value": -2069
+          },
+          {
+            "label": "Środki pieniężne netto wykorzystane z działalności inwestycyjnej 2024",
+            "canonicalId": "fsl-cf-investing",
+            "value": -31428
+          },
+          {
+            "label": "Przepływy środków pieniężnych z działalności finansowej Spłaty kredytów i pożyczek 2024",
+            "canonicalId": "fsl-cf-financing",
+            "value": -34759
+          },
+          {
+            "label": "Odsetki zapłacone 2024",
+            "canonicalId": "fsl-cf-interest-paid",
+            "value": -754
+          },
+          {
+            "label": "Dywidendy wypłacone 2024",
+            "canonicalId": "fsl-cf-dividends",
+            "value": -19588
+          },
+          {
+            "label": "Spłata zobowiązań z tytułu leasingu 2024",
+            "canonicalId": "fsl-cf-lease-repayment",
+            "value": -3969
+          },
+          {
+            "label": "Zwiększenie (zmniejszenie) netto stanu środków pieniężnych 2024",
+            "canonicalId": "fsl-cf-net-change-cash",
+            "value": -1258
+          },
+          {
+            "label": "Środki pieniężne na początek okresu 2024",
+            "canonicalId": "fsl-cf-opening-cash",
+            "value": 3298
+          },
+          {
+            "label": "Środki pieniężne na koniec okresu 2024",
+            "canonicalId": "fsl-cf-closing-cash",
+            "value": 2040
+          }
+        ],
+        "topUnmappedLines": [],
+        "policyAssessment": {
+          "effectiveCoveragePct": 100,
+          "tier1Auto": 28,
+          "tier2LlmConfirmed": 0,
+          "tier3ReviewRequired": 0,
+          "tier4Excluded": 1,
+          "meetsTarget": true,
+          "canAutoConfirm": true,
+          "summary": "100% coverage — all lines mapped with high confidence, auto-confirm eligible"
+        }
+      }
+    ]
+  },
+  {
+    "label": "Grupa Apator Raport RS 2023",
+    "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2023.pdf",
+    "detectedStatementType": "P&L",
+    "containedStatementTypes": [
+      "P&L",
+      "BS",
+      "CF"
+    ],
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "currency": "PLN",
+    "scaling": "thousands",
+    "textLength": 220517,
+    "targets": [
+      {
+        "statementType": "BS",
+        "selectedPeriodLabel": "2023",
+        "comparisonPeriodLabel": null,
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 343,
+        "mappedLineCount": 65,
+        "nonFinancialLineCount": 53,
+        "coveragePct": 19,
+        "readinessStatus": "recoverable",
+        "readinessScore": 38,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES"
+        ],
+        "warnings": [
+          "LOW_MAPPING_COVERAGE"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Aktywa trwałe 2023",
+            "canonicalId": "fsl-bs-fixed",
+            "value": 492647
+          },
+          {
+            "label": "Wartości niematerialne 2023",
+            "canonicalId": "fsl-bs-intangibles",
+            "value": 94114
+          },
+          {
+            "label": "Wartość firmy 2023",
+            "canonicalId": "fsl-bs-intangibles-goodwill",
+            "value": 120672
+          },
+          {
+            "label": "Rzeczowe aktywa trwałe 2023",
+            "canonicalId": "fsl-bs-ppe",
+            "value": 196811
+          },
+          {
+            "label": "Prawo do użytkowania aktywów 2023",
+            "canonicalId": "fsl-bs-rou-assets",
+            "value": 54800
+          },
+          {
+            "label": "Nieruchomości inwestycyjne 2023",
+            "canonicalId": "fsl-bs-investment-property",
+            "value": 2234
+          },
+          {
+            "label": "Należności długoterminowe 2023",
+            "canonicalId": "fsl-bs-lt-receivables",
+            "value": 3536
+          },
+          {
+            "label": "Aktywa z tytułu odroczonego podatku dochodowego 2023",
+            "canonicalId": "fsl-bs-other-non-current-assets-deferred-tax",
+            "value": 20177
+          },
+          {
+            "label": "Aktywa obrotowe 2023",
+            "canonicalId": "fsl-bs-current-assets",
+            "value": 482551
+          },
+          {
+            "label": "Zapasy 2023",
+            "canonicalId": "fsl-bs-inventory",
+            "value": 242296
+          },
+          {
+            "label": "Należności z tytułu podatku dochodowego od osób prawnych 2023",
+            "canonicalId": "fsl-bs-tax-receivables",
+            "value": 6285
+          },
+          {
+            "label": "Należności z tytułu innych podatków, ceł i ubezpieczeń społecznych 2023",
+            "canonicalId": "fsl-bs-other-tax-receivables",
+            "value": 8780
+          },
+          {
+            "label": "Pozostałe należności krótkoterminowe 2023",
+            "canonicalId": "fsl-bs-other-st-receivables",
+            "value": 3293
+          },
+          {
+            "label": "Środki pieniężne i ich ekwiwalenty 2023",
+            "canonicalId": "fsl-bs-cash",
+            "value": 22939
+          },
+          {
+            "label": "AKTYWA RAZEM 2023",
+            "canonicalId": "fsl-bs-total-assets",
+            "value": 975198
+          },
+          {
+            "label": "Kapitał własny 2023",
+            "canonicalId": "fsl-bs-equity",
+            "value": 539023
+          },
+          {
+            "label": "Kapitał własny przypadający akcjonariuszom jednostki dominującej 2023",
+            "canonicalId": "fsl-bs-equity-parent",
+            "value": 536965
+          },
+          {
+            "label": "Kapitał podstawowy 2023",
+            "canonicalId": "fsl-bs-share-capital",
+            "value": 3265
+          },
+          {
+            "label": "Akcje własne 2023",
+            "canonicalId": "fsl-bs-treasury-shares",
+            "value": -3522
+          },
+          {
+            "label": "Pozostałe kapitały 2023",
+            "canonicalId": "fsl-bs-other-equity-reserves",
+            "value": 600182
+          },
+          {
+            "label": "Kapitał z przeszacowania programu określonych świadczeń 2023",
+            "canonicalId": "fsl-bs-actuarial-reserve",
+            "value": 894
+          },
+          {
+            "label": "Niepodzielony wynik finansowy 2023",
+            "canonicalId": "fsl-bs-retained-earnings",
+            "value": -72699
+          },
+          {
+            "label": "Udziały niesprawujące kontroli 2023",
+            "canonicalId": "fsl-bs-minority-interest",
+            "value": 2058
+          },
+          {
+            "label": "Zobowiązania 2023",
+            "canonicalId": "fsl-bs-total-liabilities",
+            "value": 436175
+          },
+          {
+            "label": "Długoterminowe kredyty i pożyczki 2023",
+            "canonicalId": "fsl-bs-long-term-borrowings",
+            "value": 29545
+          },
+          {
+            "label": "Zobowiązania długoterminowe z tytułu prawa do użytkowania aktywów 2023",
+            "canonicalId": "fsl-bs-long-term-debt-lease",
+            "value": 37608
+          },
+          {
+            "label": "Rezerwa z tytułu odroczonego podatku dochodowego 2023",
+            "canonicalId": "fsl-bs-other-non-current-liabilities-deferred-tax",
+            "value": 3684
+          },
+          {
+            "label": "Długoterminowe zobowiązania z tytułu świadczeń pracowniczych 2023",
+            "canonicalId": "fsl-bs-employee-benefits-lt",
+            "value": 5315
+          },
+          {
+            "label": "Pozostałe rezerwy długoterminowe 2023",
+            "canonicalId": "fsl-bs-other-non-current-liabilities-provisions",
+            "value": 1204
+          },
+          {
+            "label": "Zobowiązania i rezerwy krótkoterminowe 2023",
+            "canonicalId": "fsl-bs-current-liabilities",
+            "value": 356069
+          },
+          {
+            "label": "Zobowiązania handlowe 2023",
+            "canonicalId": "fsl-bs-ap",
+            "value": 93591
+          },
+          {
+            "label": "Zobowiązania z tytułu innych podatków, ceł i ubezpieczeń społecznych 2023",
+            "canonicalId": "fsl-bs-other-tax-payables",
+            "value": 16957
+          },
+          {
+            "label": "Pozostałe zobowiązania krótkoterminowe 2023",
+            "canonicalId": "fsl-bs-other-current-liabilities",
+            "value": 34791
+          },
+          {
+            "label": "Zobowiązania krótkoterminowe z tytułu prawa do użytkowania aktywów 2023",
+            "canonicalId": "fsl-bs-short-term-debt-lease",
+            "value": 11110
+          },
+          {
+            "label": "Krótkoterminowe zobowiązania z tytułu świadczeń pracowniczych 2023",
+            "canonicalId": "fsl-bs-employee-benefits-st",
+            "value": 20954
+          },
+          {
+            "label": "Pozostałe rezerwy krótkoterminowe 2023",
+            "canonicalId": "fsl-bs-provisions",
+            "value": 12914
+          },
+          {
+            "label": "PASYWA RAZEM 2023",
+            "canonicalId": "fsl-bs-total-liabilities-equity",
+            "value": 975198
+          },
+          {
+            "label": "Zysk z działalności operacyjnej 2023",
+            "canonicalId": "fsl-bs-retained-earnings-prior",
+            "value": 40132
+          },
+          {
+            "label": "Zysk netto z działalności kontynuowanej 2023",
+            "canonicalId": "fsl-bs-retained-earnings-current",
+            "value": 8504
+          },
+          {
+            "label": "Zwiększenie (zmniejszenie) netto stanu środków pieniężnych i ekwiwalentów środków pieniężnych 2023",
+            "canonicalId": "fsl-bs-hedge-reserve",
+            "value": -6041
+          },
+          {
+            "label": "Zysk netto za okres obrotowy 2023",
+            "canonicalId": "fsl-bs-wc",
+            "value": 8504
+          },
+          {
+            "label": "Relacje z klientami 2023",
+            "canonicalId": "fsl-bs-contract-assets",
+            "value": 2106
+          },
+          {
+            "label": "Patenty i licencje, oprogramowanie komputerowe 2023",
+            "canonicalId": "fsl-bs-intangibles-software",
+            "value": 11873
+          },
+          {
+            "label": "Inwestycje niezakończone w prace rozwojowe 2023",
+            "canonicalId": "fsl-bs-equity-method-investments",
+            "value": 32325
+          },
+          {
+            "label": "Grunty, budynki i budowle 2023",
+            "canonicalId": "fsl-bs-ppe-land",
+            "value": 92868
+          },
+          {
+            "label": "Maszyny i urządzenia 2023",
+            "canonicalId": "fsl-bs-ppe-machinery",
+            "value": 47822
+          },
+          {
+            "label": "Środki transportu 2023",
+            "canonicalId": "fsl-bs-ppe-vehicles",
+            "value": 2780
+          },
+          {
+            "label": "Zwiększenie stanu z tytułu modernizacji 2023",
+            "canonicalId": "fsl-bs-other-current-assets-vat",
+            "value": 1024584
+          },
+          {
+            "label": "Pozostałe aktywa finansowe ogółem, w tym: 2023",
+            "canonicalId": "fsl-bs-other-current-financial-assets",
+            "value": 5152
+          },
+          {
+            "label": "Materiały 2023",
+            "canonicalId": "fsl-bs-inventory-raw",
+            "value": 144605
+          },
+          {
+            "label": "Produkcja w toku 2023",
+            "canonicalId": "fsl-bs-inventory-wip",
+            "value": 47489
+          },
+          {
+            "label": "Wyroby gotowe 2023",
+            "canonicalId": "fsl-bs-inventory-fg",
+            "value": 44515
+          },
+          {
+            "label": "Pozostałe 2023",
+            "canonicalId": "fsl-bs-other-provisions",
+            "value": 721
+          },
+          {
+            "label": "Należności handlowe 2023",
+            "canonicalId": "fsl-bs-ar",
+            "value": 188117
+          },
+          {
+            "label": "Inne należności 2023",
+            "canonicalId": "fsl-bs-ar-other",
+            "value": 924
+          },
+          {
+            "label": "Krótkoterminowe rozliczenia międzyokresowe 2023",
+            "canonicalId": "fsl-bs-other-current-assets-prepaids",
+            "value": 5689
+          },
+          {
+            "label": "Kapitał zapasowy ze sprzedaży akcji własnych powyżej ich wartości nominalnej 2023",
+            "canonicalId": "fsl-bs-share-premium",
+            "value": 15142
+          },
+          {
+            "label": "Zobowiązania długoterminowe 2023",
+            "canonicalId": "fsl-bs-long-term-debt",
+            "value": 40358
+          },
+          {
+            "label": "Instrumenty pochodne 2023",
+            "canonicalId": "fsl-bs-derivative-instruments",
+            "value": 324305
+          },
+          {
+            "label": "Korekta o zobowiązania z tytułu podatku dochodowego 2023",
+            "canonicalId": "fsl-bs-other-current-liabilities-tax",
+            "value": -1265
+          },
+          {
+            "label": "Różnice kursowe z konsolidacji 2023",
+            "canonicalId": "fsl-bs-fx-reserve",
+            "value": 4235
+          },
+          {
+            "label": "Zaliczki otrzymane na dostawy 2023",
+            "canonicalId": "fsl-bs-contract-liabilities",
+            "value": -6
+          },
+          {
+            "label": "Pozostałe zobowiązania 2023",
+            "canonicalId": "fsl-bs-other-non-current-liabilities",
+            "value": -74
+          },
+          {
+            "label": "Zobowiązania finansowe 2023",
+            "canonicalId": "fsl-bs-short-term-debt",
+            "value": -33260
+          },
+          {
+            "label": "Aktywa finansowe 2023",
+            "canonicalId": "fsl-bs-lt-financial-assets",
+            "value": 18827
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Podstawowe miejsce prowadzenia działalności gospodarczej – Ostaszewo 57C, 2023",
+            "value": 87,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kapitał z wyceny transakcji zabezpieczających oraz różnice kursowe z konsolidacji 2023",
+            "value": 8845,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania i rezerwy długoterminowe 2023",
+            "value": 80106,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Krótkoterminowe kredyty i pożyczki 2023",
+            "value": 162511,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zysk ze sprzedaży 2023",
+            "value": 57270,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wynik na pozostałej działalności operacyjnej, w tym: 2023",
+            "value": -17138,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Wynik na działalności finansowej, w tym: 2023",
+            "value": -12588,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zysk przed opodatkowaniem 2023",
+            "value": 27544,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Bieżący podatek dochodowy 2023",
+            "value": -7326,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Odroczony podatek dochodowy 2023",
+            "value": -11714,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Inne całkowite dochody Inne całkowite dochody netto 2023",
+            "value": 5887,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozycje, które mogą w przyszłości być przeklasyfikowane do wyniku finansowego: 2023",
+            "value": 6140,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Różnice kursowe z przeliczenia jednostek zagranicznych 2023",
+            "value": 2839,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wynik na rachunkowości zabezpieczeń wraz z efektem podatkowym 2023",
+            "value": 3301,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozycje, które w przyszłości nie będą przeklasyfikowane do wyniku finansowego: 2023",
+            "value": -253,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zyski i straty aktuarialne 2023",
+            "value": -253,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Całkowite dochody ogółem 2023",
+            "value": 14391,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Amortyzacja wartości niematerialnych 2023",
+            "value": 16807,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Amortyzacja rzeczowych aktywów trwałych 2023",
+            "value": 86,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Odpisy aktualizujące z tytułu utraty wartości rzeczowych aktywów trwałych 2023",
+            "value": 3408,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zysk na sprzedaży rzeczowych aktywów trwałych i wartości niematerialnych 2023",
+            "value": -1365,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Straty z tytułu zmiany wartości godziwej instrumentów pochodnych 2023",
+            "value": -920,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Koszty odsetek 2023",
+            "value": 15676,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Inne korekty 2023",
+            "value": 15953,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "zmian w kapitale obrotowym 2023",
+            "value": 116317,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zwrot podatku 2023",
+            "value": 7277,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zapłacony podatek dochodowy 2023",
+            "value": -15423,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wydatki na nabycie rzeczowych aktywów trwałych i aktywów leasingowych 2023",
+            "value": -18499,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wpływy ze sprzedaży rzeczowych aktywów trwałych 2023",
+            "value": 12196,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Środki pieniężne netto wykorzystane z działalności inwestycyjnej 2023",
+            "value": -25225,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wpływy z tytułu zaciągnięcia kredytów i pożyczek 2023",
+            "value": 24706,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Spłata zobowiązań z tytułu leasingu 2023",
+            "value": -11582,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Inne wydatki 2023",
+            "value": -1613,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Środki pieniężne i ich ekwiwalenty na początek okresu 2023",
+            "value": 28980,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Środki pieniężne i ich ekwiwalenty na koniec okresu 2023",
+            "value": 22939,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Przychody ze sprzedaży 2023",
+            "value": 514978,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozostałe przychody (koszty) operacyjne 2023",
+            "value": 750,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Amortyzacja 2023",
+            "value": 26823,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozostałe przych / koszty fin. 2023",
+            "value": -2549,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "ZYSK BRUTTO 2023",
+            "value": 31518,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "(+) Podatek dochodowy 2023",
+            "value": 19040,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "(+) Koszty finansowe 2023",
+            "value": 20667,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "(-) Przychody finansowe 2023",
+            "value": 8079,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "(+) Amortyzacja 2023",
+            "value": 56414,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zdarzenia o charakterze jednorazowym 2023",
+            "value": 17517,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "EBITDA skorygowana 2023",
+            "value": 114063,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Przychód z tytułu kontraktów rozpoznany z czego: 2023",
+            "value": 1137174,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Przychody ogółem 2023",
+            "value": 640513,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Sprzedaż na zewnątrz 2023",
+            "value": 640513,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Sprzedaż do jednostek powiązanych 2023",
+            "value": 3783,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Koszty prac rozwojowych 2023",
+            "value": 45363,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozostałe wartości niematerialne 2023",
+            "value": 950,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Inwestycje niezakończone w wartości niematerialne 2023",
+            "value": 1497,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zmniejszenie z tytułu likwidacji 2023",
+            "value": -557,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wartość brutto 2023",
+            "value": 29809,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Suma dotychczasowego umorzenia i odpisów aktualizujących 2023",
+            "value": -24052,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Wartość netto 2023",
+            "value": 5757,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wartość brutto wszystkich w pełni zamortyzowanych wartości niematerialnych będących nadal w używaniu 2023",
+            "value": 76452,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wartość nakładów na prace badawcze i rozwojowe ujętych jako koszt w okresie 2023",
+            "value": 16215,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Centrum Automatyzacji Pracy Sieci Apator Rector Sp. z o.o. 2023",
+            "value": 43106,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Linia Biznesowa Automatyki oraz ICT w Apator S.A. 2023",
+            "value": 34506,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Woda i Ciepło Apator Powogaz S.A. 2023",
+            "value": 17855,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Woda i Ciepło Apator Telemetria Sp. z o.o. 2023",
+            "value": 5546,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Woda i Ciepło Miitors ApS 2023",
+            "value": 18942,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wartość firmy netto 2023",
+            "value": 120672,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wartość firmy brutto na początek okresu 2023",
+            "value": 126528,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wartość firmy brutto na koniec okresu 2023",
+            "value": 124925,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Odpis aktualizujący z tytułu utraty wartości na koniec okresu 2023",
+            "value": -4253,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wartość firmy netto na koniec okresu 2023",
+            "value": 120672,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "planach finansowych spółek na lata 2023",
+            "value": 2028,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozostałe rzeczowe aktywa trwałe 2023",
+            "value": 41107,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Inwestycje niezakończone w rzeczowe aktywa trwałe 2023",
+            "value": 12234,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zwiększenie z tytułu nabycia 2023",
+            "value": 48129,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zwiększenie z tytułu własnej produkcji 2023",
+            "value": 145,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zwiększenie wynikające z przekwalifikowania- pozostałe 2023",
+            "value": 272,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zmniejszenie z tytułu zbycia 2023",
+            "value": -6316,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zmniejszenie wynikające z przekwalifikowania- pozostałe 2023",
+            "value": 163,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zmniejszenie dotychczasowego umorzenia z tytułu zbycia 2023",
+            "value": 3825,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zmniejszenie dotychczasowego umorzenia z tytułu likwidacji 22 2023",
+            "value": 3886,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Różnice kursowe netto z przeliczenia sprawozdania finansowego na walutę prezentacji 2023",
+            "value": 365,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozostałe zmiany- brutto 2023",
+            "value": -273,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozostałe zmiany- umorzenie 2023",
+            "value": 93374,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozostałe odpisy aktualizujące z tytułu utraty wartości aktywów 2023",
+            "value": -596,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zmniejszenie dotychczasowego umorzenia z tytułu likwidacji 2023",
+            "value": 4660237,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozostałe zmiany - brutto 21 2023",
+            "value": -62,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Utworzenie odpisu w ciężar bieżącego wyniku 2023",
+            "value": -596,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wartość na koniec okresu 2023",
+            "value": 54800,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zwiększenie z tytułu przyjęcia w leasing 2023",
+            "value": 17750,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Długoterminowe zobowiązania z tytułu leasingu finansowego 2023",
+            "value": 37608,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Krótkoterminowe zobowiązania z tytułu leasingu finansowego 2023",
+            "value": 11110,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania z tytułu leasingu finansowego ogółem 2023",
+            "value": 48718,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Opłaty Wartość bieżąca opłat Opłaty Wartość bieżąca opłat Płatne w okresie do 1 roku 2023",
+            "value": 12844,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Płatne w okresie od 1 roku do 5 lat 2023",
+            "value": 28772,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Płatne powyżej 5 lat 2023",
+            "value": 11911,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Przyszłe minimalne opłaty z tytułu umów leasingu finansowego ogółem 2023",
+            "value": 53527,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Przyszłe obciążenia finansowe (-) 2023",
+            "value": -4809,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Wartość bieżąca minimalnych opłat leasingowych 2023",
+            "value": 48718,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wartość na początek okresu 2023",
+            "value": 2282,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Bezpośrednie koszty operacyjne dotyczące nieruchomości inwestycyjnej, która w okresie przynosiła dochody z czynszów 2023",
+            "value": 69,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Towary 2023",
+            "value": 5293,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozostałe zapasy 2023",
+            "value": 394,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wartość zapasów ogółem 2023",
+            "value": 242296,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Odpis aktualizujący zapasy ogółem Wartość odpisów na początek okresu 2023",
+            "value": 20799,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zwiększenie- utworzenie odpisu w ciężar bieżącego wyniku 2023",
+            "value": 17316,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zmniejszenie- odpisanie w przychody niewykorzystanych kwot 2023",
+            "value": -1405,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Wykorzystanie odpisu- spisanie 2023",
+            "value": -952,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Wartość odpisów na koniec okresu 2023",
+            "value": 35717,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wartość zapasów wykazywanych w wartości godziwej pomniejszonej o koszty sprzedaży 2023",
+            "value": 241154,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Złożone depozyty, wadia, kaucje 2023",
+            "value": 1862,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Długoterminowe należności handlowe 2023",
+            "value": 2031,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Należności krótkoterminowe, w tym: 2023",
+            "value": 206475,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Należności handlowe brutto 2023",
+            "value": 192110,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Odpis z tytułu utraty wartości należności handlowych 2023",
+            "value": -3993,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Należności z tytułu sprzedanych rzeczowych aktywów trwałych oraz wartości niematerialnych 2023",
+            "value": 1081,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zaliczki na rzeczowe aktywa trwałe i wartości niematerialne i prawne 2023",
+            "value": 818,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Należności ogółem, w tym: 2023",
+            "value": 210011,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Niewymagalne 2023",
+            "value": 167944,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Przeterminowane od 2023",
+            "value": 0,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Przeterminowane od 31 do 2023",
+            "value": 180,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Przeterminowane powyżej roku 2023",
+            "value": 3514,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Wartość odpisów na początek okresu 2023",
+            "value": 4808,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Utworzenie odpisów indywidualnych (stopień 3 modelu utraty wartości) 2023",
+            "value": 3196,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Odwrócenie odpisów indywidualnych 2023",
+            "value": -261,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Odpis indywidualny 2023",
+            "value": 6849,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "W dniu 22 grudnia 2023",
+            "value": 11531,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Środki pieniężne na rachunkach bankowych 2023",
+            "value": 18765,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Środki pieniężne na rachunkach VAT (split payment) 2023",
+            "value": 4133,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Środki pieniężne i ich ekwiwalenty ogółem 2023",
+            "value": 22939,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Ubezpieczenia 2023",
+            "value": 1383,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Usługi informatyczne 2023",
+            "value": 2705,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Kapitał zakładowy wynosi 2023",
+            "value": 3.264,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Liczba wyemitowanych akcji, w pełni opłaconych 2023",
+            "value": 32647,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Wartość nominalna akcji 2023",
+            "value": 0.1,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kapitał podstawowy na początek okresu 2023",
+            "value": 3265,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kapitał podstawowy na koniec okresu 2023",
+            "value": 3265,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Tadeusz Sosgórnik 2023",
+            "value": 1490000,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "T. Sosgórnik z osobą blisko związaną 2023",
+            "value": 1490000,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Danuta Guzowska 2023",
+            "value": 954214,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zbigniew Jaworski 2023",
+            "value": 766348,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Apator Mining sp. z o. o. 2023",
+            "value": 0,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kazimierz Piotrowski z żoną 2023",
+            "value": 664774,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "PTE Allianz Polska* 2023",
+            "value": 0,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozostali 2023",
+            "value": 2268679,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Kapitał zapasowy, w tym: 2023",
+            "value": 579667,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozostały kapitał zapasowy 2023",
+            "value": 564525,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kapitał z połączenia 2023",
+            "value": 1146,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kapitały rezerwowe 2023",
+            "value": 19369,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozostałe kapitały ogółem 2023",
+            "value": 600182,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "28 czerwca 2023",
+            "value": 25593156.05,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "w wysokości 2023",
+            "value": 0.3,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "rok w łącznej kwocie 2023",
+            "value": 6529414.6,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Dywidendy ujęte jako wypłaty na rzecz właścicieli na jedną akcję (w PLN) 2023",
+            "value": 0.5,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Apator Telemetria Sp. z o.o. 2023",
+            "value": 2058,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Udziały niesprawujące kontroli ogółem 2023",
+            "value": 2058,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kredyty i pożyczki długoterminowe 2023",
+            "value": 29545,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "płatne powyżej 1 roku do 2 lat 2023",
+            "value": 4924,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Kredyty i pożyczki krótkoterminowe 2023",
+            "value": 162511,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kredyty i pożyczki ogółem, w tym 2023",
+            "value": 192056,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kredyty 2023",
+            "value": 192056,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wykorzystanie rezerwy- rozliczenie z kosztami 2023",
+            "value": -591,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wartość rezerw na dzień 2023",
+            "value": 31122022,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zwiększenie- utworzenie rezerwy w ciężar bieżącego wyniku 2023",
+            "value": 1016,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania długoterminowe z tytułu prawa do użytkowania aktywów w leasingu 2023",
+            "value": 37608,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania krótkoterminowe, w tym: 2023",
+            "value": 159690,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania bieżące 2023",
+            "value": 77751,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania przeterminowane 2023",
+            "value": 15840,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania z tytułu podatku dochodowego od osób prawnych 2023",
+            "value": 3241,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania z tytułu wynagrodzeń 2023",
+            "value": 9579,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania z tytułu dywidendy 2023",
+            "value": 89,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania z tytułu instrumentów pochodnych 2023",
+            "value": 466,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania inwestycyjne 2023",
+            "value": 1173,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Przedpłaty- zaliczki otrzymane na dostawy 2023",
+            "value": 1798,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Rozliczenia międzyokresowe przychodów 2023",
+            "value": 7522,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Faktoring 2023",
+            "value": 10001,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Inne zobowiązania 2023",
+            "value": 4163,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania krótkoterminowe z tytułu prawa do użytkowania aktywów w leasingu 2023",
+            "value": 11110,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania ogółem, w tym: 2023",
+            "value": 200048,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Bieżące obciążenie z tytułu podatku dochodowego 2023",
+            "value": 9341,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Obciążenie podatkowe wykazane w skróconym skonsolidowaniu sprawozdaniu z całkowitych dochodów 2023",
+            "value": 19040,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zobowiązania z tytułu świadczeń pracowniczych 2023",
+            "value": 5029,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Rezerwy 2023",
+            "value": 4015,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Strata podatkowa 2023",
+            "value": 869,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Ulga podatkowa do rozliczenia w przyszłych okresach 2023",
+            "value": 5807,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Nettowanie aktywa i rezerwy 2023",
+            "value": -7107,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "W dniu 28 grudnia 2023",
+            "value": 69,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Podstawa opodatkowania 2023",
+            "value": 27544,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zastosowana stawka podatkowa 2023",
+            "value": 19,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Podatek dochodowy obliczony według obowiązującej stawki 2023",
+            "value": 4935,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Podatek od przychodów zwolnionych z opodatkowania (różnice trwałe) 2023",
+            "value": -75,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Podatek od kosztów niestanowiących kosztów uzyskania przychodów (różnice trwałe) 2023",
+            "value": 2224,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Podatek od transakcji wewnątrzgrupowych (różnice trwałe) 2023",
+            "value": 3908,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Podatek od pozycji nieujętych w wyniku finansowym okresu 2023",
+            "value": -105,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Korekta strat podatkowych z lat ubiegłych 2023",
+            "value": 11352,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Inne odliczenia podatkowe 2023",
+            "value": -2093,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Podatek dochodowy 2023",
+            "value": 19040,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Efektywna stopa podatkowa 2023",
+            "value": 69.13,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zużycie materiałów i energii 2023",
+            "value": 534846,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Usługi obce 2023",
+            "value": 126093,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Świadczenia pracownicze 2023",
+            "value": 253362,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozostałe koszty 2023",
+            "value": 38545,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Koszty wytworzenia produktów na własne potrzeby jednostki 2023",
+            "value": -3883,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zmiana stanu wyrobów gotowych, produkcji niezakończonej oraz rozliczeń międzyokresowych 2023",
+            "value": 11940,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Koszt sprzedanych towarów i materiałów 2023",
+            "value": 62587,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Przychody operacyjne 2023",
+            "value": 3020,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Wynik na sprzedaży rzeczowych aktywów trwałych 2023",
+            "value": 768,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Koszty operacyjne 2023",
+            "value": -20158,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Koszt zlikwidowanych rzeczowych aktywów trwałych 2023",
+            "value": -107,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Utworzenie odpisów aktualizujących wartości niematerialne 2023",
+            "value": -9176,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Utworzenie rezerwy na zobowiązania 2023",
+            "value": -328,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zaniechane inwestycje 2023",
+            "value": -1849,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Przekazane darowizny 2023",
+            "value": -65,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Koszty operacyjne netto 2023",
+            "value": -17138,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Przychody finansowe 2023",
+            "value": 8079,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Przychody z tytułu transakcji walutowych (w tym instrumentów pochodnych) 2023",
+            "value": 6894,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Koszty finansowe 2023",
+            "value": -20667,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Odsetki od kredytów i pożyczek 2023",
+            "value": -13690,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Odsetki płatne do budżetu 2023",
+            "value": -44,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Odsetki od zobowiązań leasingowych 2023",
+            "value": -2558,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozostałe odsetki 2023",
+            "value": -1380,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Ujemne różnice kursowe 2023",
+            "value": -1486,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Koszty finansowe netto 2023",
+            "value": -12588,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zmiana stanu pozostałych należności 2023",
+            "value": 3349,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Korekta o należności z tytułu podatku dochodowego 2023",
+            "value": 544,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Korekta o należności inwestycyjne 2023",
+            "value": -1676,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozostałe zmiany 2023",
+            "value": 179,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zmiana stanu wykazana w rachunku przepływów 2023",
+            "value": 10624,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zmiana zobowiązań długoterminowych z tytułu prawa do użytkowania aktywów w leasingu 2023",
+            "value": 4309,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zmiana stanu pozostałych zobowiązań 2023",
+            "value": -7187,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Korekta o zobowiązania z tytułu leasingu 2023",
+            "value": -5863,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Korekta o zobowiązania z tytułu instrumentów pochodnych 2023",
+            "value": 1469,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Korekta o zobowiązania inwestycyjne 2023",
+            "value": 327,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zmiana stanu krótkoterminowych rezerw z tytułu świadczeń pracowniczych 2023",
+            "value": 5572,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zmiana stanu krótkoterminowych rozliczeń międzyokresowych czynnych 2023",
+            "value": 150,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Rozliczenie dotacji 2023",
+            "value": -488,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Wpływy ze sprzedaży rzeczowych aktywów trwałych Przychody ze sprzedaży środków trwałych 2023",
+            "value": 14749,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wydatki na nabycie rzeczowych aktywów trwałych Zakup rzeczowych aktywów trwałych 2023",
+            "value": -33910,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wyłączenie z tytułu leasingu 2023",
+            "value": 14460,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wydatki na nabycie wartości niematerialnych Zakup wartości niematerialnych 2023",
+            "value": -12804,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zmiana stanu prac rozwojowych w budowie 2023",
+            "value": -4420,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Wpływy / wypływy środków pieniężnych z tytułu kredytów Bilansowa zmiana kredytów długoterminowych 2023",
+            "value": 26426,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Bilansowa zmiana kredytów krótkoterminowych 2023",
+            "value": -74839,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Instrumenty pochodne (aktywa) 2023",
+            "value": 5152,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Instrumenty pochodne (pasywa) 2023",
+            "value": -466,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "USD. Wartość nominalna 2023",
+            "value": 7800,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Instrumenty zabezpieczające 2023",
+            "value": 466,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Stan na początek okresu 2023",
+            "value": -2043,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Odwrócenie wyceny z poprzedniego okresu 2023",
+            "value": 2043,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wycena na koniec okresu 2023",
+            "value": 2032,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Stan na koniec okresu 2023",
+            "value": 2032,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "w walucie w PLN w walucie w PLN Pozycje w euro (EUR) 2023",
+            "value": 5027,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Środki pieniężne 2023",
+            "value": 588,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozycje w dolarach amerykańskich (USD) 2023",
+            "value": -2692,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Przekazane zaliczki na zakup materiałów i usług 2023",
+            "value": 267,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozycje w funtach szterlingach (GBP) 2023",
+            "value": 1459,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozycje w koronach czeskich (CZK) 2023",
+            "value": -3713,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozycje w koronach duńskich (DKK) 2023",
+            "value": 4944,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozycje w juanach chińskich (CNY) 2023",
+            "value": -1895,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Przekazane zaliczki na zakup materiałów i usług 38 2023",
+            "value": 25852,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Instrumenty zabezpieczające przepływy środków pieniężnych w USD 2023",
+            "value": 5250,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "USD / PLN +10% 2023",
+            "value": -1037,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "GBP / PLN +10% 2023",
+            "value": -669,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "DKK / PLN +10% 2023",
+            "value": 288,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "CNY/ PLN +10% 2023",
+            "value": -105,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Instrumenty finansowe o stałej stopie procentowej 2023",
+            "value": -30464,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Instrumenty finansowe o zmiennej stopie procentowej 2023",
+            "value": -183888,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wpływ na wynik finansowy brutto Wpływ na kapitał własny WIBOR + 2023",
+            "value": 100,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "SONIA + 2023",
+            "value": 100,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "EURIBOR + 2023",
+            "value": 100,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "PRIBOR + 2023",
+            "value": 100,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "SOFR + 2023",
+            "value": 100,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Kredyty i pożyczki 2023",
+            "value": 192056,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zobowiązania z tytułu leasingu 2023",
+            "value": 48718,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Krótkoterminowe świadczenia pracownicze 2023",
+            "value": 13612,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Zakup produktów, usług, towarów i materiałów - 35 2023",
+            "value": 4882,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Przeciętne zatrudnienie w etatach za okres 2023",
+            "value": 2359,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pracownicy fizyczni 2023",
+            "value": 1439,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Stan zatrudnienia w etatach na koniec okresu 2023",
+            "value": 2299,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zarząd 2023",
+            "value": -4,
+            "reason": "duplicate_candidate_conflict"
+          }
+        ],
+        "policyAssessment": {
+          "effectiveCoveragePct": 19,
+          "tier1Auto": 65,
+          "tier2LlmConfirmed": 0,
+          "tier3ReviewRequired": 278,
+          "tier4Excluded": 53,
+          "meetsTarget": false,
+          "canAutoConfirm": false,
+          "summary": "19% coverage — below 90% target, 278 line(s) need review"
+        }
+      },
+      {
+        "statementType": "P&L",
+        "selectedPeriodLabel": "2023",
+        "comparisonPeriodLabel": "2022",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 20,
+        "mappedLineCount": 20,
+        "nonFinancialLineCount": 1,
+        "coveragePct": 100,
+        "readinessStatus": "ready",
+        "readinessScore": 100,
+        "reasonCodes": [],
+        "warnings": [],
+        "topMappedLines": [
+          {
+            "label": "Przychody ze sprzedaży dóbr i usług 2023",
+            "canonicalId": "fsl-pl-revenue",
+            "value": 1137174
+          },
+          {
+            "label": "Koszt własny sprzedaży 2023",
+            "canonicalId": "fsl-pl-cogs",
+            "value": -881346
+          },
+          {
+            "label": "Zysk brutto ze sprzedaży 2023",
+            "canonicalId": "fsl-pl-gross",
+            "value": 255828
+          },
+          {
+            "label": "Koszty sprzedaży 2023",
+            "canonicalId": "fsl-pl-selling",
+            "value": -44903
+          },
+          {
+            "label": "Koszty ogólnego zarządu 2023",
+            "canonicalId": "fsl-pl-gna",
+            "value": -153655
+          },
+          {
+            "label": "Zysk ze sprzedaży 2023",
+            "canonicalId": "fsl-pl-opex",
+            "value": 57270
+          },
+          {
+            "label": "Wynik na pozostałej działalności operacyjnej, w tym: 2023",
+            "canonicalId": "fsl-pl-other-op-result",
+            "value": -17138
+          },
+          {
+            "label": "Zysk z działalności operacyjnej 2023",
+            "canonicalId": "fsl-pl-ebit",
+            "value": 40132
+          },
+          {
+            "label": "Wynik na działalności finansowej, w tym: 2023",
+            "canonicalId": "fsl-pl-interest",
+            "value": -12588
+          },
+          {
+            "label": "Zysk przed opodatkowaniem 2023",
+            "canonicalId": "fsl-pl-ebt",
+            "value": 27544
+          },
+          {
+            "label": "Bieżący podatek dochodowy 2023",
+            "canonicalId": "fsl-pl-tax-current",
+            "value": -7326
+          },
+          {
+            "label": "Odroczony podatek dochodowy 2023",
+            "canonicalId": "fsl-pl-tax-deferred",
+            "value": -11714
+          },
+          {
+            "label": "Zysk netto z działalności kontynuowanej 2023",
+            "canonicalId": "fsl-pl-net-continuing",
+            "value": 8504
+          },
+          {
+            "label": "Inne całkowite dochody Inne całkowite dochody netto 2023",
+            "canonicalId": "fsl-pl-oci-total",
+            "value": 5887
+          },
+          {
+            "label": "Pozycje, które mogą w przyszłości być przeklasyfikowane do wyniku finansowego: 2023",
+            "canonicalId": "fsl-pl-oci-reclassifiable",
+            "value": 6140
+          },
+          {
+            "label": "Różnice kursowe z przeliczenia jednostek zagranicznych 2023",
+            "canonicalId": "fsl-pl-oci-fx",
+            "value": 2839
+          },
+          {
+            "label": "Wynik na rachunkowości zabezpieczeń wraz z efektem podatkowym 2023",
+            "canonicalId": "fsl-pl-oci-hedge",
+            "value": 3301
+          },
+          {
+            "label": "Pozycje, które w przyszłości nie będą przeklasyfikowane do wyniku finansowego: 2023",
+            "canonicalId": "fsl-pl-oci-non-reclassifiable",
+            "value": -253
+          },
+          {
+            "label": "Zyski i straty aktuarialne 2023",
+            "canonicalId": "fsl-pl-oci-actuarial",
+            "value": -253
+          },
+          {
+            "label": "Całkowite dochody ogółem 2023",
+            "canonicalId": "fsl-pl-comprehensive-income",
+            "value": 14391
+          }
+        ],
+        "topUnmappedLines": [],
+        "policyAssessment": {
+          "effectiveCoveragePct": 100,
+          "tier1Auto": 20,
+          "tier2LlmConfirmed": 0,
+          "tier3ReviewRequired": 0,
+          "tier4Excluded": 1,
+          "meetsTarget": true,
+          "canAutoConfirm": true,
+          "summary": "100% coverage — all lines mapped with high confidence, auto-confirm eligible"
+        }
+      },
+      {
+        "statementType": "CF",
+        "selectedPeriodLabel": "2023",
+        "comparisonPeriodLabel": "2022",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 26,
+        "mappedLineCount": 26,
+        "nonFinancialLineCount": 1,
+        "coveragePct": 100,
+        "readinessStatus": "ready",
+        "readinessScore": 100,
+        "reasonCodes": [],
+        "warnings": [],
+        "topMappedLines": [
+          {
+            "label": "Amortyzacja wartości niematerialnych 2023",
+            "canonicalId": "fsl-cf-operating-depreciation-intangibles",
+            "value": 16807
+          },
+          {
+            "label": "Amortyzacja rzeczowych aktywów trwałych 2023",
+            "canonicalId": "fsl-cf-operating-depreciation-ppe",
+            "value": 86
+          },
+          {
+            "label": "Odpisy aktualizujące z tytułu utraty wartości rzeczowych aktywów trwałych 2023",
+            "canonicalId": "fsl-cf-operating-impairment",
+            "value": 3408
+          },
+          {
+            "label": "Zysk na sprzedaży rzeczowych aktywów trwałych i wartości niematerialnych 2023",
+            "canonicalId": "fsl-cf-operating-gain-disposal",
+            "value": -1365
+          },
+          {
+            "label": "Straty z tytułu zmiany wartości godziwej instrumentów pochodnych 2023",
+            "canonicalId": "fsl-cf-operating-fv-derivatives",
+            "value": -920
+          },
+          {
+            "label": "Koszty odsetek 2023",
+            "canonicalId": "fsl-cf-operating-interest-cost",
+            "value": 15676
+          },
+          {
+            "label": "Inne korekty 2023",
+            "canonicalId": "fsl-cf-operating-other-adj",
+            "value": 15953
+          },
+          {
+            "label": "zmian w kapitale obrotowym 2023",
+            "canonicalId": "fsl-cf-operating-before-wc",
+            "value": 116317
+          },
+          {
+            "label": "Zmiana stanu zapasów 2023",
+            "canonicalId": "fsl-cf-change-wc-inventory",
+            "value": 9321
+          },
+          {
+            "label": "Zmiana stanu należności 2023",
+            "canonicalId": "fsl-cf-change-wc-ar",
+            "value": 10624
+          },
+          {
+            "label": "Zmiana stanu zobowiązań 2023",
+            "canonicalId": "fsl-cf-change-wc-ap",
+            "value": -27050
+          },
+          {
+            "label": "Zmiana stanu rezerw 2023",
+            "canonicalId": "fsl-cf-change-wc-provisions",
+            "value": 6788
+          },
+          {
+            "label": "Zwrot podatku 2023",
+            "canonicalId": "fsl-cf-tax-refund",
+            "value": 7277
+          },
+          {
+            "label": "Zapłacony podatek dochodowy 2023",
+            "canonicalId": "fsl-cf-taxes-paid",
+            "value": -15423
+          },
+          {
+            "label": "Wydatki na nabycie rzeczowych aktywów trwałych i aktywów leasingowych 2023",
+            "canonicalId": "fsl-cf-capex",
+            "value": -18499
+          },
+          {
+            "label": "Wpływy ze sprzedaży rzeczowych aktywów trwałych 2023",
+            "canonicalId": "fsl-cf-investing-disposal-ppe",
+            "value": 12196
+          },
+          {
+            "label": "Środki pieniężne netto wykorzystane z działalności inwestycyjnej 2023",
+            "canonicalId": "fsl-cf-investing",
+            "value": -25225
+          },
+          {
+            "label": "Wpływy z tytułu zaciągnięcia kredytów i pożyczek 2023",
+            "canonicalId": "fsl-cf-debt-drawdown",
+            "value": 24706
+          },
+          {
+            "label": "Spłaty kredytów i pożyczek 2023",
+            "canonicalId": "fsl-cf-debt-repayment",
+            "value": -71482
+          },
+          {
+            "label": "Odsetki zapłacone 2023",
+            "canonicalId": "fsl-cf-interest-paid",
+            "value": -14168
+          },
+          {
+            "label": "Dywidendy wypłacone 2023",
+            "canonicalId": "fsl-cf-dividends",
+            "value": -14612
+          },
+          {
+            "label": "Spłata zobowiązań z tytułu leasingu 2023",
+            "canonicalId": "fsl-cf-lease-repayment",
+            "value": -11582
+          },
+          {
+            "label": "Inne wydatki 2023",
+            "canonicalId": "fsl-cf-other-expenditure",
+            "value": -1613
+          },
+          {
+            "label": "Zwiększenie (zmniejszenie) netto stanu środków pieniężnych i ekwiwalentów środków pieniężnych 2023",
+            "canonicalId": "fsl-cf-net-change-cash",
+            "value": -6041
+          },
+          {
+            "label": "Środki pieniężne i ich ekwiwalenty na początek okresu 2023",
+            "canonicalId": "fsl-cf-opening-cash",
+            "value": 28980
+          },
+          {
+            "label": "Środki pieniężne i ich ekwiwalenty na koniec okresu 2023",
+            "canonicalId": "fsl-cf-closing-cash",
+            "value": 22939
+          }
+        ],
+        "topUnmappedLines": [],
+        "policyAssessment": {
+          "effectiveCoveragePct": 100,
+          "tier1Auto": 26,
+          "tier2LlmConfirmed": 0,
+          "tier3ReviewRequired": 0,
+          "tier4Excluded": 1,
+          "meetsTarget": true,
+          "canAutoConfirm": true,
+          "summary": "100% coverage — all lines mapped with high confidence, auto-confirm eligible"
+        }
+      }
+    ]
+  },
+  {
+    "label": "Grupa Apator Raport RS 2024",
+    "filePath": "knowledge/Finanse/Grupa Apator Raport RS 2024.pdf",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "currency": "PLN",
+    "scaling": "thousands",
+    "textLength": 274440,
+    "targets": [
+      {
+        "statementType": "BS",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 30,
+        "mappedLineCount": 30,
+        "nonFinancialLineCount": 0,
+        "coveragePct": 100,
+        "readinessStatus": "recoverable",
+        "readinessScore": 77,
+        "reasonCodes": [
+          "MISSING_REQUIRED_CANONICAL_LINES"
+        ],
+        "warnings": [
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Środki pieniężne 2024",
+            "canonicalId": "fsl-bs-cash",
+            "value": 17716
+          },
+          {
+            "label": "Pozostałe aktywa krótkoterminowe 2024",
+            "canonicalId": "fsl-bs-other-current-assets",
+            "value": 11208
+          },
+          {
+            "label": "AKTYWA RAZEM 2024",
+            "canonicalId": "fsl-bs-total-assets",
+            "value": 965357
+          },
+          {
+            "label": "Kapitał własny 2024",
+            "canonicalId": "fsl-bs-equity",
+            "value": 592502
+          },
+          {
+            "label": "Kapitał własny przypadający akcjonariuszom jednostki dominującej 2024",
+            "canonicalId": "fsl-bs-equity-parent",
+            "value": 590290
+          },
+          {
+            "label": "Kapitał podstawowy 2024",
+            "canonicalId": "fsl-bs-share-capital",
+            "value": 3265
+          },
+          {
+            "label": "Akcje własne 2024",
+            "canonicalId": "fsl-bs-treasury-shares",
+            "value": -3522
+          },
+          {
+            "label": "Pozostałe kapitały 2024",
+            "canonicalId": "fsl-bs-other-equity-reserves",
+            "value": 574829
+          },
+          {
+            "label": "Kapitał z wyceny transakcji zabezpieczających 2024",
+            "canonicalId": "fsl-bs-hedge-reserve",
+            "value": 389
+          },
+          {
+            "label": "Różnice kursowe z konsolidacji 2024",
+            "canonicalId": "fsl-bs-fx-reserve",
+            "value": 6132
+          },
+          {
+            "label": "Niepodzielony wynik finansowy 2024",
+            "canonicalId": "fsl-bs-retained-earnings",
+            "value": 8590
+          },
+          {
+            "label": "Udziały niesprawujące kontroli 2024",
+            "canonicalId": "fsl-bs-minority-interest",
+            "value": 2212
+          },
+          {
+            "label": "Zobowiązania 2024",
+            "canonicalId": "fsl-bs-total-liabilities",
+            "value": 372855
+          },
+          {
+            "label": "Zobowiązania i rezerwy długoterminowe 2024",
+            "canonicalId": "fsl-bs-long-term-debt",
+            "value": 63274
+          },
+          {
+            "label": "Długoterminowe kredyty i pożyczki 2024",
+            "canonicalId": "fsl-bs-long-term-borrowings",
+            "value": 24621
+          },
+          {
+            "label": "Zobowiązania długoterminowe z tytułu leasingu 2024",
+            "canonicalId": "fsl-bs-long-term-debt-lease",
+            "value": 28954
+          },
+          {
+            "label": "Rezerwa z tytułu odroczonego podatku dochodowego 2024",
+            "canonicalId": "fsl-bs-other-non-current-liabilities-deferred-tax",
+            "value": 2565
+          },
+          {
+            "label": "Długoterminowe zobowiązania z tytułu świadczeń pracowniczych 2024",
+            "canonicalId": "fsl-bs-employee-benefits-lt",
+            "value": 5567
+          },
+          {
+            "label": "Pozostałe rezerwy długoterminowe 2024",
+            "canonicalId": "fsl-bs-other-non-current-liabilities-provisions",
+            "value": 1567
+          },
+          {
+            "label": "Zobowiązania i rezerwy krótkoterminowe 2024",
+            "canonicalId": "fsl-bs-current-liabilities",
+            "value": 309581
+          },
+          {
+            "label": "Krótkoterminowe kredyty i pożyczki 2024",
+            "canonicalId": "fsl-bs-short-term-debt",
+            "value": 90226
+          },
+          {
+            "label": "Zobowiązania handlowe 2024",
+            "canonicalId": "fsl-bs-ap",
+            "value": 722
+          },
+          {
+            "label": "Krótkoterminowe zobowiązania kontraktowe 2024",
+            "canonicalId": "fsl-bs-contract-liabilities",
+            "value": 5940
+          },
+          {
+            "label": "Zobowiązania z tytułu podatku dochodowego od osób prawnych 2024",
+            "canonicalId": "fsl-bs-other-current-liabilities-tax",
+            "value": 5427
+          },
+          {
+            "label": "Zobowiązania z tytułu innych podatków, ceł i ubezpieczeń społecznych 2024",
+            "canonicalId": "fsl-bs-other-tax-payables",
+            "value": 19722
+          },
+          {
+            "label": "Pozostałe zobowiązania krótkoterminowe 2024",
+            "canonicalId": "fsl-bs-other-current-liabilities",
+            "value": 16853
+          },
+          {
+            "label": "Zobowiązania krótkoterminowe z tytułu leasingu 2024",
+            "canonicalId": "fsl-bs-short-term-debt-lease",
+            "value": 11950
+          },
+          {
+            "label": "Krótkoterminowe zobowiązania z tytułu świadczeń pracowniczych 2024",
+            "canonicalId": "fsl-bs-employee-benefits-st",
+            "value": 22854
+          },
+          {
+            "label": "Pozostałe rezerwy krótkoterminowe 2024",
+            "canonicalId": "fsl-bs-provisions",
+            "value": 29785
+          },
+          {
+            "label": "PASYWA RAZEM 2024",
+            "canonicalId": "fsl-bs-total-liabilities-equity",
+            "value": 965357
+          }
+        ],
+        "topUnmappedLines": [],
+        "policyAssessment": {
+          "effectiveCoveragePct": 100,
+          "tier1Auto": 29,
+          "tier2LlmConfirmed": 1,
+          "tier3ReviewRequired": 0,
+          "tier4Excluded": 0,
+          "meetsTarget": true,
+          "canAutoConfirm": true,
+          "summary": "100% coverage — all lines mapped with high confidence, auto-confirm eligible"
+        }
+      },
+      {
+        "statementType": "P&L",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 16,
+        "mappedLineCount": 16,
+        "nonFinancialLineCount": 1,
+        "coveragePct": 100,
+        "readinessStatus": "ready",
+        "readinessScore": 100,
+        "reasonCodes": [],
+        "warnings": [],
+        "topMappedLines": [
+          {
+            "label": "Przychody ze sprzedaży dóbr i usług 2024",
+            "canonicalId": "fsl-pl-revenue",
+            "value": 1227799
+          },
+          {
+            "label": "Koszt własny sprzedaży 2024",
+            "canonicalId": "fsl-pl-cogs",
+            "value": -913065
+          },
+          {
+            "label": "Zysk brutto ze sprzedaży 2024",
+            "canonicalId": "fsl-pl-gross",
+            "value": 314734
+          },
+          {
+            "label": "Koszty sprzedaży 2024",
+            "canonicalId": "fsl-pl-selling",
+            "value": -48381
+          },
+          {
+            "label": "Koszty ogólnego zarządu 2024",
+            "canonicalId": "fsl-pl-gna",
+            "value": -162894
+          },
+          {
+            "label": "Zysk ze sprzedaży 2024",
+            "canonicalId": "fsl-pl-opex",
+            "value": 103459
+          },
+          {
+            "label": "Zmiana stanu odpisów aktualizujących należności 2024",
+            "canonicalId": "fsl-pl-impairment-receivables",
+            "value": -280
+          },
+          {
+            "label": "Wynik na pozostałej działalności operacyjnej, w tym: 2024",
+            "canonicalId": "fsl-pl-other-op-result",
+            "value": -18045
+          },
+          {
+            "label": "Zysk z działalności operacyjnej 2024",
+            "canonicalId": "fsl-pl-ebit",
+            "value": 85134
+          },
+          {
+            "label": "Wynik na działalności finansowej, w tym: 2024",
+            "canonicalId": "fsl-pl-interest",
+            "value": -7599
+          },
+          {
+            "label": "Zysk przed opodatkowaniem 2024",
+            "canonicalId": "fsl-pl-ebt",
+            "value": 81818
+          },
+          {
+            "label": "Podatek dochodowy 2024",
+            "canonicalId": "fsl-pl-tax",
+            "value": -8604
+          },
+          {
+            "label": "Inne całkowite dochody - Inne całkowite dochody netto 2024",
+            "canonicalId": "fsl-pl-oci-total",
+            "value": -2261
+          },
+          {
+            "label": "Pozycje, które mogą w przyszłości być przeklasyfikowane do wyniku finansowego: 2024",
+            "canonicalId": "fsl-pl-oci-reclassifiable",
+            "value": -1974
+          },
+          {
+            "label": "Różnice kursowe z przeliczenia jednostek zagranicznych 2024",
+            "canonicalId": "fsl-pl-oci-fx",
+            "value": -718
+          },
+          {
+            "label": "Wynik na rachunkowości zabezpieczeń wraz z efektem podatkowym 2024",
+            "canonicalId": "fsl-pl-oci-hedge",
+            "value": -1256
+          }
+        ],
+        "topUnmappedLines": [],
+        "policyAssessment": {
+          "effectiveCoveragePct": 100,
+          "tier1Auto": 16,
+          "tier2LlmConfirmed": 0,
+          "tier3ReviewRequired": 0,
+          "tier4Excluded": 1,
+          "meetsTarget": true,
+          "canAutoConfirm": true,
+          "summary": "100% coverage — all lines mapped with high confidence, auto-confirm eligible"
+        }
+      },
+      {
+        "statementType": "CF",
+        "selectedPeriodLabel": "2024",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 28,
+        "mappedLineCount": 28,
+        "nonFinancialLineCount": 2,
+        "coveragePct": 100,
+        "readinessStatus": "ready",
+        "readinessScore": 100,
+        "reasonCodes": [],
+        "warnings": [],
+        "topMappedLines": [
+          {
+            "label": "Amortyzacja wartości niematerialnych 2024",
+            "canonicalId": "fsl-cf-operating-depreciation-intangibles",
+            "value": 16268
+          },
+          {
+            "label": "Amortyzacja rzeczowych aktywów trwałych 2024",
+            "canonicalId": "fsl-cf-operating-depreciation-ppe",
+            "value": 30172
+          },
+          {
+            "label": "Amortyzacja aktywów z tytułu prawa do użytkowania 2024",
+            "canonicalId": "fsl-cf-operating-depreciation-rou",
+            "value": 10872
+          },
+          {
+            "label": "Odpisy aktualizujące z tytułu utraty wartości rzeczowych aktywów trwałych 2024",
+            "canonicalId": "fsl-cf-operating-impairment",
+            "value": 453
+          },
+          {
+            "label": "Zysk na sprzedaży rzeczowych aktywów trwałych i wartości niematerialnych 2024",
+            "canonicalId": "fsl-cf-operating-gain-disposal",
+            "value": -867
+          },
+          {
+            "label": "Zyski z wyceny nieruchomości inwestycyjnych według wartości godziwej 2024",
+            "canonicalId": "fsl-cf-operating-fv-changes",
+            "value": -716
+          },
+          {
+            "label": "Koszty odsetek 2024",
+            "canonicalId": "fsl-cf-operating-interest-cost",
+            "value": 9877
+          },
+          {
+            "label": "Inne korekty 2024",
+            "canonicalId": "fsl-cf-operating-other-adj",
+            "value": 274
+          },
+          {
+            "label": "uwzględnieniem zmian w kapitale obrotowym 2024",
+            "canonicalId": "fsl-cf-operating-before-wc",
+            "value": 149575
+          },
+          {
+            "label": "Zmiana stanu zapasów 2024",
+            "canonicalId": "fsl-cf-change-wc-inventory",
+            "value": 17454
+          },
+          {
+            "label": "Zmiana stanu należności 2024",
+            "canonicalId": "fsl-cf-change-wc-ar",
+            "value": -8434
+          },
+          {
+            "label": "Zmiana stanu pozostałych aktywów 2024",
+            "canonicalId": "fsl-cf-change-wc-other",
+            "value": -2109
+          },
+          {
+            "label": "Zmiana stanu zobowiązań 2024",
+            "canonicalId": "fsl-cf-change-wc-ap",
+            "value": -18739
+          },
+          {
+            "label": "Zmiana stanu rezerw 2024",
+            "canonicalId": "fsl-cf-change-wc-provisions",
+            "value": 19005
+          },
+          {
+            "label": "Zwrot podatku 2024",
+            "canonicalId": "fsl-cf-tax-refund",
+            "value": 7070
+          },
+          {
+            "label": "Zapłacony podatek dochodowy 2024",
+            "canonicalId": "fsl-cf-taxes-paid",
+            "value": -12623
+          },
+          {
+            "label": "Wydatki na nabycie rzeczowych aktywów trwałych 2024",
+            "canonicalId": "fsl-cf-capex",
+            "value": -43691
+          },
+          {
+            "label": "Wpływy ze sprzedaży rzeczowych aktywów trwałych 2024",
+            "canonicalId": "fsl-cf-investing-disposal-ppe",
+            "value": 1758
+          },
+          {
+            "label": "Inne wydatki 2024",
+            "canonicalId": "fsl-cf-other-expenditure",
+            "value": -2058
+          },
+          {
+            "label": "Środki pieniężne netto wykorzystane z działalności inwestycyjnej 2024",
+            "canonicalId": "fsl-cf-investing",
+            "value": -58668
+          },
+          {
+            "label": "Przepływy środków pieniężnych z działalności finansowej - Wpływy z tytułu zaciągnięcia kredytów i pożyczek 2024",
+            "canonicalId": "fsl-cf-financing",
+            "value": 31396
+          },
+          {
+            "label": "Spłaty kredytów i pożyczek 2024",
+            "canonicalId": "fsl-cf-debt-repayment",
+            "value": -88845
+          },
+          {
+            "label": "Odsetki zapłacone 2024",
+            "canonicalId": "fsl-cf-interest-paid",
+            "value": -8157
+          },
+          {
+            "label": "Dywidendy wypłacone 2024",
+            "canonicalId": "fsl-cf-dividends",
+            "value": -17428
+          },
+          {
+            "label": "Spłata zobowiązań z tytułu leasingu 2024",
+            "canonicalId": "fsl-cf-lease-repayment",
+            "value": -13257
+          },
+          {
+            "label": "Zmniejszenie netto stanu środków pieniężnych 2024",
+            "canonicalId": "fsl-cf-net-change-cash",
+            "value": -5223
+          },
+          {
+            "label": "Środki pieniężne na początek okresu 2024",
+            "canonicalId": "fsl-cf-opening-cash",
+            "value": 22939
+          },
+          {
+            "label": "Środki pieniężne na koniec okresu 2024",
+            "canonicalId": "fsl-cf-closing-cash",
+            "value": 17716
+          }
+        ],
+        "topUnmappedLines": [],
+        "policyAssessment": {
+          "effectiveCoveragePct": 100,
+          "tier1Auto": 28,
+          "tier2LlmConfirmed": 0,
+          "tier3ReviewRequired": 0,
+          "tier4Excluded": 2,
+          "meetsTarget": true,
+          "canAutoConfirm": true,
+          "summary": "100% coverage — all lines mapped with high confidence, auto-confirm eligible"
+        }
+      }
+    ]
+  },
+  {
+    "label": "Raport skonsolidowany Apator",
+    "filePath": "knowledge/Finanse/Raport-skonsolidowany-Apator.pdf",
+    "detectedStatementType": "BS",
+    "containedStatementTypes": [
+      "BS",
+      "P&L",
+      "CF"
+    ],
+    "documentClass": "mixed_report",
+    "extractionStrategy": "pdf_layout_mixed",
+    "currency": "PLN",
+    "scaling": "thousands",
+    "textLength": 186704,
+    "targets": [
+      {
+        "statementType": "BS",
+        "selectedPeriodLabel": "2022",
+        "comparisonPeriodLabel": "2023",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 42,
+        "mappedLineCount": 16,
+        "nonFinancialLineCount": 3,
+        "coveragePct": 38,
+        "readinessStatus": "recoverable",
+        "readinessScore": 10,
+        "reasonCodes": [
+          "UNMAPPED_FINANCIAL_LINES",
+          "MISSING_REQUIRED_CANONICAL_LINES"
+        ],
+        "warnings": [
+          "BS_EQUATION_INCOMPLETE",
+          "LOW_MAPPING_COVERAGE",
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Zmniejszenie z tytułu zbycia 2022",
+            "canonicalId": "fsl-bs-other-tax-payables",
+            "value": -23
+          },
+          {
+            "label": "Środki pieniężne na rachunkach bankowych 2022",
+            "canonicalId": "fsl-bs-cash-operating",
+            "value": 25548
+          },
+          {
+            "label": "Środki pieniężne na rachunkach VAT (split payment) 2022",
+            "canonicalId": "fsl-bs-cash-restricted",
+            "value": 3381
+          },
+          {
+            "label": "Środki pieniężne i ich ekwiwalenty ogółem 2022",
+            "canonicalId": "fsl-bs-cash",
+            "value": 28980
+          },
+          {
+            "label": "Krótkoterminowe rozliczenia międzyokresowe 2022",
+            "canonicalId": "fsl-bs-other-current-assets-prepaids",
+            "value": 5839
+          },
+          {
+            "label": "Wartość nominalna akcji 2022",
+            "canonicalId": "fsl-bs-ar",
+            "value": 0.1
+          },
+          {
+            "label": "Kapitał podstawowy 2022",
+            "canonicalId": "fsl-bs-share-capital",
+            "value": 3265
+          },
+          {
+            "label": "Zmniejszenie kapitału podstawowego w okresie 2022",
+            "canonicalId": "fsl-bs-ap",
+            "value": -13
+          },
+          {
+            "label": "Umorzenie akcji własnych 2022",
+            "canonicalId": "fsl-bs-treasury-shares",
+            "value": -13
+          },
+          {
+            "label": "Kapitał zapasowy ze sprzedaży akcji własnych powyżej ich wartości nominalnej 2022",
+            "canonicalId": "fsl-bs-share-premium",
+            "value": 15142
+          },
+          {
+            "label": "Pozostałe kapitały ogółem 2022",
+            "canonicalId": "fsl-bs-other-equity-reserves",
+            "value": 562967
+          },
+          {
+            "label": "Niepodzielony wynik finansowy 2022",
+            "canonicalId": "fsl-bs-retained-earnings",
+            "value": -29215
+          },
+          {
+            "label": "Udziały niesprawujące kontroli ogółem 2022",
+            "canonicalId": "fsl-bs-minority-interest",
+            "value": 1801
+          },
+          {
+            "label": "Kredyty i pożyczki długoterminowe 2022",
+            "canonicalId": "fsl-bs-long-term-borrowings",
+            "value": 3119
+          },
+          {
+            "label": "płatne powyżej 1 roku do 2 lat 2022",
+            "canonicalId": "fsl-bs-long-term-debt",
+            "value": 3119
+          },
+          {
+            "label": "Kredyty i pożyczki krótkoterminowe 2022",
+            "canonicalId": "fsl-bs-short-term-debt",
+            "value": 237350
+          }
+        ],
+        "topUnmappedLines": [
+          {
+            "label": "Odwrócenie odpisów indywidualnych 2022",
+            "value": -3429,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Bilans zamknięcia 2022",
+            "value": 4808,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Odpis indywidualny 2022",
+            "value": 4756,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "W dniu 22 grudnia 2022",
+            "value": 11531,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Ubezpieczenia 2022",
+            "value": 1477,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Usługi informatyczne 2022",
+            "value": 2712,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Wymiany wodomierzy (koszty rozliczane w czasie) 2022",
+            "value": 829,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Liczba wyemitowanych akcji, w pełni opłaconych 2022",
+            "value": 32647,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Kapitał podstawowy na początek okresu 2022",
+            "value": 3278,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kapitał podstawowy na koniec okresu 2022",
+            "value": 3265,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "T. Sosgórnik z osobą blisko związaną 2022",
+            "value": 1470000,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Danuta Guzowska 2022",
+            "value": 954214,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Zbigniew Jaworski 2022",
+            "value": 766348,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Apator Mining sp. z o. o. 2022",
+            "value": 0,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kazimierz Piotrowski z żoną 2022",
+            "value": 664774,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "PTE Allianz Polska* 2022",
+            "value": 0,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Pozostali 2022",
+            "value": 2289779,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Kapitał zapasowy, w tym: 2022",
+            "value": 532451,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Pozostały kapitał zapasowy 2022",
+            "value": 517309,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kapitały rezerwowe 2022",
+            "value": 29370,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "wypłacona w dniu 24 stycznia 2022",
+            "value": 9823208.4,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "akcję. Wypłata pozostałej części dywidendy w wysokości 2022",
+            "value": 6529414.6,
+            "reason": "no_alias_match"
+          },
+          {
+            "label": "Apator Telemetria Sp. z o.o. 2022",
+            "value": 1801,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Wynik finansowy przypisany udziałom niekontrolującym, w tym: Apator Telemetria Sp. z o.o. 2022",
+            "value": 589,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "Kredyty i pożyczki ogółem, w tym 2022",
+            "value": 240469,
+            "reason": "duplicate_candidate_conflict"
+          },
+          {
+            "label": "tys. zł (na 31 grudnia 2022",
+            "value": 105.691,
+            "reason": "no_alias_match"
+          }
+        ],
+        "policyAssessment": {
+          "effectiveCoveragePct": 38,
+          "tier1Auto": 11,
+          "tier2LlmConfirmed": 5,
+          "tier3ReviewRequired": 26,
+          "tier4Excluded": 3,
+          "meetsTarget": false,
+          "canAutoConfirm": false,
+          "summary": "38% coverage — below 90% target, 26 line(s) need review"
+        }
+      },
+      {
+        "statementType": "P&L",
+        "selectedPeriodLabel": "2022",
+        "comparisonPeriodLabel": "2021",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 18,
+        "mappedLineCount": 18,
+        "nonFinancialLineCount": 3,
+        "coveragePct": 100,
+        "readinessStatus": "ready",
+        "readinessScore": 100,
+        "reasonCodes": [],
+        "warnings": [],
+        "topMappedLines": [
+          {
+            "label": "Przychody ze sprzedaży dóbr i usług 2022",
+            "canonicalId": "fsl-pl-revenue",
+            "value": 1081792
+          },
+          {
+            "label": "Koszt własny sprzedaży 2022",
+            "canonicalId": "fsl-pl-cogs",
+            "value": -857531
+          },
+          {
+            "label": "Zysk brutto ze sprzedaży 2022",
+            "canonicalId": "fsl-pl-gross",
+            "value": 224261
+          },
+          {
+            "label": "Koszty sprzedaży 2022",
+            "canonicalId": "fsl-pl-selling",
+            "value": -42422
+          },
+          {
+            "label": "Koszty ogólnego zarządu 2022",
+            "canonicalId": "fsl-pl-gna",
+            "value": -136749
+          },
+          {
+            "label": "Zysk ze sprzedaży 2022",
+            "canonicalId": "fsl-pl-opex",
+            "value": 45090
+          },
+          {
+            "label": "Wynik na pozostałej działalności operacyjnej, w tym: 2022",
+            "canonicalId": "fsl-pl-other-op-result",
+            "value": -14194
+          },
+          {
+            "label": "Udział w zyskach jednostek objętych konsolidacją metodą praw własności 2022",
+            "canonicalId": "fsl-pl-equity-method-income",
+            "value": 444
+          },
+          {
+            "label": "Zysk z działalności operacyjnej 2022",
+            "canonicalId": "fsl-pl-ebit",
+            "value": 31340
+          },
+          {
+            "label": "Wynik na działalności finansowej, w tym: 2022",
+            "canonicalId": "fsl-pl-interest",
+            "value": -15425
+          },
+          {
+            "label": "Zysk przed opodatkowaniem 2022",
+            "canonicalId": "fsl-pl-ebt",
+            "value": 15915
+          },
+          {
+            "label": "Bieżący podatek dochodowy 2022",
+            "canonicalId": "fsl-pl-tax-current",
+            "value": -9019
+          },
+          {
+            "label": "Odroczony podatek dochodowy 2022",
+            "canonicalId": "fsl-pl-tax-deferred",
+            "value": 309
+          },
+          {
+            "label": "Zysk netto z działalności kontynuowanej 2022",
+            "canonicalId": "fsl-pl-net-continuing",
+            "value": 7205
+          },
+          {
+            "label": "Inne całkowite dochody Inne całkowite dochody netto 2022",
+            "canonicalId": "fsl-pl-oci-total",
+            "value": 4767
+          },
+          {
+            "label": "Wynik na rachunkowości zabezpieczeń wraz z efektem podatkowym 2022",
+            "canonicalId": "fsl-pl-oci-hedge",
+            "value": 1132
+          },
+          {
+            "label": "Całkowite dochody ogółem 2022",
+            "canonicalId": "fsl-pl-comprehensive-income",
+            "value": 11972
+          },
+          {
+            "label": "akcjonariuszom niesprawującym kontroli 2022",
+            "canonicalId": "fsl-pl-net-minority",
+            "value": 589
+          }
+        ],
+        "topUnmappedLines": [],
+        "policyAssessment": {
+          "effectiveCoveragePct": 100,
+          "tier1Auto": 18,
+          "tier2LlmConfirmed": 0,
+          "tier3ReviewRequired": 0,
+          "tier4Excluded": 3,
+          "meetsTarget": true,
+          "canAutoConfirm": true,
+          "summary": "100% coverage — all lines mapped with high confidence, auto-confirm eligible"
+        }
+      },
+      {
+        "statementType": "CF",
+        "selectedPeriodLabel": "2022",
+        "comparisonPeriodLabel": "2021",
+        "selectionStrategy": "detected_period_fallback",
+        "extractedLineCount": 21,
+        "mappedLineCount": 21,
+        "nonFinancialLineCount": 1,
+        "coveragePct": 100,
+        "readinessStatus": "recoverable",
+        "readinessScore": 89,
+        "reasonCodes": [
+          "MISSING_REQUIRED_CANONICAL_LINES"
+        ],
+        "warnings": [
+          "REQUIRED_LINES_MISSING"
+        ],
+        "topMappedLines": [
+          {
+            "label": "Amortyzacja rzeczowych aktywów trwałych 2022",
+            "canonicalId": "fsl-cf-operating-depreciation-ppe",
+            "value": 86
+          },
+          {
+            "label": "Zysk na sprzedaży rzeczowych aktywów trwałych i wartości niematerialnych 2022",
+            "canonicalId": "fsl-cf-operating-gain-disposal",
+            "value": -2881
+          },
+          {
+            "label": "Zyski z wyceny nieruchomości inwestycyjnych według wartości godziwej 2022",
+            "canonicalId": "fsl-cf-operating-fv-changes",
+            "value": -325
+          },
+          {
+            "label": "Udziały w zyskach jednostek stowarzyszonych 2022",
+            "canonicalId": "fsl-cf-operating-equity-method",
+            "value": -444
+          },
+          {
+            "label": "Przychody z tytułu odsetek 2022",
+            "canonicalId": "fsl-cf-operating-interest-income",
+            "value": -178
+          },
+          {
+            "label": "kapitale obrotowym 2022",
+            "canonicalId": "fsl-cf-operating-before-wc",
+            "value": 98246
+          },
+          {
+            "label": "Zmiana stanu zapasów 2022",
+            "canonicalId": "fsl-cf-change-wc-inventory",
+            "value": -12682
+          },
+          {
+            "label": "Zmiana stanu rezerw 2022",
+            "canonicalId": "fsl-cf-change-wc-provisions",
+            "value": -1423
+          },
+          {
+            "label": "Zmiana stanu rozliczeń międzyokresowych 2022",
+            "canonicalId": "fsl-cf-change-wc-prepaids",
+            "value": 666
+          },
+          {
+            "label": "Zapłacony podatek dochodowy 2022",
+            "canonicalId": "fsl-cf-taxes-paid",
+            "value": -25272
+          },
+          {
+            "label": "Wydatki na nabycie rzeczowych aktywów trwałych i aktywów leasingowych 2022",
+            "canonicalId": "fsl-cf-capex",
+            "value": -38911
+          },
+          {
+            "label": "Inwestycje w jednostki zależne 2022",
+            "canonicalId": "fsl-cf-investing-subsidiaries",
+            "value": -10860
+          },
+          {
+            "label": "Inne wpływy (wydatki) 2022",
+            "canonicalId": "fsl-cf-other-receipts",
+            "value": 618
+          },
+          {
+            "label": "Środki pieniężne netto wykorzystane z działalności inwestycyjnej 2022",
+            "canonicalId": "fsl-cf-investing",
+            "value": -47066
+          },
+          {
+            "label": "Przepływy środków pieniężnych z działalności finansowej Nabycie akcji własnych 2022",
+            "canonicalId": "fsl-cf-financing",
+            "value": -1950
+          },
+          {
+            "label": "Wpływy z tytułu zaciągnięcia kredytów i pożyczek 2022",
+            "canonicalId": "fsl-cf-debt-drawdown",
+            "value": 90033
+          },
+          {
+            "label": "Spłaty kredytów i pożyczek 2022",
+            "canonicalId": "fsl-cf-debt-repayment",
+            "value": -60488
+          },
+          {
+            "label": "Odsetki zapłacone 2022",
+            "canonicalId": "fsl-cf-interest-paid",
+            "value": -13877
+          },
+          {
+            "label": "Dywidendy wypłacone 2022",
+            "canonicalId": "fsl-cf-dividends",
+            "value": -14730
+          },
+          {
+            "label": "Spłata zobowiązań z tytułu leasingu 2022",
+            "canonicalId": "fsl-cf-lease-repayment",
+            "value": -10912
+          },
+          {
+            "label": "Inne wydatki 2022",
+            "canonicalId": "fsl-cf-other-expenditure",
+            "value": -1015
+          }
+        ],
+        "topUnmappedLines": [],
+        "policyAssessment": {
+          "effectiveCoveragePct": 100,
+          "tier1Auto": 21,
+          "tier2LlmConfirmed": 0,
+          "tier3ReviewRequired": 0,
+          "tier4Excluded": 1,
+          "meetsTarget": true,
+          "canAutoConfirm": true,
+          "summary": "100% coverage — all lines mapped with high confidence, auto-confirm eligible"
+        }
+      }
+    ]
+  }
+]

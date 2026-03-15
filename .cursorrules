@@ -90,3 +90,36 @@ Detailed rules are in `.cursor/rules/nmode-shared-components.mdc` and `.cursor/r
 4. **Przed napisaniem testu**: sprawdź, czy istnieje walidator/serwis/controller do przetestowania. Jeśli nie — testuj to, co jest (np. integrację z API).
 
 Zasada: test ma wykryć regresję w prawdziwym kodzie. Placeholder tego nie robi.
+
+---
+
+## Railway DB Targeting (MUST)
+
+Nigdy nie zgaduj targetu bazy dla Railway.
+
+1. **Poza Railway**:
+   - NIE używaj `*.railway.internal`
+   - używaj `DATABASE_PUBLIC_URL` / publicznego proxy Postgresa
+
+2. **W Railway runtime**:
+   - używaj `DATABASE_URL` / `DB_HOST=*.railway.internal`
+
+3. **Local staging / migracje / skrypty importu**:
+   - jeśli `DATABASE_URL` wskazuje na `*.railway.internal`, agent MUSI przełączyć się na `DATABASE_PUBLIC_URL` albo przerwać z jasnym błędem
+   - nie wolno uruchamiać skryptów “na próbę” przeciw prywatnemu hostowi z laptopa
+   - nie wolno tworzyć ani przywracać local-DB workflowów (`localhost`, `127.0.0.1`, `0.0.0.0`) dla runtime aplikacji, migracji ani importów
+   - jeśli external/public DB target jest niedostępny, run ma zostać przerwany; bez fallbacku do lokalnej bazy
+
+4. **Finance import org consistency**:
+   - utrzymuj spójne wartości:
+     - `DEMO_ORG_ID=atelier`
+     - `DEMO_ORG_NAME=Atelier`
+     - `FINANCE_IMPORT_ORG_ID=atelier`
+
+5. **Przed zmianą Railway/staging/prod**:
+   - sprawdź aktualny target DB i environment
+   - jeśli operacja dotyczy lokalnego uruchomienia przeciw Railway, upewnij się, że używany jest publiczny/external DB URL
+
+6. **Źródło prawdy dla resolvera**:
+   - `server/src/config/databaseTargetResolver.ts`
+   - nie duplikuj tej logiki w nowych skryptach; importuj wspólny resolver
