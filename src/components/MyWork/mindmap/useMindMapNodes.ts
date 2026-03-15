@@ -230,26 +230,24 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
     editingNodeIdRef.current = newId;
 
-    setNodes((prev: Node[]) => {
-      const nextNodes = [
-        ...prev.map((n) => ({ ...n, selected: false })),
-        { ...newNode, selected: true },
-      ];
-      const nextEdges = [...edges, newEdge];
-      if (autoLayout) {
-        const laid = autoLayout(nextNodes, nextEdges);
-        return laid.map((n) => (n.id === newId ? { ...n, selected: true } : n));
-      }
-      return nextNodes;
-    });
+    const existingChildIds = findChildrenIds(selected.id);
+    if (existingChildIds.length > 0) {
+      const childNodes = nodes.filter((n: any) => existingChildIds.includes(n.id));
+      const maxY = Math.max(...childNodes.map((n: any) => n.position?.y ?? 0));
+      newNode.position = { x: selected.position.x + 220, y: maxY + 80 };
+    }
+
+    setNodes((prev: Node[]) => [
+      ...prev.map((n) => ({ ...n, selected: false })),
+      { ...newNode, selected: true },
+    ]);
     setEdges((prev: Edge[]) => [...prev, newEdge]);
     ensureCreatedNodePersists({ ...newNode, selected: true }, newEdge);
 
     setTimeout(() => {
-      try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+      try { fitView({ nodes: [{ id: newId } as any], padding: 0.5, duration: 300 }); } catch { /* */ }
     }, 60);
   }, [
-    autoLayout,
     edges,
     ensureCreatedNodePersists,
     fitView,
@@ -258,6 +256,7 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
     findChildrenIds,
     isPolish,
     locked,
+    nodes,
     pushUndo,
     setEdges,
     setNodes,
@@ -316,32 +315,32 @@ export function useMindMapNodes(opts: UseMindMapNodesOpts) {
 
     editingNodeIdRef.current = newId;
 
-    setNodes((prev: Node[]) => {
-      const nextNodes = [
-        ...prev.map((n) => ({ ...n, selected: false })),
-        { ...newNode, selected: true },
-      ];
-      const nextEdges = [...edges, newEdge];
-      if (autoLayout) {
-        const laid = autoLayout(nextNodes, nextEdges);
-        return laid.map((n) => (n.id === newId ? { ...n, selected: true } : n));
-      }
-      return nextNodes;
-    });
+    const siblingIds = findChildrenIds(parentId);
+    if (siblingIds.length > 0) {
+      const siblingNodes = nodes.filter((n: any) => siblingIds.includes(n.id));
+      const maxY = Math.max(...siblingNodes.map((n: any) => n.position?.y ?? 0));
+      newNode.position = { x: selected.position.x, y: maxY + 80 };
+    }
+
+    setNodes((prev: Node[]) => [
+      ...prev.map((n) => ({ ...n, selected: false })),
+      { ...newNode, selected: true },
+    ]);
     setEdges((prev: Edge[]) => [...prev, newEdge]);
 
     setTimeout(() => {
-      try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+      try { fitView({ nodes: [{ id: newId } as any], padding: 0.5, duration: 300 }); } catch { /* */ }
     }, 60);
   }, [
-    autoLayout,
     edges,
+    findChildrenIds,
     findParentId,
     fitView,
     getNodeById,
     getSelectedNode,
     isPolish,
     locked,
+    nodes,
     pushUndo,
     setEdges,
     setNodes,

@@ -59,8 +59,8 @@ interface FlushSyncOpts {
   snapshotLabel?: string;
 }
 
-const DEFAULT_IDLE_MS = 2500;
-const DEFAULT_DRAFT_MS = 400;
+const DEFAULT_IDLE_MS = 60_000;
+const DEFAULT_DRAFT_MS = 800;
 
 function getDraftStorageKey(ideaId: string) {
   return `consultify.idea-map-sync.${ideaId}`;
@@ -334,11 +334,28 @@ export function useIdeaMapSync({
         void flushNow(null, { reason: 'draft' }).catch(() => null);
       }
     };
+    const handleBeforeUnload = () => {
+      if (queuedPayloadRef.current) {
+        void flushNow(null, { reason: 'draft' }).catch(() => null);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        if (queuedPayloadRef.current) {
+          void flushNow(null, { reason: 'manual' }).catch(() => null);
+        }
+      }
+    };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('online', handleOnline);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('online', handleOnline);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [flushNow, open]);
 

@@ -1,249 +1,390 @@
 /**
- * ConditionalFormatting — Rules engine for conditional cell styling.
- * Stores rules in extensions.table.formatting[].
+ * ConditionalFormatting — Configuration UI + utility for cell-level conditional
+ * formatting. Supports multiple operators and style properties (background,
+ * text color, font weight, font style).
  */
-import { Paintbrush, Plus, Trash2, X } from 'lucide-react';
+import { Paintbrush, Plus, Trash2 } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { ColumnDef } from './tableTypes';
 
+export type FormatOperator =
+  | 'equals'
+  | 'not_equals'
+  | 'contains'
+  | 'not_contains'
+  | 'is_empty'
+  | 'is_not_empty'
+  | 'greater_than'
+  | 'less_than'
+  | 'between';
+
+export interface FormatRuleStyle {
+  backgroundColor?: string;
+  color?: string;
+  fontWeight?: 'bold' | 'normal';
+  fontStyle?: 'italic' | 'normal';
+}
+
 export interface FormatRule {
   id: string;
-  column: string;
-  condition: 'equals' | 'contains' | 'gt' | 'lt' | 'is_empty' | 'not_empty';
-  value: string;
-  style: {
-    backgroundColor?: string;
-    textColor?: string;
-    fontWeight?: 'bold' | 'normal';
-    icon?: string;
-  };
+  fieldId: string;
+  operator: FormatOperator;
+  value?: unknown;
+  value2?: unknown;
+  style: FormatRuleStyle;
 }
 
-interface ConditionalFormattingProps {
-  open: boolean;
-  onClose: () => void;
+export interface ConditionalFormattingConfigProps {
   rules: FormatRule[];
+  fields: ColumnDef[];
   onChange: (rules: FormatRule[]) => void;
-  columns: ColumnDef[];
 }
 
-const PRESET_COLORS = [
-  { bg: '#dcfce7', text: '#166534', label: 'Green' },
-  { bg: '#fef3c7', text: '#92400e', label: 'Yellow' },
-  { bg: '#fee2e2', text: '#991b1b', label: 'Red' },
-  { bg: '#dbeafe', text: '#1e40af', label: 'Blue' },
-  { bg: '#ede9fe', text: '#5b21b6', label: 'Purple' },
-  { bg: '#f3e8ff', text: '#7c3aed', label: 'Violet' },
+const OPERATOR_LABELS: Record<FormatOperator, { en: string; pl: string }> = {
+  equals: { en: 'equals', pl: 'równa się' },
+  not_equals: { en: 'not equals', pl: 'nie równa się' },
+  contains: { en: 'contains', pl: 'zawiera' },
+  not_contains: { en: 'not contains', pl: 'nie zawiera' },
+  is_empty: { en: 'is empty', pl: 'jest puste' },
+  is_not_empty: { en: 'is not empty', pl: 'nie jest puste' },
+  greater_than: { en: 'greater than', pl: 'większe niż' },
+  less_than: { en: 'less than', pl: 'mniejsze niż' },
+  between: { en: 'between', pl: 'pomiędzy' },
+};
+
+const PRESET_BG_COLORS = [
+  '#fee2e2', '#fef3c7', '#d1fae5', '#dbeafe', '#ede9fe',
+  '#fce7f3', '#ccfbf1', '#e0e7ff',
 ];
 
-export const ConditionalFormatting: React.FC<ConditionalFormattingProps> = ({
-  open,
-  onClose,
+const PRESET_TEXT_COLORS = [
+  '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6',
+  '#ec4899', '#334155', '#ffffff',
+];
+
+export function evaluateCondition(value: unknown, operator: FormatOperator, ruleValue?: unknown, ruleValue2?: unknown): boolean {
+  const strVal = value != null ? String(value) : '';
+  const numVal = Number(value);
+  const ruleStr = ruleValue != null ? String(ruleValue) : '';
+
+  switch (operator) {
+    case 'equals':
+      return strVal === ruleStr;
+    case 'not_equals':
+      return strVal !== ruleStr;
+    case 'contains':
+      return strVal.toLowerCase().includes(ruleStr.toLowerCase());
+    case 'not_contains':
+      return !strVal.toLowerCase().includes(ruleStr.toLowerCase());
+    case 'is_empty':
+      return value == null || strVal === '' || (Array.isArray(value) && value.length === 0);
+    case 'is_not_empty':
+      return value != null && strVal !== '' && !(Array.isArray(value) && value.length === 0);
+    case 'greater_than':
+      return !isNaN(numVal) && numVal > Number(ruleValue);
+    case 'less_than':
+      return !isNaN(numVal) && numVal < Number(ruleValue);
+    case 'between': {
+      const lo = Number(ruleValue);
+      const hi = Number(ruleValue2);
+      return !isNaN(numVal) && numVal >= lo && numVal <= hi;
+    }
+    default:
+      return false;
+  }
+}
+
+export function getCellStyle(fieldId: string, value: unknown, rules: FormatRule[]): React.CSSProperties {
+  for (const rule of rules) {
+    if (rule.fieldId !== fieldId) continue;
+    if (evaluateCondition(value, rule.operator, rule.value, rule.value2)) {
+      return rule.style as React.CSSProperties;
+    }
+  }
+  return {};
+}
+
+let _fmtCounter = 0;
+function nextFmtId(): string {
+  return `cfr-${Date.now()}-${++_fmtCounter}`;
+}
+
+function operatorNeedsValue(op: FormatOperator): boolean {
+  return op !== 'is_empty' && op !== 'is_not_empty';
+}
+
+export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigProps> = ({
   rules,
+  fields,
   onChange,
-  columns,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
   const addRule = useCallback(() => {
-    const newRule: FormatRule = {
-      id: `fmt-${Date.now()}`,
-      column: columns[0]?.key || 'label',
-      condition: 'equals',
-      value: '',
-      style: { backgroundColor: '#dcfce7', textColor: '#166534' },
-    };
-    onChange([...rules, newRule]);
-  }, [columns, onChange, rules]);
-
-  const updateRule = useCallback(
-    (id: string, updates: Partial<FormatRule>) => {
-      onChange(rules.map((r) => (r.id === id ? { ...r, ...updates } : r)));
-    },
-    [onChange, rules]
-  );
+    const firstField = fields[0]?.key || '';
+    onChange([
+      ...rules,
+      {
+        id: nextFmtId(),
+        fieldId: firstField,
+        operator: 'equals',
+        value: '',
+        style: { backgroundColor: '#fef3c7' },
+      },
+    ]);
+  }, [fields, onChange, rules]);
 
   const removeRule = useCallback(
     (id: string) => onChange(rules.filter((r) => r.id !== id)),
-    [onChange, rules]
+    [onChange, rules],
   );
 
-  if (!open) return null;
+  const updateRule = useCallback(
+    (id: string, patch: Partial<FormatRule>) => {
+      onChange(rules.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    },
+    [onChange, rules],
+  );
+
+  const updateStyle = useCallback(
+    (id: string, stylePatch: Partial<FormatRuleStyle>) => {
+      onChange(
+        rules.map((r) =>
+          r.id === id ? { ...r, style: { ...r.style, ...stylePatch } } : r,
+        ),
+      );
+    },
+    [onChange, rules],
+  );
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="w-[480px] max-h-[70vh] overflow-auto rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200/60 dark:border-navy-700/60">
-          <div className="flex items-center gap-2">
-            <Paintbrush size={16} className="text-violet-500" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-              {isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting'}
-            </h3>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800"
-          >
-            <X size={16} className="text-slate-400" />
-          </button>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Paintbrush size={12} className="text-slate-400" />
+          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            {isPl ? 'Formatowanie warunkowe' : 'Conditional formatting'}
+          </span>
         </div>
+        <button
+          onClick={addRule}
+          className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+        >
+          <Plus size={10} />
+          {isPl ? 'Dodaj regułę' : 'Add rule'}
+        </button>
+      </div>
 
-        <div className="px-5 py-4 space-y-3">
-          {rules.length === 0 && (
-            <p className="text-[11px] text-slate-400 text-center py-4">
-              {isPl ? 'Brak reguł. Dodaj pierwszą.' : 'No rules. Add one.'}
-            </p>
-          )}
+      {rules.length === 0 && (
+        <div className="text-[10px] text-slate-400 dark:text-slate-500 text-center py-3">
+          {isPl ? 'Brak reguł formatowania' : 'No formatting rules'}
+        </div>
+      )}
 
-          {rules.map((rule) => (
-            <div
-              key={rule.id}
-              className="p-3 rounded-xl border border-slate-200/60 dark:border-navy-700/60 space-y-2"
-            >
+      {rules.map((rule) => {
+        const needsValue = operatorNeedsValue(rule.operator);
+        const isBetween = rule.operator === 'between';
+
+        return (
+          <div
+            key={rule.id}
+            className="p-2.5 rounded-xl border border-slate-200/60 dark:border-navy-700/40 space-y-2"
+          >
+            {/* Row 1: field + operator */}
+            <div className="flex items-center gap-2">
+              <select
+                value={rule.fieldId}
+                onChange={(e) => updateRule(rule.id, { fieldId: e.target.value })}
+                className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
+              >
+                {fields.map((f) => (
+                  <option key={f.key} value={f.key}>{f.header}</option>
+                ))}
+              </select>
+
+              <select
+                value={rule.operator}
+                onChange={(e) => updateRule(rule.id, { operator: e.target.value as FormatOperator })}
+                className="w-28 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
+              >
+                {(Object.keys(OPERATOR_LABELS) as FormatOperator[]).map((op) => (
+                  <option key={op} value={op}>
+                    {isPl ? OPERATOR_LABELS[op].pl : OPERATOR_LABELS[op].en}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={() => removeRule(rule.id)}
+                className="p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-colors"
+              >
+                <Trash2 size={12} />
+              </button>
+            </div>
+
+            {/* Row 2: value(s) */}
+            {needsValue && (
               <div className="flex items-center gap-2">
-                <select
-                  value={rule.column}
-                  onChange={(e) => updateRule(rule.id, { column: e.target.value })}
-                  className="flex-1 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] outline-none"
-                >
-                  {columns.map((col) => (
-                    <option key={col.key} value={col.key}>
-                      {col.header}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={rule.condition}
-                  onChange={(e) =>
-                    updateRule(rule.id, { condition: e.target.value as FormatRule['condition'] })
-                  }
-                  className="w-28 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] outline-none"
-                >
-                  <option value="equals">{isPl ? 'Równa się' : 'Equals'}</option>
-                  <option value="contains">{isPl ? 'Zawiera' : 'Contains'}</option>
-                  <option value="gt">{isPl ? 'Większe' : 'Greater'}</option>
-                  <option value="lt">{isPl ? 'Mniejsze' : 'Less'}</option>
-                  <option value="not_empty">{isPl ? 'Niepuste' : 'Not empty'}</option>
-                  <option value="is_empty">{isPl ? 'Puste' : 'Empty'}</option>
-                </select>
-                {!['is_empty', 'not_empty'].includes(rule.condition) && (
-                  <input
-                    value={rule.value}
-                    onChange={(e) => updateRule(rule.id, { value: e.target.value })}
-                    placeholder="..."
-                    className="w-24 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] outline-none"
-                  />
+                <input
+                  type="text"
+                  value={rule.value != null ? String(rule.value) : ''}
+                  onChange={(e) => updateRule(rule.id, { value: e.target.value })}
+                  placeholder={isPl ? 'Wartość...' : 'Value...'}
+                  className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
+                />
+                {isBetween && (
+                  <>
+                    <span className="text-[9px] text-slate-400">&</span>
+                    <input
+                      type="text"
+                      value={rule.value2 != null ? String(rule.value2) : ''}
+                      onChange={(e) => updateRule(rule.id, { value2: e.target.value })}
+                      placeholder={isPl ? 'Do...' : 'To...'}
+                      className="flex-1 h-7 px-2 rounded-lg text-[10px] bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 outline-none"
+                    />
+                  </>
                 )}
-                <button
-                  onClick={() => removeRule(rule.id)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
-                >
-                  <Trash2 size={12} />
-                </button>
+              </div>
+            )}
+
+            {/* Row 3: style controls */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Background color */}
+              <div className="flex items-center gap-1">
+                <span className="text-[8px] text-slate-400 uppercase tracking-wider">
+                  {isPl ? 'Tło' : 'BG'}
+                </span>
+                {PRESET_BG_COLORS.slice(0, 5).map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => updateStyle(rule.id, { backgroundColor: c })}
+                    className={`w-3.5 h-3.5 rounded-full border transition-transform hover:scale-125 ${
+                      rule.style.backgroundColor === c ? 'border-violet-500 scale-110' : 'border-slate-200 dark:border-navy-700'
+                    }`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+                <input
+                  type="color"
+                  value={rule.style.backgroundColor || '#ffffff'}
+                  onChange={(e) => updateStyle(rule.id, { backgroundColor: e.target.value })}
+                  className="w-4 h-4 rounded cursor-pointer border-0 p-0"
+                />
               </div>
 
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] text-slate-400 mr-1">{isPl ? 'Styl:' : 'Style:'}</span>
-                {PRESET_COLORS.map((preset) => (
+              {/* Text color */}
+              <div className="flex items-center gap-1">
+                <span className="text-[8px] text-slate-400 uppercase tracking-wider">
+                  {isPl ? 'Tekst' : 'Text'}
+                </span>
+                {PRESET_TEXT_COLORS.slice(0, 4).map((c) => (
                   <button
-                    key={preset.label}
-                    onClick={() =>
-                      updateRule(rule.id, {
-                        style: { backgroundColor: preset.bg, textColor: preset.text },
-                      })
-                    }
-                    className={`w-5 h-5 rounded-md border-2 transition-colors ${
-                      rule.style.backgroundColor === preset.bg
-                        ? 'border-slate-800 dark:border-white'
-                        : 'border-transparent'
+                    key={c}
+                    onClick={() => updateStyle(rule.id, { color: c })}
+                    className={`w-3.5 h-3.5 rounded-full border transition-transform hover:scale-125 ${
+                      rule.style.color === c ? 'border-violet-500 scale-110' : 'border-slate-200 dark:border-navy-700'
                     }`}
-                    style={{ backgroundColor: preset.bg }}
-                    title={preset.label}
+                    style={{ backgroundColor: c }}
                   />
                 ))}
               </div>
 
-              {/* Preview */}
-              <div
-                className="px-2 py-1 rounded-lg text-[10px] font-medium"
-                style={{
-                  backgroundColor: rule.style.backgroundColor,
-                  color: rule.style.textColor,
-                  fontWeight: rule.style.fontWeight || 'normal',
-                }}
+              {/* Bold toggle */}
+              <button
+                onClick={() =>
+                  updateStyle(rule.id, {
+                    fontWeight: rule.style.fontWeight === 'bold' ? 'normal' : 'bold',
+                  })
+                }
+                className={`px-1.5 py-0.5 rounded text-[9px] font-bold transition-colors ${
+                  rule.style.fontWeight === 'bold'
+                    ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300'
+                    : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                }`}
               >
-                {isPl ? 'Podgląd stylu' : 'Style preview'}
-              </div>
-            </div>
-          ))}
-        </div>
+                B
+              </button>
 
-        <div className="px-5 py-3 border-t border-slate-200/60 dark:border-navy-700/60 flex items-center justify-between">
-          <button
-            onClick={addRule}
-            className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 px-2 py-1.5 rounded-lg transition-colors"
-          >
-            <Plus size={12} />
-            {isPl ? 'Dodaj regułę' : 'Add rule'}
-          </button>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
-          >
-            {isPl ? 'Gotowe' : 'Done'}
-          </button>
-        </div>
-      </div>
+              {/* Italic toggle */}
+              <button
+                onClick={() =>
+                  updateStyle(rule.id, {
+                    fontStyle: rule.style.fontStyle === 'italic' ? 'normal' : 'italic',
+                  })
+                }
+                className={`px-1.5 py-0.5 rounded text-[9px] italic transition-colors ${
+                  rule.style.fontStyle === 'italic'
+                    ? 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300'
+                    : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800'
+                }`}
+              >
+                I
+              </button>
+            </div>
+
+            {/* Preview */}
+            <div
+              className="px-2 py-1 rounded-lg text-[10px] border border-slate-100 dark:border-navy-800"
+              style={rule.style as React.CSSProperties}
+            >
+              {isPl ? 'Podgląd formatowania' : 'Formatting preview'}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
 
+export { ConditionalFormattingConfig as ConditionalFormatting };
+
 export function getConditionalStyle(
   rules: FormatRule[],
-  column: string,
-  value: any
+  fieldId: string,
+  value: unknown,
 ): React.CSSProperties | undefined {
   for (const rule of rules) {
-    if (rule.column !== column) continue;
-    const strVal = String(value ?? '').toLowerCase();
-    const ruleVal = rule.value.toLowerCase();
-
+    if (rule.fieldId !== fieldId) continue;
+    const v = value == null ? '' : String(value);
+    const rv = rule.value == null ? '' : String(rule.value);
     let match = false;
-    switch (rule.condition) {
+    switch (rule.operator) {
       case 'equals':
-        match = strVal === ruleVal;
+        match = v === rv;
+        break;
+      case 'not_equals':
+        match = v !== rv;
         break;
       case 'contains':
-        match = strVal.includes(ruleVal);
+        match = v.toLowerCase().includes(rv.toLowerCase());
         break;
-      case 'gt':
-        match = Number(value) > Number(rule.value);
-        break;
-      case 'lt':
-        match = Number(value) < Number(rule.value);
-        break;
-      case 'not_empty':
-        match = strVal.trim().length > 0;
+      case 'not_contains':
+        match = !v.toLowerCase().includes(rv.toLowerCase());
         break;
       case 'is_empty':
-        match = strVal.trim().length === 0;
+        match = v.trim() === '';
         break;
+      case 'is_not_empty':
+        match = v.trim() !== '';
+        break;
+      case 'greater_than':
+        match = Number(v) > Number(rv);
+        break;
+      case 'less_than':
+        match = Number(v) < Number(rv);
+        break;
+      case 'between': {
+        const n = Number(v);
+        match = n >= Number(rv) && n <= Number(rule.value2 ?? rv);
+        break;
+      }
     }
-
-    if (match) {
-      return {
-        backgroundColor: rule.style.backgroundColor,
-        color: rule.style.textColor,
-        fontWeight: rule.style.fontWeight,
-        borderRadius: '6px',
-        padding: '0 4px',
-      };
-    }
+    if (match) return rule.style as React.CSSProperties;
   }
   return undefined;
 }
 
-export default ConditionalFormatting;
+export default ConditionalFormattingConfig;

@@ -1678,7 +1678,19 @@ function MindMapInner({
     });
   }, [focusFilteredNodes, focusMode, focusObjectId, visibleEdges]);
 
-  const enrichedNodes = focusFilteredNodes;
+  const enrichedNodes = useMemo(() => {
+    const structuralChildCount = new Map<string, number>();
+    for (const e of edges) {
+      if ((e as any)?.data?.edgeRole === 'relation') continue;
+      structuralChildCount.set(e.source, (structuralChildCount.get(e.source) || 0) + 1);
+    }
+    return focusFilteredNodes.map((n) => {
+      if (n.type !== 'branch') return n;
+      const count = structuralChildCount.get(n.id) || 0;
+      if (n.data?.count === count) return n;
+      return { ...n, data: { ...n.data, count } };
+    });
+  }, [edges, focusFilteredNodes]);
 
   const visibleIdeaNodeCount = useMemo(
     () => enrichedNodes.filter((n) => n.type === 'idea' && !n.hidden).length,

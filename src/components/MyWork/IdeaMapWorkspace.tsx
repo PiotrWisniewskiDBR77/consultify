@@ -1296,22 +1296,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     }
     lastViewportRef.current = vp;
     setRuntimeViewport(vp);
-    if (!realId || isDraft) return;
-    applyRuntimeExtensionsPatch(
-      {
-        surfaceState: {
-          ...latestSurfaceStateRef.current,
-          viewport: vp,
-        },
-        mindmap: {
-          viewState: {
-            viewport: vp,
-          },
-        },
-      },
-      { reason: 'draft' }
-    );
-  }, [applyRuntimeExtensionsPatch, isDraft, realId, setRuntimeViewport]);
+  }, [setRuntimeViewport]);
 
   useEffect(() => {
     graphNodesRef.current = graphNodes;

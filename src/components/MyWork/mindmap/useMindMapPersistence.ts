@@ -343,11 +343,12 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       setTimeout(() => {
         isHydratingRef.current = false;
         try {
-          if (
+          const hasRealViewport =
             savedViewport &&
             typeof savedViewport.x === 'number' &&
-            typeof savedViewport.zoom === 'number'
-          ) {
+            typeof savedViewport.zoom === 'number' &&
+            !(savedViewport.x === 0 && savedViewport.y === 0);
+          if (hasRealViewport) {
             setViewport(savedViewport, { duration: 300 });
           } else {
             fitView({ padding: 0.3, duration: 300 });
@@ -408,11 +409,12 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       setTimeout(() => {
         isHydratingRef.current = false;
         try {
-          if (
+          const hasRealViewport =
             savedViewport &&
             typeof savedViewport.x === 'number' &&
-            typeof savedViewport.zoom === 'number'
-          ) {
+            typeof savedViewport.zoom === 'number' &&
+            !(savedViewport.x === 0 && savedViewport.y === 0);
+          if (hasRealViewport) {
             setViewport(savedViewport, { duration: 300 });
           } else {
             fitView({ padding: 0.3, duration: 300 });
@@ -580,9 +582,9 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
           mindmapViewStatePatch,
         );
         const cleanNodes = nextNodes.map((n: any) => {
-          if (!n.data?._interactionMode && !n.data?._canAddSibling) return n;
-          const { _interactionMode, _canAddSibling, ...cleanData } = n.data || {};
-          return { ...n, data: cleanData };
+          const { selected: _sel, dragging: _drag, ...rest } = n;
+          const { _interactionMode, _canAddSibling, _startEditing, _collapsed, _dropTarget, count, ...cleanData } = rest.data || {};
+          return { ...rest, data: cleanData };
         });
         const payloadKey = stableSerialize({
           nodes: cleanNodes,
@@ -636,9 +638,9 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
             },
           );
           const cleanNodes = nextNodes.map((n: any) => {
-            if (!n.data?._interactionMode && !n.data?._canAddSibling) return n;
-            const { _interactionMode, _canAddSibling, ...cleanData } = n.data || {};
-            return { ...n, data: cleanData };
+            const { selected: _sel, dragging: _drag, ...rest } = n;
+            const { _interactionMode, _canAddSibling, _startEditing, _collapsed, _dropTarget, count, ...cleanData } = rest.data || {};
+            return { ...rest, data: cleanData };
           });
           const payloadKey = stableSerialize({
             nodes: cleanNodes,
