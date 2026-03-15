@@ -3,6 +3,7 @@ import {
   Clipboard,
   ClipboardCopy,
   Grid3X3,
+  Layers,
   Layout,
   Maximize,
   Plus,
@@ -119,6 +120,14 @@ export const PaneContextMenu: React.FC<PaneContextMenuProps> = ({
       labelEn: 'Auto layout',
       icon: Layout,
       shortcut: '⌘L',
+    },
+    {
+      id: 'pane_auto_cluster',
+      labelPl: 'Auto-grupowanie',
+      labelEn: 'Auto-cluster',
+      icon: Layers,
+      shortcut: '',
+      disabled: isLocked,
       dividerAfter: true,
     },
     {

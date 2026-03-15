@@ -1759,9 +1759,11 @@ export async function applyIdeaTemplate(params: {
   isPl?: boolean;
   activeTool?: CanvasToolType;
   baseVersion?: number;
+  ideaTitle?: string;
+  seedText?: string;
 }): Promise<any> {
   const { ideaId, template, activeTool = template.tool, isPl, baseVersion } = params;
-  return Api.syncMyIdeaMap(ideaId, {
+  const result = await Api.syncMyIdeaMap(ideaId, {
     nodes: template.nodes,
     edges: template.edges,
     preferredTool: template.tool,
@@ -1783,6 +1785,22 @@ export async function applyIdeaTemplate(params: {
     ...(baseVersion != null ? { baseVersion } : {}),
     reason: 'manual',
   });
+
+  if (params.ideaTitle && template.nodes.some((n) => n.type === 'branch')) {
+    try {
+      await Api.expandMyIdeaMap(ideaId, {
+        anchorNodeId: 'root',
+        count: 5,
+        language: isPl ? 'pl' : 'en',
+        proposeOnly: false,
+        context: `Template: ${isPl ? template.namePl : template.nameEn}. Idea: "${params.ideaTitle}". ${params.seedText ? `Context: ${params.seedText}` : ''}. Generate nodes that fit the template structure.`,
+      });
+    } catch {
+      // best-effort — template still applied even if AI expand fails
+    }
+  }
+
+  return result;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────

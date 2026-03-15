@@ -746,13 +746,13 @@ const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
 ));
 CenterNodeComponent.displayName = 'RecommendationCenterNode';
 
-const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected }) => {
+const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => {
   const colors = branchColor(data.branchKey, data._depth);
   const collapsed = data._collapsed;
   const childCount = data.count || 0;
   return (
     <div
-      className={`px-4 py-2.5 rounded-2xl border-2 ${colors.border} ${colors.bg} ${
+      className={`relative px-4 py-2.5 rounded-2xl border-2 ${colors.border} ${colors.bg} ${
         selected ? `ring-2 ${colors.ring}` : ''
       } shadow-md min-w-[120px] text-center`}
     >
@@ -776,6 +776,21 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected })
         {childCount} {childCount === 1 ? 'node' : 'nodes'}
         {collapsed ? ` (${collapsed ? '...' : ''})` : ''}
       </div>
+      {selected && (
+        <button
+          type="button"
+          className="nodrag absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-600 text-white text-[9px] font-medium shadow-lg hover:bg-violet-700 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            window.dispatchEvent(new CustomEvent('idea-mindmap-node-quick-action', {
+              detail: { action: 'mm_ai_expand_node', nodeId: id }
+            }));
+          }}
+        >
+          <Sparkles size={10} />
+          <span>{childCount === 0 ? (data._isPl ? 'Rozwiń AI' : 'AI Expand') : (data._isPl ? 'Więcej AI' : 'More AI')}</span>
+        </button>
+      )}
     </div>
   );
 });
@@ -813,6 +828,9 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(String(data.label || ''));
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const suggestTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (data._startEditing) {
@@ -827,6 +845,41 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
       textareaRef.current.select();
     }
   }, [editing]);
+
+  useEffect(() => {
+    if (suggestTimerRef.current) {
+      window.clearTimeout(suggestTimerRef.current);
+      suggestTimerRef.current = null;
+    }
+
+    if (!editing || editValue.trim() !== '') {
+      setSuggestions([]);
+      setLoadingSuggestions(false);
+      return;
+    }
+
+    setLoadingSuggestions(true);
+    suggestTimerRef.current = window.setTimeout(() => {
+      const branchKey = data.branchKey as string | undefined;
+      const branchSuggestions: Record<string, string[]> = {
+        causes: ['Market shift', 'Process gap', 'Resource constraint', 'Customer feedback', 'Competitor action'],
+        options: ['Quick win', 'Strategic pivot', 'Partnership', 'New feature', 'Cost reduction'],
+        validation: ['A/B test', 'User interview', 'Data analysis', 'Prototype test', 'Expert review'],
+        risks: ['Timeline risk', 'Budget overrun', 'Skill gap', 'Dependency', 'Market change'],
+        next: ['Research spike', 'Stakeholder review', 'Build prototype', 'Run pilot', 'Document findings'],
+      };
+      const defaults = ['Key insight', 'Open question', 'Action item', 'Evidence needed', 'Hypothesis'];
+      setSuggestions(branchKey && branchSuggestions[branchKey] ? branchSuggestions[branchKey] : defaults);
+      setLoadingSuggestions(false);
+    }, 1500);
+
+    return () => {
+      if (suggestTimerRef.current) {
+        window.clearTimeout(suggestTimerRef.current);
+        suggestTimerRef.current = null;
+      }
+    };
+  }, [editing, editValue, data.branchKey]);
 
   const confirmEdit = useCallback(() => {
     setEditing(false);
@@ -1064,16 +1117,38 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
           )}
 
           {editing ? (
-            <textarea
-              ref={textareaRef}
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              onBlur={confirmEdit}
-              onKeyDown={handleKeyDown}
-              rows={2}
-              className="w-full text-[11px] font-semibold text-slate-800 dark:text-slate-200 bg-transparent border-none outline-none resize-none p-0 leading-tight nodrag"
-              placeholder={isPl ? 'Wpisz…' : 'Type…'}
-            />
+            <>
+              <textarea
+                ref={textareaRef}
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={confirmEdit}
+                onKeyDown={handleKeyDown}
+                rows={2}
+                className="w-full text-[11px] font-semibold text-slate-800 dark:text-slate-200 bg-transparent border-none outline-none resize-none p-0 leading-tight nodrag"
+                placeholder={isPl ? 'Wpisz…' : 'Type…'}
+              />
+              {suggestions.length > 0 && editValue.trim() === '' && (
+                <div className="flex flex-wrap gap-1 mt-1 nodrag">
+                  {suggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className="text-[9px] px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 hover:bg-violet-200 dark:hover:bg-violet-800/40 transition-colors"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setEditValue(s);
+                        setSuggestions([]);
+                        textareaRef.current?.focus();
+                      }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
             <>
               <div className="flex items-start gap-1.5">
@@ -1154,10 +1229,10 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 )}
                 {/* Depth model indicators */}
                 {data.notes && (
-                  <StickyNote size={9} className="text-amber-400 dark:text-amber-500 shrink-0" title={isPl ? 'Ma notatki' : 'Has notes'} />
+                  <StickyNote size={9} className="text-amber-400 dark:text-amber-500 shrink-0" />
                 )}
                 {data.riskNote && (
-                  <AlertTriangle size={9} className="text-red-400 dark:text-red-500 shrink-0" title={isPl ? 'Ma ryzyko' : 'Has risk note'} />
+                  <AlertTriangle size={9} className="text-red-400 dark:text-red-500 shrink-0" />
                 )}
                 {Array.isArray(data.evidenceLinks) && data.evidenceLinks.length > 0 && (
                   <span className="inline-flex items-center gap-0.5 shrink-0" title={`${data.evidenceLinks.length} ${isPl ? 'dowodów' : 'evidence'}`}>
@@ -1282,7 +1357,7 @@ function MindMapInner({
   const currentUser = useAppStore((state) => state.currentUser);
   const isPolish = useMemo(() => i18n.language?.startsWith('pl'), [i18n.language]);
   const debugEnabled = false;
-  const { fitView, getViewport, setViewport, getIntersectingNodes } = useReactFlow();
+  const { fitView, getViewport, setViewport, getIntersectingNodes, screenToFlowPosition } = useReactFlow();
   const { autoLayout } = useAutoLayout();
   const { exportAsPNG, exportAsSVG, exportAsJSON, exportAsMarkdown } = useMapExport();
   const interactionMode = externalInteractionMode;
@@ -2105,11 +2180,11 @@ function MindMapInner({
       clearDropTargets();
       return;
     }
-    const intersecting = getIntersectingNodes(node);
+    const intersecting = getIntersectingNodes(node) as Node[];
     const subtree = new Set(getSubtreeNodeIds(node.id));
     const currentParent = findParentId(node.id);
     const validTarget = intersecting.find(
-      (n) =>
+      (n: Node) =>
         n.id !== node.id &&
         !subtree.has(n.id) &&
         n.id !== currentParent &&
@@ -2136,11 +2211,11 @@ function MindMapInner({
     }
     if (!node || !isReparentable(node.id)) return;
 
-    const intersecting = getIntersectingNodes(node);
+    const intersecting = getIntersectingNodes(node) as Node[];
     const subtree = new Set(getSubtreeNodeIds(node.id));
     const currentParent = findParentId(node.id);
     const validTarget = intersecting.find(
-      (n) =>
+      (n: Node) =>
         n.id !== node.id &&
         !subtree.has(n.id) &&
         n.id !== currentParent &&
@@ -2310,18 +2385,19 @@ function MindMapInner({
       const convertedIds = Array.isArray(detail.nodeIds) ? detail.nodeIds : [];
       if (convertedIds.length === 0) return;
       const convertedSet = new Set(convertedIds);
-      setNodes((prev: Node[]) =>
-        prev.map((n) =>
+      setNodes((prev: Node[]) => {
+        const next = prev.map((n) =>
           convertedSet.has(n.id)
             ? { ...n, data: { ...n.data, status: 'converted', _convertedTo: detail.target } }
             : n
-        )
-      );
-      scheduleSave();
+        );
+        scheduleSave(next as any, edges as any);
+        return next;
+      });
     };
     window.addEventListener('idea-mindmap-mark-converted', handler);
     return () => window.removeEventListener('idea-mindmap-mark-converted', handler);
-  }, [ideaId, scheduleSave, setNodes]);
+  }, [ideaId, edges, scheduleSave, setNodes]);
 
   // Quick action listener is wired below (after all state declarations).
 
@@ -3905,6 +3981,14 @@ function MindMapInner({
         handleAIExpand();
       }
 
+      if (action === 'pane_auto_cluster') {
+        window.dispatchEvent(
+          new CustomEvent('idea-workspace-quick-action', {
+            detail: { action: 'mm_auto_cluster' },
+          }),
+        );
+      }
+
       setPaneContextMenu(null);
     },
     [
@@ -4339,7 +4423,7 @@ function MindMapInner({
           edges={focusFilteredEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
-          onMoveEnd={(_event, viewport) => {
+          onMoveEnd={(_event: any, viewport: { x: number; y: number; zoom: number }) => {
             onViewportReport?.(viewport);
           }}
           onNodeClick={onNodeClick}
@@ -4377,6 +4461,73 @@ function MindMapInner({
               : 'Idea recommendation map — arrow navigation, Enter/Tab add nodes'
           }
           defaultEdgeOptions={reactFlowDefaultEdgeOptions}
+          onDragOver={(event: React.DragEvent) => {
+            if (event.dataTransfer.types.includes('application/idea-context-item')) {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'copy';
+            }
+          }}
+          onDrop={(event: React.DragEvent) => {
+            const raw = event.dataTransfer.getData('application/idea-context-item');
+            if (!raw) return;
+            event.preventDefault();
+            try {
+              const item = JSON.parse(raw);
+              const position = screenToFlowPosition({
+                x: event.clientX,
+                y: event.clientY,
+              });
+              const newId = `node-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+              const branchKey = item.type === 'initiative' ? 'options'
+                : item.type === 'gap' ? 'causes'
+                : item.type === 'insight' ? 'evidence'
+                : item.type === 'kpi' ? 'validation'
+                : 'uncategorized';
+              const newNode = {
+                id: newId,
+                type: 'idea' as const,
+                position,
+                data: {
+                  label: item.title || item.text || 'Dropped item',
+                  branchKey,
+                  sourceType: 'context_panel',
+                  priority: 50,
+                  notes: item.detail || '',
+                  context: item.source ? `Source: ${item.source}` : '',
+                  semanticType: item.type === 'gap' ? 'risk'
+                    : item.type === 'insight' ? 'evidence'
+                    : item.type === 'kpi' ? 'evidence'
+                    : item.type === 'initiative' ? 'action'
+                    : 'topic',
+                  status: 'idea',
+                  tags: item.type ? [item.type] : [],
+                },
+              };
+              const nearestNode = nodes.filter(n => !n.hidden).reduce((best, n) => {
+                const dx = n.position.x - position.x;
+                const dy = n.position.y - position.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (!best || dist < best.dist) return { node: n, dist };
+                return best;
+              }, null as { node: any; dist: number } | null);
+
+              const parentId = nearestNode && nearestNode.dist < 300 ? nearestNode.node.id : 'root';
+              const colors = branchColor(branchKey);
+              const newEdge = {
+                id: `edge-${newId}`,
+                source: parentId,
+                target: newId,
+                type: 'gradient',
+                style: { stroke: colors.edge, strokeWidth: 1.5, opacity: 0.5 },
+                animated: true,
+                data: { edgeRole: 'structural' },
+              };
+
+              pushUndo();
+              setNodes(prev => [...prev.map(n => ({ ...n, selected: false })), { ...newNode, selected: true }]);
+              setEdges(prev => [...prev, newEdge]);
+            } catch { /* ignore bad data */ }
+          }}
         >
           {/* V5-IDEA-42: Unified canvas background */}
           <Background color="rgba(148,163,184,0.06)" gap={24} size={1} />

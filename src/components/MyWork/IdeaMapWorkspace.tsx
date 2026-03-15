@@ -833,6 +833,8 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           isPl: isPolish,
           activeTool,
           baseVersion: graphRuntime.graph.version,
+          ideaTitle: title,
+          seedText: seedText,
         });
         setMapRefreshToken((v) => v + 1);
         toast.success(isPolish ? 'Szablon zastosowany' : 'Template applied', { duration: 1200 });
@@ -850,7 +852,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         }
       }
     },
-    [activeTool, graphRuntime.graph.version, isPolish, realId]
+    [activeTool, graphRuntime.graph.version, isPolish, realId, seedText, title]
   );
 
   const handleGenerateCanvasAI = useCallback(

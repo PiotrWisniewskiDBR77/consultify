@@ -29,7 +29,7 @@ export interface MindMapQuickActionHandlers {
   pushUndo: () => void;
   undo: () => void;
   redo: () => void;
-  handleAIExpand: () => void;
+  handleAIExpand: (targetNodeId?: string) => void;
   autoLayout: (n: Node[], e: Edge[]) => Node[];
   fitView: (opts?: any) => void;
   exportAsSVG: (filename: string) => void;
@@ -393,7 +393,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
 
     // ── AI Actions ─────────────────────────────────────────────────────────
     if (action === 'mm_ai_expand') handlers.handleAIExpand();
-    if (action === 'mm_ai_expand_node') handlers.handleAIExpand();
+    if (action === 'mm_ai_expand_node') handlers.handleAIExpand(detail?.nodeId as string | undefined);
     if (action === 'mm_ai_suggest') {
       if (handlers.onOpenChat) {
         const prompt = isPolish
@@ -414,6 +414,146 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       }
     }
     if (action === 'mm_ai_cluster') setters.setShowAutoClustering(true);
+
+    if (action === 'mm_auto_cluster') {
+      if (locked) return;
+      const rootChildren = edges
+        .filter((e) => e.source === 'root' && e.data?.edgeRole !== 'relation')
+        .map((e) => e.target);
+
+      const orphanIdeas = nodes.filter(
+        (n) => rootChildren.includes(n.id) && n.type === 'idea',
+      );
+
+      if (orphanIdeas.length < 2) {
+        toast(
+          isPolish
+            ? 'Za mało luźnych węzłów do grupowania'
+            : 'Not enough ungrouped nodes to cluster',
+        );
+        return;
+      }
+
+      const clusters = new Map<string, Node[]>();
+      for (const node of orphanIdeas) {
+        const label = String(node.data?.label || '').toLowerCase();
+        const tags: string[] = Array.isArray(node.data?.tags) ? node.data.tags : [];
+        const semType: string = node.data?.semanticType || '';
+
+        let clusterKey = 'uncategorized';
+        if (semType === 'risk' || semType === 'threat' || label.includes('risk') || label.includes('ryzyko')) {
+          clusterKey = 'risks';
+        } else if (semType === 'hypothesis' || label.includes('hypothesis') || label.includes('hipoteza')) {
+          clusterKey = 'hypotheses';
+        } else if (semType === 'action' || semType === 'task' || label.includes('action') || label.includes('zadanie')) {
+          clusterKey = 'actions';
+        } else if (semType === 'evidence' || label.includes('evidence') || label.includes('dowód')) {
+          clusterKey = 'evidence';
+        } else if (semType === 'question' || label.includes('?') || label.includes('question')) {
+          clusterKey = 'questions';
+        } else if (tags.length > 0) {
+          clusterKey = tags[0];
+        }
+
+        if (!clusters.has(clusterKey)) clusters.set(clusterKey, []);
+        clusters.get(clusterKey)!.push(node);
+      }
+
+      if (clusters.size < 2) {
+        toast(
+          isPolish
+            ? 'Wszystkie węzły pasują do jednej grupy'
+            : 'All nodes fit in one group',
+        );
+        return;
+      }
+
+      handlers.pushUndo();
+
+      const CLUSTER_LABELS: Record<string, { en: string; pl: string }> = {
+        risks: { en: 'Risks', pl: 'Ryzyka' },
+        hypotheses: { en: 'Hypotheses', pl: 'Hipotezy' },
+        actions: { en: 'Actions', pl: 'Działania' },
+        evidence: { en: 'Evidence', pl: 'Dowody' },
+        questions: { en: 'Questions', pl: 'Pytania' },
+        uncategorized: { en: 'Other', pl: 'Inne' },
+      };
+
+      const newNodes: Node[] = [];
+      const newEdges: Edge[] = [];
+      const edgesToRemove = new Set<string>();
+      let branchIndex = 0;
+
+      for (const [key, clusterNodes] of clusters) {
+        const angle = (branchIndex / clusters.size) * 2 * Math.PI - Math.PI / 2;
+        const radius = 350;
+        const bx = Math.cos(angle) * radius;
+        const by = Math.sin(angle) * radius;
+
+        const branchId = `branch-auto-${key}-${Date.now()}`;
+        const branchLabel =
+          CLUSTER_LABELS[key]?.[isPolish ? 'pl' : 'en'] || key;
+
+        newNodes.push({
+          id: branchId,
+          type: 'branch',
+          position: { x: bx, y: by },
+          data: {
+            label: branchLabel,
+            branchKey: key,
+            hint: isPolish ? 'Automatycznie zgrupowane' : 'Auto-clustered',
+          },
+        } as Node);
+
+        newEdges.push({
+          id: `edge-root-${branchId}`,
+          source: 'root',
+          target: branchId,
+          type: 'gradient',
+          animated: true,
+          data: { edgeRole: 'structural' },
+        } as Edge);
+
+        for (const node of clusterNodes) {
+          const oldEdge = edges.find(
+            (e) => e.target === node.id && e.source === 'root',
+          );
+          if (oldEdge) edgesToRemove.add(oldEdge.id);
+
+          newEdges.push({
+            id: `edge-${branchId}-${node.id}`,
+            source: branchId,
+            target: node.id,
+            type: 'gradient',
+            animated: true,
+            data: { edgeRole: 'structural' },
+          } as Edge);
+        }
+
+        branchIndex++;
+      }
+
+      setters.setNodes((prev) => [...prev, ...newNodes]);
+      setters.setEdges((prev) => [
+        ...prev.filter((e) => !edgesToRemove.has(e.id)),
+        ...newEdges,
+      ]);
+
+      toast.success(
+        isPolish
+          ? `Utworzono ${clusters.size} grup z ${orphanIdeas.length} węzłów`
+          : `Created ${clusters.size} clusters from ${orphanIdeas.length} nodes`,
+      );
+
+      setTimeout(() => {
+        try {
+          handlers.fitView({ padding: 0.3, duration: 400 });
+        } catch {
+          /* ignore */
+        }
+      }, 100);
+      return;
+    }
     if (action === 'mm_ai_summarize') {
       if (handlers.onOpenChat) {
         const nodeLabels = nodes.slice(0, 30).map((n) => n.data?.label).filter(Boolean).join(', ');
