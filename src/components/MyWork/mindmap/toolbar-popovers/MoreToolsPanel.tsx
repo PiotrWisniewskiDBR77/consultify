@@ -1,20 +1,14 @@
 import {
   BarChart3,
   Camera,
-  Clock,
   Eye,
-  FolderKanban,
-  GitCompare,
   Globe,
   History,
   Layout,
   LayoutGrid,
   Maximize,
-  Palette,
   Search,
   Share2,
-  Shield,
-  Users,
   Webhook,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
@@ -39,24 +33,18 @@ const ALL_TOOLS: ToolItem[] = [
   { action: 'mm_toggle_minimap', iconEl: LayoutGrid, labelPl: 'Minimap', labelEn: 'Minimap', category: 'visual' },
   { action: 'mm_fit_view', iconEl: Maximize, labelPl: 'Dopasuj widok', labelEn: 'Fit view', category: 'visual' },
   { action: 'mm_presentation', iconEl: Eye, labelPl: 'Tryb prezentacji', labelEn: 'Presentation mode', category: 'visual' },
-  { action: 'mm_background', iconEl: Palette, labelPl: 'Tło kanwy', labelEn: 'Canvas background', category: 'visual' },
 
   // Workflow
   { action: 'mm_snapshots', iconEl: Camera, labelPl: 'Wersje / Snapshoty', labelEn: 'Snapshots / Versions', category: 'workflow' },
   { action: 'mm_activity', iconEl: History, labelPl: 'Historia aktywności', labelEn: 'Activity history', category: 'workflow' },
-  { action: 'mm_governance', iconEl: Shield, labelPl: 'Governance status', labelEn: 'Governance status', category: 'workflow' },
-  { action: 'mm_timers', iconEl: Clock, labelPl: 'Timer / Timeboxing', labelEn: 'Timer / Timeboxing', category: 'workflow' },
-  { action: 'mm_cross_tool', iconEl: GitCompare, labelPl: 'Konwersja narzędzi', labelEn: 'Cross-tool convert', category: 'workflow' },
 
   // Collaboration
   { action: 'mm_share', iconEl: Share2, labelPl: 'Udostępnij', labelEn: 'Share', category: 'collab' },
-  { action: 'mm_collaboration', iconEl: Users, labelPl: 'Nakładka współpracy', labelEn: 'Collaboration overlay', category: 'collab' },
   { action: 'mm_webhooks', iconEl: Webhook, labelPl: 'Webhook/integracje', labelEn: 'Webhooks/Integrations', category: 'collab' },
   { action: 'mm_embed', iconEl: Globe, labelPl: 'Osadź zewnętrznie', labelEn: 'Embed externally', category: 'collab' },
 
   // Analytics
   { action: 'mm_branch_analysis', iconEl: BarChart3, labelPl: 'Analiza gałęzi', labelEn: 'Branch analysis', category: 'analytics' },
-  { action: 'mm_kanban_view', iconEl: FolderKanban, labelPl: 'Kanban z węzłów', labelEn: 'Node Kanban view', category: 'analytics' },
 ];
 
 const CATEGORY_LABELS: Record<string, { pl: string; en: string }> = {

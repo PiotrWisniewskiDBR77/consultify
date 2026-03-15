@@ -461,7 +461,8 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     if (action === 'mm_import_device') {
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = '.json,.xmind,.mm,.txt,.csv';
+      // Keep this action narrow: external mind-map formats use the dedicated importer.
+      input.accept = '.json';
       input.onchange = (e) => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (!file) return;
@@ -470,7 +471,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           try {
             const text = ev.target?.result as string;
             const data = JSON.parse(text);
-            if (Array.isArray(data.nodes)) {
+            if (Array.isArray(data?.nodes)) {
               handlers.pushUndo();
               setters.setNodes((prev) => [...prev, ...data.nodes]);
               if (Array.isArray(data.edges)) {
@@ -478,10 +479,18 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
               }
               toast.success(isPolish ? `Zaimportowano ${data.nodes.length} węzłów` : `Imported ${data.nodes.length} nodes`);
             } else {
-              toast.error(isPolish ? 'Nieobsługiwany format' : 'Unsupported format');
+              toast.error(
+                isPolish
+                  ? 'Nieobsługiwany plik. Użyj eksportu JSON z Consultify.'
+                  : 'Unsupported file. Use a Consultify JSON export.'
+              );
             }
           } catch {
-            toast.error(isPolish ? 'Błąd parsowania pliku' : 'File parse error');
+            toast.error(
+              isPolish
+                ? 'Nie udało się odczytać pliku JSON'
+                : 'Could not read JSON file'
+            );
           }
         };
         reader.readAsText(file);
@@ -489,11 +498,12 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       input.click();
     }
     if (action === 'mm_import_url') {
-      const url = window.prompt(isPolish ? 'Podaj URL do importu:' : 'Enter URL to import:');
-      if (url?.trim()) {
-        toast(isPolish ? 'Import z URL w toku…' : 'Importing from URL…', { icon: '🌐', duration: 2000 });
-        setters.setShowDocToMap(true);
-      }
+      toast(
+        isPolish
+          ? 'Import z URL nie jest aktywny. Użyj Dokument -> Mapa albo XMind / FreeMind.'
+          : 'URL import is not active. Use Document -> Map or XMind / FreeMind.',
+        { icon: 'ℹ️', duration: 2500 }
+      );
     }
 
     // ── MoreToolsPanel actions ─────────────────────────────────────────────

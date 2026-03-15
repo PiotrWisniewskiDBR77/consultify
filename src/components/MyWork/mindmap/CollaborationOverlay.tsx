@@ -47,6 +47,20 @@ function getAuthToken(): string | null {
   return localStorage.getItem('token');
 }
 
+function isE2EToken(token: string | null): boolean {
+  if (!token) return false;
+  try {
+    const [, payload] = token.split('.');
+    if (!payload) return false;
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+    const parsed = JSON.parse(window.atob(padded));
+    return parsed?.e2e === true;
+  } catch {
+    return false;
+  }
+}
+
 function escapeDomSelector(value: string): string {
   if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
     return CSS.escape(value);
@@ -109,6 +123,7 @@ function useCollaboration(
       if (!shouldReconnectRef.current) return;
       const token = getAuthToken();
       if (!token || !ideaId || !userId) return;
+      if (isE2EToken(token)) return;
 
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const ws = new WebSocket(

@@ -3925,6 +3925,67 @@ router.get(
     if (!(await requireTables(res, ['my_ideas', 'my_idea_maps']))) return;
 
     const ideaId = String(req.params.id || '').trim();
+    if (ideaId === 'metrics') {
+      const idsRaw = String(req.query.ids || '').trim();
+      const ids = idsRaw
+        ? Array.from(
+            new Set(
+              idsRaw
+                .split(',')
+                .map((x) => String(x || '').trim())
+                .filter(Boolean)
+            )
+          ).slice(0, 250)
+        : [];
+
+      if (!ids.length) return res.json({ metrics: {} });
+
+      const placeholders = queryHelpers.buildInPlaceholders(ids);
+      const rows =
+        (await queryHelpers.queryAll<any>(
+          `
+          SELECT
+            idea_id as "ideaId",
+            nodes_json as "nodesJson",
+            edges_json as "edgesJson",
+            updated_at as "updatedAt"
+          FROM my_idea_maps
+          WHERE user_id = ? AND organization_id = ?
+            AND idea_id IN (${placeholders})
+        `,
+          [userId, orgId, ...ids]
+        )) || [];
+
+      const byId = new Map<string, any>();
+      for (const row of rows) {
+        const rowIdeaId = String(row?.ideaId || '').trim();
+        if (rowIdeaId) byId.set(rowIdeaId, row);
+      }
+
+      const metrics: Record<string, any> = {};
+      for (const id of ids) {
+        const row = byId.get(id);
+        let n = 0;
+        let e = 0;
+        if (row) {
+          try {
+            const arr = JSON.parse(String(row.nodesJson || '[]'));
+            n = Array.isArray(arr) ? arr.length : 0;
+          } catch {
+            n = 0;
+          }
+          try {
+            const arr = JSON.parse(String(row.edgesJson || '[]'));
+            e = Array.isArray(arr) ? arr.length : 0;
+          } catch {
+            e = 0;
+          }
+        }
+        metrics[id] = { nodes: n, edges: e, items: n + e, updatedAt: row?.updatedAt || null };
+      }
+
+      return res.json({ metrics });
+    }
     if (!ideaId || ideaId === 'all') return res.status(400).json({ error: 'Invalid idea id' });
 
     const language = String(req.query.language || 'en').toLowerCase();

@@ -184,6 +184,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
   const lastHydratedRuntimeVersionRef = useRef<number | null>(null);
   const skipNextAutoSaveRef = useRef(false);
   const lastScheduledPayloadKeyRef = useRef('');
+  const localVersionRef = useRef(1);
   const runtimeVersion = externalRuntime?.version ?? null;
   const runtimeLoading = externalRuntime?.loading ?? false;
   const runtimeSaving = externalRuntime?.saving ?? false;
@@ -245,6 +246,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
 
   const hydrate = useCallback(async () => {
     if (externalRuntime) {
+      localVersionRef.current = Math.max(1, Number(runtimeVersion || 1));
       const runtimeNodesSafe = Array.isArray(runtimeNodes) ? runtimeNodes : [];
       const runtimeEdgesSafe = Array.isArray(runtimeEdges) ? runtimeEdges : [];
       const defaultGraph = shouldBootstrapStarterGraph(
@@ -318,6 +320,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       setPersistence('online');
       const res = await Api.getMyIdeaMap(ideaId, { language: i18nLanguage });
       const map = res?.map || {};
+      localVersionRef.current = Math.max(1, Number(map?.version || 1));
       const nextNodes = Array.isArray(map.nodes) ? map.nodes : [];
       const nextEdges = Array.isArray(map.edges) ? map.edges : [];
       const loadedPreferred = map?.preferredTool ? String(map.preferredTool) : null;
@@ -405,6 +408,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       }
 
       const def = buildLocalDefaultIdeaMap(ideaId, ideaTitle, isPolish);
+      localVersionRef.current = 1;
       isHydratingRef.current = true;
       skipNextAutoSaveRef.current = true;
       lastScheduledPayloadKeyRef.current = '';
@@ -604,14 +608,27 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
             return;
           }
           lastScheduledPayloadKeyRef.current = payloadKey;
-          await Api.saveMyIdeaMap(ideaId, {
+          const response = await Api.syncMyIdeaMap(ideaId, {
             nodes: cleanNodes,
             edges: nextEdges,
+            baseVersion: localVersionRef.current,
             preferredTool: latestPreferredTool || undefined,
             extensions: ext,
+            reason: 'draft',
           });
+          localVersionRef.current = Math.max(1, Number(response?.version || localVersionRef.current || 1));
           setLastSavedAt(Date.now());
         } catch (err: any) {
+          if (err?.status === 409) {
+            toast(
+              isPolish
+                ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
+                : 'Change conflict detected. Refreshing map from server.',
+              { icon: '⚠️' }
+            );
+            await hydrate();
+            return;
+          }
           toast.error(
             err?.message || (isPolish ? 'Nie udało się zapisać mapy' : 'Failed to save map')
           );
@@ -620,7 +637,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
         }
       }, 700);
     },
-    [getViewport, ideaId, isPolish]
+    [getViewport, hydrate, ideaId, isPolish]
   );
 
   useEffect(() => {

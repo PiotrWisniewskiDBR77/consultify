@@ -3,7 +3,6 @@ import {
   Download,
   FileText,
   FileUp,
-  Globe,
   Image,
   MessageSquare,
   Mic,
@@ -19,8 +18,7 @@ interface ImportExportPopoverProps {
 }
 
 const IMPORT_ACTIONS = [
-  { action: 'mm_import_device', iconEl: Upload, labelPl: 'Z urządzenia', labelEn: 'From device' },
-  { action: 'mm_import_url', iconEl: Globe, labelPl: 'Z URL', labelEn: 'From URL' },
+  { action: 'mm_import_device', iconEl: Upload, labelPl: 'Mapa JSON', labelEn: 'JSON map' },
   { action: 'mm_import_external', iconEl: FileUp, labelPl: 'XMind / FreeMind', labelEn: 'XMind / FreeMind' },
   { action: 'mm_doc_to_map', iconEl: FileText, labelPl: 'Dokument → Mapa', labelEn: 'Document → Map' },
   { action: 'mm_voice', iconEl: Mic, labelPl: 'Mów pomysły (Voice)', labelEn: 'Voice to Node' },
