@@ -63,6 +63,7 @@ interface ExtractedLine {
   suggestedCanonicalLabel?: string;
   isNonFinancial?: boolean;
   classificationReason?: string;
+  mappingTier?: 'auto' | 'llm_confirmed' | 'review_required' | 'excluded';
 }
 
 interface ExtractionDiagnostics {
@@ -274,6 +275,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         sourceRow: l.sourceRow,
         isNonFinancial: !!l.isNonFinancial,
         classificationReason: l.classificationReason,
+        mappingTier: l.mappingTier,
       }));
       setMappedValues(mv);
       setStep('map');

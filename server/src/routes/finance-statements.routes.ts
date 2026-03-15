@@ -253,13 +253,47 @@ async function extractTextFromFile(
       const fs = await import('fs');
       const XLSX = await import('xlsx');
       const buffer = fs.readFileSync(filePath);
-      const wb = XLSX.read(buffer, { type: 'buffer' });
-      const lines: string[] = [];
+      const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+
+      const skipSheetPattern =
+        /^(cover|okładka|spis\s+treści|table\s+of\s+contents|notes|noty|index|summary|disclaimer|info)$/i;
+
+      const financialSheetPattern =
+        /bilans|balance|p&l|profit|loss|income|zysk|strat|cash\s*flow|przepływ|rachunek|statement|sprawozdanie|bs\b|pl\b|cf\b|aktywa|pasywa|equity|kapitał/i;
+
+      const rankedSheets: Array<{ name: string; priority: number; csv: string }> = [];
+
       for (const sheetName of wb.SheetNames) {
+        if (skipSheetPattern.test(sheetName.trim())) continue;
+
         const ws = wb.Sheets[sheetName];
-        const csv = XLSX.utils.sheet_to_csv(ws, { FS: '\t' });
-        lines.push(`=== Sheet: ${sheetName} ===`, csv);
+        if (!ws || !ws['!ref']) continue;
+
+        const csv = XLSX.utils.sheet_to_csv(ws, { FS: '\t', blankrows: false });
+        const lineCount = csv.split('\n').filter((l: string) => l.trim().length > 0).length;
+        if (lineCount < 3) continue;
+
+        const numericPattern = /\d{1,3}[,. \u00A0]\d{3}/;
+        const numericLines = csv.split('\n').filter((l: string) => numericPattern.test(l)).length;
+
+        let priority = numericLines;
+        if (financialSheetPattern.test(sheetName)) priority += 200;
+        if (numericLines > 5) priority += 50;
+
+        rankedSheets.push({ name: sheetName, priority, csv });
       }
+
+      rankedSheets.sort((a, b) => b.priority - a.priority);
+
+      const lines: string[] = [];
+      for (const sheet of rankedSheets) {
+        lines.push(`=== Sheet: ${sheet.name} ===`);
+        const cleanedLines = sheet.csv.split('\n')
+          .filter((l: string) => l.trim().length > 0)
+          .filter((l: string) => !/^\t+$/.test(l));
+        lines.push(...cleanedLines);
+      }
+
       return { text: lines.join('\n'), parseMethod: 'excel_import' };
     } catch (e: any) {
       throw new Error(`Excel parsing failed: ${e?.message}`);
@@ -712,7 +746,9 @@ router.post(
       anthropicExtraction && anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
         ? anthropicExtraction
         : openAiExtraction;
-    const columnSelection = resolveStatementColumnSelection(text, {
+    const extractedSections = locateStatementSections(text, effectiveStatementType);
+    const scopedText = extractedSections[0]?.text || text;
+    const columnSelection = resolveStatementColumnSelection(scopedText, {
       periodLabel: effectivePeriodLabel,
       currency: effectiveCurrency,
       scaling: effectiveScaling,
@@ -720,7 +756,7 @@ router.post(
     const extractionRaw =
       aiExtraction && aiExtraction.lines.length > 0
         ? aiExtraction
-        : extractFinancialLines(text, effectiveStatementType, {
+        : extractFinancialLines(scopedText, effectiveStatementType, {
             selectedPeriodLabel: columnSelection.selectedPeriodLabel,
             comparisonPeriodLabel: columnSelection.comparisonPeriodLabel,
           });
@@ -731,7 +767,6 @@ router.post(
         selectedPeriodLabel: line.selectedPeriodLabel || columnSelection.selectedPeriodLabel || undefined,
       })),
     };
-    const extractedSections = locateStatementSections(text, effectiveStatementType);
     const strategy =
       anthropicExtraction && anthropicExtraction.lines.length > (openAiExtraction?.lines.length || 0)
         ? openAiExtraction && (openAiExtraction.lines.length || 0) > 0
@@ -1024,6 +1059,9 @@ router.post(
         originalLabel: line.originalLabel,
       })
     );
+    for (let i = 0; i < mapped.length; i++) {
+      (mapped[i] as any).mappingTier = tierResults[i].tier;
+    }
     const policyAssessment = assessCoverage(tierResults, mapped.length);
 
     res.json({ statementId, ingestRunId, mappedLines: mapped, policyAssessment });

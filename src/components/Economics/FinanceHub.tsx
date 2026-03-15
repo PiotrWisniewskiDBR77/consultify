@@ -91,7 +91,7 @@ export const FinanceHub: React.FC = () => {
 
   // ---- View state ----
   const [activeTab, setActiveTab] = useState<ModuleTab>(
-    (searchParams.get('tab') as ModuleTab) || 'models'
+    (searchParams.get('tab') as ModuleTab) || 'statements'
   );
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [searchQuery, setSearchQuery] = useState('');
@@ -1490,7 +1490,7 @@ export const FinanceHub: React.FC = () => {
               </button>
             </div>
           )}
-          <div className={needsFullHeight ? 'h-[72vh] min-h-[620px] overflow-auto' : 'p-4'}>
+          <div className={needsFullHeight ? 'flex h-[calc(100vh-120px)] min-h-[620px] flex-col overflow-hidden' : 'p-4'}>
             {isBudgetPrediction ? (
               <BudgetWorkspace
                 initialBudgetId={getBudgetRawId(activeDocument.id)}

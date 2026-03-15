@@ -1,4 +1,4 @@
-import { AlertTriangle, BarChart3, Calculator, ChevronDown, ChevronRight, Eye, EyeOff, FileText, RefreshCw } from 'lucide-react';
+import { AlertTriangle, BarChart3, Calculator, ChevronDown, ChevronRight, FileText, PanelRightClose, PanelRightOpen, RefreshCw, RotateCcw, Upload } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -42,6 +42,7 @@ interface Props {
   onStatementChanged?: () => Promise<void> | void;
   onCreateModelFromPack?: (row: FinanceStatementRow) => void;
   onCreateAnalysisFromPack?: (row: FinanceStatementRow) => void;
+  onAddFile?: (packId: string) => void;
 }
 
 function parseStringArray(value: unknown): string[] {
@@ -194,9 +195,9 @@ function mapStatementDetail(detail: any): FinanceStatementDetailV1 {
   };
 }
 
-function ReadinessRing({ score, size = 36 }: { score: number; size?: number }) {
+function ReadinessRing({ score, size = 32 }: { score: number; size?: number }) {
   const pct = Math.round(score * 100);
-  const radius = (size - 6) / 2;
+  const radius = (size - 5) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (pct / 100) * circumference;
   const color =
@@ -207,27 +208,10 @@ function ReadinessRing({ score, size = 36 }: { score: number; size?: number }) {
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          strokeWidth={3}
-          className="stroke-slate-200/60 dark:stroke-white/[0.08]"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          strokeWidth={3}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          className={`${color} transition-all duration-700 ease-out`}
-        />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={2.5} className="stroke-slate-200/60 dark:stroke-white/[0.08]" />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={2.5} strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset} className={`${color} transition-all duration-700 ease-out`} />
       </svg>
-      <span className={`absolute text-[9px] font-bold tabular-nums ${textColor}`}>{pct}</span>
+      <span className={`absolute text-[8px] font-bold tabular-nums ${textColor}`}>{pct}</span>
     </div>
   );
 }
@@ -240,7 +224,6 @@ function SkeletonRows() {
           <div className="h-4 flex-[2] animate-pulse rounded bg-slate-200/60 dark:bg-white/[0.06]" />
           <div className="h-4 flex-1 animate-pulse rounded bg-slate-200/60 dark:bg-white/[0.06]" />
           <div className="h-4 w-16 animate-pulse rounded bg-slate-200/60 dark:bg-white/[0.06]" />
-          <div className="h-4 w-16 animate-pulse rounded bg-slate-200/60 dark:bg-white/[0.06]" />
         </div>
       ))}
     </div>
@@ -252,6 +235,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   onStatementChanged,
   onCreateModelFromPack,
   onCreateAnalysisFromPack,
+  onAddFile,
 }) => {
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
@@ -263,7 +247,9 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   const [detailLoading, setDetailLoading] = useState(false);
   const [selectedValueId, setSelectedValueId] = useState<string | null>(null);
   const [selectedExplain, setSelectedExplain] = useState<FinanceStatementExplain | null>(null);
+  const [selectedRow, setSelectedRow] = useState<FinanceStatementTableRow | null>(null);
   const [showAdvancedDetail, setShowAdvancedDetail] = useState(false);
+  const [showSidePanel, setShowSidePanel] = useState(true);
   const [aggregationLevel, setAggregationLevel] = useState<1 | 2 | 3>(2);
   const [analyticsRows, setAnalyticsRows] = useState<FinanceStatementTableRow[]>([]);
   const [analyticsPeriods, setAnalyticsPeriods] = useState<Array<{ label: string; index: number }>>([]);
@@ -354,14 +340,15 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
         : [];
       setAnalyticsRows(nextRows);
       setAnalyticsPeriods(Array.isArray(response?.periods) ? response.periods : []);
-      const firstRow = nextRows[0] || null;
-      setSelectedValueId(firstRow?.id || null);
-      setSelectedExplain(firstRow?.explain || null);
+      setSelectedValueId(null);
+      setSelectedExplain(null);
+      setSelectedRow(null);
     } catch (e: any) {
       if (requestSeq !== explainRequestSeq.current) return;
       setAnalyticsRows([]);
       setAnalyticsPeriods([]);
       setSelectedExplain(null);
+      setSelectedRow(null);
     } finally {
       if (requestSeq === explainRequestSeq.current) {
         setDetailLoading(false);
@@ -380,6 +367,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
     setShowAdvancedDetail(false);
     setSelectedValueId(null);
     setSelectedExplain(null);
+    setSelectedRow(null);
     void loadStatement(selectedStatement.id);
   }, [loadStatement, selectedStatement?.id]);
 
@@ -393,16 +381,29 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
     if (!analyticsRows.some((row) => row.id === selectedValueId)) {
       setSelectedValueId(null);
       setSelectedExplain(null);
+      setSelectedRow(null);
     }
   }, [analyticsRows, selectedValueId]);
 
   const failCount = packValidations.filter((v) => v.status === 'fail').length;
   const warnCount = packValidations.filter((v) => v.status === 'warning').length;
 
+  const sourceFiles = useMemo(() => {
+    return childStatements.map((s) => ({
+      id: s.id,
+      type: s.statementType,
+      fileName: s.sourceFileName || s.id,
+      mapped: s.mappedLineCount,
+      total: (s.mappedLineCount || 0) + (s.unmappedLineCount || 0),
+      status: s.readinessStatus,
+      updatedAt: s.updatedAt,
+    }));
+  }, [childStatements]);
+
   if (loading && !detail) {
     return (
       <div className="space-y-4 p-4">
-        <div className="h-16 animate-pulse rounded-2xl bg-slate-200/40 dark:bg-white/[0.04]" />
+        <div className="h-14 animate-pulse rounded-2xl bg-slate-200/40 dark:bg-white/[0.04]" />
         <SkeletonRows />
       </div>
     );
@@ -439,14 +440,12 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
   }
 
   return (
-    <div className="space-y-3 p-4">
-      {/* Compact header */}
-      <div className="rounded-2xl border border-slate-200/70 bg-white/90 backdrop-blur-sm dark:border-white/[0.08] dark:bg-navy-900/80">
-        <div className="flex items-center gap-4 px-4 py-3">
-          {/* Readiness ring */}
+    <div className="flex h-full flex-col gap-2 p-3">
+      {/* ═══ HEADER BAR ═══ */}
+      <div className="flex-shrink-0 rounded-2xl border border-slate-200/70 bg-white/90 backdrop-blur-sm dark:border-white/[0.08] dark:bg-navy-900/80">
+        {/* Row 1: Entity name + status + quick actions */}
+        <div className="flex items-center gap-3 px-4 py-2.5">
           <ReadinessRing score={packRow.readinessScore || 0} />
-
-          {/* Title & metadata */}
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="truncate text-sm font-semibold text-slate-900 dark:text-white">
@@ -466,21 +465,19 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                     : (isPl ? 'Szkic' : 'Draft')}
               </span>
             </div>
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 dark:text-slate-400">
               <span>{packRow.periodLabel || `${packRow.periodStart} → ${packRow.periodEnd}`}</span>
               <span>{packRow.currency}</span>
               <span>{packRow.scaling}</span>
               <span>{childStatements.length} {isPl ? 'dok.' : 'docs'}</span>
             </div>
           </div>
-
-          {/* Quick actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {onCreateModelFromPack && packRow.isWorkable && (
               <button
                 type="button"
                 onClick={() => onCreateModelFromPack(packRow)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-200 dark:hover:bg-white/[0.04]"
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200/70 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
               >
                 <Calculator size={12} />
                 <span className="hidden sm:inline">{isPl ? 'Model' : 'Model'}</span>
@@ -490,7 +487,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => onCreateAnalysisFromPack(packRow)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/70 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-200 dark:hover:bg-white/[0.04]"
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200/70 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
               >
                 <BarChart3 size={12} />
                 <span className="hidden sm:inline">{isPl ? 'Analiza' : 'Analysis'}</span>
@@ -499,8 +496,9 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* P&L / BS / CF tabs with line count badges */}
-        <div className="flex items-center gap-1 border-t border-slate-200/50 px-4 py-2 dark:border-white/[0.05]" role="tablist">
+        {/* Row 2: P&L/BS/CF tabs (left) + Aggregation + Panel toggle (right) */}
+        <div className="flex items-center gap-1 border-t border-slate-200/50 px-4 py-1.5 dark:border-white/[0.05]" role="tablist">
+          {/* Statement type tabs */}
           {(['P&L', 'BS', 'CF'] as const).map((tab) => {
             const child = statementsByType.get(tab);
             const hasDocument = !!child;
@@ -517,7 +515,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                 aria-disabled={!hasDocument}
                 onClick={() => hasDocument && setActiveTab(tab)}
                 disabled={!hasDocument}
-                className={`relative flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`relative flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors ${
                   isActive && hasDocument
                     ? 'bg-cyan-600 text-white shadow-sm'
                     : hasDocument
@@ -527,7 +525,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
               >
                 {tab}
                 {hasDocument && total > 0 && (
-                  <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums leading-none ${
+                  <span className={`rounded px-1 py-0.5 text-[9px] font-semibold tabular-nums leading-none ${
                     isActive
                       ? 'bg-white/20 text-white'
                       : 'bg-slate-200/70 text-slate-500 dark:bg-white/[0.08] dark:text-slate-400'
@@ -536,7 +534,7 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                   </span>
                 )}
                 {!hasDocument && (
-                  <span className="text-[10px] font-normal italic">
+                  <span className="text-[9px] font-normal italic">
                     {isPl ? 'brak' : 'n/a'}
                   </span>
                 )}
@@ -544,20 +542,22 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
             );
           })}
 
-          {/* Missing types warning */}
           {missingStatementTypes.length > 0 && (
-            <span className="ml-2 inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400">
+            <span className="ml-1 inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400">
               <AlertTriangle size={10} />
-              {isPl ? 'Brakuje:' : 'Missing:'} {missingStatementTypes.join(', ')}
+              {missingStatementTypes.join(', ')}
             </span>
           )}
+
+          {/* Spacer */}
+          <div className="flex-1" />
 
           {/* Validation toggle */}
           {packValidations.length > 0 && (
             <button
               type="button"
               onClick={() => setShowValidations((prev) => !prev)}
-              className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-medium text-slate-500 transition-colors hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.04]"
+              className="inline-flex items-center gap-1 rounded-lg px-1.5 py-1 text-[10px] font-medium text-slate-500 transition-colors hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.04]"
             >
               {failCount > 0 && (
                 <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-100 px-1 text-[9px] font-bold text-rose-600 dark:bg-rose-500/15 dark:text-rose-400">
@@ -569,9 +569,56 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                   {warnCount}
                 </span>
               )}
-              {showValidations ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+              {showValidations ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
             </button>
           )}
+
+          {/* Separator */}
+          <div className="mx-1 h-5 w-px bg-slate-200/60 dark:bg-white/[0.06]" />
+
+          {/* Aggregation control */}
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {isPl ? 'Agg' : 'Agg'}
+            </span>
+            <div className="inline-flex items-center rounded-md border border-slate-200/70 bg-slate-50/80 p-0.5 dark:border-white/[0.08] dark:bg-white/[0.03]">
+              {([1, 2, 3] as const).map((level) => {
+                const isActive = aggregationLevel === level;
+                return (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => setAggregationLevel(level)}
+                    className={`h-5 min-w-5 rounded px-1.5 text-[10px] font-medium transition-all ${
+                      isActive
+                        ? 'bg-cyan-600 text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    {level}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Panel toggle */}
+          <button
+            type="button"
+            onClick={() => setShowSidePanel((prev) => !prev)}
+            className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
+              showSidePanel
+                ? 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300'
+                : 'text-slate-500 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.04]'
+            }`}
+            aria-pressed={showSidePanel}
+            title={isPl ? 'Panel szczegółów' : 'Details panel'}
+          >
+            {showSidePanel ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
+            <span className="hidden lg:inline">
+              {isPl ? 'Szczegóły' : 'Details'}
+            </span>
+          </button>
         </div>
 
         {/* Collapsible validations */}
@@ -585,75 +632,14 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
         )}
       </div>
 
-      {/* Statement detail area */}
+      {/* ═══ CONTENT AREA ═══ */}
       {selectedStatement ? (
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_320px]">
-          {/* Main table area */}
-          <div className="rounded-2xl border border-slate-200/70 bg-white/90 backdrop-blur-sm dark:border-white/[0.08] dark:bg-navy-900/80">
-            {/* Table header with controls */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/60 px-4 py-2.5 dark:border-white/[0.06]">
-              <div className="min-w-0">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                  {activeTab}
-                </div>
-                <div className="mt-0.5 truncate text-sm font-medium text-slate-900 dark:text-white">
-                  {selectedStatement.sourceFileName || selectedStatement.id}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Aggregation segmented control */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                    {isPl ? 'Agregacja' : 'Aggregation'}
-                  </span>
-                  <div className="inline-flex items-center rounded-lg border border-slate-200/70 bg-slate-50/80 p-0.5 dark:border-white/[0.08] dark:bg-white/[0.03]">
-                    {([1, 2, 3] as const).map((level) => {
-                      const isActive = aggregationLevel === level;
-                      return (
-                        <button
-                          key={level}
-                          type="button"
-                          onClick={() => setAggregationLevel(level)}
-                          className={`h-6 min-w-7 rounded-md px-2 text-[11px] font-medium transition-all ${
-                            isActive
-                              ? 'bg-cyan-600 text-white shadow-sm'
-                              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                          }`}
-                          title={
-                            level === 1
-                              ? (isPl ? 'Tylko grupy główne' : 'Primary groups only')
-                              : level === 2
-                                ? (isPl ? 'Grupy i podgrupy' : 'Groups and subgroups')
-                                : (isPl ? 'Pełna analityka' : 'Full analytics')
-                          }
-                        >
-                          {level}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Technical details toggle */}
-                <button
-                  type="button"
-                  onClick={() => setShowAdvancedDetail((current) => !current)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200/70 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
-                  aria-pressed={showAdvancedDetail}
-                >
-                  {showAdvancedDetail ? <EyeOff size={12} /> : <Eye size={12} />}
-                  <span className="hidden sm:inline">
-                    {showAdvancedDetail
-                      ? (isPl ? 'Ukryj techniczne' : 'Hide technical')
-                      : (isPl ? 'Pokaż techniczne' : 'Show technical')}
-                  </span>
-                </button>
-              </div>
-            </div>
-
+        <div className={`grid min-h-0 flex-1 gap-2 ${showSidePanel ? 'xl:grid-cols-[minmax(0,1fr)_320px]' : ''}`}>
+          {/* Main table */}
+          <div className="flex min-h-0 flex-col rounded-2xl border border-slate-200/70 bg-white/90 backdrop-blur-sm dark:border-white/[0.08] dark:bg-navy-900/80">
             {/* Statement validations (inline, compact) */}
             {statementDetail?.validationLedger && statementDetail.validationLedger.length > 0 && (
-              <div className="border-b border-slate-200/50 px-4 py-2 dark:border-white/[0.04]">
+              <div className="border-b border-slate-200/50 px-4 py-1.5 dark:border-white/[0.04]">
                 <StatementValidationBadges
                   validations={statementDetail.validationLedger}
                   emptyLabel=""
@@ -661,8 +647,8 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
               </div>
             )}
 
-            {/* Table content */}
-            <div className="p-3">
+            {/* Table */}
+            <div className="flex min-h-0 flex-1 flex-col p-2">
               {detailLoading ? (
                 <SkeletonRows />
               ) : statementDetail ? (
@@ -673,6 +659,8 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
                   onSelectRow={(row: FinanceStatementTableRow) => {
                     setSelectedValueId(row.id);
                     setSelectedExplain(row.explain || null);
+                    setSelectedRow(row);
+                    if (!showSidePanel) setShowSidePanel(true);
                   }}
                   lineLabel={isPl ? 'Pozycja' : 'Line item'}
                   valueLabel={isPl ? 'Wartość' : 'Value'}
@@ -713,17 +701,133 @@ export const FinancialStatementPackWorkspace: React.FC<Props> = ({
             )}
           </div>
 
-          {/* Explain panel */}
-          <StatementExplainPanel
-            explain={selectedExplain}
-            title={isPl ? 'Wyjaśnienie mapowania' : 'Mapping explain'}
-            emptyLabel={isPl ? 'Kliknij wiersz, aby zobaczyć źródło i logikę mapowania.' : 'Select a row to inspect evidence and mapping logic.'}
-            mappingLabel={isPl ? 'Mapowanie' : 'Mapping'}
-            originLabel={isPl ? 'Pochodzenie' : 'Origin'}
-            confidenceLabel={isPl ? 'Pewność' : 'Confidence'}
-            sourceLabel={isPl ? 'Źródło' : 'Source'}
-            noEvidenceLabel={isPl ? 'Brak zapisanych evidence dla tej pozycji.' : 'No stored evidence for this value.'}
-          />
+          {/* Side panel */}
+          {showSidePanel && (
+            <div className="flex min-h-0 flex-col">
+              {selectedExplain ? (
+                <StatementExplainPanel
+                  explain={selectedExplain}
+                  selectedRow={selectedRow}
+                  currency={packRow.currency}
+                  title={isPl ? 'Szczegóły pozycji' : 'Line item details'}
+                  emptyLabel={isPl ? 'Kliknij wiersz, aby zobaczyć szczegóły pozycji.' : 'Select a row to see line item details.'}
+                  mappingLabel={isPl ? 'Mapowanie' : 'Mapping'}
+                  originLabel={isPl ? 'Pochodzenie' : 'Origin'}
+                  confidenceLabel={isPl ? 'Pewność' : 'Confidence'}
+                  sourceLabel={isPl ? 'Źródło' : 'Source'}
+                  noEvidenceLabel={isPl ? 'Brak zapisanych evidence dla tej pozycji.' : 'No stored evidence for this value.'}
+                />
+              ) : (
+                /* Source files list when no row selected */
+                <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 backdrop-blur-sm dark:border-white/[0.08] dark:bg-navy-900/90">
+                  <div className="flex-shrink-0 border-b border-slate-200/70 px-3 py-2.5 dark:border-white/[0.06]">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      {isPl ? 'Pliki źródłowe' : 'Source files'}
+                    </div>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => onAddFile?.(statementPackId)}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-cyan-600 px-3 py-1.5 text-[11px] font-medium text-white shadow-sm transition-colors hover:bg-cyan-700"
+                      >
+                        <Upload size={12} />
+                        {isPl ? 'Dodaj plik' : 'Add file'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await loadPack();
+                          if (selectedStatement?.id) {
+                            await loadStatement(selectedStatement.id);
+                            await loadAnalytics(selectedStatement.id, aggregationLevel);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/70 px-3 py-1.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-white/[0.08] dark:text-slate-300 dark:hover:bg-white/[0.04]"
+                        title={isPl ? 'Przelicz ponownie' : 'Recalculate'}
+                      >
+                        <RotateCcw size={12} />
+                        {isPl ? 'Przelicz' : 'Recalc'}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-auto">
+                    {sourceFiles.length > 0 ? (
+                      <div className="divide-y divide-slate-200/40 dark:divide-white/[0.04]">
+                        {sourceFiles.map((file) => {
+                          const isActiveFile = selectedStatement?.id === file.id;
+                          const statusColor =
+                            file.status === 'ready'
+                              ? 'bg-emerald-400'
+                              : file.status === 'recoverable'
+                                ? 'bg-amber-400'
+                                : 'bg-slate-400';
+                          return (
+                            <div
+                              key={file.id}
+                              className={`px-4 py-3 transition-colors ${
+                                isActiveFile
+                                  ? 'bg-cyan-50/50 dark:bg-cyan-500/[0.06]'
+                                  : 'hover:bg-slate-50/40 dark:hover:bg-white/[0.02]'
+                              }`}
+                            >
+                              <div className="flex items-start gap-2.5">
+                                <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100/80 dark:bg-white/[0.05]">
+                                  <FileText size={13} className="text-slate-500 dark:text-slate-400" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="truncate text-[12px] font-medium text-slate-800 dark:text-slate-100">
+                                      {file.fileName}
+                                    </span>
+                                  </div>
+                                  <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                                    <span className="inline-flex items-center gap-1 rounded bg-slate-100/80 px-1.5 py-0.5 font-semibold dark:bg-white/[0.06]">
+                                      {file.type}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1">
+                                      <span className={`h-1.5 w-1.5 rounded-full ${statusColor}`} />
+                                      {file.status}
+                                    </span>
+                                    {file.total > 0 && (
+                                      <span className="tabular-nums">
+                                        {file.mapped}/{file.total} {isPl ? 'linii' : 'lines'}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {file.total > 0 && (
+                                    <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-slate-200/60 dark:bg-white/[0.06]">
+                                      <div
+                                        className="h-full rounded-full bg-cyan-500 transition-all duration-300"
+                                        style={{ width: `${file.total > 0 ? (file.mapped / file.total) * 100 : 0}%` }}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-2 px-4 py-10 text-center">
+                        <FileText size={20} className="text-slate-400 dark:text-slate-500" />
+                        <div className="text-[12px] text-slate-500 dark:text-slate-400">
+                          {isPl ? 'Brak plików źródłowych.' : 'No source files.'}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="border-t border-slate-200/50 px-4 py-2 dark:border-white/[0.05]">
+                    <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                      {isPl
+                        ? 'Kliknij wiersz w tabeli, aby zobaczyć szczegóły pozycji.'
+                        : 'Click a table row to see line item details.'}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200/70 py-12 dark:border-white/[0.08]">

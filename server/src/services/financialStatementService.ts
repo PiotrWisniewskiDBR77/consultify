@@ -435,25 +435,91 @@ export function detectContainedStatementTypes(text: string): Array<'P&L' | 'BS' 
 }
 
 function detectCurrency(text: string): string {
-  const patterns: [RegExp, string][] = [
-    [/\b(pln|złot|zł)\b/i, 'PLN'],
-    [/\b(eur|euro|€)\b/i, 'EUR'],
-    [/\b(usd|us\s*dollar|\$)\b/i, 'USD'],
-    [/\b(gbp|£|pound\s*sterling)\b/i, 'GBP'],
-    [/\b(czk|koruna|korona czeska)\b/i, 'CZK'],
-    [/\b(chf|swiss\s*franc|frank)\b/i, 'CHF'],
+  const headerArea = text.substring(0, 30000).toLowerCase();
+
+  // High-confidence reporting-currency phrases (order doesn't matter — scored)
+  const reportingPhrases: [RegExp, string, number][] = [
+    [/in\s+millions?\s+of\s+(?:u\.?s\.?\s*)?dollars/i, 'USD', 10],
+    [/in\s+thousands?\s+of\s+(?:u\.?s\.?\s*)?dollars/i, 'USD', 10],
+    [/(?:amounts?\s+(?:are\s+)?in|expressed\s+in|denominated\s+in|reported\s+in)\s+(?:u\.?s\.?\s*)?dollars/i, 'USD', 10],
+    [/\(\s*in\s+(?:millions?|thousands?|billions?)(?:\s*,\s*except)?\s*\)/i, 'USD', 6],
+    [/form\s+10-k/i, 'USD', 4],
+    [/form\s+20-f/i, 'USD', 3],
+    [/\bsec\s+filing\b/i, 'USD', 3],
+    [/\bnasdaq|nyse\b/i, 'USD', 3],
+    [/in\s+millions?\s+of\s+euros/i, 'EUR', 10],
+    [/in\s+thousands?\s+of\s+euros/i, 'EUR', 10],
+    [/(?:amounts?\s+(?:are\s+)?in|expressed\s+in|reported\s+in)\s+euros/i, 'EUR', 10],
+    [/in\s+millions?\s+of\s+pounds/i, 'GBP', 10],
+    [/\bw\s+(?:tysiącach|milionach)\s+(?:złotych|pln|zł)\b/i, 'PLN', 10],
+    [/waluta\s+sprawozdawcza:\s*pln/i, 'PLN', 10],
+    [/waluta\s+sprawozdawcza:\s*eur/i, 'EUR', 10],
+    [/waluta\s+sprawozdawcza:\s*usd/i, 'USD', 10],
+    [/\b(tys\.?\s*zł|mln\s*zł|zł|złot)\b/i, 'PLN', 8],
   ];
-  for (const [re, code] of patterns) {
-    if (re.test(text)) return code;
+
+  const scores = new Map<string, number>();
+  for (const [re, code, weight] of reportingPhrases) {
+    if (re.test(headerArea)) {
+      scores.set(code, (scores.get(code) || 0) + weight);
+    }
   }
+
+  if (scores.size > 0) {
+    return [...scores.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  }
+
+  // Fallback: simple keyword count in broader text sample
+  const sample = text.substring(0, 50000).toLowerCase();
+  const fallback: [RegExp, string][] = [
+    [/\b(pln|złot|zł)\b/gi, 'PLN'],
+    [/\b(usd|us\s*dollar(?:s)?)\b/gi, 'USD'],
+    [/\$\s*\d/g, 'USD'],
+    [/\b(eur(?:o)?)\b/gi, 'EUR'],
+    [/€\s*\d/g, 'EUR'],
+    [/\b(gbp|£)\b/gi, 'GBP'],
+  ];
+  const counts = new Map<string, number>();
+  for (const [re, code] of fallback) {
+    const matches = sample.match(re);
+    if (matches) counts.set(code, (counts.get(code) || 0) + matches.length);
+  }
+  if (counts.size > 0) {
+    return [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  }
+
   return 'PLN';
 }
 
 function detectScaling(text: string): DetectionResult['scaling'] {
-  const lower = text.toLowerCase();
-  if (/\b(in millions|w milionach|mln zł|mln pln|in mio\.?\s*(?:eur|€)?|000\s*000|en millions|millions d[''e]?\s*(?:euros|dollars))\b/.test(lower)) return 'millions';
-  if (/\b(in thousands|w tysiącach|tys\.?\s*zł|tys\.?\s*pln|in tsd\.?\s*(?:eur|€)?|in tausend|000|en milliers|milliers d[''e]?\s*(?:euros|dollars))\b/.test(lower)) return 'thousands';
-  if (/\b(in billions|w miliardach|in mrd\.?|mld|en milliards|milliards d[''e]?\s*(?:euros|dollars))\b/.test(lower)) return 'billions';
+  const headerArea = text.substring(0, 30000).toLowerCase();
+
+  const millionsRe = /(?:in\s+millions?|w\s+milionach|mln\s*(?:zł|pln|eur|usd|€|\$)?|in\s+mio\.?\s*(?:eur|€)?|\(\s*000\s*000\s*\)|en\s+millions|millions?\s+d[''e]?\s*(?:euros|dollars|pounds)|\$\s*million(?:s)?\b)\b/;
+  const thousandsRe = /(?:in\s+thousands?|w\s+tysiącach|tys\.?\s*(?:zł|pln)?|in\s+tsd\.?\s*(?:eur|€)?|in\s+tausend|\(\s*000\s*\)|en\s+milliers|milliers\s+d[''e]?\s*(?:euros|dollars))\b/;
+  const billionsRe = /(?:in\s+billions?|w\s+miliardach|in\s+mrd\.?|mld|en\s+milliards|milliards\s+d[''e]?\s*(?:euros|dollars))\b/;
+
+  if (millionsRe.test(headerArea)) return 'millions';
+  if (thousandsRe.test(headerArea)) return 'thousands';
+  if (billionsRe.test(headerArea)) return 'billions';
+
+  // SEC 10-K / 20-F filings: scaling indicators often appear deep in the document
+  // near financial statement headers — search a much wider window
+  const deepLimit = Math.min(text.length, 800000);
+  const deepArea = text.substring(0, deepLimit).toLowerCase();
+  const stmtHeaderRe = /\b(?:consolidated\s+(?:balance\s+sheets?|statements?\s+of\s+(?:income|operations|cash\s+flows|comprehensive\s+income|financial\s+position))|group\s+(?:income\s+statement|balance\s+sheet|cash\s+flow)|financial\s+and\s+operating\s+performance)\b/g;
+
+  for (const m of deepArea.matchAll(stmtHeaderRe)) {
+    const vicinity = deepArea.substring(Math.max(0, m.index! - 200), m.index! + 400);
+    if (/\(\s*in\s+millions?\b/i.test(vicinity) || /\$\s*million/i.test(vicinity) || /million(?:s)?\s+except/i.test(vicinity)) return 'millions';
+    if (/\(\s*in\s+thousands?\b/i.test(vicinity) || /\$\s*thousand/i.test(vicinity)) return 'thousands';
+    if (/\(\s*in\s+billions?\b/i.test(vicinity)) return 'billions';
+  }
+
+  // Broad fallback: standalone scaling phrase anywhere in first 200K
+  const broadArea = deepArea.substring(0, 200000);
+  if (/\$\s*million\s+except\s+per\s+share/i.test(broadArea)) return 'millions';
+  if (/\(\s*in\s+millions?,?\s+except/i.test(broadArea)) return 'millions';
+
   return 'units';
 }
 
@@ -462,51 +528,85 @@ function detectPeriod(text: string): {
   periodEnd: string | null;
   periodLabel: string | null;
 } {
-  const headerArea = text.substring(0, 4000);
+  const headerArea = text.substring(0, 6000);
+  const currentYear = new Date().getFullYear();
+  const maxReportingYear = currentYear + 1;
 
+  const isPlausibleReportingYear = (y: number): boolean => y >= 2015 && y <= maxReportingYear;
+
+  // Polish "okres objęty" / "za okres" / "do 31.12.YYYY"
   const periodEndMatch = headerArea.match(
     /(?:okres objęty|za okres|do)\s+.*?(31\.12\.(20\d{2})|31\/(12)\/(20\d{2}))/i
   );
   if (periodEndMatch) {
     const year = periodEndMatch[2] || periodEndMatch[4] || '';
-    if (/^20\d{2}$/.test(year)) {
+    const y = parseInt(year, 10);
+    if (isPlausibleReportingYear(y)) {
       return { periodStart: `${year}-01-01`, periodEnd: `${year}-12-31`, periodLabel: year };
     }
   }
 
+  // Report code: RS-2024, R-2024, QS-2024
   const reportCodeMatch = headerArea.match(/\b[RQ]S?[-‐]\s*(20\d{2})\b/i);
   if (reportCodeMatch) {
-    const year = reportCodeMatch[1];
-    return { periodStart: `${year}-01-01`, periodEnd: `${year}-12-31`, periodLabel: year };
-  }
-
-  const yearEndedMatches = [
-    ...headerArea.matchAll(
-      /(?:for the (?:year|period) ended|za rok(?: obrotowy)?|für das (?:geschäfts|halb)?jahr(?:\s+endend)?|zum\s+(?:31\.12\.)?\s*|exercice clos le|pour l[''']exercice|au\s+31\s+d[eé]cembre)\s+(\d{4}(?:[.\-/]\d{1,2}[.\-/]\d{1,2})?)/gi
-    ),
-  ];
-  if (yearEndedMatches.length > 0) {
-    const years = yearEndedMatches
-      .map((m) => String(m[1] || '').slice(0, 4))
-      .filter((y) => /^20\d{2}$/.test(y))
-      .map(Number);
-    if (years.length > 0) {
-      const latest = Math.max(...years);
-      return {
-        periodStart: `${latest}-01-01`,
-        periodEnd: `${latest}-12-31`,
-        periodLabel: String(latest),
-      };
+    const y = parseInt(reportCodeMatch[1], 10);
+    if (isPlausibleReportingYear(y)) {
+      return { periodStart: `${y}-01-01`, periodEnd: `${y}-12-31`, periodLabel: String(y) };
     }
   }
 
-  const allYears = [...headerArea.matchAll(/\b(20[1-3]\d)\b/g)].map((m) => parseInt(m[1]));
+  // "year ended December 31, 2024" / "for the fiscal year ended" etc.
+  const yearEndedPatterns = [
+    /(?:for the (?:fiscal\s+)?(?:year|period) ended|year ending|(?:twelve|six) months ended)\s+(?:december|january|february|march|april|may|june|july|august|september|october|november)\s+\d{1,2},?\s*(20\d{2})/gi,
+    /(?:for the (?:year|period) ended|za rok(?: obrotowy)?|für das (?:geschäfts|halb)?jahr(?:\s+endend)?|zum\s+(?:31\.12\.)?\s*|exercice clos le|pour l[''']exercice|au\s+31\s+d[eé]cembre)\s+(\d{4}(?:[.\-/]\d{1,2}[.\-/]\d{1,2})?)/gi,
+    /(?:fiscal\s+)?(?:year|period)\s+ended?\s+\w+\s+\d{1,2},?\s*(20\d{2})/gi,
+    /(?:as of|at)\s+(?:december|january|february|march|april|may|june|july|august|september|october|november)\s+\d{1,2},?\s*(20\d{2})/gi,
+  ];
+
+  for (const pattern of yearEndedPatterns) {
+    const matches = [...headerArea.matchAll(pattern)];
+    if (matches.length > 0) {
+      const years = matches
+        .map((m) => parseInt(String(m[1] || '').slice(0, 4), 10))
+        .filter(isPlausibleReportingYear);
+      if (years.length > 0) {
+        const latest = Math.max(...years);
+        return {
+          periodStart: `${latest}-01-01`,
+          periodEnd: `${latest}-12-31`,
+          periodLabel: String(latest),
+        };
+      }
+    }
+  }
+
+  // Filename-style year in the header (e.g., "10-K 2025", "Annual Report 2024")
+  const annualReportYear = headerArea.match(
+    /(?:annual\s+report|10-k|20-f|form\s+10-k|raport\s+(?:roczny|finansowy))\s+(?:and\s+form\s+\S+\s+)?(20\d{2})/i
+  );
+  if (annualReportYear) {
+    const y = parseInt(annualReportYear[1], 10);
+    if (isPlausibleReportingYear(y)) {
+      return { periodStart: `${y - 1}-01-01`, periodEnd: `${y - 1}-12-31`, periodLabel: String(y - 1) };
+    }
+  }
+
+  // Fallback: most frequent plausible year in header (not max — avoids forward-looking years)
+  const allYears = [...headerArea.matchAll(/\b(20[1-3]\d)\b/g)]
+    .map((m) => parseInt(m[1], 10))
+    .filter(isPlausibleReportingYear);
   if (allYears.length >= 1) {
-    const latest = Math.max(...allYears);
+    const freq = new Map<number, number>();
+    for (const y of allYears) freq.set(y, (freq.get(y) || 0) + 1);
+    const sorted = [...freq.entries()].sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return b[0] - a[0];
+    });
+    const best = sorted[0][0];
     return {
-      periodStart: `${latest}-01-01`,
-      periodEnd: `${latest}-12-31`,
-      periodLabel: String(latest),
+      periodStart: `${best}-01-01`,
+      periodEnd: `${best}-12-31`,
+      periodLabel: String(best),
     };
   }
 
@@ -649,7 +749,7 @@ function extractPeriodGrid(text: string): StatementPeriodColumn[] {
     const label = String(match[1] || '').trim();
     if (seen.has(normalizePeriodLabel(label))) continue;
     const yearNum = Number(label);
-    if (yearNum < 2015 || yearNum > 2035) continue;
+    if (yearNum < 2015 || yearNum > new Date().getFullYear() + 1) continue;
     yearCandidates.push({
       label,
       index: match.index ?? 0,
@@ -790,6 +890,10 @@ function normalizeAliasText(value: string): string {
     .replace(/^[ivxlcdm]+\.\s+/giu, ' ')
     .replace(/^\d+[a-z]?[.)]\s+/giu, ' ')
     .replace(/^[.]?\d{1,2}(?:\.\d{1,3})+\s+/giu, ' ')
+    // Strip trailing year tokens FIRST (e.g., "Financial assets 26 2024" → "Financial assets 26")
+    .replace(/\s+20\d{2}\s*$/g, '')
+    // Then strip trailing note reference numbers (1-2 digits at end, e.g., "Financial assets 26" → "Financial assets")
+    .replace(/\s+\d{1,2}\s*$/g, '')
     .replace(/[^\p{L}\p{N}% ]/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim();
@@ -803,6 +907,10 @@ function cleanupExtractedLabel(value: string): string {
     .replace(/^[.]?\d{1,2}(?:\.\d{1,3})+\s+/giu, ' ')
     .replace(/\s*[-–—]+\s*$/, '')
     .replace(/\s*\d{1,2}\.\d{1,3}\s*$/, '')
+    // Strip trailing year tokens FIRST (e.g., "Revenue 2024" → "Revenue")
+    .replace(/\s+20\d{2}\s*$/, '')
+    // Then strip trailing note ref numbers (e.g., "Financial assets 26" → "Financial assets")
+    .replace(/\s+\d{1,2}\s*$/, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -865,6 +973,12 @@ export function locateStatementSections(
         /compte de résultat/i,
         /tableau des flux de trésorerie/i,
         /tableau de variation des capitaux propres/i,
+        /\binformacje dodatkowe\b/i,
+        /\bnoty objaśniające\b/i,
+        /\bobjaśnienia do (?:skonsolidowanego\s+)?sprawozdania\b/i,
+        /\bnotes\s+to\s+(?:the\s+)?(?:consolidated\s+)?financial\s+statements\b/i,
+        /\bsee\s+accompanying\s+notes\b/i,
+        /\bwprowadzenie do sprawozdania\b/i,
       ],
     },
     'P&L': {
@@ -999,17 +1113,45 @@ export function locateStatementSections(
     const inNumberedNote = precedingLines.some((pl) =>
       /^\s*(?:\d{1,2})\.\s+[A-ZĄĆĘŁŃÓŚŹŻ]/i.test(pl.trim())
     );
-    if (inNumberedNote && !/^(?:Consolidated|Group|Skonsolidowan)/i.test(trimmedStartLine)) continue;
+    if (inNumberedNote && !/^(?:\d+(?:\.\d+)*\.?\s*)?(?:Consolidated|Group|Skonsolidowan)/i.test(trimmedStartLine)) continue;
 
     if (/\b(?:other\s+income\s+statement\s+items|from\s+group\s+income\s+statement)\b/i.test(trimmedStartLine)) continue;
     if (/\b(?:income\s+statement|profit\s+and\s+loss)\s+analysis\b/i.test(trimmedStartLine)) continue;
 
     const start = Math.max(0, index - 4);
-    let end = Math.min(rawLines.length, index + 220);
-    for (let cursor = index + 8; cursor < Math.min(rawLines.length, index + 260); cursor++) {
-      if (markers.end.some((pattern) => pattern.test(rawLines[cursor]))) {
+    const maxWindow = normalizedType === 'BS' ? 120 : 220;
+    const maxSearch = normalizedType === 'BS' ? 150 : 260;
+    let end = Math.min(rawLines.length, index + maxWindow);
+    for (let cursor = index + 8; cursor < Math.min(rawLines.length, index + maxSearch); cursor++) {
+      const curLine = rawLines[cursor];
+      if (markers.end.some((pattern) => pattern.test(curLine))) {
         end = cursor;
         break;
+      }
+      if (normalizedType === 'BS') {
+        if (/^\s*(?:\d{1,2})(?:\.\d{1,2})*\.?\s+[A-ZĄĆĘŁŃÓŚŹŻ]/i.test(curLine.trim()) && cursor > index + 15) {
+          const isOwnHeader = cursor === index;
+          if (!isOwnHeader) {
+            end = cursor;
+            break;
+          }
+        }
+        if (/(?:spis treści|table of contents)/i.test(curLine)) {
+          end = cursor;
+          break;
+        }
+        if (/(?:nota\s+\d|note\s+\d{1,2}\b)/i.test(curLine)) {
+          const hasFinancialNumbers = (curLine.match(numericGroupRegex) || []).length >= 2;
+          const isInlineRef = /\(note\s+\d/i.test(curLine);
+          if (!hasFinancialNumbers && !isInlineRef) {
+            end = cursor;
+            break;
+          }
+        }
+        if (/(?:wartość firmy netto|wartość brutto|suma dotychczasowego umorzenia|zwiększenie z tytułu|zmniejszenie z tytułu|wartość na koniec okresu|wartość na początek okresu|wartość odpisów)/i.test(curLine) && cursor > index + 30) {
+          end = cursor;
+          break;
+        }
       }
     }
 
@@ -1315,7 +1457,7 @@ export function extractFinancialLines(
     /^kapitałach\s/i,
     /^przepływy środków pieniężnych z działalności (?:operacyjnej|inwestycyjnej|finansowej)\s+(?:zysk|strata)/i,
     /^przepływy środków pieniężnych z działalności inwestycyjnej\s+[-–—]?\s*wydatki/i,
-    /^środki pieniężne (?:z działalności operacyjnej przed|wygenerowane w toku|netto z)/i,
+    /^środki pieniężne (?:z działalności operacyjnej przed|wygenerowane w toku)/i,
     /^continued\s+on\s+(?:next|following)/i,
     /^(?:w\s+)?(?:PLN|EUR|USD|GBP|CHF)\s*$/i,
     /^(?:tys\.|tysiące|thousands|millions|mln|mld)\s*$/i,
@@ -1346,6 +1488,13 @@ export function extractFinancialLines(
     /^(?:in\s+accordance\s+with|pursuant\s+to|under\s+the)/i,
     /\bwe\s+(?:believe|expect|anticipate|estimate|intend|continue)\b/i,
     /\bthe\s+company\s+(?:believes|expects|has|is|was|will|may|should)\b/i,
+    /^f-\d+\s*$/i,
+    /^\d{1,3}\s+(?:of|von|z|sur)\s+\d{1,3}\s*$/i,
+    /^(?:see|refer to)\s+(?:notes?|note)\s+\d/i,
+    /^(?:the\s+)?accompanying\s+notes/i,
+    /^(?:amounts?\s+in|expressed\s+in|in\s+millions|in\s+thousands|in\s+billions)\b/i,
+    /^(?:except\s+(?:per\s+share|share)\s+(?:data|amounts?))/i,
+    /^(?:\(?\s*continued\s*\)?)\s*$/i,
   ];
 
   const isNoiseLine = (line: string): boolean =>
@@ -1366,7 +1515,7 @@ export function extractFinancialLines(
     /środki\s+pieniężne\s+na\s+dzień\s+utraty\s+kontroli/i.test(line.trim()) ||
     / - - /.test(line.trim()) ||
     /^zależną\s*\(/i.test(line.trim()) ||
-    /,\s*z\s+tego\s+przypadając[aey]?\s*:/i.test(line.trim()) ||
+    /^,?\s*z\s+tego\s+przypadając[aey]?\s*:?\s*$/i.test(line.trim()) ||
     /^(?:razem|total|suma|ogółem)\s*$/i.test(line.trim()) ||
     /^(?:w\s+tym|z\s+tego|of\s+which|including)\s*:?\s*$/i.test(line.trim()) ||
     /^(?:działalność|activity)\s*$/i.test(line.trim()) ||
@@ -1401,9 +1550,14 @@ export function extractFinancialLines(
       const isFirstMerge = previousDigits.length >= 1 && previousDigits.length <= 3;
       const isContinuedMerge = initialGroup >= 1 && initialGroup <= 2 && previousDigits.length > 3;
       const mergedDigitCount = previousDigits.length + currentDigits.length;
+      // Only merge space-separated thousands when gap is a SINGLE space.
+      // Multi-space gaps indicate column separation in PDFs, not thousands grouping.
+      // This prevents merging page numbers with values (e.g., "986  987" from adjacent
+      // PDF columns being merged into 986987).
       const canMergeThousands =
         !!previous &&
         /^\s+$/.test(gap) &&
+        gap.length === 1 &&
         (isFirstMerge || isContinuedMerge) &&
         mergedDigitCount <= 7 &&
         currentDigits.length === 3 &&
@@ -1469,6 +1623,7 @@ export function extractFinancialLines(
     };
   };
   const normalizedTargetPeriod = normalizePeriodLabel(targetPeriodLabel || '');
+  const selectedColIndex = columnSelection.selectedPeriodIndex ?? 0;
   const selectValueToken = (
     numericTokens: Array<{
       raw: string;
@@ -1495,6 +1650,7 @@ export function extractFinancialLines(
       return t;
     });
 
+    // Strategy 1: Match inline period label
     if (normalizedTargetPeriod) {
       for (let idx = 0; idx < effectiveTokens.length; idx++) {
         const token = effectiveTokens[idx];
@@ -1517,6 +1673,20 @@ export function extractFinancialLines(
       }
     }
 
+    // Strategy 2: Use column index from period grid (for multi-column tables without inline years)
+    const valueTokens = effectiveTokens.filter((t) => t.tokenType === 'value');
+    const hasPeriodTokens = effectiveTokens.some((t) => t.tokenType === 'period');
+    if (!hasPeriodTokens && valueTokens.length > 1 && selectedColIndex < valueTokens.length) {
+      const target = valueTokens[selectedColIndex];
+      return {
+        raw: target.raw,
+        normalizedValue: target.normalizedValue,
+        index: target.index,
+        selectionReason: 'column_index_match',
+      };
+    }
+
+    // Strategy 3: First value token fallback
     const firstValue = effectiveTokens.find((token) => token.tokenType === 'value');
     if (!firstValue) return null;
     return {
@@ -1660,6 +1830,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'produits des ventes',
     'ventes',
     'total des ventes',
+    'total revenues and other income',
+    'total net revenues',
   ],
   'fsl-pl-cogs': [
     'cost of goods',
@@ -1685,6 +1857,10 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'coût de revient des ventes',
     'achats nets de variation de stocks',
     'achats consommés',
+    'cost of sales relating to financial services business',
+    'total automotive cost of revenues',
+    'automotive cost of revenues',
+    'koszt sprzedanych towarów',
   ],
   'fsl-pl-gross': [
     'gross profit',
@@ -1746,6 +1922,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'charges opérationnelles',
     'total des charges opérationnelles',
     'autres charges opérationnelles',
+    'production and similar taxes',
+    'production and manufacturing taxes',
+    'other taxes',
   ],
   'fsl-pl-ebitda': ['ebitda', 'wynik ebitda', 'zysk ebitda', 'ebitda adjusted'],
   'fsl-pl-ebit': [
@@ -1796,9 +1975,17 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'net loss',
     'zysk netto',
     'zysk/strata netto',
+    'wynik netto',
+    'zysk strata netto',
+    'zysk (strata) netto za okres',
+    'zysk netto za okres sprawozdawczy',
+    'wynik finansowy netto',
+    'zysk netto z tego przypadający',
+    'zysk strata netto z tego przypadający',
     'net earnings',
     'zysk netto za okres',
     'zysk netto przypadający',
+    'zysk netto przypadający na akcjonariuszy jednostki dominującej',
     'jahresüberschuss',
     'konzernergebnis',
     'jahresergebnis',
@@ -1817,6 +2004,10 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'bénéfice net',
     'résultat net de l\'exercice',
     'income after taxes',
+    'net income $',
+    'net income attributable to common stockholders',
+    'net income attributable to common stockholders $',
+    'łączne całkowite dochody',
   ],
   'fsl-pl-interest': [
     'interest expense',
@@ -1911,6 +2102,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'total assets',
     'aktywa ogółem',
     'aktywa razem',
+    'razem aktywa',
     'suma aktywów',
     'aktywa razem ogółem',
     'bilanzsumme',
@@ -1939,6 +2131,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   'fsl-bs-intangibles': [
     'intangible assets',
     'intangibles',
+    'digital assets',
+    'digital assets net',
     'wartości niematerialne',
     'wartości niematerialne i prawne',
     'immaterielle vermögenswerte',
@@ -1946,6 +2140,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'immobilisations incorporelles',
     'marques et autres immobilisations incorporelles',
     'other intangible assets',
+    'trademarks with indefinite lives',
+    'trademarks',
   ],
   'fsl-bs-intangibles-goodwill': [
     'goodwill',
@@ -1966,6 +2162,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'immobilisations corporelles',
     'immobilisations corporelles nettes',
     'property plant and equipment net',
+    'solar energy systems',
+    'solar energy systems net',
   ],
   'fsl-bs-rou-assets': [
     'right of use assets',
@@ -2011,6 +2209,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   'fsl-bs-cash': [
     'cash',
     'cash and cash equivalents',
+    'total cash cash equivalents and short-term investments',
+    'cash cash equivalents and short-term investments',
+    'cash and short-term investments',
     'środki pieniężne',
     'gotówka',
     'środki pieniężne i ich ekwiwalenty',
@@ -2067,6 +2268,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'zobowiązania ogółem',
     'zobowiązania razem',
     'zobowiązania i rezerwy na zobowiązania',
+    'zobowiązanie długo i krótkoterminowe',
     'suma pasywów',
     'zobowiązania razem ogółem',
     'zobowiązania',
@@ -2079,6 +2281,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-bs-current-liabilities': [
     'current liabilities',
+    'current provisions and liabilities',
     'zobowiązania krótkoterminowe',
     'zobowiązania bieżące',
     'zobowiązania krótkoterminowe razem',
@@ -2093,8 +2296,12 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   'fsl-bs-long-term-debt': [
     'long-term debt',
     'long term liabilities',
+    'debt and finance leases net of current portion',
+    'long-term debt net of current portion',
+    'finance debt',
     'zobowiązania długoterminowe',
     'non-current liabilities',
+    'non current provisions and liabilities',
     'zobowiązania długoterminowe razem',
     'zobowiązania i rezerwy długoterminowe',
     'langfristige verbindlichkeiten',
@@ -2136,6 +2343,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'capitaux propres',
     'total capitaux propres',
     "total shareholders' equity",
+    'net assets',
   ],
   'fsl-bs-equity-parent': [
     'equity attributable to parent',
@@ -2148,6 +2356,12 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'den aktionären des mutterunternehmens zuzurechnendes eigenkapital',
     'capitaux propres part du groupe',
     'capitaux propres attribuables aux propriétaires',
+    'equity bp shareholders equity',
+    'equity stockholders equity',
+    'equity attributable to shareowners of',
+    'equity attributable to stockholders of',
+    'equity attributable to shareholders of',
+    'equity attributable to owners',
   ],
   'fsl-bs-share-capital': [
     'share capital',
@@ -2208,12 +2422,17 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-bs-other-current-financial-assets': [
     'other current financial assets',
+    'marketable securities',
+    'short-term investments',
+    'short-term marketable securities',
     'pozostałe krótkoterminowe aktywa finansowe',
     'krótkoterminowe aktywa finansowe',
     'sonstige kurzfristige finanzielle vermögenswerte',
   ],
   'fsl-bs-other-current-assets-prepaids': [
     'prepaid expenses',
+    'prepayments',
+    'prepaid expenses and other current assets',
     'rozliczenia międzyokresowe',
     'krótkoterminowe rozliczenia międzyokresowe',
     'rechnungsabgrenzungsposten',
@@ -2279,6 +2498,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'net cash provided by used in operating activities',
     'net cash used in operating activities',
     'cash inflow outflow from operating activities',
+    'cash flows from operating activities net income',
+    'cash flows from operating activities net income $',
   ],
   'fsl-cf-investing': [
     'investing cash flow',
@@ -2286,6 +2507,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'przepływy z inwestycji',
     'przepływy pieniężne netto z działalności inwestycyjnej',
     'środki pieniężne netto z działalności inwestycyjnej',
+    'środki pieniężne netto wykorzystane z działalności inwestycyjnej',
     'przepływy środków pieniężnych z działalności inwestycyjnej',
     'działalność inwestycyjna',
     'cashflow aus investitionstätigkeit',
@@ -2304,6 +2526,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'przepływy z finansowania',
     'przepływy pieniężne netto z działalności finansowej',
     'środki pieniężne netto z działalności finansowej',
+    'środki pieniężne netto wykorzystane z działalności finansowej',
     'przepływy środków pieniężnych z działalności finansowej',
     'działalność finansowa',
     'cashflow aus finanzierungstätigkeit',
@@ -2314,6 +2537,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'activités de financement',
     'net cash provided by used in financing activities',
     'net cash used in financing activities',
+    'net cash provided by used in financing activities',
     'cash inflow outflow from financing activities',
   ],
   'fsl-cf-capex': [
@@ -2337,6 +2561,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'auszahlungen für den erwerb immaterieller vermögenswerte und sachanlagen',
     "acquisitions d'immobilisations corporelles",
     "acquisitions d'immobilisations",
+    'expenditure for investment assets',
+    'investing activities expenditure on property plant and equipment intangible and other assets',
   ],
   'fsl-cf-fcf': [
     'free cash flow', 'fcf', 'wolne przepływy', 'wolne przepływy pieniężne',
@@ -2354,6 +2580,11 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'change in other working capital',
     'change in other operating assets and liabilities',
     'increase decrease in other current and non-current assets',
+    'change in leased products',
+    'change in receivables from sales financing',
+    'change in other financial liabilities',
+    'collateral paid received associated with hedging activities net',
+    'deferred revenue',
     'zmiana stanu pozostałych aktywów',
     'zmiana stanu rozliczeń międzyokresowych',
     'zmiana stanu amortyzowanego aktywa kontraktowego',
@@ -2386,6 +2617,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'koszty finansowe',
     'zinsaufwendungen',
     'gezahlte zinsen',
+    'other interest and similar income expenses',
+    'other interest and similar income/expenses',
   ],
   'fsl-cf-net-change-cash': [
     'net change in cash',
@@ -2433,6 +2666,11 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'cash and cash equivalents as at 31 december',
     'cash and cash equivalents at end of period',
     'cash and cash equivalents at end of year',
+    'cash cash equivalents restricted cash and restricted cash equivalents at end of year',
+    'cash at end of year',
+    'cash and cash equivalents at end of year $',
+    'cash and cash equivalents at end of year',
+    'less restricted cash and restricted cash equivalents at end of year',
   ],
   // ── NEW BS HINTS ──
   'fsl-bs-lt-receivables': [
@@ -2446,6 +2684,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'long-term financial assets',
     'other investments',
     'other financial assets',
+    'financial assets',
     'instrumenty finansowe razem',
     'financial instruments total',
     'derivative financial instruments',
@@ -2466,6 +2705,10 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'anteile an assoziierten unternehmen',
     'nach der equity-methode bilanzierte beteiligungen',
     'at equity bilanzierte beteiligungen',
+    'investments in joint ventures',
+    'investments in associates',
+    'investments in joint ventures and associates',
+    'investments accounted for using the equity method',
   ],
   'fsl-bs-tax-receivables': [
     'tax receivables',
@@ -2494,6 +2737,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-bs-assets-held-for-sale': [
     'assets held for sale',
+    'assets classified as held for sale',
+    'non-current assets held for sale',
+    'disposal groups',
     'aktywa przeznaczone do sprzedaży',
     'aktywa trwałe przeznaczone do zbycia',
     'aktywa klasyfikowane jako przeznaczone do sprzedaży',
@@ -2611,6 +2857,10 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-bs-total-liabilities-equity': [
     'total liabilities and equity',
+    'total equity and liabilities',
+    'total liabilities and stockholders equity',
+    'total liabilities and shareholders equity',
+    'razem zobowiązania i kapitał własny',
     'pasywa razem',
     'pasywa ogółem',
     'razem pasywa',
@@ -2644,6 +2894,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-bs-short-term-debt': [
     'short-term debt',
+    'current portion of debt and finance leases',
+    'current portion of long-term debt',
+    'loans and notes payable',
     'krótkoterminowe kredyty i pożyczki',
     'krótkoterminowe zobowiązania finansowe',
     'kredyty krótkoterminowe',
@@ -2684,6 +2937,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-bs-other-non-current-liabilities': [
     'other non-current liabilities',
+    'other long-term liabilities',
+    'other noncurrent liabilities',
+    'financial liabilities',
     'pozostałe zobowiązania długoterminowe',
     'inne zobowiązania długoterminowe',
     'sonstige langfristige verbindlichkeiten',
@@ -2697,12 +2953,17 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-bs-other-current-liabilities-tax': [
     'tax payables',
+    'current tax',
+    'current tax liabilities',
     'zobowiązania podatkowe',
     'zobowiązania z tytułu podatku dochodowego',
     'zobowiązania z tytułu podatku dochodowego od osób prawnych',
     'ertragsteuerverbindlichkeiten',
     'steuerschulden',
     'verbindlichkeiten aus ertragsteuern',
+    'current tax payable',
+    'accrued income taxes',
+    'income tax payable',
   ],
   'fsl-bs-other-tax-payables': [
     'other tax payables',
@@ -2787,6 +3048,11 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'quote-part du résultat net des sociétés mises en équivalence',
     'résultat des sociétés mises en équivalence',
     'net income loss from equity affiliates',
+    'equity income',
+    'earnings from joint ventures',
+    'earnings from joint ventures and associates',
+    'result from equity accounted investments',
+    'udział w wyniku jednostek wycenianych metodą praw własności',
   ],
   'fsl-pl-fin-income': [
     'financial income',
@@ -2816,6 +3082,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'charges financières',
     'autres charges financières',
     'other financial expense',
+    'other financial result',
+    'net financial result',
   ],
   'fsl-pl-impairment-receivables': [
     'impairment of receivables',
@@ -2882,6 +3150,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-pl-comprehensive-income': [
     'total comprehensive income',
+    'total comprehensive income attributable to shareholders',
+    'total comprehensive income attributable to',
+    'łączne całkowite dochody przypadające akcjonariuszom jednostki dominującej',
     'całkowite dochody ogółem',
     'łączne całkowite dochody',
     'razem całkowite dochody',
@@ -2901,6 +3172,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'résultat net par action',
     'bénéfice par action',
     'earnings per share basic',
+    'per ads dollars basic',
+    'per ordinary share cents basic',
+    'basic eps',
   ],
   'fsl-pl-eps-diluted': [
     'diluted earnings per share',
@@ -2949,6 +3223,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'zysk brutto',
     'strata brutto',
     'zysk/strata brutto',
+    'zysk strata przed opodatkowaniem',
+    'przepływy pieniężne z działalności operacyjnej zysk strata przed opodatkowaniem',
     'ergebnis vor steuern',
     'ergebnis vor ertragsteuern',
   ],
@@ -3021,10 +3297,19 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'other items',
     'other non-cash income and expense items',
     'non-cash interest and other operating activities',
+    'razem wyłączenia przychodów i kosztów',
     'inne korekty',
     'pozostałe korekty',
+    'pozostałe odsetki',
     'sonstige anpassungen',
     'sonstige bereinigungen',
+    'deferred income taxes',
+    'other operating charges',
+    'inventory and purchase commitments write-downs',
+    'operating lease vehicles',
+    'deferred tax',
+    'supplemental disclosures cash paid during the period for interest',
+    'supplemental disclosures cash paid during the period for interest $',
   ],
   'fsl-cf-operating-equity-method': [
     'equity method cf',
@@ -3047,6 +3332,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'przychody z tytułu odsetek',
     'przychody odsetkowe',
     'odsetki otrzymane',
+    'odsetki od pożyczek udzielonych wspólnemu przedsięwzięciu',
     'zinserträge',
     'erhaltene zinsen',
   ],
@@ -3067,6 +3353,8 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'wydatki na wartości niematerialne',
     'wydatki na nabycie wartości niematerialnych',
     'nabycie wartości niematerialnych',
+    'i wartości niematerialnych',
+    'udzielone zaliczki na rzeczowe aktywa trwałe i wartości niematerialne',
     'auszahlungen für investitionen in immaterielle vermögenswerte',
     'erwerb immaterieller vermögenswerte',
   ],
@@ -3078,6 +3366,20 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'wpływy ze zbycia aktywów trwałych',
     'einzahlungen aus dem abgang von anlagevermögen',
     'erlöse aus dem verkauf von sachanlagen',
+    'proceeds from disposals of fixed assets',
+    'proceeds from disposals of businesses',
+    'proceeds from disposals of businesses net of cash disposed',
+    'proceeds from disposals of property plant and equipment',
+    'proceeds from disposal of intangible assets and property plant and equipment',
+    'proceeds from disposals of investments',
+    'proceeds from maturities of investments',
+    'proceeds from sales of investments',
+    'proceeds from disposals of businesses equity method investments and nonmarketable securities',
+    'proceeds from disposal of property plant and equipment',
+    'proceeds from disposals of subsidiaries',
+    'proceeds from the disposal of marketable securities and investment funds',
+    'proceeds from disposal of marketable securities',
+    'proceeds from subsidies for intangible assets and property plant and equipment',
   ],
   'fsl-cf-fx-on-cash': [
     'fx effect on cash',
@@ -3113,6 +3415,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'ausschüttung an aktionäre',
     'dividendes versés',
     'dividendes payés',
+    'payment of dividends to non-controlling interests',
+    'dividends paid to non-controlling interests',
+    'dividends paid to minority interests',
   ],
   'fsl-cf-debt-drawdown': [
     'debt drawdown',
@@ -3132,6 +3437,10 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'proceeds from issuances of debt',
     'issuances of loans notes payable and long-term debt',
     'issuances of debt',
+    'net increase decrease in short-term debt',
+    'net increase in short-term debt',
+    'issue of perpetual hybrid bonds',
+    'wpływy z zaciągnięcia kredytów',
   ],
   'fsl-cf-debt-repayment': [
     'debt repayment',
@@ -3150,6 +3459,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'repayment of non-current financial liabilities',
     'payments of loans notes payable and long-term debt',
     'repayments of debt',
+    'redemption of perpetual hybrid bonds',
   ],
   'fsl-cf-lease-repayment': [
     'lease repayment',
@@ -3167,6 +3477,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'zapłacony podatek dochodowy',
     'podatek zapłacony',
     'podatek dochodowy zapłacony',
+    'wydatki z tytułu zapłaty podatku dochodowego',
     'gezahlte ertragsteuern',
     'auszahlungen für ertragsteuern',
     'impôts payés',
@@ -3182,6 +3493,11 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-other-expenditure': [
     'other expenditure',
+    'debt issuance costs',
+    'wydatki z tytułu instrumentów pochodnych związanych ze źródłami finansowania zewnętrznego',
+    'wydatki na aktywa finansowe przeznaczone na likwidację kopalń i innych obiektów technologicznych',
+    'wspólnemu przedsięwzięciu',
+    'od zobowiązań handlowych objętych mechanizmami faktoringu odwrotnego',
     'inne wydatki',
     'inne wydatki finansowe',
     'inne wydatki inwestycyjne',
@@ -3190,6 +3506,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-other-receipts': [
     'other receipts',
+    'wpływy z tytułu instrumentów pochodnych związanych ze źródłami finansowania zewnętrznego',
     'inne wpływy',
     'inne wpływy wydatki',
     'inne wpływy finansowe',
@@ -3199,6 +3516,10 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
   ],
   'fsl-cf-investing-subsidiaries': [
     'investment in subsidiaries',
+    'investment in associates',
+    'investment in joint ventures',
+    'receipts relating to transactions involving non-controlling interests',
+    'receipts relating to transactions involving non-controlling interests other',
     'inwestycje w jednostki zależne',
     'nabycie jednostek zależnych',
     'wydatki na nabycie udziałów w jednostkach zależnych',
@@ -3226,6 +3547,11 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'przychody ze sprzedaży wyrobów',
     'erlöse aus produktverkäufen',
     'erlöse aus dem verkauf von erzeugnissen',
+    'automotive sales',
+    'automotive revenues',
+    'total automotive revenues',
+    'sales of products previously leased to customers',
+    'revenues automotive sales',
   ],
   'fsl-pl-revenue-product-domestic': [
     'domestic product revenue',
@@ -3254,6 +3580,11 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'revenue from services',
     'erlöse aus dienstleistungen',
     'dienstleistungserlöse',
+    'services and other',
+    'energy generation and storage',
+    'revenues from service contracts telematics and roadside assistance',
+    'interest income on credit financing and finance leases',
+    'automotive leasing',
   ],
   'fsl-pl-revenue-service-subscription': [
     'subscription revenue',
@@ -3275,6 +3606,12 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'przychody inne',
     'other sales',
     'inne przychody ze sprzedaży',
+    'automotive regulatory credits',
+    'other operating revenue',
+    'other operating revenues',
+    'remaining revenue',
+    'pozostałe przychody',
+    'sonstige umsatzerlöse',
   ],
   'fsl-pl-cogs-materials': [
     'materials cost',
@@ -3392,6 +3729,13 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'research and development expenses',
     'r&d expenses',
     'forschungs- und entwicklungskosten',
+    'research and development expenditure',
+    'restructuring and other',
+    'restructuring charges',
+    'autres charges opérationnelles',
+    'other cost of sales',
+    'warranty expenditure',
+    'restructuring costs',
   ],
   'fsl-pl-other-opex-impairment': [
     'impairment expense',
@@ -3414,6 +3758,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'provision charges',
     'aufwand aus rückstellungen',
     'zuführung zu rückstellungen',
+    'expense for additions to provisions',
+    'provision expense',
+    'dotacja na rezerwy',
   ],
   'fsl-pl-depreciation-ppe': [
     'ppe depreciation',
@@ -3459,6 +3806,15 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'sundry other financial result',
     'other financial result net',
     'exploration expense',
+    'other financial income and expense',
+    'net financial result',
+    'wynik na działalności finansowej',
+    'net interest impact on other long-term provisions',
+    'other interest and similar expenses',
+    'income from investments in subsidiaries and participations',
+    'expenses from investments in subsidiaries and participations',
+    'exchange losses',
+    'exchange gains and losses',
   ],
   // ── MISSING BS SUB-LINES ──
   'fsl-bs-cash-operating': [
@@ -3484,6 +3840,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'trade and other receivables',
     'należności z tytułu dostaw',
     'forderungen aus lieferungen und leistungen',
+    'trade accounts receivable',
   ],
   'fsl-bs-ar-other': [
     'other receivables',
@@ -3572,6 +3929,7 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'inne aktywa długoterminowe',
     'sonstige langfristige vermögenswerte',
     'übrige langfristige vermögenswerte',
+    'other noncurrent assets',
   ],
   'fsl-bs-ap-trade': [
     'trade payables',
@@ -3580,6 +3938,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'trade and other payables',
     'zobowiązania z tytułu zakupu towarów',
     'verbindlichkeiten aus lieferungen und leistungen',
+    'zobowiązania handlowe',
+    'zobowiązania z tytułu dostaw i usług',
+    'accounts payable trade',
   ],
   'fsl-bs-short-term-debt-bank': [
     'short-term bank debt',
@@ -3598,6 +3959,10 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'rezerwy na koszty',
     'passive rechnungsabgrenzung',
     'abgegrenzte schulden',
+    'accrued liabilities',
+    'accounts payable and accrued expenses',
+    'abgrenzungsverbindlichkeiten',
+    'rückstellungen und abgrenzungen',
   ],
   'fsl-bs-long-term-debt-bank': [
     'long-term bank debt',
@@ -3638,6 +4003,9 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'bestandsveränderungen der fertigen und unfertigen erzeugnisse',
     'erhöhung oder verminderung des bestands',
     'veränderung des bestands an fertigen und unfertigen erzeugnissen',
+    'change in inventory of finished goods',
+    'zmiana stanu zapasów produktów gotowych',
+    'bestandsveränderung',
   ],
   'fsl-pl-cbn-own-work-capitalised': [
     'own work capitalised',
@@ -3738,11 +4106,21 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'jahresüberschuss',
     'konzernergebnis',
     'periodenergebnis',
+    'net income cf',
+    'net income',
+    'net income loss',
+    'net profit loss',
+    'profit loss before tax',
+    'profit before tax',
+    'profit loss for the year',
+    'profit for the year',
+    'cash flows from operating activities net income',
   ],
   'fsl-cf-change-wc': [
     'change in working capital',
     'changes in working capital',
     'changes in operating assets and liabilities',
+    'changes in assets and liabilities',
     'net change in operating assets and liabilities',
     'zmiana kapitału obrotowego',
     'zmiany w kapitale obrotowym netto',
@@ -3807,18 +4185,6 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'tilgung von leasingverbindlichkeiten',
     'rückzahlung von leasingverbindlichkeiten',
   ],
-  // ── EXTENDED ENGLISH CF ALIASES ──
-  'fsl-cf-operating-net-income': [
-    'net income cf',
-    'consolidated net income',
-    'net income',
-    'net income loss',
-    'net profit loss',
-    'profit loss before tax',
-    'profit before tax',
-    'profit loss for the year',
-    'profit for the year',
-  ],
   'fsl-cf-operating-sbc': [
     'stock based compensation',
     'stock based compensation expense',
@@ -3839,122 +4205,6 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'rückkauf eigener aktien',
     'repurchase of common stock',
     'buybacks of common stock',
-  ],
-  'fsl-cf-investing-disposal-proceeds': [
-    'disposal proceeds',
-    'wpływy ze sprzedaży aktywów',
-    'wpływy ze sprzedaży rzeczowych aktywów trwałych',
-    'wpływy ze sprzedaży aktywów trwałych',
-    'wpływy ze zbycia aktywów trwałych',
-    'einzahlungen aus dem abgang von anlagevermögen',
-    'erlöse aus dem verkauf von sachanlagen',
-    'proceeds from disposals of fixed assets',
-    'proceeds from disposals of businesses',
-    'proceeds from disposals of businesses net of cash disposed',
-    'proceeds from disposals of property plant and equipment',
-    'proceeds from disposal of intangible assets and property plant and equipment',
-    'proceeds from disposals of investments',
-    'proceeds from maturities of investments',
-    'proceeds from sales of investments',
-  ],
-  // ── EXTENDED ENGLISH P&L ALIASES ──
-  'fsl-pl-equity-method-income': [
-    'share of profit of associates',
-    'equity method income',
-    'equity income',
-    'equity income loss net',
-    'earnings from joint ventures',
-    'earnings from joint ventures and associates',
-    'earnings from associates',
-    'result from equity accounted investments',
-    'udział w zyskach jednostek stowarzyszonych',
-    'udział w wyniku jednostek wycenianych metodą praw własności',
-    'udział w wynikach jednostek stowarzyszonych',
-    'ergebnis aus at equity bilanzierten beteiligungen',
-    'ergebnis aus nach der equity-methode bilanzierten beteiligungen',
-    'quote-part du résultat net des sociétés mises en équivalence',
-    'résultat des sociétés mises en équivalence',
-    'net income loss from equity affiliates',
-  ],
-  'fsl-pl-other-opex': [
-    'other operating expenses',
-    'other operating charges',
-    'pozostałe koszty operacyjne',
-    'research and development',
-    'research and development expenses',
-    'research and development expenditure',
-    'restructuring and other',
-    'restructuring charges',
-    'sonstige betriebliche aufwendungen',
-    'autres charges opérationnelles',
-  ],
-  'fsl-pl-other-opex-provisions': [
-    'expense for additions to provisions',
-    'provision expense',
-    'dotacja na rezerwy',
-  ],
-  'fsl-pl-other-fin': [
-    'other financial result',
-    'other financial income and expense',
-    'net financial result',
-    'wynik na działalności finansowej',
-    'sonstiges finanzergebnis',
-  ],
-  'fsl-pl-cbn-inventory-change': [
-    'change in inventory of finished goods',
-    'zmiana stanu produktów',
-    'zmiana stanu zapasów produktów gotowych',
-    'bestandsveränderung',
-    'veränderung des bestands an fertigen und unfertigen erzeugnissen',
-  ],
-  // ── EXTENDED ENGLISH BS ALIASES ──
-  'fsl-bs-equity-method-investments': [
-    'equity method investments',
-    'investments in joint ventures',
-    'investments in associates',
-    'investments in joint ventures and associates',
-    'investments accounted for using the equity method',
-    'inwestycje w jednostkach stowarzyszonych',
-    'inwestycje wyceniane metodą praw własności',
-    'udziały w jednostkach zależnych',
-    'udziały i akcje w jednostkach zależnych',
-    'udziały w jednostkach podporządkowanych',
-    'anteile an assoziierten unternehmen',
-    'nach der equity-methode bilanzierte beteiligungen',
-    'at equity bilanzierte beteiligungen',
-  ],
-  'fsl-bs-other-non-current-assets': [
-    'other non-current assets',
-    'other noncurrent assets',
-    'pozostałe aktywa trwałe',
-    'inne aktywa trwałe',
-    'sonstige langfristige vermögenswerte',
-  ],
-  'fsl-bs-other-current-liabilities-accruals': [
-    'accrued expenses',
-    'accruals',
-    'accrued liabilities',
-    'accounts payable and accrued expenses',
-    'rozliczenia międzyokresowe bierne',
-    'bierne rozliczenia międzyokresowe',
-    'abgrenzungsverbindlichkeiten',
-    'rückstellungen und abgrenzungen',
-  ],
-  'fsl-bs-ap-trade': [
-    'trade payables',
-    'trade and other payables',
-    'zobowiązania handlowe',
-    'zobowiązania z tytułu dostaw i usług',
-    'accounts payable trade',
-    'verbindlichkeiten aus lieferungen und leistungen',
-  ],
-  'fsl-bs-ar-trade': [
-    'trade receivables',
-    'trade and other receivables',
-    'trade accounts receivable',
-    'należności handlowe',
-    'należności z tytułu dostaw i usług',
-    'forderungen aus lieferungen und leistungen',
   ],
   // ── NEW CANONICAL IDS ALIASES ──
   'fsl-pl-rnd': [
@@ -4071,160 +4321,6 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'sonstige finanzierungsaktivitäten',
     'autres activités de financement',
   ],
-  // ── EXTENDED ALIASES for commonly unmapped items ──
-  'fsl-pl-other-opex': [
-    'other operating expenses',
-    'other cost of sales',
-    'warranty expenditure',
-    'other operating charges',
-    'restructuring and other',
-    'restructuring charges',
-    'restructuring costs',
-    'pozostałe koszty operacyjne',
-    'inne koszty operacyjne',
-    'sonstige betriebliche aufwendungen',
-  ],
-  'fsl-pl-other-fin': [
-    'other financial result',
-    'net interest impact on other long-term provisions',
-    'other interest and similar expenses',
-    'sundry other financial result',
-    'income from investments in subsidiaries and participations',
-    'expenses from investments in subsidiaries and participations',
-    'exchange losses',
-    'exchange gains and losses',
-    'pozostałe przychody koszty finansowe',
-    'sonstiges finanzergebnis',
-  ],
-  'fsl-bs-other-current-liabilities-tax': [
-    'tax payables',
-    'current tax payable',
-    'accrued income taxes',
-    'income tax payable',
-    'zobowiązania podatkowe',
-    'zobowiązania z tytułu podatku dochodowego',
-    'ertragsteuerverbindlichkeiten',
-  ],
-  'fsl-bs-other-non-current-liabilities': [
-    'other noncurrent liabilities',
-    'other non-current liabilities',
-    'pozostałe zobowiązania długoterminowe',
-    'sonstige langfristige verbindlichkeiten',
-  ],
-  'fsl-bs-other-current-assets-prepaids': [
-    'prepaid expenses',
-    'prepaid expenses and other current assets',
-    'rozliczenia międzyokresowe',
-    'krótkoterminowe rozliczenia międzyokresowe',
-  ],
-  'fsl-cf-operating-net-income': [
-    'net income',
-    'net income loss',
-    'cash flows from operating activities net income',
-    'net income in operating cash flow',
-    'zysk netto',
-    'wynik netto',
-    'jahresüberschuss',
-    'konzernergebnis',
-  ],
-  'fsl-cf-operating-other-adj': [
-    'other adjustments',
-    'other items',
-    'deferred income taxes',
-    'other operating charges',
-    'inventory and purchase commitments write-downs',
-    'operating lease vehicles',
-    'inne korekty',
-    'pozostałe korekty',
-    'deferred tax',
-    'sonstige anpassungen',
-  ],
-  'fsl-cf-investing-disposal-proceeds': [
-    'disposal proceeds',
-    'proceeds from disposals of fixed assets',
-    'proceeds from disposals of businesses equity method investments and nonmarketable securities',
-    'proceeds from disposals of property plant and equipment',
-    'proceeds from disposal of property plant and equipment',
-    'proceeds from disposals of subsidiaries',
-    'wpływy ze sprzedaży aktywów',
-    'wpływy ze sprzedaży aktywów trwałych',
-    'wpływy ze zbycia aktywów trwałych',
-  ],
-  'fsl-cf-closing-cash': [
-    'closing cash balance',
-    'cash cash equivalents restricted cash and restricted cash equivalents at end of year',
-    'cash and cash equivalents at end of year',
-    'cash and cash equivalents at end of period',
-    'cash at end of year',
-    'środki pieniężne na koniec okresu',
-    'stan środków pieniężnych na koniec okresu',
-  ],
-  'fsl-cf-debt-drawdown': [
-    'debt drawdown',
-    'proceeds from issuances of debt',
-    'issuances of loans notes payable and long-term debt',
-    'net increase decrease in short-term debt',
-    'net increase in short-term debt',
-    'issue of perpetual hybrid bonds',
-    'wpływy z zaciągnięcia kredytów',
-    'zaciągnięcie kredytów i pożyczek',
-  ],
-  'fsl-cf-debt-repayment': [
-    'debt repayment',
-    'repayments of debt',
-    'payments of loans notes payable and long-term debt',
-    'repayment of non-current financial liabilities',
-    'repayments of long-term financing',
-    'redemption of perpetual hybrid bonds',
-    'spłata kredytów i pożyczek',
-    'spłaty kredytów i pożyczek',
-  ],
-  'fsl-pl-revenue-product': [
-    'product revenue',
-    'automotive sales',
-    'automotive revenues',
-    'total automotive revenues',
-    'sales of products previously leased to customers',
-    'revenues automotive sales',
-    'przychody ze sprzedaży produktów',
-    'przychody z produktów',
-    'erlöse aus produktverkäufen',
-  ],
-  'fsl-pl-revenue-service': [
-    'service revenue',
-    'services and other',
-    'energy generation and storage',
-    'revenues from service contracts telematics and roadside assistance',
-    'interest income on credit financing and finance leases',
-    'automotive leasing',
-    'przychody z usług',
-    'przychody usługowe',
-  ],
-  'fsl-pl-revenue-other': [
-    'other revenue',
-    'automotive regulatory credits',
-    'other operating revenue',
-    'other operating revenues',
-    'remaining revenue',
-    'pozostałe przychody',
-    'sonstige umsatzerlöse',
-  ],
-  'fsl-pl-cogs': [
-    'cost of goods sold',
-    'cogs',
-    'cost of sales',
-    'total cost of revenues',
-    'total cost of sales',
-    'cost of revenues',
-    'manufacturing costs',
-    'cost of sales relating to financial services business',
-    'total automotive cost of revenues',
-    'automotive cost of revenues',
-    'koszt sprzedanych towarów',
-    'koszt własny sprzedaży',
-    'herstellungskosten',
-    'umsatzkosten',
-  ],
   'fsl-pl-comprehensive-income-parent': [
     'total comprehensive income attributable to shareholders',
     'comprehensive income attributable to common stockholders',
@@ -4274,41 +4370,6 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'wynik finansowy netto',
     'finanzergebnis',
   ],
-  'fsl-bs-intangibles': [
-    'intangible assets',
-    'intangibles',
-    'trademarks with indefinite lives',
-    'trademarks',
-    'other intangible assets',
-    'wartości niematerialne',
-    'wartości niematerialne i prawne',
-    'immaterielle vermögenswerte',
-  ],
-  'fsl-bs-equity-parent': [
-    'equity attributable to parent',
-    'equity attributable to shareholders',
-    'equity attributable to shareowners',
-    'equity bp shareholders equity',
-    'equity stockholders equity',
-    'kapitał własny przypadający akcjonariuszom jednostki dominującej',
-  ],
-  'fsl-bs-short-term-debt': [
-    'short-term debt',
-    'current portion of debt and finance leases',
-    'current portion of long-term debt',
-    'loans and notes payable',
-    'krótkoterminowe zobowiązania finansowe',
-    'kurzfristige finanzverbindlichkeiten',
-  ],
-  'fsl-bs-long-term-debt': [
-    'long-term debt',
-    'debt and finance leases net of current portion',
-    'long-term debt net of current portion',
-    'finance debt',
-    'non-current liabilities',
-    'zobowiązania długoterminowe',
-    'langfristige verbindlichkeiten',
-  ],
   'fsl-bs-investments-associates': [
     'investments in associates',
     'inwestycje w jednostki stowarzyszone',
@@ -4350,14 +4411,6 @@ const CANONICAL_MAPPING_HINTS: Record<string, string[]> = {
     'pozostałe rezerwy',
     'sonstige rückstellungen',
     'autres provisions',
-  ],
-  'fsl-cf-change-wc': [
-    'change in working capital',
-    'changes in operating assets and liabilities',
-    'changes in assets and liabilities',
-    'zmiana kapitału obrotowego',
-    'zmiana stanu kapitału obrotowego',
-    'veränderung des working capital',
   ],
   'fsl-cf-investing-associates': [
     'investment in associates',
@@ -4941,6 +4994,16 @@ export async function autoMapLines(
           ? { delta: 0.6, reason: 'balance_sheet_total_anchor' }
           : { delta: -0.2, reason: 'balance_sheet_total_conflict' };
       }
+      if (/(?:preferred\s+stock|par\s+value)/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-bs-share-capital') return { delta: 0.6, reason: 'bs_preferred_stock_to_share_capital' };
+        if (canonicalId === 'fsl-bs-equity') return { delta: -0.8, reason: 'bs_preferred_stock_not_total_equity' };
+        return { delta: -0.2, reason: 'bs_preferred_stock_conflict' };
+      }
+      if (/^total\s+(?:stockholders|shareholders)\s+equity/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-bs-equity') return { delta: 0.9, reason: 'bs_total_stockholders_equity_exact' };
+        if (canonicalId === 'fsl-bs-share-capital') return { delta: -0.5, reason: 'bs_total_equity_not_share_capital' };
+        return { delta: -0.2, reason: 'bs_total_equity_conflict' };
+      }
       if (/^kapitał\s+własny\s*$/i.test(normalizedLabel) || /^kapitał\s+własny\s+razem/i.test(normalizedLabel) || /^total\s+equity/i.test(normalizedLabel) || /^equity\s*$/i.test(normalizedLabel) || /^eigenkapital\s*$/i.test(normalizedLabel) || /^eigenkapital\s+gesamt/i.test(normalizedLabel) || /^capitaux\s+propres\s*$/i.test(normalizedLabel) || /^total\s+capitaux\s+propres/i.test(normalizedLabel)) {
         if (canonicalId === 'fsl-bs-equity') return { delta: 0.6, reason: 'balance_sheet_equity_anchor' };
         if (canonicalId === 'fsl-bs-equity-method-investments') return { delta: -0.4, reason: 'equity_vs_equity_method' };
@@ -5255,6 +5318,10 @@ export async function autoMapLines(
       }
       if (/(zysk brutto|zysk brutto ze sprzedaży|gross profit)/.test(normalizedLabel)) {
         return canonicalId === 'fsl-pl-gross' ? { delta: 0.45, reason: 'profit_loss_gross_anchor' } : { delta: 0 };
+      }
+      if (/zysk\s+(?:netto\s+)?z\s+tego\s+przypadający/i.test(normalizedLabel)) {
+        if (canonicalId === 'fsl-pl-net') return { delta: 0.7, reason: 'pl_net_z_tego_anchor' };
+        if (canonicalId === 'fsl-pl-net-parent') return { delta: -0.3, reason: 'pl_net_z_tego_not_parent' };
       }
       if (/(zysk\s+netto\s+przypadający\s+akcjonariuszom|zysk\s+przypadający\s+akcjonariuszom\s+podmiotu\s+domin)/i.test(normalizedLabel)) {
         if (canonicalId === 'fsl-pl-net-parent') return { delta: 0.7, reason: 'pl_net_parent_anchor' };
@@ -5849,6 +5916,34 @@ export function validateStatement(
         code: 'BS_CURRENT_LIABILITIES_EXCEED_TOTAL',
         message: 'Current liabilities exceed total liabilities.',
       });
+    }
+
+    const nonCurrentAssets = getValue('fsl-bs-noncurrent-assets');
+    if (nonCurrentAssets !== null && currentAssets !== null && totalAssets !== null) {
+      const assetSum = nonCurrentAssets + currentAssets;
+      const diff = Math.abs(totalAssets - assetSum);
+      if (diff > Math.abs(totalAssets) * 0.02) {
+        messages.push({
+          type: 'warning',
+          code: 'BS_ASSETS_SUBCOMPONENT_MISMATCH',
+          message: `Non-current + Current assets ≠ Total assets`,
+          details: `NC: ${nonCurrentAssets}, C: ${currentAssets}, Sum: ${assetSum}, Total: ${totalAssets}`,
+        });
+      }
+    }
+
+    const nonCurrentLiabilities = getValue('fsl-bs-noncurrent-liabilities');
+    if (nonCurrentLiabilities !== null && currentLiabilities !== null && totalLiabilities !== null) {
+      const liabSum = nonCurrentLiabilities + currentLiabilities;
+      const diff = Math.abs(totalLiabilities - liabSum);
+      if (diff > Math.abs(totalLiabilities) * 0.02) {
+        messages.push({
+          type: 'warning',
+          code: 'BS_LIABILITIES_SUBCOMPONENT_MISMATCH',
+          message: `Non-current + Current liabilities ≠ Total liabilities`,
+          details: `NC: ${nonCurrentLiabilities}, C: ${currentLiabilities}, Sum: ${liabSum}, Total: ${totalLiabilities}`,
+        });
+      }
     }
   }
 
@@ -7214,6 +7309,362 @@ export async function confirmStatement(
   if (!r?.success) {
     throw new Error(`DB update failed (financial_statements.confirm): ${r?.error || 'unknown'}`);
   }
+}
+
+// ---------------------------------------------------------------------------
+// CFO Auto-Validation & Auto-Repair
+// ---------------------------------------------------------------------------
+
+export interface CfoValidationLine {
+  canonicalLineId: string | null;
+  value: number;
+  originalLabel?: string;
+  periodLabel?: string;
+  isNonFinancial?: boolean;
+  statementType: string;
+}
+
+export interface CfoRepair {
+  action: 'derived' | 'sign_fix' | 'flagged';
+  canonicalLineId: string;
+  originalValue?: number | null;
+  repairedValue: number;
+  reason: string;
+  confidence: number;
+}
+
+export interface CfoCheckResult {
+  code: string;
+  severity: 'pass' | 'warning' | 'error' | 'info';
+  message: string;
+  details?: string;
+}
+
+export interface CfoAutoValidationResult {
+  qualityScore: number;
+  verdict: 'APPROVED' | 'APPROVED_WITH_NOTES' | 'NEEDS_REVIEW' | 'REJECTED';
+  checks: CfoCheckResult[];
+  repairs: CfoRepair[];
+  derivedLines: CfoValidationLine[];
+  summary: string;
+}
+
+export function runCfoAutoValidation(
+  allLines: CfoValidationLine[],
+  metadata: { currency?: string; scaling?: string; period?: string; documentName?: string }
+): CfoAutoValidationResult {
+  const checks: CfoCheckResult[] = [];
+  const repairs: CfoRepair[] = [];
+  const derivedLines: CfoValidationLine[] = [];
+
+  const active = allLines.filter((l) => !l.isNonFinancial && l.canonicalLineId);
+  const byType = (type: string) => active.filter((l) => l.statementType === type);
+  const getValue = (lineId: string, type?: string): number | null => {
+    const pool = type ? byType(type) : active;
+    const match = pool.find((l) => l.canonicalLineId === lineId);
+    return match ? match.value : null;
+  };
+  const hasLine = (lineId: string): boolean => active.some((l) => l.canonicalLineId === lineId);
+
+  const addDerived = (id: string, value: number, type: string, reason: string, conf: number) => {
+    derivedLines.push({
+      canonicalLineId: id,
+      value,
+      originalLabel: `[CFO-derived] ${reason}`,
+      statementType: type,
+      isNonFinancial: false,
+    });
+    repairs.push({ action: 'derived', canonicalLineId: id, repairedValue: value, reason, confidence: conf });
+  };
+
+  // ── 1. BALANCE SHEET CHECKS & REPAIRS ──
+
+  const totalAssets = getValue('fsl-bs-total-assets', 'BS');
+  const equity = getValue('fsl-bs-equity', 'BS');
+  const totalLiab = getValue('fsl-bs-total-liabilities', 'BS');
+  const totalLE = getValue('fsl-bs-total-liabilities-equity', 'BS');
+  const currentAssets = getValue('fsl-bs-current-assets', 'BS');
+  const fixedAssets = getValue('fsl-bs-fixed', 'BS');
+  const currentLiab = getValue('fsl-bs-current-liabilities', 'BS');
+  const longTermDebt = getValue('fsl-bs-long-term-debt', 'BS');
+  const cash = getValue('fsl-bs-cash', 'BS');
+
+  // Derive Total Liabilities from equation: TL = TA - Equity
+  if (totalLiab === null && totalAssets !== null && equity !== null) {
+    const derived = totalAssets - equity;
+    if (derived >= 0) {
+      addDerived('fsl-bs-total-liabilities', derived, 'BS', 'Total Assets − Equity', 0.95);
+      checks.push({ code: 'BS_TOTAL_LIAB_DERIVED', severity: 'info', message: `Total Liabilities derived: ${derived.toFixed(2)}` });
+    }
+  }
+
+  // Derive Total Liabilities from L+E minus Equity
+  if (totalLiab === null && totalLE !== null && equity !== null && totalAssets === null) {
+    const derived = totalLE - equity;
+    if (derived >= 0) {
+      addDerived('fsl-bs-total-liabilities', derived, 'BS', 'Total L&E − Equity', 0.9);
+      checks.push({ code: 'BS_TOTAL_LIAB_FROM_LE', severity: 'info', message: `Total Liabilities derived from T(L&E): ${derived.toFixed(2)}` });
+    }
+  }
+
+  // Derive Total Liabilities from sub-components
+  if (totalLiab === null && !derivedLines.some((d) => d.canonicalLineId === 'fsl-bs-total-liabilities')) {
+    if (currentLiab !== null && longTermDebt !== null) {
+      const derived = currentLiab + longTermDebt;
+      addDerived('fsl-bs-total-liabilities', derived, 'BS', 'Current Liab. + Non-current Liab.', 0.85);
+      checks.push({ code: 'BS_TOTAL_LIAB_FROM_COMPONENTS', severity: 'info', message: `Total Liabilities derived from components: ${derived.toFixed(2)}` });
+    }
+  }
+
+  // Derive Total Assets from L&E total if missing
+  if (totalAssets === null && totalLE !== null) {
+    addDerived('fsl-bs-total-assets', totalLE, 'BS', 'Total L&E ≡ Total Assets', 0.95);
+    checks.push({ code: 'BS_TOTAL_ASSETS_FROM_LE', severity: 'info', message: `Total Assets derived from Total L&E: ${totalLE}` });
+  }
+
+  // Derive Equity if we have both Assets and Liabilities
+  if (equity === null && totalAssets !== null && totalLiab !== null) {
+    const derived = totalAssets - totalLiab;
+    addDerived('fsl-bs-equity', derived, 'BS', 'Total Assets − Total Liabilities', 0.9);
+    checks.push({ code: 'BS_EQUITY_DERIVED', severity: 'info', message: `Equity derived: ${derived.toFixed(2)}` });
+  }
+
+  // Derive Non-current Assets
+  if (!hasLine('fsl-bs-fixed') && totalAssets !== null && currentAssets !== null) {
+    const derived = totalAssets - currentAssets;
+    if (derived >= 0) {
+      addDerived('fsl-bs-fixed', derived, 'BS', 'Total Assets − Current Assets', 0.85);
+    }
+  }
+
+  // BS equation verification (use derived values too)
+  const effectiveAssets = totalAssets ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-bs-total-assets')?.value ?? null;
+  const effectiveEquity = equity ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-bs-equity')?.value ?? null;
+  const effectiveLiab = totalLiab ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-bs-total-liabilities')?.value ?? null;
+
+  if (effectiveAssets !== null && effectiveEquity !== null && effectiveLiab !== null) {
+    const sum = effectiveEquity + effectiveLiab;
+    const diff = Math.abs(effectiveAssets - sum);
+    const tolerance = Math.abs(effectiveAssets) * 0.02;
+    if (diff <= tolerance) {
+      checks.push({ code: 'BS_EQUATION', severity: 'pass', message: `A(${effectiveAssets}) = E(${effectiveEquity}) + L(${effectiveLiab})` });
+    } else {
+      checks.push({
+        code: 'BS_EQUATION',
+        severity: 'error',
+        message: `BS equation FAIL`,
+        details: `Assets=${effectiveAssets}, E+L=${sum}, diff=${diff.toFixed(2)}`,
+      });
+    }
+  } else {
+    checks.push({ code: 'BS_EQUATION', severity: 'warning', message: 'BS equation cannot be verified — missing components' });
+  }
+
+  // Sign checks
+  if (effectiveAssets !== null && effectiveAssets < 0) {
+    checks.push({ code: 'BS_SIGN_ASSETS', severity: 'error', message: `Total Assets is negative: ${effectiveAssets}` });
+  }
+  if (cash !== null && cash < 0) {
+    checks.push({ code: 'BS_SIGN_CASH', severity: 'warning', message: `Cash is negative: ${cash}` });
+  }
+
+  // ── 2. P&L CHECKS & REPAIRS ──
+
+  const revenue = getValue('fsl-pl-revenue', 'P&L');
+  const cogs = getValue('fsl-pl-cogs', 'P&L');
+  const gross = getValue('fsl-pl-gross', 'P&L');
+  const ebit = getValue('fsl-pl-ebit', 'P&L');
+  const ebt = getValue('fsl-pl-ebt', 'P&L');
+  const tax = getValue('fsl-pl-tax', 'P&L');
+  const netIncome = getValue('fsl-pl-net', 'P&L');
+
+  // Derive Gross Profit
+  if (gross === null && revenue !== null && cogs !== null) {
+    const derived = revenue - Math.abs(cogs);
+    addDerived('fsl-pl-gross', derived, 'P&L', 'Revenue − |COGS|', 0.95);
+    checks.push({ code: 'PL_GROSS_DERIVED', severity: 'info', message: `Gross Profit derived: ${derived.toFixed(2)}` });
+  }
+
+  // Derive Net Income from EBT - Tax
+  if (netIncome === null && ebt !== null && tax !== null) {
+    const derived = ebt + tax;
+    addDerived('fsl-pl-net', derived, 'P&L', 'EBT + Tax', 0.9);
+    checks.push({ code: 'PL_NET_DERIVED', severity: 'info', message: `Net Income derived: ${derived.toFixed(2)}` });
+  }
+
+  // Derive EBIT from EBT + interest (if available)
+  if (ebit === null && ebt !== null) {
+    const interest = getValue('fsl-pl-interest', 'P&L');
+    if (interest !== null) {
+      const derived = ebt + Math.abs(interest);
+      addDerived('fsl-pl-ebit', derived, 'P&L', 'EBT + |Interest|', 0.8);
+    }
+  }
+
+  // Cross-check: Revenue - COGS ≈ Gross (if all exist)
+  const effectiveGross = gross ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-pl-gross')?.value ?? null;
+  if (revenue !== null && cogs !== null && effectiveGross !== null) {
+    const expected = revenue - Math.abs(cogs);
+    const diff = Math.abs(effectiveGross - expected);
+    if (diff <= Math.abs(revenue) * 0.02) {
+      checks.push({ code: 'PL_GROSS_CHECK', severity: 'pass', message: 'Gross Profit = Revenue − COGS ✓' });
+    } else {
+      checks.push({
+        code: 'PL_GROSS_CHECK',
+        severity: 'warning',
+        message: 'Gross Profit ≠ Revenue − COGS',
+        details: `Rev=${revenue}, COGS=${cogs}, Gross=${effectiveGross}, Expected=${expected.toFixed(2)}`,
+      });
+    }
+  }
+
+  // P&L flow check: Revenue → Gross → EBIT → EBT → Net
+  const effectiveNet = netIncome ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-pl-net')?.value ?? null;
+  if (revenue !== null && effectiveNet !== null) {
+    const margin = (effectiveNet / revenue) * 100;
+    if (Math.abs(margin) > 200) {
+      checks.push({ code: 'PL_NET_MARGIN', severity: 'error', message: `Net margin ${margin.toFixed(1)}% — implausible`, details: `Rev=${revenue}, Net=${effectiveNet}` });
+    } else {
+      checks.push({ code: 'PL_NET_MARGIN', severity: 'pass', message: `Net margin: ${margin.toFixed(1)}%` });
+    }
+  }
+
+  // Sign conventions
+  if (revenue !== null && revenue < 0) {
+    checks.push({ code: 'PL_SIGN_REVENUE', severity: 'error', message: `Revenue is negative: ${revenue}` });
+  }
+
+  // Completeness
+  const plCritical = ['fsl-pl-revenue', 'fsl-pl-net'];
+  const plMissing = plCritical.filter((id) => !hasLine(id) && !derivedLines.some((d) => d.canonicalLineId === id));
+  if (plMissing.length > 0) {
+    checks.push({ code: 'PL_COMPLETENESS', severity: 'warning', message: `Missing critical P&L lines: ${plMissing.join(', ')}` });
+  } else if (hasLine('fsl-pl-revenue') || derivedLines.some((d) => d.canonicalLineId === 'fsl-pl-revenue')) {
+    checks.push({ code: 'PL_COMPLETENESS', severity: 'pass', message: 'Critical P&L lines present' });
+  }
+
+  // ── 3. CASH FLOW CHECKS & REPAIRS ──
+
+  const cfOp = getValue('fsl-cf-operating', 'CF');
+  const cfInv = getValue('fsl-cf-investing', 'CF');
+  const cfFin = getValue('fsl-cf-financing', 'CF');
+  const cfNetChange = getValue('fsl-cf-net-change-cash', 'CF');
+
+  // Derive net change from components
+  if (cfNetChange === null && cfOp !== null && cfInv !== null && cfFin !== null) {
+    const derived = cfOp + cfInv + cfFin;
+    addDerived('fsl-cf-net-change-cash', derived, 'CF', 'Operating + Investing + Financing', 0.85);
+    checks.push({ code: 'CF_NET_CHANGE_DERIVED', severity: 'info', message: `Net change in cash derived: ${derived.toFixed(2)}` });
+  }
+
+  // CF reconciliation: Operating + Investing + Financing ≈ Net Change
+  const effectiveNetChange = cfNetChange ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-cf-net-change-cash')?.value ?? null;
+  if (cfOp !== null && cfInv !== null && cfFin !== null && effectiveNetChange !== null) {
+    const sum = cfOp + cfInv + cfFin;
+    const diff = Math.abs(effectiveNetChange - sum);
+    const base = Math.max(Math.abs(cfOp), 1);
+    if (diff <= base * 0.1) {
+      checks.push({ code: 'CF_RECONCILIATION', severity: 'pass', message: `CF reconciles: Op(${cfOp}) + Inv(${cfInv}) + Fin(${cfFin}) = ${sum}` });
+    } else {
+      checks.push({
+        code: 'CF_RECONCILIATION',
+        severity: 'warning',
+        message: 'CF sections don\'t reconcile to net change',
+        details: `Sum=${sum}, NetChange=${effectiveNetChange}, diff=${diff.toFixed(2)}`,
+      });
+    }
+  }
+
+  // CF completeness
+  const cfCritical = ['fsl-cf-operating', 'fsl-cf-investing', 'fsl-cf-financing'];
+  const cfMissing = cfCritical.filter((id) => !hasLine(id));
+  if (cfMissing.length > 0) {
+    checks.push({ code: 'CF_COMPLETENESS', severity: 'warning', message: `Missing CF sections: ${cfMissing.join(', ')}` });
+  } else {
+    checks.push({ code: 'CF_COMPLETENESS', severity: 'pass', message: 'All CF sections present' });
+  }
+
+  // ── 4. CROSS-STATEMENT CONSISTENCY ──
+
+  // Net Income in P&L should ≈ starting point in CF (if CF uses indirect method)
+  const cfNetIncomeStart = getValue('fsl-cf-operating-net-income', 'CF') ?? getValue('fsl-cf-operating-ebt', 'CF');
+  const plNet = netIncome ?? derivedLines.find((d) => d.canonicalLineId === 'fsl-pl-net')?.value ?? null;
+  if (plNet !== null && cfNetIncomeStart !== null) {
+    const diff = Math.abs(plNet - cfNetIncomeStart);
+    const base = Math.max(Math.abs(plNet), 1);
+    if (diff <= base * 0.05) {
+      checks.push({ code: 'CROSS_PL_CF_NET', severity: 'pass', message: 'P&L Net Income matches CF starting point' });
+    } else {
+      checks.push({
+        code: 'CROSS_PL_CF_NET',
+        severity: 'warning',
+        message: 'P&L Net Income ≠ CF starting point',
+        details: `P&L Net=${plNet}, CF start=${cfNetIncomeStart}`,
+      });
+    }
+  }
+
+  // Total Assets should be reasonable vs Revenue
+  if (effectiveAssets !== null && revenue !== null && revenue > 0) {
+    const assetTurnover = revenue / effectiveAssets;
+    if (assetTurnover > 10 || assetTurnover < 0.01) {
+      checks.push({
+        code: 'CROSS_ASSET_TURNOVER',
+        severity: 'warning',
+        message: `Asset turnover ${assetTurnover.toFixed(2)} — unusual`,
+        details: `Revenue=${revenue}, Assets=${effectiveAssets}`,
+      });
+    } else {
+      checks.push({ code: 'CROSS_ASSET_TURNOVER', severity: 'pass', message: `Asset turnover: ${assetTurnover.toFixed(2)}x` });
+    }
+  }
+
+  // ── 5. PERIOD CONSISTENCY ──
+
+  // Check if comparison values have wild swings (>500% change)
+  const bsLines = byType('BS');
+  const withComparison = allLines.filter((l) => l.periodLabel && l.periodLabel !== metadata.period);
+  if (withComparison.length > 0) {
+    checks.push({ code: 'DUAL_PERIOD', severity: 'pass', message: `Dual-period data present (${withComparison.length} comparison values)` });
+  } else {
+    checks.push({ code: 'DUAL_PERIOD', severity: 'warning', message: 'No comparison period data found' });
+  }
+
+  // ── 6. QUALITY SCORING ──
+
+  let score = 50;
+  const passCount = checks.filter((c) => c.severity === 'pass').length;
+  const warnCount = checks.filter((c) => c.severity === 'warning').length;
+  const errorCount = checks.filter((c) => c.severity === 'error').length;
+  const infoCount = checks.filter((c) => c.severity === 'info').length;
+
+  score += passCount * 5;
+  score -= warnCount * 8;
+  score -= errorCount * 15;
+  score += infoCount * 2;
+  score += repairs.length * 3;
+
+  // Bonus for key data presence
+  if (hasLine('fsl-pl-revenue') && (hasLine('fsl-pl-net') || derivedLines.some((d) => d.canonicalLineId === 'fsl-pl-net'))) score += 10;
+  if (effectiveAssets !== null && effectiveEquity !== null && effectiveLiab !== null) score += 10;
+  if (cfOp !== null && cfInv !== null && cfFin !== null) score += 10;
+
+  score = Math.max(0, Math.min(100, score));
+
+  let verdict: CfoAutoValidationResult['verdict'];
+  if (errorCount > 3 || score < 30) verdict = 'REJECTED';
+  else if (errorCount > 0 || score < 55) verdict = 'NEEDS_REVIEW';
+  else if (warnCount > 3 || score < 75) verdict = 'APPROVED_WITH_NOTES';
+  else verdict = 'APPROVED';
+
+  const summary = [
+    `Quality Score: ${score}/100 — ${verdict}`,
+    `Checks: ${passCount} pass, ${warnCount} warn, ${errorCount} error`,
+    `Auto-repairs: ${repairs.length} values derived`,
+    `Derived lines: ${derivedLines.length}`,
+  ].join(' | ');
+
+  return { qualityScore: score, verdict, checks, repairs, derivedLines, summary };
 }
 
 logger.info('[FinancialStatementService] Loaded');

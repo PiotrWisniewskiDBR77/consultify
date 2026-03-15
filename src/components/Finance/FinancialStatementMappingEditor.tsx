@@ -1,4 +1,4 @@
-import { Edit3, Search, X } from 'lucide-react';
+import { AlertTriangle, Edit3, Search, X } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -18,6 +18,7 @@ export interface FinancialStatementMappedValue {
   sourceRow?: number;
   isNonFinancial?: boolean;
   classificationReason?: string;
+  mappingTier?: 'auto' | 'llm_confirmed' | 'review_required' | 'excluded';
 }
 
 interface Props {
@@ -49,6 +50,37 @@ function ConfidenceDot({ confidence }: { confidence: number }) {
       {pct}%
     </span>
   );
+}
+
+function TierBadge({ tier, isPl }: { tier?: string; isPl: boolean }) {
+  if (!tier || tier === 'auto') return null;
+
+  if (tier === 'review_required') {
+    return (
+      <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-orange-100 px-1 py-0.5 text-[9px] font-semibold text-orange-700 dark:bg-orange-500/10 dark:text-orange-300">
+        <AlertTriangle size={9} />
+        {isPl ? 'do weryfikacji' : 'review'}
+      </span>
+    );
+  }
+
+  if (tier === 'llm_confirmed') {
+    return (
+      <span className="ml-1.5 rounded bg-blue-50 px-1 py-0.5 text-[9px] font-medium text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
+        AI
+      </span>
+    );
+  }
+
+  if (tier === 'excluded') {
+    return (
+      <span className="ml-1.5 rounded bg-slate-100 px-1 py-0.5 text-[9px] font-medium text-slate-400 dark:bg-white/[0.06] dark:text-slate-500">
+        {isPl ? 'wykluczone' : 'excluded'}
+      </span>
+    );
+  }
+
+  return null;
 }
 
 function SearchableSelect({
@@ -179,6 +211,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
 
   const mappedCount = mappedValues.filter((v) => v.canonicalLineId).length;
   const unmappedCount = mappedValues.length - mappedCount;
+  const reviewCount = mappedValues.filter((v) => v.mappingTier === 'review_required').length;
 
   return (
     <div className={`overflow-hidden rounded-2xl border border-slate-200/70 bg-white dark:border-white/[0.08] dark:bg-navy-900 ${className}`}>
@@ -191,6 +224,12 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
           {unmappedCount > 0 && (
             <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
               {unmappedCount} {isPl ? 'do uzupełnienia' : 'unmapped'}
+            </span>
+          )}
+          {reviewCount > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-orange-50 px-1.5 py-0.5 text-[10px] font-medium text-orange-700 dark:bg-orange-500/10 dark:text-orange-300">
+              <AlertTriangle size={10} />
+              {reviewCount} {isPl ? 'do weryfikacji' : 'to review'}
             </span>
           )}
           <div className="ml-auto h-1.5 w-24 overflow-hidden rounded-full bg-slate-200/60 dark:bg-white/[0.06]">
@@ -227,9 +266,11 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
               <tr
                 key={`${value.originalLabel}-${value.sourceRow || idx}`}
                 className={`group transition-colors hover:bg-slate-50/60 dark:hover:bg-white/[0.03] ${
-                  !value.canonicalLineId
-                    ? 'bg-amber-50/20 dark:bg-amber-500/[0.03]'
-                    : ''
+                  value.mappingTier === 'review_required'
+                    ? 'bg-orange-50/30 dark:bg-orange-500/[0.04]'
+                    : !value.canonicalLineId
+                      ? 'bg-amber-50/20 dark:bg-amber-500/[0.03]'
+                      : ''
                 }`}
               >
                 <td className="px-4 py-2 text-slate-700 dark:text-slate-200">
@@ -239,6 +280,7 @@ export const FinancialStatementMappingEditor: React.FC<Props> = ({
                       non-fin
                     </span>
                   )}
+                  <TierBadge tier={value.mappingTier} isPl={!!isPl} />
                 </td>
                 <td className="px-4 py-2 text-right">
                   {editingIdx === idx ? (
