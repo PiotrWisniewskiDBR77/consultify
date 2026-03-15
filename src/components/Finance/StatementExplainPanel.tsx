@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronDown, ChevronRight, FileSearch, Layers, PenLine, Sparkles, Zap } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronRight, FileSearch, GitMerge, Layers, PenLine, Sparkles, Zap } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
