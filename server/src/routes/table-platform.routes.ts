@@ -458,7 +458,7 @@ router.patch('/fields/:fieldId/permissions', async (req: Request, res: Response)
       'field',
       fieldId,
       authReq.userId,
-      existing.rows[0].options?.permissions ?? null,
+      (existing.rows[0] as any)?.options?.permissions ?? null,
       permissions,
       { readRoles, writeRoles }
     );
@@ -1297,7 +1297,7 @@ router.get('/audit/:entityType/:entityId', async (req: Request, res: Response) =
 
     return res.status(200).json({
       events: result.rows,
-      total: Number(countResult.rows[0]?.total ?? 0),
+      total: Number((countResult.rows[0] as any)?.total ?? 0),
       limit: pageLimit,
       offset: pageOffset,
     });
@@ -1338,7 +1338,7 @@ router.get('/tables/:tableId/audit', requireTableAccess, async (req: Request, re
       `SELECT COUNT(*) as total FROM (${countSql}) sub`,
       countParams
     );
-    const total = Number(countResult.rows[0]?.total ?? 0);
+    const total = Number((countResult.rows[0] as any)?.total ?? 0);
 
     return res.status(200).json({
       events: result.rows,
@@ -1663,7 +1663,7 @@ router.get('/records/:recordId/expand', async (req: Request, res: Response) => {
     if (!recordId) {
       return res.status(400).json({ error: 'recordId is required' });
     }
-    const depth = Math.min(Math.max(parseInt(String(req.query.depth ?? '1'), 10) || 1, 0), 3);
+    const depth = Math.min(Math.max(parseInt(String((req.query.depth ?? '1')), 10) || 1, 0), 3);
     const RelationService = (await import('../services/tablePlatform/RelationService.js')).default;
     const expanded = await RelationService.expandRecord(recordId, depth);
     if (!expanded) {
@@ -2395,6 +2395,131 @@ router.post('/kpis/:kpiId/compute', async (req: Request, res: Response) => {
     return res.status(200).json(result);
   } catch (e) {
     handleRouteError(e, res, 'computeKpi');
+  }
+});
+
+// ==========================================
+// MODULE LINKAGE (Consultify Integration)
+// ==========================================
+
+router.post('/governed-models/:modelId/publish-to-results', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const model = await GovernedModelService.getModel(modelId);
+    if (!model) return res.status(404).json({ error: 'Governed model not found' });
+    const { kpiIds, fieldMapping } = req.body ?? {};
+    if (!kpiIds || !Array.isArray(kpiIds)) return res.status(400).json({ error: 'kpiIds array is required' });
+    const { syncToModule } = await import('../services/tablePlatform/ModuleSyncService.js');
+    const result = await syncToModule(modelId, 'results', {
+      kpiIds,
+      fieldMapping: fieldMapping ?? {},
+    });
+    return res.status(200).json({
+      success: result.syncStatus === 'success',
+      syncedRecords: result.syncedRecords,
+      syncId: result.syncId,
+      message: result.errorMessage,
+    });
+  } catch (e) {
+    handleRouteError(e, res, 'publishToResults');
+  }
+});
+
+router.post('/governed-models/:modelId/sync-to-finance', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const model = await GovernedModelService.getModel(modelId);
+    if (!model) return res.status(404).json({ error: 'Governed model not found' });
+    const { fieldMappings, fieldMapping, tableId } = req.body ?? {};
+    const mapping = fieldMappings ?? fieldMapping;
+    if (!mapping || typeof mapping !== 'object') return res.status(400).json({ error: 'fieldMappings or fieldMapping is required' });
+    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    const { syncToModule } = await import('../services/tablePlatform/ModuleSyncService.js');
+    const result = await syncToModule(modelId, 'finance', {
+      fieldMappings: mapping as Record<string, string>,
+      tableId,
+    });
+    return res.status(200).json({
+      success: result.syncStatus === 'success',
+      syncedRecords: result.syncedRecords,
+      syncId: result.syncId,
+      message: result.errorMessage,
+    });
+  } catch (e) {
+    handleRouteError(e, res, 'syncToFinance');
+  }
+});
+
+router.post('/governed-models/:modelId/sync-to-execution', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const model = await GovernedModelService.getModel(modelId);
+    if (!model) return res.status(404).json({ error: 'Governed model not found' });
+    const { fieldMappings, fieldMapping, tableId } = req.body ?? {};
+    const mapping = fieldMappings ?? fieldMapping;
+    if (!mapping || typeof mapping !== 'object') return res.status(400).json({ error: 'fieldMappings or fieldMapping is required' });
+    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    const { syncToModule } = await import('../services/tablePlatform/ModuleSyncService.js');
+    const result = await syncToModule(modelId, 'execution', {
+      fieldMappings: mapping as Record<string, string>,
+      tableId,
+    });
+    return res.status(200).json({
+      success: result.syncStatus === 'success',
+      syncedRecords: result.syncedRecords,
+      syncId: result.syncId,
+      message: result.errorMessage,
+    });
+  } catch (e) {
+    handleRouteError(e, res, 'syncToExecution');
+  }
+});
+
+router.post('/governed-models/:modelId/sync-to-initiatives', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const model = await GovernedModelService.getModel(modelId);
+    if (!model) return res.status(404).json({ error: 'Governed model not found' });
+    const { fieldMappings, fieldMapping, tableId } = req.body ?? {};
+    const mapping = fieldMappings ?? fieldMapping;
+    if (!mapping || typeof mapping !== 'object') return res.status(400).json({ error: 'fieldMappings or fieldMapping is required' });
+    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    const { syncToModule } = await import('../services/tablePlatform/ModuleSyncService.js');
+    const result = await syncToModule(modelId, 'initiatives', {
+      fieldMappings: mapping as Record<string, string>,
+      tableId,
+    });
+    return res.status(200).json({
+      success: result.syncStatus === 'success',
+      syncedRecords: result.syncedRecords,
+      syncId: result.syncId,
+      message: result.errorMessage,
+    });
+  } catch (e) {
+    handleRouteError(e, res, 'syncToInitiatives');
+  }
+});
+
+router.get('/governed-models/:modelId/link-status', async (req: Request, res: Response) => {
+  try {
+    const { modelId } = req.params;
+    if (!modelId) return res.status(400).json({ error: 'modelId is required' });
+    const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
+    const model = await GovernedModelService.getModel(modelId);
+    if (!model) return res.status(404).json({ error: 'Governed model not found' });
+    const { getLinkStatus } = await import('../services/tablePlatform/ModuleSyncService.js');
+    const status = await getLinkStatus(modelId);
+    return res.status(200).json(status);
+  } catch (e) {
+    handleRouteError(e, res, 'getModuleLinkStatus');
   }
 });
 
@@ -3393,6 +3518,221 @@ scimRouter.delete('/Users/:id', async (req: Request, res: Response) => {
 });
 
 router.use('/scim/v2', scimRouter);
+
+// ============================================================================
+// RECORD TEMPLATES
+// ============================================================================
+
+router.get('/tables/:tableId/record-templates', async (req: Request, res: Response) => {
+  try {
+    const db = (await import('../database/Database.js')).getDatabase();
+    const { tableId } = req.params;
+    const result = await db.query(
+      `SELECT * FROM tp_records WHERE table_id = $1 AND (data->>'_is_template')::boolean = true ORDER BY created_at DESC`,
+      [tableId]
+    );
+    return res.status(200).json({ templates: result.rows.map((r: any) => ({ id: r.id, name: r.data?._template_name ?? 'Untitled', data: r.data, createdAt: r.created_at })) });
+  } catch (err) {
+    handleRouteError(err, res, 'listRecordTemplates');
+  }
+});
+
+router.post('/tables/:tableId/record-templates', async (req: Request, res: Response) => {
+  try {
+    const db = (await import('../database/Database.js')).getDatabase();
+    const { tableId } = req.params;
+    const { name, data } = req.body;
+    const templateData = { ...data, _is_template: true, _template_name: name };
+    const result = await db.query(
+      `INSERT INTO tp_records (id, table_id, data) VALUES (gen_random_uuid(), $1, $2) RETURNING *`,
+      [tableId, JSON.stringify(templateData)]
+    );
+    const row = result.rows[0] as any;
+    return res.status(201).json({ id: row.id, name, data: row.data, createdAt: row.created_at });
+  } catch (err) {
+    handleRouteError(err, res, 'createRecordTemplate');
+  }
+});
+
+router.patch('/record-templates/:templateId', async (req: Request, res: Response) => {
+  try {
+    const db = (await import('../database/Database.js')).getDatabase();
+    const { templateId } = req.params;
+    const { name, data } = req.body;
+    const existing = await db.query('SELECT * FROM tp_records WHERE id = $1', [templateId]);
+    if (existing.rows.length === 0) return res.status(404).json({ error: 'Template not found' });
+    const oldData = (existing.rows[0] as any).data ?? {};
+    const newData = { ...oldData, ...(data ?? {}), _is_template: true, _template_name: name ?? oldData._template_name };
+    const result = await db.query(
+      'UPDATE tp_records SET data = $1, updated_at = now() WHERE id = $2 RETURNING *',
+      [JSON.stringify(newData), templateId]
+    );
+    const row = result.rows[0] as any;
+    return res.status(200).json({ id: row.id, name: newData._template_name, data: row.data, createdAt: row.created_at });
+  } catch (err) {
+    handleRouteError(err, res, 'updateRecordTemplate');
+  }
+});
+
+router.delete('/record-templates/:templateId', async (req: Request, res: Response) => {
+  try {
+    const db = (await import('../database/Database.js')).getDatabase();
+    const { templateId } = req.params;
+    await db.query('DELETE FROM tp_records WHERE id = $1', [templateId]);
+    return res.status(204).send();
+  } catch (err) {
+    handleRouteError(err, res, 'deleteRecordTemplate');
+  }
+});
+
+// ============================================================================
+// DEPENDENCY CONFIG (GET/PUT)
+// ============================================================================
+
+router.get('/tables/:tableId/dependency-config', async (req: Request, res: Response) => {
+  try {
+    const db = (await import('../database/Database.js')).getDatabase();
+    const { tableId } = req.params;
+
+    const result = await db.query(
+      'SELECT dependency_config FROM tp_tables WHERE id = $1',
+      [tableId]
+    );
+    const row = result.rows[0] as { dependency_config: Record<string, unknown> | null } | undefined;
+    const config = row?.dependency_config ?? null;
+
+    return res.status(200).json({ config });
+  } catch (err) {
+    handleRouteError(err, res, 'getDependencyConfig');
+  }
+});
+
+router.put('/tables/:tableId/dependency-config', async (req: Request, res: Response) => {
+  try {
+    const db = (await import('../database/Database.js')).getDatabase();
+    const { tableId } = req.params;
+    const { config } = req.body;
+
+    await db.query(
+      'UPDATE tp_tables SET dependency_config = $1, updated_at = NOW() WHERE id = $2',
+      [config ? JSON.stringify(config) : null, tableId]
+    );
+
+    return res.status(200).json({ success: true, config: config ?? null });
+  } catch (err) {
+    handleRouteError(err, res, 'putDependencyConfig');
+  }
+});
+
+
+router.post('/tables/:tableId/date-dependencies/recalculate', async (req: Request, res: Response) => {
+  try {
+    const { DateDependencyEngine } = await import('../services/tablePlatform/DateDependencyEngine.js');
+    const db = (await import('../database/Database.js')).getDatabase();
+    const { tableId } = req.params;
+    const { config } = req.body;
+
+    const recordsResult = await db.query('SELECT * FROM tp_records WHERE table_id = $1', [tableId]);
+    const rawRecords = recordsResult.rows as Array<{ id: string; data: Record<string, any> }>;
+
+    const toRecordDateData = (r: { id: string; data: Record<string, any> }) => ({
+      recordId: r.id,
+      startDate: r.data?.[config.startDateFieldId] ?? null,
+      endDate: r.data?.[config.endDateFieldId] ?? null,
+      duration: config.durationFieldId ? (r.data?.[config.durationFieldId] ?? null) : null,
+      predecessorIds: config.predecessorFieldId
+        ? (Array.isArray(r.data?.[config.predecessorFieldId]) ? r.data[config.predecessorFieldId] : [])
+        : [],
+      dependencyType: config.dependencyTypeFieldId
+        ? (r.data?.[config.dependencyTypeFieldId] ?? config.defaultDependencyType ?? 'FS')
+        : (config.defaultDependencyType ?? 'FS'),
+      lagDays: config.lagFieldId
+        ? (Number(r.data?.[config.lagFieldId]) || ((config.defaultLagDays ?? 0)))
+        : (config.defaultLagDays ?? 0),
+    });
+
+    const records = rawRecords.map(toRecordDateData);
+    const engine = new DateDependencyEngine(config);
+    const updates = engine.recalculateDates(records);
+
+    let updatedCount = 0;
+    for (const update of updates) {
+      if (!update.changed) continue;
+      const raw = rawRecords.find((r) => r.id === update.recordId);
+      if (!raw) continue;
+      const newData = { ...raw.data };
+      if (update.startDate !== null) newData[config.startDateFieldId] = update.startDate;
+      if (update.endDate !== null) newData[config.endDateFieldId] = update.endDate;
+      if (config.durationFieldId && update.duration !== null) newData[config.durationFieldId] = update.duration;
+      await db.query('UPDATE tp_records SET data = $1, updated_at = now() WHERE id = $2', [
+        JSON.stringify(newData),
+        update.recordId,
+      ]);
+      updatedCount++;
+    }
+
+    return res.status(200).json({ success: true, updatedRecords: updatedCount });
+  } catch (err) {
+    handleRouteError(err, res, 'recalculateDateDependencies');
+  }
+});
+
+router.post('/tables/:tableId/date-dependencies/detect-cycle', async (req: Request, res: Response) => {
+  try {
+    const { DateDependencyEngine } = await import('../services/tablePlatform/DateDependencyEngine.js');
+    const db = (await import('../database/Database.js')).getDatabase();
+    const { tableId } = req.params;
+    const { config } = req.body;
+
+    const recordsResult = await db.query('SELECT * FROM tp_records WHERE table_id = $1', [tableId]);
+    const rawRecords = recordsResult.rows as Array<{ id: string; data: Record<string, any> }>;
+
+    const records = rawRecords.map((r) => ({
+      recordId: r.id,
+      startDate: r.data?.[config.startDateFieldId] ?? null,
+      endDate: r.data?.[config.endDateFieldId] ?? null,
+      duration: config.durationFieldId ? (r.data?.[config.durationFieldId] ?? null) : null,
+      predecessorIds: config.predecessorFieldId
+        ? (Array.isArray(r.data?.[config.predecessorFieldId]) ? r.data[config.predecessorFieldId] : [])
+        : [],
+      dependencyType: (config.defaultDependencyType ?? 'FS') as 'FS' | 'SS' | 'FF' | 'SF',
+      lagDays: config.defaultLagDays ?? 0,
+    }));
+
+    const engine = new DateDependencyEngine(config);
+    const cycleNodes = engine.detectCycle(records);
+
+    return res.status(200).json({ hasCycle: cycleNodes !== null, cycleNodes });
+  } catch (err) {
+    handleRouteError(err, res, 'detectDateDependencyCycle');
+  }
+});
+
+// ============================================================================
+// FIELD REORDER
+// ============================================================================
+
+router.post('/tables/:tableId/fields/reorder', async (req: Request, res: Response) => {
+  try {
+    const db = (await import('../database/Database.js')).getDatabase();
+    const { tableId } = req.params;
+    const { fieldIds } = req.body;
+
+    if (!Array.isArray(fieldIds)) return res.status(400).json({ error: 'fieldIds must be an array' });
+
+    for (let i = 0; i < fieldIds.length; i++) {
+      await db.query('UPDATE tp_fields SET field_order = $1 WHERE id = $2 AND table_id = $3', [
+        i,
+        fieldIds[i],
+        tableId,
+      ]);
+    }
+
+    return res.status(200).json({ success: true, reordered: fieldIds.length });
+  } catch (err) {
+    handleRouteError(err, res, 'reorderFields');
+  }
+});
 
 router.post('/admin/scim/token', async (req: Request, res: Response) => {
   try {

@@ -1758,6 +1758,48 @@ router.post(
   })
 );
 
+router.delete(
+  '/packs/:id',
+  verifyToken,
+  isAuthenticated,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const packId = String(req.params.id);
+
+    const packRows = (await dbAll(
+      `SELECT id FROM financial_statement_packs WHERE id = ? AND organization_id = ?`,
+      [packId, orgId]
+    )) as any[];
+    if (!packRows?.length) {
+      return res.status(404).json({ error: 'Statement pack not found' });
+    }
+
+    const childStatements = (await dbAll(
+      `SELECT id FROM financial_statements WHERE statement_pack_id = ?`,
+      [packId]
+    )) as any[];
+    const childIds = (childStatements || []).map((s: any) => String(s.id));
+
+    for (const stmtId of childIds) {
+      await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [stmtId]);
+      await dbRun(`DELETE FROM financial_statement_validations WHERE statement_id = ?`, [stmtId]);
+      await dbRun(`DELETE FROM financial_statement_mapping_candidates WHERE statement_id = ?`, [stmtId]);
+      await dbRun(`DELETE FROM financial_statement_candidate_rows WHERE statement_id = ?`, [stmtId]);
+      await dbRun(`DELETE FROM financial_statement_extracted_sections WHERE statement_id = ?`, [stmtId]);
+      await dbRun(`DELETE FROM financial_statement_source_artifacts WHERE statement_id = ?`, [stmtId]);
+      await dbRun(`DELETE FROM financial_statement_quality_runs WHERE statement_id = ?`, [stmtId]);
+      await dbRun(`DELETE FROM financial_statement_ingest_runs WHERE statement_id = ?`, [stmtId]);
+      await dbRun(`DELETE FROM financial_statements WHERE id = ?`, [stmtId]);
+    }
+
+    await dbRun(`DELETE FROM financial_statement_validations WHERE statement_pack_id = ?`, [packId]);
+    await dbRun(`DELETE FROM financial_statement_packs WHERE id = ?`, [packId]);
+
+    res.json({ success: true, deleted: packId, statementsDeleted: childIds.length });
+  })
+);
+
 router.get(
   '/canonical-lines',
   verifyToken,
@@ -2068,8 +2110,39 @@ router.delete(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const statementId = String(req.params.id);
-    const stmt = await getStatementOrFail(statementId, getOrgId(req), res);
+    const id = String(req.params.id);
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    // Check if ID is a pack first (frontend sends pack IDs from the list view)
+    const packRows = (await dbAll(
+      `SELECT id FROM financial_statement_packs WHERE id = ? AND organization_id = ?`,
+      [id, orgId]
+    )) as any[];
+    if (packRows?.length) {
+      const childStatements = (await dbAll(
+        `SELECT id FROM financial_statements WHERE statement_pack_id = ?`,
+        [id]
+      )) as any[];
+      const childIds = (childStatements || []).map((s: any) => String(s.id));
+      for (const stmtId of childIds) {
+        await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [stmtId]);
+        await dbRun(`DELETE FROM financial_statement_validations WHERE statement_id = ?`, [stmtId]);
+        await dbRun(`DELETE FROM financial_statement_mapping_candidates WHERE statement_id = ?`, [stmtId]);
+        await dbRun(`DELETE FROM financial_statement_candidate_rows WHERE statement_id = ?`, [stmtId]);
+        await dbRun(`DELETE FROM financial_statement_extracted_sections WHERE statement_id = ?`, [stmtId]);
+        await dbRun(`DELETE FROM financial_statement_source_artifacts WHERE statement_id = ?`, [stmtId]);
+        await dbRun(`DELETE FROM financial_statement_quality_runs WHERE statement_id = ?`, [stmtId]);
+        await dbRun(`DELETE FROM financial_statement_ingest_runs WHERE statement_id = ?`, [stmtId]);
+        await dbRun(`DELETE FROM financial_statements WHERE id = ?`, [stmtId]);
+      }
+      await dbRun(`DELETE FROM financial_statement_validations WHERE statement_pack_id = ?`, [id]);
+      await dbRun(`DELETE FROM financial_statement_packs WHERE id = ?`, [id]);
+      return res.json({ success: true, deleted: id, statementsDeleted: childIds.length });
+    }
+
+    // Fallback: treat as individual statement ID
+    const stmt = await getStatementOrFail(id, orgId, res);
     if (!stmt) return;
 
     if (stmt.status === 'confirmed') {
@@ -2078,11 +2151,11 @@ router.delete(
         .json({ error: 'Cannot delete confirmed statement. Archive it instead.' });
     }
 
-    await detachStatementFromPack(statementId);
-    await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [statementId]);
-    await dbRun(`DELETE FROM financial_statements WHERE id = ?`, [statementId]);
+    await detachStatementFromPack(id);
+    await dbRun(`DELETE FROM financial_statement_values WHERE statement_id = ?`, [id]);
+    await dbRun(`DELETE FROM financial_statements WHERE id = ?`, [id]);
 
-    res.json({ success: true, deleted: statementId });
+    res.json({ success: true, deleted: id });
   })
 );
 

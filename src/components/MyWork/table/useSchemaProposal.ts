@@ -24,7 +24,8 @@ export interface UseSchemaProposalReturn {
     workspaceId: string,
     message: string,
     existingSchema?: unknown,
-    language?: string
+    language?: string,
+    companyContext?: { workspaceName?: string; moduleName?: string; existingTableNames?: string[] }
   ) => Promise<void>;
   executeProposal: (approvedOperationIds?: string[]) => Promise<unknown>;
   rejectProposal: (reason?: string) => Promise<void>;
@@ -73,7 +74,8 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
       workspaceId: string,
       message: string,
       existingSchema?: unknown,
-      language?: string
+      language?: string,
+      companyContext?: { workspaceName?: string; moduleName?: string; existingTableNames?: string[] }
     ): Promise<void> => {
       setLoading(true);
       setError(null);
@@ -83,7 +85,8 @@ export function useSchemaProposal(): UseSchemaProposalReturn {
           workspaceId,
           message,
           existingSchema,
-          language
+          language,
+          companyContext
         );
         setProposal(result);
         addToHistory(result, 'pending');

@@ -64,6 +64,11 @@ export const ResetPasswordRequestSchema = z.object({
     .regex(/[0-9]/, 'Password must contain at least one number'),
 });
 
+// Forgot Password Request
+export const ForgotPasswordRequestSchema = z.object({
+  email: z.string().email('Invalid email format'),
+});
+
 // Verify Email Request
 export const VerifyEmailRequestSchema = z.object({
   token: z.string().min(1, 'Token is required'),
@@ -101,6 +106,7 @@ export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
 export type RefreshTokenRequest = z.infer<typeof RefreshTokenRequestSchema>;
 export type ChangePasswordRequest = z.infer<typeof ChangePasswordRequestSchema>;
 export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>;
+export type ForgotPasswordRequest = z.infer<typeof ForgotPasswordRequestSchema>;
 export type VerifyEmailRequest = z.infer<typeof VerifyEmailRequestSchema>;
 export type MFASetupRequest = z.infer<typeof MFASetupRequestSchema>;
 export type MFAEnableRequest = z.infer<typeof MFAEnableRequestSchema>;

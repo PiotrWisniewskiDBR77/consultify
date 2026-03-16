@@ -186,7 +186,7 @@ export function useTablePlatformIntegration(
   const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
 
-  const isActive = bridge.isNewPlatform && open;
+  const isActive = bridge.isNewPlatform && open && !bridge.platformFailed;
 
   // Sync columns from bridge when active
   useEffect(() => {

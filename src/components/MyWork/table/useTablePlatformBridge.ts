@@ -64,6 +64,7 @@ export interface UseTablePlatformBridgeReturn {
   isNewPlatform: boolean;
   loading: boolean;
   error: string | null;
+  platformFailed: boolean;
 
   base: TablePlatformBase | null;
   table: TablePlatformTable | null;
@@ -97,6 +98,7 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [platformFailed, setPlatformFailed] = useState(false);
   const [base, setBase] = useState<TablePlatformBase | null>(null);
   const [table, setTable] = useState<TablePlatformTable | null>(null);
   const [fields, setFields] = useState<TablePlatformField[]>([]);
@@ -138,7 +140,9 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
 
         const tableId = String((tableRow as Record<string, unknown>).id ?? '');
         return { baseId, tableId, base: baseData };
-      } catch {
+      } catch (err) {
+        console.error('[TablePlatformBridge] ensureBaseAndTable failed, falling back to legacy:', err);
+        setPlatformFailed(true);
         return null;
       }
     },
@@ -376,38 +380,44 @@ export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTab
     loadData();
   }, [isNewPlatform, enabled, loadData]);
 
-  if (!isNewPlatform) {
-    return {
-      isNewPlatform: false,
-      loading: false,
-      error: null,
-      base: null,
-      table: null,
-      fields: [],
-      views: [],
-      records: [],
-      totalRecords: 0,
-      hasMore: false,
-      columns: [],
-      nodes: [],
-      createRecord: async () => null,
-      updateRecord: async () => null,
-      deleteRecord: async () => false,
-      addField: async () => null,
-      updateField: async () => {},
-      createView: async () => null,
-      updateView: async () => {},
-      loadMore: async () => {},
-      refresh: async () => {},
-      applyFilters: async () => {},
-      applySorts: async () => {},
-    };
+  const noopReturn: UseTablePlatformBridgeReturn = {
+    isNewPlatform: false,
+    loading: false,
+    error: null,
+    platformFailed: false,
+    base: null,
+    table: null,
+    fields: [],
+    views: [],
+    records: [],
+    totalRecords: 0,
+    hasMore: false,
+    columns: [],
+    nodes: [],
+    createRecord: async () => null,
+    updateRecord: async () => null,
+    deleteRecord: async () => false,
+    addField: async () => null,
+    updateField: async () => {},
+    createView: async () => null,
+    updateView: async () => {},
+    loadMore: async () => {},
+    refresh: async () => {},
+    applyFilters: async () => {},
+    applySorts: async () => {},
+  };
+
+  if (!isNewPlatform) return noopReturn;
+
+  if (platformFailed) {
+    return { ...noopReturn, platformFailed: true };
   }
 
   return {
     isNewPlatform: true,
     loading,
     error,
+    platformFailed: false,
     base,
     table,
     fields,

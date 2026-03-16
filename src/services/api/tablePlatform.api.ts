@@ -283,12 +283,13 @@ export async function generateSchemaProposal(
   workspaceId: string,
   message: string,
   existingSchema?: any,
-  language?: string
+  language?: string,
+  companyContext?: { workspaceName?: string; moduleName?: string; existingTableNames?: string[] }
 ): Promise<any> {
   const res = await fetchWithRetry(`${BASE_PATH}/schema/propose`, {
     method: 'POST',
     headers: getHeaders(),
-    body: JSON.stringify({ workspaceId, message, existingSchema, language }),
+    body: JSON.stringify({ workspaceId, message, existingSchema, language, ...companyContext }),
   });
   return handleResponse(res, 'Failed to generate schema proposal');
 }
@@ -991,4 +992,510 @@ export async function executeDistribution(distributionId: string): Promise<any> 
     headers: getHeaders(),
   });
   return handleResponse(res, 'Failed to execute distribution');
+}
+
+// ============================================================================
+// GOVERNED MODELS API
+// ============================================================================
+
+export async function listGovernedModels(baseId: string): Promise<any[]> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/governed-models`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to list governed models');
+}
+
+export async function getGovernedModel(modelId: string): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to fetch governed model');
+}
+
+export async function createGovernedModel(
+  baseId: string,
+  data: { name: string; description?: string }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/governed-models`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res, 'Failed to create governed model');
+}
+
+export async function updateGovernedModel(
+  modelId: string,
+  updates: { name?: string; description?: string; status?: string }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(updates),
+  });
+  return handleResponse(res, 'Failed to update governed model');
+}
+
+export async function deleteGovernedModel(modelId: string): Promise<void> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  await handleResponse(res, 'Failed to delete governed model');
+}
+
+export async function addModelKpi(
+  modelId: string,
+  kpi: {
+    code: string;
+    labelEn: string;
+    labelPl?: string;
+    formulaType: string;
+    formulaConfig?: Record<string, unknown>;
+    sourceTableId?: string;
+    sourceFieldId?: string;
+    unit?: string;
+    format?: string;
+  }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}/kpis`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(kpi),
+  });
+  return handleResponse(res, 'Failed to add KPI');
+}
+
+export async function listModelKpis(modelId: string): Promise<any[]> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}/kpis`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to list KPIs');
+}
+
+export async function removeModelKpi(kpiId: string): Promise<void> {
+  const res = await fetchWithRetry(`${BASE_PATH}/kpis/${kpiId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  await handleResponse(res, 'Failed to remove KPI');
+}
+
+export async function computeKpi(kpiId: string): Promise<{ kpiId: string; value: number | null; computedAt: string }> {
+  const res = await fetchWithRetry(`${BASE_PATH}/kpis/${kpiId}/compute`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to compute KPI');
+}
+
+export async function addModelDimension(
+  modelId: string,
+  dim: { name: string; sourceTableId?: string; sourceFieldId?: string; dimensionType?: string }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}/dimensions`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(dim),
+  });
+  return handleResponse(res, 'Failed to add dimension');
+}
+
+export async function listModelDimensions(modelId: string): Promise<any[]> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}/dimensions`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to list dimensions');
+}
+
+export async function removeModelDimension(dimensionId: string): Promise<void> {
+  const res = await fetchWithRetry(`${BASE_PATH}/dimensions/${dimensionId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  await handleResponse(res, 'Failed to remove dimension');
+}
+
+export async function addModelSource(
+  modelId: string,
+  data: { tableId: string; trusted?: boolean; requiredProvenance?: string }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}/sources`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res, 'Failed to add model source');
+}
+
+export async function listModelSources(modelId: string): Promise<any[]> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}/sources`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to list model sources');
+}
+
+// ============================================================================
+// MODULE LINKAGE API (Consultify Integration)
+// ============================================================================
+
+export async function publishToResults(
+  modelId: string,
+  mapping: { kpiIds: string[]; targetModule?: string }
+): Promise<{ success: boolean; syncedRecords: number; message: string }> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}/publish-to-results`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(mapping),
+  });
+  return handleResponse(res, 'Failed to publish to Results');
+}
+
+export async function syncToFinance(
+  modelId: string,
+  mapping: { fieldMappings: Record<string, string>; tableId: string }
+): Promise<{ success: boolean; syncedRecords: number; message: string }> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}/sync-to-finance`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(mapping),
+  });
+  return handleResponse(res, 'Failed to sync to Finance');
+}
+
+export async function syncToExecution(
+  modelId: string,
+  mapping: { fieldMappings: Record<string, string>; tableId: string }
+): Promise<{ success: boolean; syncedRecords: number; message: string }> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}/sync-to-execution`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(mapping),
+  });
+  return handleResponse(res, 'Failed to sync to Execution');
+}
+
+export async function syncToInitiatives(
+  modelId: string,
+  mapping: { fieldMappings: Record<string, string>; tableId: string }
+): Promise<{ success: boolean; syncedRecords: number; message: string }> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}/sync-to-initiatives`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(mapping),
+  });
+  return handleResponse(res, 'Failed to sync to Initiatives');
+}
+
+export async function getModuleLinkStatus(
+  modelId: string
+): Promise<{
+  results: { linked: boolean; lastSync?: string; recordCount: number; errors: string[] } | null;
+  finance: { linked: boolean; lastSync?: string; recordCount: number; errors: string[] } | null;
+  execution: { linked: boolean; lastSync?: string; recordCount: number; errors: string[] } | null;
+  initiatives: { linked: boolean; lastSync?: string; recordCount: number; errors: string[] } | null;
+}> {
+  const res = await fetchWithRetry(`${BASE_PATH}/governed-models/${modelId}/link-status`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to fetch module link status');
+}
+
+// ============================================================================
+// AUTOMATIONS API
+// ============================================================================
+
+export async function createAutomation(
+  tableId: string,
+  data: {
+    name: string;
+    description?: string;
+    triggerType: string;
+    triggerConfig: Record<string, unknown>;
+    actions: Array<{ actionType: string; actionConfig: Record<string, unknown> }>;
+  }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/automations`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res, 'Failed to create automation');
+}
+
+export async function listAutomations(tableId: string): Promise<any[]> {
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/automations`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to list automations');
+}
+
+export async function toggleAutomation(
+  automationId: string,
+  enabled: boolean
+): Promise<void> {
+  const res = await fetchWithRetry(`${BASE_PATH}/automations/${automationId}/toggle`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ enabled }),
+  });
+  await handleResponse(res, 'Failed to toggle automation');
+}
+
+export async function deleteAutomation(automationId: string): Promise<void> {
+  const res = await fetchWithRetry(`${BASE_PATH}/automations/${automationId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  await handleResponse(res, 'Failed to delete automation');
+}
+
+export async function getAutomationRuns(
+  automationId: string,
+  limit = 20
+): Promise<any[]> {
+  const res = await fetchWithRetry(
+    `${BASE_PATH}/automations/${automationId}/runs?limit=${limit}`,
+    { headers: getHeaders() }
+  );
+  return handleResponse(res, 'Failed to fetch automation runs');
+}
+
+export async function runAutomationNow(automationId: string): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/automations/${automationId}/run-now`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to run automation');
+}
+
+// ============================================================================
+// TABLE SYNC API
+// ============================================================================
+
+export async function createTableSync(
+  sourceTableId: string,
+  targetTableId: string,
+  fieldMapping: Record<string, string>,
+  syncMode?: 'one_way' | 'two_way',
+  filterConfig?: { fieldId: string; operator: string; value: string }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${sourceTableId}/syncs`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ targetTableId, fieldMapping, syncMode, filterConfig }),
+  });
+  return handleResponse(res, 'Failed to create sync');
+}
+
+export async function listTableSyncs(tableId: string): Promise<any[]> {
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/syncs`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to list syncs');
+}
+
+export async function deleteTableSync(syncId: string): Promise<void> {
+  const res = await fetchWithRetry(`${BASE_PATH}/syncs/${syncId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  await handleResponse(res, 'Failed to delete sync');
+}
+
+export async function executeTableSync(syncId: string): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/syncs/${syncId}/execute`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to execute sync');
+}
+
+// ============================================================================
+// SHARING / PERMISSIONS API
+// ============================================================================
+
+export async function listBaseCollaborators(baseId: string): Promise<any[]> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/collaborators`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to list collaborators');
+}
+
+export async function inviteCollaborator(
+  baseId: string,
+  email: string,
+  role: string
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/collaborators`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ email, role }),
+  });
+  return handleResponse(res, 'Failed to invite collaborator');
+}
+
+export async function updateCollaboratorRole(
+  baseId: string,
+  userId: string,
+  role: string
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/collaborators/${userId}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ role }),
+  });
+  return handleResponse(res, 'Failed to update collaborator role');
+}
+
+export async function removeCollaborator(
+  baseId: string,
+  userId: string
+): Promise<void> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/collaborators/${userId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  await handleResponse(res, 'Failed to remove collaborator');
+}
+
+// ============================================================================
+// DATE DEPENDENCIES
+// ============================================================================
+
+export interface DateDependencyConfigPayload {
+  startDateFieldId: string;
+  endDateFieldId: string;
+  durationFieldId?: string;
+  predecessorFieldId?: string;
+  dependencyTypeFieldId?: string;
+  lagFieldId?: string;
+  defaultDependencyType: 'FS' | 'SS' | 'FF' | 'SF';
+  defaultLagDays: number;
+  skipWeekends: boolean;
+}
+
+/** Get date dependency config for a table */
+export async function getDependencyConfig(
+  tableId: string
+): Promise<{ config: DateDependencyConfigPayload | null }> {
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/dependency-config`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to fetch dependency config');
+}
+
+/** Save date dependency config for a table */
+export async function putDependencyConfig(
+  tableId: string,
+  config: DateDependencyConfigPayload | null
+): Promise<{ success: boolean; config: DateDependencyConfigPayload | null }> {
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/dependency-config`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify({ config }),
+  });
+  return handleResponse(res, 'Failed to save dependency config');
+}
+
+/** Recalculate date dependencies for a table */
+export async function recalculateDateDependencies(
+  tableId: string,
+  config: DateDependencyConfigPayload
+): Promise<{ success: boolean; updatedRecords: number }> {
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/date-dependencies/recalculate`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ config: { ...config, tableId } }),
+  });
+  return handleResponse(res, 'Failed to recalculate date dependencies');
+}
+
+/** Detect circular dependencies in date predecessor links */
+export async function detectDateDependencyCycle(
+  tableId: string,
+  config: DateDependencyConfigPayload
+): Promise<{ hasCycle: boolean; cycleNodes: string[] | null }> {
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/date-dependencies/detect-cycle`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ config: { ...config, tableId } }),
+  });
+  return handleResponse(res, 'Failed to detect date dependency cycle');
+}
+
+// ============================================================================
+// FIELD REORDER
+// ============================================================================
+
+export async function reorderFields(tableId: string, fieldIds: string[]): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/fields/reorder`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ fieldIds }),
+  });
+  return handleResponse(res, 'Failed to reorder fields');
+}
+
+// ============================================================================
+// RECORD TEMPLATES
+// ============================================================================
+
+export async function listRecordTemplates(tableId: string): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/record-templates`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to list record templates');
+}
+
+export async function createRecordTemplate(
+  tableId: string,
+  name: string,
+  data: Record<string, unknown>
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/record-templates`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ name, data }),
+  });
+  return handleResponse(res, 'Failed to create record template');
+}
+
+export async function updateRecordTemplate(
+  templateId: string,
+  updates: { name?: string; data?: Record<string, unknown> }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/record-templates/${templateId}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(updates),
+  });
+  return handleResponse(res, 'Failed to update record template');
+}
+
+export async function deleteRecordTemplate(templateId: string): Promise<void> {
+  const res = await fetchWithRetry(`${BASE_PATH}/record-templates/${templateId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  await handleResponse(res, 'Failed to delete record template');
+}
+
+export async function getBaseShareSettings(baseId: string): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/share-settings`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to fetch share settings');
+}
+
+export async function updateBaseShareSettings(
+  baseId: string,
+  settings: { publicAccess?: boolean; publicRole?: string }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/share-settings`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(settings),
+  });
+  return handleResponse(res, 'Failed to update share settings');
 }

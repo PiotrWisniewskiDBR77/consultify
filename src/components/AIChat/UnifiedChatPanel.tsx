@@ -75,7 +75,7 @@ import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { PendingActionsIndicator } from './PendingActionsIndicator';
 import { detectTableIntent } from './tableIntentDetector';
-import { generateSchemaProposal } from '@/services/api/tablePlatform.api';
+import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
 
 // ============================================================================
 // Types
@@ -327,6 +327,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [editingText, setEditingText] = useState<string>('');
   const [editBusy, setEditBusy] = useState(false);
   const [signalsOpen, setSignalsOpen] = useState(false);
+  const [tableBuilderOpen, setTableBuilderOpen] = useState(false);
+  const [tableBuilderInitialMsg, setTableBuilderInitialMsg] = useState<string | undefined>();
   const lastKickoffSentRef = useRef<string | null>(null);
   const pendingChatSaveIntentRef = useRef<{
     target: ChatSaveTarget;
@@ -1241,6 +1243,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       }
 
       // Table Platform: intercept table creation/modification intents
+      // Opens the AI Table Builder slide-over panel with the user's message
       if (detectTableIntent(text)) {
         const userMessage: ChatMessage = {
           id: `user-${Date.now()}`,
@@ -1261,50 +1264,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           } catch { /* best-effort persist */ }
         }
 
-        setIsBotTyping(true);
-        try {
-          const wsId = workspaceContext?.workspaceId || workspaceContext?.entityId || '';
-          const language = (i18n.language || 'en').split('-')[0];
-          const proposal = await generateSchemaProposal(wsId, text, undefined, language);
+        const uiLang = (i18n.language || 'en').split('-')[0];
+        addChatMessage({
+          id: `table-builder-${Date.now()}`,
+          role: 'ai',
+          content: uiLang === 'pl'
+            ? 'Otwieram AI Kreator Tabel \u2014 zaraz przygotuję propozycję struktury.'
+            : 'Opening AI Table Builder \u2014 I\'ll prepare a structure proposal for you.',
+          timestamp: new Date(),
+        });
 
-          const proposalMsg: ChatMessage = {
-            id: `table-proposal-${Date.now()}`,
-            role: 'ai',
-            content: '',
-            timestamp: new Date(),
-            metadata: {
-              type: 'table_proposal',
-              proposal,
-            },
-          };
-          addChatMessage(proposalMsg);
-
-          if (activeConversationId) {
-            try {
-              await addMessageToConversation({
-                conversationId: activeConversationId,
-                role: 'ai',
-                content: `[Table Schema Proposal] ${proposal?.summary || ''}`,
-                messageType: 'text',
-                metadata: { type: 'table_proposal', proposal } as any,
-              });
-            } catch { /* best-effort persist */ }
-          }
-        } catch (err) {
-          const uiLang = (i18n.language || 'en').split('-')[0];
-          addChatMessage({
-            id: `table-error-${Date.now()}`,
-            role: 'ai',
-            content:
-              uiLang === 'pl'
-                ? 'Nie udało się wygenerować propozycji tabeli. Spróbuj ponownie.'
-                : 'Failed to generate table proposal. Please try again.',
-            timestamp: new Date(),
-          });
-          console.error('[UnifiedChatPanel] Table proposal generation failed:', err);
-        } finally {
-          setIsBotTyping(false);
-        }
+        setTableBuilderInitialMsg(text);
+        setTableBuilderOpen(true);
 
         onMessageSent?.(content);
         return;
@@ -2982,6 +2953,36 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           open={signalsOpen}
           onClose={() => setSignalsOpen(false)}
           projectId={workspaceContext?.projectId || null}
+        />
+      )}
+
+      {/* AI Table Builder slide-over panel */}
+      {tableBuilderOpen && (
+        <ChatToSchemaPanel
+          workspaceId={workspaceContext?.entityId || ''}
+          initialMessage={tableBuilderInitialMsg}
+          slideOver
+          companyContext={{
+            workspaceName: workspaceContext?.entityName || workspaceContext?.projectName,
+            moduleName: workspaceContext?.type || undefined,
+          }}
+          onExecuted={() => {
+            const uiLang = (i18n.language || 'en').split('-')[0];
+            addChatMessage({
+              id: `table-created-${Date.now()}`,
+              role: 'ai',
+              content: uiLang === 'pl'
+                ? 'Tabela została utworzona pomyślnie! Możesz ją teraz znaleźć w zakładce My Work.'
+                : 'Table created successfully! You can find it in the My Work tab.',
+              timestamp: new Date(),
+            });
+            setTableBuilderOpen(false);
+            setTableBuilderInitialMsg(undefined);
+          }}
+          onClose={() => {
+            setTableBuilderOpen(false);
+            setTableBuilderInitialMsg(undefined);
+          }}
         />
       )}
     </div>

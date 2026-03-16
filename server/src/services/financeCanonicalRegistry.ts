@@ -13,7 +13,7 @@ export interface CanonicalLineDefinition {
   sortOrder: number;
   aggregationLevel: number;
   requiredLevel: CanonicalRequiredLevel;
-  signConvention: 'positive_normal' | 'negative_normal' | 'display_absolute' | 'any';
+  signConvention: 'positive_normal' | 'negative_normal' | 'display_absolute';
   isTotal?: boolean;
   isSubtotal?: boolean;
   isComputed?: boolean;
@@ -269,10 +269,10 @@ const CF_LINES = makeLines('CF', [
   { id: 'fsl-cf-other-expenditure', code: 'OTHER_EXPENDITURE', labelEn: 'Other Expenditure', labelPl: 'Inne wydatki', sortOrder: 74, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'negative_normal' },
   { id: 'fsl-cf-other-receipts', code: 'OTHER_RECEIPTS', labelEn: 'Other Receipts', labelPl: 'Inne wpływy', sortOrder: 75, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'positive_normal' },
   { id: 'fsl-cf-investing-subsidiaries', code: 'INVESTING_SUBSIDIARIES', labelEn: 'Investment in Subsidiaries', labelPl: 'Inwestycje w jednostki zależne', parentId: 'fsl-cf-investing', sortOrder: 76, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'negative_normal' },
-  { id: 'fsl-cf-change-wc-restricted-cash', code: 'CHANGE_WC_RESTRICTED_CASH', labelEn: 'Change in Restricted Cash', labelPl: 'Zmiana stanu środków pieniężnych o ograniczonym dysponowaniu', parentId: 'fsl-cf-operating', sortOrder: 77, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'any' },
-  { id: 'fsl-cf-change-wc-prepaids', code: 'CHANGE_WC_PREPAIDS', labelEn: 'Change in Prepayments', labelPl: 'Zmiana stanu rozliczeń międzyokresowych', parentId: 'fsl-cf-operating', sortOrder: 78, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'any' },
+  { id: 'fsl-cf-change-wc-restricted-cash', code: 'CHANGE_WC_RESTRICTED_CASH', labelEn: 'Change in Restricted Cash', labelPl: 'Zmiana stanu środków pieniężnych o ograniczonym dysponowaniu', parentId: 'fsl-cf-operating', sortOrder: 77, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'positive_normal' },
+  { id: 'fsl-cf-change-wc-prepaids', code: 'CHANGE_WC_PREPAIDS', labelEn: 'Change in Prepayments', labelPl: 'Zmiana stanu rozliczeń międzyokresowych', parentId: 'fsl-cf-operating', sortOrder: 78, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'positive_normal' },
   { id: 'fsl-cf-lease-repayment', code: 'LEASE_REPAYMENT', labelEn: 'Lease Liability Repayment', labelPl: 'Spłata zobowiązań z tytułu leasingu', parentId: 'fsl-cf-financing', sortOrder: 79, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'negative_normal' },
-  { id: 'fsl-cf-operating-fv-derivatives', code: 'FV_DERIVATIVES', labelEn: 'Fair Value Changes on Derivatives', labelPl: 'Zmiany wartości godziwej instrumentów pochodnych', parentId: 'fsl-cf-operating', sortOrder: 80, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'any' },
+  { id: 'fsl-cf-operating-fv-derivatives', code: 'FV_DERIVATIVES', labelEn: 'Fair Value Changes on Derivatives', labelPl: 'Zmiany wartości godziwej instrumentów pochodnych', parentId: 'fsl-cf-operating', sortOrder: 80, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'positive_normal' },
   { id: 'fsl-cf-dividends-received', code: 'DIVIDENDS_RECEIVED', labelEn: 'Dividends Received', labelPl: 'Otrzymane dywidendy', parentId: 'fsl-cf-investing', sortOrder: 81, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'positive_normal' },
   { id: 'fsl-cf-share-buyback', code: 'SHARE_BUYBACK', labelEn: 'Share Buyback / Treasury Shares Acquired', labelPl: 'Skup akcji własnych', parentId: 'fsl-cf-financing', sortOrder: 82, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'negative_normal' },
   { id: 'fsl-cf-operating-sbc', code: 'SBC_CF', labelEn: 'Stock-Based Compensation (CF)', labelPl: 'Wynagrodzenie w formie akcji', parentId: 'fsl-cf-operating', sortOrder: 83, aggregationLevel: 2, requiredLevel: 'optional', signConvention: 'positive_normal' },

@@ -36,6 +36,12 @@ import type { FieldType, TablePlatformField } from '@/types/tablePlatform';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
+interface ConditionalVisibility {
+  fieldId: string;
+  operator: 'equals' | 'not_equals' | 'is_empty' | 'is_not_empty';
+  value?: unknown;
+}
+
 interface FormFieldConfig {
   fieldId: string;
   label?: string;
@@ -43,6 +49,7 @@ interface FormFieldConfig {
   helpText?: string;
   defaultValue?: unknown;
   hidden?: boolean;
+  conditionalVisibility?: ConditionalVisibility;
 }
 
 interface FormConfig {
@@ -51,6 +58,7 @@ interface FormConfig {
   redirectUrl?: string;
   allowMultiple?: boolean;
   requireAuth?: boolean;
+  notificationEmail?: string;
   styling?: Record<string, unknown>;
 }
 
@@ -119,6 +127,7 @@ export default function FormBuilder({
   const [redirectUrl, setRedirectUrl] = useState(form.config?.redirectUrl ?? '');
   const [allowMultiple, setAllowMultiple] = useState(form.config?.allowMultiple ?? true);
   const [requireAuth, setRequireAuth] = useState(form.config?.requireAuth ?? false);
+  const [notificationEmail, setNotificationEmail] = useState(form.config?.notificationEmail ?? '');
 
   const [fieldConfigs, setFieldConfigs] = useState<FormFieldConfig[]>(() => {
     const existing = form.config?.fields ?? [];
@@ -156,12 +165,13 @@ export default function FormBuilder({
           redirectUrl: redirectUrl || undefined,
           allowMultiple,
           requireAuth,
+          notificationEmail: notificationEmail || undefined,
         },
       });
     } finally {
       setSaving(false);
     }
-  }, [name, description, slug, isPublished, fieldConfigs, submitMessage, redirectUrl, allowMultiple, requireAuth, onSave]);
+  }, [name, description, slug, isPublished, fieldConfigs, submitMessage, redirectUrl, allowMultiple, requireAuth, notificationEmail, onSave]);
 
   const handleCopyUrl = useCallback(() => {
     navigator.clipboard.writeText(publicUrl);
@@ -308,6 +318,8 @@ export default function FormBuilder({
             fieldConfigs={fieldConfigs}
             fieldMap={fieldMap}
             onUpdate={updateFieldConfig}
+            onMoveUp={(idx) => { if (idx > 0) moveField(idx, idx - 1); }}
+            onMoveDown={(idx) => { if (idx < fieldConfigs.length - 1) moveField(idx, idx + 1); }}
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
@@ -324,6 +336,7 @@ export default function FormBuilder({
             slug={slug}
             submitMessage={submitMessage}
             redirectUrl={redirectUrl}
+            notificationEmail={notificationEmail}
             allowMultiple={allowMultiple}
             requireAuth={requireAuth}
             publicUrl={publicUrl}
@@ -333,6 +346,7 @@ export default function FormBuilder({
             onSlugChange={setSlug}
             onSubmitMessageChange={setSubmitMessage}
             onRedirectUrlChange={setRedirectUrl}
+            onNotificationEmailChange={setNotificationEmail}
             onAllowMultipleChange={setAllowMultiple}
             onRequireAuthChange={setRequireAuth}
           />
@@ -365,6 +379,8 @@ interface FieldListPanelProps {
   fieldConfigs: FormFieldConfig[];
   fieldMap: Map<string, TablePlatformField>;
   onUpdate: (fieldId: string, updates: Partial<FormFieldConfig>) => void;
+  onMoveUp: (idx: number) => void;
+  onMoveDown: (idx: number) => void;
   onDragStart: (idx: number) => void;
   onDragOver: (e: React.DragEvent, idx: number) => void;
   onDrop: (idx: number) => void;
@@ -377,6 +393,8 @@ function FieldListPanel({
   fieldConfigs,
   fieldMap,
   onUpdate,
+  onMoveUp,
+  onMoveDown,
   onDragStart,
   onDragOver,
   onDrop,
@@ -419,6 +437,24 @@ function FieldListPanel({
           >
             {/* Field row */}
             <div className="flex items-center gap-3 px-4 py-3">
+              <div className="flex shrink-0 flex-col gap-0.5">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onMoveUp(idx); }}
+                  disabled={idx === 0}
+                  className="rounded p-0.5 text-gray-400 transition-colors hover:text-gray-600 disabled:opacity-30 dark:hover:text-gray-300"
+                  title={t('formBuilder.moveUp', 'Move up')}
+                >
+                  <ChevronUp className="h-3 w-3" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onMoveDown(idx); }}
+                  disabled={idx === fieldConfigs.length - 1}
+                  className="rounded p-0.5 text-gray-400 transition-colors hover:text-gray-600 disabled:opacity-30 dark:hover:text-gray-300"
+                  title={t('formBuilder.moveDown', 'Move down')}
+                >
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </div>
               <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-gray-400" />
               <span className="shrink-0 text-gray-500 dark:text-gray-400">
                 {FIELD_TYPE_ICON[field.fieldType] ?? <Type className="h-4 w-4" />}
@@ -503,23 +539,103 @@ function FieldListPanel({
                     />
                   </div>
                 </div>
-                {fc.hidden && (
-                  <div className="mt-3">
-                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                      {t('formBuilder.defaultValue', 'Default value (for hidden fields)')}
-                    </label>
+
+                {/* Default value */}
+                <div className="mt-3">
+                  <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                    {t('formBuilder.defaultValue', 'Default value')}
+                  </label>
+                  <input
+                    type="text"
+                    value={String(fc.defaultValue ?? '')}
+                    onChange={(e) =>
+                      onUpdate(fc.fieldId, {
+                        defaultValue: e.target.value || undefined,
+                      })
+                    }
+                    className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                  />
+                </div>
+
+                {/* Conditional visibility */}
+                <div className="mt-3">
+                  <label className="mb-1 flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    {t('formBuilder.conditionalVisibility', 'Conditional visibility')}
                     <input
-                      type="text"
-                      value={String(fc.defaultValue ?? '')}
-                      onChange={(e) =>
-                        onUpdate(fc.fieldId, {
-                          defaultValue: e.target.value || undefined,
-                        })
-                      }
-                      className="w-full rounded-lg border border-gray-200 px-3 py-1.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+                      type="checkbox"
+                      checked={!!fc.conditionalVisibility}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          onUpdate(fc.fieldId, {
+                            conditionalVisibility: { fieldId: '', operator: 'equals', value: '' },
+                          });
+                        } else {
+                          onUpdate(fc.fieldId, { conditionalVisibility: undefined });
+                        }
+                      }}
+                      className="h-3.5 w-3.5 rounded border-gray-300"
                     />
-                  </div>
-                )}
+                  </label>
+                  {fc.conditionalVisibility && (
+                    <div className="mt-2 grid grid-cols-3 gap-2 rounded-lg border border-gray-100 bg-gray-50 p-2 dark:border-navy-700 dark:bg-navy-900">
+                      <select
+                        value={fc.conditionalVisibility.fieldId}
+                        onChange={(e) =>
+                          onUpdate(fc.fieldId, {
+                            conditionalVisibility: { ...fc.conditionalVisibility!, fieldId: e.target.value },
+                          })
+                        }
+                        className="rounded border border-gray-200 px-2 py-1 text-xs dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                      >
+                        <option value="">{t('formBuilder.selectField', 'Select field...')}</option>
+                        {fieldConfigs
+                          .filter((other) => other.fieldId !== fc.fieldId)
+                          .map((other) => {
+                            const otherField = fieldMap.get(other.fieldId);
+                            return (
+                              <option key={other.fieldId} value={other.fieldId}>
+                                {other.label || otherField?.name || other.fieldId}
+                              </option>
+                            );
+                          })}
+                      </select>
+                      <select
+                        value={fc.conditionalVisibility.operator}
+                        onChange={(e) =>
+                          onUpdate(fc.fieldId, {
+                            conditionalVisibility: {
+                              ...fc.conditionalVisibility!,
+                              operator: e.target.value as ConditionalVisibility['operator'],
+                            },
+                          })
+                        }
+                        className="rounded border border-gray-200 px-2 py-1 text-xs dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                      >
+                        <option value="equals">{t('formBuilder.opEquals', 'equals')}</option>
+                        <option value="not_equals">{t('formBuilder.opNotEquals', 'not equals')}</option>
+                        <option value="is_empty">{t('formBuilder.opIsEmpty', 'is empty')}</option>
+                        <option value="is_not_empty">{t('formBuilder.opIsNotEmpty', 'is not empty')}</option>
+                      </select>
+                      {fc.conditionalVisibility.operator !== 'is_empty' &&
+                        fc.conditionalVisibility.operator !== 'is_not_empty' && (
+                          <input
+                            type="text"
+                            value={String(fc.conditionalVisibility.value ?? '')}
+                            onChange={(e) =>
+                              onUpdate(fc.fieldId, {
+                                conditionalVisibility: {
+                                  ...fc.conditionalVisibility!,
+                                  value: e.target.value,
+                                },
+                              })
+                            }
+                            placeholder={t('formBuilder.condValue', 'Value...')}
+                            className="rounded border border-gray-200 px-2 py-1 text-xs dark:border-navy-600 dark:bg-navy-800 dark:text-white"
+                          />
+                        )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -535,6 +651,7 @@ interface SettingsPanelProps {
   slug: string;
   submitMessage: string;
   redirectUrl: string;
+  notificationEmail: string;
   allowMultiple: boolean;
   requireAuth: boolean;
   publicUrl: string;
@@ -544,6 +661,7 @@ interface SettingsPanelProps {
   onSlugChange: (v: string) => void;
   onSubmitMessageChange: (v: string) => void;
   onRedirectUrlChange: (v: string) => void;
+  onNotificationEmailChange: (v: string) => void;
   onAllowMultipleChange: (v: boolean) => void;
   onRequireAuthChange: (v: boolean) => void;
 }
@@ -554,6 +672,7 @@ function SettingsPanel({
   slug,
   submitMessage,
   redirectUrl,
+  notificationEmail,
   allowMultiple,
   requireAuth,
   publicUrl,
@@ -563,6 +682,7 @@ function SettingsPanel({
   onSlugChange,
   onSubmitMessageChange,
   onRedirectUrlChange,
+  onNotificationEmailChange,
   onAllowMultipleChange,
   onRequireAuthChange,
 }: SettingsPanelProps) {
@@ -640,6 +760,23 @@ function SettingsPanel({
           placeholder="https://..."
           className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
         />
+      </div>
+
+      {/* Notification email */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('formBuilder.notificationEmail', 'Notification email (optional)')}
+        </label>
+        <input
+          type="email"
+          value={notificationEmail}
+          onChange={(e) => onNotificationEmailChange(e.target.value)}
+          placeholder="notify@example.com"
+          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-white"
+        />
+        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+          {t('formBuilder.notificationEmailHint', 'Receive an email when a new response is submitted')}
+        </p>
       </div>
 
       {/* Toggles */}

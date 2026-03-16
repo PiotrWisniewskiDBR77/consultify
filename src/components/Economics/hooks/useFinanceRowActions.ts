@@ -51,7 +51,7 @@ export function useFinanceRowActions({
 
       try {
         if (row.kind === 'statements') {
-          await Api.delete(`/api/finance-statements/${row.id}`);
+          await Api.delete(`/api/finance-statements/packs/${row.id}`);
           await loadStatements();
         } else if (
           row.kind === 'models' ||

@@ -284,6 +284,12 @@ const LegalDocumentView = React.lazy(() =>
   import('@/views/LegalDocumentView').then((m) => ({ default: m.LegalDocumentView }))
 );
 const OAuthCallbackView = React.lazy(() => import('@/views/OAuthCallback'));
+const ForgotPasswordView = React.lazy(() =>
+  import('@/views/auth/ForgotPasswordView').then((m) => ({ default: m.ForgotPasswordView }))
+);
+const ResetPasswordView = React.lazy(() =>
+  import('@/views/auth/ResetPasswordView').then((m) => ({ default: m.ResetPasswordView }))
+);
 
 // Status & Changelog
 const StatusPageView = React.lazy(() =>
@@ -328,6 +334,11 @@ const DocsChangelogView = React.lazy(() =>
 );
 const DocsSecurityView = React.lazy(() =>
   import('@/views/docs/DocsSecurityView').then((m) => ({ default: m.DocsSecurityView }))
+);
+
+// Public Form Page (Table Platform)
+const PublicFormPage = React.lazy(() =>
+  import('@/components/MyWork/table/forms/PublicFormPage').then((m) => ({ default: m.PublicFormPage }))
 );
 
 // Public Mini Assessment (T015)
@@ -648,6 +659,16 @@ export const AppRoutes: React.FC = () => {
           <Route path=":categorySlug/:articleSlug" element={<DocsArticleView />} />
         </Route>
 
+        {/* Public Form Page (Table Platform) — no auth required */}
+        <Route
+          path="/forms/:slug"
+          element={
+            <Suspense fallback={<LoadingScreen message="Loading form..." />}>
+              <PublicFormPage />
+            </Suspense>
+          }
+        />
+
         {/* Public Mini Assessment (T015) */}
         <Route
           path="/assess/:token?"
@@ -847,6 +868,30 @@ export const AppRoutes: React.FC = () => {
             <Suspense fallback={<LoadingScreen message="Processing authentication..." />}>
               <OAuthCallbackView />
             </Suspense>
+          }
+        />
+
+        {/* Forgot Password - Public */}
+        <Route
+          path="/forgot-password"
+          element={
+            <AuthLayout>
+              <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                <ForgotPasswordView />
+              </Suspense>
+            </AuthLayout>
+          }
+        />
+
+        {/* Reset Password - Public */}
+        <Route
+          path="/reset-password"
+          element={
+            <AuthLayout>
+              <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                <ResetPasswordView />
+              </Suspense>
+            </AuthLayout>
           }
         />
 
@@ -1193,10 +1238,10 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.ECONOMICS}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Economics']}>
+            <MainLayout breadcrumbs={breadcrumbs || ['Finance']}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
-                  <EconomicsView />
+                  <V4ComingSoonView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1208,7 +1253,7 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Finance']}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
-                  <EconomicsView />
+                  <V4ComingSoonView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1217,9 +1262,11 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.EXECUTION}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Execution']} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || ['Execution']}>
               <RouteErrorBoundary>
-                <ExecutionHub />
+                <AnimationWrapper variant="slideUp">
+                  <V4ComingSoonView />
+                </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1230,7 +1277,7 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Implementation']}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
-                  <ImplementationView />
+                  <V4ComingSoonView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1242,7 +1289,7 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Rollout']}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
-                  <FullRolloutView />
+                  <V4ComingSoonView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1314,9 +1361,11 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.KPI_OKR}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]}>
               <RouteErrorBoundary>
-                <KpiOkrView />
+                <AnimationWrapper variant="slideUp">
+                  <V4ComingSoonView />
+                </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1326,10 +1375,11 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout
               breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}
-              noPadding
             >
               <RouteErrorBoundary>
-                <ReportsAndPresentationsHub />
+                <AnimationWrapper variant="slideUp">
+                  <V4ComingSoonView />
+                </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1337,9 +1387,11 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.MEETING}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.meeting', 'Meeting')]}>
               <RouteErrorBoundary>
-                <MeetingHub />
+                <AnimationWrapper variant="slideUp">
+                  <V4ComingSoonView />
+                </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1349,10 +1401,11 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout
               breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}
-              noPadding
             >
               <RouteErrorBoundary>
-                <PresentationWizard />
+                <AnimationWrapper variant="slideUp">
+                  <V4ComingSoonView />
+                </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1360,9 +1413,15 @@ export const AppRoutes: React.FC = () => {
         <Route
           path="/presentations/builder/:deckId"
           element={
-            <RouteErrorBoundary>
-              <DeckBuilder />
-            </RouteErrorBoundary>
+            <MainLayout
+              breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}
+            >
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="slideUp">
+                  <V4ComingSoonView />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
           }
         />
         <Route
@@ -1384,9 +1443,11 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.BENEFITS}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]}>
               <RouteErrorBoundary>
-                <ResultsHub />
+                <AnimationWrapper variant="slideUp">
+                  <V4ComingSoonView />
+                </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
           }

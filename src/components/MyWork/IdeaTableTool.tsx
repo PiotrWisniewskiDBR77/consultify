@@ -43,6 +43,8 @@ import {
   Network,
   Paintbrush,
   Palette,
+  PanelRightClose,
+  PanelRightOpen,
   Plus,
   Presentation,
   Redo2,
@@ -109,7 +111,9 @@ import { FrameworkGenerator } from './table/FrameworkGenerator';
 import { GridView } from './table/GridView';
 import { IdeaPipeline } from './table/IdeaPipeline';
 import FormBuilder from './table/FormBuilder';
+import { FormsIndex } from './table/forms/FormsIndex';
 import { InterfaceDesigner } from './table/InterfaceDesigner';
+import { InterfacesIndex } from './table/interfaces/InterfacesIndex';
 import { IdeaScoringModel } from './table/IdeaScoringModel';
 import { BatchAIFillButton, InlineAIFill } from './table/InlineAIFill';
 import { KanbanView } from './table/KanbanView';
@@ -157,6 +161,15 @@ import { WebhookRelayPanel } from './table/connectors/WebhookRelayPanel';
 import { useTableRealtime } from './table/useTableRealtime';
 import { PresenceIndicators } from './table/PresenceIndicators';
 import { DistributionBuilder } from './table/DistributionBuilder';
+import { AutomationsManager } from './table/automations/AutomationsManager';
+import { SyncManager } from './table/sync/SyncManager';
+import { SharingManager } from './table/sharing/SharingManager';
+import { DistributionManager } from './table/distribution/DistributionManager';
+import { GovernedModelsDashboard } from './table/governed/GovernedModelsDashboard';
+import { ConsultifyLinkPanel } from './table/integration/ConsultifyLinkPanel';
+import { WorkflowDashboard } from './table/WorkflowDashboard';
+import { StatusBar } from './table/StatusBar';
+import { TableTabStrip } from './table/TableTabStrip';
 import { TemplateGallery } from './table/TemplateGallery';
 import { MobileToolbarMenu } from './table/MobileToolbarMenu';
 
@@ -479,10 +492,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [showConnectorWizard, setShowConnectorWizard] = useState(false);
   const [showConnectorList, setShowConnectorList] = useState(false);
   const [showWebhookRelays, setShowWebhookRelays] = useState(false);
+  const [platformTab, setPlatformTab] = useState<'data' | 'forms' | 'interfaces' | 'models' | 'workflow'>('data');
   const [showInterfaceDesigner, setShowInterfaceDesigner] = useState(false);
   const [showFormBuilder, setShowFormBuilder] = useState(false);
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
   const [showDistributionBuilder, setShowDistributionBuilder] = useState(false);
+  const [showAutomationsManager, setShowAutomationsManager] = useState(false);
+  const [showSyncManager, setShowSyncManager] = useState(false);
+  const [showSharingManager, setShowSharingManager] = useState(false);
+  const [showDistributionManager, setShowDistributionManager] = useState(false);
+  const [showConsultifyLink, setShowConsultifyLink] = useState(false);
   const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
   const [connectorHistoryTarget, setConnectorHistoryTarget] = useState<Connector | null>(null);
   const [colContextMenu, setColContextMenu] = useState<{
@@ -495,9 +514,84 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     visibleFieldIds: [],
     galleryCardSize: 'medium',
   });
+  const [showToolsMenu, setShowToolsMenu] = useState(false);
+  const [baseTables, setBaseTables] = useState<{ id: string; name: string }[]>([]);
+  const [statusBarAggConfig, setStatusBarAggConfig] = useState<Record<string, string>>({});
   const csvInputRef = useRef<HTMLInputElement>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
+
+  // ── Multi-table tab strip: load tables list ─────────────────────────────────
+  const platformTableId = usePlatform
+    ? (platformIntegration as any).platformFields?.[0]?.tableId ?? ideaId
+    : null;
+
+  useEffect(() => {
+    if (!usePlatform) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const bases = await TablePlatformApi.listBases(ideaId);
+        const baseRow = Array.isArray(bases) ? bases[0] : null;
+        if (!baseRow || cancelled) return;
+        const baseId = String((baseRow as Record<string, unknown>).id ?? '');
+        const fullBase = await TablePlatformApi.getBase(baseId);
+        const tables = ((fullBase as Record<string, unknown>)?.tables ?? []) as { id: string; name: string }[];
+        if (!cancelled) {
+          setBaseTables(tables.map((t: any) => ({ id: String(t.id), name: String(t.name ?? 'Untitled') })));
+        }
+      } catch {
+        // silently fail
+      }
+    })();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usePlatform, ideaId]);
+
+  const handleTabSelectTable = useCallback(async (tableId: string) => {
+    if (!usePlatform) return;
+    await platformIntegration.refresh();
+    toast(isPl ? 'Przełączono tabelę' : 'Switched table');
+  }, [usePlatform, platformIntegration, isPl]);
+
+  const handleTabCreateTable = useCallback(async () => {
+    if (!usePlatform) return;
+    const name = window.prompt(isPl ? 'Nazwa nowej tabeli:' : 'New table name:');
+    if (!name?.trim()) return;
+    try {
+      const bases = await TablePlatformApi.listBases(ideaId);
+      const baseRow = Array.isArray(bases) ? bases[0] : null;
+      if (!baseRow) return;
+      const baseId = String((baseRow as Record<string, unknown>).id ?? '');
+      const created = await TablePlatformApi.createTable(baseId, name.trim());
+      if (created) {
+        setBaseTables((prev) => [...prev, { id: String((created as any).id), name: name.trim() }]);
+        toast.success(isPl ? 'Tabela utworzona' : 'Table created');
+      }
+    } catch {
+      toast.error(isPl ? 'Nie udało się utworzyć tabeli' : 'Failed to create table');
+    }
+  }, [usePlatform, ideaId, isPl]);
+
+  const handleTabRenameTable = useCallback((_tableId: string, _newName: string) => {
+    setBaseTables((prev) => prev.map((t) => t.id === _tableId ? { ...t, name: _newName } : t));
+    toast.success(isPl ? 'Nazwa zmieniona' : 'Renamed');
+  }, [isPl]);
+
+  const handleTabDuplicateTable = useCallback(async (_tableId: string) => {
+    toast(isPl ? 'Duplikowanie tabeli — wkrótce' : 'Duplicate table — coming soon');
+  }, [isPl]);
+
+  const handleTabDeleteTable = useCallback(async (tableId: string) => {
+    if (!window.confirm(isPl ? 'Czy na pewno chcesz usunąć tę tabelę?' : 'Are you sure you want to delete this table?')) return;
+    try {
+      await TablePlatformApi.deleteTable(tableId);
+      setBaseTables((prev) => prev.filter((t) => t.id !== tableId));
+      toast.success(isPl ? 'Tabela usunięta' : 'Table deleted');
+    } catch {
+      toast.error(isPl ? 'Nie udało się usunąć tabeli' : 'Failed to delete table');
+    }
+  }, [isPl]);
 
   // ── Quick action listener (extracted to hook) ────────────────────────────────
   useTableQuickActions({
@@ -908,6 +1002,9 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             onClick={(e) => e.stopPropagation()}
             className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
           />
+        </td>
+        <td className="w-10 px-1 py-1.5 text-[10px] text-slate-400 dark:text-slate-500 text-right select-none tabular-nums">
+          {rowIdx + 1}
         </td>
         {_visCols.map((col, colIdx) => {
           const condStyle =
@@ -1453,7 +1550,63 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               <BarChart3 size={12} />
             </button>
 
-            {/* Interface Designer */}
+            {/* Platform tab switcher: Data / Forms / Interfaces */}
+            {usePlatform && (
+              <div className="flex items-center rounded-lg bg-slate-100 dark:bg-navy-800 p-0.5">
+                <button
+                  onClick={() => setPlatformTab('data')}
+                  className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                    platformTab === 'data'
+                      ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                  }`}
+                >
+                  {isPl ? 'Dane' : 'Data'}
+                </button>
+                <button
+                  onClick={() => setPlatformTab('forms')}
+                  className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                    platformTab === 'forms'
+                      ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                  }`}
+                >
+                  {isPl ? 'Formularze' : 'Forms'}
+                </button>
+                <button
+                  onClick={() => setPlatformTab('interfaces')}
+                  className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                    platformTab === 'interfaces'
+                      ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                  }`}
+                >
+                  {isPl ? 'Interfejsy' : 'Interfaces'}
+                </button>
+                <button
+                  onClick={() => setPlatformTab('models')}
+                  className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                    platformTab === 'models'
+                      ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                  }`}
+                >
+                  {isPl ? 'Modele' : 'Models'}
+                </button>
+                <button
+                  onClick={() => setPlatformTab('workflow')}
+                  className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                    platformTab === 'workflow'
+                      ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
+                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                  }`}
+                >
+                  {isPl ? 'Workflow' : 'Workflow'}
+                </button>
+              </div>
+            )}
+
+            {/* Interface Designer (direct open) */}
             {usePlatform && (
               <button
                 onClick={() => setShowInterfaceDesigner(true)}
@@ -1464,7 +1617,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               </button>
             )}
 
-            {/* Form Builder */}
+            {/* Form Builder (direct open) */}
             {usePlatform && !locked && (
               <button
                 onClick={() => setShowFormBuilder(true)}
@@ -1475,15 +1628,123 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               </button>
             )}
 
-            {/* AI Schema Builder */}
+            {/* Tools dropdown — quick access to platform features */}
+            {usePlatform && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowToolsMenu((p) => !p)}
+                  className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                    showToolsMenu
+                      ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                  }`}
+                  title={isPl ? 'Narzędzia' : 'Tools'}
+                >
+                  <Grid3X3 size={12} />
+                  <span className="hidden lg:inline">{isPl ? 'Narzędzia' : 'Tools'}</span>
+                  <ChevronDown size={10} />
+                </button>
+                {showToolsMenu && (
+                  <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1 max-h-[70vh] overflow-y-auto">
+                    <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{isPl ? 'Workflow' : 'Workflow'}</div>
+                    <button
+                      onClick={() => { setShowAutomationsManager(true); setShowToolsMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    >
+                      <Rocket size={14} className="text-amber-500" />
+                      {isPl ? 'Automatyzacje' : 'Automations'}
+                    </button>
+                    <button
+                      onClick={() => { setShowSyncManager(true); setShowToolsMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    >
+                      <Link2 size={14} className="text-cyan-500" />
+                      {isPl ? 'Synchronizacja danych' : 'Data Sync'}
+                    </button>
+                    <button
+                      onClick={() => { setShowWebhookRelays(true); setShowToolsMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    >
+                      <Webhook size={14} className="text-indigo-500" />
+                      {isPl ? 'Webhook Relay' : 'Webhook Relays'}
+                    </button>
+                    <button
+                      onClick={() => { setShowSharingManager(true); setShowToolsMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    >
+                      <Network size={14} className="text-green-500" />
+                      {isPl ? 'Udostępnianie' : 'Sharing & Permissions'}
+                    </button>
+                    <button
+                      onClick={() => { setShowDistributionManager(true); setShowToolsMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    >
+                      <Send size={14} className="text-pink-500" />
+                      {isPl ? 'Dystrybucja' : 'Distribution'}
+                    </button>
+                    <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
+                    <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">{isPl ? 'Budowanie' : 'Build'}</div>
+                    <button
+                      onClick={() => { setShowFormBuilder(true); setShowToolsMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    >
+                      <FileText size={14} className="text-blue-500" />
+                      {isPl ? 'Formularze' : 'Forms'}
+                    </button>
+                    <button
+                      onClick={() => { setShowInterfaceDesigner(true); setShowToolsMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    >
+                      <Layout size={14} className="text-violet-500" />
+                      {isPl ? 'Interfejsy' : 'Interfaces'}
+                    </button>
+                    <button
+                      onClick={() => { setShowChatToSchema(true); setShowToolsMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    >
+                      <Sparkles size={14} className="text-amber-500" />
+                      {isPl ? 'AI Schema Builder' : 'AI Schema Builder'}
+                    </button>
+                    <button
+                      onClick={() => { setShowTemplateGallery(true); setShowToolsMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    >
+                      <LayoutTemplate size={14} className="text-emerald-500" />
+                      {isPl ? 'Szablony' : 'Templates'}
+                    </button>
+                    <button
+                      onClick={() => { setShowConnectorWizard(true); setShowToolsMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    >
+                      <Download size={14} className="text-teal-500" />
+                      {isPl ? 'Konektory' : 'Connectors'}
+                    </button>
+                    <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
+                    <button
+                      onClick={() => { setShowConsultifyLink(true); setShowToolsMenu(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                    >
+                      <Layers size={14} className="text-indigo-500" />
+                      {isPl ? 'Połączenie z Consultify' : 'Consultify Link'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* AI Builder (split-screen) */}
             {!locked && usePlatform && (
               <button
-                onClick={() => setShowChatToSchema(true)}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors"
-                title="AI Schema Builder"
+                onClick={() => setShowChatToSchema((p) => !p)}
+                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                  showChatToSchema
+                    ? 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                }`}
+                title={isPl ? 'AI Kreator (Ctrl+Shift+S)' : 'AI Builder (Ctrl+Shift+S)'}
               >
-                <Sparkles size={12} />
-                <span className="hidden lg:inline">AI Schema</span>
+                {showChatToSchema ? <PanelRightClose size={12} /> : <PanelRightOpen size={12} />}
+                <span className="hidden lg:inline">{isPl ? 'AI Kreator' : 'AI Builder'}</span>
               </button>
             )}
           </div>
@@ -1811,8 +2072,86 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           </div>
         )}
 
-        {/* Content area */}
-        {_loading ? (
+        {/* Content area — switchable between Data / Forms / Interfaces + optional AI Panel */}
+        <div className="flex flex-1 overflow-hidden min-h-0">
+          <div className="flex-1 overflow-hidden min-w-0">
+        {usePlatform && platformTab === 'forms' ? (
+          <div className="flex-1 overflow-y-auto">
+            <FormsIndex
+              tableId={platformTableId ?? ideaId}
+              tableFields={platformIntegration.platformFields.length > 0
+                ? platformIntegration.platformFields
+                : effectiveColumns.map((c) => ({
+                    id: c.key,
+                    tableId: platformTableId ?? ideaId,
+                    name: c.header,
+                    fieldType: (c.type ?? 'singleLineText') as import('@/types/tablePlatform').FieldType,
+                    options: {},
+                    isComputed: false,
+                    order: 0,
+                    createdAt: '',
+                    updatedAt: '',
+                  }))
+              }
+              locked={locked}
+            />
+          </div>
+        ) : usePlatform && platformTab === 'interfaces' ? (
+          <div className="flex-1 overflow-y-auto">
+            <InterfacesIndex
+              baseId={ideaId}
+              tableId={platformTableId ?? ideaId}
+              tables={[{
+                id: platformTableId ?? ideaId,
+                name: isPl ? 'Bieżąca tabela' : 'Current table',
+                fields: _cols.map((c) => ({ id: c.key, name: c.header })),
+              }]}
+              platformViews={platformIntegration.platformViews}
+              onCreateView={platformIntegration.createPlatformView}
+              locked={locked}
+            />
+          </div>
+        ) : usePlatform && platformTab === 'models' ? (
+          <div className="flex-1 overflow-y-auto">
+            <GovernedModelsDashboard
+              baseId={ideaId}
+              tables={baseTables.map((t) => ({
+                id: t.id,
+                name: t.name,
+                fields: t.id === (platformTableId ?? ideaId)
+                  ? _cols.map((c) => ({ id: c.key, name: c.header }))
+                  : [],
+              }))}
+              locked={locked}
+              onOpenTable={(tableId) => {
+                const tab = baseTables.find((bt) => bt.id === tableId);
+                if (tab) handleTabSelectTable(tab.id);
+              }}
+            />
+          </div>
+        ) : usePlatform && platformTab === 'workflow' ? (
+          <div className="flex-1 overflow-hidden">
+            <WorkflowDashboard
+              tableId={platformTableId ?? ideaId}
+              baseId={ideaId}
+              workspaceId={ideaId}
+              tables={baseTables.map((t) => ({
+                id: t.id,
+                name: t.name,
+                fields: t.id === (platformTableId ?? ideaId)
+                  ? _cols.map((c) => ({ id: c.key, name: c.header, fieldType: (c.type ?? 'singleLineText') }))
+                  : [],
+              }))}
+              fields={_cols.map((c) => ({ id: c.key, name: c.header, fieldType: (c.type ?? 'singleLineText') }))}
+              views={platformIntegration.platformViews.map((v: any) => ({
+                id: v.id,
+                name: v.name,
+                shareToken: v.shareToken,
+              }))}
+              locked={locked}
+            />
+          </div>
+        ) : _loading ? (
           <div className="flex-1 flex items-center justify-center">
             <Loader2 className="animate-spin text-slate-400" size={24} />
           </div>
@@ -1946,7 +2285,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             />
             <table
               className="w-full text-left"
-              style={{ minWidth: _visCols.reduce((s, c) => s + c.width, 40) }}
+              style={{ minWidth: _visCols.reduce((s, c) => s + c.width, 80) }}
             >
               <thead className="sticky top-0 bg-slate-50/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/60 z-10">
                 <tr>
@@ -1974,6 +2313,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
                     />
                   </th>
+                  <th className="w-10 px-1 py-2 text-[10px] font-normal text-slate-400 dark:text-slate-500 text-right select-none">#</th>
                   {_visCols.map((col) => (
                     <th
                       key={col.key}
@@ -2046,7 +2386,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     <React.Fragment key={groupKey}>
                       <tr className="bg-slate-100/50 dark:bg-navy-800/50">
                         <td
-                          colSpan={_visCols.length + 1}
+                          colSpan={_visCols.length + 2}
                           className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                         >
                           {groupKey || (isPl ? '(brak wartości)' : '(empty)')} <span className="text-slate-400 font-normal ml-1">({rows.length})</span>
@@ -2057,7 +2397,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   ))
                 ) : processedRowsWithRollups.length === 0 ? (
                   <tr>
-                    <td colSpan={_visCols.length + 1} className="px-4 py-12 text-center">
+                    <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
                       <div className="mx-auto max-w-xl text-slate-400 dark:text-slate-500">
                         <div className="text-sm font-semibold mb-1">
                           {isPl ? 'Tabela jest jeszcze pusta' : 'This table is still empty'}
@@ -2105,6 +2445,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                   <tfoot className="border-t-2 border-slate-200/60 dark:border-navy-700/60">
                     <tr className="bg-slate-50/50 dark:bg-navy-900/50">
                       <td className="px-2 py-1.5" />
+                      <td className="w-10 px-1 py-1.5" />
                       {_visCols.map((col) => {
                         const agg = col.aggregation;
                         if (!agg || agg === 'none')
@@ -2168,6 +2509,38 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             )}
           </div>
         )}
+
+        {/* Status Bar — record count + aggregates */}
+        {usePlatform && (
+          <StatusBar
+            totalRecords={platformIntegration.totalRecords}
+            selectedCount={_selIds.size}
+            columns={platformIntegration.platformFields.map((f) => ({
+              id: f.id,
+              name: f.name,
+              fieldType: f.fieldType,
+            }))}
+            records={platformIntegration.nodes.map((n) => n.data ?? {})}
+            aggregateConfig={statusBarAggConfig as Record<string, 'none' | 'sum' | 'avg' | 'min' | 'max' | 'count'>}
+            onAggregateChange={(fieldId, mode) =>
+              setStatusBarAggConfig((prev) => ({ ...prev, [fieldId]: mode }))
+            }
+          />
+        )}
+
+        {/* Table Tab Strip — multi-table navigation */}
+        {usePlatform && baseTables.length > 0 && (
+          <TableTabStrip
+            baseId={ideaId}
+            tables={baseTables}
+            activeTableId={platformTableId ?? baseTables[0]?.id ?? ''}
+            onSelectTable={handleTabSelectTable}
+            onCreateTable={handleTabCreateTable}
+            onRenameTable={handleTabRenameTable}
+            onDuplicateTable={handleTabDuplicateTable}
+            onDeleteTable={handleTabDeleteTable}
+          />
+        )}
       </div>
 
       {/* Analytics Summary Strip */}
@@ -2228,6 +2601,27 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           </div>
         </div>
       )}
+
+          </div>
+          {showChatToSchema && usePlatform && (
+            <div className="w-[400px] border-l border-gray-200 dark:border-navy-700 flex-shrink-0 flex flex-col overflow-hidden">
+              <ChatToSchemaPanel
+                mode="splitScreen"
+                workspaceId={ideaId}
+                existingSchema={effectiveColumns.map(c => ({
+                  key: c.key,
+                  header: c.header,
+                  type: c.type,
+                }))}
+                onExecuted={() => {
+                  setShowChatToSchema(false);
+                  platformIntegration.refresh();
+                }}
+                onClose={() => setShowChatToSchema(false)}
+              />
+            </div>
+          )}
+        </div>
 
       {/* Row Detail Panel */}
       <RowDetailPanel
@@ -2465,27 +2859,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         baseId={ideaId}
       />
 
-      {/* Chat-to-Schema Panel */}
-      {showChatToSchema && usePlatform && (
-        <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
-          <div className="w-[600px] max-w-[90vw] max-h-[80vh] overflow-y-auto bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl">
-            <ChatToSchemaPanel
-              workspaceId={ideaId}
-              existingSchema={effectiveColumns.map(c => ({
-                key: c.key,
-                header: c.header,
-                type: c.type,
-              }))}
-              onExecuted={() => {
-                setShowChatToSchema(false);
-                platformIntegration.refresh();
-              }}
-              onClose={() => setShowChatToSchema(false)}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Data Connector Wizard */}
       <ConnectorWizard
         open={showConnectorWizard}
@@ -2602,6 +2975,26 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         />
       )}
 
+      {/* Consultify Link Panel */}
+      {showConsultifyLink && (
+        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowConsultifyLink(false)}>
+          <div className="w-[460px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <ConsultifyLinkPanel
+              baseId={ideaId}
+              tables={baseTables.map((t) => ({
+                id: t.id,
+                name: t.name,
+                fields: t.id === (platformTableId ?? ideaId)
+                  ? _cols.map((c) => ({ id: c.key, name: c.header }))
+                  : [],
+              }))}
+              models={[]}
+              onClose={() => setShowConsultifyLink(false)}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Webhook Relay Panel */}
       {showWebhookRelays && (
         <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowWebhookRelays(false)}>
@@ -2609,6 +3002,70 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             <WebhookRelayPanel
               workspaceId={ideaId}
               onClose={() => setShowWebhookRelays(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Automations Manager */}
+      {showAutomationsManager && (
+        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowAutomationsManager(false)}>
+          <div className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <AutomationsManager
+              tableId={platformTableId ?? ideaId}
+              baseId={ideaId}
+              fields={
+                usePlatform && platformIntegration.platformFields
+                  ? platformIntegration.platformFields.map((f: any) => ({ id: f.id, name: f.name, fieldType: f.fieldType }))
+                  : _cols.map((c) => ({ id: c.key, name: c.header, fieldType: c.type ?? 'singleLineText' }))
+              }
+              onClose={() => setShowAutomationsManager(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Sync Manager */}
+      {showSyncManager && (
+        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowSyncManager(false)}>
+          <div className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <SyncManager
+              tableId={platformTableId ?? ideaId}
+              baseId={ideaId}
+              tables={baseTables}
+              fields={
+                usePlatform && platformIntegration.platformFields
+                  ? platformIntegration.platformFields.map((f: any) => ({ id: f.id, name: f.name, fieldType: f.fieldType }))
+                  : _cols.map((c) => ({ id: c.key, name: c.header, fieldType: c.type ?? 'singleLineText' }))
+              }
+              onClose={() => setShowSyncManager(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Sharing Manager */}
+      {showSharingManager && (
+        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowSharingManager(false)}>
+          <div className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <SharingManager
+              baseId={ideaId}
+              views={effectiveSavedViews?.map((v: any) => ({ id: v.id, name: v.name, shareToken: v.shareToken })) ?? []}
+              onClose={() => setShowSharingManager(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Distribution Manager */}
+      {showDistributionManager && (
+        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowDistributionManager(false)}>
+          <div className="w-[480px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <DistributionManager
+              baseId={ideaId}
+              tableId={platformTableId ?? ideaId}
+              views={effectiveSavedViews?.map((v: any) => ({ id: v.id, name: v.name })) ?? []}
+              onClose={() => setShowDistributionManager(false)}
             />
           </div>
         </div>

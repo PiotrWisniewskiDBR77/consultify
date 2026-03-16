@@ -1,0 +1,396 @@
+/**
+ * ConsultifyLinkPanel — connects Table Platform data to Consultify modules:
+ * Results, Finance, Execution, and Initiatives.
+ */
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Activity,
+  ArrowRight,
+  BarChart3,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  DollarSign,
+  Loader2,
+  Rocket,
+  Target,
+  X,
+  XCircle,
+  Zap,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import * as Api from '@/services/api/tablePlatform.api';
+
+/* ------------------------------------------------------------------ */
+/* Types                                                               */
+/* ------------------------------------------------------------------ */
+
+interface LinkStatus {
+  linked: boolean;
+  lastSync?: string;
+  recordCount: number;
+  errors: string[];
+}
+
+interface ModuleLinkStatuses {
+  results: LinkStatus | null;
+  finance: LinkStatus | null;
+  execution: LinkStatus | null;
+  initiatives: LinkStatus | null;
+}
+
+interface TableInfo {
+  id: string;
+  name: string;
+  fields?: { id: string; name: string; fieldType?: string }[];
+}
+
+/* ------------------------------------------------------------------ */
+/* Module link section                                                 */
+/* ------------------------------------------------------------------ */
+
+const MODULE_CONFIG = {
+  results: {
+    icon: Target,
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-500/10',
+    borderColor: 'border-emerald-200 dark:border-emerald-500/20',
+  },
+  finance: {
+    icon: DollarSign,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50 dark:bg-blue-500/10',
+    borderColor: 'border-blue-200 dark:border-blue-500/20',
+  },
+  execution: {
+    icon: Zap,
+    color: 'text-violet-600',
+    bgColor: 'bg-violet-50 dark:bg-violet-500/10',
+    borderColor: 'border-violet-200 dark:border-violet-500/20',
+  },
+  initiatives: {
+    icon: Rocket,
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-50 dark:bg-amber-500/10',
+    borderColor: 'border-amber-200 dark:border-amber-500/20',
+  },
+} as const;
+
+type ModuleKey = keyof typeof MODULE_CONFIG;
+
+const FINANCE_CATEGORIES = ['revenue', 'cost', 'profit', 'budget', 'forecast', 'actual'];
+const EXECUTION_FIELDS = ['status', 'assignee', 'due_date', 'priority', 'progress'];
+const INITIATIVE_FIELDS = ['title', 'description', 'owner', 'status', 'start_date', 'end_date', 'budget'];
+
+function formatTimeAgo(date: string): string {
+  const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
+}
+
+function ModuleLinkSection({
+  moduleKey,
+  isPl,
+  status,
+  tables,
+  modelId,
+  onSyncComplete,
+}: {
+  moduleKey: ModuleKey;
+  isPl: boolean;
+  status: LinkStatus | null;
+  tables: TableInfo[];
+  modelId: string | null;
+  onSyncComplete: () => void;
+}) {
+  const cfg = MODULE_CONFIG[moduleKey];
+  const Icon = cfg.icon;
+  const [expanded, setExpanded] = useState(false);
+  const [selectedTableId, setSelectedTableId] = useState('');
+  const [fieldMappings, setFieldMappings] = useState<Record<string, string>>({});
+  const [syncing, setSyncing] = useState(false);
+
+  const moduleLabels: Record<ModuleKey, { en: string; pl: string }> = {
+    results: { en: 'Results', pl: 'Wyniki' },
+    finance: { en: 'Finance', pl: 'Finanse' },
+    execution: { en: 'Execution', pl: 'Egzekucja' },
+    initiatives: { en: 'Initiatives', pl: 'Inicjatywy' },
+  };
+
+  const selectedTable = tables.find((t) => t.id === selectedTableId);
+  const targetFields =
+    moduleKey === 'finance' ? FINANCE_CATEGORIES :
+    moduleKey === 'execution' ? EXECUTION_FIELDS :
+    moduleKey === 'initiatives' ? INITIATIVE_FIELDS :
+    ['kpi_value', 'kpi_target', 'kpi_unit'];
+
+  const handleSync = useCallback(async () => {
+    if (!modelId) {
+      toast.error(isPl ? 'Wybierz model' : 'Select a model first');
+      return;
+    }
+    setSyncing(true);
+    try {
+      if (moduleKey === 'results') {
+        await Api.publishToResults(modelId, { kpiIds: Object.values(fieldMappings) });
+      } else if (moduleKey === 'finance') {
+        await Api.syncToFinance(modelId, { fieldMappings, tableId: selectedTableId });
+      } else if (moduleKey === 'execution') {
+        await Api.syncToExecution(modelId, { fieldMappings, tableId: selectedTableId });
+      } else if (moduleKey === 'initiatives') {
+        await Api.syncToInitiatives(modelId, { fieldMappings, tableId: selectedTableId });
+      }
+      toast.success(isPl ? 'Synchronizacja zakończona' : 'Sync completed');
+      onSyncComplete();
+    } catch {
+      toast.error(isPl ? 'Błąd synchronizacji' : 'Sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  }, [modelId, moduleKey, fieldMappings, selectedTableId, isPl, onSyncComplete]);
+
+  const inputCls =
+    'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40';
+
+  return (
+    <div className={`rounded-xl border ${cfg.borderColor} overflow-hidden`}>
+      {/* Header */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className={`w-full flex items-center gap-3 px-4 py-3 ${cfg.bgColor} transition-colors`}
+      >
+        <Icon size={16} className={cfg.color} />
+        <span className={`text-sm font-medium ${cfg.color} flex-1 text-left`}>
+          {isPl ? moduleLabels[moduleKey].pl : moduleLabels[moduleKey].en}
+        </span>
+        {status?.linked && (
+          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600">
+            <CheckCircle2 size={10} /> {isPl ? 'Połączono' : 'Linked'}
+          </span>
+        )}
+        {expanded ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+      </button>
+
+      {/* Status bar */}
+      {status && (
+        <div className="flex items-center gap-4 px-4 py-2 bg-slate-50 dark:bg-navy-900 border-t border-slate-100 dark:border-navy-800">
+          <span className="text-[10px] text-slate-500">
+            {status.linked ? (
+              <span className="text-emerald-600">{isPl ? 'Aktywne' : 'Active'}</span>
+            ) : (
+              <span className="text-slate-400">{isPl ? 'Nieaktywne' : 'Inactive'}</span>
+            )}
+          </span>
+          {status.lastSync && (
+            <span className="text-[10px] text-slate-400">
+              {isPl ? 'Ost. sync' : 'Last sync'}: {formatTimeAgo(status.lastSync)}
+            </span>
+          )}
+          <span className="text-[10px] text-slate-400">
+            {status.recordCount} {isPl ? 'rek.' : 'rec.'}
+          </span>
+          {status.errors.length > 0 && (
+            <span className="inline-flex items-center gap-1 text-[10px] text-red-500">
+              <XCircle size={10} /> {status.errors.length} {isPl ? 'błędów' : 'errors'}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Expanded mapping UI */}
+      {expanded && (
+        <div className="px-4 py-3 space-y-3 border-t border-slate-100 dark:border-navy-800">
+          {/* Select table */}
+          <div>
+            <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+              {isPl ? 'Tabela źródłowa' : 'Source table'}
+            </label>
+            <select
+              className={inputCls}
+              value={selectedTableId}
+              onChange={(e) => {
+                setSelectedTableId(e.target.value);
+                setFieldMappings({});
+              }}
+            >
+              <option value="">{isPl ? '— Wybierz tabelę —' : '— Select table —'}</option>
+              {tables.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Field mapping */}
+          {selectedTable && (
+            <div>
+              <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+                {isPl ? 'Mapowanie pól' : 'Field mapping'}
+              </label>
+              <div className="space-y-1.5">
+                {targetFields.map((tf) => (
+                  <div key={tf} className="flex items-center gap-2">
+                    <span className="text-[11px] text-slate-500 w-24 truncate">{tf}</span>
+                    <ArrowRight size={10} className="text-slate-300 flex-shrink-0" />
+                    <select
+                      className={inputCls}
+                      value={fieldMappings[tf] ?? ''}
+                      onChange={(e) =>
+                        setFieldMappings((p) => ({ ...p, [tf]: e.target.value }))
+                      }
+                    >
+                      <option value="">—</option>
+                      {(selectedTable.fields ?? []).map((f) => (
+                        <option key={f.id} value={f.id}>{f.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sync button */}
+          <button
+            disabled={syncing || !selectedTableId || !modelId}
+            onClick={handleSync}
+            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+          >
+            {syncing && <Loader2 size={12} className="animate-spin" />}
+            {moduleKey === 'results'
+              ? (isPl ? 'Publikuj do Wyników' : 'Publish to Results')
+              : (isPl ? `Synchronizuj z ${moduleLabels[moduleKey].pl}` : `Sync to ${moduleLabels[moduleKey].en}`)}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Main Panel                                                          */
+/* ------------------------------------------------------------------ */
+
+interface ConsultifyLinkPanelProps {
+  baseId: string;
+  tables: TableInfo[];
+  modelId?: string | null;
+  models?: any[];
+  onClose: () => void;
+}
+
+export const ConsultifyLinkPanel: React.FC<ConsultifyLinkPanelProps> = ({
+  baseId,
+  tables,
+  modelId: propModelId,
+  models: _externalModels,
+  onClose,
+}) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+
+  const [models, setModels] = useState<{ model_id: string; name: string }[]>([]);
+  const [selectedModelId, setSelectedModelId] = useState<string>(propModelId ?? '');
+  const [statuses, setStatuses] = useState<ModuleLinkStatuses>({
+    results: null,
+    finance: null,
+    execution: null,
+    initiatives: null,
+  });
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const list = await Api.listGovernedModels(baseId);
+      setModels(list);
+      if (!selectedModelId && list.length > 0) {
+        setSelectedModelId(list[0].model_id);
+      }
+    } catch { /* ignore */ }
+
+    if (selectedModelId) {
+      try {
+        const s = await Api.getModuleLinkStatus(selectedModelId);
+        setStatuses(s);
+      } catch { /* ignore */ }
+    }
+    setLoading(false);
+  }, [baseId, selectedModelId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const inputCls =
+    'w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/40';
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-navy-700">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+            {isPl ? 'Połączenie z Consultify' : 'Consultify Link'}
+          </h3>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+            {isPl
+              ? 'Połącz dane tabeli z modułami Consultify'
+              : 'Connect table data to Consultify modules'}
+          </p>
+        </div>
+        <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-navy-800">
+          <X size={16} className="text-slate-400" />
+        </button>
+      </div>
+
+      {/* Model selector */}
+      <div className="px-5 py-3 border-b border-slate-100 dark:border-navy-800">
+        <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
+          {isPl ? 'Model danych' : 'Data Model'}
+        </label>
+        <select
+          className={inputCls}
+          value={selectedModelId}
+          onChange={(e) => setSelectedModelId(e.target.value)}
+        >
+          <option value="">{isPl ? '— Wybierz model —' : '— Select model —'}</option>
+          {models.map((m) => (
+            <option key={m.model_id} value={m.model_id}>{m.name}</option>
+          ))}
+        </select>
+        {models.length === 0 && !loading && (
+          <p className="text-[11px] text-slate-400 mt-1 italic">
+            {isPl ? 'Utwórz model danych w zakładce Modele' : 'Create a data model in the Models tab first'}
+          </p>
+        )}
+      </div>
+
+      {/* Module links */}
+      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="animate-spin text-slate-400" size={20} />
+          </div>
+        ) : (
+          (['results', 'finance', 'execution', 'initiatives'] as ModuleKey[]).map((mk) => (
+            <ModuleLinkSection
+              key={mk}
+              moduleKey={mk}
+              isPl={isPl}
+              status={statuses[mk]}
+              tables={tables}
+              modelId={selectedModelId || null}
+              onSyncComplete={loadData}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ConsultifyLinkPanel;

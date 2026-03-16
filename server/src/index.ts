@@ -238,6 +238,28 @@ const databaseInitPromise: Promise<void> =
             dbInitError = null;
           }
 
+          // Run Table Platform migrations
+          try {
+            const { runMigrations } = await import('./services/tablePlatform/migrationRunner.js');
+            const migResult = await runMigrations();
+            if (migResult.failed) {
+              logger.error(`[Server] Table Platform migration FAILED on: ${migResult.failed}`);
+            } else {
+              logger.info(`[Server] Table Platform migrations: ${migResult.applied} applied, ${migResult.skipped} already up to date`);
+            }
+            // Seed default templates after migrations
+            try {
+              const { default: templateService } = await import('./services/tablePlatform/TemplateService.js');
+              if (templateService?.seedDefaultTemplates) {
+                await templateService.seedDefaultTemplates();
+              }
+            } catch (seedErr) {
+              logger.warn('[Server] Template seeding skipped:', seedErr);
+            }
+          } catch (migErr) {
+            logger.warn('[Server] Table Platform migrations skipped:', migErr);
+          }
+
           // Initialize connection pool
           if (process.env.DISABLE_CONNECTION_POOL !== 'true') {
             try {

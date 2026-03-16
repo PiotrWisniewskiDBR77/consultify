@@ -22,6 +22,7 @@ import {
 import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import {
   ChangePasswordRequestSchema,
+  ForgotPasswordRequestSchema,
   LoginRequestSchema,
   MFADisableRequestSchema,
   MFAEnableRequestSchema,
@@ -1405,6 +1406,55 @@ router.post(
       logger.error('[Auth] Change password error:', error);
       return res.status(500).json({ error: 'Failed to change password' });
     }
+  })
+);
+
+// FORGOT PASSWORD — request a reset link (Public)
+router.post(
+  '/forgot-password',
+  validateBody(ForgotPasswordRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { email } = req.body;
+
+    const user = await dbGet<{ id: string; email: string }>(
+      'SELECT id, email FROM users WHERE LOWER(email) = LOWER(?)',
+      [email]
+    );
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return res.json({ success: true, message: 'If the email exists, a reset link has been sent.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+
+    await dbRun('DELETE FROM password_resets WHERE user_id = ?', [user.id]);
+    await dbRun(
+      'INSERT INTO password_resets (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)',
+      [uuidv4(), user.id, token, expiresAt]
+    );
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const resetLink = `${frontendUrl}/reset-password?token=${token}`;
+
+    try {
+      const emailService = (await import('../services/emailService.js')).default;
+      await emailService.send({
+        to: user.email,
+        subject: 'Consultify — Password Reset',
+        html: `
+          <h2>Password Reset Request</h2>
+          <p>Click the link below to reset your password. This link expires in 1 hour.</p>
+          <p><a href="${resetLink}">${resetLink}</a></p>
+          <p>If you did not request this, you can safely ignore this email.</p>
+        `,
+      });
+    } catch (err) {
+      logger.error('[Auth] Failed to send password reset email:', err);
+    }
+
+    return res.json({ success: true, message: 'If the email exists, a reset link has been sent.' });
   })
 );
 

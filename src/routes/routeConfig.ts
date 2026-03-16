@@ -20,6 +20,8 @@ export const ROUTES = {
   WELCOME: '/',
   AUTH: '/auth',
   BECOME_PARTNER: '/become-partner',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
 
   // Main App Routes
   AI_CHAT: '/chat',

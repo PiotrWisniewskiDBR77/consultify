@@ -22,3 +22,4 @@ export { SSOService, ssoService } from './SSOService.js';
 export { ServiceAccountService, serviceAccountService } from './ServiceAccountService.js';
 export { SCIMService, scimService } from './SCIMService.js';
 export { default as GovernedModelService } from './GovernedModelService.js';
+export { syncToModule, getLinkStatus } from './ModuleSyncService.js';
