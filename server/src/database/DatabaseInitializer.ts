@@ -8,10 +8,15 @@
  */
 
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import { databaseConfig } from '../config/DatabaseConfig.js';
 import logger from '../utils/Logger.js';
 import { getDatabase, getDatabaseAsync } from './Database.js';
+
+const __filename_esm = fileURLToPath(import.meta.url);
+const __dirname_esm = path.dirname(__filename_esm);
 
 const resolveTestSchemaPath = async () => {
   const path = await import('path');
@@ -2474,6 +2479,90 @@ async function ensureReportBuilderAndSchedulingTables(): Promise<void> {
   );
 }
 
+// ==========================================
+// TABLE PLATFORM MIGRATION RUNNER
+// ==========================================
+
+/**
+ * Run Table Platform migrations (server/migrations/7*.sql).
+ * Tracks executed migrations in tp_migration_history to ensure idempotency.
+ * Each migration runs inside its own transaction.
+ * PostgreSQL only — SQLite does not support the table platform.
+ */
+async function runTablePlatformMigrations(db: any): Promise<void> {
+  const TAG = '[TP-Migrations]';
+
+  // 1. Ensure migration tracking table exists
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS tp_migration_history (
+      id SERIAL PRIMARY KEY,
+      filename TEXT NOT NULL UNIQUE,
+      executed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      checksum TEXT,
+      duration_ms INTEGER
+    )
+  `);
+
+  // 2. Discover migration files
+  const migrationsDir = path.resolve(__dirname_esm, '../../migrations');
+  if (!fs.existsSync(migrationsDir)) {
+    logger.warn(`${TAG} Migrations directory not found: ${migrationsDir}`);
+    return;
+  }
+
+  const allFiles = fs.readdirSync(migrationsDir)
+    .filter((f: string) => /^7\d{2}_.*\.sql$/.test(f))
+    .sort();
+
+  if (allFiles.length === 0) {
+    logger.info(`${TAG} No 7xx migration files found`);
+    return;
+  }
+
+  logger.info(`${TAG} Found ${allFiles.length} table platform migration files`);
+
+  // 3. Get already-executed migrations
+  const executed = await db.query('SELECT filename FROM tp_migration_history ORDER BY filename');
+  const executedSet = new Set((executed.rows || []).map((r: any) => r.filename));
+
+  // 4. Run pending migrations in order
+  let applied = 0;
+  for (const file of allFiles) {
+    if (executedSet.has(file)) continue;
+
+    const filePath = path.join(migrationsDir, file);
+    const sql = fs.readFileSync(filePath, 'utf-8').trim();
+    if (!sql) {
+      logger.warn(`${TAG} Skipping empty migration: ${file}`);
+      continue;
+    }
+
+    const startMs = Date.now();
+    try {
+      await db.query('BEGIN');
+      await db.query(sql);
+      await db.query(
+        'INSERT INTO tp_migration_history (filename, duration_ms) VALUES ($1, $2)',
+        [file, Date.now() - startMs]
+      );
+      await db.query('COMMIT');
+      applied++;
+      logger.info(`${TAG} ✓ ${file} (${Date.now() - startMs}ms)`);
+    } catch (err: any) {
+      await db.query('ROLLBACK').catch(() => {});
+      logger.error(`${TAG} ✗ ${file} failed: ${err?.message}`);
+      // Stop on first failure — migrations are ordered and may depend on each other
+      throw new Error(`Table Platform migration ${file} failed: ${err?.message}`);
+    }
+  }
+
+  if (applied > 0) {
+    logger.info(`${TAG} Applied ${applied} migration(s) successfully`);
+  } else {
+    logger.info(`${TAG} All ${allFiles.length} migrations already applied`);
+  }
+}
+
 /**
  * Initialize database schema
  * This ensures all tables are created if they don't exist
@@ -2609,6 +2698,28 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
             }
           }
         }
+      }
+
+      // Run Table Platform migrations (7xx SQL files)
+      try {
+        await runTablePlatformMigrations(db);
+
+        // Seed default templates after migrations succeed
+        try {
+          const { default: templateService } = await import(
+            '../services/tablePlatform/TemplateService.js'
+          );
+          await templateService.seedDefaultTemplates();
+        } catch (seedErr: any) {
+          logger.warn(
+            `[DatabaseInitializer] Template seeding failed (non-fatal): ${seedErr?.message}`
+          );
+        }
+      } catch (tpErr: any) {
+        logger.error(
+          `[DatabaseInitializer] Table Platform migrations failed (non-fatal): ${tpErr?.message}`
+        );
+        // Non-fatal: legacy app still works without table platform
       }
     } else {
       // SQLite: Check if schema exists, if not, initialize

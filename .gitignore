@@ -153,6 +153,26 @@ e2e-results.xml
 # Debug screenshots
 debug-*.png
 
+# Local browser/debug artifacts
+/screenshots/
+/exports/report-builder-public/
+/knowledge/**/*.zip
+/knowledge/AirTable/Screen/
+/REC_MAP_CRASH_EVIDENCE.md
+/capture-*.mjs
+/inspect-*.mjs
+/reproduce-*.mjs
+/test-*.mjs
+/test-*.md
+/test-*.ts
+/test-*.txt
+/test-*.png
+/test-*.html
+/validation-output*.txt
+/debug-*.txt
+/final-*.txt
+/rec-map-*.txt
+
 # Test result files
 test-results-*.txt
 

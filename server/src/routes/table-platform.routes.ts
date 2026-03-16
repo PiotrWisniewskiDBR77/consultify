@@ -33,11 +33,41 @@ const { requireBaseAccess, requireTableAccess } = PermissionsService;
 
 const router = Router();
 
+// Cache schema readiness to avoid per-request DB check
+let _schemaReady: boolean | null = null;
+let _schemaCheckAt = 0;
+const SCHEMA_CHECK_TTL_MS = 30_000; // recheck every 30s if not ready
+
+async function checkSchemaReady(): Promise<boolean> {
+  const now = Date.now();
+  if (_schemaReady === true) return true; // once ready, stays ready
+  if (_schemaReady !== null && now - _schemaCheckAt < SCHEMA_CHECK_TTL_MS) return _schemaReady;
+
+  try {
+    const db = (await import('../database/Database.js')).getDatabase();
+    await db.query('SELECT 1 FROM tp_bases LIMIT 0');
+    _schemaReady = true;
+  } catch {
+    _schemaReady = false;
+  }
+  _schemaCheckAt = now;
+  return _schemaReady;
+}
+
 function requireTablePlatform(req: Request, res: Response, next: () => void) {
   if (!featureFlags.ENABLE_TABLE_PLATFORM_RECORDS_API) {
     return res.status(404).json({ error: 'Table platform is not enabled' });
   }
-  next();
+  // Check schema readiness (async but non-blocking for perf after first check)
+  checkSchemaReady().then((ready) => {
+    if (!ready) {
+      return res.status(503).json({
+        error: 'Table platform schema is not initialized. Migrations may be pending.',
+        code: 'SCHEMA_NOT_READY',
+      });
+    }
+    next();
+  });
 }
 
 const tablePlatformLimiter = rateLimit({
@@ -50,6 +80,47 @@ const tablePlatformLimiter = rateLimit({
     const authReq = req as any;
     return `${authReq.userId || req.ip}`;
   },
+});
+
+// ==========================================
+// HEALTH CHECK (no auth required)
+// ==========================================
+router.get('/health', async (_req: Request, res: Response) => {
+  try {
+    const db = (await import('../database/Database.js')).getDatabase();
+    const checks: Record<string, string> = {};
+
+    // Check core tp_bases table
+    await db.query('SELECT 1 FROM tp_bases LIMIT 0');
+    checks.tp_bases = 'ok';
+
+    // Check migration history
+    const migResult = await db.query('SELECT COUNT(*) as cnt FROM tp_migration_history');
+    checks.migrations_applied = String((migResult.rows[0] as any)?.cnt || 0);
+
+    // Spot-check a few more critical tables
+    for (const table of ['tp_tables', 'tp_fields', 'tp_views', 'tp_records']) {
+      try {
+        await db.query(`SELECT 1 FROM ${table} LIMIT 0`);
+        checks[table] = 'ok';
+      } catch {
+        checks[table] = 'missing';
+      }
+    }
+
+    const allOk = Object.values(checks).every((v) => v === 'ok' || /^\d+$/.test(v));
+    res.status(allOk ? 200 : 503).json({
+      status: allOk ? 'healthy' : 'degraded',
+      platform: 'table-platform',
+      checks,
+    });
+  } catch (err: any) {
+    res.status(503).json({
+      status: 'unavailable',
+      platform: 'table-platform',
+      error: err?.message || 'Unknown error',
+    });
+  }
 });
 
 router.use(verifyToken as any);
