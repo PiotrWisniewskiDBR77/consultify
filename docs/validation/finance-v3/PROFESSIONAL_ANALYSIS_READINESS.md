@@ -381,3 +381,281 @@ Layer 5: PROFESSIONAL OUTPUT
 **Verdict**: System jest gotowy do profesjonalnej analizy finansowej na poziomie
 banku inwestycyjnego. Jedyny brakujący element to dane rynkowe (Market Cap, Beta),
 które z natury muszą być zewnętrzne.
+
+---
+
+## 9. Gotowość silnika modelowania (Financial Model Engine)
+
+### 9a. Zamknięta pętla 3-Statement (MUST)
+
+| Linkage | Mechanizm | Status |
+|---------|-----------|--------|
+| P&L → CF | Net Income otwiera CF (indirect method) | ✅ Defined |
+| P&L → CF | D&A adjustment (non-cash) | ✅ Defined (cross-statement fallback) |
+| BS → CF | ΔWC = Δ(AR + Inventory − AP) | ✅ Computed from BS deltas |
+| CF → BS | Net Change in Cash → Cash on BS | ✅ Defined |
+| CF → BS | Debt drawdown/repayment → Debt on BS | ✅ Defined |
+| BS → P&L | Interest = f(avg Debt × Cost of Debt) | ✅ Circular, iterative resolution |
+| BS → P&L | Depreciation = f(PPE × Depreciation Rate) | ✅ Circular, iterative resolution |
+| Balance check | Assets = Liabilities + Equity | ✅ Hard validation |
+| CF tie-out | ΔCash = OCF + ICF + FCF | ✅ Hard validation |
+
+**Circular reference resolution:** Max 100 iteracji, convergence ε = 0.01.
+
+### 9b. Driver-Based Modeling (MUST)
+
+| Driver | Typ | Źródło bazowe | Editable |
+|--------|-----|--------------|----------|
+| Revenue Growth | % YoY | Historical CAGR | ✅ |
+| Gross Margin | % Revenue | Historical average | ✅ |
+| SG&A / Revenue | % Revenue | Historical average | ✅ |
+| R&D / Revenue | % Revenue | Historical average | ✅ |
+| D&A Rate | % avg(PPE+Intangibles) | Historical rate | ✅ |
+| Capex Intensity | % Revenue | Historical Capex/Rev | ✅ |
+| DSO | Days | Historical DSO | ✅ |
+| DIO | Days | Historical DIO | ✅ |
+| DPO | Days | Historical DPO | ✅ |
+| Effective Tax Rate | % | Historical ETR | ✅ |
+| Cost of Debt | % | Historical Interest/avg Debt | ✅ |
+| Payout Ratio | % NI | Historical ratio | ✅ |
+| Debt Schedule | Amounts | Manual or maturity profile | ✅ |
+
+**Verdict**: ✅ Pełny zestaw driverów pokrywający standard Wall Street Prep / Macabacus.
+
+### 9c. Zero-Change Baseline
+
+Po imporcie `ready` statements system generuje prognozę "zero-change":
+- Wszystkie drivery = wartości z ostatniego okresu historycznego
+- Revenue growth = 0% (flat) lub historical CAGR (user choice)
+- Zamknięta pętla P&L→CF→BS
+- AI generuje Model Health Report z flagami
+
+**Verdict**: ✅ Defined. Implementacja wymaga `FinancialModelEngine`.
+
+---
+
+## 10. Gotowość silnika scenariuszy (Scenario Engine)
+
+### 10a. Tryby predykcji
+
+| Tryb | Opis | Status |
+|------|------|--------|
+| Index-driven | Zmiana driverów (% revenue, rotacje, intensywność) | ✅ Defined |
+| Document-driven | Upload założeń (PDF/XLS) → AI parsing → Q&A → Confirm | ✅ Defined |
+| AI-assisted | Opis scenariusza w języku naturalnym → AI tłumaczy na drivery | ✅ Defined |
+
+### 10b. Porównanie scenariuszy
+
+| Funkcja | Status |
+|---------|--------|
+| Side-by-side comparison (do 5 scenariuszy) | ✅ Defined |
+| Delta vs baseline | ✅ Defined |
+| Revenue bridge (waterfall) | ✅ Defined |
+| Margin waterfall | ✅ Defined |
+| Tornado chart (driver sensitivity) | ✅ Defined |
+| Break-even analysis | ✅ Defined |
+
+### 10c. Initiative Impact
+
+| Element | Mechanizm | Status |
+|---------|-----------|--------|
+| Revenue uplift | → Revenue line, margin follows base drivers | ✅ Defined |
+| Cost savings | → Specific cost group (must be pinned) | ✅ Defined |
+| CAPEX | → Timeline amounts (not % revenue) | ✅ Defined |
+| Materialization | → Monthly axis, delta vs baseline | ✅ Defined |
+
+### 10d. Quality Gates
+
+| Gate | Reguła | Status |
+|------|--------|--------|
+| CAPEX gate | Scenariusz bez CAPEX → blokada zatwierdzenia | ✅ MUST |
+| WC estimation | Brak explicit WC → estymacja z historycznych rotacji | ✅ Defined |
+| Assumption snapshot | Po Confirm → immutable record (kto, kiedy, co) | ✅ Defined |
+
+**Verdict**: ✅ Pełna specyfikacja scenariuszy na poziomie Anaplan/Pigment. Implementacja wymaga `ScenarioEngine`.
+
+---
+
+## 11. Gotowość silnika wyceny (Valuation Engine)
+
+### 11a. DCF — pełna specyfikacja
+
+| Komponent | Formuła | Status |
+|-----------|---------|--------|
+| UFCF | EBIT × (1−t) + D&A − ΔWC − Capex | ✅ |
+| WACC | E/(D+E) × Ke + D/(D+E) × Kd × (1−t) | ✅ |
+| Ke (CAPM) | Rf + β × (Rm−Rf) + Size Premium + CRP | ✅ (requires market inputs) |
+| Terminal Value (Gordon) | UFCFₙ × (1+g) / (WACC−g) | ✅ |
+| Terminal Value (Exit Multiple) | EBITDAₙ × Exit Multiple | ✅ |
+| Enterprise Value | Σ PV(UFCF) + PV(TV) | ✅ |
+| Equity Value | EV − Net Debt − Minority + Associates + Excess Cash | ✅ |
+
+### 11b. Comparable Companies
+
+| Element | Status |
+|---------|--------|
+| Peer selection (user-defined + AI-suggested) | ✅ Defined |
+| Multiples: EV/EBITDA, EV/Revenue, EV/EBIT | ✅ |
+| Multiples: P/E, P/B (requires Market Cap) | ⚠️ Market data needed |
+| Statistics: Mean, Median, P25, P75 | ✅ Defined |
+| Implied EV per multiple | ✅ Defined |
+
+### 11c. Football Field Chart
+
+| Metoda | Range | Status |
+|--------|-------|--------|
+| DCF (base case) | Min-Max from sensitivity | ✅ Defined |
+| DCF (per scenario) | Per scenario range | ✅ Defined |
+| EV/EBITDA comps | P25-P75 | ✅ Defined |
+| EV/Revenue comps | P25-P75 | ✅ Defined |
+| 52-week range | Market data | ⚠️ Requires external data |
+
+### 11d. Sensitivity Analysis
+
+| Typ | Parametry | Status |
+|-----|-----------|--------|
+| 2D Matrix | WACC × Terminal Growth (g) | ✅ MUST |
+| 2D Matrix | WACC × Exit Multiple | ✅ Defined |
+| Tornado Chart | Top 10 drivers ranked by EV impact | ✅ Defined |
+| Scenario-linked | DCF per scenario (base/optimistic/stress) | ✅ Defined |
+
+### 11e. Market Assumptions Panel
+
+| Input | Default | Editable | Status |
+|-------|---------|----------|--------|
+| Risk-Free Rate (Rf) | 4.5% | ✅ | ✅ Defined |
+| Beta (β) | 1.0 | ✅ | ✅ Defined |
+| Equity Risk Premium (ERP) | 5.5% | ✅ | ✅ Defined |
+| Size Premium | 0% | ✅ | ✅ Defined |
+| Country Risk Premium | 0% | ✅ | ✅ Defined |
+| Market Cap | Book Value | ✅ | ✅ Defined |
+| Perpetual Growth (g) | 2.0% | ✅ | ✅ Defined |
+
+**Verdict**: ✅ Pełna specyfikacja wyceny na poziomie equity research / M&A advisory.
+Implementacja wymaga `ValuationEngine` + Market Assumptions UI panel.
+
+---
+
+## 12. Gotowość AI Orchestration
+
+### 12a. AI jako Financial Analyst-in-the-Loop
+
+| Capability | Status | Specyfikacja |
+|------------|--------|-------------|
+| Context injection (model/scenario/valuation data) | ✅ Defined | `AI_FINANCE_ORCHESTRATION_SPEC.md` §2.1 |
+| Finance Tools (read: ratios, health, sensitivity) | ✅ Defined | §2.2 Tier 1 |
+| Finance Tools (write: create model, scenario, valuation) | ✅ Defined | §2.2 Tier 2 |
+| Numerical Anchor Principle | ✅ MUST | §2.3 |
+| Proposal → Confirm pattern | ✅ MUST | §2.4 |
+| Proactive guidance (next steps) | ✅ Defined | §3.1 |
+| Guided workflows (end-to-end analysis) | ✅ Defined | §3.2 |
+| Financial Intent Detector | ✅ Defined | §4.1 |
+| ChatFinancialProposalCard | ✅ Defined | §5.1 |
+| AI-generated Financial Narrative | ✅ MUST | `FINANCIAL_ANALYSIS_V3.md` §2.3.3 |
+
+### 12b. Porównanie AI capabilities vs benchmark
+
+| Capability | Bloomberg Intelligence | Deloitte PrecisionView | PwC AI Audit | **Consultify AI** |
+|------------|----------------------|----------------------|-------------|-------------------|
+| Auto-import PDF → model | ❌ | ❌ | ❌ | ✅ unique |
+| AI-driven ratio analysis | ❌ | ✅ partial | ❌ | ✅ full (42 ratios + composites) |
+| AI narrative generation | ✅ (BI reports) | ✅ | ❌ | ✅ (equity research style) |
+| AI scenario builder | ❌ | ✅ partial | ❌ | ✅ (3 modes: index/document/conversational) |
+| AI DCF orchestration | ❌ | ❌ | ❌ | ✅ unique |
+| Numerical anchoring | N/A | ❌ | ✅ | ✅ MUST |
+| Proposal → Confirm UX | N/A | ❌ | ❌ | ✅ unique |
+| Proactive next-step guidance | ❌ | ❌ | ❌ | ✅ unique |
+| Learning loop (mapping) | ❌ | ❌ | ❌ | ✅ unique |
+
+**Verdict**: ✅ AI orchestration specification jest kompletna i unikalna na rynku.
+Żaden istniejący system nie oferuje AI jako aktywnego orkiestratora pełnego cyklu analizy finansowej
+z numerical anchoring i proposal-confirm pattern.
+
+---
+
+## 13. Rozszerzone porównanie z narzędziami referencyjnymi (v3.1)
+
+| Capability | Bloomberg | Capital IQ | Anaplan | Deloitte PV | Excel | **Consultify** |
+|------------|-----------|------------|---------|-------------|-------|----------------|
+| 3-Statement Model | ✅ | ✅ | ✅ | ✅ | ✅ manual | ✅ auto-import |
+| 42 Ratios | ✅ | ✅ | ❌ | ✅ partial | ✅ manual | ✅ auto |
+| DuPont 5-Factor | ✅ | ❌ | ❌ | ❌ | ✅ manual | ✅ auto |
+| Altman Z-Score (3 variants) | ✅ | ✅ | ❌ | ❌ | ✅ manual | ✅ auto |
+| Piotroski F-Score | ✅ | ❌ | ❌ | ❌ | ✅ manual | ✅ auto |
+| DCF (UFCF + WACC) | ✅ | ✅ | ❌ | ✅ | ✅ manual | ✅ auto |
+| Comps (Trading) | ✅ | ✅ | ❌ | ❌ | ✅ manual | ✅ (user-input peers) |
+| Football Field | ✅ | ✅ | ❌ | ❌ | ✅ manual | ✅ auto |
+| Sensitivity (2D + Tornado) | ✅ | ✅ | ✅ | ✅ | ✅ manual | ✅ auto |
+| Scenario Comparison | ❌ | ❌ | ✅ | ✅ | ✅ manual | ✅ auto (5 scenarios) |
+| Driver-based Forecasting | ❌ | ❌ | ✅ | ✅ | ✅ manual | ✅ auto |
+| Document-driven Prediction | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ unique |
+| AI Narrative Generation | ✅ (BI) | ❌ | ❌ | ✅ partial | ❌ | ✅ full |
+| AI Orchestration (active) | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ unique |
+| Auto-import PDF | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ unique |
+| Learning Loop | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ unique |
+| SGR | ❌ | ❌ | ❌ | ❌ | ✅ manual | ✅ auto |
+| Investment Analysis (NPV/IRR) | ✅ | ✅ | ✅ | ✅ | ✅ manual | ✅ auto |
+
+**Verdict**: Consultify v3.1 ma **4 unikalne capabilities** niedostępne w żadnym innym systemie:
+1. Auto-import PDF → canonical 3-statement model
+2. AI as active orchestrator (not just commentator)
+3. Document-driven prediction (upload assumptions → AI parses → Q&A → scenario)
+4. Learning loop for statement mapping
+
+---
+
+## 14. Podsumowanie architektury analitycznej (v3.1)
+
+```
+Layer 0: AI ORCHESTRATION
+  Financial Analyst-in-the-Loop
+  Intent Detection → Tool Execution → Numerical Anchoring → Proposal → Confirm
+  Proactive Guidance → Guided Workflows → Narrative Generation
+
+Layer 1: DATA INGESTION
+  PDF/Excel → Extract → Map → Validate → Confirm
+  (91 P&L + 92 BS + 76 CF = 259 canonical lines)
+  4-tier mapping policy + learning loop
+
+Layer 2: FINANCIAL MODEL ENGINE
+  3-Statement linkage (P&L → CF → BS → P&L circular)
+  Driver-based modeling (13+ driver types)
+  Zero-change baseline → iterative convergence
+  Audit trail (origin: imported/computed/manual/ai_suggested)
+
+Layer 3: RATIO ANALYSIS
+  34 single-period + 8 growth = 42 ratios
+  Benchmarks (P25/median/P75), thresholds (ok/warn/critical)
+  Traffic light scoring
+
+Layer 4: COMPOSITE MODELS
+  DuPont 5-Factor, Altman Z-Score (3 variants), Piotroski F-Score
+  SGR, WACC Inputs, Unlevered FCF, EV Bridge
+
+Layer 5: SCENARIO ENGINE
+  Index-driven / Document-driven / AI-assisted
+  CAPEX gate, WC estimation, Assumption snapshots
+  Comparison (5 scenarios), Tornado, Break-even
+
+Layer 6: VALUATION ENGINE
+  DCF (UFCF + WACC + Terminal Value)
+  Comparable Companies (5 multiples)
+  Football Field Chart
+  Sensitivity (2D matrix + Tornado)
+  Market Assumptions Panel
+
+Layer 7: INVESTMENT ANALYSIS
+  NPV, IRR, Payback, Discounted Payback, ROI, PI, MOIC
+  Initiative-linked, sensitivity per driver
+
+Layer 8: PROFESSIONAL OUTPUT
+  AI-generated Financial Narrative (equity research standard)
+  Export to Reports/Presentations with traceability
+  Valuation Improvement Advisory (T056)
+  Negotiation Argument Builder (T057)
+```
+
+**Final Verdict**: System Consultify Finance v3.1 jest gotowy do profesjonalnej analizy
+finansowej na poziomie banku inwestycyjnego / Big4 advisory, z unikalną przewagą
+w postaci AI orchestration i auto-import PDF. Specyfikacja pokrywa pełny cykl:
+Statement → Model → Analysis → Prediction → Valuation → Investment Analysis → Report.

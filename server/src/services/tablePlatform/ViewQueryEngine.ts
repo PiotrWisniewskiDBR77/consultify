@@ -5,6 +5,7 @@
 
 import { getDatabase } from '../../database/Database.js';
 import logger from '../../utils/Logger.js';
+import { parseFormula, type FormulaAST } from './formulaEngine.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -14,6 +15,7 @@ export interface QueryOptions {
   tableId: string;
   viewId?: string;
   filters?: FilterGroup;
+  filterByFormula?: string;
   sorts?: SortRule[];
   groupBy?: string;
   groupAggregates?: GroupAggregate[];
@@ -23,6 +25,7 @@ export interface QueryOptions {
   page?: number;
   search?: string;
   searchFieldIds?: string[];
+  userRole?: string;
 }
 
 export interface GroupAggregate {
@@ -490,6 +493,20 @@ async function loadFieldTypes(tableId: string): Promise<Map<string, string>> {
   return map;
 }
 
+async function loadFieldNameToId(tableId: string): Promise<Map<string, string>> {
+  const db = getDatabase();
+  const result = await (db as any).query(
+    'SELECT id, name FROM tp_fields WHERE table_id = $1',
+    [tableId]
+  );
+  const map = new Map<string, string>();
+  for (const row of result.rows || []) {
+    if (row.name) map.set(row.name, row.id);
+    map.set(row.id, row.id);
+  }
+  return map;
+}
+
 // ---------------------------------------------------------------------------
 // Search Builder
 // ---------------------------------------------------------------------------
@@ -518,6 +535,99 @@ function buildSearchClause(
 
   if (parts.length === 0) return { sql: 'TRUE', nextIdx: startIdx };
   return { sql: `(${parts.join(' OR ')})`, nextIdx: idx };
+}
+
+// ---------------------------------------------------------------------------
+// Formula Filter Builder
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve a field name to its ID using the field name→id map.
+ * Falls back to the name itself if not found (may be an ID already).
+ */
+function resolveFieldName(name: string, fieldNameToId: Map<string, string>): string {
+  return fieldNameToId.get(name) ?? name;
+}
+
+/**
+ * Convert a formula AST into a parameterized SQL WHERE clause.
+ * Field references `{FieldName}` become `(r.data->>$N)` with parameterized field IDs.
+ */
+function astToSql(
+  node: FormulaAST,
+  params: unknown[],
+  startIdx: number,
+  fieldNameToId: Map<string, string>,
+  fieldTypes: Map<string, string>
+): { sql: string; nextIdx: number } {
+  let idx = startIdx;
+
+  switch (node.type) {
+    case 'literal': {
+      params.push(node.value);
+      return { sql: `$${idx}`, nextIdx: idx + 1 };
+    }
+
+    case 'fieldRef': {
+      const fieldId = resolveFieldName(node.name!, fieldNameToId);
+      params.push(fieldId);
+      const fieldType = fieldTypes.get(fieldId) || 'singleLineText';
+      const isNumeric = NUMBER_FIELD_TYPES.has(fieldType);
+      const expr = isNumeric ? `(r.data->>$${idx})::numeric` : `(r.data->>$${idx})`;
+      return { sql: expr, nextIdx: idx + 1 };
+    }
+
+    case 'operator': {
+      const op = node.name!;
+      const children = node.children ?? [];
+
+      if (op === 'NOT') {
+        const { sql: childSql, nextIdx } = astToSql(children[0], params, idx, fieldNameToId, fieldTypes);
+        return { sql: `NOT (${childSql})`, nextIdx };
+      }
+
+      if (op === 'AND' || op === 'OR') {
+        const { sql: leftSql, nextIdx: afterLeft } = astToSql(children[0], params, idx, fieldNameToId, fieldTypes);
+        const { sql: rightSql, nextIdx: afterRight } = astToSql(children[1], params, afterLeft, fieldNameToId, fieldTypes);
+        return { sql: `(${leftSql} ${op} ${rightSql})`, nextIdx: afterRight };
+      }
+
+      // Comparison / arithmetic operators
+      const { sql: leftSql, nextIdx: afterLeft } = astToSql(children[0], params, idx, fieldNameToId, fieldTypes);
+      const { sql: rightSql, nextIdx: afterRight } = astToSql(children[1], params, afterLeft, fieldNameToId, fieldTypes);
+
+      const sqlOp = op === '=' ? '=' : op === '!=' ? '!=' : op;
+      return { sql: `(${leftSql} ${sqlOp} ${rightSql})`, nextIdx: afterRight };
+    }
+
+    case 'function': {
+      // For filter formulas, we don't support function calls in SQL generation.
+      // Return TRUE as a safe fallback.
+      return { sql: 'TRUE', nextIdx: idx };
+    }
+
+    default:
+      return { sql: 'TRUE', nextIdx: idx };
+  }
+}
+
+function buildFormulaFilterClause(
+  formula: string,
+  params: unknown[],
+  startIdx: number,
+  fieldNameToId: Map<string, string>,
+  fieldTypes: Map<string, string>
+): { sql: string; nextIdx: number } {
+  try {
+    const ast = parseFormula(formula);
+    return astToSql(ast, params, startIdx, fieldNameToId, fieldTypes);
+  } catch (e) {
+    logger.warn('[ViewQueryEngine] filterByFormula parse failed', {
+      formula,
+      error: (e as Error).message,
+    });
+    return { sql: 'TRUE', nextIdx: startIdx };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -694,6 +804,21 @@ const viewQueryEngine = {
       paramIdx = nextIdx;
     }
 
+    if (options.filterByFormula?.trim()) {
+      const fieldNameToId = await loadFieldNameToId(options.tableId);
+      const { sql, nextIdx } = buildFormulaFilterClause(
+        options.filterByFormula,
+        params,
+        paramIdx,
+        fieldNameToId,
+        fieldTypes
+      );
+      if (sql !== 'TRUE') {
+        conditions.push(`(${sql})`);
+      }
+      paramIdx = nextIdx;
+    }
+
     if (options.search?.trim()) {
       const searchFieldIds = options.searchFieldIds?.length
         ? options.searchFieldIds.filter(id => isValidFieldKey(id))
@@ -703,6 +828,27 @@ const viewQueryEngine = {
       const { sql, nextIdx } = buildSearchClause(options.search, searchFieldIds, params, paramIdx);
       conditions.push(sql);
       paramIdx = nextIdx;
+    }
+
+    if (options.userRole) {
+      try {
+        const { default: rowPolicyService } = await import('./RowPolicyService.js');
+        const { sql: policySql, nextIdx: afterPolicy } = await rowPolicyService.buildRowFilterClause(
+          options.tableId,
+          options.userRole,
+          params,
+          paramIdx
+        );
+        if (policySql !== 'TRUE') {
+          conditions.push(`(${policySql})`);
+        }
+        paramIdx = afterPolicy;
+      } catch (policyErr) {
+        logger.warn('[ViewQueryEngine] row policy filter failed, skipping', {
+          tableId: options.tableId,
+          error: (policyErr as Error).message,
+        });
+      }
     }
 
     if (conditions.length > 0) {

@@ -25,6 +25,32 @@ export interface AutomationAction {
   actionConfig: Record<string, unknown>;
 }
 
+interface AutomationRow {
+  id: string;
+  table_id: string;
+  base_id: string;
+  name: string;
+  trigger_type: string;
+  trigger_config: Record<string, unknown>;
+  actions: AutomationAction[];
+  enabled: boolean;
+  created_at: string;
+  created_by?: string;
+  [key: string]: unknown;
+}
+
+function resolveTemplate(template: string, context: Record<string, unknown>): string {
+  return template.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (_, path: string) => {
+    const parts = path.split('.');
+    let val: unknown = context;
+    for (const p of parts) {
+      if (val && typeof val === 'object') val = (val as Record<string, unknown>)[p];
+      else return '';
+    }
+    return String(val ?? '');
+  });
+}
+
 export class AutomationService {
   async createAutomation(
     baseId: string,
@@ -42,12 +68,23 @@ export class AutomationService {
     try {
       await db.query('BEGIN');
 
+      const triggerConfig = { ...data.triggerConfig };
       const autoResult = await db.query(
         `INSERT INTO tp_automations (base_id, table_id, name, description, trigger_type, trigger_config, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [baseId, tableId, data.name, data.description ?? null, data.triggerType, JSON.stringify(data.triggerConfig), data.createdBy ?? null]
+        [baseId, tableId, data.name, data.description ?? null, data.triggerType, JSON.stringify(triggerConfig), data.createdBy ?? null]
       );
-      const automation = autoResult.rows[0];
+      const automation = autoResult.rows[0] as AutomationRow;
+
+      if (data.triggerType === 'webhook_received') {
+        const webhookUrl = this.getWebhookUrl(automation.id);
+        const updatedConfig = { ...triggerConfig, webhookUrl };
+        await db.query(
+          `UPDATE tp_automations SET trigger_config = $2 WHERE id = $1`,
+          [automation.id, JSON.stringify(updatedConfig)]
+        );
+        automation.trigger_config = updatedConfig;
+      }
 
       const actions: AutomationAction[] = [];
       for (let i = 0; i < data.actions.length; i++) {
@@ -99,6 +136,60 @@ export class AutomationService {
     await db.query('DELETE FROM tp_automations WHERE id = $1', [automationId]);
   }
 
+  async getAutomation(automationId: string): Promise<Automation | null> {
+    const db = getDatabase();
+    const result = await db.query(
+      `SELECT a.*,
+        COALESCE(json_agg(
+          json_build_object('id', aa.id, 'actionOrder', aa.action_order, 'actionType', aa.action_type, 'actionConfig', aa.action_config)
+          ORDER BY aa.action_order
+        ) FILTER (WHERE aa.id IS NOT NULL), '[]') as actions
+       FROM tp_automations a
+       LEFT JOIN tp_automation_actions aa ON aa.automation_id = a.id
+       WHERE a.id = $1
+       GROUP BY a.id`,
+      [automationId]
+    );
+    const row = result.rows[0] as AutomationRow | undefined;
+    if (!row) return null;
+    return { ...this.mapAutomation(row), actions: row.actions };
+  }
+
+  getWebhookUrl(automationId: string): string {
+    return `/api/table-platform/automations/${automationId}/trigger`;
+  }
+
+  async triggerWebhook(
+    automationId: string,
+    payload: Record<string, unknown>
+  ): Promise<{ success: boolean; runId?: string; error?: string }> {
+    const automation = await this.getAutomation(automationId);
+    if (!automation) {
+      return { success: false, error: 'Automation not found' };
+    }
+    if (!automation.enabled) {
+      return { success: false, error: 'Automation is not active' };
+    }
+    if (automation.triggerType !== 'webhook_received') {
+      return { success: false, error: 'Automation is not a webhook trigger type' };
+    }
+
+    const triggerRecord = { id: null, data: payload, _webhookPayload: payload };
+
+    try {
+      await this.runAutomation(
+        { ...automation, table_id: automation.tableId, trigger_config: automation.triggerConfig },
+        triggerRecord
+      );
+      return { success: true };
+    } catch (err) {
+      logger.error(`[AutomationService] Webhook trigger failed for ${automationId}`, {
+        error: (err as Error).message,
+      });
+      return { success: false, error: (err as Error).message };
+    }
+  }
+
   async evaluateTriggers(
     tableId: string,
     event: 'record_created' | 'record_updated',
@@ -118,9 +209,9 @@ export class AutomationService {
       [tableId, event]
     );
 
-    for (const auto of automations.rows) {
+    for (const auto of automations.rows as AutomationRow[]) {
       if (auto.trigger_config?.conditions) {
-        if (!this.evaluateConditions(record, auto.trigger_config.conditions)) continue;
+        if (!this.evaluateConditions(record, auto.trigger_config.conditions as any[])) continue;
       }
 
       this.runAutomation(auto, record).catch((err) => {
@@ -138,7 +229,7 @@ export class AutomationService {
        VALUES ($1, $2, 'running') RETURNING id`,
       [automation.id, triggerRecord?.id ?? null]
     );
-    const runId = runResult.rows[0].id;
+    const runId = (runResult.rows[0] as { id: string }).id;
     const startTime = Date.now();
     const actionResults: any[] = [];
 
@@ -184,6 +275,13 @@ export class AutomationService {
 
   private async executeAction(action: any, triggerRecord: any, automation: any): Promise<any> {
     const db = getDatabase();
+    const context: Record<string, unknown> = {
+      tableId: automation.table_id,
+      recordId: triggerRecord?.id,
+      userId: automation.created_by,
+      record: triggerRecord?.data ?? triggerRecord ?? {},
+      trigger: { record: triggerRecord },
+    };
 
     switch (action.actionType) {
       case 'update_record': {
@@ -191,7 +289,9 @@ export class AutomationService {
         if (fieldUpdates && triggerRecord?.id) {
           const data: Record<string, unknown> = {};
           for (const [fieldId, value] of Object.entries(fieldUpdates)) {
-            data[fieldId] = value === '{{trigger.record.id}}' ? triggerRecord.id : value;
+            data[fieldId] = typeof value === 'string' && value.startsWith('{{')
+              ? resolveTemplate(value, context)
+              : value;
           }
           await db.query(
             `UPDATE tp_records SET data = data || $2::jsonb, updated_at = NOW() WHERE id = $1`,
@@ -203,12 +303,35 @@ export class AutomationService {
       }
 
       case 'create_record': {
-        const { tableId, data } = action.actionConfig ?? {};
-        const result = await db.query(
-          `INSERT INTO tp_records (table_id, data) VALUES ($1, $2) RETURNING id`,
-          [tableId || automation.table_id, JSON.stringify(data || {})]
-        );
-        return { recordId: result.rows[0].id };
+        const { default: recordsService } = await import('./RecordsService.js');
+        const tableId = action.actionConfig?.tableId || context.tableId;
+        const data = action.actionConfig?.data || {};
+        const resolvedData: Record<string, unknown> = {};
+        for (const [key, val] of Object.entries(data)) {
+          resolvedData[key] = typeof val === 'string' && val.startsWith('{{')
+            ? resolveTemplate(val, context)
+            : val;
+        }
+        const record = await recordsService.createRecord(tableId as string, resolvedData, context.userId as string);
+        return { success: true, recordId: record.id };
+      }
+
+      case 'delete_record': {
+        const { default: recordsService } = await import('./RecordsService.js');
+        const recordId = action.actionConfig?.recordId || context.recordId;
+        await recordsService.deleteRecord(recordId as string, context.userId as string);
+        return { success: true };
+      }
+
+      case 'find_records': {
+        const { default: viewQueryEngine } = await import('./ViewQueryEngine.js');
+        const result = await viewQueryEngine.executeQuery({
+          tableId: action.actionConfig?.tableId,
+          filters: action.actionConfig?.filters,
+          sorts: action.actionConfig?.sorts,
+          pageSize: action.actionConfig?.limit || 100,
+        });
+        return { success: true, records: result.records, total: result.total };
       }
 
       case 'send_webhook': {
@@ -224,6 +347,68 @@ export class AutomationService {
         } catch (err: any) {
           return { error: err.message };
         }
+      }
+
+      case 'send_slack': {
+        const webhookUrl = action.actionConfig?.webhookUrl;
+        const text = resolveTemplate(action.actionConfig?.message || '', context);
+        const resp = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        if (!resp.ok) throw new Error(`Slack webhook failed: ${resp.status}`);
+        return { success: true };
+      }
+
+      case 'send_teams': {
+        const webhookUrl = action.actionConfig?.webhookUrl;
+        const text = resolveTemplate(action.actionConfig?.message || '', context);
+        const resp = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            '@type': 'MessageCard',
+            summary: 'Consultify Notification',
+            text,
+          }),
+        });
+        if (!resp.ok) throw new Error(`Teams webhook failed: ${resp.status}`);
+        return { success: true };
+      }
+
+      case 'run_script': {
+        const script = action.actionConfig?.script || '';
+        const fn = new Function('context', 'record', `'use strict';\n${script}`);
+        const result = fn(context, context.record || {});
+        return { success: true, result };
+      }
+
+      case 'update_linked_records': {
+        const { default: relationService } = await import('./RelationService.js');
+        const { default: recordsService } = await import('./RecordsService.js');
+        const linked = await relationService.getLinkedRecords(
+          (action.actionConfig?.recordId || context.recordId) as string,
+          action.actionConfig?.fieldId
+        );
+        for (const lr of linked) {
+          await recordsService.updateRecord(lr.id, action.actionConfig?.updates, context.userId as string);
+        }
+        return { success: true, updatedCount: linked.length };
+      }
+
+      case 'duplicate_record': {
+        const { default: recordsService } = await import('./RecordsService.js');
+        const recordId = action.actionConfig?.recordId || context.recordId;
+        const original = await recordsService.getRecord(recordId as string);
+        if (!original) throw new Error('Record not found');
+        const newData = { ...(original as any).data };
+        delete newData.__created_by;
+        delete newData.__created_by_name;
+        const newRecord = await recordsService.createRecord(
+          (original as any).table_id, newData, context.userId as string
+        );
+        return { success: true, recordId: newRecord.id };
       }
 
       case 'send_email':
@@ -274,7 +459,7 @@ export class AutomationService {
       `SELECT month, run_count as count FROM tp_automation_run_counts WHERE organization_id = $1 ORDER BY month DESC LIMIT 12`,
       [organizationId]
     );
-    return result.rows;
+    return result.rows as { month: string; count: number }[];
   }
 
   private mapAutomation(row: any): Omit<Automation, 'actions'> {

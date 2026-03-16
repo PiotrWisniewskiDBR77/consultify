@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'tp_offline_queue';
+const LAST_SYNC_KEY = 'tp_last_sync_time';
 const MAX_RETRIES = 3;
 
 export interface QueuedOperation {
@@ -12,17 +13,25 @@ export interface QueuedOperation {
 }
 
 type QueueListener = (queue: QueuedOperation[]) => void;
+type SyncListener = (lastSyncTime: number | null) => void;
 
 export class OfflineQueue {
   private queue: QueuedOperation[] = [];
   private isOnline = navigator.onLine;
   private syncInProgress = false;
   private listeners: QueueListener[] = [];
+  private syncListeners: SyncListener[] = [];
+  private lastSyncTime: number | null = null;
 
   constructor() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try { this.queue = JSON.parse(stored) as QueuedOperation[]; } catch { /* corrupted data, start fresh */ }
+    }
+
+    const storedSync = localStorage.getItem(LAST_SYNC_KEY);
+    if (storedSync) {
+      this.lastSyncTime = Number(storedSync) || null;
     }
 
     window.addEventListener('online', () => {
@@ -107,6 +116,12 @@ export class OfflineQueue {
 
       this.persist();
       this.notify();
+
+      if (synced > 0) {
+        this.lastSyncTime = Date.now();
+        localStorage.setItem(LAST_SYNC_KEY, String(this.lastSyncTime));
+        this.notifySyncListeners();
+      }
     } finally {
       this.syncInProgress = false;
     }
@@ -158,10 +173,21 @@ export class OfflineQueue {
     this.notify();
   }
 
+  getLastSyncTime(): number | null {
+    return this.lastSyncTime;
+  }
+
   subscribe(listener: QueueListener): () => void {
     this.listeners.push(listener);
     return () => {
       this.listeners = this.listeners.filter(l => l !== listener);
+    };
+  }
+
+  subscribeSyncTime(listener: SyncListener): () => void {
+    this.syncListeners.push(listener);
+    return () => {
+      this.syncListeners = this.syncListeners.filter(l => l !== listener);
     };
   }
 
@@ -173,6 +199,12 @@ export class OfflineQueue {
     const snapshot = [...this.queue];
     for (const listener of this.listeners) {
       listener(snapshot);
+    }
+  }
+
+  private notifySyncListeners(): void {
+    for (const listener of this.syncListeners) {
+      listener(this.lastSyncTime);
     }
   }
 }

@@ -24,7 +24,7 @@ export class FieldPermissionService {
       ) as has_field_perms`,
       [tableId]
     );
-    return result.rows[0]?.has_field_perms === true;
+    return (result.rows[0] as { has_field_perms: boolean })?.has_field_perms === true;
   }
 
   /**
@@ -36,7 +36,7 @@ export class FieldPermissionService {
     const field = await db.query('SELECT options FROM tp_fields WHERE id = $1', [fieldId]);
     if (!field.rows[0]) return false;
 
-    const perms = field.rows[0].options?.permissions;
+    const perms = (field.rows[0] as { options?: { permissions?: { readRoles?: string[]; writeRoles?: string[] } } }).options?.permissions;
     if (!perms || !perms.readRoles) return true;
 
     return perms.readRoles.includes(userRole) || perms.readRoles.includes('*');
@@ -50,7 +50,7 @@ export class FieldPermissionService {
     const field = await db.query('SELECT options FROM tp_fields WHERE id = $1', [fieldId]);
     if (!field.rows[0]) return false;
 
-    const perms = field.rows[0].options?.permissions;
+    const perms = (field.rows[0] as { options?: { permissions?: { readRoles?: string[]; writeRoles?: string[] } } }).options?.permissions;
     if (!perms || !perms.writeRoles) return true;
 
     return perms.writeRoles.includes(userRole) || perms.writeRoles.includes('*');
@@ -70,9 +70,10 @@ export class FieldPermissionService {
       [tableId]
     );
 
+    type FieldRow = { id: string; options?: { permissions?: { readRoles?: string[]; writeRoles?: string[] } } };
     const filtered: Record<string, unknown> = {};
-    for (const field of fields.rows) {
-      const perms = (field as any).options?.permissions;
+    for (const field of fields.rows as FieldRow[]) {
+      const perms = field.options?.permissions;
       const allowed =
         !perms ||
         !perms.readRoles ||

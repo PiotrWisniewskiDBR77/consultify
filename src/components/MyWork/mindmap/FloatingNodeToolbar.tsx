@@ -3,6 +3,7 @@ import {
   CircleDot,
   GitBranch,
   GitPullRequest,
+  Hash,
   Link2,
   CheckSquare,
   ListChecks,
@@ -13,6 +14,7 @@ import {
   Rocket,
   Sparkles,
   Star,
+  StickyNote,
   ToggleRight,
   Tags,
   Unlock,
@@ -30,9 +32,10 @@ import { FloatingAIPopover } from './floating-toolbar/FloatingAIPopover';
 import { FontSizeDropdown } from './floating-toolbar/FontSizeDropdown';
 import { SemanticControlsPopover } from './floating-toolbar/SemanticControlsPopover';
 import { SemanticTypeDropdown } from './floating-toolbar/SemanticTypeDropdown';
+import { QuickLinkPopover, QuickNotesPopover, QuickTagsPopover } from './floating-toolbar/QuickEditPopovers';
 import { QuickTaskPopover } from './floating-toolbar/QuickTaskPopover';
 
-type DropdownId = 'semanticType' | 'semantic' | 'branchTheme' | 'color' | 'fontSize' | 'artifacts' | 'task' | 'convertBranch' | 'ai' | null;
+type DropdownId = 'semanticType' | 'semantic' | 'branchTheme' | 'color' | 'fontSize' | 'artifacts' | 'task' | 'convertBranch' | 'ai' | 'quickNotes' | 'quickTags' | 'quickLink' | null;
 
 export interface FloatingNodeToolbarProps {
   nodeId: string;
@@ -131,6 +134,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           onClick={onAddChild}
           disabled={disabled}
           title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
+          aria-label={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
           className={`flex h-7 items-center gap-1 px-1.5 rounded-lg transition-all duration-150 text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
         >
           <Plus size={14} strokeWidth={2.5} />
@@ -143,6 +147,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             onClick={onAddSibling}
             disabled={disabled}
             title={isPl ? 'Dodaj sąsiada (Enter)' : 'Add sibling (Enter)'}
+            aria-label={isPl ? 'Dodaj sąsiada (Enter)' : 'Add sibling (Enter)'}
             className={`flex h-7 items-center gap-1 px-1.5 rounded-lg transition-all duration-150 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-white/[0.04] ${disabled ? 'opacity-40 pointer-events-none' : ''}`}
           >
             <GitBranch size={13} />
@@ -157,6 +162,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           <button
             onClick={() => toggle('semanticType')}
             title={isPl ? 'Typ węzła' : 'Node type'}
+            aria-label={isPl ? 'Typ węzła' : 'Node type'}
             className={btnClass(openDropdown === 'semanticType')}
           >
             <CircleDot size={13} />
@@ -178,6 +184,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           <button
             onClick={() => toggle('semantic')}
             title={isPl ? 'Semantyka i tagi' : 'Semantics and tags'}
+            aria-label={isPl ? 'Semantyka i tagi' : 'Semantics and tags'}
             className={btnClass(openDropdown === 'semantic')}
           >
             <Tags size={13} />
@@ -203,6 +210,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           <button
             onClick={() => toggle('branchTheme')}
             title={isPl ? 'Styl linii' : 'Line style'}
+            aria-label={isPl ? 'Styl linii' : 'Line style'}
             className={btnClass(openDropdown === 'branchTheme')}
           >
             <Waypoints size={13} />
@@ -223,6 +231,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         <button
           onClick={() => onUpdate({ autoLayout: !style.autoLayout })}
           title={isPl ? 'Auto-układ gałęzi' : 'Auto-layout branch'}
+          aria-label={isPl ? 'Auto-układ gałęzi' : 'Auto-layout branch'}
           className={btnClass(!!style.autoLayout)}
         >
           <ToggleRight size={13} />
@@ -233,6 +242,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           <button
             onClick={() => toggle('color')}
             title={isPl ? 'Kolor' : 'Color'}
+            aria-label={isPl ? 'Kolor' : 'Color'}
             className={btnClass(openDropdown === 'color')}
           >
             <div
@@ -259,6 +269,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           <button
             onClick={() => toggle('fontSize')}
             title={isPl ? 'Rozmiar czcionki' : 'Font size'}
+            aria-label={isPl ? 'Rozmiar czcionki' : 'Font size'}
             className={`${btnClass(openDropdown === 'fontSize')} text-[10px] font-bold`}
           >
             {style.fontSize || 14}
@@ -278,6 +289,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         <button
           onClick={() => onUpdate({ bold: !style.bold })}
           title={isPl ? 'Pogrubienie' : 'Bold'}
+          aria-label={isPl ? 'Pogrubienie' : 'Bold'}
           className={btnClass(!!style.bold)}
         >
           <Bold size={13} />
@@ -290,6 +302,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           <button
             onClick={() => toggle('artifacts')}
             title={isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
+            aria-label={isPl ? 'Powiązane artefakty' : 'Linked artifacts'}
             className={btnClass(openDropdown === 'artifacts')}
           >
             <Paperclip size={13} />
@@ -323,6 +336,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
           <button
             onClick={() => toggle('task')}
             title={isPl ? 'Szybkie zadanie' : 'Quick task'}
+            aria-label={isPl ? 'Szybkie zadanie' : 'Quick task'}
             className={btnClass(openDropdown === 'task')}
           >
             <CheckSquare size={13} />
@@ -347,6 +361,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
               onClick={() => toggle('convertBranch')}
               disabled={disabled}
               title={isPl ? 'Konwertuj gałąź na...' : 'Convert branch to...'}
+              aria-label={isPl ? 'Konwertuj gałąź na...' : 'Convert branch to...'}
               className={btnClass(openDropdown === 'convertBranch')}
             >
               <GitPullRequest size={13} />
@@ -381,18 +396,89 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         <button
           onClick={() => onUpdate({ locked: !style.locked })}
           title={isPl ? (style.locked ? 'Odblokuj' : 'Zablokuj') : (style.locked ? 'Unlock' : 'Lock')}
+          aria-label={isPl ? (style.locked ? 'Odblokuj' : 'Zablokuj') : (style.locked ? 'Unlock' : 'Lock')}
           className={btnClass(!!style.locked)}
         >
           {style.locked ? <Lock size={13} /> : <Unlock size={13} />}
         </button>
 
+        {/* 9a. Quick Notes */}
+        <div className="relative">
+          <button
+            onClick={() => toggle('quickNotes')}
+            disabled={disabled}
+            title={isPl ? 'Szybka notatka' : 'Quick notes'}
+            className={btnClass(openDropdown === 'quickNotes')}
+          >
+            <StickyNote size={13} />
+          </button>
+          {openDropdown === 'quickNotes' && (
+            <div className="absolute top-full left-0 mt-1 z-[100]">
+              <QuickNotesPopover
+                isPl={!!isPl}
+                nodeId={nodeId}
+                currentNotes={nodeData?.notes || ''}
+                onSave={(id, notes) => onUpdate({ notes })}
+                onClose={closeDD}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 9b. Quick Tags */}
+        <div className="relative">
+          <button
+            onClick={() => toggle('quickTags')}
+            disabled={disabled}
+            title={isPl ? 'Szybkie tagi' : 'Quick tags'}
+            className={btnClass(openDropdown === 'quickTags')}
+          >
+            <Hash size={13} />
+          </button>
+          {openDropdown === 'quickTags' && (
+            <div className="absolute top-full left-0 mt-1 z-[100]">
+              <QuickTagsPopover
+                isPl={!!isPl}
+                nodeId={nodeId}
+                currentTags={Array.isArray(nodeData?.tags) ? nodeData.tags : []}
+                onSave={(id, tags) => onUpdate({ tags })}
+                onClose={closeDD}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 9c. Quick Link */}
+        <div className="relative">
+          <button
+            onClick={() => toggle('quickLink')}
+            disabled={disabled}
+            title={isPl ? 'Szybki link' : 'Quick link'}
+            className={btnClass(openDropdown === 'quickLink')}
+          >
+            <Link2 size={13} />
+          </button>
+          {openDropdown === 'quickLink' && (
+            <div className="absolute top-full left-0 mt-1 z-[100]">
+              <QuickLinkPopover
+                isPl={!!isPl}
+                nodeId={nodeId}
+                currentLink={nodeData?.evidenceLink || ''}
+                onSave={(id, link) => onUpdate({ evidenceLink: link })}
+                onClose={closeDD}
+              />
+            </div>
+          )}
+        </div>
+
         <div className="w-px h-4 bg-slate-200/50 dark:bg-white/[0.06] mx-0.5" />
 
-        {/* 9. AI */}
+        {/* 10. AI */}
         <div className="relative">
           <button
             onClick={() => toggle('ai')}
             title="AI"
+            aria-label="AI"
             className={btnClass(openDropdown === 'ai')}
           >
             <Sparkles size={13} />
@@ -414,6 +500,7 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
         <button
           onClick={(e) => onOpenContextMenu({ x: e.clientX, y: e.clientY })}
           title={isPl ? 'Więcej opcji' : 'More options'}
+          aria-label={isPl ? 'Więcej opcji' : 'More options'}
           className={btnClass(false)}
         >
           <MoreVertical size={13} />

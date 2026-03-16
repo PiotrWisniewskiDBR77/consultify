@@ -203,7 +203,16 @@ export class ScheduledAutomationExecutor {
          GROUP BY a.id`
       );
 
-      for (const auto of result.rows) {
+      interface ScheduledAutomationRow {
+        id: string;
+        name?: string;
+        trigger_type: string;
+        trigger_config: any;
+        table_id: string;
+        actions: any[];
+        enabled: boolean;
+      }
+      for (const auto of result.rows as ScheduledAutomationRow[]) {
         const config = auto.trigger_config as ScheduledTriggerConfig;
         if (!config.cron) continue;
 
@@ -238,7 +247,7 @@ export class ScheduledAutomationExecutor {
       `INSERT INTO tp_automation_runs (automation_id, status) VALUES ($1, 'running') RETURNING id`,
       [automation.id]
     );
-    const runId = runResult.rows[0].id;
+    const runId = (runResult.rows[0] as { id: string }).id;
     const startTime = Date.now();
     const actionResults: any[] = [];
 
@@ -294,7 +303,7 @@ export class ScheduledAutomationExecutor {
           'INSERT INTO tp_records (table_id, data) VALUES ($1, $2) RETURNING id',
           [tableId || automation.table_id, JSON.stringify(data || {})]
         );
-        return { recordId: result.rows[0].id };
+        return { recordId: (result.rows[0] as { id: string }).id };
       }
       case 'send_webhook': {
         const { url, method, headers, bodyTemplate } = action.actionConfig ?? {};

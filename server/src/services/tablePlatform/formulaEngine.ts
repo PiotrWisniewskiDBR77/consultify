@@ -438,7 +438,12 @@ function toDateSafe(v: unknown): Date | null {
 // Built-in functions
 // ---------------------------------------------------------------------------
 
-type BuiltinFn = (args: unknown[]) => unknown;
+export interface FormulaContext {
+  recordId?: string;
+  createdTime?: string;
+}
+
+type BuiltinFn = (args: unknown[], ctx?: FormulaContext) => unknown;
 
 const BUILTINS: Record<string, BuiltinFn> = {
   SUM: (args) => args.reduce((acc: number, v) => acc + toNumber(v), 0),
@@ -528,6 +533,228 @@ const BUILTINS: Record<string, BuiltinFn> = {
     }
     return null;
   },
+
+  // ── Text functions ──────────────────────────────────────────────────────
+
+  TRIM: (args) => (args[0] == null ? '' : String(args[0]).trim()),
+
+  LEFT: (args) => {
+    const text = args[0] == null ? '' : String(args[0]);
+    const count = Math.max(0, toNumber(args[1]));
+    return text.slice(0, count);
+  },
+
+  RIGHT: (args) => {
+    const text = args[0] == null ? '' : String(args[0]);
+    const count = Math.max(0, toNumber(args[1]));
+    return count === 0 ? '' : text.slice(-count);
+  },
+
+  MID: (args) => {
+    const text = args[0] == null ? '' : String(args[0]);
+    const start = Math.max(0, toNumber(args[1]));
+    const count = Math.max(0, toNumber(args[2]));
+    return text.slice(start, start + count);
+  },
+
+  SUBSTITUTE: (args) => {
+    const text = args[0] == null ? '' : String(args[0]);
+    const oldStr = args[1] == null ? '' : String(args[1]);
+    const newStr = args[2] == null ? '' : String(args[2]);
+    if (oldStr === '') return text;
+    return text.split(oldStr).join(newStr);
+  },
+
+  SEARCH: (args) => {
+    const needle = args[0] == null ? '' : String(args[0]).toLowerCase();
+    const haystack = args[1] == null ? '' : String(args[1]).toLowerCase();
+    if (needle === '') return 0;
+    const idx = haystack.indexOf(needle);
+    return idx === -1 ? 0 : idx + 1;
+  },
+
+  REPT: (args) => {
+    const text = args[0] == null ? '' : String(args[0]);
+    const count = Math.max(0, Math.floor(toNumber(args[1])));
+    if (count > 10000) return text; // safety limit
+    return text.repeat(count);
+  },
+
+  T: (args) => {
+    if (args[0] == null) return '';
+    return typeof args[0] === 'string' ? args[0] : String(args[0]);
+  },
+
+  ENCODE_URL_COMPONENT: (args) => {
+    const text = args[0] == null ? '' : String(args[0]);
+    return encodeURIComponent(text);
+  },
+
+  // ── Numeric functions ───────────────────────────────────────────────────
+
+  ABS: (args) => Math.abs(toNumber(args[0])),
+
+  CEILING: (args) => {
+    const num = toNumber(args[0]);
+    const sig = args[1] != null ? toNumber(args[1]) : 1;
+    if (sig === 0) return 0;
+    return Math.ceil(num / sig) * sig;
+  },
+
+  FLOOR: (args) => {
+    const num = toNumber(args[0]);
+    const sig = args[1] != null ? toNumber(args[1]) : 1;
+    if (sig === 0) return 0;
+    return Math.floor(num / sig) * sig;
+  },
+
+  MOD: (args) => {
+    const num = toNumber(args[0]);
+    const divisor = toNumber(args[1]);
+    if (divisor === 0) return null;
+    return num % divisor;
+  },
+
+  POWER: (args) => Math.pow(toNumber(args[0]), toNumber(args[1])),
+
+  SQRT: (args) => {
+    const num = toNumber(args[0]);
+    return num < 0 ? null : Math.sqrt(num);
+  },
+
+  LOG: (args) => {
+    const num = toNumber(args[0]);
+    if (num <= 0) return null;
+    const base = args[1] != null ? toNumber(args[1]) : 10;
+    if (base <= 0 || base === 1) return null;
+    return Math.log(num) / Math.log(base);
+  },
+
+  INT: (args) => Math.trunc(toNumber(args[0])),
+
+  EVEN: (args) => {
+    const num = toNumber(args[0]);
+    const ceil = Math.ceil(Math.abs(num));
+    const even = ceil % 2 === 0 ? ceil : ceil + 1;
+    return num < 0 ? -even : even;
+  },
+
+  ODD: (args) => {
+    const num = toNumber(args[0]);
+    const ceil = Math.ceil(Math.abs(num));
+    const odd = ceil % 2 === 1 ? ceil : ceil + 1;
+    return num < 0 ? -odd : odd;
+  },
+
+  VALUE: (args) => {
+    if (args[0] == null) return 0;
+    const n = Number(args[0]);
+    return isNaN(n) ? null : n;
+  },
+
+  // ── Date functions ──────────────────────────────────────────────────────
+
+  DATEADD: (args) => {
+    const d = toDateSafe(args[0]);
+    if (!d) return null;
+    const count = toNumber(args[1]);
+    const unit = String(args[2] ?? 'days').toLowerCase();
+    const result = new Date(d.getTime());
+    switch (unit) {
+      case 'days':
+        result.setDate(result.getDate() + count);
+        break;
+      case 'months':
+        result.setMonth(result.getMonth() + count);
+        break;
+      case 'years':
+        result.setFullYear(result.getFullYear() + count);
+        break;
+      case 'hours':
+        result.setHours(result.getHours() + count);
+        break;
+      case 'minutes':
+        result.setMinutes(result.getMinutes() + count);
+        break;
+      default:
+        result.setDate(result.getDate() + count);
+    }
+    return result.toISOString();
+  },
+
+  DATETIME_FORMAT: (args) => {
+    const d = toDateSafe(args[0]);
+    if (!d) return null;
+    const fmt = args[1] != null ? String(args[1]) : 'YYYY-MM-DD';
+    return fmt
+      .replace('YYYY', String(d.getFullYear()))
+      .replace('MM', String(d.getMonth() + 1).padStart(2, '0'))
+      .replace('DD', String(d.getDate()).padStart(2, '0'))
+      .replace('HH', String(d.getHours()).padStart(2, '0'))
+      .replace('mm', String(d.getMinutes()).padStart(2, '0'))
+      .replace('ss', String(d.getSeconds()).padStart(2, '0'));
+  },
+
+  DATETIME_PARSE: (args) => {
+    const text = args[0] == null ? '' : String(args[0]);
+    const d = new Date(text);
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  },
+
+  WEEKDAY: (args) => {
+    const d = toDateSafe(args[0]);
+    return d ? d.getDay() : null;
+  },
+
+  WEEKNUM: (args) => {
+    const d = toDateSafe(args[0]);
+    if (!d) return null;
+    const start = new Date(d.getFullYear(), 0, 1);
+    const diff = d.getTime() - start.getTime();
+    const oneWeek = 7 * 24 * 60 * 60 * 1000;
+    return Math.ceil((diff / oneWeek) + start.getDay() / 7);
+  },
+
+  SET_TIMEZONE: (args) => {
+    const d = toDateSafe(args[0]);
+    if (!d) return null;
+    const tz = args[1] != null ? String(args[1]) : 'UTC';
+    try {
+      return d.toLocaleString('en-US', { timeZone: tz });
+    } catch {
+      return d.toISOString();
+    }
+  },
+
+  LAST_MODIFIED_TIME: () => new Date().toISOString(),
+
+  // ── Logical functions ───────────────────────────────────────────────────
+
+  SWITCH: (args) => {
+    if (args.length < 2) return null;
+    const expr = args[0];
+    for (let i = 1; i + 1 < args.length; i += 2) {
+      if (expr == args[i]) return args[i + 1]; // eslint-disable-line eqeqeq
+    }
+    return args.length % 2 === 0 ? args[args.length - 1] : null;
+  },
+
+  AND: (args) => args.every((a) => toBoolean(a)),
+
+  OR: (args) => args.some((a) => toBoolean(a)),
+
+  BLANK: () => null,
+
+  ERROR: (args) => {
+    const msg = args[0] != null ? String(args[0]) : 'Error';
+    throw new FormulaError(msg);
+  },
+
+  // ── Record context functions ────────────────────────────────────────────
+
+  RECORD_ID: (_args, ctx) => ctx?.recordId ?? null,
+
+  CREATED_TIME: (_args, ctx) => ctx?.createdTime ?? null,
 };
 
 // ---------------------------------------------------------------------------
@@ -537,9 +764,10 @@ const BUILTINS: Record<string, BuiltinFn> = {
 export function evaluateFormula(
   ast: FormulaAST,
   record: Record<string, unknown>,
-  fieldMap: Map<string, string>
+  fieldMap: Map<string, string>,
+  context?: FormulaContext
 ): unknown {
-  return evalNode(ast, record, fieldMap);
+  return evalNode(ast, record, fieldMap, context);
 }
 
 function resolveFieldValue(
@@ -555,7 +783,8 @@ function resolveFieldValue(
 function evalNode(
   node: FormulaAST,
   record: Record<string, unknown>,
-  fieldMap: Map<string, string>
+  fieldMap: Map<string, string>,
+  context?: FormulaContext
 ): unknown {
   switch (node.type) {
     case 'literal':
@@ -570,8 +799,8 @@ function evalNode(
       if (!fn) {
         throw new FormulaError(`Unknown function: ${fnName}`);
       }
-      const args = (node.children ?? []).map((c) => evalNode(c, record, fieldMap));
-      return fn(args);
+      const args = (node.children ?? []).map((c) => evalNode(c, record, fieldMap, context));
+      return fn(args, context);
     }
 
     case 'operator': {
@@ -579,11 +808,11 @@ function evalNode(
       const children = node.children ?? [];
 
       if (op === 'NOT') {
-        return !toBoolean(evalNode(children[0], record, fieldMap));
+        return !toBoolean(evalNode(children[0], record, fieldMap, context));
       }
 
-      const left = evalNode(children[0], record, fieldMap);
-      const right = children.length > 1 ? evalNode(children[1], record, fieldMap) : undefined;
+      const left = evalNode(children[0], record, fieldMap, context);
+      const right = children.length > 1 ? evalNode(children[1], record, fieldMap, context) : undefined;
 
       switch (op) {
         case '+':

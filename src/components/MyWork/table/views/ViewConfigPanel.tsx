@@ -199,6 +199,27 @@ export const ViewConfigPanel: React.FC<ViewConfigPanelProps> = ({
             </div>
           </Section>
 
+          {/* Group by (grid view) */}
+          {config.viewType === 'grid' && (
+            <Section
+              title={isPl ? 'Grupowanie' : 'Group by'}
+              id="groupBy"
+              expanded={expandedSection}
+              onToggle={setExpandedSection}
+            >
+              <div className="space-y-3">
+                <FieldSelect
+                  label={isPl ? 'Grupuj po polu' : 'Group by field'}
+                  value={config.groupByFieldId}
+                  options={columns}
+                  onChange={(id) => updateConfig({ groupByFieldId: id || undefined })}
+                  isPl={isPl}
+                  allowEmpty
+                />
+              </div>
+            </Section>
+          )}
+
           {/* Kanban config */}
           {config.viewType === 'kanban' && (
             <Section

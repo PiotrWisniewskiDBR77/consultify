@@ -20,6 +20,95 @@ interface HealthMetric {
   detail: string;
 }
 
+/* ── Per-branch health scoring ─────────────────────────────────────── */
+
+interface BranchHealthResult {
+  score: number;
+  label: 'healthy' | 'needs-work' | 'empty';
+  childCount: number;
+  hasNotes: boolean;
+  hasEvidence: boolean;
+  depthScore: number;
+}
+
+function collectDescendants(
+  nodeId: string,
+  edges: Array<{ source: string; target: string; data?: any }>,
+): string[] {
+  const children = edges
+    .filter((e) => e.source === nodeId && (!e.data?.edgeRole || e.data.edgeRole === 'structural'))
+    .map((e) => e.target);
+  const all: string[] = [...children];
+  for (const cid of children) all.push(...collectDescendants(cid, edges));
+  return all;
+}
+
+export function computeBranchHealth(
+  branchNodeId: string,
+  nodes: Array<{ id: string; data: any; type?: string }>,
+  edges: Array<{ source: string; target: string; data?: any }>,
+): BranchHealthResult {
+  const descendantIds = collectDescendants(branchNodeId, edges);
+  const descendants = nodes.filter((n) => descendantIds.includes(n.id));
+
+  const directChildren = edges.filter(
+    (e) => e.source === branchNodeId && (!e.data?.edgeRole || e.data.edgeRole === 'structural'),
+  );
+  const childCount = directChildren.length;
+
+  const hasNotes = descendants.some((n) => n.data?.notes && String(n.data.notes).trim().length > 0);
+  const hasEvidence = descendants.some(
+    (n) => Array.isArray(n.data?.evidenceLinks) && n.data.evidenceLinks.length > 0,
+  );
+
+  function maxDepth(nodeId: string, currentDepth: number): number {
+    const kids = edges
+      .filter((e) => e.source === nodeId && (!e.data?.edgeRole || e.data.edgeRole === 'structural'))
+      .map((e) => e.target);
+    if (kids.length === 0) return currentDepth;
+    return Math.max(...kids.map((kid) => maxDepth(kid, currentDepth + 1)));
+  }
+  const depth = maxDepth(branchNodeId, 0);
+  const depthScore = depth >= 3 ? 100 : Math.round((depth / 3) * 100);
+
+  const childScore = childCount === 0 ? 0 : childCount === 1 ? 40 : childCount === 2 ? 70 : 100;
+  const notesScore = hasNotes ? 100 : 0;
+  const evidenceScore = hasEvidence ? 100 : 0;
+
+  const score = Math.round(
+    childScore * 0.3 + notesScore * 0.2 + evidenceScore * 0.2 + depthScore * 0.3,
+  );
+
+  const label: BranchHealthResult['label'] =
+    score >= 70 ? 'healthy' : score >= 30 ? 'needs-work' : 'empty';
+
+  return { score, label, childCount, hasNotes, hasEvidence, depthScore };
+}
+
+/* ── BranchHealthDot — small colored indicator ────────────────────── */
+
+export const BranchHealthDot: React.FC<{ score: number; size?: number }> = ({
+  score,
+  size = 8,
+}) => {
+  const color = score >= 70 ? '#22c55e' : score >= 30 ? '#eab308' : '#ef4444';
+  return (
+    <div
+      title={`Health: ${score}%`}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        backgroundColor: color,
+        flexShrink: 0,
+        pointerEvents: 'auto',
+      }}
+    />
+  );
+};
+
+/* ── Global MapHealthScore widget ─────────────────────────────────── */
+
 export const MapHealthScore: React.FC<MapHealthScoreProps> = ({ nodes, edges, visible = true }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');

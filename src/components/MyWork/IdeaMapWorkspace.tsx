@@ -99,6 +99,7 @@ class CanvasToolErrorBoundary extends React.Component<
 
   render() {
     if (this.state.hasError) {
+      const isPl = typeof window !== 'undefined' && (navigator.language || '').startsWith('pl');
       return (
         <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-navy-950 p-8">
           <div className="p-3 rounded-2xl bg-red-500/10">
@@ -106,10 +107,10 @@ class CanvasToolErrorBoundary extends React.Component<
           </div>
           <div className="text-center">
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-1">
-              {this.props.toolName} failed to load
+              {this.props.toolName} {isPl ? 'nie załadował się' : 'failed to load'}
             </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
-              {this.state.error?.message || 'An unexpected error occurred'}
+              {this.state.error?.message || (isPl ? 'Wystąpił nieoczekiwany błąd' : 'An unexpected error occurred')}
             </div>
           </div>
           {this.props.onRetry && (
@@ -121,7 +122,7 @@ class CanvasToolErrorBoundary extends React.Component<
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
             >
               <RefreshCw size={14} />
-              Retry
+              {isPl ? 'Ponów' : 'Retry'}
             </button>
           )}
         </div>
@@ -576,7 +577,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const handleAcceptChallengeRef = useRef<() => void>(() => {});
 
   const handleQuickAction = useCallback(
-    (action: string, eventDetail?: Record<string, any>) => {
+    async (action: string, eventDetail?: Record<string, any>) => {
       console.log(`%c[Workspace] handleQuickAction: "${action}"`, 'color: #3b82f6; font-weight: bold');
       // V5-IDEA-26: Cross-system transforms
       const XFORM_MAP: Record<string, CanvasToolType> = {
@@ -735,6 +736,55 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         return;
       }
 
+      if (action === 'mm_ai_suggest_links_execute') {
+        const nodeId = eventDetail?.nodeId as string;
+        const nodeLabel = eventDetail?.nodeLabel as string;
+        if (!nodeId || !realId) return;
+
+        try {
+          const batch = await generateAIProposal({
+            ideaId: realId,
+            generatorType: 'ai_propose_attachments' as any,
+            tool: activeTool,
+            context: {
+              seedText: seedText || '',
+              title: title || '',
+              existingNodes: graphNodesRef.current,
+              existingEdges: graphEdgesRef.current,
+              language: i18n.language || 'en',
+              selection: {
+                type: 'node',
+                count: 1,
+                ids: [nodeId],
+                primaryId: nodeId,
+              },
+              targetNodeLabel: nodeLabel,
+              targetNodeTags: eventDetail?.nodeTags || [],
+              targetNodeSemanticType: eventDetail?.nodeSemanticType || '',
+            },
+          });
+          if (batch?.proposals?.length) {
+            setProposalBatch(batch);
+            setActivePanel('tools');
+            toast.success(
+              isPolish
+                ? `Znaleziono ${batch.proposals.length} propozycji powiązań`
+                : `Found ${batch.proposals.length} link suggestions`
+            );
+          } else {
+            toast(
+              isPolish ? 'Nie znaleziono pasujących artefaktów' : 'No matching artifacts found',
+              { icon: '🔍' }
+            );
+          }
+        } catch (err: any) {
+          toast.error(
+            err?.message || (isPolish ? 'Nie udało się wyszukać powiązań' : 'Failed to find links')
+          );
+        }
+        return;
+      }
+
       trackFunnelEvent('ideas_quick_tool_used', { tool: activeTool, action });
       if (action === 'mm_select_mode') setMindMapInteractionMode('select');
       if (action === 'mm_pan_mode') setMindMapInteractionMode('pan');
@@ -753,6 +803,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
       const action = typeof detail.action === 'string' ? detail.action : '';
       if (!action) return;
       if (detail.ideaId && detail.ideaId !== realId) return;
+      if (action === 'mm_ai_suggest_links_execute') {
+        handleQuickAction(action, detail);
+        return;
+      }
       if (
         action.endsWith('_execute') ||
         action.startsWith('mm_') ||

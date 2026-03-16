@@ -22,6 +22,7 @@ import {
   Download,
   Eye,
   EyeOff,
+  FileText,
   Filter,
   Flame,
   GanttChart,
@@ -32,6 +33,7 @@ import {
   KanbanSquare,
   Keyboard,
   Layout,
+  LayoutTemplate,
   Layers,
   LayoutGrid,
   Link2,
@@ -46,6 +48,7 @@ import {
   Redo2,
   Rocket,
   Save,
+  Send,
   Sparkles,
   StickyNote,
   Table2,
@@ -53,6 +56,7 @@ import {
   Trophy,
   Undo2,
   Upload,
+  Webhook,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -104,12 +108,14 @@ import { batchEvaluateFormulas } from './table/FormulaEngineV2';
 import { FrameworkGenerator } from './table/FrameworkGenerator';
 import { GridView } from './table/GridView';
 import { IdeaPipeline } from './table/IdeaPipeline';
+import FormBuilder from './table/FormBuilder';
 import { InterfaceDesigner } from './table/InterfaceDesigner';
 import { IdeaScoringModel } from './table/IdeaScoringModel';
 import { BatchAIFillButton, InlineAIFill } from './table/InlineAIFill';
 import { KanbanView } from './table/KanbanView';
 import { KeyboardShortcutsPanel } from './table/KeyboardShortcutsPanel';
 import { MatrixView } from './table/MatrixView';
+import { RecordExpandModal } from './table/RecordExpandModal';
 import { RowDetailPanel } from './table/RowDetailPanel';
 import { type RowTemplate, RowTemplatePicker } from './table/RowTemplatePicker';
 import { type SmartSuggestion, SmartSuggestionsBar } from './table/SmartSuggestionsBar';
@@ -127,6 +133,7 @@ import { computeAggregation } from './table/tableTypes';
 import { TimelineView } from './table/TimelineView';
 import { useTableKeyboard } from './table/useTableKeyboard';
 import { useTablePlatformIntegration } from './table/useTablePlatformIntegration';
+import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { ActivityFeed } from './table/ActivityFeed';
 import { AuditTrailPanel } from './table/AuditTrailPanel';
 import { ChatToSchemaPanel } from './table/ChatToSchemaPanel';
@@ -146,8 +153,12 @@ import { ConnectorWizard } from './table/connectors/ConnectorWizard';
 import { ConnectorList } from './table/connectors/ConnectorList';
 import { RunHistoryPanel } from './table/connectors/RunHistoryPanel';
 import { useConnectors, type Connector } from './table/connectors/useConnectors';
+import { WebhookRelayPanel } from './table/connectors/WebhookRelayPanel';
 import { useTableRealtime } from './table/useTableRealtime';
 import { PresenceIndicators } from './table/PresenceIndicators';
+import { DistributionBuilder } from './table/DistributionBuilder';
+import { TemplateGallery } from './table/TemplateGallery';
+import { MobileToolbarMenu } from './table/MobileToolbarMenu';
 
 interface IdeaTableToolProps {
   open: boolean;
@@ -192,7 +203,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     locked,
     isPl,
     open,
-    onSelectionChange,
+    onSelectionChange: onSelectionChange as (sel: unknown) => void | undefined,
   });
 
   // When the new platform is active, override legacy hook outputs
@@ -467,7 +478,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [showSnapshotManager, setShowSnapshotManager] = useState(false);
   const [showConnectorWizard, setShowConnectorWizard] = useState(false);
   const [showConnectorList, setShowConnectorList] = useState(false);
+  const [showWebhookRelays, setShowWebhookRelays] = useState(false);
   const [showInterfaceDesigner, setShowInterfaceDesigner] = useState(false);
+  const [showFormBuilder, setShowFormBuilder] = useState(false);
+  const [showTemplateGallery, setShowTemplateGallery] = useState(false);
+  const [showDistributionBuilder, setShowDistributionBuilder] = useState(false);
+  const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
   const [connectorHistoryTarget, setConnectorHistoryTarget] = useState<Connector | null>(null);
   const [colContextMenu, setColContextMenu] = useState<{
     colKey: string;
@@ -808,11 +824,29 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
 
   // Save, toggleColumn, cycleSort, applyView now handled by hooks
 
+  const handlePlatformUndo = useCallback(async () => {
+    if (!usePlatform) {
+      nodesUndo.undo();
+      return;
+    }
+    try {
+      const result = await TablePlatformApi.undoRecordEdit(ideaId);
+      if (result) {
+        toast.success(isPl ? 'Cofnięto zmianę' : 'Undo successful');
+        platformIntegration.refresh?.();
+      } else {
+        toast(isPl ? 'Brak zmian do cofnięcia' : 'Nothing to undo');
+      }
+    } catch {
+      toast.error(isPl ? 'Nie udało się cofnąć' : 'Undo failed');
+    }
+  }, [usePlatform, ideaId, isPl, nodesUndo, platformIntegration]);
+
   // ── Keyboard ───────────────────────────────────────────────────────────────
   useTableKeyboard({
     rowCount: processedRowsWithRollups.length,
     colCount: _visCols.length,
-    onUndo: nodesUndo.undo,
+    onUndo: handlePlatformUndo,
     onRedo: nodesUndo.redo,
     onDelete: _bulkDel,
     onEscape: () => {
@@ -846,7 +880,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       <tr
         key={row.id}
         data-node-id={row.id}
-        className={`border-b border-slate-200/30 dark:border-white/[0.04] cursor-pointer transition-colors group/row ${
+        className={`border-b border-slate-200/30 dark:border-white/[0.04] cursor-pointer transition-colors group/row touch-manipulation ${
           isSelected
             ? 'bg-primary-500/5'
             : detailNodeId === row.id
@@ -858,8 +892,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         style={rowColor ? { borderLeftWidth: 3, borderLeftColor: rowColor } : undefined}
         onClick={() => setSelectedNodeForLines(selectedNodeForLines === row.id ? null : row.id)}
         onDoubleClick={() => {
-          setDetailNodeId(row.id);
-          setDetailMode('full');
+          if (usePlatform) {
+            setExpandedRecordId(row.id);
+          } else {
+            setDetailNodeId(row.id);
+            setDetailMode('full');
+          }
         }}
       >
         <td className="w-8 px-2 py-1.5">
@@ -888,7 +926,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 ...condStyle,
                 ...(heatmapStyles?.get(row.id)?.get(col.key) || {}),
               }}
-              className="px-2 py-1.5 relative group/cell"
+              className="px-2 py-1.5 md:py-1.5 relative group/cell min-h-[44px] md:min-h-0"
             >
               <CellCursor remoteUsers={remotePresenceUsers} nodeId={row.id} colKey={col.key} />
               <div className="flex items-center gap-0.5">
@@ -960,7 +998,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     >
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Toolbar */}
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
+        <div className="flex flex-wrap items-center gap-1 md:gap-2 px-2 md:px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
           <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mr-2">
             {isPl ? 'Tabela' : 'Table'}
           </div>
@@ -1170,7 +1208,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             title={isPl ? 'Grupuj' : 'Group'}
           >
             <Group size={12} />
-            {isPl ? 'Grupuj' : 'Group'}
+            <span className="hidden sm:inline">{isPl ? 'Grupuj' : 'Group'}</span>
           </button>
 
           {/* V5-IDEA-24: View layout switcher — FROZEN order: table → kanban → timeline → calendar → matrix → grid */}
@@ -1219,200 +1257,291 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             />
           )}
 
-          {/* AI Categorize */}
+          {/* Secondary actions — hidden on mobile, shown in overflow menu */}
+          <div className="hidden md:contents">
+            {/* AI Categorize */}
+            {!locked && (
+              <button
+                onClick={() => setShowAICategorize(true)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                title={isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
+              >
+                <Layers size={12} />
+              </button>
+            )}
+
+            {/* Scoring Model */}
+            <button
+              onClick={() => setShowScoringModel(true)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              title={isPl ? 'Model scoringowy' : 'Scoring Model'}
+            >
+              <Trophy size={12} />
+            </button>
+
+            {/* Export to Presentation */}
+            <button
+              onClick={() => setShowExportPresentation(true)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              title={isPl ? 'Eksport do prezentacji' : 'Export to Presentation'}
+            >
+              <Presentation size={12} />
+            </button>
+
+            {/* Pipeline */}
+            <button
+              onClick={() => setShowPipeline(true)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              title={isPl ? 'Pipeline pomysłów' : 'Idea Pipeline'}
+            >
+              <Rocket size={12} />
+            </button>
+
+            {/* AI Copilot */}
+            <button
+              onClick={() => setShowCopilot(true)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              title={isPl ? 'AI Copilot' : 'AI Copilot'}
+            >
+              <Brain size={12} />
+            </button>
+
+            {/* Voice / Image Input */}
+            <button
+              onClick={() => setShowVoiceInput(true)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              title={isPl ? 'Głos / Obraz' : 'Voice / Image'}
+            >
+              <Mic size={12} />
+            </button>
+
+            {/* Cross-table Relations */}
+            <button
+              onClick={() => setShowCrossRelations(true)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              title={isPl ? 'Relacje między tabelami' : 'Cross-table Relations'}
+            >
+              <Network size={12} />
+            </button>
+
+            {/* Heatmap */}
+            <div className="relative">
+              <button
+                onClick={() => setShowHeatmap(!showHeatmap)}
+                className={`p-1.5 rounded-lg transition-colors ${heatmapColumns.size > 0 ? 'text-amber-500 bg-amber-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                title={isPl ? 'Heatmapa' : 'Heatmap'}
+              >
+                <Flame size={12} />
+              </button>
+              <HeatmapControls
+                open={showHeatmap}
+                onClose={() => setShowHeatmap(false)}
+                columns={_cols}
+                enabledColumns={heatmapColumns}
+                onToggleColumn={toggleHeatmapColumn}
+                palette={heatmapPalette}
+                onPaletteChange={setHeatmapPalette}
+              />
+            </div>
+
+            {/* History / Audit */}
+            <button
+              onClick={() => setShowAuditTrail((p) => !p)}
+              className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+              title={isPl ? 'Historia zmian' : 'History'}
+            >
+              <History size={12} />
+            </button>
+
+            {/* Activity Feed */}
+            <button
+              onClick={() => setShowActivityFeed((p) => !p)}
+              className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+              title={isPl ? 'Aktywność' : 'Activity'}
+            >
+              <Activity size={12} />
+            </button>
+
+            {/* Snapshots */}
+            <button
+              onClick={() => setShowSnapshotManager(true)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              title={isPl ? 'Migawki' : 'Snapshots'}
+            >
+              <Camera size={12} />
+            </button>
+
+            {/* Keyboard shortcuts */}
+            <button
+              onClick={() => setShowKeyboardShortcuts(true)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              title={isPl ? 'Skróty klawiszowe (?)' : 'Keyboard shortcuts (?)'}
+            >
+              <Keyboard size={12} />
+            </button>
+
+          {/* Templates */}
           {!locked && (
             <button
-              onClick={() => setShowAICategorize(true)}
+              onClick={() => setShowTemplateGallery(true)}
               className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
+              title={isPl ? 'Szablony' : 'Templates'}
             >
-              <Layers size={12} />
+              <LayoutTemplate size={12} />
             </button>
           )}
 
-          {/* Scoring Model */}
-          <button
-            onClick={() => setShowScoringModel(true)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-            title={isPl ? 'Model scoringowy' : 'Scoring Model'}
-          >
-            <Trophy size={12} />
-          </button>
-
-          {/* Export to Presentation */}
-          <button
-            onClick={() => setShowExportPresentation(true)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-            title={isPl ? 'Eksport do prezentacji' : 'Export to Presentation'}
-          >
-            <Presentation size={12} />
-          </button>
-
-          {/* Pipeline */}
-          <button
-            onClick={() => setShowPipeline(true)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-            title={isPl ? 'Pipeline pomysłów' : 'Idea Pipeline'}
-          >
-            <Rocket size={12} />
-          </button>
-
-          {/* AI Copilot */}
-          <button
-            onClick={() => setShowCopilot(true)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-            title={isPl ? 'AI Copilot' : 'AI Copilot'}
-          >
-            <Brain size={12} />
-          </button>
-
-          {/* Voice / Image Input */}
-          <button
-            onClick={() => setShowVoiceInput(true)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-            title={isPl ? 'Głos / Obraz' : 'Voice / Image'}
-          >
-            <Mic size={12} />
-          </button>
-
-          {/* Cross-table Relations */}
-          <button
-            onClick={() => setShowCrossRelations(true)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-            title={isPl ? 'Relacje między tabelami' : 'Cross-table Relations'}
-          >
-            <Network size={12} />
-          </button>
-
-          {/* Heatmap */}
-          <div className="relative">
+          {/* Distribute */}
+          {!locked && (
             <button
-              onClick={() => setShowHeatmap(!showHeatmap)}
-              className={`p-1.5 rounded-lg transition-colors ${heatmapColumns.size > 0 ? 'text-amber-500 bg-amber-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title={isPl ? 'Heatmapa' : 'Heatmap'}
+              onClick={() => setShowDistributionBuilder(true)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              title={isPl ? 'Dystrybucja' : 'Distribute'}
             >
-              <Flame size={12} />
+              <Send size={12} />
             </button>
-            <HeatmapControls
-              open={showHeatmap}
-              onClose={() => setShowHeatmap(false)}
-              columns={_cols}
-              enabledColumns={heatmapColumns}
-              onToggleColumn={toggleHeatmapColumn}
-              palette={heatmapPalette}
-              onPaletteChange={setHeatmapPalette}
-            />
-          </div>
-
-          {/* History / Audit */}
-          <button
-            onClick={() => setShowAuditTrail((p) => !p)}
-            className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-            title={isPl ? 'Historia zmian' : 'History'}
-          >
-            <History size={12} />
-          </button>
-
-          {/* Activity Feed */}
-          <button
-            onClick={() => setShowActivityFeed((p) => !p)}
-            className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-            title={isPl ? 'Aktywność' : 'Activity'}
-          >
-            <Activity size={12} />
-          </button>
-
-          {/* Snapshots */}
-          <button
-            onClick={() => setShowSnapshotManager(true)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-            title={isPl ? 'Migawki' : 'Snapshots'}
-          >
-            <Camera size={12} />
-          </button>
-
-          {/* Keyboard shortcuts */}
-          <button
-            onClick={() => setShowKeyboardShortcuts(true)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-            title={isPl ? 'Skróty klawiszowe (?)' : 'Keyboard shortcuts (?)'}
-          >
-            <Keyboard size={12} />
-          </button>
+          )}
 
           {/* Framework generator */}
-          {!locked && (
-            <button
-              onClick={() => setShowFrameworkGen(true)}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-              title={isPl ? 'Generator frameworków' : 'Framework Generator'}
-            >
-              <LayoutGrid size={12} />
-              {isPl ? 'Framework' : 'Framework'}
-            </button>
-          )}
+            {!locked && (
+              <button
+                onClick={() => setShowFrameworkGen(true)}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                title={isPl ? 'Generator frameworków' : 'Framework Generator'}
+              >
+                <LayoutGrid size={12} />
+                <span className="hidden lg:inline">{isPl ? 'Framework' : 'Framework'}</span>
+              </button>
+            )}
 
-          {/* Conditional formatting */}
-          <button
-            onClick={() => setShowConditionalFmt(true)}
-            className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-            title={isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting'}
-          >
-            <Paintbrush size={12} />
-          </button>
-
-          {/* Color palette */}
-          <div className="relative">
+            {/* Conditional formatting */}
             <button
-              onClick={() => setShowColorPalette(!showColorPalette)}
-              className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title={isPl ? 'Paleta kolorów' : 'Color Palette'}
+              onClick={() => setShowConditionalFmt(true)}
+              className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+              title={isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting'}
             >
-              <Palette size={12} />
+              <Paintbrush size={12} />
             </button>
-            <ColorPalette
-              open={showColorPalette}
-              onClose={() => setShowColorPalette(false)}
-              activePalette={activePalette}
-              onPaletteChange={(id) => {
-                setActivePalette(id);
-                setShowColorPalette(false);
-              }}
-              onAutoAssign={handleAutoAssignColors}
-            />
+
+            {/* Color palette */}
+            <div className="relative">
+              <button
+                onClick={() => setShowColorPalette(!showColorPalette)}
+                className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                title={isPl ? 'Paleta kolorów' : 'Color Palette'}
+              >
+                <Palette size={12} />
+              </button>
+              <ColorPalette
+                open={showColorPalette}
+                onClose={() => setShowColorPalette(false)}
+                activePalette={activePalette}
+                onPaletteChange={(id) => {
+                  setActivePalette(id);
+                  setShowColorPalette(false);
+                }}
+                onAutoAssign={handleAutoAssignColors}
+              />
+            </div>
+
+            {/* Summary dashboard */}
+            <button
+              onClick={() => setShowSummaryDashboard(!showSummaryDashboard)}
+              className={`p-1.5 rounded-lg transition-colors ${showSummaryDashboard ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+              title={isPl ? 'Podsumowanie' : 'Summary'}
+            >
+              <BarChart3 size={12} />
+            </button>
+
+            {/* Interface Designer */}
+            {usePlatform && (
+              <button
+                onClick={() => setShowInterfaceDesigner(true)}
+                className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                title={isPl ? 'Projektant interfejsu' : 'Interface Designer'}
+              >
+                <Layout size={12} />
+              </button>
+            )}
+
+            {/* Form Builder */}
+            {usePlatform && !locked && (
+              <button
+                onClick={() => setShowFormBuilder(true)}
+                className="p-1.5 rounded-lg transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                title={isPl ? 'Kreator formularzy' : 'Form Builder'}
+              >
+                <FileText size={12} />
+              </button>
+            )}
+
+            {/* AI Schema Builder */}
+            {!locked && usePlatform && (
+              <button
+                onClick={() => setShowChatToSchema(true)}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors"
+                title="AI Schema Builder"
+              >
+                <Sparkles size={12} />
+                <span className="hidden lg:inline">AI Schema</span>
+              </button>
+            )}
           </div>
 
-          {/* Summary dashboard */}
-          <button
-            onClick={() => setShowSummaryDashboard(!showSummaryDashboard)}
-            className={`p-1.5 rounded-lg transition-colors ${showSummaryDashboard ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-            title={isPl ? 'Podsumowanie' : 'Summary'}
-          >
-            <BarChart3 size={12} />
-          </button>
-
-          {/* Interface Designer */}
-          {usePlatform && (
-            <button
-              onClick={() => setShowInterfaceDesigner(true)}
-              className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title={isPl ? 'Projektant interfejsu' : 'Interface Designer'}
-            >
-              <Layout size={12} />
+          {/* Mobile overflow menu for secondary actions */}
+          <MobileToolbarMenu>
+            {!locked && (
+              <button onClick={() => setShowAICategorize(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+                <Layers size={14} /> {isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
+              </button>
+            )}
+            <button onClick={() => setShowScoringModel(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <Trophy size={14} /> {isPl ? 'Scoring' : 'Scoring'}
             </button>
-          )}
-
-          {/* AI Schema Builder */}
-          {!locked && usePlatform && (
-            <button
-              onClick={() => setShowChatToSchema(true)}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors"
-              title="AI Schema Builder"
-            >
-              <Sparkles size={12} />
-              AI Schema
+            <button onClick={() => setShowExportPresentation(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <Presentation size={14} /> {isPl ? 'Prezentacja' : 'Presentation'}
             </button>
-          )}
+            <button onClick={() => setShowPipeline(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <Rocket size={14} /> {isPl ? 'Pipeline' : 'Pipeline'}
+            </button>
+            <button onClick={() => setShowCopilot(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <Brain size={14} /> AI Copilot
+            </button>
+            <button onClick={() => setShowVoiceInput(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <Mic size={14} /> {isPl ? 'Głos / Obraz' : 'Voice / Image'}
+            </button>
+            <button onClick={() => setShowCrossRelations(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <Network size={14} /> {isPl ? 'Relacje' : 'Relations'}
+            </button>
+            <button onClick={() => setShowHeatmap(!showHeatmap)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <Flame size={14} /> {isPl ? 'Heatmapa' : 'Heatmap'}
+            </button>
+            <button onClick={() => setShowAuditTrail((p) => !p)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <History size={14} /> {isPl ? 'Historia' : 'History'}
+            </button>
+            <button onClick={() => setShowActivityFeed((p) => !p)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <Activity size={14} /> {isPl ? 'Aktywność' : 'Activity'}
+            </button>
+            <button onClick={() => setShowSnapshotManager(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <Camera size={14} /> {isPl ? 'Migawki' : 'Snapshots'}
+            </button>
+            <button onClick={() => setShowConditionalFmt(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <Paintbrush size={14} /> {isPl ? 'Formatowanie' : 'Formatting'}
+            </button>
+            <button onClick={() => setShowSummaryDashboard(!showSummaryDashboard)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+              <BarChart3 size={14} /> {isPl ? 'Podsumowanie' : 'Summary'}
+            </button>
+            {!locked && (
+              <button onClick={() => setShowFrameworkGen(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+                <LayoutGrid size={14} /> Framework
+              </button>
+            )}
+            {!locked && (
+              <button onClick={() => setShowTemplateGallery(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
+                <LayoutTemplate size={14} /> {isPl ? 'Szablony' : 'Templates'}
+              </button>
+            )}
+          </MobileToolbarMenu>
 
           {/* CSV import/export + Connectors */}
           <div className="flex items-center gap-0.5">
@@ -1439,6 +1568,15 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 {connectors.connectors.some((c) => c.lastRunStatus === 'failed') && (
                   <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
                 )}
+              </button>
+            )}
+            {usePlatform && (
+              <button
+                onClick={() => setShowWebhookRelays(true)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
+                title={isPl ? 'Webhook Relay (Zapier/Make)' : 'Webhook Relays (Zapier/Make)'}
+              >
+                <Webhook size={12} />
               </button>
             )}
             <input
@@ -1524,8 +1662,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           {/* Undo / Redo */}
           <div className="flex items-center gap-0.5">
             <button
-              onClick={nodesUndo.undo}
-              disabled={!nodesUndo.canUndo}
+              onClick={handlePlatformUndo}
+              disabled={!usePlatform && !nodesUndo.canUndo}
               className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
               title="Undo (Ctrl+Z)"
             >
@@ -1799,7 +1937,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             }}
           />
         ) : (
-          <div ref={tableContainerRef} className="flex-1 overflow-auto relative">
+          <div ref={tableContainerRef} className="flex-1 overflow-x-auto overflow-y-auto relative -webkit-overflow-scrolling-touch">
             <ConnectionLines
               selectedNodeId={selectedNodeForLines}
               edges={edges}
@@ -1903,15 +2041,15 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {groupedRows ? (
-                  Object.entries(groupedRows).map(([groupKey, rows]) => (
+                {effectiveGroupedRows ? (
+                  Object.entries(effectiveGroupedRows).map(([groupKey, rows]) => (
                     <React.Fragment key={groupKey}>
                       <tr className="bg-slate-100/50 dark:bg-navy-800/50">
                         <td
                           colSpan={_visCols.length + 1}
                           className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                         >
-                          {groupKey} ({rows.length})
+                          {groupKey || (isPl ? '(brak wartości)' : '(empty)')} <span className="text-slate-400 font-normal ml-1">({rows.length})</span>
                         </td>
                       </tr>
                       {rows.map((row, idx) => renderRow(row, idx))}
@@ -2166,7 +2304,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         onClose={() => setShowConditionalFmt(false)}
         rules={formatRules}
         onChange={setFormatRules}
-        columns={_cols}
+        fields={_cols}
       />
 
       {/* Cell Expand Popover */}
@@ -2386,6 +2524,91 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               onSave={() => {
                 setShowInterfaceDesigner(false);
               }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Form Builder */}
+      {showFormBuilder && usePlatform && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/20 backdrop-blur-[2px]" onClick={() => setShowFormBuilder(false)}>
+          <div className="w-[800px] max-w-[95vw] max-h-[85vh] overflow-y-auto bg-white dark:bg-navy-950 rounded-2xl border border-slate-200 dark:border-navy-700 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <FormBuilder
+              form={{
+                id: `form-${ideaId}`,
+                table_id: ideaId,
+                name: isPl ? 'Nowy formularz' : 'New Form',
+                description: null,
+                slug: `form-${ideaId}`,
+                is_published: false,
+                config: { fields: [] },
+                submit_count: 0,
+              }}
+              tableFields={effectiveColumns.map((c) => ({
+                id: c.key,
+                tableId: ideaId,
+                name: c.header,
+                fieldType: (c.type ?? 'singleLineText') as import('@/types/tablePlatform').FieldType,
+                options: {},
+                isComputed: false,
+                order: 0,
+                createdAt: '',
+                updatedAt: '',
+              }))}
+              onSave={async () => {
+                toast.success(isPl ? 'Formularz zapisany' : 'Form saved');
+                setShowFormBuilder(false);
+              }}
+              onDelete={async () => {
+                setShowFormBuilder(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Record Expand Modal (double-click on row) */}
+      {expandedRecordId && usePlatform && (
+        <RecordExpandModal
+          open={!!expandedRecordId}
+          onClose={() => setExpandedRecordId(null)}
+          recordId={expandedRecordId}
+          tableId={ideaId}
+          tableName={isPl ? 'Bieżąca tabela' : 'Current table'}
+          onOpenAuditTrail={(recId) => {
+            setDetailNodeId(recId);
+            setShowAuditTrail(true);
+          }}
+          locked={locked}
+        />
+      )}
+
+      {/* Template Gallery */}
+      {showTemplateGallery && (
+        <TemplateGallery
+          workspaceId={ideaId}
+          onClose={() => setShowTemplateGallery(false)}
+          onTemplateUsed={() => {
+            toast.success(isPl ? 'Szablon zastosowany' : 'Template applied');
+          }}
+        />
+      )}
+
+      {/* Distribution Builder */}
+      {showDistributionBuilder && (
+        <DistributionBuilder
+          baseId={ideaId}
+          onClose={() => setShowDistributionBuilder(false)}
+        />
+      )}
+
+      {/* Webhook Relay Panel */}
+      {showWebhookRelays && (
+        <div className="fixed inset-0 z-[150] flex items-stretch justify-end bg-black/20 backdrop-blur-[2px]" onClick={() => setShowWebhookRelays(false)}>
+          <div className="w-[420px] max-w-[90vw] h-full bg-white dark:bg-navy-950 border-l border-slate-200 dark:border-navy-700 shadow-2xl overflow-y-auto p-5" onClick={(e) => e.stopPropagation()}>
+            <WebhookRelayPanel
+              workspaceId={ideaId}
+              onClose={() => setShowWebhookRelays(false)}
             />
           </div>
         </div>

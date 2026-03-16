@@ -47,7 +47,7 @@ export class ServiceAccountService {
       [organizationId, data.name, data.description ?? null, tokenHash, tokenPrefix, data.scopes, expiresAt, data.createdBy ?? null],
     );
 
-    return { account: result.rows[0], token: rawToken };
+    return { account: result.rows[0] as ServiceAccount, token: rawToken };
   }
 
   async validateToken(token: string): Promise<{ valid: boolean; account?: any; organizationId?: string }> {
@@ -64,7 +64,7 @@ export class ServiceAccountService {
 
     if (result.rows.length === 0) return { valid: false };
 
-    const account = result.rows[0];
+    const account = result.rows[0] as ServiceAccount & { organization_id: string };
 
     if (account.expires_at && new Date(account.expires_at) < new Date()) {
       return { valid: false };
@@ -81,14 +81,14 @@ export class ServiceAccountService {
     return { valid: true, account, organizationId: account.organization_id };
   }
 
-  async listServiceAccounts(organizationId: string): Promise<ServiceAccount[]> {
+  async listServiceAccounts(organizationId: string  ): Promise<ServiceAccount[]> {
     const db = getDatabase();
     const result = await db.query(
       `SELECT id, name, description, token_prefix, scopes, last_used_at, expires_at, created_at
        FROM tp_service_accounts WHERE organization_id = $1 ORDER BY created_at DESC`,
       [organizationId],
     );
-    return result.rows;
+    return result.rows as ServiceAccount[];
   }
 
   async revokeServiceAccount(accountId: string): Promise<void> {

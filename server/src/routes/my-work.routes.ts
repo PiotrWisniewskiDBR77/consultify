@@ -5063,6 +5063,136 @@ router.delete(
 );
 
 // ============================================================================
+// Node Comments — server-persisted per-node comment threads
+// ============================================================================
+
+/**
+ * GET /api/my-work/my-ideas/:id/map/nodes/:nodeId/comments
+ */
+router.get(
+  '/my-ideas/:id/map/nodes/:nodeId/comments',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+
+    const hasTables = await requireTables(res, ['idea_node_comments']);
+    if (!hasTables) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    const nodeId = String(req.params.nodeId || '').trim();
+    if (!ideaId || !nodeId) return res.status(400).json({ error: 'Missing ideaId or nodeId' });
+
+    const rows = await queryHelpers.query<any>(
+      `SELECT id, node_id, user_id, user_name, text, mentions, created_at
+       FROM idea_node_comments
+       WHERE idea_id = ? AND node_id = ? AND organization_id = ?
+       ORDER BY created_at ASC`,
+      [ideaId, nodeId, orgId]
+    );
+
+    res.json({
+      comments: rows.map((c: any) => ({
+        id: c.id,
+        nodeId: c.node_id,
+        author: c.user_name || c.user_id,
+        text: c.text,
+        mentions: c.mentions ? (typeof c.mentions === 'string' ? JSON.parse(c.mentions) : c.mentions) : [],
+        createdAt: c.created_at,
+      })),
+    });
+  })
+);
+
+/**
+ * POST /api/my-work/my-ideas/:id/map/nodes/:nodeId/comments
+ */
+router.post(
+  '/my-ideas/:id/map/nodes/:nodeId/comments',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
+
+    const hasTables = await requireTables(res, ['idea_node_comments']);
+    if (!hasTables) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    const nodeId = String(req.params.nodeId || '').trim();
+    if (!ideaId || !nodeId) return res.status(400).json({ error: 'Missing ideaId or nodeId' });
+
+    const schema = z.object({
+      text: z.string().min(1).max(5000),
+      mentions: z.array(z.string()).optional(),
+    });
+
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: parsed.error.message });
+
+    const userName = req.user?.name || req.user?.email || 'User';
+    const id = uuidv4();
+
+    await queryHelpers.run(
+      `INSERT INTO idea_node_comments (id, idea_id, node_id, user_id, organization_id, user_name, text, mentions, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+      [id, ideaId, nodeId, userId, orgId, userName, parsed.data.text, parsed.data.mentions ? JSON.stringify(parsed.data.mentions) : null]
+    );
+
+    await req.emitAuditEvent?.({
+      action: 'IDEA_NODE_COMMENT_CREATE',
+      resourceType: 'IDEA_NODE_COMMENT',
+      resourceId: id,
+    });
+
+    res.status(201).json({
+      comment: {
+        id,
+        nodeId,
+        author: userName,
+        text: parsed.data.text,
+        mentions: parsed.data.mentions || [],
+        createdAt: new Date().toISOString(),
+      },
+    });
+  })
+);
+
+/**
+ * DELETE /api/my-work/my-ideas/:id/map/nodes/:nodeId/comments/:commentId
+ */
+router.delete(
+  '/my-ideas/:id/map/nodes/:nodeId/comments/:commentId',
+  requireAudit,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { orgId } = identity;
+
+    const hasTables = await requireTables(res, ['idea_node_comments']);
+    if (!hasTables) return;
+
+    const ideaId = String(req.params.id || '').trim();
+    const nodeId = String(req.params.nodeId || '').trim();
+    const commentId = String(req.params.commentId || '').trim();
+    if (!ideaId || !nodeId || !commentId) return res.status(400).json({ error: 'Missing required params' });
+
+    await queryHelpers.run(
+      `DELETE FROM idea_node_comments WHERE id = ? AND idea_id = ? AND node_id = ? AND organization_id = ?`,
+      [commentId, ideaId, nodeId, orgId]
+    );
+
+    await req.emitAuditEvent?.({
+      action: 'IDEA_NODE_COMMENT_DELETE',
+      resourceType: 'IDEA_NODE_COMMENT',
+      resourceId: commentId,
+    });
+
+    res.json({ ok: true });
+  })
+);
+
+// ============================================================================
 // Activity Feed — server-persisted map activity log
 // ============================================================================
 

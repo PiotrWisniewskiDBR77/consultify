@@ -352,6 +352,101 @@ const auditService = {
     }
   },
 
+  // ── Cell-Level History ──────────────────────────────────────────────────
+
+  async logCellChanges(
+    recordId: string,
+    tableId: string,
+    changes: Array<{ fieldId: string; oldValue: unknown; newValue: unknown }>,
+    userId: string
+  ): Promise<void> {
+    if (changes.length === 0) return;
+    const db = getDatabase();
+    try {
+      const values: unknown[] = [];
+      const placeholders: string[] = [];
+      let paramIdx = 1;
+
+      for (const change of changes) {
+        placeholders.push(
+          `($${paramIdx}, $${paramIdx + 1}, $${paramIdx + 2}, $${paramIdx + 3}, $${paramIdx + 4}, $${paramIdx + 5})`
+        );
+        values.push(
+          recordId,
+          tableId,
+          change.fieldId,
+          change.oldValue !== undefined ? JSON.stringify(change.oldValue) : null,
+          change.newValue !== undefined ? JSON.stringify(change.newValue) : null,
+          userId
+        );
+        paramIdx += 6;
+      }
+
+      await db.query(
+        `INSERT INTO tp_cell_history (record_id, table_id, field_id, old_value, new_value, changed_by)
+         VALUES ${placeholders.join(', ')}`,
+        values
+      );
+    } catch (e) {
+      logger.error('[AuditService] logCellChanges failed', {
+        recordId,
+        tableId,
+        error: (e as Error).message,
+      });
+    }
+  },
+
+  async getCellHistory(
+    recordId: string,
+    fieldId: string,
+    limit = 50,
+    offset = 0
+  ): Promise<unknown[]> {
+    const db = getDatabase();
+    try {
+      const result = await db.query(
+        `SELECT id, record_id, table_id, field_id, old_value, new_value, changed_by, changed_at
+         FROM tp_cell_history
+         WHERE record_id = $1 AND field_id = $2
+         ORDER BY changed_at DESC
+         LIMIT $3 OFFSET $4`,
+        [recordId, fieldId, limit, offset]
+      );
+      return result.rows;
+    } catch (e) {
+      logger.error('[AuditService] getCellHistory failed', {
+        recordId,
+        fieldId,
+        error: (e as Error).message,
+      });
+      throw e;
+    }
+  },
+
+  async getRecordCellHistory(
+    recordId: string,
+    limit = 100
+  ): Promise<unknown[]> {
+    const db = getDatabase();
+    try {
+      const result = await db.query(
+        `SELECT id, record_id, table_id, field_id, old_value, new_value, changed_by, changed_at
+         FROM tp_cell_history
+         WHERE record_id = $1
+         ORDER BY changed_at DESC
+         LIMIT $2`,
+        [recordId, limit]
+      );
+      return result.rows;
+    } catch (e) {
+      logger.error('[AuditService] getRecordCellHistory failed', {
+        recordId,
+        error: (e as Error).message,
+      });
+      throw e;
+    }
+  },
+
   async restoreSnapshot(snapshotId: string): Promise<void> {
     const db = getDatabase();
     try {

@@ -80,13 +80,13 @@ export class ExtensionService {
       ]
     );
     logger.info('[ExtensionService] Registered extension', { name: data.name });
-    return result.rows[0];
+    return result.rows[0] as Extension;
   }
 
   async getExtension(extensionId: string): Promise<Extension | null> {
     const db = getDatabase();
     const result = await db.query('SELECT * FROM tp_extensions WHERE id = $1', [extensionId]);
-    return result.rows[0] ?? null;
+    return (result.rows[0] as Extension) ?? null;
   }
 
   async listPublishedExtensions(category?: string): Promise<Extension[]> {
@@ -99,7 +99,7 @@ export class ExtensionService {
     }
     query += ' ORDER BY install_count DESC, name ASC';
     const result = await db.query(query, params);
-    return result.rows;
+    return result.rows as Extension[];
   }
 
   async installExtension(
@@ -108,7 +108,7 @@ export class ExtensionService {
     installedBy?: string
   ): Promise<ExtensionInstall | null> {
     const db = getDatabase();
-    const client = await db.connect();
+    const client = await (db as any).connect();
     try {
       await client.query('BEGIN');
       const result = await client.query(
@@ -160,7 +160,7 @@ export class ExtensionService {
        ORDER BY ei.created_at DESC`,
       [baseId]
     );
-    return result.rows;
+    return result.rows as (Extension & { install_config: Record<string, unknown>; installed_at: string })[];
   }
 
   async updateExtensionConfig(

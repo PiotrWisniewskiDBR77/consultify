@@ -35,12 +35,15 @@ import ReactFlow, {
   Panel,
   Position,
   ReactFlowProvider,
+  useEdges,
   useEdgesState,
+  useNodes,
   useNodesState,
   useReactFlow,
 } from 'reactflow';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
+import { resolveTagColor } from './mindmap/tagColorMapping';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import {
@@ -79,6 +82,7 @@ import { AISentimentOverlay, type SentimentResult } from './mindmap/AISentimentO
 import { AIWhatIfScenarios } from './mindmap/AIWhatIfScenarios';
 import { BatchConvertModal } from './mindmap/BatchConvertModal';
 import { BranchComparison } from './mindmap/BranchComparison';
+import { BranchSummaryPanel } from './mindmap/BranchSummaryPanel';
 import { ClusterBubbles } from './mindmap/ClusterBubbles';
 import {
   CollaborationOverlay,
@@ -98,7 +102,8 @@ import { IdeaFunnelAnalytics } from './mindmap/IdeaFunnelAnalytics';
 import { ImportExternalMap } from './mindmap/ImportExternalMap';
 import { InterviewToMap } from './mindmap/InterviewToMap';
 import { LabeledEdge } from './mindmap/LabeledEdge';
-
+import { LargeMapOptimizer } from './mindmap/LargeMapOptimizer';
+import { BranchHealthDot, computeBranchHealth, MapHealthScore } from './mindmap/MapHealthScore';
 import { MindMap3DView } from './mindmap/MindMap3DView';
 import { type NodeComment, NodeCommentThread } from './mindmap/NodeCommentThread';
 import { NodeContextMenu } from './mindmap/NodeContextMenu';
@@ -125,10 +130,13 @@ import { TimeHeatmap } from './mindmap/TimeHeatmap';
 import { TimelineView } from './mindmap/TimelineView';
 import { applyStructureLayout } from './mindmap/StructureLayouts';
 import { StructurePickerPopover } from './mindmap/toolbar-popovers/StructurePickerPopover';
+import { detectMindmapIntent, type SidekickContext } from './mindmap/aiSidekickContext';
 import { useAutoLayout } from './mindmap/useAutoLayout';
 import { useMapExport } from './mindmap/useMapExport';
+import { useMapExportPdf } from './mindmap/useMapExportPdf';
 import { hasMindMapClipboard, isRelationEdge, isStructuralEdge, useMindMapNodes } from './mindmap/useMindMapNodes';
 import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
+import { MindmapCommandPalette } from './mindmap/MindmapCommandPalette';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
 import { VoiceToNode } from './mindmap/VoiceToNode';
 import { triggerWebhooks, WebhookSettings } from './mindmap/WebhookSettings';
@@ -747,9 +755,29 @@ const CenterNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
 CenterNodeComponent.displayName = 'RecommendationCenterNode';
 
 const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, id }) => {
-  const colors = branchColor(data.branchKey, data._depth);
+  const colors = useMemo(() => branchColor(data.branchKey, data._depth), [data.branchKey, data._depth]);
   const collapsed = data._collapsed;
   const childCount = data.count || 0;
+  const rfNodes = useNodes();
+  const rfEdges = useEdges();
+  const nodeCount = rfNodes.length;
+  const edgeCount = rfEdges.length;
+  const health = useMemo(
+    () => computeBranchHealth(id, rfNodes, rfEdges),
+    [id, nodeCount, edgeCount],
+  );
+
+  if (data._simplified) {
+    return (
+      <div className={`px-3 py-1.5 rounded-xl border ${colors.border} ${colors.bg} text-center min-w-[100px]`}>
+        <Handle type="target" position={Position.Left} className="!opacity-0 !w-1 !h-1" />
+        <Handle type="source" position={Position.Right} id="right" className="!opacity-0 !w-1 !h-1" />
+        <div className={`text-xs font-semibold ${colors.text}`}>{data.label}</div>
+        <div className="text-[10px] text-slate-500 dark:text-slate-400">{childCount} nodes</div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`relative px-4 py-2.5 rounded-2xl border-2 ${colors.border} ${colors.bg} ${
@@ -765,6 +793,24 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         id="bottom"
         className="!opacity-0 !w-1 !h-1"
       />
+      <div className="absolute -top-1 -right-1 z-10">
+        <BranchHealthDot score={health.score} />
+      </div>
+      {selected && (
+        <button
+          type="button"
+          title={data._isPl ? 'Dodaj węzeł (Tab)' : 'Add node (Tab)'}
+          className="nodrag absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-5 h-5 flex items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 hover:scale-110 transition-all"
+          onClick={(e) => {
+            e.stopPropagation();
+            window.dispatchEvent(new CustomEvent('idea-mindmap-node-quick-action', {
+              detail: { action: 'mm_add_child', nodeId: id }
+            }));
+          }}
+        >
+          <Plus size={12} strokeWidth={2.5} />
+        </button>
+      )}
       <div
         className={`text-xs font-semibold ${colors.text} flex items-center gap-1 justify-center`}
       >
@@ -777,19 +823,35 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
         {collapsed ? ` (${collapsed ? '...' : ''})` : ''}
       </div>
       {selected && (
-        <button
-          type="button"
-          className="nodrag absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-600 text-white text-[9px] font-medium shadow-lg hover:bg-violet-700 transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            window.dispatchEvent(new CustomEvent('idea-mindmap-node-quick-action', {
-              detail: { action: 'mm_ai_expand_node', nodeId: id }
-            }));
-          }}
-        >
-          <Sparkles size={10} />
-          <span>{childCount === 0 ? (data._isPl ? 'Rozwiń AI' : 'AI Expand') : (data._isPl ? 'Więcej AI' : 'More AI')}</span>
-        </button>
+        <div className="nodrag absolute -bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1">
+          <button
+            type="button"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-600 text-white text-[9px] font-medium shadow-lg hover:bg-violet-700 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.dispatchEvent(new CustomEvent('idea-mindmap-node-quick-action', {
+                detail: { action: 'mm_ai_expand_node', nodeId: id }
+              }));
+            }}
+          >
+            <Sparkles size={10} />
+            <span>{childCount === 0 ? (data._isPl ? 'Rozwiń AI' : 'AI Expand') : (data._isPl ? 'Więcej AI' : 'More AI')}</span>
+          </button>
+          <button
+            type="button"
+            title={data._isPl ? 'Podsumuj gałąź' : 'Summarize branch'}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-medium shadow-lg hover:bg-emerald-700 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.dispatchEvent(new CustomEvent('idea-mindmap-summarize-branch', {
+                detail: { nodeId: id, nodeLabel: data.label || '' }
+              }));
+            }}
+          >
+            <FileText size={10} />
+            <span>{data._isPl ? 'Podsumuj' : 'Summarize'}</span>
+          </button>
+        </div>
       )}
     </div>
   );
@@ -799,12 +861,16 @@ BranchNodeComponent.displayName = 'RecommendationBranchNode';
 const handleBase = '!w-2.5 !h-2.5 !border-2 transition-all duration-150';
 const MINDMAP_NODE_QUICK_ACTION_EVENT = 'idea-mindmap-node-quick-action';
 const MindMapInteractionModeContext = React.createContext<MindMapInteractionMode>('select');
+const MindMapIdeaIdContext = React.createContext<string>('');
 
 const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, selected }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
   const interactionMode = useContext(MindMapInteractionModeContext);
-  const colors = branchColor(data.branchKey, data._depth);
+  const ideaId = useContext(MindMapIdeaIdContext);
+  const { getNodes, getEdges } = useReactFlow();
+  const colors = useMemo(() => branchColor(data.branchKey, data._depth), [data.branchKey, data._depth]);
+  const tagColor = useMemo(() => resolveTagColor(data.tags || []), [data.tags]);
   const isAI =
     data.sourceType === 'ai_chat' ||
     data.sourceType === 'ai_hint' ||
@@ -831,6 +897,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const suggestTimerRef = useRef<number | null>(null);
+  const suggestCacheRef = useRef<Map<string, string[]>>(new Map());
 
   useEffect(() => {
     if (data._startEditing) {
@@ -858,28 +925,77 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
       return;
     }
 
-    setLoadingSuggestions(true);
-    suggestTimerRef.current = window.setTimeout(() => {
-      const branchKey = data.branchKey as string | undefined;
-      const branchSuggestions: Record<string, string[]> = {
-        causes: ['Market shift', 'Process gap', 'Resource constraint', 'Customer feedback', 'Competitor action'],
-        options: ['Quick win', 'Strategic pivot', 'Partnership', 'New feature', 'Cost reduction'],
-        validation: ['A/B test', 'User interview', 'Data analysis', 'Prototype test', 'Expert review'],
-        risks: ['Timeline risk', 'Budget overrun', 'Skill gap', 'Dependency', 'Market change'],
-        next: ['Research spike', 'Stakeholder review', 'Build prototype', 'Run pilot', 'Document findings'],
-      };
-      const defaults = ['Key insight', 'Open question', 'Action item', 'Evidence needed', 'Hypothesis'];
-      setSuggestions(branchKey && branchSuggestions[branchKey] ? branchSuggestions[branchKey] : defaults);
+    const branchKey = data.branchKey as string | undefined;
+    const cacheKey = branchKey || '__default__';
+
+    const cached = suggestCacheRef.current.get(cacheKey);
+    if (cached) {
+      setSuggestions(cached);
       setLoadingSuggestions(false);
+      return;
+    }
+
+    setLoadingSuggestions(true);
+
+    const branchSuggestionsFallback: Record<string, string[]> = {
+      causes: ['Market shift', 'Process gap', 'Resource constraint', 'Customer feedback', 'Competitor action'],
+      options: ['Quick win', 'Strategic pivot', 'Partnership', 'New feature', 'Cost reduction'],
+      validation: ['A/B test', 'User interview', 'Data analysis', 'Prototype test', 'Expert review'],
+      risks: ['Timeline risk', 'Budget overrun', 'Skill gap', 'Dependency', 'Market change'],
+      next: ['Research spike', 'Stakeholder review', 'Build prototype', 'Run pilot', 'Document findings'],
+    };
+    const defaultsFallback = ['Key insight', 'Open question', 'Action item', 'Evidence needed', 'Hypothesis'];
+
+    let cancelled = false;
+
+    suggestTimerRef.current = window.setTimeout(async () => {
+      if (cancelled) return;
+
+      const allEdges = getEdges();
+      const parentEdge = allEdges.find((e) => e.target === id);
+      const parentNode = parentEdge ? getNodes().find((n) => n.id === parentEdge.source) : undefined;
+
+      try {
+        const res = await Api.getMyIdeaAISuggestions(ideaId, {
+          seedText: parentNode?.data?.label || '',
+          mapNodes: getNodes().map((n) => ({ id: n.id, label: n.data?.label, type: n.type })),
+          mapEdges: allEdges.map((e) => ({ source: e.source, target: e.target })),
+          activeTool: 'mindmap',
+          language: i18n.language,
+          ...(branchKey ? { branchKey } : {}),
+          ...(parentNode?.data?.label ? { parentLabel: parentNode.data.label } : {}),
+        });
+        if (cancelled) return;
+        const texts = Array.isArray(res?.suggestions)
+          ? res.suggestions.map((s: any) => String(s.text)).filter(Boolean)
+          : [];
+        if (texts.length > 0) {
+          suggestCacheRef.current.set(cacheKey, texts);
+          setSuggestions(texts);
+        } else {
+          const fallback = branchKey && branchSuggestionsFallback[branchKey]
+            ? branchSuggestionsFallback[branchKey]
+            : defaultsFallback;
+          setSuggestions(fallback);
+        }
+      } catch {
+        if (cancelled) return;
+        const fallback = branchKey && branchSuggestionsFallback[branchKey]
+          ? branchSuggestionsFallback[branchKey]
+          : defaultsFallback;
+        setSuggestions(fallback);
+      }
+      if (!cancelled) setLoadingSuggestions(false);
     }, 1500);
 
     return () => {
+      cancelled = true;
       if (suggestTimerRef.current) {
         window.clearTimeout(suggestTimerRef.current);
         suggestTimerRef.current = null;
       }
     };
-  }, [editing, editValue, data.branchKey]);
+  }, [editing, editValue, data.branchKey, ideaId, id, getNodes, getEdges, i18n.language]);
 
   const confirmEdit = useCallback(() => {
     setEditing(false);
@@ -946,6 +1062,16 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
 
   const innerRotate = shape === 'diamond' ? '-rotate-45' : '';
 
+  if (data._simplified) {
+    return (
+      <div className={`px-2 py-1 rounded-lg border ${colors.border} ${colors.bg} text-xs min-w-[80px] max-w-[180px]`}>
+        <div className={`font-semibold ${colors.text} line-clamp-1`}>{data.label || '...'}</div>
+        <Handle type="target" position={Position.Left} id="target-left" className="!opacity-0 !w-1 !h-1" />
+        <Handle type="source" position={Position.Right} id="source-right" className="!opacity-0 !w-1 !h-1" />
+      </div>
+    );
+  }
+
   const depth = data._depth ?? 0;
   const depthScale = depth <= 1 ? 1 : depth === 2 ? 0.95 : 0.9;
   const depthOpacity = depth <= 1 ? '' : depth === 2 ? 'opacity-90' : 'opacity-80';
@@ -978,7 +1104,7 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
       <div
         onDoubleClick={handleDoubleClick}
         style={nodeSurfaceStyle}
-        className={`group px-3 py-2 ${shapeClass} border-2 ${colors.border} ${colors.bg} ${depthOpacity} ${
+        className={`group px-3 py-2 ${shapeClass} border-2 ${!accentColor && tagColor ? tagColor.borderClass : colors.border} ${!accentColor && tagColor ? tagColor.bgClass : colors.bg} ${depthOpacity} ${
           data._dropTarget
             ? 'ring-3 ring-primary-400 ring-offset-2 border-primary-500 shadow-lg shadow-primary-500/30'
             : selected ? `ring-2 ${colors.ring}` : ''
@@ -1017,41 +1143,41 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
             >
               <Pencil size={13} />
             </button>
+          </>
+        )}
+        {selected && !editing && (
+          <div className="nodrag absolute -right-3 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-1">
             <button
               type="button"
-              aria-label={isPl ? 'Dodaj gałąź dziecko' : 'Add child branch'}
-              title={isPl ? 'Dodaj gałąź dziecko' : 'Add child branch'}
+              title={isPl ? 'Dodaj gałąź (Tab)' : 'Add child (Tab)'}
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-primary-600 text-white shadow-lg hover:bg-primary-700 hover:scale-110 transition-all"
               onClick={(e) => {
                 e.stopPropagation();
-                window.dispatchEvent(
-                  new CustomEvent(MINDMAP_NODE_QUICK_ACTION_EVENT, {
-                    detail: { action: 'add_child', nodeId: id },
-                  })
-                );
+                window.dispatchEvent(new CustomEvent(MINDMAP_NODE_QUICK_ACTION_EVENT, {
+                  detail: { action: 'mm_add_child', nodeId: id }
+                }));
               }}
-              className="absolute left-full top-1/2 z-20 ml-3 -translate-y-1/2 h-9 w-9 rounded-full bg-primary-500 text-white shadow-lg shadow-primary-500/25 hover:bg-primary-600 transition-colors flex items-center justify-center"
             >
-              <Plus size={18} />
+              <Plus size={14} strokeWidth={2.5} />
             </button>
-            {canAddSibling && (
-              <button
-                type="button"
-                aria-label={isPl ? 'Dodaj gałąź równoległą' : 'Add sibling branch'}
-                title={isPl ? 'Dodaj gałąź równoległą' : 'Add sibling branch'}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  window.dispatchEvent(
-                    new CustomEvent(MINDMAP_NODE_QUICK_ACTION_EVENT, {
-                      detail: { action: 'add_sibling', nodeId: id },
-                    })
-                  );
-                }}
-                className="absolute left-1/2 top-full z-20 mt-3 -translate-x-1/2 h-7 w-7 rounded-full border border-slate-200/80 bg-white text-slate-600 shadow-md hover:text-primary-600 hover:border-primary-200 transition-colors flex items-center justify-center dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300"
-              >
-                <Plus size={14} />
-              </button>
-            )}
-          </>
+          </div>
+        )}
+        {selected && !editing && canAddSibling && (
+          <div className="nodrag absolute -bottom-3 left-1/2 -translate-x-1/2 z-20">
+            <button
+              type="button"
+              title={isPl ? 'Dodaj sąsiada (Enter)' : 'Add sibling (Enter)'}
+              className="w-5 h-5 flex items-center justify-center rounded-full bg-slate-500 text-white shadow-md hover:bg-slate-600 hover:scale-110 transition-all opacity-70 hover:opacity-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.dispatchEvent(new CustomEvent(MINDMAP_NODE_QUICK_ACTION_EVENT, {
+                  detail: { action: 'mm_add_sibling', nodeId: id }
+                }));
+              }}
+            >
+              <Plus size={12} strokeWidth={2} />
+            </button>
+          </div>
         )}
 
         {/* Status dot */}
@@ -1128,6 +1254,17 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                 className="w-full text-[11px] font-semibold text-slate-800 dark:text-slate-200 bg-transparent border-none outline-none resize-none p-0 leading-tight nodrag"
                 placeholder={isPl ? 'Wpisz…' : 'Type…'}
               />
+              {loadingSuggestions && suggestions.length === 0 && editValue.trim() === '' && (
+                <div className="flex flex-wrap gap-1 mt-1 nodrag">
+                  {[72, 56, 64].map((w, i) => (
+                    <span
+                      key={i}
+                      className="inline-block h-[18px] rounded-full bg-violet-100 dark:bg-violet-900/30 animate-pulse"
+                      style={{ width: w }}
+                    />
+                  ))}
+                </div>
+              )}
               {suggestions.length > 0 && editValue.trim() === '' && (
                 <div className="flex flex-wrap gap-1 mt-1 nodrag">
                   {suggestions.map((s, i) => (
@@ -1360,19 +1497,31 @@ function MindMapInner({
   const { fitView, getViewport, setViewport, getIntersectingNodes, screenToFlowPosition } = useReactFlow();
   const { autoLayout } = useAutoLayout();
   const { exportAsPNG, exportAsSVG, exportAsJSON, exportAsMarkdown } = useMapExport();
+  const { exportAsPdf } = useMapExportPdf();
   const interactionMode = externalInteractionMode;
+  const [simplifiedMode, setSimplifiedMode] = useState(false);
   const reactFlowNodeTypes = useRef(nodeTypes).current;
-  const reactFlowEdgeTypes = useRef(edgeTypes).current;
+  const reactFlowEdgeTypes = useMemo(
+    () => (simplifiedMode ? {} : edgeTypes),
+    [simplifiedMode],
+  );
   const reactFlowFitViewOptions = useMemo(() => ({ padding: 0.3 }), []);
   const reactFlowProOptions = useMemo(() => ({ hideAttribution: true }), []);
   const reactFlowDefaultEdgeOptions = useMemo(
-    () => ({
-      type: 'gradient',
-      style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.7 },
-      animated: true,
-      data: { animated: true, showParticles: true },
-    }),
-    []
+    () =>
+      simplifiedMode
+        ? {
+            type: 'default',
+            style: { stroke: '#8b5cf6', strokeWidth: 1.5, opacity: 0.5 },
+            animated: false,
+          }
+        : {
+            type: 'gradient',
+            style: { stroke: '#8b5cf6', strokeWidth: 2, opacity: 0.7 },
+            animated: true,
+            data: { animated: true, showParticles: true },
+          },
+    [simplifiedMode]
   );
   const updateInteractionMode = useCallback(
     (mode: MindMapInteractionMode) => {
@@ -1562,6 +1711,10 @@ function MindMapInner({
     const beforeUnload = () => {
       debugLog('REAL_PAGE_RELOAD beforeunload', { source: 'lifecycle', severity: 'warn' });
       persistDebugEntries();
+      try {
+        const vp = getViewport();
+        localStorage.setItem(`mm-viewport-${ideaId}`, JSON.stringify(vp));
+      } catch { /* ignore */ }
     };
     window.addEventListener('error', errorHandler);
     window.addEventListener('unhandledrejection', rejectionHandler);
@@ -1573,6 +1726,10 @@ function MindMapInner({
       pendingInteractionsRef.current.clear();
       debugLog('REACT_UNMOUNT', { source: 'lifecycle' });
       persistDebugEntries();
+      try {
+        const vp = getViewport();
+        localStorage.setItem(`mm-viewport-${ideaId}`, JSON.stringify(vp));
+      } catch { /* ignore */ }
       window.removeEventListener('error', errorHandler);
       window.removeEventListener('unhandledrejection', rejectionHandler);
       window.removeEventListener('beforeunload', beforeUnload);
@@ -1642,6 +1799,19 @@ function MindMapInner({
     React.Dispatch<React.SetStateAction<Edge[]>>,
     (changes: unknown) => void,
   ];
+
+  // ── Graph CRUD collaboration ──────────────────────────────────────────────
+  const collabSendRef = useRef<((msg: any) => void) | null>(null);
+
+  const registerCollabSend = useCallback((sendFn: (msg: any) => void) => {
+    collabSendRef.current = sendFn;
+  }, []);
+
+  const broadcastGraphPatch = useCallback((operations: Array<{ op: string; data: any }>) => {
+    if (collabSendRef.current && operations.length > 0) {
+      collabSendRef.current({ type: 'graph_patch', operations });
+    }
+  }, []);
 
   const updateNodeDataById = useCallback(
     (nodeId: string, updater: (data: any) => any) => {
@@ -1760,12 +1930,20 @@ function MindMapInner({
       structuralChildCount.set(e.source, (structuralChildCount.get(e.source) || 0) + 1);
     }
     return focusFilteredNodes.map((n) => {
-      if (n.type !== 'branch') return n;
-      const count = structuralChildCount.get(n.id) || 0;
-      if (n.data?.count === count) return n;
-      return { ...n, data: { ...n.data, count } };
+      const extra: Record<string, unknown> = {};
+      if (simplifiedMode) extra._simplified = true;
+      if (n.type === 'branch') {
+        const count = structuralChildCount.get(n.id) || 0;
+        if (count !== n.data?.count || simplifiedMode) {
+          return { ...n, data: { ...n.data, count, ...extra } };
+        }
+      }
+      if (simplifiedMode) {
+        return { ...n, data: { ...n.data, ...extra } };
+      }
+      return n;
     });
-  }, [edges, focusFilteredNodes]);
+  }, [edges, focusFilteredNodes, simplifiedMode]);
 
   const visibleIdeaNodeCount = useMemo(
     () => enrichedNodes.filter((n) => n.type === 'idea' && !n.hidden).length,
@@ -2048,6 +2226,7 @@ function MindMapInner({
     setSaving,
     setLastSavedAt,
     scheduleSave,
+    saveViewportOnly,
     localVersionRef,
   } =
     useMindMapPersistence({
@@ -2073,6 +2252,20 @@ function MindMapInner({
       clearUndoHistory,
       externalRuntime,
     });
+
+  const debouncedSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedSave = useCallback(() => {
+    if (debouncedSaveTimerRef.current) clearTimeout(debouncedSaveTimerRef.current);
+    debouncedSaveTimerRef.current = setTimeout(() => {
+      scheduleSave(nodes as any, edges as any);
+    }, 500);
+  }, [scheduleSave, nodes, edges]);
+
+  useEffect(() => {
+    return () => {
+      if (debouncedSaveTimerRef.current) clearTimeout(debouncedSaveTimerRef.current);
+    };
+  }, []);
 
   // ── Node operations (extracted to useMindMapNodes) ──────────────────────
   const {
@@ -2115,6 +2308,22 @@ function MindMapInner({
     remoteLockedNodeIds,
     autoLayout,
   });
+
+  // ── AI Sidekick context detection ──────────────────────────────────────
+  const sidekickCtx = useMemo<SidekickContext>(() => detectMindmapIntent({
+    nodes: nodes.map((n: Node) => ({ id: n.id, data: n.data, type: n.type })),
+    edges: edges.map((e: Edge) => ({ source: e.source, target: e.target })),
+    selectedNodeIds,
+    isEditing: editingNodeIdRef.current !== null,
+    hasTemplate: nodes.some((n: Node) => n.data?._fromTemplate === true),
+    activeTool: 'mindmap',
+  }), [nodes, edges, selectedNodeIds]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('idea-mindmap-sidekick-context', {
+      detail: sidekickCtx,
+    }));
+  }, [sidekickCtx]);
 
   useEffect(() => {
     const handler = (event: Event) => {
@@ -2209,6 +2418,7 @@ function MindMapInner({
     if (event?.target) {
       markInputHandled('click', event.target, 'onNodeDragStop', node ? `node:${node.id}` : undefined);
     }
+    debouncedSave();
     if (!node || !isReparentable(node.id)) return;
 
     const intersecting = getIntersectingNodes(node) as Node[];
@@ -2231,7 +2441,7 @@ function MindMapInner({
         );
       }
     }
-  }, [clearDropTargets, debugLog, findParentId, getIntersectingNodes, getSubtreeNodeIds, isPolish, isReparentable, markInputHandled, reparentNode]);
+  }, [clearDropTargets, debouncedSave, debugLog, findParentId, getIntersectingNodes, getSubtreeNodeIds, isPolish, isReparentable, markInputHandled, reparentNode]);
 
   const currentUserName = useMemo(() => {
     const fullName = [currentUser?.firstName, currentUser?.lastName]
@@ -2291,6 +2501,39 @@ function MindMapInner({
       setDrawerNodeId(null);
     }
   }, [contextMenu, drawerNodeId, remoteLockedNodeIds, setNodes]);
+
+  // ── Apply incoming graph patches from collaborators ──────────────────────
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail?.operations || detail.userId === currentUser?.id) return;
+
+      for (const op of detail.operations) {
+        switch (op.op) {
+          case 'add_node':
+            setNodes((prev: Node[]) => [...prev, op.data]);
+            break;
+          case 'remove_node':
+            setNodes((prev: Node[]) => prev.filter((n: Node) => n.id !== op.data.id));
+            break;
+          case 'update_node':
+            setNodes((prev: Node[]) => prev.map((n: Node) => n.id === op.data.id ? { ...n, ...op.data } : n));
+            break;
+          case 'add_edge':
+            setEdges((prev: Edge[]) => [...prev, op.data]);
+            break;
+          case 'remove_edge':
+            setEdges((prev: Edge[]) => prev.filter((e: Edge) => e.id !== op.data.id));
+            break;
+          case 'update_edge':
+            setEdges((prev: Edge[]) => prev.map((e: Edge) => e.id === op.data.id ? { ...e, ...op.data } : e));
+            break;
+        }
+      }
+    };
+    window.addEventListener('idea-collab-graph-patch', handler);
+    return () => window.removeEventListener('idea-collab-graph-patch', handler);
+  }, [currentUser?.id, setNodes, setEdges]);
 
   // Node operations (findParentId, findChildrenIds, addChildNode, addSiblingNode,
   // deleteSelected, duplicateSelected, focusSelectedNode, reparentSelectedPromote,
@@ -2398,6 +2641,29 @@ function MindMapInner({
     window.addEventListener('idea-mindmap-mark-converted', handler);
     return () => window.removeEventListener('idea-mindmap-mark-converted', handler);
   }, [ideaId, edges, scheduleSave, setNodes]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.ideaId && detail.ideaId !== ideaId) return;
+      if (detail?.nodeId) {
+        setSummaryBranchId(detail.nodeId);
+        setSummaryBranchLabel(detail.nodeLabel || '');
+        setSummaryPanelOpen(true);
+      }
+    };
+    window.addEventListener('idea-mindmap-summarize-branch', handler);
+    return () => window.removeEventListener('idea-mindmap-summarize-branch', handler);
+  }, [ideaId]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      exportAsPdf(detail.title || ideaTitle || 'Mind Map');
+    };
+    window.addEventListener('idea-mindmap-export-pdf', handler);
+    return () => window.removeEventListener('idea-mindmap-export-pdf', handler);
+  }, [exportAsPdf, ideaTitle]);
 
   // Quick action listener is wired below (after all state declarations).
 
@@ -2534,6 +2800,12 @@ function MindMapInner({
         e.preventDefault();
         debugLog('KEY_HANDLED redo', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
         redo();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'h') {
+        e.preventDefault();
+        debugLog('KEY_HANDLED snapshotHistory', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
+        setShowSnapshots((prev) => !prev);
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
@@ -3091,6 +3363,25 @@ function MindMapInner({
 
   // ── R4.5: Webhook Settings ─────────────────────────────────────────
   const [showWebhookSettings, setShowWebhookSettings] = useState(false);
+
+  // ── Branch Summary Panel ──────────────────────────────────────────
+  const [summaryPanelOpen, setSummaryPanelOpen] = useState(false);
+  const [summaryBranchId, setSummaryBranchId] = useState('');
+  const [summaryBranchLabel, setSummaryBranchLabel] = useState('');
+
+  // ── Command palette ──────────────────────────────────────────────────────
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   // ── AI expand ────────────────────────────────────────────────────────────
   const [showAIModal, setShowAIModal] = useState(false);
@@ -4417,6 +4708,7 @@ function MindMapInner({
           <Loader2 className="animate-spin text-amber-500" size={34} />
         </div>
       ) : (
+        <MindMapIdeaIdContext.Provider value={ideaId}>
         <MindMapInteractionModeContext.Provider value={interactionMode}>
         <ReactFlow
           nodes={enrichedNodes}
@@ -4425,6 +4717,8 @@ function MindMapInner({
           onEdgesChange={onEdgesChange}
           onMoveEnd={(_event: any, viewport: { x: number; y: number; zoom: number }) => {
             onViewportReport?.(viewport);
+            saveViewportOnly();
+            try { localStorage.setItem(`mm-viewport-${ideaId}`, JSON.stringify(viewport)); } catch { /* */ }
           }}
           onNodeClick={onNodeClick}
           onNodeDoubleClick={onNodeDoubleClick}
@@ -4453,7 +4747,7 @@ function MindMapInner({
               ? 'cursor-grab active:cursor-grabbing'
               : interactionMode === 'connect'
                 ? 'cursor-crosshair'
-                : ''
+                : 'cursor-default'
           }`}
           aria-label={
             isPolish
@@ -4613,8 +4907,22 @@ function MindMapInner({
           )}
 
           {/* Active branch info removed — redundant with visual branch nodes on canvas */}
+
+          {/* AI Sidekick intent indicator */}
+          {sidekickCtx && nodes.length > 1 && (
+            <Panel position="top-center">
+              <div className="mt-2 px-3 py-1 rounded-full bg-white/80 dark:bg-navy-900/80 backdrop-blur-sm border border-slate-200/50 dark:border-white/10 text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 pointer-events-none select-none">
+                <Sparkles size={10} className="text-violet-500 shrink-0" />
+                <span>{isPolish ? sidekickCtx.promptHintPl : sidekickCtx.promptHint}</span>
+              </div>
+            </Panel>
+          )}
         </ReactFlow>
+        {showHealthScore && (
+          <MapHealthScore nodes={nodes} edges={edges} visible={showHealthScore} />
+        )}
         </MindMapInteractionModeContext.Provider>
+        </MindMapIdeaIdContext.Provider>
       )}
 
       {/* AI Branch Balancer */}
@@ -4776,10 +5084,10 @@ function MindMapInner({
               .map((e) => {
                 const child = nodes.find((n) => n.id === e.target);
                 return child
-                  ? { id: child.id, label: child.data?.label || '', status: child.data?.status }
+                  ? { id: child.id, label: child.data?.label || '', status: child.data?.status, notes: child.data?.notes || '' }
                   : null;
               })
-              .filter(Boolean) as Array<{ id: string; label: string; status?: string }>,
+              .filter(Boolean) as Array<{ id: string; label: string; status?: string; notes?: string }>,
           }))}
         onFocusBranch={(branchKey) => {
           setShowPresentation(false);
@@ -4877,16 +5185,23 @@ function MindMapInner({
       {/* Snapshot History */}
       {showSnapshots ? (
         <SnapshotHistory
-        open={showSnapshots}
-        onClose={() => setShowSnapshots(false)}
-        ideaId={ideaId}
-        currentNodes={nodes}
-        currentEdges={edges}
-        onRestore={(restoredNodes, restoredEdges) => {
-          pushUndo();
-          setNodes(restoredNodes);
-          setEdges(restoredEdges);
-        }}
+          open={showSnapshots}
+          onClose={() => setShowSnapshots(false)}
+          ideaId={ideaId}
+          currentNodes={nodes}
+          currentEdges={edges}
+          onRestore={(restoredNodes, restoredEdges) => {
+            pushUndo();
+            setNodes(restoredNodes);
+            setEdges(restoredEdges);
+            scheduleSave(restoredNodes as any, restoredEdges as any);
+            setShowSnapshots(false);
+            toast.success(isPolish ? 'Przywrócono wersję' : 'Version restored');
+          }}
+          onPreview={(previewNodes, previewEdges) => {
+            setNodes(previewNodes);
+            setEdges(previewEdges);
+          }}
         />
       ) : null}
 
@@ -5093,6 +5408,7 @@ function MindMapInner({
             <NodeCommentThread
               open={!!commentNodeId}
               onClose={() => setCommentNodeId(null)}
+              ideaId={ideaId}
               nodeId={commentNodeId}
               nodeLabel={node?.data?.label || commentNodeId}
               comments={nodeComments[commentNodeId] || []}
@@ -5298,6 +5614,7 @@ function MindMapInner({
           currentUserName={currentUserName}
           selectedNodeIds={selectedNodeIds}
           onSessionStateChange={handleCollabSessionStateChange}
+          onRegisterSend={registerCollabSend}
         />
       ) : null}
 
@@ -5536,6 +5853,32 @@ function MindMapInner({
         )}
       </div>
       )}
+
+      <BranchSummaryPanel
+        open={summaryPanelOpen}
+        onClose={() => setSummaryPanelOpen(false)}
+        ideaId={ideaId}
+        ideaTitle={ideaTitle || ''}
+        branchNodeId={summaryBranchId}
+        branchLabel={summaryBranchLabel}
+        nodes={nodes}
+        edges={edges}
+      />
+
+      <MindmapCommandPalette
+        open={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onAction={(action) => {
+          setCommandPaletteOpen(false);
+          window.dispatchEvent(new CustomEvent('idea-workspace-quick-action', { detail: { action, ideaId } }));
+        }}
+      />
+
+      <LargeMapOptimizer
+        nodeCount={nodes.length}
+        edgeCount={edges.length}
+        onToggleSimplifiedMode={setSimplifiedMode}
+      />
     </div>
   );
 }

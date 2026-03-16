@@ -171,7 +171,7 @@ const formService = {
       throw new NotFoundError('Form', formId);
     }
 
-    if (data.slug && data.slug !== before.slug) {
+    if (data.slug && data.slug !== (before as { slug: string }).slug) {
       validateSlug(data.slug);
       const existing = await db.query(
         'SELECT id FROM tp_forms WHERE slug = $1 AND id != $2',
@@ -207,7 +207,7 @@ const formService = {
       paramIdx++;
     }
     if (data.config !== undefined) {
-      const existingConfig = (before.config ?? {}) as FormConfig;
+      const existingConfig = ((before as { config?: unknown }).config ?? {}) as FormConfig;
       const mergedConfig: FormConfig = {
         ...existingConfig,
         ...data.config,
@@ -359,7 +359,7 @@ const formService = {
       'SELECT COUNT(*) AS total FROM tp_records WHERE table_id = $1',
       [form.table_id]
     );
-    const total = parseInt(String(countResult.rows[0]?.total ?? 0), 10);
+    const total = parseInt(String((countResult.rows[0] as { total: string })?.total ?? 0), 10);
 
     const result = await db.query(
       `SELECT * FROM tp_records WHERE table_id = $1

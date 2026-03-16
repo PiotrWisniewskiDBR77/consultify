@@ -40,6 +40,9 @@ export interface ConditionalFormattingConfigProps {
   rules: FormatRule[];
   fields: ColumnDef[];
   onChange: (rules: FormatRule[]) => void;
+  /** When true, shows the config UI (e.g. in a modal). When false, renders nothing. */
+  open?: boolean;
+  onClose?: () => void;
 }
 
 const OPERATOR_LABELS: Record<FormatOperator, { en: string; pl: string }> = {
@@ -119,7 +122,10 @@ export const ConditionalFormattingConfig: React.FC<ConditionalFormattingConfigPr
   rules,
   fields,
   onChange,
+  open = true,
+  onClose,
 }) => {
+  if (open === false) return null;
   const { i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 

@@ -1,4 +1,5 @@
 import {
+  Clock,
   Code,
   Download,
   FileText,
@@ -7,6 +8,7 @@ import {
   List,
   MessageSquare,
   Mic,
+  Printer,
   Presentation,
   Upload,
 } from 'lucide-react';
@@ -27,6 +29,7 @@ const IMPORT_ACTIONS = [
 ];
 
 const EXPORT_ACTIONS = [
+  { action: 'mm_export_pdf', iconEl: Printer, labelPl: 'Eksport PDF', labelEn: 'Export PDF' },
   { action: 'mm_export_png', iconEl: Image, labelPl: 'PNG', labelEn: 'PNG' },
   { action: 'mm_export_svg', iconEl: Image, labelPl: 'SVG', labelEn: 'SVG' },
   { action: 'mm_export_json', iconEl: Download, labelPl: 'JSON', labelEn: 'JSON' },
@@ -84,6 +87,16 @@ export const ImportExportPopover: React.FC<ImportExportPopoverProps> = ({
             </button>
           );
         })}
+      </div>
+      <div className="border-t border-slate-200/30 dark:border-white/[0.04] px-1 py-1">
+        <button
+          onClick={() => dispatch('mm_snapshot_history')}
+          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors"
+        >
+          <Clock size={12} className="text-amber-500 shrink-0" />
+          {isPl ? 'Historia wersji' : 'Version History'}
+          <span className="ml-auto text-[9px] text-slate-400">⌘⇧H</span>
+        </button>
       </div>
     </div>
   );

@@ -32,10 +32,14 @@ export type FieldType =
   | 'lastModifiedTime'
   | 'lastModifiedBy'
   | 'autoNumber'
-  | 'formula';
+  | 'formula'
+  | 'button'
+  | 'rating'
+  | 'duration'
+  | 'barcode';
 
-/** Select option for singleSelect / multiSelect fields */
-export interface SelectOption {
+/** Select option for singleSelect / multiSelect fields (avoids conflict with ui SelectOption) */
+export interface TablePlatformSelectOption {
   id: string;
   name: string;
   color?: string;
@@ -63,11 +67,11 @@ export interface DateFieldOptions {
 }
 
 export interface SingleSelectFieldOptions {
-  options: SelectOption[];
+  options: TablePlatformSelectOption[];
 }
 
 export interface MultiSelectFieldOptions {
-  options: SelectOption[];
+  options: TablePlatformSelectOption[];
 }
 
 export interface LinkedRecordFieldOptions {
@@ -103,6 +107,14 @@ export interface FormulaFieldOptions {
   dependencies?: string[];
 }
 
+export interface RatingFieldOptions {
+  max?: number;
+}
+
+export interface DurationFieldOptions {
+  format?: 'h:mm' | 'h:mm:ss' | 'h:mm:ss.S';
+}
+
 export type FieldOptions =
   | NumberFieldOptions
   | CurrencyFieldOptions
@@ -116,6 +128,8 @@ export type FieldOptions =
   | CountFieldOptions
   | AttachmentFieldOptions
   | FormulaFieldOptions
+  | RatingFieldOptions
+  | DurationFieldOptions
   | Record<string, never>;
 
 // ============================================================================
@@ -165,6 +179,10 @@ export interface TablePlatformView {
   viewType: 'grid' | 'kanban' | 'calendar' | 'timeline' | 'gallery' | 'form';
   visibleFieldIds: string[];
   config: ViewConfig;
+  isPersonal?: boolean;
+  ownerId?: string;
+  isShared?: boolean;
+  shareToken?: string;
   createdAt: string;
   updatedAt: string;
 }

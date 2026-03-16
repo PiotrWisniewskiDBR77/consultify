@@ -125,7 +125,7 @@ async function auditEntry(root: string, entry: RealCorpusEntry): Promise<Documen
       statementType: target.statementType,
       periodLabel: target.periodLabel || detection.periodLabel,
     });
-    const extracted = extractFinancialLines(text, target.statementType, {
+    const extracted = extractFinancialLines(scopedText, target.statementType, {
       selectedPeriodLabel: columnSelection.selectedPeriodLabel,
       comparisonPeriodLabel: columnSelection.comparisonPeriodLabel,
     });

@@ -221,6 +221,7 @@ describe('Table Platform Smoke Tests', () => {
       const recordRow = { id: 'smoke-uuid-001', table_id: 't-1', data: { Name: 'Smoke Item' } };
       mockQuery
         .mockResolvedValueOnce({ rows: [] }) // loadAutoFields
+        .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }) // resolveUserName
         .mockResolvedValueOnce({ rows: [] }) // INSERT
         .mockResolvedValueOnce({ rows: [recordRow] }) // SELECT after insert
         .mockResolvedValueOnce({ rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }] }) // recomputeAffectedFields tp_fields
@@ -255,6 +256,7 @@ describe('Table Platform Smoke Tests', () => {
       mockQuery
         .mockResolvedValueOnce({ rows: [before] }) // SELECT before
         .mockResolvedValueOnce({ rows: [] }) // loadAutoFields
+        .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }) // resolveUserName
         .mockResolvedValueOnce({ rows: [] }) // UPDATE
         .mockResolvedValueOnce({ rows: [after] }) // SELECT after
         .mockResolvedValueOnce({ rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }] }) // recomputeAffectedFields tp_fields

@@ -15,13 +15,9 @@ import {
   ChevronRight,
   FileText,
   GitBranch,
-  Grid3X3,
   Lightbulb,
   ListChecks,
-  Maximize2,
   MessageSquarePlus,
-  Paintbrush,
-  Palette,
   Pencil,
   Presentation,
   Rocket,
@@ -29,7 +25,6 @@ import {
   Shield,
   Sparkles,
   Star,
-  TreePine,
 } from 'lucide-react';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -44,6 +39,7 @@ import {
 } from './ideaEntryTypes';
 import type { CanvasToolType, IdeaWorkspaceSelection } from './ideaSelectionTypes';
 import { MapHealthScore } from './mindmap/MapHealthScore';
+import { MindmapInspector } from './mindmap/MindmapInspector';
 import { IdeaCompletenessWidget } from './table/IdeaCompletenessWidget';
 
 const FIELD_CLASS =
@@ -170,8 +166,6 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
   onLayoutChange,
   onThemeChange,
   onStyleChange,
-  onFitView,
-  onAutoLayout,
 }) => {
   const { i18n } = useTranslation();
   const isPl = i18n.language === 'pl';
@@ -624,102 +618,29 @@ export const IdeaWorkspaceTools: React.FC<IdeaWorkspaceToolsProps> = ({
 
       {activeTool === 'mindmap' && (
         <>
-          {/* ── 5. Style ── */}
-          <Section title={isPl ? 'Styl' : 'Style'} icon={<Paintbrush size={13} />}>
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 w-20 shrink-0">
-                  {isPl ? 'Kształt' : 'Shape'}
-                </span>
-                <div className="flex gap-1">
-                  {(['default', 'circle', 'diamond', 'hexagon'] as const).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => onStyleChange?.({ shape: s })}
-                      className="h-7 px-2 rounded-md text-[10px] font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors capitalize"
-                    >
-                      {s === 'default' ? (isPl ? 'Prostokąt' : 'Rectangle') : s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-slate-500 dark:text-slate-400 w-20 shrink-0">
-                  {isPl ? 'Kolor' : 'Color'}
-                </span>
-                <div className="flex gap-1.5">
-                  {['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6366f1'].map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => onStyleChange?.({ color: c })}
-                      className="w-5 h-5 rounded-full border-2 border-white dark:border-navy-800 shadow-sm hover:scale-110 transition-transform"
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
+          {/* ── 5. Mindmap Inspector (Style / Layout / Theme) ── */}
+          <Section
+            title={isPl ? 'Inspektor mapy' : 'Map inspector'}
+            icon={<Sparkles size={12} />}
+            defaultOpen
+          >
+            <MindmapInspector
+              selectedNodeId={selection.type === 'node' ? selection.primaryId : undefined}
+              selectedNodeData={
+                selection.type === 'node' && selection.primaryId
+                  ? graphNodes.find((n: any) => n.id === selection.primaryId)?.data
+                  : undefined
+              }
+              currentStructure="mindmap"
+              currentLayoutMode="tree"
+              onUpdateNode={(nodeId, patch) => onStyleChange?.({ nodeId, ...patch })}
+              onSetStructure={(s) => onLayoutChange?.(`structure_${s}`)}
+              onSetLayoutMode={(m) => onLayoutChange?.(m)}
+              onApplyTheme={(t) => onThemeChange?.(t)}
+            />
           </Section>
 
-          {/* ── 6. Layout ── */}
-          <Section title="Layout" icon={<Grid3X3 size={13} />}>
-            <div className="space-y-2.5">
-              <div className="flex gap-1.5 flex-wrap">
-                {[
-                  { id: 'tree', label: isPl ? 'Drzewo' : 'Tree' },
-                  { id: 'radial', label: isPl ? 'Promienisty' : 'Radial' },
-                  { id: 'force', label: isPl ? 'Siłowy' : 'Force' },
-                ].map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => onLayoutChange?.(m.id)}
-                    className="h-7 px-3 rounded-lg text-[11px] font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-                  >
-                    <TreePine size={10} className="inline mr-1 -mt-0.5" />
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-1.5">
-                <button
-                  onClick={onAutoLayout}
-                  className="flex-1 h-7 rounded-lg text-[11px] font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-                >
-                  {isPl ? 'Auto-layout' : 'Auto-layout'}
-                </button>
-                <button
-                  onClick={onFitView}
-                  className="flex-1 h-7 rounded-lg text-[11px] font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-                >
-                  <Maximize2 size={10} className="inline mr-1 -mt-0.5" />
-                  {isPl ? 'Dopasuj widok' : 'Fit view'}
-                </button>
-              </div>
-            </div>
-          </Section>
-
-          {/* ── 7. Theme ── */}
-          <Section title={isPl ? 'Motyw' : 'Theme'} icon={<Palette size={13} />}>
-            <div className="flex gap-1.5 flex-wrap">
-              {[
-                { id: 'light', label: isPl ? 'Jasny' : 'Light' },
-                { id: 'dark', label: isPl ? 'Ciemny' : 'Dark' },
-                { id: 'colorful', label: isPl ? 'Kolorowy' : 'Colorful' },
-                { id: 'minimal', label: isPl ? 'Minimalistyczny' : 'Minimal' },
-              ].map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => onThemeChange?.(t.id)}
-                  className="h-7 px-3 rounded-lg text-[11px] font-medium bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </Section>
-
-          {/* ── 8. Map Health ── */}
+          {/* ── 6. Map Health ── */}
           <Section title={isPl ? 'Zdrowie mapy' : 'Map health'} icon={<Activity size={13} />}>
             <MapHealthScore
               nodes={graphNodes.map((n: any) => ({ id: n.id, data: n.data, type: n.type }))}

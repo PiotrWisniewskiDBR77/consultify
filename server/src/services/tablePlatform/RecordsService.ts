@@ -16,8 +16,52 @@ import { fieldPermissionService } from './FieldPermissionService.js';
 import { automationService } from './AutomationService.js';
 import { tablePlatformRealtime } from './RealtimeService.js';
 import { webhookDispatcher } from './WebhookDispatcherService.js';
+import { webhookRelayService } from './WebhookRelayService.js';
+import recordWatchService from './RecordWatchService.js';
 
 const MAX_BATCH_SIZE = 10;
+const MAX_UNDO_STACK = 20;
+
+async function resolveUserName(userId: string): Promise<string> {
+  try {
+    const pool = getDatabase();
+    const r = await pool.query(
+      "SELECT COALESCE(name, email, id) as display_name FROM users WHERE id = $1",
+      [userId]
+    );
+    if (r.rows.length > 0) return (r.rows[0] as any).display_name;
+    return userId;
+  } catch {
+    return userId;
+  }
+}
+
+interface UndoEntry {
+  recordId: string;
+  tableId: string;
+  previousData: Record<string, unknown>;
+  timestamp: number;
+}
+
+const undoBuffers = new Map<string, UndoEntry[]>();
+
+function pushUndo(userId: string, entry: UndoEntry): void {
+  let stack = undoBuffers.get(userId);
+  if (!stack) {
+    stack = [];
+    undoBuffers.set(userId, stack);
+  }
+  stack.push(entry);
+  if (stack.length > MAX_UNDO_STACK) {
+    stack.shift();
+  }
+}
+
+function popUndo(userId: string): UndoEntry | undefined {
+  const stack = undoBuffers.get(userId);
+  if (!stack || stack.length === 0) return undefined;
+  return stack.pop();
+}
 const CURSOR_DELIM = '|';
 
 const AUTO_FIELD_TYPES = new Set([
@@ -65,14 +109,16 @@ async function computeAutoNumber(
   return start;
 }
 
-function populateAutoFieldsForCreate(
+async function populateAutoFieldsForCreate(
   data: Record<string, unknown>,
   autoFields: AutoField[],
   userId: string | undefined,
   autoNumberValues: Map<string, number>
-): Record<string, unknown> {
+): Promise<Record<string, unknown>> {
   const now = new Date().toISOString();
   const enriched = { ...data };
+  let displayName: string | undefined;
+
   for (const field of autoFields) {
     switch (field.type) {
       case 'createdTime':
@@ -94,14 +140,23 @@ function populateAutoFieldsForCreate(
       }
     }
   }
+
+  if (userId) {
+    displayName = await resolveUserName(userId);
+    enriched.__created_by = userId;
+    enriched.__created_by_name = displayName;
+    enriched.__modified_by = userId;
+    enriched.__modified_by_name = displayName;
+  }
+
   return enriched;
 }
 
-function populateAutoFieldsForUpdate(
+async function populateAutoFieldsForUpdate(
   data: Record<string, unknown>,
   autoFields: AutoField[],
   userId: string | undefined
-): Record<string, unknown> {
+): Promise<Record<string, unknown>> {
   const now = new Date().toISOString();
   const enriched = { ...data };
   for (const field of autoFields) {
@@ -111,6 +166,13 @@ function populateAutoFieldsForUpdate(
       enriched[field.id] = userId ?? null;
     }
   }
+
+  if (userId) {
+    const displayName = await resolveUserName(userId);
+    enriched.__modified_by = userId;
+    enriched.__modified_by_name = displayName;
+  }
+
   return enriched;
 }
 
@@ -129,6 +191,12 @@ export interface BatchError {
 export interface BatchRecordsResponse {
   results: Array<{ index: number; result: unknown }>;
   errors: BatchError[];
+}
+
+export interface UpsertResult {
+  createdRecords: unknown[];
+  updatedRecords: unknown[];
+  errors: Array<{ index: number; error: string }>;
 }
 
 /** Sanitize field name for JSONB key - allow only alphanumeric and underscore */
@@ -238,7 +306,7 @@ const recordsService = {
         }
       }
 
-      const enrichedData = populateAutoFieldsForCreate(data, autoFields, createdBy, autoNumberValues);
+      const enrichedData = await populateAutoFieldsForCreate(data, autoFields, createdBy, autoNumberValues);
 
       await db.query(
         `INSERT INTO tp_records (id, table_id, data, created_by)
@@ -279,6 +347,7 @@ const recordsService = {
           recordId: id,
           newCellValues: enrichedData,
         }).catch(() => {});
+        webhookRelayService.dispatchEvent(baseId, 'record.created', { recordId: id, tableId, data: enrichedData }).catch(() => {});
       }).catch(() => {});
 
       return row ?? null;
@@ -292,7 +361,7 @@ const recordsService = {
     const db = getDatabase();
     try {
       const result = await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId]);
-      const record = result.rows[0] ?? null;
+      const record = (result.rows[0] ?? null) as { table_id: string; data: Record<string, unknown> } | null;
       if (record) {
         try {
           const attachFieldIds = await getAttachmentFieldIds(record.table_id);
@@ -360,6 +429,16 @@ const recordsService = {
         }
       }
 
+      if (updatedBy) {
+        const existingDataForUndo = (before as { data?: Record<string, unknown> }).data ?? {};
+        pushUndo(updatedBy, {
+          recordId,
+          tableId,
+          previousData: { ...existingDataForUndo },
+          timestamp: Date.now(),
+        });
+      }
+
       const validation = await schemaValidationService.validateRecord(tableId, data);
       if (!validation.valid) {
         throw new ValidationError('Record validation failed', {
@@ -370,7 +449,7 @@ const recordsService = {
       schemaValidationService.validateRecordSize(data);
 
       const autoFields = await loadAutoFields(tableId);
-      const enrichedData = populateAutoFieldsForUpdate(data, autoFields, updatedBy);
+      const enrichedData = await populateAutoFieldsForUpdate(data, autoFields, updatedBy);
 
       const existingData = (before as { data?: Record<string, unknown> }).data ?? {};
       const merged = { ...existingData, ...enrichedData };
@@ -399,6 +478,28 @@ const recordsService = {
 
       let after = (await db.query('SELECT * FROM tp_records WHERE id = $1', [recordId])).rows[0];
       await auditService.logEvent('update', 'record', recordId, updatedBy, before, after, undefined);
+
+      // Cell-level history: compute diff between old and new data
+      if (updatedBy) {
+        try {
+          const cellChanges: Array<{ fieldId: string; oldValue: unknown; newValue: unknown }> = [];
+          for (const key of Object.keys(enrichedData)) {
+            const oldVal = existingData[key] ?? null;
+            const newVal = merged[key] ?? null;
+            if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+              cellChanges.push({ fieldId: key, oldValue: oldVal, newValue: newVal });
+            }
+          }
+          if (cellChanges.length > 0) {
+            await auditService.logCellChanges(recordId, tableId, cellChanges, updatedBy);
+          }
+        } catch (cellHistErr) {
+          logger.warn('[RecordsService] cell history logging failed', {
+            recordId,
+            error: (cellHistErr as Error).message,
+          });
+        }
+      }
 
       try {
         const changedFieldIds = Object.keys(enrichedData);
@@ -432,6 +533,15 @@ const recordsService = {
           oldCellValues: existingData,
           newCellValues: enrichedData,
         }).catch(() => {});
+        webhookRelayService.dispatchEvent(baseId, 'record.updated', { recordId, tableId, data: enrichedData, previousData: existingData }).catch(() => {});
+      }).catch(() => {});
+
+      recordWatchService.notifyWatchers(recordId, {
+        action: 'update',
+        recordId,
+        tableId,
+        actorId: updatedBy,
+        changes: enrichedData,
       }).catch(() => {});
 
       return after ?? null;
@@ -462,6 +572,14 @@ const recordsService = {
           tableId,
           recordId,
         }).catch(() => {});
+        webhookRelayService.dispatchEvent(baseId, 'record.deleted', { recordId, tableId }).catch(() => {});
+      }).catch(() => {});
+
+      recordWatchService.notifyWatchers(recordId, {
+        action: 'delete',
+        recordId,
+        tableId,
+        actorId: deletedBy,
       }).catch(() => {});
 
       return true;
@@ -735,6 +853,156 @@ const recordsService = {
       results.push(ok);
     }
     return results;
+  },
+
+  async upsertRecords(
+    tableId: string,
+    records: Array<{ data: Record<string, unknown> }>,
+    fieldsToMergeOn: string[],
+    userId?: string
+  ): Promise<UpsertResult> {
+    if (records.length > MAX_BATCH_SIZE) {
+      throw new ValidationError(
+        `Upsert limited to ${MAX_BATCH_SIZE} records; received ${records.length}`
+      );
+    }
+    if (!fieldsToMergeOn.length) {
+      throw new ValidationError('fieldsToMergeOn must contain at least one field ID');
+    }
+
+    const db = getDatabase();
+    const result: UpsertResult = { createdRecords: [], updatedRecords: [], errors: [] };
+
+    for (let i = 0; i < records.length; i++) {
+      try {
+        const data = records[i].data;
+        if (!data || typeof data !== 'object') {
+          result.errors.push({ index: i, error: 'data is required and must be an object' });
+          continue;
+        }
+
+        const whereParts: string[] = [];
+        const params: unknown[] = [tableId];
+        let paramIdx = 2;
+
+        for (const fieldId of fieldsToMergeOn) {
+          const safeKey = sanitizeFieldKey(fieldId);
+          if (!safeKey) continue;
+          const val = data[fieldId];
+          if (val === undefined || val === null) {
+            whereParts.push(`(r.data->>$${paramIdx} IS NULL)`);
+            params.push(fieldId);
+            paramIdx++;
+          } else {
+            whereParts.push(`r.data->>$${paramIdx} = $${paramIdx + 1}`);
+            params.push(fieldId, String(val));
+            paramIdx += 2;
+          }
+        }
+
+        if (whereParts.length === 0) {
+          result.errors.push({ index: i, error: 'No valid merge fields resolved' });
+          continue;
+        }
+
+        const matchSql = `SELECT id FROM tp_records r WHERE r.table_id = $1 AND ${whereParts.join(' AND ')} LIMIT 1`;
+        const matchResult = await db.query(matchSql, params);
+        const existingId = (matchResult.rows[0] as { id?: string } | undefined)?.id;
+
+        if (existingId) {
+          const updated = await this.updateRecord(existingId, data, userId);
+          result.updatedRecords.push(updated);
+        } else {
+          const created = await this.createRecord(tableId, data, userId);
+          result.createdRecords.push(created);
+        }
+      } catch (e) {
+        result.errors.push({ index: i, error: (e as Error).message });
+      }
+    }
+
+    return result;
+  },
+
+  async searchAcrossBase(
+    baseId: string,
+    query: string,
+    limit = 50
+  ): Promise<{ tableId: string; tableName: string; records: unknown[] }[]> {
+    const db = getDatabase();
+    try {
+      const tablesResult = await db.query(
+        'SELECT id, name FROM tp_tables WHERE base_id = $1',
+        [baseId]
+      );
+      const tables = tablesResult.rows as { id: string; name: string }[];
+      if (tables.length === 0) return [];
+
+      const pattern = `%${query.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
+      const results: { tableId: string; tableName: string; records: unknown[] }[] = [];
+      let remaining = Math.min(limit, 200);
+
+      for (const table of tables) {
+        if (remaining <= 0) break;
+
+        const searchResult = await db.query(
+          `SELECT * FROM tp_records
+           WHERE table_id = $1 AND data::text ILIKE $2
+           ORDER BY updated_at DESC NULLS LAST
+           LIMIT $3`,
+          [table.id, pattern, remaining]
+        );
+
+        const records = searchResult.rows || [];
+        if (records.length > 0) {
+          results.push({
+            tableId: table.id,
+            tableName: table.name,
+            records,
+          });
+          remaining -= records.length;
+        }
+      }
+
+      return results;
+    } catch (e) {
+      logger.error('[RecordsService] searchAcrossBase failed', {
+        baseId,
+        query,
+        error: (e as Error).message,
+      });
+      throw e;
+    }
+  },
+
+  async undoLastEdit(tableId: string, userId: string): Promise<any> {
+    const entry = popUndo(userId);
+    if (!entry) return null;
+    if (entry.tableId !== tableId) {
+      pushUndo(userId, entry);
+      return null;
+    }
+
+    const db = getDatabase();
+    try {
+      const current = (await db.query('SELECT * FROM tp_records WHERE id = $1', [entry.recordId])).rows[0];
+      if (!current) return null;
+
+      await db.query(
+        `UPDATE tp_records SET data = $2, updated_at = NOW(), version = COALESCE(version, 0) + 1 WHERE id = $1`,
+        [entry.recordId, JSON.stringify(entry.previousData)]
+      );
+
+      const restored = (await db.query('SELECT * FROM tp_records WHERE id = $1', [entry.recordId])).rows[0];
+      await auditService.logEvent('undo', 'record', entry.recordId, userId, current, restored, { table_id: tableId });
+
+      try { tablePlatformRealtime.notifyRecordUpdated(tableId, entry.recordId, restored); } catch { /* non-blocking */ }
+
+      return restored ?? null;
+    } catch (e) {
+      logger.error('[RecordsService] undoLastEdit failed', { tableId, userId, error: (e as Error).message });
+      throw e;
+    }
   },
 };
 

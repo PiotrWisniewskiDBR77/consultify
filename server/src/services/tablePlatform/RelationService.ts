@@ -114,7 +114,7 @@ const relationService = {
 
       const linked = await this.getLinkedRecords(fromRecordId, fromFieldId);
       const linkedIds = linked.map((r: { id: string }) => r.id);
-      const record = (await db.query('SELECT * FROM tp_records WHERE id = $1', [fromRecordId])).rows[0];
+      const record = (await db.query('SELECT * FROM tp_records WHERE id = $1', [fromRecordId])).rows[0] as { data?: Record<string, unknown> } | undefined;
       if (record) {
         const data = (record.data ?? {}) as Record<string, unknown>;
         data[fromFieldId] = linkedIds;
@@ -180,7 +180,7 @@ const relationService = {
 
       const linked = await this.getLinkedRecords(fromRecordId, fromFieldId);
       const linkedIds = linked.map((r: { id: string }) => r.id);
-      const record = (await db.query('SELECT * FROM tp_records WHERE id = $1', [fromRecordId])).rows[0];
+      const record = (await db.query('SELECT * FROM tp_records WHERE id = $1', [fromRecordId])).rows[0] as { data?: Record<string, unknown> } | undefined;
       if (record) {
         const data = (record.data ?? {}) as Record<string, unknown>;
         data[fromFieldId] = linkedIds;

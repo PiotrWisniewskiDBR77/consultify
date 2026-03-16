@@ -5,6 +5,7 @@
 
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
+import rateLimit from 'express-rate-limit';
 import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
 import { featureFlags } from '../config/FeatureFlags.js';
 import MetadataService from '../services/tablePlatform/MetadataService.js';
@@ -15,6 +16,7 @@ import { handleRouteError } from '../services/tablePlatform/ErrorHandling.js';
 import { automationService } from '../services/tablePlatform/AutomationService.js';
 import { scheduledAutomationExecutor, validateCronExpression } from '../services/tablePlatform/ScheduledAutomationExecutor.js';
 import { webhookDispatcher } from '../services/tablePlatform/WebhookDispatcherService.js';
+import { webhookRelayService } from '../services/tablePlatform/WebhookRelayService.js';
 import { interfaceService } from '../services/tablePlatform/InterfaceService.js';
 import { extensionService } from '../services/tablePlatform/ExtensionService.js';
 import { ssoService } from '../services/tablePlatform/SSOService.js';
@@ -38,8 +40,21 @@ function requireTablePlatform(req: Request, res: Response, next: () => void) {
   next();
 }
 
+const tablePlatformLimiter = rateLimit({
+  windowMs: 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests', retryAfterMs: 1000 },
+  keyGenerator: (req: Request) => {
+    const authReq = req as any;
+    return `${authReq.userId || req.ip}`;
+  },
+});
+
 router.use(verifyToken as any);
 router.use(requireTablePlatform);
+router.use(tablePlatformLimiter);
 
 // ==========================================
 // METADATA API
@@ -120,6 +135,67 @@ router.delete('/bases/:baseId', requireBaseAccess, async (req: Request, res: Res
     return res.status(204).send();
   } catch (err) {
     handleRouteError(err, res, 'deleteBase');
+  }
+});
+
+// ── Global Base Search ────────────────────────────────────────────────────────
+
+router.get('/bases/:baseId/search', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const { baseId } = req.params;
+    const q = String(req.query.q ?? '').trim();
+    if (!q) {
+      return res.status(400).json({ error: 'q (search query) is required' });
+    }
+    const limit = req.query.limit ? Math.min(parseInt(String(req.query.limit), 10), 200) : 50;
+    const results = await RecordsService.searchAcrossBase(baseId, q, limit);
+    return res.status(200).json({ results });
+  } catch (err) {
+    handleRouteError(err, res, 'searchAcrossBase');
+  }
+});
+
+router.post('/bases/:baseId/duplicate', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { baseId } = req.params;
+    const { name } = req.body ?? {};
+    if (!baseId) {
+      return res.status(400).json({ error: 'baseId is required' });
+    }
+    const newBase = await MetadataService.duplicateBase(
+      baseId,
+      name ?? 'Copy',
+      authReq.userId
+    );
+    if (!newBase) {
+      return res.status(404).json({ error: 'Base not found' });
+    }
+    return res.status(201).json(newBase);
+  } catch (err) {
+    handleRouteError(err, res, 'duplicateBase');
+  }
+});
+
+router.post('/tables/:tableId/duplicate', requireTableAccess, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { tableId } = req.params;
+    const { name } = req.body ?? {};
+    if (!tableId) {
+      return res.status(400).json({ error: 'tableId is required' });
+    }
+    const newTable = await MetadataService.duplicateTable(
+      tableId,
+      name ?? 'Copy',
+      authReq.userId
+    );
+    if (!newTable) {
+      return res.status(404).json({ error: 'Table not found' });
+    }
+    return res.status(201).json(newTable);
+  } catch (err) {
+    handleRouteError(err, res, 'duplicateTable');
   }
 });
 
@@ -328,7 +404,7 @@ router.post('/tables/:tableId/views', requireTableAccess, async (req: Request, r
     const authReq = req as AuthRequest;
     const userId = authReq.userId;
     const { tableId } = req.params;
-    const { name, viewType, config } = req.body ?? {};
+    const { name, viewType, config, isPersonal } = req.body ?? {};
     if (!tableId) {
       return res.status(400).json({ error: 'tableId is required' });
     }
@@ -340,7 +416,9 @@ router.post('/tables/:tableId/views', requireTableAccess, async (req: Request, r
       name,
       viewType ?? 'grid',
       config,
-      userId
+      userId,
+      !!isPersonal,
+      isPersonal ? userId : undefined
     );
     if (!view) {
       return res.status(500).json({ error: 'Failed to create view' });
@@ -441,10 +519,23 @@ router.post('/tables/:tableId/validate-formula', requireTableAccess, async (req:
 router.get('/tables/:tableId/records', requireTableAccess, async (req: Request, res: Response) => {
   try {
     const { tableId } = req.params;
-    const { viewId, pageSize, cursor, filters, sorts, fields } = req.query;
+    const { viewId, pageSize, cursor, filters, sorts, fields, filterByFormula } = req.query;
     if (!tableId) {
       return res.status(400).json({ error: 'tableId is required' });
     }
+
+    if (typeof filterByFormula === 'string' && filterByFormula.trim()) {
+      const ViewQueryEngine = (await import('../services/tablePlatform/ViewQueryEngine.js')).default;
+      const result = await ViewQueryEngine.executeQuery({
+        tableId,
+        viewId: typeof viewId === 'string' ? viewId : undefined,
+        filterByFormula,
+        pageSize: pageSize !== undefined ? parseInt(String(pageSize), 10) : undefined,
+        cursor: typeof cursor === 'string' ? cursor : undefined,
+      });
+      return res.status(200).json(result);
+    }
+
     const options: {
       viewId?: string;
       pageSize?: number;
@@ -552,15 +643,176 @@ router.delete('/records/:recordId', async (req: Request, res: Response) => {
   }
 });
 
+// ==========================================
+// RECORD COMMENTS
+// ==========================================
+
+router.post('/records/:recordId/comments', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const { recordId } = req.params;
+    const { tableId, content, parentId, authorName } = req.body ?? {};
+    if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      return res.status(400).json({ error: 'content is required' });
+    }
+    const RecordCommentService = (await import('../services/tablePlatform/RecordCommentService.js')).default;
+    const comment = await RecordCommentService.addComment(
+      recordId, tableId, userId!, authorName, content.trim(), parentId
+    );
+    return res.status(201).json(comment);
+  } catch (err) {
+    handleRouteError(err, res, 'addComment');
+  }
+});
+
+router.get('/records/:recordId/comments', async (req: Request, res: Response) => {
+  try {
+    const { recordId } = req.params;
+    if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+    const limit = parseInt(String(req.query.limit ?? '50'), 10);
+    const offset = parseInt(String(req.query.offset ?? '0'), 10);
+    const RecordCommentService = (await import('../services/tablePlatform/RecordCommentService.js')).default;
+    const result = await RecordCommentService.listComments(recordId, limit, offset);
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'listComments');
+  }
+});
+
+router.patch('/comments/:commentId', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const { commentId } = req.params;
+    const { content } = req.body ?? {};
+    if (!commentId) return res.status(400).json({ error: 'commentId is required' });
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      return res.status(400).json({ error: 'content is required' });
+    }
+    const RecordCommentService = (await import('../services/tablePlatform/RecordCommentService.js')).default;
+    const comment = await RecordCommentService.updateComment(commentId, userId!, content.trim());
+    if (!comment) {
+      return res.status(404).json({ error: 'Comment not found or not authorized' });
+    }
+    return res.status(200).json(comment);
+  } catch (err) {
+    handleRouteError(err, res, 'updateComment');
+  }
+});
+
+router.delete('/comments/:commentId', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const { commentId } = req.params;
+    if (!commentId) return res.status(400).json({ error: 'commentId is required' });
+    const RecordCommentService = (await import('../services/tablePlatform/RecordCommentService.js')).default;
+    const ok = await RecordCommentService.deleteComment(commentId, userId!);
+    if (!ok) {
+      return res.status(404).json({ error: 'Comment not found or not authorized' });
+    }
+    return res.status(204).send();
+  } catch (err) {
+    handleRouteError(err, res, 'deleteComment');
+  }
+});
+
+// ==========================================
+// RECORD UNDO
+// ==========================================
+
+router.post('/tables/:tableId/undo', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const { tableId } = req.params;
+    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+    const record = await RecordsService.undoLastEdit(tableId, userId);
+    if (!record) {
+      return res.status(404).json({ error: 'Nothing to undo' });
+    }
+    return res.status(200).json(record);
+  } catch (err) {
+    handleRouteError(err, res, 'undoLastEdit');
+  }
+});
+
+// ==========================================
+// CELL HISTORY
+// ==========================================
+
+router.get('/records/:recordId/cell-history', async (req: Request, res: Response) => {
+  try {
+    const { recordId } = req.params;
+    if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+    const fieldId = typeof req.query.fieldId === 'string' ? req.query.fieldId : undefined;
+    const limit = parseInt(String(req.query.limit ?? '50'), 10);
+    const offset = parseInt(String(req.query.offset ?? '0'), 10);
+    const AuditService = (await import('../services/tablePlatform/AuditService.js')).default;
+    if (fieldId) {
+      const history = await AuditService.getCellHistory(recordId, fieldId, limit, offset);
+      return res.status(200).json(history);
+    }
+    const history = await AuditService.getRecordCellHistory(recordId, limit);
+    return res.status(200).json(history);
+  } catch (err) {
+    handleRouteError(err, res, 'getCellHistory');
+  }
+});
+
+// ==========================================
+// RECORD WATCHES
+// ==========================================
+
+router.post('/records/:recordId/watch', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const { recordId } = req.params;
+    const { tableId } = req.body ?? {};
+    if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    if (!userId) return res.status(401).json({ error: 'Authentication required' });
+    const RecordWatchService = (await import('../services/tablePlatform/RecordWatchService.js')).default;
+    const isWatching = await RecordWatchService.isWatching(recordId, userId);
+    if (isWatching) {
+      await RecordWatchService.unwatchRecord(recordId, userId);
+      return res.status(200).json({ watching: false });
+    } else {
+      await RecordWatchService.watchRecord(recordId, tableId, userId);
+      return res.status(200).json({ watching: true });
+    }
+  } catch (err) {
+    handleRouteError(err, res, 'toggleWatch');
+  }
+});
+
+router.get('/records/:recordId/watchers', async (req: Request, res: Response) => {
+  try {
+    const { recordId } = req.params;
+    if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+    const RecordWatchService = (await import('../services/tablePlatform/RecordWatchService.js')).default;
+    const watchers = await RecordWatchService.getWatchers(recordId);
+    return res.status(200).json(watchers);
+  } catch (err) {
+    handleRouteError(err, res, 'getWatchers');
+  }
+});
+
 router.post('/tables/:tableId/records/query', requireTableAccess, async (req: Request, res: Response) => {
   try {
     const { tableId } = req.params;
-    const { filters, sorts, groupBy, fields, pageSize, cursor, search, viewId } = req.body ?? {};
+    const { filters, filterByFormula, sorts, groupBy, fields, pageSize, cursor, search, viewId } = req.body ?? {};
     const ViewQueryEngine = (await import('../services/tablePlatform/ViewQueryEngine.js')).default;
     const result = await ViewQueryEngine.executeQuery({
       tableId,
       viewId,
       filters,
+      filterByFormula,
       sorts,
       groupBy,
       fields,
@@ -627,6 +879,32 @@ router.post('/tables/:tableId/records/batch', requireTableAccess, async (req: Re
 });
 
 // ==========================================
+// BATCH UPSERT
+// ==========================================
+
+router.post('/tables/:tableId/records/upsert', requireTableAccess, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const { tableId } = req.params;
+    const { records, fieldsToMergeOn } = req.body ?? {};
+    if (!tableId) {
+      return res.status(400).json({ error: 'tableId is required' });
+    }
+    if (!Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({ error: 'records array is required and must not be empty' });
+    }
+    if (!Array.isArray(fieldsToMergeOn) || fieldsToMergeOn.length === 0) {
+      return res.status(400).json({ error: 'fieldsToMergeOn array is required and must not be empty' });
+    }
+    const result = await RecordsService.upsertRecords(tableId, records, fieldsToMergeOn, userId);
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'upsertRecords');
+  }
+});
+
+// ==========================================
 // CSV IMPORT
 // ==========================================
 
@@ -658,6 +936,70 @@ router.post('/bases/:baseId/import/csv', requireBaseAccess, async (req: Request,
     return res.status(201).json(result);
   } catch (e) {
     logger.error('[TablePlatform] import CSV as new table failed', { error: (e as Error).message });
+    return res.status(500).json({ error: 'Import failed', details: (e as Error).message });
+  }
+});
+
+// ==========================================
+// GOOGLE SHEETS IMPORT
+// ==========================================
+
+router.post('/bases/:baseId/import/google-sheets', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { baseId } = req.params;
+    const { url, tableName } = req.body ?? {};
+    if (!baseId) return res.status(400).json({ error: 'baseId is required' });
+    if (!url || typeof url !== 'string') return res.status(400).json({ error: 'url is required' });
+    const CsvImportService = (await import('../services/tablePlatform/CsvImportService.js')).default;
+    const result = await CsvImportService.importFromGoogleSheet(url, baseId, authReq.userId, tableName);
+    return res.status(201).json(result);
+  } catch (e) {
+    logger.error('[TablePlatform] import Google Sheet failed', { error: (e as Error).message });
+    return res.status(500).json({ error: 'Import failed', details: (e as Error).message });
+  }
+});
+
+// ==========================================
+// XLSX IMPORT
+// ==========================================
+
+router.post('/tables/:tableId/import/xlsx', requireTableAccess, upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { tableId } = req.params;
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    if (!file) return res.status(400).json({ error: 'XLSX file required. Use multipart form field "file".' });
+    const CsvImportService = (await import('../services/tablePlatform/CsvImportService.js')).default;
+    const { headers, rows } = CsvImportService.parseXlsx(file.buffer);
+    if (headers.length === 0) return res.status(400).json({ error: 'No headers found in XLSX' });
+    const csvContent = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const mapping = req.body?.mapping ? JSON.parse(req.body.mapping) : undefined;
+    const result = await CsvImportService.importToTable(tableId, csvContent, mapping, authReq.userId);
+    return res.status(200).json(result);
+  } catch (e) {
+    logger.error('[TablePlatform] import XLSX failed', { error: (e as Error).message });
+    return res.status(500).json({ error: 'Import failed', details: (e as Error).message });
+  }
+});
+
+router.post('/bases/:baseId/import/xlsx', requireBaseAccess, upload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { baseId } = req.params;
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!baseId) return res.status(400).json({ error: 'baseId is required' });
+    if (!file) return res.status(400).json({ error: 'XLSX file required. Use multipart form field "file".' });
+    const tableName = req.body?.tableName ?? 'Imported table';
+    const CsvImportService = (await import('../services/tablePlatform/CsvImportService.js')).default;
+    const { headers, rows } = CsvImportService.parseXlsx(file.buffer);
+    if (headers.length === 0) return res.status(400).json({ error: 'No headers found in XLSX' });
+    const csvContent = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const result = await CsvImportService.importToNewTable(baseId, tableName, csvContent, authReq.userId);
+    return res.status(201).json(result);
+  } catch (e) {
+    logger.error('[TablePlatform] import XLSX as new table failed', { error: (e as Error).message });
     return res.status(500).json({ error: 'Import failed', details: (e as Error).message });
   }
 });
@@ -1650,6 +1992,31 @@ router.post('/automations/validate-cron', async (req: Request, res: Response) =>
 });
 
 // ==========================================
+// WEBHOOK INCOMING TRIGGER
+// ==========================================
+
+router.post('/automations/:automationId/trigger', async (req: Request, res: Response) => {
+  try {
+    const { automationId } = req.params;
+    if (!automationId) {
+      return res.status(400).json({ error: 'automationId is required' });
+    }
+    const payload = req.body ?? {};
+    const result = await automationService.triggerWebhook(automationId, payload);
+    if (!result.success) {
+      const status = result.error === 'Automation not found' ? 404
+        : result.error === 'Automation is not active' ? 409
+        : result.error === 'Automation is not a webhook trigger type' ? 400
+        : 500;
+      return res.status(status).json({ error: result.error });
+    }
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    handleRouteError(err, res, 'triggerWebhookAutomation');
+  }
+});
+
+// ==========================================
 // INTERFACE DESIGNER API
 // ==========================================
 
@@ -2078,6 +2445,111 @@ router.patch('/bases/:baseId/extensions/:extensionId/config', requireBaseAccess,
 });
 
 // ==========================================
+// TEMPLATES MARKETPLACE
+// ==========================================
+
+router.get('/templates', async (req: Request, res: Response) => {
+  try {
+    const { category } = req.query;
+    const templateSvc = (await import('../services/tablePlatform/TemplateService.js')).default;
+    const templates = await templateSvc.listTemplates(
+      typeof category === 'string' ? category : undefined
+    );
+    return res.status(200).json(templates);
+  } catch (err) {
+    handleRouteError(err, res, 'listTemplates');
+  }
+});
+
+router.get('/templates/:templateId', async (req: Request, res: Response) => {
+  try {
+    const { templateId } = req.params;
+    if (!templateId) return res.status(400).json({ error: 'templateId is required' });
+    const templateSvc = (await import('../services/tablePlatform/TemplateService.js')).default;
+    const tpl = await templateSvc.getTemplate(templateId);
+    if (!tpl) return res.status(404).json({ error: 'Template not found' });
+    return res.status(200).json(tpl);
+  } catch (err) {
+    handleRouteError(err, res, 'getTemplate');
+  }
+});
+
+router.post('/templates/:templateId/use', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const organizationId = authReq.organizationId;
+    if (!organizationId) return res.status(403).json({ error: 'Organization context required' });
+    const { templateId } = req.params;
+    const { workspaceId, name } = req.body ?? {};
+    if (!templateId) return res.status(400).json({ error: 'templateId is required' });
+    if (!workspaceId || typeof workspaceId !== 'string') {
+      return res.status(400).json({ error: 'workspaceId is required' });
+    }
+    const templateSvc = (await import('../services/tablePlatform/TemplateService.js')).default;
+    const base = await templateSvc.createFromTemplate(
+      templateId,
+      workspaceId,
+      name || 'Untitled base',
+      userId!,
+      organizationId
+    );
+    return res.status(201).json(base);
+  } catch (err) {
+    handleRouteError(err, res, 'useTemplate');
+  }
+});
+
+router.post('/bases/:baseId/publish-template', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { baseId } = req.params;
+    const { name, description, category } = req.body ?? {};
+    if (!baseId) return res.status(400).json({ error: 'baseId is required' });
+    if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name is required' });
+    if (!category || typeof category !== 'string') return res.status(400).json({ error: 'category is required' });
+    const templateSvc = (await import('../services/tablePlatform/TemplateService.js')).default;
+    const tpl = await templateSvc.publishAsTemplate(
+      baseId,
+      name,
+      description || '',
+      category,
+      authReq.userId!
+    );
+    return res.status(201).json(tpl);
+  } catch (err) {
+    handleRouteError(err, res, 'publishTemplate');
+  }
+});
+
+// ==========================================
+// VIEW SHARING
+// ==========================================
+
+router.post('/views/:viewId/share', async (req: Request, res: Response) => {
+  try {
+    const { viewId } = req.params;
+    if (!viewId) return res.status(400).json({ error: 'viewId is required' });
+    const { password, expiresAt } = req.body ?? {};
+    const result = await MetadataService.shareView(viewId, { password, expiresAt });
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'shareView');
+  }
+});
+
+router.post('/views/:viewId/unshare', async (req: Request, res: Response) => {
+  try {
+    const { viewId } = req.params;
+    if (!viewId) return res.status(400).json({ error: 'viewId is required' });
+    await MetadataService.unshareView(viewId);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    handleRouteError(err, res, 'unshareView');
+  }
+});
+
+// ==========================================
 // PUBLIC FORMS API (no auth required)
 // ==========================================
 
@@ -2150,6 +2622,47 @@ publicFormRouter.get('/public/interfaces/:shareToken', async (req: Request, res:
 });
 
 // ==========================================
+// PUBLIC VIEW SHARING (no auth required)
+// ==========================================
+
+publicFormRouter.get('/public/views/:token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ error: 'token is required' });
+    }
+    const result = await MetadataService.getSharedView(token);
+    if (!result) return res.status(404).json({ error: 'Shared view not found or expired' });
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'getPublicSharedView');
+  }
+});
+
+publicFormRouter.get('/public/views/:token/records', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ error: 'token is required' });
+    }
+    const viewData = await MetadataService.getSharedView(token);
+    if (!viewData) return res.status(404).json({ error: 'Shared view not found or expired' });
+
+    const { pageSize, cursor } = req.query;
+    const ViewQueryEngine = (await import('../services/tablePlatform/ViewQueryEngine.js')).default;
+    const result = await ViewQueryEngine.executeQuery({
+      tableId: viewData.tableId,
+      viewId: viewData.viewId,
+      pageSize: pageSize !== undefined ? parseInt(String(pageSize), 10) : 100,
+      cursor: typeof cursor === 'string' ? cursor : undefined,
+    });
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'getPublicSharedViewRecords');
+  }
+});
+
+// ==========================================
 // OUTBOUND WEBHOOKS API
 // ==========================================
 
@@ -2217,6 +2730,80 @@ router.get('/webhooks/:webhookId/payloads', async (req: Request, res: Response) 
     return res.status(200).json(result);
   } catch (err) {
     handleRouteError(err, res, 'listWebhookPayloads');
+  }
+});
+
+// ==========================================
+// WEBHOOK RELAYS (Zapier/Make)
+// ==========================================
+
+router.post('/bases/:baseId/relays', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const { baseId } = req.params;
+    const { name, targetUrl, secret, eventTypes } = req.body ?? {};
+    if (!name || !targetUrl) {
+      return res.status(400).json({ error: 'name and targetUrl are required' });
+    }
+    const relay = await webhookRelayService.createRelay(baseId, name, targetUrl, secret, eventTypes, authReq.userId);
+    return res.status(201).json(relay);
+  } catch (err) {
+    handleRouteError(err, res, 'createRelay');
+  }
+});
+
+router.get('/bases/:baseId/relays', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const { baseId } = req.params;
+    const relays = await webhookRelayService.listRelays(baseId);
+    return res.status(200).json({ relays });
+  } catch (err) {
+    handleRouteError(err, res, 'listRelays');
+  }
+});
+
+router.get('/relays/:relayId', async (req: Request, res: Response) => {
+  try {
+    const relay = await webhookRelayService.getRelay(req.params.relayId);
+    if (!relay) return res.status(404).json({ error: 'Relay not found' });
+    return res.status(200).json(relay);
+  } catch (err) {
+    handleRouteError(err, res, 'getRelay');
+  }
+});
+
+router.patch('/relays/:relayId', async (req: Request, res: Response) => {
+  try {
+    const { name, targetUrl, secret, eventTypes, isActive } = req.body ?? {};
+    const updates: Record<string, unknown> = {};
+    if (name !== undefined) updates.name = name;
+    if (targetUrl !== undefined) updates.target_url = targetUrl;
+    if (secret !== undefined) updates.secret = secret;
+    if (eventTypes !== undefined) updates.event_types = eventTypes;
+    if (isActive !== undefined) updates.is_active = isActive;
+    const relay = await webhookRelayService.updateRelay(req.params.relayId, updates as any);
+    if (!relay) return res.status(404).json({ error: 'Relay not found' });
+    return res.status(200).json(relay);
+  } catch (err) {
+    handleRouteError(err, res, 'updateRelay');
+  }
+});
+
+router.delete('/relays/:relayId', async (req: Request, res: Response) => {
+  try {
+    await webhookRelayService.deleteRelay(req.params.relayId);
+    return res.status(204).send();
+  } catch (err) {
+    handleRouteError(err, res, 'deleteRelay');
+  }
+});
+
+router.post('/relays/:relayId/test', async (req: Request, res: Response) => {
+  try {
+    const result = await webhookRelayService.testRelay(req.params.relayId);
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'testRelay');
   }
 });
 
@@ -2372,6 +2959,246 @@ router.delete('/admin/service-accounts/:id', async (req: Request, res: Response)
     return res.status(204).send();
   } catch (err) {
     handleRouteError(err, res, 'revokeServiceAccount');
+  }
+});
+
+// ==========================================
+// ROW-LEVEL POLICIES
+// ==========================================
+
+router.post('/tables/:tableId/row-policies', async (req: Request, res: Response) => {
+  try {
+    const { tableId } = req.params;
+    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    const { name, role, conditionFieldId, conditionOperator, conditionValue, permission } = req.body ?? {};
+    if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name is required' });
+    if (!role || typeof role !== 'string') return res.status(400).json({ error: 'role is required' });
+    const RowPolicyService = (await import('../services/tablePlatform/RowPolicyService.js')).default;
+    const policy = await RowPolicyService.createPolicy(
+      tableId,
+      name,
+      role,
+      conditionFieldId,
+      conditionOperator ?? 'equals',
+      conditionValue,
+      permission ?? 'read'
+    );
+    return res.status(201).json(policy);
+  } catch (err) {
+    handleRouteError(err, res, 'createRowPolicy');
+  }
+});
+
+router.get('/tables/:tableId/row-policies', async (req: Request, res: Response) => {
+  try {
+    const { tableId } = req.params;
+    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    const RowPolicyService = (await import('../services/tablePlatform/RowPolicyService.js')).default;
+    const policies = await RowPolicyService.listPolicies(tableId);
+    return res.status(200).json(policies);
+  } catch (err) {
+    handleRouteError(err, res, 'listRowPolicies');
+  }
+});
+
+router.patch('/row-policies/:policyId', async (req: Request, res: Response) => {
+  try {
+    const { policyId } = req.params;
+    if (!policyId) return res.status(400).json({ error: 'policyId is required' });
+    const updates = req.body ?? {};
+    const RowPolicyService = (await import('../services/tablePlatform/RowPolicyService.js')).default;
+    const policy = await RowPolicyService.updatePolicy(policyId, updates);
+    if (!policy) {
+      return res.status(404).json({ error: 'Policy not found' });
+    }
+    return res.status(200).json(policy);
+  } catch (err) {
+    handleRouteError(err, res, 'updateRowPolicy');
+  }
+});
+
+router.delete('/row-policies/:policyId', async (req: Request, res: Response) => {
+  try {
+    const { policyId } = req.params;
+    if (!policyId) return res.status(400).json({ error: 'policyId is required' });
+    const RowPolicyService = (await import('../services/tablePlatform/RowPolicyService.js')).default;
+    const ok = await RowPolicyService.deletePolicy(policyId);
+    if (!ok) {
+      return res.status(404).json({ error: 'Policy not found' });
+    }
+    return res.status(204).send();
+  } catch (err) {
+    handleRouteError(err, res, 'deleteRowPolicy');
+  }
+});
+
+// ==========================================
+// TABLE-TO-TABLE SYNC
+// ==========================================
+
+router.post('/table-syncs', async (req: Request, res: Response) => {
+  try {
+    const { sourceTableId, targetTableId, fieldMapping, syncMode, filterConfig } = req.body ?? {};
+    if (!sourceTableId || typeof sourceTableId !== 'string') {
+      return res.status(400).json({ error: 'sourceTableId is required' });
+    }
+    if (!targetTableId || typeof targetTableId !== 'string') {
+      return res.status(400).json({ error: 'targetTableId is required' });
+    }
+    if (!fieldMapping || typeof fieldMapping !== 'object') {
+      return res.status(400).json({ error: 'fieldMapping is required' });
+    }
+    const TableSyncService = (await import('../services/tablePlatform/TableSyncService.js')).default;
+    const sync = await TableSyncService.createSync(
+      sourceTableId,
+      targetTableId,
+      fieldMapping,
+      syncMode ?? 'one_way',
+      filterConfig
+    );
+    return res.status(201).json(sync);
+  } catch (err) {
+    handleRouteError(err, res, 'createTableSync');
+  }
+});
+
+router.get('/tables/:tableId/syncs', async (req: Request, res: Response) => {
+  try {
+    const { tableId } = req.params;
+    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+    const TableSyncService = (await import('../services/tablePlatform/TableSyncService.js')).default;
+    const syncs = await TableSyncService.listSyncs(tableId);
+    return res.status(200).json(syncs);
+  } catch (err) {
+    handleRouteError(err, res, 'listTableSyncs');
+  }
+});
+
+router.post('/table-syncs/:syncId/execute', async (req: Request, res: Response) => {
+  try {
+    const { syncId } = req.params;
+    if (!syncId) return res.status(400).json({ error: 'syncId is required' });
+    const TableSyncService = (await import('../services/tablePlatform/TableSyncService.js')).default;
+    const stats = await TableSyncService.executeSync(syncId);
+    return res.status(200).json(stats);
+  } catch (err) {
+    handleRouteError(err, res, 'executeTableSync');
+  }
+});
+
+router.delete('/table-syncs/:syncId', async (req: Request, res: Response) => {
+  try {
+    const { syncId } = req.params;
+    if (!syncId) return res.status(400).json({ error: 'syncId is required' });
+    const TableSyncService = (await import('../services/tablePlatform/TableSyncService.js')).default;
+    const ok = await TableSyncService.deleteSync(syncId);
+    if (!ok) {
+      return res.status(404).json({ error: 'Sync config not found' });
+    }
+    return res.status(204).send();
+  } catch (err) {
+    handleRouteError(err, res, 'deleteTableSync');
+  }
+});
+
+// ==========================================
+// DISTRIBUTIONS API
+// ==========================================
+
+router.post('/bases/:baseId/distributions', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.userId;
+    const { baseId } = req.params;
+    const { name, sourceType, sourceId, channel, channelConfig, schedule, format } = req.body ?? {};
+    if (!name || !sourceType || !sourceId || !channel) {
+      return res.status(400).json({ error: 'name, sourceType, sourceId, and channel are required' });
+    }
+    const DistributionService = (await import('../services/tablePlatform/DistributionService.js')).default;
+    const dist = await DistributionService.createDistribution({
+      name, baseId, sourceType, sourceId, channel,
+      channelConfig: channelConfig ?? {},
+      schedule, format,
+      userId: userId!,
+    });
+    return res.status(201).json(dist);
+  } catch (err) {
+    handleRouteError(err, res, 'createDistribution');
+  }
+});
+
+router.get('/bases/:baseId/distributions', requireBaseAccess, async (req: Request, res: Response) => {
+  try {
+    const { baseId } = req.params;
+    const DistributionService = (await import('../services/tablePlatform/DistributionService.js')).default;
+    const distributions = await DistributionService.listDistributions(baseId);
+    return res.status(200).json(distributions);
+  } catch (err) {
+    handleRouteError(err, res, 'listDistributions');
+  }
+});
+
+router.get('/distributions/:distributionId', async (req: Request, res: Response) => {
+  try {
+    const { distributionId } = req.params;
+    if (!distributionId) return res.status(400).json({ error: 'distributionId is required' });
+    const DistributionService = (await import('../services/tablePlatform/DistributionService.js')).default;
+    const dist = await DistributionService.getDistribution(distributionId);
+    if (!dist) return res.status(404).json({ error: 'Distribution not found' });
+    return res.status(200).json(dist);
+  } catch (err) {
+    handleRouteError(err, res, 'getDistribution');
+  }
+});
+
+router.patch('/distributions/:distributionId', async (req: Request, res: Response) => {
+  try {
+    const { distributionId } = req.params;
+    if (!distributionId) return res.status(400).json({ error: 'distributionId is required' });
+    const DistributionService = (await import('../services/tablePlatform/DistributionService.js')).default;
+    const dist = await DistributionService.updateDistribution(distributionId, req.body ?? {});
+    if (!dist) return res.status(404).json({ error: 'Distribution not found' });
+    return res.status(200).json(dist);
+  } catch (err) {
+    handleRouteError(err, res, 'updateDistribution');
+  }
+});
+
+router.delete('/distributions/:distributionId', async (req: Request, res: Response) => {
+  try {
+    const { distributionId } = req.params;
+    if (!distributionId) return res.status(400).json({ error: 'distributionId is required' });
+    const DistributionService = (await import('../services/tablePlatform/DistributionService.js')).default;
+    const ok = await DistributionService.deleteDistribution(distributionId);
+    if (!ok) return res.status(404).json({ error: 'Distribution not found' });
+    return res.status(204).send();
+  } catch (err) {
+    handleRouteError(err, res, 'deleteDistribution');
+  }
+});
+
+router.post('/distributions/:distributionId/toggle', async (req: Request, res: Response) => {
+  try {
+    const { distributionId } = req.params;
+    if (!distributionId) return res.status(400).json({ error: 'distributionId is required' });
+    const DistributionService = (await import('../services/tablePlatform/DistributionService.js')).default;
+    const dist = await DistributionService.toggleDistribution(distributionId);
+    if (!dist) return res.status(404).json({ error: 'Distribution not found' });
+    return res.status(200).json(dist);
+  } catch (err) {
+    handleRouteError(err, res, 'toggleDistribution');
+  }
+});
+
+router.post('/distributions/:distributionId/execute', async (req: Request, res: Response) => {
+  try {
+    const { distributionId } = req.params;
+    if (!distributionId) return res.status(400).json({ error: 'distributionId is required' });
+    const DistributionService = (await import('../services/tablePlatform/DistributionService.js')).default;
+    const result = await DistributionService.executeDistribution(distributionId);
+    return res.status(200).json(result);
+  } catch (err) {
+    handleRouteError(err, res, 'executeDistribution');
   }
 });
 

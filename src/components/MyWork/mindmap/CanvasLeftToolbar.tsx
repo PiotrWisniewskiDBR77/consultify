@@ -13,6 +13,7 @@ import {
   MoreHorizontal,
   MousePointer2,
   Pen,
+  Play,
   Plus,
   Redo2,
   Sparkles,
@@ -74,6 +75,7 @@ const MM_CONTEXT_SLOTS: ToolSlot[] = [
   { id: 'knowledge', icon: FileText, labelPl: 'Wiedza', labelEn: 'Knowledge', popover: 'knowledge' },
   { id: 'comment', icon: MessageSquare, labelPl: 'Komentarze', labelEn: 'Comments', action: 'mm_comments' },
   { id: 'connect', icon: Link2, labelPl: 'Połącz — przeciągnij z uchwytu jednego węzła do drugiego', labelEn: 'Connect — drag from one node handle to another', action: 'mm_connect_mode' },
+  { id: 'present', icon: Play, labelPl: 'Prezentacja', labelEn: 'Present', action: 'mm_presentation' },
 ];
 
 const WB_CONTEXT_SLOTS: ToolSlot[] = [
@@ -185,6 +187,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
           <button
             onClick={handlePointerToggle}
             title={pointerTooltip}
+            aria-label={pointerTooltip}
             className="flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 bg-primary-500/10 text-primary-600 dark:text-primary-400"
           >
             <PointerIcon size={15} />
@@ -208,6 +211,7 @@ export const CanvasLeftToolbar: React.FC<CanvasLeftToolbarProps> = ({
         <button
           onClick={() => handleSlotClick(slot)}
           title={isPl ? slot.labelPl : slot.labelEn}
+          aria-label={isPl ? slot.labelPl : slot.labelEn}
           className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ${
             isActive
               ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'

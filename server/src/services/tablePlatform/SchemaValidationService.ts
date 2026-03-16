@@ -36,6 +36,10 @@ export const ALLOWED_FIELD_TYPES = [
   'lastModifiedBy',
   'autoNumber',
   'formula',
+  'button',
+  'rating',
+  'duration',
+  'barcode',
 ] as const;
 
 export const RESERVED_FIELD_NAMES = [
@@ -176,6 +180,42 @@ const schemaValidationService = {
     if (normalizedType === 'formula') {
       if (!options.formula || typeof options.formula !== 'string') {
         errors.push('formula field must have a formula string in options');
+      }
+    }
+
+    if (normalizedType === 'button') {
+      if (options.label != null && typeof options.label !== 'string') {
+        errors.push('button label must be a string');
+      }
+      const validActionTypes = ['open_url', 'run_automation'];
+      if (options.actionType && !validActionTypes.includes(String(options.actionType))) {
+        errors.push(`button actionType must be one of: ${validActionTypes.join(', ')}`);
+      }
+      if (options.actionType === 'open_url') {
+        if (options.actionConfig?.url && typeof options.actionConfig.url !== 'string') {
+          errors.push('button actionConfig.url must be a string');
+        }
+      }
+      if (options.actionType === 'run_automation') {
+        if (options.actionConfig?.automationId && typeof options.actionConfig.automationId !== 'string') {
+          errors.push('button actionConfig.automationId must be a string');
+        }
+      }
+    }
+
+    if (normalizedType === 'rating') {
+      if (options.max != null) {
+        const max = Number(options.max);
+        if (!Number.isInteger(max) || max < 1 || max > 10) {
+          errors.push('rating max must be an integer between 1 and 10');
+        }
+      }
+    }
+
+    if (normalizedType === 'duration') {
+      const validFormats = ['h:mm', 'h:mm:ss', 'h:mm:ss.S'];
+      if (options.format != null && !validFormats.includes(String(options.format))) {
+        errors.push(`duration format must be one of: ${validFormats.join(', ')}`);
       }
     }
 
@@ -420,6 +460,33 @@ const schemaValidationService = {
         case 'rollup':
         case 'formula':
           errors.push({ fieldId: field.id, message: `Cannot set computed field '${field.name}' (type: ${field.field_type})` });
+          break;
+
+        case 'button':
+          break;
+
+        case 'rating': {
+          if (typeof value !== 'number' || !Number.isInteger(value)) {
+            errors.push({ fieldId: field.id, message: `'${field.name}' must be an integer` });
+          } else {
+            const max = Number((field.options as { max?: number })?.max) || 5;
+            if (value < 0 || value > max) {
+              errors.push({ fieldId: field.id, message: `'${field.name}' must be between 0 and ${max}` });
+            }
+          }
+          break;
+        }
+
+        case 'duration':
+          if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+            errors.push({ fieldId: field.id, message: `'${field.name}' must be a non-negative number (seconds)` });
+          }
+          break;
+
+        case 'barcode':
+          if (typeof value !== 'string') {
+            errors.push({ fieldId: field.id, message: `'${field.name}' must be a string` });
+          }
           break;
 
         default:

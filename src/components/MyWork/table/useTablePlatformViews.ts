@@ -45,7 +45,7 @@ function normalizeView(raw: Record<string, unknown>): TablePlatformView {
     name: String(raw.name ?? ''),
     viewType: (raw.view_type ?? raw.viewType ?? 'grid') as TablePlatformView['viewType'],
     visibleFieldIds: Array.isArray(raw.visible_field_ids ?? raw.visibleFieldIds)
-      ? (raw.visible_field_ids ?? raw.visibleFieldIds)
+      ? ((raw.visible_field_ids ?? raw.visibleFieldIds) as string[])
       : [],
     config: (raw.config ?? {}) as TablePlatformView['config'],
     createdAt: String(raw.created_at ?? raw.createdAt ?? ''),

@@ -28,6 +28,7 @@ interface CollaborationOverlayProps {
   currentUserName: string;
   selectedNodeIds?: string[];
   onSessionStateChange?: (state: CollaborationSessionState | null) => void;
+  onRegisterSend?: (sendFn: (msg: any) => void) => void;
 }
 
 const CURSOR_COLORS = ['#f43f5e', '#8b5cf6', '#06b6d4', '#22c55e', '#f59e0b', '#ec4899'];
@@ -153,6 +154,15 @@ function useCollaboration(
               break;
             case 'lock_rejected':
               break;
+            case 'graph_patch':
+              window.dispatchEvent(new CustomEvent('idea-collab-graph-patch', { detail: msg }));
+              break;
+            case 'graph_sync_request':
+              window.dispatchEvent(new CustomEvent('idea-collab-sync-request', { detail: msg }));
+              break;
+            case 'graph_full_state':
+              window.dispatchEvent(new CustomEvent('idea-collab-full-state', { detail: msg }));
+              break;
             default:
               break;
           }
@@ -273,7 +283,7 @@ function useCollaboration(
     };
   }, []);
 
-  return { connected, users, sessionState, sendCursor, lockNode, unlockNode, selectNodes };
+  return { connected, users, sessionState, sendCursor, sendMessage, lockNode, unlockNode, selectNodes };
 }
 
 export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
@@ -282,13 +292,20 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
   currentUserName,
   selectedNodeIds = [],
   onSessionStateChange,
+  onRegisterSend,
 }) => {
-  const { connected, users, sessionState, sendCursor } = useCollaboration(
+  const { connected, users, sessionState, sendCursor, sendMessage } = useCollaboration(
     ideaId,
     currentUserId,
     currentUserName,
     selectedNodeIds
   );
+
+  useEffect(() => {
+    if (connected && onRegisterSend) {
+      onRegisterSend(sendMessage);
+    }
+  }, [connected, onRegisterSend, sendMessage]);
   const overlayRootRef = useRef<HTMLDivElement | null>(null);
   const [nodeRects, setNodeRects] = useState<Record<string, NodeOverlayRect>>({});
   const lastCursorSentAtRef = useRef(0);

@@ -216,6 +216,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     if (action === 'mm_timeline') setters.setShowTimeline(true);
     if (action === 'mm_presentation') setters.setShowPresentation(true);
     if (action === 'mm_snapshots') setters.setShowSnapshots(true);
+    if (action === 'mm_snapshot_history') setters.setShowSnapshots((prev: boolean) => !prev);
     if (action === 'mm_voice') setters.setShowVoiceToNode(true);
     if (action === 'mm_doc_to_map') setters.setShowDocToMap(true);
     if (action === 'mm_interview_to_map') setters.setShowInterviewToMap(true);
@@ -315,6 +316,11 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       }
     }
 
+    if (action === 'mm_export_pdf') {
+      window.dispatchEvent(new CustomEvent('idea-mindmap-export-pdf', { detail: { title: ideaTitle } }));
+      return;
+    }
+
     // ── AddNodePopover: Semantic node inserts ──────────────────────────────
     const SEMANTIC_INSERT_MAP: Record<string, { kind: string; labelPl: string; labelEn: string }> = {
       mm_insert_topic: { kind: 'topic', labelPl: 'Temat', labelEn: 'Topic' },
@@ -366,6 +372,44 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           data: { userCreated: true, edgeRole: 'structural' },
         },
       ]);
+    }
+
+    // ── Group selected nodes (Ctrl+G) ────────────────────────────────────
+    if (action === 'group' || action === 'mm_group') {
+      if (locked) return;
+      const selectedIds = nodes.filter((n) => n.selected).map((n) => n.id);
+      if (selectedIds.length < 2) {
+        toast(isPolish ? 'Zaznacz co najmniej 2 węzły' : 'Select at least 2 nodes', { icon: 'ℹ️' });
+        return;
+      }
+      handlers.pushUndo();
+      const selectedNodes = nodes.filter((n) => selectedIds.includes(n.id));
+      const minX = Math.min(...selectedNodes.map((n) => n.position.x));
+      const minY = Math.min(...selectedNodes.map((n) => n.position.y));
+      const maxX = Math.max(...selectedNodes.map((n) => n.position.x + (n.width || 160)));
+      const maxY = Math.max(...selectedNodes.map((n) => n.position.y + (n.height || 60)));
+      const pad = 40;
+      const frameId = `frame-group-${Date.now()}`;
+      setters.setNodes((prev) => [
+        ...prev,
+        {
+          id: frameId,
+          type: 'group',
+          position: { x: minX - pad, y: minY - pad },
+          data: { label: isPolish ? 'Grupa' : 'Group' },
+          style: {
+            width: maxX - minX + pad * 2,
+            height: maxY - minY + pad * 2,
+            border: '2px dashed #94a3b8',
+            borderRadius: 16,
+            background: 'rgba(148,163,184,0.04)',
+          },
+        } as Node,
+      ]);
+      toast.success(
+        isPolish ? `Zgrupowano ${selectedIds.length} węzłów` : `Grouped ${selectedIds.length} nodes`,
+      );
+      return;
     }
 
     // ── CanvasLeftToolbar direct slots ─────────────────────────────────────
@@ -587,15 +631,19 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     }
     if (action === 'mm_ai_summarize_branch') {
       const sel = handlers.getSelectedNode();
-      if (sel && handlers.onOpenChat) {
-        const tags = Array.isArray(sel.data?.tags) ? sel.data.tags.join(', ') : '';
-        const sType = sel.data?.semanticType || '';
-        const ctx = [tags ? `Tags: ${tags}` : '', sType ? `Type: ${sType}` : ''].filter(Boolean).join('. ');
-        const prompt = isPolish
-          ? `Podsumuj gałąź "${sel.data?.label}" i jej podwęzły w mapie "${ideaTitle}".${ctx ? ` Kontekst: ${ctx}.` : ''}`
-          : `Summarize the branch "${sel.data?.label}" and its sub-nodes in map "${ideaTitle}".${ctx ? ` Context: ${ctx}.` : ''}`;
-        handlers.onOpenChat(prompt);
+      if (!sel) {
+        toast(isPolish ? 'Zaznacz gałąź' : 'Select a branch first', { icon: 'ℹ️' });
+        return;
       }
+      window.dispatchEvent(
+        new CustomEvent('idea-mindmap-summarize-branch', {
+          detail: {
+            ideaId,
+            nodeId: sel.id,
+            nodeLabel: sel.data?.label || '',
+          },
+        })
+      );
     }
     if (action === 'mm_chat_about_node') {
       const nodeId = detail?.nodeId as string | undefined;
@@ -616,6 +664,28 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
       }
     }
     if (action === 'mm_ai_what_if') setters.setShowWhatIf(true);
+
+    if (action === 'ai_suggest_links' || action === 'mm_ai_suggest_links') {
+      if (locked) return;
+      const sel = handlers.getSelectedNode();
+      if (!sel) {
+        toast(isPolish ? 'Zaznacz węzeł' : 'Select a node first', { icon: 'ℹ️' });
+        return;
+      }
+      window.dispatchEvent(
+        new CustomEvent('idea-workspace-quick-action', {
+          detail: {
+            action: 'mm_ai_suggest_links_execute',
+            ideaId,
+            nodeId: sel.id,
+            nodeLabel: sel.data?.label || '',
+            nodeTags: sel.data?.tags || [],
+            nodeSemanticType: sel.data?.semanticType || '',
+          },
+        })
+      );
+      return;
+    }
 
     // ── KnowledgePopover: Platform inserts ────────────────────────────────
     if (action === 'mm_insert_from_notebook') {
@@ -671,10 +741,11 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     if (action === 'mm_import_url') {
       toast(
         isPolish
-          ? 'Import z URL nie jest aktywny. Użyj Dokument -> Mapa albo XMind / FreeMind.'
-          : 'URL import is not active. Use Document -> Map or XMind / FreeMind.',
+          ? 'Import URL nie jest jeszcze dostępny. Użyj Import → Dokument lub XMind/FreeMind.'
+          : 'URL import is not yet available. Use Import → Document or XMind/FreeMind.',
         { icon: 'ℹ️', duration: 2500 }
       );
+      return;
     }
     if (
       [
@@ -688,9 +759,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
     ) {
       toast(
         isPolish
-          ? 'To narzędzie nie jest już aktywne w obecnym widoku mindmap.'
-          : 'This tool is no longer active in the current mindmap view.',
-        { icon: 'ℹ️', duration: 2200 }
+          ? 'Ta funkcja jest w trakcie rozwoju'
+          : 'This feature is under development',
+        { icon: '🚧', duration: 2200 }
       );
       return;
     }
@@ -729,6 +800,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           tree_right: { pl: 'Drzewo (w prawo)', en: 'Tree (Right)' },
           fishbone: { pl: 'Ishikawa (rybka)', en: 'Fishbone' },
           timeline: { pl: 'Oś czasu', en: 'Timeline' },
+          semantic: { pl: 'Semantyczny', en: 'Semantic' },
         };
         const label = isPolish ? LABELS[newType]?.pl : LABELS[newType]?.en;
         toast.success(isPolish ? `Struktura: ${label}` : `Structure: ${label}`, { duration: 1200 });

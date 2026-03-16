@@ -27,7 +27,7 @@ export class InterfaceService {
        VALUES ($1, $2, $3, $4) RETURNING *`,
       [baseId, data.name, data.description ?? null, data.createdBy ?? null]
     );
-    logger.info('[InterfaceService] Created interface', { baseId, name: data.name, id: result.rows[0]?.id });
+    logger.info('[InterfaceService] Created interface', { baseId, name: data.name, id: (result.rows[0] as { id: string })?.id });
     return result.rows[0];
   }
 

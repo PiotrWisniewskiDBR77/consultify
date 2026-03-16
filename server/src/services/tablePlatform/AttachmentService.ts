@@ -130,7 +130,7 @@ const attachmentService = {
       'SELECT COALESCE(SUM(size_bytes), 0) as total FROM tp_attachments WHERE record_id = $1',
       [recordId]
     );
-    const currentTotal = parseInt(result.rows[0].total, 10);
+    const currentTotal = parseInt((result.rows[0] as { total: string }).total, 10);
 
     if (currentTotal + newFileSize > MAX_RECORD_ATTACHMENTS_SIZE) {
       throw new ValidationError(
@@ -210,8 +210,8 @@ const attachmentService = {
       const sharp = (await import('sharp')).default;
       const buffer = await fs.readFile(filePath);
 
-      await sharp(buffer).resize(100, 100, { fit: 'inside' }).toFile(smallPath);
-      await sharp(buffer).resize(400, 400, { fit: 'inside' }).toFile(largePath);
+      await (sharp(buffer).resize(100, 100, { fit: 'inside' }) as any).toFile(smallPath);
+      await (sharp(buffer).resize(400, 400, { fit: 'inside' }) as any).toFile(largePath);
 
       logger.info('[AttachmentService] Thumbnails generated', { attachmentId });
     } catch {
@@ -277,7 +277,7 @@ const attachmentService = {
       });
 
       return {
-        ...row,
+        ...(row as object),
         download_url: this.generateDownloadUrl(id),
       } as AttachmentMeta;
     } catch (err) {
@@ -318,7 +318,8 @@ const attachmentService = {
    */
   async deleteFile(attachmentId: string, deletedBy?: string): Promise<boolean> {
     const db = getDatabase();
-    const before = (await db.query('SELECT * FROM tp_attachments WHERE id = $1', [attachmentId])).rows[0];
+    const before = (await db.query('SELECT * FROM tp_attachments WHERE id = $1', [attachmentId])).rows[0] as
+      { storage_key: string; record_id: string; field_id: string } | undefined;
     if (!before) return false;
 
     const fullPath = path.join(UPLOAD_DIR, before.storage_key);
@@ -459,8 +460,9 @@ const attachmentService = {
     const db = getDatabase();
     try {
       const result = await db.query('SELECT data FROM tp_records WHERE id = $1', [recordId]);
-      if (!result.rows[0]) return;
-      const data: Record<string, unknown> = result.rows[0].data ?? {};
+      const row = result.rows[0] as { data: Record<string, unknown> } | undefined;
+      if (!row) return;
+      const data: Record<string, unknown> = row.data ?? {};
       const current = Array.isArray(data[fieldId]) ? (data[fieldId] as string[]) : [];
       if (!current.includes(attachmentId)) {
         current.push(attachmentId);
@@ -479,8 +481,9 @@ const attachmentService = {
     const db = getDatabase();
     try {
       const result = await db.query('SELECT data FROM tp_records WHERE id = $1', [recordId]);
-      if (!result.rows[0]) return;
-      const data: Record<string, unknown> = result.rows[0].data ?? {};
+      const row = result.rows[0] as { data: Record<string, unknown> } | undefined;
+      if (!row) return;
+      const data: Record<string, unknown> = row.data ?? {};
       const current = Array.isArray(data[fieldId]) ? (data[fieldId] as string[]) : [];
       const filtered = current.filter((id) => id !== attachmentId);
       data[fieldId] = filtered;

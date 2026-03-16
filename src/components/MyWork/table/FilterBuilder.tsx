@@ -13,7 +13,7 @@ import type {
   FilterGroup,
   FilterRule,
   TablePlatformField,
-  SelectOption,
+  TablePlatformSelectOption,
 } from '@/types/tablePlatform';
 
 // ── Operator definitions per field type group ────────────────────────────────
@@ -111,8 +111,8 @@ function isMultiValueOperator(op: string): boolean {
   return op === 'isAnyOf' || op === 'isNoneOf';
 }
 
-function getSelectOptions(field: TablePlatformField): SelectOption[] {
-  const opts = field.options as { options?: SelectOption[] } | undefined;
+function getSelectOptions(field: TablePlatformField): TablePlatformSelectOption[] {
+  const opts = field.options as { options?: TablePlatformSelectOption[] } | undefined;
   return opts?.options ?? [];
 }
 
@@ -248,7 +248,7 @@ const SelectValueInput: React.FC<ValueInputProps> = ({ field, operator, value, o
 // ── Multi-select dropdown for isAnyOf / isNoneOf ─────────────────────────────
 
 interface MultiSelectDropdownProps {
-  options: SelectOption[];
+  options: TablePlatformSelectOption[];
   selected: string[];
   onChange: (val: string[]) => void;
   isPl: boolean;

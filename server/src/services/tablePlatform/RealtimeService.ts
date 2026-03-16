@@ -42,9 +42,9 @@ export class TablePlatformRealtimeService {
 
     const tpNamespace = io.of('/table-platform');
 
-    tpNamespace.on('connection', (socket: Socket) => {
-      const userId = (socket.handshake.auth as Record<string, unknown>)?.userId as string | undefined;
-      const userName = (socket.handshake.auth as Record<string, unknown>)?.userName as string | undefined;
+    tpNamespace.on('connection', (socket: any) => {
+      const userId = socket.handshake?.auth?.userId as string | undefined;
+      const userName = socket.handshake?.auth?.userName as string | undefined;
 
       if (!userId) {
         socket.disconnect();
@@ -100,7 +100,7 @@ export class TablePlatformRealtimeService {
 
   notifyRecordCreated(tableId: string, record: unknown): void {
     try {
-      this.io?.of('/table-platform').to(`table:${tableId}`).emit('record:created', record);
+      (this.io?.of('/table-platform') as any)?.to(`table:${tableId}`).emit('record:created', record);
     } catch (err) {
       logger.warn('[TablePlatformRealtime] notifyRecordCreated failed', { tableId, error: (err as Error).message });
     }
@@ -108,7 +108,7 @@ export class TablePlatformRealtimeService {
 
   notifyRecordUpdated(tableId: string, recordId: string, data: unknown): void {
     try {
-      this.io?.of('/table-platform').to(`table:${tableId}`).emit('record:updated', { recordId, data });
+      (this.io?.of('/table-platform') as any)?.to(`table:${tableId}`).emit('record:updated', { recordId, data });
     } catch (err) {
       logger.warn('[TablePlatformRealtime] notifyRecordUpdated failed', { tableId, recordId, error: (err as Error).message });
     }
@@ -116,7 +116,7 @@ export class TablePlatformRealtimeService {
 
   notifyRecordDeleted(tableId: string, recordId: string): void {
     try {
-      this.io?.of('/table-platform').to(`table:${tableId}`).emit('record:deleted', { recordId });
+      (this.io?.of('/table-platform') as any)?.to(`table:${tableId}`).emit('record:deleted', { recordId });
     } catch (err) {
       logger.warn('[TablePlatformRealtime] notifyRecordDeleted failed', { tableId, recordId, error: (err as Error).message });
     }
@@ -124,7 +124,7 @@ export class TablePlatformRealtimeService {
 
   notifySchemaChanged(tableId: string, change: unknown): void {
     try {
-      this.io?.of('/table-platform').to(`table:${tableId}`).emit('schema:changed', change);
+      (this.io?.of('/table-platform') as any)?.to(`table:${tableId}`).emit('schema:changed', change);
     } catch (err) {
       logger.warn('[TablePlatformRealtime] notifySchemaChanged failed', { tableId, error: (err as Error).message });
     }
@@ -157,7 +157,8 @@ export class TablePlatformRealtimeService {
 
   private broadcastPresence(tableId: string): void {
     try {
-      this.io?.of('/table-platform').to(`table:${tableId}`).emit('presence:update', this.getTablePresence(tableId));
+      const ns = this.io?.of('/table-platform');
+      if (ns) (ns as any).to(`table:${tableId}`).emit('presence:update', this.getTablePresence(tableId));
     } catch (err) {
       logger.warn('[TablePlatformRealtime] broadcastPresence failed', { tableId, error: (err as Error).message });
     }

@@ -34,6 +34,7 @@ import {
   detectStatementType,
   evaluateStatementReadiness,
   extractFinancialLines,
+  runCfoAutoValidation,
   getLatestStatementIngestRun,
   loadPersistedStatementCandidateRows,
   learnStatementAliases,
@@ -1236,6 +1237,42 @@ router.put(
       })),
     });
 
+    // ── CFO Auto-Validation ──
+    const cfoInput = normalizedValues
+      .filter((v: any) => !v.isNonFinancial && v.canonicalLineId)
+      .map((v: any) => ({
+        canonicalLineId: v.canonicalLineId,
+        value: Number(v.value || 0),
+        originalLabel: v.originalLabel,
+        statementType: stmt.statement_type,
+        isNonFinancial: false,
+      }));
+    const cfoResult = runCfoAutoValidation(cfoInput, {
+      currency: stmt.currency,
+      scaling: stmt.scaling,
+      period: stmt.period_label,
+      documentName: stmt.source_file_name,
+    });
+
+    // Save CFO-derived values alongside original values
+    for (const derived of cfoResult.derivedLines) {
+      if (!derived.canonicalLineId) continue;
+      const existsAlready = normalizedValues.some(
+        (v: any) => v.canonicalLineId === derived.canonicalLineId && !v.isNonFinancial
+      );
+      if (existsAlready) continue;
+      normalizedValues.push({
+        canonicalLineId: derived.canonicalLineId,
+        value: derived.value,
+        originalLabel: derived.originalLabel || '[CFO-derived]',
+        mappingStatus: 'auto',
+        isNonFinancial: false,
+        confidence: 0.8,
+        sourceRow: null,
+        valueOrigin: 'computed',
+      });
+    }
+
     await updateStatementStatus(
       statementId,
       'mapped',
@@ -1245,7 +1282,12 @@ router.put(
     await persistStatementValidationLedger({
       statementId,
       statementType: stmt.statement_type,
-      messages: validationResult.messages,
+      messages: [...validationResult.messages, ...cfoResult.checks.filter(c => c.severity !== 'pass').map(c => ({
+        type: c.severity === 'error' ? 'error' as const : c.severity === 'warning' ? 'warning' as const : 'info' as const,
+        code: `CFO_${c.code}`,
+        message: c.message,
+        details: c.details,
+      }))],
       values: normalizedValues.map((value: any) => ({
         canonicalLineId: value.canonicalLineId,
         value: value.value,

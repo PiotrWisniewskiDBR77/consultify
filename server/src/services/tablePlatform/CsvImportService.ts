@@ -316,7 +316,7 @@ export async function importToTable(
     [tableId]
   );
   const fieldTypes = new Map<string, { type: string; options?: Record<string, unknown> }>();
-  for (const row of fieldTypesResult.rows) {
+  for (const row of fieldTypesResult.rows as Array<{ id: string; field_type: string; options?: Record<string, unknown> }>) {
     fieldTypes.set(row.id, {
       type: row.field_type,
       options: row.options ?? {},
@@ -482,14 +482,81 @@ export async function importToNewTable(
 }
 
 // ---------------------------------------------------------------------------
+// parseXlsx
+// ---------------------------------------------------------------------------
+
+export function parseXlsx(buffer: Buffer): { headers: string[]; rows: string[][]; totalRows: number } {
+  // Dynamic import is not possible in a sync function, so we use require-style
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const XLSX = require('xlsx');
+  const workbook = XLSX.read(buffer, { type: 'buffer' });
+  const sheetName = workbook.SheetNames[0];
+  if (!sheetName) {
+    return { headers: [], rows: [], totalRows: 0 };
+  }
+  const sheet = workbook.Sheets[sheetName];
+  const jsonRows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+  if (jsonRows.length === 0) {
+    return { headers: [], rows: [], totalRows: 0 };
+  }
+  const headers = Object.keys(jsonRows[0]);
+  const rows = jsonRows.map((row) => headers.map((h) => String(row[h] ?? '')));
+  return { headers, rows, totalRows: rows.length };
+}
+
+// ---------------------------------------------------------------------------
+// importFromGoogleSheet
+// ---------------------------------------------------------------------------
+
+const GSHEET_ID_REGEX = /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/;
+
+export async function importFromGoogleSheet(
+  sheetUrl: string,
+  baseId: string,
+  userId: string,
+  tableName?: string
+): Promise<{ tableId: string; result: ImportResult }> {
+  const match = sheetUrl.match(GSHEET_ID_REGEX);
+  if (!match || !match[1]) {
+    throw new Error('Invalid Google Sheets URL. Expected format: https://docs.google.com/spreadsheets/d/{ID}/...');
+  }
+
+  const spreadsheetId = match[1];
+  const exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv`;
+
+  let csvContent: string;
+  try {
+    const response = await fetch(exportUrl, { redirect: 'follow' });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    csvContent = await response.text();
+  } catch (err) {
+    throw new Error(
+      "Sheet must be publicly accessible or shared with 'Anyone with link'. " +
+      `Fetch failed: ${(err as Error).message}`
+    );
+  }
+
+  if (!csvContent || csvContent.trim().length === 0) {
+    throw new Error('Google Sheet returned empty content');
+  }
+
+  const finalName = tableName || 'Google Sheet Import';
+  return importToNewTable(baseId, finalName, csvContent, userId);
+}
+
+// ---------------------------------------------------------------------------
 // Service export
 // ---------------------------------------------------------------------------
 
 const csvImportService = {
   parseCSV,
+  parseXlsx,
   inferFieldTypes,
   importToTable,
   importToNewTable,
+  importFromGoogleSheet,
 };
 
 export default csvImportService;

@@ -205,8 +205,8 @@ export function useTablePlatformIntegration(
   const columns = isActive ? (localColumns.length > 0 ? localColumns : bridge.columns) : EMPTY_COLUMNS;
   const nodes = isActive ? (localNodes.length > 0 ? localNodes : bridge.nodes) : EMPTY_NODES;
 
-  const { processedRows, groupedRows } = useMemo(() => {
-    if (!isActive) return { processedRows: EMPTY_NODES, groupedRows: null };
+  const { processed: processedRows, grouped: groupedRows } = useMemo(() => {
+    if (!isActive) return { processed: EMPTY_NODES, grouped: null };
     return applyLocalFilterSortGroup(
       nodes,
       views.filters,
@@ -237,7 +237,7 @@ export function useTablePlatformIntegration(
       if (!isActive || locked) return;
       void (async () => {
         const { fieldType, options } = columnToField(col);
-        const added = await bridge.addField(col.header, fieldType, options ?? {});
+        const added = await bridge.addField(col.header ?? '', fieldType ?? 'singleLineText', (options ?? {}) as Record<string, unknown>);
         if (added) {
           const newCol = fieldToColumn(added);
           setLocalColumns((prev) => [...prev, newCol]);

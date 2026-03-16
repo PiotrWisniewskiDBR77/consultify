@@ -16,6 +16,9 @@ The documents in this folder are intended to support pre-implementation analysis
 
 ## Core documents
 
+- [TABLE_PLATFORM_IMPLEMENTATION_PLAN_V7.md](TABLE_PLATFORM_IMPLEMENTATION_PLAN_V7.md)  
+  Latest execution reference plan (`V7`) for building Airtable-class operational capabilities inside Consultify as a company operating and decision system.
+
 - [CONSULTIFY_AIRTABLE_90_DAY_PLAN.md](CONSULTIFY_AIRTABLE_90_DAY_PLAN.md)  
   Main 90-day program plan and MVP framing.
 
@@ -81,3 +84,9 @@ See [workstreams/README.md](workstreams/README.md) for the full index and readin
 ## Intended next step
 
 Sprint 0 kickoff: architecture lock, confirm ADR approval, assign team, set up feature flags. No further approvals required if PRE_FLIGHT_SIGN_OFF conditions are accepted.
+
+## Current execution reference
+
+For current execution planning and program sequencing, use:
+
+- [TABLE_PLATFORM_IMPLEMENTATION_PLAN_V7.md](TABLE_PLATFORM_IMPLEMENTATION_PLAN_V7.md)

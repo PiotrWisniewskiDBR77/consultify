@@ -20,7 +20,7 @@ const permissionsService = {
         'SELECT organization_id, created_by FROM tp_bases WHERE id = $1',
         [baseId]
       );
-      const base = result.rows[0];
+      const base = result.rows[0] as { created_by: string; organization_id: string } | undefined;
       if (!base) return false;
       if (base.created_by === userId) return true;
       return base.organization_id === orgId;
@@ -47,7 +47,7 @@ const permissionsService = {
         'SELECT t.base_id FROM tp_tables t WHERE t.id = $1',
         [tableId]
       );
-      const table = result.rows[0];
+      const table = result.rows[0] as { base_id: string } | undefined;
       if (!table) return false;
       return permissionsService.canAccessBase(userId, orgId, table.base_id);
     } catch (e) {

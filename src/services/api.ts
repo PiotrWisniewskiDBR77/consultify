@@ -3469,6 +3469,31 @@ export const Api = {
     return handleResponse(res, 'Failed to create activity entry');
   },
 
+  // --- Node Comments ---
+  getNodeComments: async (ideaId: string, nodeId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/nodes/${encodeURIComponent(nodeId)}/comments`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to fetch node comments');
+  },
+
+  addNodeComment: async (ideaId: string, nodeId: string, text: string, mentions?: string[]): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/nodes/${encodeURIComponent(nodeId)}/comments`,
+      { method: 'POST', headers: getHeaders(), body: JSON.stringify({ text, mentions }) }
+    );
+    return handleResponse(res, 'Failed to add comment');
+  },
+
+  deleteNodeComment: async (ideaId: string, nodeId: string, commentId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/my-work/my-ideas/${encodeURIComponent(ideaId)}/map/nodes/${encodeURIComponent(nodeId)}/comments/${encodeURIComponent(commentId)}`,
+      { method: 'DELETE', headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to delete comment');
+  },
+
   getMyIdeaAISuggestions: async (
     ideaId: string,
     payload: {

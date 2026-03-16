@@ -117,7 +117,7 @@ export async function listRecords(
     viewId?: string;
     pageSize?: number;
     cursor?: string;
-    filters?: Record<string, unknown>;
+    filters?: Array<{ field: string; op: string; value?: unknown }> | Record<string, unknown>;
     sorts?: Array<{ fieldId: string; direction: 'asc' | 'desc' }>;
   }
 ): Promise<any> {
@@ -260,6 +260,20 @@ export async function importCsvAsNewTable(
   return handleResponse(res, 'Failed to import CSV as new table');
 }
 
+/** Google Sheets import as new table */
+export async function importGoogleSheet(
+  baseId: string,
+  url: string,
+  tableName?: string
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/import/google-sheets`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ url, tableName }),
+  });
+  return handleResponse(res, 'Failed to import Google Sheet');
+}
+
 // ============================================================================
 // CHAT-TO-SCHEMA (Schema Proposals)
 // ============================================================================
@@ -351,6 +365,28 @@ export async function deleteView(viewId: string): Promise<void> {
     headers: getHeaders(),
   });
   await handleResponse(res, 'Failed to delete view');
+}
+
+/** Share a view publicly with optional password and expiration */
+export async function shareView(
+  viewId: string,
+  options?: { password?: string; expiresAt?: string }
+): Promise<{ token: string; url: string }> {
+  const res = await fetchWithRetry(`${BASE_PATH}/views/${viewId}/share`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(options ?? {}),
+  });
+  return handleResponse(res, 'Failed to share view');
+}
+
+/** Remove public sharing from a view */
+export async function unshareView(viewId: string): Promise<void> {
+  const res = await fetchWithRetry(`${BASE_PATH}/views/${viewId}/unshare`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  await handleResponse(res, 'Failed to unshare view');
 }
 
 // ============================================================================
@@ -637,6 +673,176 @@ export async function getFormSubmissions(
   return handleResponse(res, 'Failed to fetch form submissions');
 }
 
+// ============================================================================
+// RECORD UNDO
+// ============================================================================
+
+export async function undoRecordEdit(tableId: string): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/tables/${tableId}/undo`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to undo record edit');
+}
+
+// ============================================================================
+// RECORD COMMENTS
+// ============================================================================
+
+export async function addRecordComment(
+  recordId: string,
+  tableId: string,
+  content: string,
+  authorName?: string,
+  parentId?: string
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/records/${recordId}/comments`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ tableId, content, authorName, parentId }),
+  });
+  return handleResponse(res, 'Failed to add comment');
+}
+
+export async function listRecordComments(
+  recordId: string,
+  options?: { limit?: number; offset?: number }
+): Promise<any> {
+  const params = new URLSearchParams();
+  if (options?.limit) params.set('limit', String(options.limit));
+  if (options?.offset) params.set('offset', String(options.offset));
+  const query = params.toString();
+  const url = query
+    ? `${BASE_PATH}/records/${recordId}/comments?${query}`
+    : `${BASE_PATH}/records/${recordId}/comments`;
+  const res = await fetchWithRetry(url, { headers: getHeaders() });
+  return handleResponse(res, 'Failed to list comments');
+}
+
+export async function updateRecordComment(
+  commentId: string,
+  content: string
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/comments/${commentId}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ content }),
+  });
+  return handleResponse(res, 'Failed to update comment');
+}
+
+export async function deleteRecordComment(commentId: string): Promise<void> {
+  const res = await fetchWithRetry(`${BASE_PATH}/comments/${commentId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  await handleResponse(res, 'Failed to delete comment');
+}
+
+// ============================================================================
+// RECORD WATCHES
+// ============================================================================
+
+export async function toggleRecordWatch(
+  recordId: string,
+  tableId: string
+): Promise<{ watching: boolean }> {
+  const res = await fetchWithRetry(`${BASE_PATH}/records/${recordId}/watch`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ tableId }),
+  });
+  return handleResponse(res, 'Failed to toggle watch');
+}
+
+export async function getRecordWatchers(recordId: string): Promise<any[]> {
+  const res = await fetchWithRetry(`${BASE_PATH}/records/${recordId}/watchers`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to fetch watchers');
+}
+
+// ============================================================================
+// TEMPLATES MARKETPLACE
+// ============================================================================
+
+export async function listTemplates(category?: string): Promise<any[]> {
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  const query = params.toString();
+  const url = query ? `${BASE_PATH}/templates?${query}` : `${BASE_PATH}/templates`;
+  const res = await fetchWithRetry(url, { headers: getHeaders() });
+  return handleResponse(res, 'Failed to list templates');
+}
+
+export async function getTemplate(templateId: string): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/templates/${templateId}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to fetch template');
+}
+
+export async function useTemplate(
+  templateId: string,
+  workspaceId: string,
+  name?: string
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/templates/${templateId}/use`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ workspaceId, name }),
+  });
+  return handleResponse(res, 'Failed to use template');
+}
+
+export async function publishTemplate(
+  baseId: string,
+  data: { name: string; description?: string; category: string }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/publish-template`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res, 'Failed to publish template');
+}
+
+// ============================================================================
+// SHARED VIEW PUBLIC ACCESS
+// ============================================================================
+
+export async function getSharedViewData(token: string): Promise<any> {
+  const res = await fetch(`${BASE_PATH}/public/views/${encodeURIComponent(token)}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as any).error || 'Shared view not found');
+  }
+  return res.json();
+}
+
+export async function getSharedViewRecords(
+  token: string,
+  options?: { pageSize?: number; cursor?: string }
+): Promise<any> {
+  const params = new URLSearchParams();
+  if (options?.pageSize) params.set('pageSize', String(options.pageSize));
+  if (options?.cursor) params.set('cursor', options.cursor);
+  const query = params.toString();
+  const url = query
+    ? `${BASE_PATH}/public/views/${encodeURIComponent(token)}/records?${query}`
+    : `${BASE_PATH}/public/views/${encodeURIComponent(token)}/records`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as any).error || 'Failed to fetch shared view records');
+  }
+  return res.json();
+}
+
+// ============================================================================
+// PUBLIC FORMS
+// ============================================================================
+
 export async function getPublicForm(slug: string): Promise<any> {
   const res = await fetch(`${BASE_PATH}/public/forms/${encodeURIComponent(slug)}`);
   if (!res.ok) {
@@ -660,4 +866,129 @@ export async function submitPublicForm(
     throw new Error((body as any).error || 'Submission failed');
   }
   return res.json();
+}
+
+// ============================================================================
+// WEBHOOK RELAYS (Zapier/Make)
+// ============================================================================
+
+export async function createWebhookRelay(
+  baseId: string,
+  config: { name: string; targetUrl: string; secret?: string; eventTypes?: string[] }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/relays`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(config),
+  });
+  return handleResponse(res, 'Failed to create webhook relay');
+}
+
+export async function listWebhookRelays(baseId: string): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/relays`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to list webhook relays');
+}
+
+export async function updateWebhookRelay(
+  relayId: string,
+  updates: { name?: string; targetUrl?: string; secret?: string; eventTypes?: string[]; isActive?: boolean }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/relays/${relayId}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(updates),
+  });
+  return handleResponse(res, 'Failed to update webhook relay');
+}
+
+export async function deleteWebhookRelay(relayId: string): Promise<void> {
+  const res = await fetchWithRetry(`${BASE_PATH}/relays/${relayId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  await handleResponse(res, 'Failed to delete webhook relay');
+}
+
+export async function testWebhookRelay(relayId: string): Promise<{ success: boolean; statusCode?: number; error?: string }> {
+  const res = await fetchWithRetry(`${BASE_PATH}/relays/${relayId}/test`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to test webhook relay');
+}
+
+// ============================================================================
+// DISTRIBUTIONS API
+// ============================================================================
+
+export async function createDistribution(
+  baseId: string,
+  config: {
+    name: string;
+    sourceType: string;
+    sourceId: string;
+    channel: string;
+    channelConfig?: Record<string, unknown>;
+    schedule?: string;
+    format?: string;
+  }
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/distributions`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(config),
+  });
+  return handleResponse(res, 'Failed to create distribution');
+}
+
+export async function listDistributions(baseId: string): Promise<any[]> {
+  const res = await fetchWithRetry(`${BASE_PATH}/bases/${baseId}/distributions`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to list distributions');
+}
+
+export async function getDistribution(distributionId: string): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/distributions/${distributionId}`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to fetch distribution');
+}
+
+export async function updateDistribution(
+  distributionId: string,
+  updates: Record<string, unknown>
+): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/distributions/${distributionId}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(updates),
+  });
+  return handleResponse(res, 'Failed to update distribution');
+}
+
+export async function deleteDistribution(distributionId: string): Promise<void> {
+  const res = await fetchWithRetry(`${BASE_PATH}/distributions/${distributionId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  await handleResponse(res, 'Failed to delete distribution');
+}
+
+export async function toggleDistribution(distributionId: string): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/distributions/${distributionId}/toggle`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to toggle distribution');
+}
+
+export async function executeDistribution(distributionId: string): Promise<any> {
+  const res = await fetchWithRetry(`${BASE_PATH}/distributions/${distributionId}/execute`, {
+    method: 'POST',
+    headers: getHeaders(),
+  });
+  return handleResponse(res, 'Failed to execute distribution');
 }

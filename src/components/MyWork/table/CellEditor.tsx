@@ -4,13 +4,20 @@
  * Provides type-appropriate editing UI for each FieldType.
  * Enter saves, Escape cancels. Auto-focuses on mount.
  */
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Link2, Star } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { FieldType, SelectOption } from '@/types/tablePlatform';
+import type { FieldType, TablePlatformSelectOption } from '@/types/tablePlatform';
+import { LinkedRecordPicker } from './LinkedRecordPicker';
 
 // ── Props ────────────────────────────────────────────────────────────────────
+
+export interface LinkedRecordContext {
+  recordId: string;
+  fieldId: string;
+  linkedTableId: string;
+}
 
 export interface CellEditorProps {
   value: unknown;
@@ -18,17 +25,18 @@ export interface CellEditorProps {
   fieldOptions?: Record<string, unknown>;
   onSave: (newValue: unknown) => void;
   onCancel: () => void;
+  linkedRecordContext?: LinkedRecordContext;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function getSelectOptions(fieldOptions?: Record<string, unknown>): SelectOption[] {
-  const opts = fieldOptions as { options?: SelectOption[] } | undefined;
+function getSelectOptions(fieldOptions?: Record<string, unknown>): TablePlatformSelectOption[] {
+  const opts = fieldOptions as { options?: TablePlatformSelectOption[] } | undefined;
   return opts?.options ?? [];
 }
 
 const baseCls =
-  'w-full rounded-lg border border-violet-400 dark:border-violet-500 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] text-slate-800 dark:text-slate-200 outline-none ring-2 ring-violet-500/30';
+  'w-full rounded-lg border border-violet-400 dark:border-violet-500 bg-white dark:bg-navy-950 px-2 py-1.5 text-[11px] md:text-[11px] text-sm text-slate-800 dark:text-slate-200 outline-none ring-2 ring-violet-500/30 min-h-[44px] md:min-h-0 touch-manipulation';
 
 // ── Text Editor ──────────────────────────────────────────────────────────────
 
@@ -66,40 +74,52 @@ const TextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) => {
   );
 };
 
-// ── Long Text Editor ─────────────────────────────────────────────────────────
+// ── Rich Text Editor (Long Text) ─────────────────────────────────────────────
 
-const LongTextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) => {
-  const [draft, setDraft] = useState(String(value ?? ''));
-  const ref = useRef<HTMLTextAreaElement>(null);
+const RichTextEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) => {
+  const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    ref.current?.focus();
-    ref.current?.select();
+    if (editorRef.current && typeof value === 'string') {
+      editorRef.current.innerHTML = value;
+    }
+    editorRef.current?.focus();
   }, []);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        onSave(draft);
-      } else if (e.key === 'Escape') {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'b') { e.preventDefault(); document.execCommand('bold'); }
+        if (e.key === 'i') { e.preventDefault(); document.execCommand('italic'); }
+      }
+      if (e.key === 'Escape') {
         e.preventDefault();
         onCancel();
       }
     },
-    [draft, onSave, onCancel],
+    [onCancel],
   );
 
+  const commit = useCallback(() => {
+    onSave(editorRef.current?.innerHTML || '');
+  }, [onSave]);
+
   return (
-    <textarea
-      ref={ref}
-      value={draft}
-      onChange={(e) => setDraft(e.target.value)}
-      onKeyDown={handleKeyDown}
-      onBlur={() => onSave(draft)}
-      rows={3}
-      className={`${baseCls} resize-y min-h-[60px]`}
-    />
+    <div className="space-y-1">
+      <div className="flex gap-1 text-xs">
+        <button type="button" onClick={() => document.execCommand('bold')} className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 font-bold">B</button>
+        <button type="button" onClick={() => document.execCommand('italic')} className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 italic">I</button>
+        <button type="button" onClick={() => document.execCommand('insertUnorderedList')} className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800">• List</button>
+      </div>
+      <div
+        ref={editorRef}
+        contentEditable
+        className="min-h-[80px] p-2 border rounded bg-white dark:bg-navy-950 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500 text-slate-800 dark:text-slate-200"
+        onInput={() => {/* value tracked via ref */}}
+        onKeyDown={handleKeyDown}
+        onBlur={commit}
+      />
+    </div>
   );
 };
 
@@ -219,7 +239,7 @@ const SingleSelectEditor: React.FC<CellEditorProps> = ({
                 onSave(optVal);
                 setOpen(false);
               }}
-              className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2 ${
+              className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2 min-h-[44px] md:min-h-0 touch-manipulation ${
                 String(value) === optVal ? 'bg-violet-50 dark:bg-violet-500/10' : ''
               }`}
             >
@@ -229,11 +249,11 @@ const SingleSelectEditor: React.FC<CellEditorProps> = ({
                   style={{ backgroundColor: opt.color }}
                 />
               )}
-              {optVal}
+              {optVal as React.ReactNode}
             </button>
           );
         })}
-        {value && (
+        {Boolean(value) && (
           <button
             type="button"
             onClick={() => {
@@ -300,7 +320,7 @@ const MultiSelectEditor: React.FC<CellEditorProps> = ({
               key={opt.id}
               type="button"
               onClick={() => toggle(optVal)}
-              className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2"
+              className="w-full text-left px-2 py-1.5 rounded-lg text-[11px] hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-2 min-h-[44px] md:min-h-0 touch-manipulation"
             >
               <span
                 className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center flex-shrink-0 ${
@@ -389,6 +409,162 @@ const ValidatedTextEditor: React.FC<CellEditorProps & { placeholder?: string; pa
   );
 };
 
+// ── Linked Record Editor ─────────────────────────────────────────────────────
+
+const LinkedRecordEditor: React.FC<CellEditorProps> = ({ value, fieldOptions, onSave, onCancel, linkedRecordContext }) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+
+  const linkedTableId = linkedRecordContext?.linkedTableId
+    ?? (fieldOptions as { linkedTableId?: string })?.linkedTableId
+    ?? '';
+
+  const currentIds: string[] = Array.isArray(value) ? value.map(String) : value ? [String(value)] : [];
+  const currentLinks = currentIds.map((id) => ({ id, displayValue: id }));
+
+  if (!linkedTableId) {
+    return (
+      <div className="flex items-center gap-2 px-2 py-1.5 text-[11px] text-slate-400">
+        <Link2 className="h-3.5 w-3.5" />
+        {isPl ? 'Brak powiązanej tabeli' : 'No linked table configured'}
+      </div>
+    );
+  }
+
+  return (
+    <LinkedRecordPicker
+      open
+      onClose={onCancel}
+      recordId={linkedRecordContext?.recordId ?? ''}
+      fieldId={linkedRecordContext?.fieldId ?? ''}
+      linkedTableId={linkedTableId}
+      currentLinks={currentLinks}
+      onLink={(ids) => {
+        const merged = [...new Set([...currentIds, ...ids])];
+        onSave(merged);
+      }}
+      onUnlink={(ids) => {
+        const remaining = currentIds.filter((id) => !ids.includes(id));
+        onSave(remaining.length > 0 ? remaining : null);
+      }}
+    />
+  );
+};
+
+// ── Rating Editor ────────────────────────────────────────────────────────────
+
+const RatingEditor: React.FC<CellEditorProps> = ({ value, fieldOptions, onSave, onCancel }) => {
+  const max = Number((fieldOptions as { max?: number })?.max) || 5;
+  const [draft, setDraft] = useState(Math.round(Number(value) || 0));
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onSave(draft);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onSave, draft]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+      if (e.key === 'Enter') onSave(draft);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onSave, onCancel, draft]);
+
+  return (
+    <div ref={ref} className="flex items-center gap-0.5 px-1 py-1">
+      {Array.from({ length: max }, (_, i) => (
+        <button
+          key={i}
+          type="button"
+          onClick={() => {
+            const newVal = i + 1 === draft ? 0 : i + 1;
+            setDraft(newVal);
+            onSave(newVal);
+          }}
+          className="p-0 border-0 bg-transparent cursor-pointer"
+        >
+          <Star
+            size={16}
+            className={i < draft ? 'text-amber-400 fill-amber-400' : 'text-slate-300 dark:text-navy-600 hover:text-amber-300'}
+          />
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// ── Duration Editor ──────────────────────────────────────────────────────────
+
+const DurationEditor: React.FC<CellEditorProps> = ({ value, onSave, onCancel }) => {
+  const totalSeconds = Math.max(0, Math.round(Number(value) || 0));
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  const initial = `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+  const [draft, setDraft] = useState(initial);
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    ref.current?.focus();
+    ref.current?.select();
+  }, []);
+
+  const parseToSeconds = useCallback((str: string): number | null => {
+    const parts = str.split(':').map(Number);
+    if (parts.some((p) => isNaN(p) || p < 0)) return null;
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    if (parts.length === 2) return parts[0] * 3600 + parts[1] * 60;
+    if (parts.length === 1) return parts[0] * 60;
+    return null;
+  }, []);
+
+  const handleSave = useCallback(() => {
+    if (!draft.trim()) {
+      onSave(null);
+      return;
+    }
+    const seconds = parseToSeconds(draft.trim());
+    if (seconds != null) {
+      onSave(seconds);
+    } else {
+      onSave(value);
+    }
+  }, [draft, parseToSeconds, onSave, value]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleSave();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        onCancel();
+      }
+    },
+    [handleSave, onCancel],
+  );
+
+  return (
+    <input
+      ref={ref}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onKeyDown={handleKeyDown}
+      onBlur={handleSave}
+      placeholder="h:mm:ss"
+      className={`${baseCls} tabular-nums`}
+    />
+  );
+};
+
 const URL_PATTERN = /^(https?:\/\/)?[\w.-]+\.\w{2,}/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -396,7 +572,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const EDITORS: Partial<Record<FieldType, React.FC<CellEditorProps>>> = {
   singleLineText: TextEditor,
-  longText: LongTextEditor,
+  longText: RichTextEditor,
   number: NumberEditor,
   currency: NumberEditor,
   percent: NumberEditor,
@@ -406,6 +582,10 @@ const EDITORS: Partial<Record<FieldType, React.FC<CellEditorProps>>> = {
   url: (props) => <ValidatedTextEditor {...props} placeholder="https://..." pattern={URL_PATTERN} />,
   email: (props) => <ValidatedTextEditor {...props} placeholder="name@example.com" pattern={EMAIL_PATTERN} />,
   phone: (props) => <ValidatedTextEditor {...props} placeholder="+1 234 567 890" />,
+  linkedRecord: LinkedRecordEditor,
+  rating: RatingEditor,
+  duration: DurationEditor,
+  barcode: TextEditor,
 };
 
 export const CellEditor: React.FC<CellEditorProps> = React.memo((props) => {

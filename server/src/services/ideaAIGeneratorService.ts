@@ -50,7 +50,11 @@ export type GeneratorType =
   | 'wb_extract_actions'
   // V51-06: Table AI handlers
   | 'table_rows'
-  | 'table_simplify';
+  | 'table_simplify'
+  // Mindmap-specific aliases
+  | 'mm_branch_generator'
+  | 'mm_expand'
+  | 'mm_what_if';
 
 export type CanvasTool = 'process_flow' | 'mindmap' | 'table' | 'whiteboard';
 
@@ -636,6 +640,10 @@ const SCHEMA_MAP: Record<GeneratorType, z.ZodSchema<any>> = {
   // V51-06: Table AI
   table_rows: TableRowsSchema,
   table_simplify: TableSimplifySchema,
+  // Mindmap-specific aliases
+  mm_branch_generator: MindmapExpandSchema,
+  mm_expand: NodeExpandSchema,
+  mm_what_if: NodeExpandSchema,
 };
 
 // ── Context builder ──────────────────────────────────────────────────────────
@@ -1059,6 +1067,31 @@ Elementy: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: 
       : `You are a workshop facilitator. Analyze sticky notes and extract concrete action items. For each action provide text, optional owner, and priority. Respond ONLY in JSON.${orgBlock}
 
 Elements: ${existingNodeLabels.map((l, i) => `${ctx.existingNodes[i]?.id || i}: ${l}`).join(', ') || 'none'}`,
+
+    // Mindmap-specific aliases
+    mm_branch_generator: isPl
+      ? `Jesteś doradcą strategicznym. Na podstawie opisu wyzwania rozbuduj mapę myśli o nowe gałęzie z konkretnymi akcjami. Zaproponuj 5-7 nowych węzłów. Odpowiedz TYLKO w formacie JSON.${orgBlock}
+
+Istniejące gałęzie: ${existingNodeLabels.join(', ') || 'brak'}`
+      : `You are a strategic advisor. Based on the challenge description, expand the mind map with new branches and concrete actions. Propose 5-7 new nodes. Respond ONLY in JSON.${orgBlock}
+
+Existing branches: ${existingNodeLabels.join(', ') || 'none'}`,
+
+    mm_expand: isPl
+      ? `Jesteś ekspertem od optymalizacji procesów. Przeanalizuj krok procesu i zaproponuj: pod-kroki do rozbicia, ryzyka związane z tym krokiem, metryki do pomiaru wydajności, oraz optymalizacje do poprawy. Odpowiedz TYLKO w JSON.${orgBlock}
+
+Istniejące elementy: ${existingNodeLabels.join(', ') || 'brak'}`
+      : `You are a process optimization expert. Analyze the process step and propose: sub-steps to break it down, risks associated with this step, metrics to measure performance, and optimizations to improve it. Respond ONLY in JSON.${orgBlock}
+
+Existing elements: ${existingNodeLabels.join(', ') || 'none'}`,
+
+    mm_what_if: isPl
+      ? `Jesteś ekspertem od scenariuszy strategicznych. Wygeneruj scenariusze "co jeśli" dla danego kontekstu węzła. Zbadaj alternatywne wyniki i przypadki brzegowe. Zaproponuj pod-kroki, ryzyka, metryki i optymalizacje. Odpowiedz TYLKO w JSON.${orgBlock}
+
+Istniejące elementy: ${existingNodeLabels.join(', ') || 'brak'}`
+      : `You are a strategic scenario expert. Generate what-if scenarios for the given node context. Explore alternative outcomes and edge cases. Propose sub-steps, risks, metrics, and optimizations. Respond ONLY in JSON.${orgBlock}
+
+Existing elements: ${existingNodeLabels.join(', ') || 'none'}`,
 
     // V51-06: Table AI prompts
     table_rows: isPl
@@ -2372,6 +2405,18 @@ export function formatIdeaGeneratorOutput(
       ],
       createdAt: ts,
     };
+  }
+
+  if (generatorType === 'mm_branch_generator') {
+    return formatIdeaGeneratorOutput('mindmap_expand', tool, output, batchId, language);
+  }
+
+  if (generatorType === 'mm_expand') {
+    return formatIdeaGeneratorOutput('node_expand', tool, output, batchId, language);
+  }
+
+  if (generatorType === 'mm_what_if') {
+    return formatIdeaGeneratorOutput('node_expand', tool, output, batchId, language);
   }
 
   return { id: batchId, tool, generatorType, proposals: [], createdAt: ts };

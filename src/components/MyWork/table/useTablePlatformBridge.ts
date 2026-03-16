@@ -46,13 +46,13 @@ function normalizeRecord(raw: Record<string, unknown>): TablePlatformRecord {
   };
 }
 
-/** Convert TP filters/sorts to backend API format (field, op, dir) */
+/** Convert TP filters/sorts to backend API format */
 function toBackendFilters(tp: TPFilterGroup): Array<{ field: string; op: string; value?: unknown }> {
   return tp.rules.map((r) => ({ field: r.fieldId, op: r.operator, value: r.value }));
 }
 
-function toBackendSorts(sorts: TPSortRule[]): Array<{ field: string; dir: 'asc' | 'desc' }> {
-  return sorts.map((s) => ({ field: s.fieldId, dir: s.direction }));
+function toBackendSorts(sorts: TPSortRule[]): Array<{ fieldId: string; direction: 'asc' | 'desc' }> {
+  return sorts.map((s) => ({ fieldId: s.fieldId, direction: s.direction }));
 }
 
 export interface UseTablePlatformBridgeOpts {

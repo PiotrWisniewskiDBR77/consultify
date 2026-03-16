@@ -49,7 +49,7 @@ export class SSOService {
        RETURNING *`,
       [organizationId, JSON.stringify(config)],
     );
-    return result.rows[0];
+    return result.rows[0] as SSOConfigRow;
   }
 
   async configureOIDC(organizationId: string, config: OIDCConfig): Promise<SSOConfigRow> {
@@ -61,7 +61,7 @@ export class SSOService {
        RETURNING *`,
       [organizationId, JSON.stringify(config)],
     );
-    return result.rows[0];
+    return result.rows[0] as SSOConfigRow;
   }
 
   async getSSOConfig(organizationId: string): Promise<SSOConfigRow | null> {
@@ -70,7 +70,7 @@ export class SSOService {
       'SELECT * FROM tp_sso_configs WHERE organization_id = $1',
       [organizationId],
     );
-    return result.rows[0] || null;
+    return (result.rows[0] as SSOConfigRow | undefined) || null;
   }
 
   async toggleSSO(organizationId: string, enabled: boolean): Promise<void> {

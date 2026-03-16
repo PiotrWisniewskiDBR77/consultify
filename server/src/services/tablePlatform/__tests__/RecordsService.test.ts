@@ -48,6 +48,7 @@ describe('RecordsService', () => {
     const recordRow = { id: 'rec-uuid-001', table_id: 't-1', data: { Name: 'Test' } };
     mockQuery
       .mockResolvedValueOnce({ rows: [] }) // loadAutoFields
+      .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }) // resolveUserName
       .mockResolvedValueOnce({ rows: [] }) // INSERT
       .mockResolvedValueOnce({ rows: [recordRow] }) // SELECT after insert
       .mockResolvedValueOnce({ rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }] }); // recomputeAffectedFields tp_fields
@@ -80,6 +81,7 @@ describe('RecordsService', () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [before] }) // SELECT before
       .mockResolvedValueOnce({ rows: [] }) // loadAutoFields
+      .mockResolvedValueOnce({ rows: [{ display_name: 'user-1' }] }) // resolveUserName
       .mockResolvedValueOnce({ rows: [] }) // UPDATE
       .mockResolvedValueOnce({ rows: [after] }) // SELECT after
       .mockResolvedValueOnce({ rows: [{ id: 'f1', name: 'Name', field_type: 'single_line_text', options: {} }] }); // recomputeAffectedFields tp_fields

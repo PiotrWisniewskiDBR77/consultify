@@ -9,8 +9,9 @@ import {
   Wand2,
   Zap,
 } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
+import type { SidekickContext } from '../aiSidekickContext';
 import type { IdeaWorkspaceSelection } from '../../ideaSelectionTypes';
 
 interface AIActionsPopoverProps {
@@ -19,6 +20,7 @@ interface AIActionsPopoverProps {
   onAction: (action: string) => void;
   onOpenChat: () => void;
   onClose: () => void;
+  sidekickHint?: string;
 }
 
 const GENERAL_GENERATORS = [
@@ -43,7 +45,21 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
   onAction,
   onOpenChat,
   onClose,
+  sidekickHint: sidekickHintProp,
 }) => {
+  const [eventCtx, setEventCtx] = useState<SidekickContext | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      setEventCtx((e as CustomEvent<SidekickContext>).detail);
+    };
+    window.addEventListener('idea-mindmap-sidekick-context', handler);
+    return () => window.removeEventListener('idea-mindmap-sidekick-context', handler);
+  }, []);
+
+  const resolvedHint = sidekickHintProp
+    ?? (eventCtx ? (isPl ? eventCtx.promptHintPl : eventCtx.promptHint) : undefined);
+
   const hasNodeSelected = selection.type === 'node' && selection.count >= 1;
 
   const dispatch = (action: string) => {
@@ -53,6 +69,14 @@ export const AIActionsPopover: React.FC<AIActionsPopoverProps> = ({
 
   return (
     <div className="w-60 max-h-[420px] overflow-y-auto rounded-xl bg-white dark:bg-navy-900 border border-slate-200/60 dark:border-white/[0.06] shadow-xl">
+      {resolvedHint && (
+        <div className="px-3 py-2 border-b border-slate-200/30 dark:border-white/[0.04]">
+          <div className="text-[10px] text-violet-600 dark:text-violet-400 font-medium flex items-center gap-1">
+            <Sparkles size={10} />
+            {resolvedHint}
+          </div>
+        </div>
+      )}
       <div className="px-1 py-1">
         <button
           onClick={() => {

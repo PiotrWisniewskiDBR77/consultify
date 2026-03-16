@@ -1,10 +1,13 @@
 /**
  * NodeCommentThread — Full comment threads per node with @mentions.
- * Persisted in node data.comments array.
+ * Fetches from server API when available, falls back to prop-based comments.
  */
-import { AtSign, MessageSquare, Send, Trash2, X } from 'lucide-react';
-import React, { useCallback, useRef, useState } from 'react';
+import { AtSign, Loader2, MessageSquare, Send, Trash2, X } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
+
+import { Api } from '@/services/api';
 
 export interface NodeComment {
   id: string;
@@ -17,6 +20,7 @@ export interface NodeComment {
 interface NodeCommentThreadProps {
   open: boolean;
   onClose: () => void;
+  ideaId: string;
   nodeId: string;
   nodeLabel: string;
   comments: NodeComment[];
@@ -48,9 +52,10 @@ function formatTime(iso: string): string {
 export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
   open,
   onClose,
+  ideaId,
   nodeId,
   nodeLabel,
-  comments,
+  comments: propComments,
   locked,
   currentUser,
   onAddComment,
@@ -60,24 +65,93 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
   const isPl = i18n.language?.startsWith('pl');
 
   const [text, setText] = useState('');
+  const [localComments, setLocalComments] = useState<NodeComment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [apiAvailable, setApiAvailable] = useState(true);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSubmit = useCallback(() => {
+  const comments = apiAvailable ? localComments : propComments;
+
+  useEffect(() => {
+    if (!open || !ideaId || !nodeId) return;
+    let cancelled = false;
+    setLoading(true);
+
+    Api.getNodeComments(ideaId, nodeId)
+      .then((res) => {
+        if (!cancelled && Array.isArray(res?.comments)) {
+          setLocalComments(res.comments);
+          setApiAvailable(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLocalComments(propComments);
+          setApiAvailable(false);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [open, ideaId, nodeId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!apiAvailable) setLocalComments(propComments);
+  }, [propComments, apiAvailable]);
+
+  const handleSubmit = useCallback(async () => {
     const trimmed = text.trim();
     if (!trimmed) return;
+
+    const mentions = extractMentions(trimmed);
+
+    if (apiAvailable && ideaId) {
+      try {
+        const res = await Api.addNodeComment(ideaId, nodeId, trimmed, mentions);
+        if (res?.comment) {
+          setLocalComments((prev) => [...prev, res.comment]);
+          onAddComment(nodeId, res.comment);
+          setText('');
+          inputRef.current?.focus();
+          return;
+        }
+      } catch {
+        toast.error(isPl ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+      }
+    }
 
     const comment: NodeComment = {
       id: `comment-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
       author: currentUser,
       text: trimmed,
       createdAt: new Date().toISOString(),
-      mentions: extractMentions(trimmed),
+      mentions,
     };
-
     onAddComment(nodeId, comment);
+    setLocalComments((prev) => [...prev, comment]);
     setText('');
     inputRef.current?.focus();
-  }, [currentUser, nodeId, onAddComment, text]);
+  }, [apiAvailable, currentUser, ideaId, isPl, nodeId, onAddComment, text]);
+
+  const handleDelete = useCallback(
+    async (commentId: string) => {
+      if (apiAvailable && ideaId) {
+        try {
+          await Api.deleteNodeComment(ideaId, nodeId, commentId);
+          setLocalComments((prev) => prev.filter((c) => c.id !== commentId));
+          onDeleteComment(nodeId, commentId);
+          return;
+        } catch {
+          toast.error(isPl ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
+        }
+      }
+      onDeleteComment(nodeId, commentId);
+      setLocalComments((prev) => prev.filter((c) => c.id !== commentId));
+    },
+    [apiAvailable, ideaId, isPl, nodeId, onDeleteComment]
+  );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -113,48 +187,55 @@ export const NodeCommentThread: React.FC<NodeCommentThreadProps> = ({
 
       {/* Comments list */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-        {comments.length === 0 && (
+        {loading && (
+          <div className="flex justify-center py-6">
+            <Loader2 size={18} className="animate-spin text-blue-500" />
+          </div>
+        )}
+
+        {!loading && comments.length === 0 && (
           <div className="text-center py-8 text-[11px] text-slate-400">
             {isPl ? 'Brak komentarzy. Napisz pierwszy!' : 'No comments yet. Write the first one!'}
           </div>
         )}
 
-        {comments.map((c) => (
-          <div key={c.id} className="group">
-            <div className="flex items-start gap-2">
-              <div className="w-6 h-6 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">
-                {c.author.charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
-                    {c.author}
-                  </span>
-                  <span className="text-[8px] text-slate-400">{formatTime(c.createdAt)}</span>
-                  {c.author === currentUser && (
-                    <button
-                      onClick={() => onDeleteComment(nodeId, c.id)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-400 hover:text-red-500 transition-all"
-                    >
-                      <Trash2 size={10} />
-                    </button>
-                  )}
+        {!loading &&
+          comments.map((c) => (
+            <div key={c.id} className="group">
+              <div className="flex items-start gap-2">
+                <div className="w-6 h-6 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">
+                  {c.author.charAt(0).toUpperCase()}
                 </div>
-                <div className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed whitespace-pre-wrap">
-                  {c.text.split(/(@\w+)/g).map((part, idx) =>
-                    part.startsWith('@') ? (
-                      <span key={idx} className="text-blue-500 font-medium">
-                        {part}
-                      </span>
-                    ) : (
-                      <span key={idx}>{part}</span>
-                    )
-                  )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">
+                      {c.author}
+                    </span>
+                    <span className="text-[8px] text-slate-400">{formatTime(c.createdAt)}</span>
+                    {c.author === currentUser && (
+                      <button
+                        onClick={() => handleDelete(c.id)}
+                        className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-slate-400 hover:text-red-500 transition-all"
+                      >
+                        <Trash2 size={10} />
+                      </button>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed whitespace-pre-wrap">
+                    {c.text.split(/(@\w+)/g).map((part, idx) =>
+                      part.startsWith('@') ? (
+                        <span key={idx} className="text-blue-500 font-medium">
+                          {part}
+                        </span>
+                      ) : (
+                        <span key={idx}>{part}</span>
+                      )
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
 
       {/* Input */}

@@ -138,6 +138,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
         { id: 'ctx_dependencies', labelPl: 'Wykryj zależności', labelEn: 'Detect dependencies', icon: Network, disabled: isLocked },
         { id: 'ctx_priority', labelPl: 'Priorytetyzacja', labelEn: 'Prioritize', icon: Target, disabled: isLocked },
         { id: 'ctx_competitive', labelPl: 'Konkurencja', labelEn: 'Competitors', icon: Globe, disabled: isLocked },
+        { id: 'ai_suggest_links', labelPl: 'AI: Zasugeruj powiązania', labelEn: 'AI: Suggest links', icon: Sparkles, disabled: isLocked },
       ],
     },
     {

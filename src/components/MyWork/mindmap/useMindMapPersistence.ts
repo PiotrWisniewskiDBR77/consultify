@@ -51,8 +51,8 @@ function shouldBootstrapStarterGraph(
   runtimeEdges: Edge[],
   runtimeVersion: number | null
 ) {
-  if (runtimeNodes.length === 0 && runtimeEdges.length === 0) return true;
   if (runtimeVersion !== null && runtimeVersion > 1) return false;
+  if (runtimeNodes.length === 0 && runtimeEdges.length === 0) return true;
   if (runtimeEdges.length > 0) return false;
   if (runtimeNodes.length !== 1) return false;
   return String(runtimeNodes[0]?.id || '') === 'root';
@@ -287,26 +287,41 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     prevSyncStateRef.current = runtimeSyncState;
   }, [runtimeLastSavedAt, runtimeLoading, runtimeSaving, runtimeSyncState, runtimeVersion, externalRuntime]);
 
+  // Keep a stable ref to runtime data so `hydrate` doesn't get a new identity
+  // on every save cycle (which would cascade into effect re-runs).
+  const runtimeDataRef = useRef({ runtimeNodes, runtimeEdges, runtimeExtensions, runtimeVersion });
+  useEffect(() => {
+    runtimeDataRef.current = { runtimeNodes, runtimeEdges, runtimeExtensions, runtimeVersion };
+  }, [runtimeNodes, runtimeEdges, runtimeExtensions, runtimeVersion]);
+
   const hydrate = useCallback(async () => {
+    const { runtimeNodes: rtNodes, runtimeEdges: rtEdges, runtimeExtensions: rtExt, runtimeVersion: rtVer } = runtimeDataRef.current;
     if (externalRuntime) {
-      localVersionRef.current = Math.max(1, Number(runtimeVersion || 1));
-      const runtimeNodesSafe = Array.isArray(runtimeNodes) ? runtimeNodes : [];
-      const runtimeEdgesSafe = Array.isArray(runtimeEdges) ? runtimeEdges : [];
+      localVersionRef.current = Math.max(1, Number(rtVer || 1));
+      const runtimeNodesSafe = Array.isArray(rtNodes) ? rtNodes : [];
+      const runtimeEdgesSafe = Array.isArray(rtEdges) ? rtEdges : [];
       const defaultGraph = shouldBootstrapStarterGraph(
         runtimeNodesSafe as Node[],
         runtimeEdgesSafe as Edge[],
-        runtimeVersion
+        rtVer
       )
         ? buildLocalDefaultIdeaMap(ideaId, ideaTitle, isPolish)
         : null;
       const nextNodes = defaultGraph ? defaultGraph.nodes : runtimeNodesSafe;
       const nextEdges = defaultGraph ? defaultGraph.edges : runtimeEdgesSafe;
       const safeRuntimeExtensions =
-        runtimeExtensions && typeof runtimeExtensions === 'object' ? runtimeExtensions : {};
+        rtExt && typeof rtExt === 'object' ? rtExt : {};
       const viewState = (safeRuntimeExtensions as any)?.mindmap?.viewState;
       const savedCollapsed = viewState?.collapsedNodeIds;
       if (Array.isArray(savedCollapsed)) setCollapsedNodeIds(new Set(savedCollapsed));
-      const savedViewport = viewState?.viewport;
+      let savedViewport = viewState?.viewport;
+      // Fallback: if server has no viewport, try localStorage
+      if (!savedViewport || typeof savedViewport.zoom !== 'number' || savedViewport.zoom <= 0) {
+        try {
+          const local = localStorage.getItem(`mm-viewport-${ideaId}`);
+          if (local) savedViewport = JSON.parse(local);
+        } catch { /* ignore */ }
+      }
       const patchedNodes = nextNodes.map((n: any) => {
         if (String(n?.id) !== 'root') return n;
         return {
@@ -347,7 +362,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
             savedViewport &&
             typeof savedViewport.x === 'number' &&
             typeof savedViewport.zoom === 'number' &&
-            !(savedViewport.x === 0 && savedViewport.y === 0);
+            savedViewport.zoom > 0;
           if (hasRealViewport) {
             setViewport(savedViewport, { duration: 300 });
           } else {
@@ -391,7 +406,13 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
       const savedCollapsed = viewState?.collapsedNodeIds;
       if (Array.isArray(savedCollapsed)) setCollapsedNodeIds(new Set(savedCollapsed));
 
-      const savedViewport = viewState?.viewport;
+      let savedViewport = viewState?.viewport;
+      if (!savedViewport || typeof savedViewport.zoom !== 'number' || savedViewport.zoom <= 0) {
+        try {
+          const local = localStorage.getItem(`mm-viewport-${ideaId}`);
+          if (local) savedViewport = JSON.parse(local);
+        } catch { /* ignore */ }
+      }
 
       const depthPatchedNodes = normalizeMindMapNodes(
         patchedNodes,
@@ -413,7 +434,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
             savedViewport &&
             typeof savedViewport.x === 'number' &&
             typeof savedViewport.zoom === 'number' &&
-            !(savedViewport.x === 0 && savedViewport.y === 0);
+            savedViewport.zoom > 0;
           if (hasRealViewport) {
             setViewport(savedViewport, { duration: 300 });
           } else {
@@ -470,6 +491,8 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     } finally {
       setLoading(false);
     }
+    // runtimeNodes/runtimeEdges/runtimeExtensions are read from runtimeDataRef
+    // to keep hydrate's identity stable across save cycles.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     fitView,
@@ -478,9 +501,6 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     ideaTitle,
     isPolish,
     onPreferredToolLoaded,
-    runtimeEdges,
-    runtimeExtensions,
-    runtimeNodes,
     setEdges,
     setNodes,
   ]);
@@ -490,9 +510,21 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ideaId]);
 
+  // Re-hydrate ONLY when the runtime version jumps by more than 1 (external
+  // change, e.g. conflict resolution or another user's save).  A +1 bump is
+  // the normal result of our own scheduleSave — re-hydrating on that would
+  // reset the viewport to the saved position, causing the "jump to top-left"
+  // bug the user reported.
   useEffect(() => {
     if (runtimeVersion === null) return;
-    if (lastHydratedRuntimeVersionRef.current === runtimeVersion) return;
+    const prev = lastHydratedRuntimeVersionRef.current;
+    if (prev === runtimeVersion) return;
+    // First hydration (prev === null) always runs.
+    // Subsequent: only when version jumps by >1 (external change).
+    if (prev !== null && runtimeVersion <= prev + 1) {
+      lastHydratedRuntimeVersionRef.current = runtimeVersion;
+      return;
+    }
     lastHydratedRuntimeVersionRef.current = runtimeVersion;
     hydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -688,6 +720,65 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     scheduleSave(nodes as any, edges as any);
   }, [nodes, edges, scheduleSave]);
 
+  // Persist viewport position independently of node/edge changes so that
+  // pan/zoom is restored after page reload even when the graph didn't change.
+  const viewportSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveViewportOnly = useCallback(() => {
+    if (isHydratingRef.current) return;
+    if (viewportSaveTimerRef.current) clearTimeout(viewportSaveTimerRef.current);
+    viewportSaveTimerRef.current = setTimeout(() => {
+      const {
+        collapsedNodeIds: latestCollapsedNodeIds,
+        externalRuntime: latestExternalRuntime,
+        locked: latestLocked,
+        structureType: latestStructureType,
+        runtimeCaptureGraph: latestRuntimeCaptureGraph,
+        extensions: latestExtensions,
+        runtimeExtensions: latestRuntimeExtensions,
+      } = scheduleSaveStateRef.current;
+      if (latestLocked) return;
+      const currentViewport = getViewport();
+      const mindmapViewStatePatch = {
+        mindmap: {
+          ...(latestStructureType ? { structureType: latestStructureType } : {}),
+          viewState: {
+            collapsedNodeIds: Array.from(latestCollapsedNodeIds),
+            viewport: currentViewport,
+          },
+        },
+      };
+      if (latestExternalRuntime && latestRuntimeCaptureGraph) {
+        const ext = mergeWorkspaceExtensions(
+          (latestExtensions || {}) as Record<string, unknown>,
+          mindmapViewStatePatch,
+        );
+        const runtimeExt = mergeWorkspaceExtensions(
+          (latestRuntimeExtensions && typeof latestRuntimeExtensions === 'object'
+            ? latestRuntimeExtensions
+            : {}) as Record<string, unknown>,
+          mindmapViewStatePatch,
+        );
+        if (stableSerialize(ext) === stableSerialize(runtimeExt)) return;
+        const { runtimeNodes: rtNodes, runtimeEdges: rtEdges } = runtimeDataRef.current;
+        const cleanNodes = (Array.isArray(rtNodes) ? rtNodes : []).map((n: any) => {
+          const { selected: _sel, dragging: _drag, ...rest } = n;
+          const { _interactionMode, _canAddSibling, _startEditing, _collapsed, _dropTarget, count, ...cleanData } = rest.data || {};
+          return { ...rest, data: cleanData };
+        });
+        latestRuntimeCaptureGraph(
+          { nodes: cleanNodes as Node[], edges: (Array.isArray(rtEdges) ? rtEdges : []) as Edge[], extensions: ext },
+          { reason: 'draft' },
+        );
+      }
+    }, 1500);
+  }, [getViewport]);
+
+  useEffect(() => {
+    return () => {
+      if (viewportSaveTimerRef.current) clearTimeout(viewportSaveTimerRef.current);
+    };
+  }, []);
+
   return {
     loading,
     saving,
@@ -698,6 +789,7 @@ export function useMindMapPersistence(opts: UseMindMapPersistenceOpts) {
     isHydratingRef,
     hydrate,
     scheduleSave,
+    saveViewportOnly,
     localVersionRef,
   };
 }

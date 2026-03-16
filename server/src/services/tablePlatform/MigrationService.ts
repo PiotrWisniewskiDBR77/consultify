@@ -387,20 +387,20 @@ const migrationService = {
         'SELECT id FROM tp_tables WHERE base_id = $1',
         [baseId]
       );
-      const tableIds = tablesResult.rows.map((r: { id: string }) => r.id);
+      const tableIds = (tablesResult.rows as Array<{ id: string }>).map((r) => r.id);
 
       for (const tid of tableIds) {
         const recCountResult = await db.query(
           'SELECT COUNT(*) AS cnt FROM tp_records WHERE table_id = $1',
           [tid]
         );
-        newRecordCount += parseInt(String(recCountResult.rows[0]?.cnt ?? 0), 10);
+        newRecordCount += parseInt(String((recCountResult.rows[0] as { cnt: string })?.cnt ?? 0), 10);
 
         const fieldCountResult = await db.query(
           'SELECT COUNT(*) AS cnt FROM tp_fields WHERE table_id = $1',
           [tid]
         );
-        newFieldCount += parseInt(String(fieldCountResult.rows[0]?.cnt ?? 0), 10);
+        newFieldCount += parseInt(String((fieldCountResult.rows[0] as { cnt: string })?.cnt ?? 0), 10);
       }
 
       if (graph) {

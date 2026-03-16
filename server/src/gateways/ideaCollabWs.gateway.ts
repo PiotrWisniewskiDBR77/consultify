@@ -356,6 +356,63 @@ export function attachIdeaCollabWs(server: HttpServer): void {
             break;
           }
 
+          case 'graph_patch': {
+            const patch = {
+              type: 'graph_patch',
+              userId: user.id,
+              userName: user.name,
+              timestamp: Date.now(),
+              operations: msg.operations,
+            };
+            state.lastActivity = Date.now();
+            ws.__actionsCount = (ws.__actionsCount || 0) + 1;
+
+            const patchStr = JSON.stringify(patch);
+            room.forEach((_, otherWs) => {
+              if (otherWs !== ws && otherWs.readyState === 1) {
+                otherWs.send(patchStr);
+              }
+            });
+
+            if (ws.__sessionId) {
+              persistEvent(db, ws.__sessionId, 'graph_patch', {
+                opCount: Array.isArray(msg.operations) ? msg.operations.length : 0,
+              });
+            }
+            break;
+          }
+
+          case 'graph_full_sync': {
+            const syncRoom = ideaRooms.get(ideaId);
+            if (!syncRoom) break;
+            for (const [otherWs] of syncRoom) {
+              if (otherWs !== ws && otherWs.readyState === 1) {
+                otherWs.send(JSON.stringify({ type: 'graph_sync_request', requesterId: user.id }));
+                break;
+              }
+            }
+            break;
+          }
+
+          case 'graph_sync_response': {
+            const targetId = msg.requesterId;
+            const respRoom = ideaRooms.get(ideaId);
+            if (!respRoom || !targetId) break;
+            for (const [otherWs, otherUser] of respRoom) {
+              if (otherUser.id === targetId && otherWs.readyState === 1) {
+                otherWs.send(JSON.stringify({
+                  type: 'graph_full_state',
+                  nodes: msg.nodes,
+                  edges: msg.edges,
+                  version: msg.version,
+                  fromUserId: user.id,
+                }));
+                break;
+              }
+            }
+            break;
+          }
+
           default:
             break;
         }

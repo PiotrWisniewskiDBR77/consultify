@@ -1,0 +1,489 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Check,
+  ChevronLeft,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Play,
+  Plus,
+  Power,
+  PowerOff,
+  Trash2,
+  Webhook,
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import * as TablePlatformApi from '@/services/api/tablePlatform.api';
+
+interface WebhookRelay {
+  id: string;
+  base_id: string;
+  name: string;
+  target_url: string;
+  secret: string | null;
+  event_types: string[];
+  is_active: boolean;
+  last_triggered_at: string | null;
+  trigger_count: number;
+  created_by: string;
+  created_at: string;
+}
+
+const EVENT_OPTIONS = [
+  { value: 'record.created', labelEn: 'Record Created', labelPl: 'Rekord utworzony' },
+  { value: 'record.updated', labelEn: 'Record Updated', labelPl: 'Rekord zaktualizowany' },
+  { value: 'record.deleted', labelEn: 'Record Deleted', labelPl: 'Rekord usunięty' },
+];
+
+interface WebhookRelayPanelProps {
+  workspaceId: string;
+  onClose: () => void;
+}
+
+export const WebhookRelayPanel: React.FC<WebhookRelayPanelProps> = ({ workspaceId, onClose }) => {
+  const { i18n } = useTranslation();
+  const isPl = i18n.language?.startsWith('pl');
+
+  const [baseId, setBaseId] = useState<string | null>(null);
+  const [relays, setRelays] = useState<WebhookRelay[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editingRelay, setEditingRelay] = useState<WebhookRelay | null>(null);
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [testingId, setTestingId] = useState<string | null>(null);
+
+  const fetchRelays = useCallback(async () => {
+    setLoading(true);
+    try {
+      const bases = await TablePlatformApi.listBases(workspaceId);
+      const firstBase = Array.isArray(bases) ? bases[0] : null;
+      if (!firstBase) {
+        setLoading(false);
+        return;
+      }
+      const resolvedBaseId = String((firstBase as Record<string, unknown>).id ?? '');
+      setBaseId(resolvedBaseId);
+      const data = await TablePlatformApi.listWebhookRelays(resolvedBaseId);
+      setRelays(data?.relays ?? []);
+    } catch {
+      toast.error(isPl ? 'Nie udało się pobrać webhooków' : 'Failed to load webhooks');
+    } finally {
+      setLoading(false);
+    }
+  }, [workspaceId, isPl]);
+
+  useEffect(() => {
+    fetchRelays();
+  }, [fetchRelays]);
+
+  const handleDelete = async (relayId: string) => {
+    try {
+      await TablePlatformApi.deleteWebhookRelay(relayId);
+      setRelays((prev) => prev.filter((r) => r.id !== relayId));
+      toast.success(isPl ? 'Webhook usunięty' : 'Webhook deleted');
+    } catch {
+      toast.error(isPl ? 'Nie udało się usunąć' : 'Failed to delete');
+    }
+  };
+
+  const handleToggle = async (relay: WebhookRelay) => {
+    try {
+      const updated = await TablePlatformApi.updateWebhookRelay(relay.id, { isActive: !relay.is_active });
+      setRelays((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    } catch {
+      toast.error(isPl ? 'Nie udało się zmienić statusu' : 'Failed to toggle status');
+    }
+  };
+
+  const handleTest = async (relayId: string) => {
+    setTestingId(relayId);
+    try {
+      const result = await TablePlatformApi.testWebhookRelay(relayId);
+      if (result.success) {
+        toast.success(isPl ? `Test OK (${result.statusCode})` : `Test passed (${result.statusCode})`);
+      } else {
+        toast.error(isPl ? `Test nieudany: ${result.error ?? result.statusCode}` : `Test failed: ${result.error ?? result.statusCode}`);
+      }
+    } catch {
+      toast.error(isPl ? 'Test nieudany' : 'Test failed');
+    } finally {
+      setTestingId(null);
+    }
+  };
+
+  const formatTime = (iso?: string | null) => {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleString(isPl ? 'pl-PL' : 'en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch {
+      return iso;
+    }
+  };
+
+  const truncateUrl = (url: string, max = 40) => {
+    if (url.length <= max) return url;
+    return url.slice(0, max) + '…';
+  };
+
+  if ((showForm || editingRelay) && baseId) {
+    return (
+      <RelayForm
+        baseId={baseId}
+        relay={editingRelay}
+        isPl={!!isPl}
+        onBack={() => {
+          setShowForm(false);
+          setEditingRelay(null);
+        }}
+        onSaved={(relay) => {
+          if (editingRelay) {
+            setRelays((prev) => prev.map((r) => (r.id === relay.id ? relay : r)));
+          } else {
+            setRelays((prev) => [relay, ...prev]);
+          }
+          setShowForm(false);
+          setEditingRelay(null);
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+            <ChevronLeft size={16} className="text-slate-400" />
+          </button>
+          <Webhook size={18} className="text-indigo-500" />
+          <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+            {isPl ? 'Webhook Relay' : 'Webhook Relays'}
+            {relays.length > 0 && (
+              <span className="text-slate-400 font-normal ml-1">({relays.length})</span>
+            )}
+          </h3>
+        </div>
+        <button
+          onClick={() => setShowForm(true)}
+          className="inline-flex items-center gap-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 px-2.5 py-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
+        >
+          <Plus size={12} />
+          {isPl ? 'Dodaj' : 'Add'}
+        </button>
+      </div>
+
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 size={20} className="animate-spin text-slate-400" />
+        </div>
+      )}
+
+      {/* Empty */}
+      {!loading && relays.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="rounded-2xl bg-slate-100 dark:bg-navy-800 p-4 mb-4">
+            <Webhook size={28} className="text-slate-400 dark:text-slate-500" />
+          </div>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            {isPl ? 'Brak skonfigurowanych webhooków' : 'No webhook relays configured'}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 max-w-xs">
+            {isPl
+              ? 'Przekazuj zdarzenia z tabeli do Zapier, Make lub dowolnego URL.'
+              : 'Forward table events to Zapier, Make, or any webhook URL.'}
+          </p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-600 transition-colors"
+          >
+            <Plus size={14} />
+            {isPl ? 'Dodaj webhook' : 'Add webhook'}
+          </button>
+        </div>
+      )}
+
+      {/* List */}
+      {!loading && relays.length > 0 && (
+        <div className="space-y-2 flex-1 overflow-y-auto">
+          {relays.map((relay) => (
+            <div
+              key={relay.id}
+              className="group flex items-center gap-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-3 hover:border-slate-300 dark:hover:border-navy-600 transition-colors"
+            >
+              <div className="flex-shrink-0">
+                <div className={`w-2 h-2 rounded-full ${relay.is_active ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-slate-800 dark:text-white truncate">
+                    {relay.name}
+                  </span>
+                  {!relay.is_active && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-800 text-slate-400">
+                      {isPl ? 'Wył.' : 'Off'}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                  <span className="truncate max-w-[180px]" title={relay.target_url}>
+                    {truncateUrl(relay.target_url)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 mt-0.5 text-[10px] text-slate-400 dark:text-slate-500">
+                  <span>{isPl ? 'Ostatnio:' : 'Last:'} {formatTime(relay.last_triggered_at)}</span>
+                  <span>×{relay.trigger_count ?? 0}</span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="relative flex-shrink-0">
+                <button
+                  onClick={() => setMenuOpen(menuOpen === relay.id ? null : relay.id)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                >
+                  <MoreHorizontal size={16} />
+                </button>
+
+                {menuOpen === relay.id && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(null)} />
+                    <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1">
+                      <MenuBtn
+                        icon={testingId === relay.id ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />}
+                        label={isPl ? 'Testuj' : 'Test'}
+                        onClick={() => { setMenuOpen(null); handleTest(relay.id); }}
+                      />
+                      <MenuBtn
+                        icon={relay.is_active ? <PowerOff size={13} /> : <Power size={13} />}
+                        label={relay.is_active ? (isPl ? 'Wyłącz' : 'Disable') : (isPl ? 'Włącz' : 'Enable')}
+                        onClick={() => { setMenuOpen(null); handleToggle(relay); }}
+                      />
+                      <MenuBtn
+                        icon={<Pencil size={13} />}
+                        label={isPl ? 'Edytuj' : 'Edit'}
+                        onClick={() => { setMenuOpen(null); setEditingRelay(relay); }}
+                      />
+                      <div className="my-1 border-t border-slate-100 dark:border-navy-800" />
+                      <MenuBtn
+                        icon={<Trash2 size={13} />}
+                        label={isPl ? 'Usuń' : 'Delete'}
+                        danger
+                        onClick={() => { setMenuOpen(null); handleDelete(relay.id); }}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/*  Relay Form (create / edit)                                         */
+/* ------------------------------------------------------------------ */
+
+interface RelayFormProps {
+  baseId: string;
+  relay: WebhookRelay | null;
+  isPl: boolean;
+  onBack: () => void;
+  onSaved: (relay: WebhookRelay) => void;
+}
+
+const RelayForm: React.FC<RelayFormProps> = ({ baseId, relay, isPl, onBack, onSaved }) => {
+  const [name, setName] = useState(relay?.name ?? '');
+  const [targetUrl, setTargetUrl] = useState(relay?.target_url ?? '');
+  const [secret, setSecret] = useState(relay?.secret ?? '');
+  const [eventTypes, setEventTypes] = useState<string[]>(
+    relay?.event_types ?? ['record.created', 'record.updated', 'record.deleted']
+  );
+  const [saving, setSaving] = useState(false);
+
+  const toggleEvent = (ev: string) => {
+    setEventTypes((prev) =>
+      prev.includes(ev) ? prev.filter((e) => e !== ev) : [...prev, ev]
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !targetUrl.trim()) {
+      toast.error(isPl ? 'Nazwa i URL są wymagane' : 'Name and URL are required');
+      return;
+    }
+    if (eventTypes.length === 0) {
+      toast.error(isPl ? 'Wybierz przynajmniej jedno zdarzenie' : 'Select at least one event');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      let result: WebhookRelay;
+      if (relay) {
+        result = await TablePlatformApi.updateWebhookRelay(relay.id, {
+          name: name.trim(),
+          targetUrl: targetUrl.trim(),
+          secret: secret || undefined,
+          eventTypes,
+        });
+      } else {
+        result = await TablePlatformApi.createWebhookRelay(baseId, {
+          name: name.trim(),
+          targetUrl: targetUrl.trim(),
+          secret: secret || undefined,
+          eventTypes,
+        });
+      }
+      toast.success(relay ? (isPl ? 'Webhook zaktualizowany' : 'Webhook updated') : (isPl ? 'Webhook utworzony' : 'Webhook created'));
+      onSaved(result);
+    } catch {
+      toast.error(isPl ? 'Nie udało się zapisać' : 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-2 mb-5">
+        <button onClick={onBack} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+          <ChevronLeft size={16} className="text-slate-400" />
+        </button>
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-white">
+          {relay ? (isPl ? 'Edytuj webhook' : 'Edit webhook') : (isPl ? 'Nowy webhook' : 'New webhook')}
+        </h3>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex-1 space-y-4">
+        {/* Name */}
+        <div>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+            {isPl ? 'Nazwa' : 'Name'}
+          </label>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={isPl ? 'np. Zapier — nowe rekordy' : 'e.g. Zapier — new records'}
+            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+          />
+        </div>
+
+        {/* URL */}
+        <div>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+            {isPl ? 'URL docelowy' : 'Target URL'}
+          </label>
+          <input
+            value={targetUrl}
+            onChange={(e) => setTargetUrl(e.target.value)}
+            placeholder="https://hooks.zapier.com/hooks/catch/..."
+            type="url"
+            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+          />
+        </div>
+
+        {/* Secret */}
+        <div>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+            {isPl ? 'Sekret HMAC (opcjonalny)' : 'HMAC Secret (optional)'}
+          </label>
+          <input
+            value={secret}
+            onChange={(e) => setSecret(e.target.value)}
+            placeholder={isPl ? 'Klucz do podpisu HMAC-SHA256' : 'Key for HMAC-SHA256 signing'}
+            type="password"
+            autoComplete="off"
+            className="w-full rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+          />
+          <p className="mt-1 text-[10px] text-slate-400">
+            {isPl
+              ? 'Nagłówek X-Consultify-Signature zostanie dodany do żądań.'
+              : 'X-Consultify-Signature header will be added to requests.'}
+          </p>
+        </div>
+
+        {/* Event Types */}
+        <div>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">
+            {isPl ? 'Zdarzenia' : 'Events'}
+          </label>
+          <div className="space-y-1.5">
+            {EVENT_OPTIONS.map((opt) => (
+              <label
+                key={opt.value}
+                className="flex items-center gap-2.5 cursor-pointer rounded-lg px-3 py-2 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+              >
+                <div
+                  className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                    eventTypes.includes(opt.value)
+                      ? 'bg-indigo-500 border-indigo-500'
+                      : 'border-slate-300 dark:border-navy-600'
+                  }`}
+                  onClick={() => toggleEvent(opt.value)}
+                >
+                  {eventTypes.includes(opt.value) && <Check size={10} className="text-white" />}
+                </div>
+                <span className="text-sm text-slate-700 dark:text-slate-300" onClick={() => toggleEvent(opt.value)}>
+                  {isPl ? opt.labelPl : opt.labelEn}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Submit */}
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+          >
+            {saving && <Loader2 size={14} className="animate-spin" />}
+            {relay
+              ? (isPl ? 'Zapisz zmiany' : 'Save changes')
+              : (isPl ? 'Utwórz webhook' : 'Create webhook')}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/*  Menu button                                                        */
+/* ------------------------------------------------------------------ */
+
+const MenuBtn: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  danger?: boolean;
+  onClick: () => void;
+}> = ({ icon, label, danger, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`flex items-center gap-2 w-full px-3 py-1.5 text-xs font-medium transition-colors ${
+      danger
+        ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10'
+        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
+    }`}
+  >
+    {icon}
+    {label}
+  </button>
+);
+
+export default WebhookRelayPanel;

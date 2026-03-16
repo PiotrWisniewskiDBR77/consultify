@@ -11,7 +11,9 @@ import {
   Grid3X3,
   KanbanSquare,
   LayoutGrid,
+  Lock,
   Plus,
+  Share2,
   Table2,
   X,
 } from 'lucide-react';
@@ -19,6 +21,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { TablePlatformView } from '@/types/tablePlatform';
+import { ShareViewDialog } from './ShareViewDialog';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,7 +31,7 @@ export interface ViewSwitcherProps {
   views: TablePlatformView[];
   activeViewId: string;
   onViewChange: (viewId: string) => void;
-  onCreateView: (name: string, type: ViewType) => void;
+  onCreateView: (name: string, type: ViewType, isPersonal?: boolean) => void;
 }
 
 // ── View type icons and labels ───────────────────────────────────────────────
@@ -59,6 +62,8 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState<ViewType>('grid');
+  const [newPersonal, setNewPersonal] = useState(false);
+  const [sharingViewId, setSharingViewId] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -86,12 +91,13 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
   const handleCreate = useCallback(() => {
     const trimmed = newName.trim();
     if (!trimmed) return;
-    onCreateView(trimmed, newType);
+    onCreateView(trimmed, newType, newPersonal);
     setNewName('');
     setNewType('grid');
+    setNewPersonal(false);
     setCreating(false);
     setOpen(false);
-  }, [newName, newType, onCreateView]);
+  }, [newName, newType, newPersonal, onCreateView]);
 
   const handleCreateKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -150,7 +156,7 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                     onViewChange(view.id);
                     setOpen(false);
                   }}
-                  className={`w-full text-left px-3 py-2 text-[11px] flex items-center gap-2 transition-colors ${
+                  className={`group/view w-full text-left px-3 py-2 text-[11px] flex items-center gap-2 transition-colors ${
                     isActive
                       ? 'bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300'
                       : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800'
@@ -158,6 +164,19 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                 >
                   <Icon size={13} className={isActive ? 'text-violet-500' : 'text-slate-400'} />
                   <span className="flex-1 truncate">{view.name}</span>
+                  {view.isPersonal && <Lock size={10} className="text-slate-400 flex-shrink-0" />}
+                  {view.isShared && <Share2 size={10} className="text-emerald-500 flex-shrink-0" />}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSharingViewId(view.id);
+                    }}
+                    className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-navy-700 text-slate-400 hover:text-violet-500 flex-shrink-0 opacity-0 group-hover/view:opacity-100 transition-opacity"
+                    title={isPl ? 'Udostępnij' : 'Share'}
+                  >
+                    <Share2 size={10} />
+                  </button>
                   <span className="text-[9px] text-slate-400">
                     {isPl ? meta.labelPl : meta.labelEn}
                   </span>
@@ -209,6 +228,18 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
                     );
                   })}
                 </div>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newPersonal}
+                    onChange={(e) => setNewPersonal(e.target.checked)}
+                    className="rounded border-slate-300 dark:border-navy-600 text-violet-500 focus:ring-violet-500/30 h-3.5 w-3.5"
+                  />
+                  <Lock size={10} className="text-slate-400" />
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                    {isPl ? 'Widok prywatny' : 'Personal view'}
+                  </span>
+                </label>
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
@@ -231,6 +262,20 @@ export const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
           </div>
         </div>
       )}
+      {sharingViewId && (() => {
+        const view = views.find(v => v.id === sharingViewId);
+        if (!view) return null;
+        return (
+          <ShareViewDialog
+            viewId={view.id}
+            viewName={view.name}
+            isShared={view.isShared}
+            shareToken={view.shareToken}
+            onClose={() => setSharingViewId(null)}
+            onUpdated={() => setSharingViewId(null)}
+          />
+        );
+      })()}
     </div>
   );
 };

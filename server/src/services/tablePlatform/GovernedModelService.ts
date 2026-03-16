@@ -347,19 +347,19 @@ const governedModelService = {
           `SELECT SUM((data->>$2)::numeric) AS val FROM tp_records WHERE table_id = $1`,
           [sourceTableId, sourceFieldId]
         );
-        value = result.rows[0]?.val != null ? Number(result.rows[0].val) : null;
+        value = (result.rows[0] as { val: string | null })?.val != null ? Number((result.rows[0] as { val: string }).val) : null;
       } else if (formulaType === 'field_avg' && sourceTableId && sourceFieldId) {
         const result = await db.query(
           `SELECT AVG((data->>$2)::numeric) AS val FROM tp_records WHERE table_id = $1`,
           [sourceTableId, sourceFieldId]
         );
-        value = result.rows[0]?.val != null ? Number(result.rows[0].val) : null;
+        value = (result.rows[0] as { val: string | null })?.val != null ? Number((result.rows[0] as { val: string }).val) : null;
       } else if (formulaType === 'field_count' && sourceTableId) {
         const result = await db.query(
           'SELECT COUNT(*) AS val FROM tp_records WHERE table_id = $1',
           [sourceTableId]
         );
-        value = Number(result.rows[0]?.val ?? 0);
+        value = Number((result.rows[0] as { val: string })?.val ?? 0);
       } else if (formulaType === 'expression') {
         value = 0;
       } else if (formulaType === 'canonical_line') {

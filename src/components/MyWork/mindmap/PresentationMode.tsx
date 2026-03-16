@@ -2,14 +2,14 @@
  * PresentationMode — Branch-by-branch presentation with zoom animation.
  * Full-screen overlay that steps through branches.
  */
-import { ArrowLeft, ArrowRight, ChevronRight, GitBranch, Lightbulb, Play, X } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import { ArrowLeft, ArrowRight, ChevronRight, ChevronUp, Clock, GitBranch, Lightbulb, Play, StickyNote, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface PresentationBranch {
   branchKey: string;
   label: string;
-  nodes: Array<{ id: string; label: string; status?: string }>;
+  nodes: Array<{ id: string; label: string; status?: string; notes?: string }>;
 }
 
 interface PresentationModeProps {
@@ -59,6 +59,12 @@ const DEFAULT_COLORS = {
   accent: 'bg-slate-500',
 };
 
+function formatElapsed(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 export const PresentationMode: React.FC<PresentationModeProps> = ({
   open,
   onClose,
@@ -70,6 +76,21 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
   const isPl = i18n.language?.startsWith('pl');
 
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [showNotes, setShowNotes] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Timer: tick every second while open
+  useEffect(() => {
+    if (!open) {
+      setElapsedSeconds(0);
+      return;
+    }
+    timerRef.current = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [open]);
 
   // Slides: title + each branch
   const slides = useMemo(() => {
@@ -92,8 +113,16 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
     setCurrentSlide((prev) => Math.max(prev - 1, 0));
   }, []);
 
+  const toggleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+  }, []);
+
   // Keyboard navigation
-  React.useEffect(() => {
+  useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === ' ') {
@@ -105,10 +134,12 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
         goPrev();
       }
       if (e.key === 'Escape') onClose();
+      if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+      if (e.key === 'n' || e.key === 'N') setShowNotes((p) => !p);
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [goNext, goPrev, onClose, open]);
+  }, [goNext, goPrev, onClose, open, toggleFullscreen]);
 
   if (!open) return null;
 
@@ -135,13 +166,30 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
           <span className="text-[10px] text-slate-400">
             {currentSlide + 1} / {slides.length}
           </span>
+          <span className="text-[10px] text-slate-400 flex items-center gap-1 ml-2">
+            <Clock size={10} />
+            {formatElapsed(elapsedSeconds)}
+          </span>
         </div>
-        <button
-          onClick={onClose}
-          className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-        >
-          <X size={16} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setShowNotes((p) => !p)}
+            title={isPl ? 'Notatki prezentera (N)' : 'Presenter notes (N)'}
+            className={`p-2 rounded-lg transition-colors ${
+              showNotes
+                ? 'text-amber-500 bg-amber-500/10'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800'
+            }`}
+          >
+            <StickyNote size={14} />
+          </button>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Slide content */}
@@ -216,6 +264,28 @@ export const PresentationMode: React.FC<PresentationModeProps> = ({
                   <ChevronRight size={14} />
                   {isPl ? 'Przejdź do gałęzi na mapie' : 'Go to branch on map'}
                 </button>
+
+                {/* Presenter Notes */}
+                {showNotes && b.nodes.some((n) => n.notes) && (
+                  <div className="mt-6 rounded-2xl bg-slate-50 dark:bg-navy-900/60 border border-slate-200/40 dark:border-navy-700/40 overflow-hidden">
+                    <button
+                      onClick={() => setShowNotes((p) => !p)}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/40 transition-colors"
+                    >
+                      <StickyNote size={12} />
+                      {isPl ? 'Notatki prezentera' : 'Presenter Notes'}
+                      <ChevronUp size={12} className="ml-auto" />
+                    </button>
+                    <div className="px-4 pb-3 space-y-2">
+                      {b.nodes.filter((n) => n.notes).map((n) => (
+                        <div key={n.id} className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                          <span className="font-semibold text-slate-600 dark:text-slate-300">{n.label}:</span>{' '}
+                          {n.notes}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })()}

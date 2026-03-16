@@ -427,20 +427,43 @@ const metadataService = {
     }
   },
 
+  async listViews(tableId: string, userId?: string): Promise<any[]> {
+    const db = getDatabase();
+    try {
+      if (userId) {
+        const result = await db.query(
+          `SELECT * FROM tp_views WHERE table_id = $1 AND (is_personal = false OR owner_id = $2) ORDER BY created_at ASC`,
+          [tableId, userId]
+        );
+        return result.rows;
+      }
+      const result = await db.query(
+        'SELECT * FROM tp_views WHERE table_id = $1 ORDER BY created_at ASC',
+        [tableId]
+      );
+      return result.rows;
+    } catch (e) {
+      logger.error('[MetadataService] listViews failed', { tableId, error: (e as Error).message });
+      throw e;
+    }
+  },
+
   async createView(
     tableId: string,
     name: string,
     viewType = 'grid',
     config?: Record<string, unknown>,
-    createdBy?: string
+    createdBy?: string,
+    isPersonal = false,
+    ownerId?: string
   ): Promise<any> {
     const db = getDatabase();
     const id = uuidv4();
     try {
       await db.query(
-        `INSERT INTO tp_views (id, table_id, name, view_type, config, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [id, tableId, name, viewType, config ? JSON.stringify(config) : '{}', createdBy ?? null]
+        `INSERT INTO tp_views (id, table_id, name, view_type, config, created_by, is_personal, owner_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [id, tableId, name, viewType, config ? JSON.stringify(config) : '{}', createdBy ?? null, isPersonal, ownerId ?? null]
       );
       const view = (await db.query('SELECT * FROM tp_views WHERE id = $1', [id])).rows[0];
       await auditService.logEvent('create', 'view', id, createdBy, undefined, view, { table_id: tableId });
@@ -604,6 +627,155 @@ const metadataService = {
   // COLUMN CONFIG PERSISTENCE
   // ==========================================
 
+  // ==========================================
+  // DUPLICATE BASE / TABLE
+  // ==========================================
+
+  async duplicateBase(
+    baseId: string,
+    newName: string,
+    userId?: string
+  ): Promise<any> {
+    const db = getDatabase();
+    try {
+      const original = await this.getBase(baseId);
+      if (!original) return null;
+
+      const origBase = original as Record<string, unknown>;
+      const newBaseId = uuidv4();
+      await db.query(
+        `INSERT INTO tp_bases (id, workspace_id, organization_id, name, created_by)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [newBaseId, origBase.workspace_id, origBase.organization_id, newName, userId ?? null]
+      );
+
+      const tables = (origBase.tables ?? []) as Array<Record<string, unknown>>;
+      for (const table of tables) {
+        await this.duplicateTableInternal(
+          String(table.id),
+          newBaseId,
+          String(table.name),
+          userId
+        );
+      }
+
+      const newBase = await this.getBase(newBaseId);
+      await auditService.logEvent('create', 'base', newBaseId, userId, undefined, newBase, { duplicatedFrom: baseId });
+      return newBase;
+    } catch (e) {
+      logger.error('[MetadataService] duplicateBase failed', { baseId, error: (e as Error).message });
+      throw e;
+    }
+  },
+
+  async duplicateTable(
+    tableId: string,
+    newName: string,
+    userId?: string
+  ): Promise<any> {
+    const db = getDatabase();
+    try {
+      const tableResult = await db.query('SELECT * FROM tp_tables WHERE id = $1', [tableId]);
+      const original = tableResult.rows[0] as Record<string, unknown> | undefined;
+      if (!original) return null;
+
+      const baseId = String(original.base_id);
+      const newTable = await this.duplicateTableInternal(tableId, baseId, newName, userId);
+
+      await bumpSchemaVersion(baseId, { action: 'duplicateTable', sourceTableId: tableId, newTableId: (newTable as Record<string, unknown>)?.id }, userId);
+      await this.notifySchemaMutated(baseId, [String((newTable as Record<string, unknown>)?.id)]);
+      return newTable;
+    } catch (e) {
+      logger.error('[MetadataService] duplicateTable failed', { tableId, error: (e as Error).message });
+      throw e;
+    }
+  },
+
+  async duplicateTableInternal(
+    sourceTableId: string,
+    targetBaseId: string,
+    newName: string,
+    userId?: string
+  ): Promise<any> {
+    const db = getDatabase();
+    const newTableId = uuidv4();
+
+    const fieldsResult = await db.query(
+      'SELECT * FROM tp_fields WHERE table_id = $1 ORDER BY field_order ASC, created_at ASC',
+      [sourceTableId]
+    );
+    const fields = fieldsResult.rows as Array<Record<string, unknown>>;
+
+    const fieldIdMap = new Map<string, string>();
+    for (const f of fields) {
+      fieldIdMap.set(String(f.id), uuidv4());
+    }
+
+    const sourceTable = (await db.query('SELECT * FROM tp_tables WHERE id = $1', [sourceTableId])).rows[0] as Record<string, unknown>;
+    const newPrimaryFieldId = sourceTable?.primary_field_id
+      ? fieldIdMap.get(String(sourceTable.primary_field_id)) ?? null
+      : null;
+
+    await db.query(
+      `INSERT INTO tp_tables (id, base_id, name, description, primary_field_id, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [newTableId, targetBaseId, newName, sourceTable?.description ?? null, newPrimaryFieldId, userId ?? null]
+    );
+
+    for (const f of fields) {
+      const newFieldId = fieldIdMap.get(String(f.id))!;
+      await db.query(
+        `INSERT INTO tp_fields (id, table_id, name, field_type, options, field_order)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [newFieldId, newTableId, f.name, f.field_type, typeof f.options === 'string' ? f.options : JSON.stringify(f.options ?? {}), f.field_order ?? 0]
+      );
+    }
+
+    const viewsResult = await db.query(
+      'SELECT * FROM tp_views WHERE table_id = $1 ORDER BY created_at ASC',
+      [sourceTableId]
+    );
+    for (const v of viewsResult.rows as Array<Record<string, unknown>>) {
+      const newViewId = uuidv4();
+      const visibleFieldIds = Array.isArray(v.visible_field_ids)
+        ? (v.visible_field_ids as string[]).map((fid) => fieldIdMap.get(fid) ?? fid)
+        : v.visible_field_ids;
+      await db.query(
+        `INSERT INTO tp_views (id, table_id, name, view_type, visible_field_ids, config, is_default, is_personal, owner_id, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        [
+          newViewId, newTableId, v.name, v.view_type,
+          visibleFieldIds,
+          typeof v.config === 'string' ? v.config : JSON.stringify(v.config ?? {}),
+          v.is_default ?? false, v.is_personal ?? false, v.owner_id ?? null, userId ?? null,
+        ]
+      );
+    }
+
+    const recordsResult = await db.query(
+      'SELECT * FROM tp_records WHERE table_id = $1',
+      [sourceTableId]
+    );
+    for (const r of recordsResult.rows as Array<Record<string, unknown>>) {
+      const newRecordId = uuidv4();
+      const originalData = (typeof r.data === 'string' ? JSON.parse(r.data) : r.data ?? {}) as Record<string, unknown>;
+      const remappedData: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(originalData)) {
+        const newKey = fieldIdMap.get(key) ?? key;
+        remappedData[newKey] = val;
+      }
+      await db.query(
+        `INSERT INTO tp_records (id, table_id, data, created_by)
+         VALUES ($1, $2, $3, $4)`,
+        [newRecordId, newTableId, JSON.stringify(remappedData), userId ?? null]
+      );
+    }
+
+    const newTable = await this.getTable(newTableId);
+    await auditService.logEvent('create', 'table', newTableId, userId, undefined, newTable, { duplicatedFrom: sourceTableId });
+    return newTable;
+  },
+
   async updateViewColumnConfig(
     viewId: string,
     columnConfig: Array<{ fieldId: string; visible: boolean; width: number }>
@@ -625,6 +797,85 @@ const metadataService = {
       return (after ?? null) as Record<string, unknown> | null;
     } catch (e) {
       logger.error('[MetadataService] updateViewColumnConfig failed', { viewId, error: (e as Error).message });
+      throw e;
+    }
+  },
+
+  // ==========================================
+  // VIEW SHARING
+  // ==========================================
+
+  async shareView(
+    viewId: string,
+    options?: { password?: string; expiresAt?: string }
+  ): Promise<{ token: string; url: string }> {
+    const db = getDatabase();
+    try {
+      const { randomUUID } = await import('crypto');
+      const token = randomUUID();
+      await db.query(
+        `UPDATE tp_views
+         SET share_token = $2, is_shared = true, share_password = $3, share_expires_at = $4, updated_at = NOW()
+         WHERE id = $1`,
+        [viewId, token, options?.password ?? null, options?.expiresAt ?? null]
+      );
+      return { token, url: `/public/views/${token}` };
+    } catch (e) {
+      logger.error('[MetadataService] shareView failed', { viewId, error: (e as Error).message });
+      throw e;
+    }
+  },
+
+  async unshareView(viewId: string): Promise<void> {
+    const db = getDatabase();
+    try {
+      await db.query(
+        `UPDATE tp_views
+         SET share_token = NULL, is_shared = false, share_password = NULL, share_expires_at = NULL, updated_at = NOW()
+         WHERE id = $1`,
+        [viewId]
+      );
+    } catch (e) {
+      logger.error('[MetadataService] unshareView failed', { viewId, error: (e as Error).message });
+      throw e;
+    }
+  },
+
+  async getSharedView(
+    token: string
+  ): Promise<{ viewId: string; tableId: string; viewName: string; viewType: string; config: any; tableName: string; fields: any[] } | null> {
+    const db = getDatabase();
+    try {
+      const viewResult = await db.query(
+        `SELECT v.*, t.name as table_name, t.id as table_id_ref
+         FROM tp_views v
+         JOIN tp_tables t ON t.id = v.table_id
+         WHERE v.share_token = $1 AND v.is_shared = true`,
+        [token]
+      );
+      const view = viewResult.rows[0] as Record<string, any> | undefined;
+      if (!view) return null;
+
+      if (view.share_expires_at && new Date(view.share_expires_at) < new Date()) {
+        return null;
+      }
+
+      const fieldsResult = await db.query(
+        'SELECT id, name, field_type, options FROM tp_fields WHERE table_id = $1 ORDER BY field_order ASC',
+        [view.table_id]
+      );
+
+      return {
+        viewId: view.id,
+        tableId: view.table_id,
+        viewName: view.name,
+        viewType: view.view_type,
+        config: view.config,
+        tableName: view.table_name,
+        fields: fieldsResult.rows,
+      };
+    } catch (e) {
+      logger.error('[MetadataService] getSharedView failed', { token, error: (e as Error).message });
       throw e;
     }
   },

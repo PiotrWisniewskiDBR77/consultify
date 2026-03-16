@@ -39,7 +39,8 @@ export class SCIMService {
     );
 
     if (result.rows.length === 0) return { valid: false };
-    return { valid: true, organizationId: result.rows[0].organization_id };
+    const row = result.rows[0] as { organization_id: string };
+    return { valid: true, organizationId: row.organization_id };
   }
 
   async listUsers(
@@ -72,9 +73,10 @@ export class SCIMService {
       [organizationId],
     );
 
+    const totalRow = totalResult.rows[0] as { total: string };
     return {
       schemas: ['urn:ietf:params:scim:api:messages:2.0:ListResponse'],
-      totalResults: parseInt(totalResult.rows[0].total, 10),
+      totalResults: parseInt(totalRow.total, 10),
       startIndex,
       itemsPerPage: count,
       Resources: result.rows.map((u: any) => this.toSCIMUser(u)),
@@ -85,7 +87,7 @@ export class SCIMService {
     const db = getDatabase();
     const result = await db.query('SELECT * FROM users WHERE id = $1', [userId]);
     if (result.rows.length === 0) return null;
-    return this.toSCIMUser(result.rows[0]);
+    return this.toSCIMUser(result.rows[0] as Record<string, unknown>);
   }
 
   async createUser(organizationId: string, scimUser: any): Promise<any> {

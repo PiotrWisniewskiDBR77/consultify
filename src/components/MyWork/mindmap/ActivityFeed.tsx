@@ -249,9 +249,13 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                         </button>
                       )}
                     </div>
-                    {entry.detail && (
+                    {entry.detail && entry.type === 'comment' ? (
+                      <div className="text-[9px] text-slate-400 mt-1 pl-2 border-l-2 border-sky-300/40 italic leading-relaxed">
+                        "{entry.detail}"
+                      </div>
+                    ) : entry.detail ? (
                       <div className="text-[9px] text-slate-400 mt-0.5">{entry.detail}</div>
-                    )}
+                    ) : null}
                   </div>
                   <span className="text-[8px] text-slate-400 shrink-0 mt-0.5">
                     {formatTime(entry.timestamp)}
