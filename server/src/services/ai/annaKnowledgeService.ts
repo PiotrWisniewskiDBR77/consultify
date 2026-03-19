@@ -1,3 +1,4 @@
+import { getDatabase } from '../../database/Database.js';
 import { all as dbAll } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import ragService from '../ragService.js';
@@ -112,11 +113,23 @@ function detectRequestedProducts(query: string): { matchedProducts: string[]; pr
 }
 
 async function loadIndexedProductDocs(): Promise<AnnaIndexedDoc[]> {
-  const rows = (await dbAll(
-    `SELECT id, filename, metadata FROM knowledge_docs WHERE source_type = ?`,
-    ['product_pill'],
-    { fallback: true } as any
-  )) as AnnaDocRow[];
+  let rows: AnnaDocRow[];
+
+  const isPg = process.env.DB_TYPE === 'postgres';
+  if (isPg) {
+    const db = getDatabase();
+    const result = await db.query<AnnaDocRow>(
+      `SELECT id, filename, metadata FROM knowledge_docs WHERE source_type = $1`,
+      ['product_pill']
+    );
+    rows = result.rows;
+  } else {
+    rows = (await dbAll(
+      `SELECT id, filename, metadata FROM knowledge_docs WHERE source_type = ?`,
+      ['product_pill'],
+      { fallback: true } as any
+    )) as AnnaDocRow[];
+  }
 
   return (rows || [])
     .map((row) => {
