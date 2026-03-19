@@ -84,6 +84,9 @@ const SecurityModule = React.lazy(() =>
 const SystemModule = React.lazy(() =>
   import('./SystemModule').then((m) => ({ default: m.SystemModule }))
 );
+const VirtualWorkersModule = React.lazy(() =>
+  import('./VirtualWorkersModule').then((m) => ({ default: m.VirtualWorkersModule }))
+);
 
 interface SuperAdminViewProps {
   currentUser: User;
@@ -167,6 +170,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
 
             case AppView.SUPERADMIN_ANALYTICS:
               return <AnalyticsModuleView />;
+
+            case AppView.SUPERADMIN_VIRTUAL_WORKERS:
+              return <VirtualWorkersModule />;
 
             // Legacy view redirects - redirect to appropriate module with initial tab
             case AppView.SUPERADMIN_DASHBOARD:

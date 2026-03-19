@@ -206,6 +206,7 @@ export enum AppView {
   SUPERADMIN_SECURITY = 'SUPERADMIN_SECURITY',
   SUPERADMIN_CONFIGURATION = 'SUPERADMIN_CONFIGURATION',
   SUPERADMIN_ANALYTICS = 'SUPERADMIN_ANALYTICS', // Custom Dashboards, Reports, Metrics, Predictive
+  SUPERADMIN_VIRTUAL_WORKERS = 'SUPERADMIN_VIRTUAL_WORKERS', // Virtual Workers (Anna, Teresa, etc.)
 
   // SuperAdmin Legacy Views (kept for backward compatibility - used as tab identifiers)
   SUPERADMIN_DASHBOARD = 'SUPERADMIN_DASHBOARD',

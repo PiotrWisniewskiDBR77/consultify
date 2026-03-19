@@ -62,6 +62,8 @@ interface ToolCanvasProps {
   chatSnippets?: { role: string; content: string }[];
   showContextPanel?: boolean;
   onGenerateFullSession?: () => void;
+  onGenerateSuggestions?: () => void;
+  isGeneratingAI?: boolean;
   sessionGenerationStatus?: SessionGenerationStatus;
   onAcceptCard?: (cardType: ProposalCardType, cardId: string) => void;
   onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
@@ -86,6 +88,8 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   chatSnippets,
   showContextPanel = true,
   onGenerateFullSession,
+  onGenerateSuggestions,
+  isGeneratingAI,
   sessionGenerationStatus,
   onAcceptCard,
   onRejectCard,
@@ -136,6 +140,8 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
           <SWOTBuildPhase
             session={session}
             isPolish={isPolish}
+            onGenerateSuggestions={onGenerateSuggestions}
+            isGeneratingAI={isGeneratingAI || isStreaming}
             onAcceptCard={onAcceptCard}
             onRejectCard={onRejectCard}
             onRethinkCard={onRethinkCard}

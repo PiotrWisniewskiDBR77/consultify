@@ -770,12 +770,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
             title="DBR77"
           >
             <img
-              src="/assets/logos/logo-dark.svg"
+              src="/assets/logos/logo-dark.svg?v=20260319"
               className="h-16 md:h-20 w-auto object-contain hidden dark:block drop-shadow-[0_18px_40px_rgba(0,0,0,0.45)]"
               alt="Consultify"
             />
             <img
-              src="/assets/logos/logo-light.svg"
+              src="/assets/logos/logo-light.svg?v=20260319"
               className="h-16 md:h-20 w-auto object-contain block dark:hidden drop-shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
               alt="Consultify"
             />

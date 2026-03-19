@@ -6,7 +6,6 @@ import { Api } from '@/services/api';
 import { AnnaAssistantWidget } from '../components/Landing/AnnaAssistantWidget';
 import { DemoModeModal } from '../components/Landing/DemoModeModal';
 import { DocumentationSection } from '../components/Landing/DocumentationSection';
-import { AnnaAssistantWidget } from '../components/Landing/AnnaAssistantWidget';
 import { EntryFooter } from '../components/Landing/EntryFooter';
 import { EntryTopBar } from '../components/Landing/EntryTopBar';
 import { EpicHeroSection } from '../components/Landing/EpicHeroSection';

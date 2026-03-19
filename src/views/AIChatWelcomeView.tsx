@@ -2124,13 +2124,13 @@ For example: REMEMBER: preferred_language: Polish`;
       {/* Footer (overlay) - does NOT affect centering above */}
       <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col items-center gap-1 pointer-events-none select-none z-0">
         <img
-          src="/assets/logos/logo-dark.svg"
+          src="/assets/logos/logo-dark.svg?v=20260319"
           alt="Consultify"
           className="h-24 sm:h-28 md:h-32 w-auto opacity-100 hidden dark:block translate-y-1 drop-shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
           draggable={false}
         />
         <img
-          src="/assets/logos/logo-light.svg"
+          src="/assets/logos/logo-light.svg?v=20260319"
           alt="Consultify"
           className="h-24 sm:h-28 md:h-32 w-auto opacity-35 dark:hidden translate-y-1"
           draggable={false}

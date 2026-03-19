@@ -1555,6 +1555,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   }))}
                   showContextPanel
                   onGenerateFullSession={generateFullSession}
+                  onGenerateSuggestions={() => void handleGenerateAI()}
+                  isGeneratingAI={isGeneratingAI}
                   sessionGenerationStatus={currentSession.sessionGenerationStatus}
                 />
               ) : (

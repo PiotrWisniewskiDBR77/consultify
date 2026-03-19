@@ -139,6 +139,7 @@ import mfaRoutes from './routes/mfa.routes.js';
 import modelRegistryRoutes from './routes/modelRegistry.routes.js';
 import multiFrameworkAssessmentRoutes from './routes/multi-framework-assessment.routes.js';
 import publicAnnaRoutes from './routes/public-anna.routes.js';
+import virtualWorkersRoutes from './routes/virtual-workers.routes.js';
 import multiFrameworkWorkflowRoutes from './routes/multi-framework-workflow.routes.js';
 import myWorkRoutes from './routes/my-work.routes.js';
 import notebookV4Routes from './routes/notebook.routes.js';
@@ -396,6 +397,7 @@ export class ApiGateway {
       app.use('/api/ai-infrastructure', aiInfrastructureRoutes);
       app.use('/api/ai-development', aiDevelopmentRoutes);
       app.use('/api/ai-operations', aiOperationsRoutes);
+      app.use('/api/virtual-workers', virtualWorkersRoutes);
       app.use('/api/ai-async', aiAsyncRoutes);
 
       // Integration routes

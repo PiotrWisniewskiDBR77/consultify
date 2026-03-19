@@ -865,10 +865,11 @@ export function SWOTInputExplorationPhase({
                               <button
                                 type="button"
                                 onClick={() => removeSWOTSignal(signal.id)}
-                                className="inline-flex items-center gap-1.5 rounded-full border border-rose-200/70 bg-white px-3 py-1.5 text-xs font-medium text-rose-700 transition-colors hover:bg-rose-50 dark:border-rose-900/40 dark:bg-white/[0.04] dark:text-rose-300"
+                                aria-label={labels.remove}
+                                title={labels.remove}
+                                className="inline-flex items-center justify-center rounded-full border border-slate-200/70 bg-white p-2 text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
-                                {labels.remove}
                               </button>
                             </div>
 
@@ -884,7 +885,7 @@ export function SWOTInputExplorationPhase({
                                   });
                                   setFeedbackInput('');
                                 }}
-                                className="inline-flex items-center rounded-full border border-amber-300/50 bg-white px-3 py-1.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-50 dark:border-amber-900/40 dark:bg-white/[0.04] dark:text-amber-200"
+                                className="inline-flex items-center rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
                               >
                                 {labels.comment}
                               </button>
@@ -1068,7 +1069,7 @@ export function SWOTInputExplorationPhase({
                             setActiveAction({ streamId, mode: 'comment', target: 'proposal' });
                             setFeedbackInput('');
                           }}
-                          className="inline-flex items-center rounded-full border border-amber-300/50 bg-white px-3 py-1.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-50 dark:border-amber-900/40 dark:bg-white/[0.04] dark:text-amber-200"
+                          className="inline-flex items-center rounded-full border border-slate-200/70 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
                         >
                           {labels.comment}
                         </button>

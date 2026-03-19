@@ -1,6 +1,8 @@
+import { GoogleGenAI, Modality } from '@google/genai';
+import type { LiveServerMessage, Session } from '@google/genai';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bot, Loader2, MessageCircle, Send, Sparkles, X } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Bot, Loader2, MessageCircle, Mic, Send, Sparkles, Square, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 type AnnaMessage = {
@@ -8,6 +10,8 @@ type AnnaMessage = {
   role: 'user' | 'assistant';
   content: string;
 };
+
+type VoiceStatus = 'idle' | 'connecting' | 'live' | 'error';
 
 type AnnaCopy = {
   title: string;
@@ -21,7 +25,24 @@ type AnnaCopy = {
   privacyBadge: string;
   suggestions: string[];
   error: string;
+  voiceReady: string;
+  voiceConnecting: string;
+  voiceListening: string;
+  voiceUnavailable: string;
+  voiceError: string;
+  voiceStart: string;
+  voiceStop: string;
 };
+
+type AnnaWindow = Window &
+  typeof globalThis & {
+    webkitAudioContext?: typeof AudioContext;
+  };
+
+const LIVE_VOICE_MODEL = 'gemini-2.5-flash-native-audio-preview-09-2025';
+const LIVE_VOICE_NAME = 'Kore';
+const FRONTEND_GEMINI_KEY =
+  process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY;
 
 const COPY: Record<'en' | 'pl', AnnaCopy> = {
   en: {
@@ -42,6 +63,14 @@ const COPY: Record<'en' | 'pl', AnnaCopy> = {
       'Why start with a demo or trial?',
     ],
     error: 'I could not reach Anna. Please try again in a moment.',
+    voiceReady: 'Tap the microphone to start a live voice conversation.',
+    voiceConnecting: 'Connecting voice mode...',
+    voiceListening: 'Anna is listening live. Start typing anytime to switch back to text.',
+    voiceUnavailable:
+      'Voice mode needs a browser microphone and NEXT_PUBLIC_GEMINI_API_KEY configured.',
+    voiceError: 'Voice mode could not start. Please try again in a moment.',
+    voiceStart: 'Start voice conversation',
+    voiceStop: 'Stop voice conversation',
   },
   pl: {
     title: 'Anna',
@@ -61,8 +90,54 @@ const COPY: Record<'en' | 'pl', AnnaCopy> = {
       'Dlaczego warto zaczac od demo lub triala?',
     ],
     error: 'Nie udalo sie polaczyc z Anna. Sprobuj ponownie za chwile.',
+    voiceReady: 'Kliknij mikrofon, aby uruchomic rozmowe glosowa na zywo.',
+    voiceConnecting: 'Lacze tryb glosowy...',
+    voiceListening: 'Anna slucha na zywo. Zacznij pisac w dowolnym momencie, aby wrocic do tekstu.',
+    voiceUnavailable:
+      'Tryb glosowy wymaga mikrofonu w przegladarce i ustawionego NEXT_PUBLIC_GEMINI_API_KEY.',
+    voiceError: 'Nie udalo sie uruchomic trybu glosowego. Sprobuj ponownie za chwile.',
+    voiceStart: 'Uruchom rozmowe glosowa',
+    voiceStop: 'Zatrzymaj rozmowe glosowa',
   },
 };
+
+function buildVoiceSystemInstruction(lang: 'en' | 'pl', knowledgeContext?: string): string {
+  if (lang === 'pl') {
+    return `Jestes Anna, publiczna asystentka glosowa Consultify i DBR77 Vector.
+
+Twoj glos ma byc cieply, spokojny, profesjonalny i kobiecy. Brzmisz jak doswiadczona strategiczna konsultantka AI, a nie chatbot ani agresywny handlowiec.
+
+Zasady:
+- Odpowiadaj zawsze w jezyku uzytkownika.
+- Priorytetem jest Consultify. O innych produktach DBR mow dopiero wtedy, gdy uzytkownik pyta wprost albo gdy to pomaga wyjasnic role Consultify.
+- Odpowiedzi maja byc krotkie, naturalne i mowione: zwykle 2-4 zdania.
+- Nie wymyslaj faktow i nie obiecuj funkcji, ktorych nie opisano publicznie.
+- Gdy to pasuje, wspomnij o demo lub trialu.
+
+Publiczna wiedza:
+Consultify to platforma AI do doradztwa strategicznego. DBR77 Vector to wyspecjalizowany model dla transformacji przemyslu i operacji. Mozesz wyjasniac produkt, wartosc biznesowa, wdrozenia, bezpieczenstwo i kolejne kroki rozmowy, ale nie masz dostepu do danych klienta ani projektow.
+
+Kontekst wiedzy:
+${String(knowledgeContext || 'Brak dodatkowego kontekstu produktowego. Pozostan przy ostroznych, publicznych faktach.')}`;
+  }
+
+  return `You are Anna, the public voice assistant for Consultify and DBR77 Vector.
+
+Your voice is warm, calm, professional, and feminine. You sound like a senior AI strategy consultant, not a chatbot or a pushy salesperson.
+
+Rules:
+- Always respond in the user's language.
+- Prioritize Consultify by default. Discuss other DBR products only when the user explicitly asks or when they clarify how Consultify fits the wider DBR system.
+- Keep answers short, natural, and voice-friendly: usually 2-4 sentences.
+- Do not invent facts or promise capabilities that are not public.
+- When helpful, mention the demo or free trial path.
+
+Public knowledge:
+Consultify is an AI-powered strategic consulting platform. DBR77 Vector is a specialized model for industrial transformation and operations. You can explain product value, deployment options, security, and next steps, but you do not have access to any client or project data.
+
+Knowledge context:
+${String(knowledgeContext || 'No additional product context was loaded. Stay conservative and use only verified public facts.')}`;
+}
 
 export const AnnaAssistantWidget: React.FC = () => {
   const { i18n } = useTranslation();
@@ -73,6 +148,9 @@ export const AnnaAssistantWidget: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle');
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [voiceAvailable, setVoiceAvailable] = useState(false);
   const [messages, setMessages] = useState<AnnaMessage[]>(() => [
     {
       id: 'anna-welcome',
@@ -81,7 +159,15 @@ export const AnnaAssistantWidget: React.FC = () => {
     },
   ]);
 
+  const sessionIdRef = useRef<string>(crypto.randomUUID());
+  const voiceStartRef = useRef<number>(0);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const sessionRef = useRef<Session | null>(null);
+  const activeSourcesRef = useRef<AudioBufferSourceNode[]>([]);
+  const nextPlayTimeRef = useRef(0);
 
   useEffect(() => {
     setMessages([
@@ -98,10 +184,66 @@ export const AnnaAssistantWidget: React.FC = () => {
   }, [messages, isLoading]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const browserWindow = window as AnnaWindow;
+    const hasAudioContext = Boolean(window.AudioContext || browserWindow.webkitAudioContext);
+    const hasMicrophone = Boolean(navigator.mediaDevices?.getUserMedia);
+    setVoiceAvailable(Boolean(FRONTEND_GEMINI_KEY && hasAudioContext && hasMicrophone));
+  }, []);
+
+  const teardownVoice = useCallback(async () => {
+    processorRef.current?.disconnect();
+    if (processorRef.current) {
+      processorRef.current.onaudioprocess = null;
+    }
+    processorRef.current = null;
+
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    activeSourcesRef.current.forEach((source) => {
+      try {
+        source.stop();
+      } catch {
+        // Source may already be finished.
+      }
+    });
+    activeSourcesRef.current = [];
+    nextPlayTimeRef.current = 0;
+
+    if (sessionRef.current) {
+      try {
+        sessionRef.current.close();
+      } catch {
+        // Session may already be closed.
+      }
+      sessionRef.current = null;
+    }
+
+    if (audioContextRef.current) {
+      try {
+        await audioContextRef.current.close();
+      } catch {
+        // Audio context may already be closing.
+      }
+      audioContextRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
     const openAnna = () => setIsOpen(true);
     window.addEventListener('anna:open', openAnna);
     return () => window.removeEventListener('anna:open', openAnna);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      void teardownVoice();
+    };
+  }, [teardownVoice]);
 
   const history = useMemo(
     () =>
@@ -114,6 +256,199 @@ export const AnnaAssistantWidget: React.FC = () => {
         })),
     [messages]
   );
+
+  const startVoiceConversation = useCallback(async () => {
+    if (isLoading) return;
+    voiceStartRef.current = Date.now();
+
+    if (!voiceAvailable || !FRONTEND_GEMINI_KEY || typeof window === 'undefined') {
+      setVoiceStatus('error');
+      setVoiceError(copy.voiceUnavailable);
+      return;
+    }
+
+    setError(null);
+    setVoiceError(null);
+    setVoiceStatus('connecting');
+    await teardownVoice();
+
+    const browserWindow = window as AnnaWindow;
+    const AudioContextCtor = window.AudioContext || browserWindow.webkitAudioContext;
+
+    try {
+      let voiceKnowledgeContext = '';
+      try {
+        const contextResponse = await fetch(
+          `/api/public/anna/voice-context?locale=${encodeURIComponent(i18n.resolvedLanguage || i18n.language || lang)}`
+        );
+        if (contextResponse.ok) {
+          const contextData = await contextResponse.json();
+          if (typeof contextData?.context === 'string') {
+            voiceKnowledgeContext = contextData.context.trim();
+          }
+        }
+      } catch (contextError) {
+        console.warn('[AnnaAssistantWidget] Voice context bootstrap failed', contextError);
+      }
+
+      if (!AudioContextCtor) {
+        throw new Error('AudioContext unavailable');
+      }
+
+      const ai = new GoogleGenAI({ apiKey: FRONTEND_GEMINI_KEY });
+      const audioContext = new AudioContextCtor({ sampleRate: 16000 });
+      audioContextRef.current = audioContext;
+      nextPlayTimeRef.current = audioContext.currentTime;
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      streamRef.current = stream;
+
+      const source = audioContext.createMediaStreamSource(stream);
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+      processorRef.current = processor;
+
+      const sessionPromise = ai.live.connect({
+        model: LIVE_VOICE_MODEL,
+        config: {
+          responseModalities: [Modality.AUDIO],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: LIVE_VOICE_NAME },
+            },
+          },
+          systemInstruction: buildVoiceSystemInstruction(lang, voiceKnowledgeContext),
+        },
+        callbacks: {
+          onopen: () => {
+            setVoiceStatus('live');
+
+            processor.onaudioprocess = (event) => {
+              const inputData = event.inputBuffer.getChannelData(0);
+              const pcm16 = new Int16Array(inputData.length);
+
+              for (let index = 0; index < inputData.length; index += 1) {
+                const sample = Math.max(-1, Math.min(1, inputData[index]));
+                pcm16[index] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+              }
+
+              const bytes = new Uint8Array(pcm16.buffer);
+              let binary = '';
+              for (let index = 0; index < bytes.length; index += 1) {
+                binary += String.fromCharCode(bytes[index]);
+              }
+
+              sessionRef.current?.sendRealtimeInput({
+                media: {
+                  mimeType: 'audio/pcm;rate=16000',
+                  data: btoa(binary),
+                },
+              });
+            };
+
+            source.connect(processor);
+            processor.connect(audioContext.destination);
+          },
+          onmessage: (message: LiveServerMessage) => {
+            if (message.serverContent?.interrupted) {
+              activeSourcesRef.current.forEach((activeSource) => {
+                try {
+                  activeSource.stop();
+                } catch {
+                  // Source may already be finished.
+                }
+              });
+              activeSourcesRef.current = [];
+              nextPlayTimeRef.current = audioContext.currentTime;
+            }
+
+            const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
+            if (!base64Audio) return;
+
+            const binaryString = atob(base64Audio);
+            const bytesArray = new Uint8Array(binaryString.length);
+            for (let index = 0; index < binaryString.length; index += 1) {
+              bytesArray[index] = binaryString.charCodeAt(index);
+            }
+
+            const pcm16 = new Int16Array(bytesArray.buffer);
+            const audioBuffer = audioContext.createBuffer(1, pcm16.length, 24000);
+            const channelData = audioBuffer.getChannelData(0);
+            for (let index = 0; index < pcm16.length; index += 1) {
+              channelData[index] = pcm16[index] / 32768;
+            }
+
+            const playSource = audioContext.createBufferSource();
+            playSource.buffer = audioBuffer;
+            playSource.connect(audioContext.destination);
+
+            const startAt = Math.max(nextPlayTimeRef.current, audioContext.currentTime);
+            playSource.start(startAt);
+            nextPlayTimeRef.current = startAt + audioBuffer.duration;
+
+            activeSourcesRef.current.push(playSource);
+            playSource.onended = () => {
+              activeSourcesRef.current = activeSourcesRef.current.filter(
+                (candidate) => candidate !== playSource
+              );
+            };
+          },
+          onclose: () => {
+            void teardownVoice();
+            setVoiceStatus('idle');
+          },
+          onerror: (liveError: unknown) => {
+            console.error('[AnnaAssistantWidget] Live voice failed', liveError);
+            setVoiceStatus('error');
+            setVoiceError(copy.voiceError);
+            void teardownVoice();
+          },
+        },
+      });
+
+      sessionRef.current = await sessionPromise;
+    } catch (liveError) {
+      console.error('[AnnaAssistantWidget] Voice session failed to start', liveError);
+      setVoiceStatus('error');
+      setVoiceError(copy.voiceError);
+      await teardownVoice();
+    }
+  }, [
+    copy.voiceError,
+    copy.voiceUnavailable,
+    i18n.language,
+    i18n.resolvedLanguage,
+    isLoading,
+    lang,
+    teardownVoice,
+    voiceAvailable,
+  ]);
+
+  const stopVoiceConversation = useCallback(async () => {
+    setVoiceError(null);
+    setVoiceStatus('idle');
+    await teardownVoice();
+
+    if (voiceStartRef.current > 0) {
+      const durationSeconds = Math.round((Date.now() - voiceStartRef.current) / 1000);
+      voiceStartRef.current = 0;
+      fetch('/api/public/anna/voice-event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: sessionIdRef.current,
+          durationSeconds,
+          locale: lang,
+        }),
+      }).catch(() => {});
+    }
+  }, [teardownVoice, lang]);
 
   const sendMessage = async (preset?: string) => {
     const content = (preset || input).trim();
@@ -137,6 +472,7 @@ export const AnnaAssistantWidget: React.FC = () => {
         body: JSON.stringify({
           message: content,
           locale: i18n.resolvedLanguage || i18n.language || lang,
+          sessionId: sessionIdRef.current,
           history,
         }),
       });
@@ -167,6 +503,27 @@ export const AnnaAssistantWidget: React.FC = () => {
     }
   };
 
+  const trimmedInput = input.trim();
+  const voiceHint =
+    voiceStatus === 'live'
+      ? copy.voiceListening
+      : voiceStatus === 'connecting'
+        ? copy.voiceConnecting
+        : voiceError
+          ? voiceError
+          : voiceAvailable
+            ? copy.voiceReady
+            : copy.voiceUnavailable;
+
+  const isVoiceModeVisible = !trimmedInput;
+  const actionMode = trimmedInput
+    ? 'send'
+    : voiceStatus === 'connecting'
+      ? 'connecting'
+      : voiceStatus === 'live'
+        ? 'stop'
+        : 'mic';
+
   return (
     <div className="fixed right-5 bottom-5 z-[180] flex max-w-[calc(100vw-1.5rem)] flex-col items-end gap-3">
       <AnimatePresence>
@@ -195,7 +552,10 @@ export const AnnaAssistantWidget: React.FC = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false);
+                  void stopVoiceConversation();
+                }}
                 className="rounded-full p-1.5 text-white/45 transition-colors hover:bg-white/8 hover:text-white"
                 aria-label="Close Anna"
               >
@@ -237,6 +597,27 @@ export const AnnaAssistantWidget: React.FC = () => {
                   </div>
                 )}
 
+                {isVoiceModeVisible && (
+                  <div
+                    className={`rounded-2xl border px-4 py-3 text-sm ${
+                      voiceStatus === 'error' || !voiceAvailable
+                        ? 'border-amber-300/15 bg-amber-500/10 text-amber-100'
+                        : 'border-cyan-300/15 bg-cyan-500/10 text-cyan-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {voiceStatus === 'connecting' ? (
+                        <Loader2 size={15} className="animate-spin" />
+                      ) : voiceStatus === 'live' ? (
+                        <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.9)]" />
+                      ) : (
+                        <Mic size={15} />
+                      )}
+                      <span>{voiceHint}</span>
+                    </div>
+                  </div>
+                )}
+
                 {messages.length <= 1 && !isLoading && (
                   <div className="pt-1">
                     <p className="mb-2 text-xs font-medium text-white/45">{copy.suggestionsLabel}</p>
@@ -263,7 +644,13 @@ export const AnnaAssistantWidget: React.FC = () => {
               <div className="flex items-end gap-2">
                 <textarea
                   value={input}
-                  onChange={(e) => setInput(e.target.value)}
+                  onChange={(e) => {
+                    if (voiceStatus === 'live' || voiceStatus === 'connecting') {
+                      void stopVoiceConversation();
+                    }
+                    setVoiceError(null);
+                    setInput(e.target.value);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
@@ -276,12 +663,51 @@ export const AnnaAssistantWidget: React.FC = () => {
                 />
                 <button
                   type="button"
-                  onClick={() => void sendMessage()}
-                  disabled={!input.trim() || isLoading}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-600 text-white transition-all hover:bg-violet-500 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30"
-                  aria-label={copy.send}
+                  onClick={() => {
+                    if (actionMode === 'send') {
+                      void sendMessage();
+                      return;
+                    }
+
+                    if (actionMode === 'stop') {
+                      void stopVoiceConversation();
+                      return;
+                    }
+
+                    if (actionMode === 'mic') {
+                      void startVoiceConversation();
+                    }
+                  }}
+                  disabled={
+                    isLoading ||
+                    actionMode === 'connecting' ||
+                    (actionMode === 'mic' && !voiceAvailable)
+                  }
+                  className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl text-white transition-all disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 ${
+                    actionMode === 'stop'
+                      ? 'bg-rose-500 shadow-[0_0_28px_rgba(244,63,94,0.45)] hover:bg-rose-400'
+                      : actionMode === 'mic'
+                        ? 'bg-cyan-500 shadow-[0_0_28px_rgba(6,182,212,0.45)] hover:bg-cyan-400'
+                        : 'bg-violet-600 hover:bg-violet-500'
+                  }`}
+                  aria-label={
+                    actionMode === 'send'
+                      ? copy.send
+                      : actionMode === 'stop'
+                        ? copy.voiceStop
+                        : copy.voiceStart
+                  }
+                  title={actionMode === 'mic' && !voiceAvailable ? copy.voiceUnavailable : undefined}
                 >
-                  <Send size={16} />
+                  {actionMode === 'connecting' ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : actionMode === 'stop' ? (
+                    <Square size={16} />
+                  ) : actionMode === 'mic' ? (
+                    <Mic size={16} />
+                  ) : (
+                    <Send size={16} />
+                  )}
                 </button>
               </div>
             </div>

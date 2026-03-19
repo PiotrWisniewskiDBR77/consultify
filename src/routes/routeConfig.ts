@@ -147,6 +147,7 @@ export const ROUTES = {
     CONFIGURATION: '/superadmin/configuration',
     REVENUE: '/superadmin/revenue',
     ANALYTICS: '/superadmin/analytics',
+    VIRTUAL_WORKERS: '/superadmin/virtual-workers',
   },
 
   // Partner Portal
@@ -370,6 +371,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.SUPERADMIN_SECURITY]: ROUTES.SUPERADMIN.SECURITY,
   [AppView.SUPERADMIN_CONFIGURATION]: ROUTES.SUPERADMIN.CONFIGURATION,
   [AppView.SUPERADMIN_ANALYTICS]: ROUTES.SUPERADMIN.ANALYTICS,
+  [AppView.SUPERADMIN_VIRTUAL_WORKERS]: ROUTES.SUPERADMIN.VIRTUAL_WORKERS,
   [AppView.SUPERADMIN_DASHBOARD]: ROUTES.SUPERADMIN.ROOT,
   [AppView.SUPERADMIN_ORGANIZATIONS]: ROUTES.SUPERADMIN.CUSTOMERS,
   [AppView.SUPERADMIN_USERS]: ROUTES.SUPERADMIN.CUSTOMERS,
@@ -490,6 +492,7 @@ export function getAppViewFromPath(path: string): AppView | null {
     return AppView.SUPERADMIN_CONFIGURATION;
   if (normalized.startsWith(ROUTES.SUPERADMIN.REVENUE)) return AppView.SUPERADMIN_REVENUE;
   if (normalized.startsWith(ROUTES.SUPERADMIN.ANALYTICS)) return AppView.SUPERADMIN_ANALYTICS;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.VIRTUAL_WORKERS)) return AppView.SUPERADMIN_VIRTUAL_WORKERS;
   if (normalized.startsWith(ROUTES.SUPERADMIN.ROOT)) return AppView.SUPERADMIN_OVERVIEW;
   if (normalized.startsWith(ROUTES.ASSESSMENT.ROOT)) return AppView.ASSESSMENT_OVERVIEW;
   if (normalized.startsWith(ROUTES.DISCOVERY_TOOLS.ROOT)) return AppView.DISCOVERY_TOOLS;

@@ -115,7 +115,7 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
             title="Consultify"
           >
             <img
-              src={isDark ? '/assets/logos/logo-dark.svg' : '/assets/logos/logo-light.svg'}
+              src={isDark ? '/assets/logos/logo-dark.svg?v=20260319' : '/assets/logos/logo-light.svg?v=20260319'}
               alt="Consultify"
               className="h-6 w-auto object-contain"
             />

@@ -851,7 +851,8 @@ Return JSON with the updated fields for this ${cardType}. Use the same field nam
             impact: item.impact || 'medium',
             source: 'ai',
             confidence: typeof item.confidence === 'number' ? item.confidence : 3,
-            status: item.status === 'accepted' ? 'accepted' : 'proposed',
+            status: 'proposed',
+            proposalStatus: 'ai-proposed',
           });
         });
       }

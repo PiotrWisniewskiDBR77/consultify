@@ -69,6 +69,50 @@ router.post(
   })
 );
 
+/**
+ * POST /api/ai-operations/knowledge/product-pills/index
+ *
+ * Index `knowledge/Pigułki wiedzy/**` markdown pills into `knowledge_docs` + `knowledge_chunks`.
+ * SuperAdmin/Admin only.
+ */
+router.post(
+  '/knowledge/product-pills/index',
+  verifyToken,
+  requireRole('super_admin', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const forceReindex = Boolean((req.body as any)?.forceReindex);
+
+      const mod = (await import('../../services/ai/knowledgeIndexer.js')) as any;
+      const knowledgeIndexer = (mod.knowledgeIndexer || mod.default?.knowledgeIndexer) as {
+        initialize: () => Promise<boolean>;
+        indexProductKnowledgePills: (opts: { forceReindex?: boolean }) => Promise<unknown>;
+      };
+
+      if (!knowledgeIndexer?.initialize || !knowledgeIndexer?.indexProductKnowledgePills) {
+        return res.status(503).json({
+          statusCode: 503,
+          status: false,
+          type: 'not_configured',
+          message: 'Service temporarily unavailable due to missing configuration',
+        });
+      }
+
+      const ok = await knowledgeIndexer.initialize();
+      if (!ok) return res.status(500).json({ error: 'KnowledgeIndexer initialize() failed' });
+
+      const result = await knowledgeIndexer.indexProductKnowledgePills({ forceReindex });
+      return res.json({ success: true, forceReindex, result });
+    } catch (error: unknown) {
+      logger.error('[AI Operations] Product pills indexing failed:', error);
+      return res.status(500).json({
+        error: 'Product pills indexing failed',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
+);
+
 // ==========================================
 // MISSION CONTROL ENDPOINTS
 // ==========================================
