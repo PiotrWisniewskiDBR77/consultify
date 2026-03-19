@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '@/services/api';
+import { Api, shouldAllowDemoData } from '@/services/api';
 
 import { type FilterChip, type ModuleTab } from '../../shared/ModuleHub';
 import {
@@ -17,6 +17,35 @@ import {
   normalizeStatus,
   type PredictionType,
 } from '../financeTypes';
+
+const DEMO_STATEMENTS = [
+  { id: 'demo-s1', entity_name: 'Atelier Sp. z o.o.', period_label: 'FY 2025', period_start: '2025-01-01', period_end: '2025-12-31', currency: 'PLN', scaling: 'thousands', pack_readiness_status: 'ready', pack_status: 'validated', pl_count: 1, bs_count: 1, cf_count: 1, source_statement_count: 3, updated_at: '2026-03-10T14:00:00Z', statements: [] },
+  { id: 'demo-s2', entity_name: 'Atelier Sp. z o.o.', period_label: 'H1 2025', period_start: '2025-01-01', period_end: '2025-06-30', currency: 'PLN', scaling: 'thousands', pack_readiness_status: 'ready', pack_status: 'validated', pl_count: 1, bs_count: 1, cf_count: 0, source_statement_count: 2, updated_at: '2026-02-15T10:00:00Z', statements: [] },
+  { id: 'demo-s3', entity_name: 'NovaTech GmbH', period_label: 'FY 2025', period_start: '2025-01-01', period_end: '2025-12-31', currency: 'EUR', scaling: 'thousands', pack_readiness_status: 'recoverable', pack_status: 'pending', pl_count: 1, bs_count: 0, cf_count: 0, source_statement_count: 1, updated_at: '2026-03-14T09:00:00Z', statements: [] },
+  { id: 'demo-s4', entity_name: 'GreenField Inc.', period_label: 'Q4 2025', period_start: '2025-10-01', period_end: '2025-12-31', currency: 'USD', scaling: 'units', pack_readiness_status: 'pending', pack_status: 'draft', pl_count: 1, bs_count: 1, cf_count: 1, source_statement_count: 3, updated_at: '2026-03-16T11:00:00Z', statements: [] },
+];
+
+const DEMO_MODELS = [
+  { id: 'demo-m1', name: 'Atelier - FY26-FY28 Revenue & Margin Forecast', scenario: 'base', currency: 'PLN', horizon_months: 36, start_date: '2026-01-01', status: 'approved', source_statement_pack_id: 'demo-s1', updated_at: '2026-03-12T10:00:00Z' },
+  { id: 'demo-m2', name: 'Atelier - FY26-FY28 Working Capital Forecast', scenario: 'base', currency: 'PLN', horizon_months: 36, start_date: '2026-01-01', status: 'review', source_statement_pack_id: 'demo-s1', updated_at: '2026-03-14T14:00:00Z' },
+  { id: 'demo-m3', name: 'NovaTech - FY26-FY28 Cash Protection Forecast', scenario: 'base', currency: 'EUR', horizon_months: 36, start_date: '2026-04-01', status: 'draft', updated_at: '2026-03-15T16:00:00Z' },
+];
+
+const DEMO_ANALYSES = [
+  { id: 'demo-a1', title: 'Atelier FY 2025 – Comprehensive Analysis', analysisType: 'comprehensive', currency: 'PLN', status: 'approved', periods: [1, 2, 3, 4], updatedAt: '2026-03-11T10:00:00Z' },
+  { id: 'demo-a2', title: 'Cloud Migration – Investment Case', analysisType: 'investment_case', currency: 'PLN', status: 'review', periods: [1, 2, 3], updatedAt: '2026-03-13T14:00:00Z' },
+  { id: 'demo-a3', title: 'NovaTech Acquisition – Due Diligence', analysisType: 'comprehensive', currency: 'EUR', status: 'draft', periods: [1, 2], updatedAt: '2026-03-16T09:00:00Z' },
+];
+
+const DEMO_VALUATIONS = [
+  { id: 'demo-v1', title: 'Atelier – DCF Valuation 2026', sourceType: 'financial_model', method: 'DCF', currency: 'PLN', horizonYears: 5, status: 'approved', updatedAt: '2026-03-10T12:00:00Z' },
+  { id: 'demo-v2', title: 'NovaTech – Comparable Analysis', sourceType: 'financial_analysis', method: 'Comparables', currency: 'EUR', horizonYears: 3, status: 'draft', updatedAt: '2026-03-15T15:00:00Z' },
+];
+
+const DEMO_BUDGETS = [
+  { id: 'demo-b1', title: 'Atelier – Budget 2026', currency: 'PLN', status: 'approved', periodStart: '2026-01-01', periodEnd: '2026-12-31', granularity: 'monthly', updatedAt: '2026-03-01T10:00:00Z' },
+  { id: 'demo-b2', title: 'Marketing Campaign – Q2 2026', currency: 'PLN', status: 'draft', periodStart: '2026-04-01', periodEnd: '2026-06-30', granularity: 'monthly', updatedAt: '2026-03-14T08:00:00Z' },
+];
 
 function isInvestmentAnalysisType(value: unknown): boolean {
   const normalized = String(value || '')
@@ -45,31 +74,104 @@ export function useFinanceData(
   const [valuations, setValuations] = useState<any[]>([]);
   const [budgets, setBudgets] = useState<any[]>([]);
   const [loadingTab, setLoadingTab] = useState<FinanceKind | null>('models');
+  const allowDemoData = shouldAllowDemoData();
+  const [isUsingDemoData, setIsUsingDemoData] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadStatements = useCallback(async () => {
-    const data = await Api.get('/api/finance-statements/packs');
-    setStatements(Array.isArray(data) ? data : []);
-  }, []);
+    try {
+      const data = await Api.get('/api/finance-statements/packs');
+      const arr = Array.isArray(data) ? data : [];
+      setLoadError(null);
+      setIsUsingDemoData(false);
+      setStatements(arr);
+    } catch {
+      setLoadError(
+        t(
+          'finance.errors.statementsRealSourceFailed',
+          'Failed to load real finance statements from the active data source.'
+        )
+      );
+      setIsUsingDemoData(false);
+      setStatements([]);
+    }
+  }, [t]);
 
   const loadModels = useCallback(async () => {
-    const data = await Api.get('/api/financial-modeling/models');
-    setModels(Array.isArray(data) ? data : []);
-  }, []);
+    try {
+      const data = await Api.get('/api/financial-modeling/models');
+      const arr = Array.isArray(data) ? data : [];
+      setLoadError(null);
+      setIsUsingDemoData(false);
+      setModels(arr);
+    } catch {
+      setLoadError(
+        t(
+          'finance.errors.modelsRealSourceFailed',
+          'Failed to load real finance models from the active data source.'
+        )
+      );
+      setIsUsingDemoData(false);
+      setModels([]);
+    }
+  }, [t]);
 
   const loadAnalyses = useCallback(async () => {
-    const data = await Api.get('/api/economics/financial-analyses');
-    setAnalyses(Array.isArray((data as any)?.analyses) ? (data as any).analyses : []);
-  }, []);
+    try {
+      const data = await Api.get('/api/economics/financial-analyses');
+      const arr = Array.isArray((data as any)?.analyses) ? (data as any).analyses : [];
+      setLoadError(null);
+      setIsUsingDemoData(false);
+      setAnalyses(arr);
+    } catch {
+      setLoadError(
+        t(
+          'finance.errors.analysesRealSourceFailed',
+          'Failed to load real financial analyses from the active data source.'
+        )
+      );
+      setIsUsingDemoData(false);
+      setAnalyses([]);
+    }
+  }, [t]);
 
   const loadValuations = useCallback(async () => {
-    const data = await Api.get('/api/economics/valuations');
-    setValuations(Array.isArray((data as any)?.valuations) ? (data as any).valuations : []);
-  }, []);
+    try {
+      const data = await Api.get('/api/economics/valuations');
+      const arr = Array.isArray((data as any)?.valuations) ? (data as any).valuations : [];
+      setLoadError(null);
+      setIsUsingDemoData(false);
+      setValuations(arr);
+    } catch {
+      setLoadError(
+        t(
+          'finance.errors.valuationsRealSourceFailed',
+          'Failed to load real valuations from the active data source.'
+        )
+      );
+      setIsUsingDemoData(false);
+      setValuations([]);
+    }
+  }, [t]);
 
   const loadBudgets = useCallback(async () => {
-    const data = await Api.get('/api/economics/budgets');
-    setBudgets(Array.isArray((data as any)?.budgets) ? (data as any).budgets : []);
-  }, []);
+    try {
+      const data = await Api.get('/api/economics/budgets');
+      const arr = Array.isArray((data as any)?.budgets) ? (data as any).budgets : [];
+      setLoadError(null);
+      setIsUsingDemoData(false);
+      setBudgets(arr);
+    } catch {
+      setLoadError(
+        t(
+          'finance.errors.budgetsRealSourceFailed',
+          'Failed to load real budgets from the active data source.'
+        )
+      );
+      setIsUsingDemoData(false);
+      setBudgets([]);
+    }
+  }, [t]);
 
   useEffect(() => {
     const kind: FinanceKind =
@@ -90,7 +192,7 @@ export function useFinanceData(
       setLoadingTab(kind);
       try {
         if (kind === 'statements') await loadStatements();
-        else if (kind === 'models') await loadModels();
+        else if (kind === 'models') await Promise.all([loadModels(), loadStatements()]);
         else if (kind === 'prediction') await Promise.all([loadModels(), loadBudgets()]);
         else if (kind === 'analysis' || kind === 'investment') await loadAnalyses();
         else if (kind === 'valuation') await loadValuations();
@@ -225,7 +327,13 @@ export function useFinanceData(
         });
     }
     if (activeTab === 'models') {
-      return (models || []).map((m: any) => ({
+      return (models || []).map((m: any) => {
+        const sourcePack = (statements || []).find(
+          (statement: any) => String(statement.id) === String(m.source_statement_pack_id || '')
+        );
+        const forecastStartYear =
+          Number.parseInt(String(m.start_date || '').slice(0, 4), 10) || new Date().getFullYear();
+        return {
         id: String(m.id),
         title: String(m.name || t('common.untitled', 'Untitled')),
         kind: 'models' as const,
@@ -244,8 +352,17 @@ export function useFinanceData(
           : m.source_statement_id
             ? 'statement'
             : 'manual',
+        sourceDocumentTitle: sourcePack
+          ? String(sourcePack.entity_name || sourcePack.period_label || sourcePack.id)
+          : m.source_statement_pack_id
+            ? t('finance.model.seededFromPack', 'Seeded statement pack')
+            : t('finance.model.seededManuallyShort', 'Manual'),
+        forecastWindowLabel: `${forecastStartYear}-${forecastStartYear + 2}`,
+        variantLabel: 'base / optimistic / conservative',
+        analyticalDepthLabel: 'L1-L3',
         updatedAt: String(m.updated_at || m.created_at || new Date().toISOString()),
-      }));
+      };
+      });
     }
     if (activeTab === 'prediction') {
       const modelRows: FinanceModelRow[] = (models || []).map((m: any) => ({
@@ -267,6 +384,10 @@ export function useFinanceData(
           : m.source_statement_id
             ? 'statement'
             : 'manual',
+        sourceDocumentTitle: t('finance.model.seededFromPack', 'Seeded statement pack'),
+        forecastWindowLabel: `${Number.parseInt(String(m.start_date || '').slice(0, 4), 10) || new Date().getFullYear()}-${(Number.parseInt(String(m.start_date || '').slice(0, 4), 10) || new Date().getFullYear()) + 2}`,
+        variantLabel: 'base / optimistic / conservative',
+        analyticalDepthLabel: 'L1-L3',
         updatedAt: String(m.updated_at || m.created_at || new Date().toISOString()),
       }));
       const budgetRows: FinanceModelRow[] = (budgets || []).map((b: any) => ({
@@ -355,6 +476,8 @@ export function useFinanceData(
     valuations,
     budgets,
     loadingTab,
+    loadError,
+    isUsingDemoData,
     loadStatements,
     loadModels,
     loadAnalyses,

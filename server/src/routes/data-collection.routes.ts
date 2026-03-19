@@ -3,7 +3,7 @@
  * Connector CRUD, test, run, auto-map, run history, and webhook receive
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request as ExpressRequest, Response } from 'express';
 import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
 import { featureFlags } from '../config/FeatureFlags.js';
 import logger from '../utils/Logger.js';
@@ -11,6 +11,7 @@ import { getDatabase } from '../database/Database.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
+type Request = ExpressRequest<Record<string, string>>;
 
 function requireTablePlatform(req: Request, res: Response, next: () => void) {
   if (!featureFlags.ENABLE_TABLE_PLATFORM_RECORDS_API) {

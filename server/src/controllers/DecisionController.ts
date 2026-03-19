@@ -127,7 +127,7 @@ const refreshTaskDecisionBlock = async (input: {
       WHERE d.organization_id = ?
         AND di.impacted_type = 'task'
         AND di.impacted_id = ?
-        AND di.is_blocker = 1
+        AND di.is_blocker = TRUE
         AND d.status IN ('pending', 'escalated')
       ORDER BY
         CASE WHEN d.deadline IS NULL THEN 1 ELSE 0 END,
@@ -201,7 +201,7 @@ const refreshInitiativeDecisionBlock = async (input: {
       WHERE d.organization_id = ?
         AND di.impacted_type = 'initiative'
         AND di.impacted_id = ?
-        AND di.is_blocker = 1
+        AND di.is_blocker = TRUE
         AND d.status IN ('pending', 'escalated')
     `,
     [organizationId, initiativeId]
@@ -301,7 +301,7 @@ export class DecisionController {
           owner.first_name || ' ' || owner.last_name as owner_name,
           requester.first_name || ' ' || requester.last_name as requested_by_name,
           p.name as project_name,
-          (SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = 1) as blocked_items_count
+          (SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = TRUE) as blocked_items_count
         FROM decisions d
         LEFT JOIN users owner ON d.decision_maker_id = owner.id
         LEFT JOIN users requester ON d.created_by = requester.id
@@ -457,7 +457,7 @@ export class DecisionController {
                 COUNT(di.id) as blocked_count
             FROM decisions d
             LEFT JOIN users u ON d.decision_maker_id = u.id
-            LEFT JOIN decision_impacts di ON d.id = di.decision_id AND di.is_blocker = 1
+            LEFT JOIN decision_impacts di ON d.id = di.decision_id AND di.is_blocker = TRUE
             WHERE d.status IN ('pending', 'escalated')
             ${projectId ? 'AND d.project_id = ?' : ''}
             GROUP BY d.id
@@ -559,13 +559,13 @@ export class DecisionController {
             dh.old_status,
             dh.new_status,
             dh.changed_by,
-            dh.created_at,
+            dh.changed_at,
             dh.details,
             TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')) AS changed_by_name
          FROM decision_history dh
          LEFT JOIN users u ON dh.changed_by = u.id
          WHERE dh.decision_id = ?
-         ORDER BY dh.created_at ASC`,
+         ORDER BY dh.changed_at ASC`,
         [id]
       );
 
@@ -1025,7 +1025,7 @@ export class DecisionController {
           impacted_id: string;
           is_blocker: number;
         }>(
-          `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = ? AND is_blocker = 1`,
+          `SELECT impacted_type, impacted_id, is_blocker FROM decision_impacts WHERE decision_id = ? AND is_blocker = TRUE`,
           [id]
         );
         for (const impact of impacts || []) {

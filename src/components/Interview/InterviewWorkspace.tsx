@@ -74,6 +74,7 @@ import {
 import { CompanyProfile, KeyMetric, OpenGap, Stakeholder } from './CompanyFactsPanel';
 import { EvidencePanel, InterviewEvidence } from './EvidencePanel';
 import { InterviewSingleQuestionRuntime } from './InterviewSingleQuestionRuntime';
+import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 import { InterviewNote, NotesPanel } from './NotesPanel';
 import { InterviewQuestion, QuestionsList } from './QuestionsList';
 import { RuntimeMode, RuntimeModeSelector } from './RuntimeModeSelector';
@@ -133,8 +134,26 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { currentUser } = useAppStore();
+  const { currentUser, currentOrganization } = useAppStore();
   const { setActiveConversation } = useConversationStore();
+  const interviewDemoData = useMemo(
+    () =>
+      createInterviewDemoDataset({
+        currentUserId: currentUser?.id,
+        currentUserName: currentUser?.displayName || (currentUser as any)?.name,
+        currentUserEmail: currentUser?.email,
+        organizationId: currentOrganization?.id,
+        organizationName: currentOrganization?.name,
+      }),
+    [
+      currentOrganization?.id,
+      currentOrganization?.name,
+      currentUser?.displayName,
+      currentUser?.email,
+      currentUser?.id,
+      (currentUser as any)?.name,
+    ]
+  );
 
   // ==========================================
   // STATE
@@ -391,20 +410,57 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   // Load session data
   useEffect(() => {
     const loadSession = async () => {
+      const useDemoSession = (sessionId: string) => {
+        const demoDetail = interviewDemoData.sessionDetailsById[sessionId];
+        if (!demoDetail) return false;
+
+        const currentSession = demoDetail.session as InterviewSession;
+        setSession(currentSession);
+        setSessionName(currentSession.name || 'Discovery Interview');
+        setQuestions(demoDetail.questions as InterviewQuestion[]);
+        setNotes(demoDetail.notes as InterviewNote[]);
+        setEvidence(demoDetail.evidence as InterviewEvidence[]);
+        setLinkedItems((demoDetail.linkedItems || []) as PersistedLinkedItem[]);
+        setCompanyProfile(demoDetail.companyProfile as CompanyProfile);
+        setEditedProfile(demoDetail.companyProfile as CompanyProfile);
+        setSummaryData(demoDetail.summary as SummaryData);
+
+        const assignment =
+          interviewDemoData.assignmentsBySessionId[sessionId] ||
+          Object.values(interviewDemoData.assignmentsBySessionId).find(
+            (item: any) => item?.id === currentSession.assignmentId
+          ) ||
+          null;
+        setAssignmentStatus((assignment as any)?.status || null);
+        setAssignmentInfo(assignment || null);
+        onSessionChange?.(currentSession);
+        return true;
+      };
+
       setIsLoading(true);
       try {
         let currentSession: InterviewSession | null = null;
 
+        if (initialSessionId && isInterviewDemoId(initialSessionId)) {
+          if (useDemoSession(initialSessionId)) return;
+        }
+
         if (initialSessionId) {
-          const sessionRes = await Api.get(`/interview/sessions/${initialSessionId}`);
-          currentSession = sessionRes as InterviewSession;
+          const sessionRes = await Api.get(`/interview/sessions/${initialSessionId}`).catch(() => null);
+          if (!sessionRes && useDemoSession(initialSessionId)) return;
+          currentSession = sessionRes as InterviewSession | null;
         } else {
-          const sessionsRes = await Api.get('/interview/sessions?status=active');
+          const sessionsRes = await Api.get('/interview/sessions?status=active').catch(() => []);
           const sessions = Array.isArray(sessionsRes) ? sessionsRes : [];
 
           if (sessions.length > 0) {
             currentSession = sessions[0] as InterviewSession;
           } else {
+            const firstDemoSession = Object.values(interviewDemoData.sessionDetailsById)[0];
+            if (firstDemoSession) {
+              useDemoSession(firstDemoSession.session.id);
+              return;
+            }
             const newSession = await Api.post('/interview/sessions', { projectId });
             currentSession = newSession as InterviewSession;
           }
@@ -426,10 +482,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             myAssignmentsRes,
             linkedItemsRes,
           ] = await Promise.all([
-            Api.get(`/interview/sessions/${currentSession.id}/questions`),
-            Api.get(`/interview/sessions/${currentSession.id}/notes`),
-            Api.get(`/interview/sessions/${currentSession.id}/evidence`),
-            Api.get('/interview/context'),
+            Api.get(`/interview/sessions/${currentSession.id}/questions`).catch(() => []),
+            Api.get(`/interview/sessions/${currentSession.id}/notes`).catch(() => []),
+            Api.get(`/interview/sessions/${currentSession.id}/evidence`).catch(() => []),
+            Api.get('/interview/context').catch(() => null),
             Api.get(`/interview/sessions/${currentSession.id}/summary`).catch(() => null),
             currentSession.assignmentId
               ? Api.get(`/interview/assignments/my?includeCompleted=true`).catch(() => [])
@@ -437,16 +493,34 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             Api.get(`/interview/sessions/${currentSession.id}/linked-items`).catch(() => []),
           ]);
 
-          setQuestions(Array.isArray(questionsRes) ? questionsRes : []);
-          setNotes(Array.isArray(notesRes) ? notesRes : []);
-          setEvidence(Array.isArray(evidenceRes) ? evidenceRes : []);
+          const demoFallback = interviewDemoData.sessionDetailsById[currentSession.id];
+
+          setQuestions(
+            Array.isArray(questionsRes) && questionsRes.length > 0
+              ? questionsRes
+              : ((demoFallback?.questions as InterviewQuestion[]) || [])
+          );
+          setNotes(
+            Array.isArray(notesRes) && notesRes.length > 0
+              ? notesRes
+              : ((demoFallback?.notes as InterviewNote[]) || [])
+          );
+          setEvidence(
+            Array.isArray(evidenceRes) && evidenceRes.length > 0
+              ? evidenceRes
+              : ((demoFallback?.evidence as InterviewEvidence[]) || [])
+          );
           setLinkedItems(
-            Array.isArray(linkedItemsRes) ? (linkedItemsRes as PersistedLinkedItem[]) : []
+            Array.isArray(linkedItemsRes) && linkedItemsRes.length > 0
+              ? (linkedItemsRes as PersistedLinkedItem[])
+              : ((demoFallback?.linkedItems as PersistedLinkedItem[]) || [])
           );
 
           if (currentSession.assignmentId) {
             const list = Array.isArray(myAssignmentsRes) ? myAssignmentsRes : [];
-            const found = list.find((a: any) => a?.id === currentSession?.assignmentId);
+            const found =
+              list.find((a: any) => a?.id === currentSession?.assignmentId) ||
+              interviewDemoData.assignmentsBySessionId[currentSession.id];
             setAssignmentStatus(found?.status || null);
             setAssignmentInfo(found || null);
           }
@@ -463,6 +537,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             };
             setCompanyProfile(profile);
             setEditedProfile(profile);
+          } else if (demoFallback?.companyProfile) {
+            setCompanyProfile(demoFallback.companyProfile as CompanyProfile);
+            setEditedProfile(demoFallback.companyProfile as CompanyProfile);
           }
 
           if (summaryRes && typeof summaryRes === 'object') {
@@ -473,10 +550,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               constraints: summary.constraints || currentSession.summaryConstraints || [],
               painPoints: summary.painPoints || currentSession.summaryPainPoints || [],
             });
+          } else if (demoFallback?.summary) {
+            setSummaryData(demoFallback.summary as SummaryData);
           }
         }
       } catch (error) {
         console.error('[InterviewWorkspace] Failed to load session:', error);
+        if (initialSessionId && useDemoSession(initialSessionId)) return;
         toast.error(isPolish ? 'Nie udało się załadować sesji' : 'Failed to load session');
       } finally {
         setIsLoading(false);
@@ -484,7 +564,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     };
 
     loadSession();
-  }, [initialSessionId, projectId, isPolish, onSessionChange]);
+  }, [initialSessionId, interviewDemoData, isPolish, onSessionChange, projectId]);
 
   // ==========================================
   // HANDLERS

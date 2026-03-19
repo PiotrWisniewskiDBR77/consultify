@@ -1,0 +1,273 @@
+import { AlertTriangle, CalendarDays, CheckSquare, Loader2 } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+import { Button } from '@/components/ui/primitives/Button';
+import { Modal } from '@/components/ui/primitives/Modal';
+import Api from '@/services/api';
+
+interface CalendarConflictItem {
+  id: string;
+  title: string;
+  due_date?: string | null;
+  deadline?: string | null;
+}
+
+interface CalendarConflictResponse {
+  date: string;
+  tasks: CalendarConflictItem[];
+  decisions: CalendarConflictItem[];
+  totalItems: number;
+  hasConflicts: boolean;
+  suggestion?: string | null;
+}
+
+interface CalendarCreateEventModalProps {
+  open: boolean;
+  defaultDate: Date;
+  onClose: () => void;
+  onCreated?: () => void;
+}
+
+const toDateInputValue = (date: Date) => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const CalendarCreateEventModal: React.FC<CalendarCreateEventModalProps> = ({
+  open,
+  defaultDate,
+  onClose,
+  onCreated,
+}) => {
+  const { i18n } = useTranslation();
+  const isPolish = i18n.language === 'pl';
+
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState(toDateInputValue(defaultDate));
+  const [saving, setSaving] = useState(false);
+  const [conflictsLoading, setConflictsLoading] = useState(false);
+  const [conflicts, setConflicts] = useState<CalendarConflictResponse | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setTitle('');
+    setDescription('');
+    setDate(toDateInputValue(defaultDate));
+    setConflicts(null);
+  }, [defaultDate, open]);
+
+  useEffect(() => {
+    if (!open || !date) return;
+
+    let cancelled = false;
+    const loadConflicts = async () => {
+      try {
+        setConflictsLoading(true);
+        const res = await Api.get(`/my-work/calendar/conflicts?date=${encodeURIComponent(date)}`);
+        if (!cancelled) {
+          setConflicts(res?.data ?? res ?? null);
+        }
+      } catch {
+        if (!cancelled) setConflicts(null);
+      } finally {
+        if (!cancelled) setConflictsLoading(false);
+      }
+    };
+
+    loadConflicts();
+    return () => {
+      cancelled = true;
+    };
+  }, [date, open]);
+
+  const totalExistingItems = Number(conflicts?.totalItems ?? 0);
+  const hasBusyDay = Boolean(conflicts?.hasConflicts);
+
+  const helperText = useMemo(() => {
+    if (conflictsLoading) {
+      return isPolish ? 'Sprawdzanie obciążenia dnia...' : 'Checking day load...';
+    }
+    if (!conflicts) return null;
+    if (totalExistingItems === 0) {
+      return isPolish ? 'Ten dzień wygląda na wolny.' : 'This day looks clear.';
+    }
+    return isPolish
+      ? `Na ten dzień masz już ${totalExistingItems} pozycji.`
+      : `You already have ${totalExistingItems} items on this day.`;
+  }, [conflicts, conflictsLoading, isPolish, totalExistingItems]);
+
+  const handleSubmit = async () => {
+    if (!title.trim()) {
+      toast.error(isPolish ? 'Tytuł jest wymagany' : 'Title is required');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await Api.post('/my-work/calendar/events', {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        start: date,
+        allDay: true,
+        source: 'task',
+      });
+      toast.success(isPolish ? 'Zadanie dodane do kalendarza' : 'Task added to calendar');
+      onCreated?.();
+      onClose();
+    } catch (error) {
+      console.error('Failed to create calendar event', error);
+      toast.error(isPolish ? 'Nie udało się dodać do kalendarza' : 'Failed to add to calendar');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="lg"
+      title={isPolish ? 'Dodaj do kalendarza' : 'Add to calendar'}
+      description={
+        isPolish
+          ? 'W V1 kalendarz tworzy zadanie osobiste z datą wykonania, zgodnie z logiką My Work.'
+          : 'In V1, calendar creation produces a personal task with a due date, aligned with My Work logic.'
+      }
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={saving}>
+            {isPolish ? 'Anuluj' : 'Cancel'}
+          </Button>
+          <Button variant="primary" onClick={handleSubmit} loading={saving}>
+            {isPolish ? 'Dodaj' : 'Add'}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:bg-navy-950 dark:text-slate-300">
+          <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
+            <CheckSquare size={16} className="text-primary-500" />
+            {isPolish ? 'Typ artefaktu: Zadanie' : 'Artifact type: Task'}
+          </div>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'Decyzje i inicjatywy z poziomu kalendarza są przygotowane jako kolejny etap.'
+              : 'Decisions and initiatives from calendar are prepared for a later phase.'}
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+            {isPolish ? 'Tytuł' : 'Title'}
+          </label>
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={isPolish ? 'Np. Przygotować deck na review' : 'e.g. Prepare review deck'}
+            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+            {isPolish ? 'Opis' : 'Description'}
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            placeholder={
+              isPolish
+                ? 'Krótki kontekst lub definicja done...'
+                : 'Short context or definition of done...'
+            }
+            className="w-full rounded-lg border border-slate-300/60 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-900 dark:text-slate-100">
+            {isPolish ? 'Data' : 'Date'}
+          </label>
+          <div className="relative">
+            <CalendarDays
+              size={16}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full rounded-lg border border-slate-300/60 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none transition focus:border-primary-400 dark:border-navy-600/40 dark:bg-navy-950 dark:text-slate-100"
+            />
+          </div>
+          {helperText && (
+            <p className="text-xs text-slate-500 dark:text-slate-400">{helperText}</p>
+          )}
+        </div>
+
+        <div
+          className={`rounded-xl px-4 py-3 ${
+            hasBusyDay
+              ? 'bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:text-amber-100'
+              : 'bg-slate-50 text-slate-700 dark:bg-navy-950 dark:text-slate-300'
+          }`}
+        >
+          <div className="flex items-start gap-2">
+            <AlertTriangle
+              size={16}
+              className={hasBusyDay ? 'text-amber-500' : 'text-slate-400'}
+            />
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-medium">
+                {hasBusyDay
+                  ? isPolish
+                    ? 'Dzień jest już dość obciążony'
+                    : 'This day is already fairly busy'
+                  : isPolish
+                    ? 'Podgląd obciążenia dnia'
+                    : 'Day load preview'}
+              </div>
+              <div className="mt-1 text-xs opacity-80">
+                {conflicts?.suggestion ||
+                  (isPolish
+                    ? 'Formularz sprawdza istniejące zadania i decyzje dla wybranego dnia.'
+                    : 'The form checks existing tasks and decisions for the selected day.')}
+              </div>
+
+              {totalExistingItems > 0 && (
+                <div className="mt-3 space-y-2">
+                  {conflicts?.tasks?.slice(0, 3).map((item) => (
+                    <div key={`task-${item.id}`} className="text-xs">
+                      {isPolish ? 'Zadanie' : 'Task'}: {item.title}
+                    </div>
+                  ))}
+                  {conflicts?.decisions?.slice(0, 3).map((item) => (
+                    <div key={`decision-${item.id}`} className="text-xs">
+                      {isPolish ? 'Decyzja' : 'Decision'}: {item.title}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {conflictsLoading && (
+                <div className="mt-3 inline-flex items-center gap-2 text-xs opacity-80">
+                  <Loader2 size={14} className="animate-spin" />
+                  {isPolish ? 'Ładowanie konfliktów...' : 'Loading conflicts...'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+export default CalendarCreateEventModal;

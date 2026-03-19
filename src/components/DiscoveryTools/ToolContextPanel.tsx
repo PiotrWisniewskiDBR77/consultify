@@ -1,84 +1,31 @@
 /**
  * ToolContextPanel
- * Right panel with org context, AI assist, and generated initiatives.
+ * Active AI collaboration panel for tool sessions.
  */
 
-import { BookOpen, CheckCircle2, MessageSquareText } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  Lightbulb,
+  MessageSquareText,
+  Sparkles,
+  Target,
+} from 'lucide-react';
 import React from 'react';
 
+import {
+  computeDynamicSwotOverallReadiness,
+  computeDynamicSwotPhaseSummaries,
+  computeDynamicSwotSessionSignals,
+} from '@/components/DiscoveryTools/toolCompletion';
 import { PorterData, SWOTData, ToolSession, ToolType } from '@/store/useToolStore';
-
-type CompletionItem = { label: string; done: boolean };
-
-const getCompletionItems = (toolType: ToolType, session: ToolSession, isPolish: boolean) => {
-  const items: CompletionItem[] = [];
-  const data = session.inputData as SWOTData | PorterData;
-
-  const label = (en: string, pl: string) => (isPolish ? pl : en);
-
-  if (toolType === 'dynamic-swot') {
-    const swot = data as SWOTData;
-    items.push({
-      label: label('Strategic goal defined', 'Cel strategiczny zdefiniowany'),
-      done: !!swot.context.goal && !!swot.context.scope,
-    });
-    const quadrantLabels: Record<string, string> = {
-      strengths: isPolish ? 'Mocne strony' : 'Strengths',
-      weaknesses: isPolish ? 'Slabe strony' : 'Weaknesses',
-      opportunities: isPolish ? 'Szanse' : 'Opportunities',
-      threats: isPolish ? 'Zagrozenia' : 'Threats',
-    };
-    ['strengths', 'weaknesses', 'opportunities', 'threats'].forEach((q) => {
-      items.push({
-        label: label(`Items in ${quadrantLabels[q]}`, `Elementy: ${quadrantLabels[q]}`),
-        done: swot.items.some((i) => i.quadrant === q),
-      });
-    });
-    items.push({
-      label: label('Correlations generated', 'Korelacje wygenerowane'),
-      done: swot.correlations.length > 0,
-    });
-  } else if (toolType === 'market-forces') {
-    const porter = data as PorterData;
-    items.push({
-      label: label('Industry defined', 'Branza zdefiniowana'),
-      done: !!porter.context.industry,
-    });
-    items.push({
-      label: label('Geographic scope defined', 'Zakres geograficzny zdefiniowany'),
-      done: !!porter.context.geographicScope,
-    });
-    Object.values(porter.forces).forEach((force) => {
-      items.push({
-        label: label(`Drivers: ${force.name}`, `Czynniki: ${force.name}`),
-        done: force.drivers.length > 0,
-      });
-    });
-  }
-
-  return items;
-};
-
-const calcConfidence = (items: CompletionItem[]) => {
-  const done = items.filter((i) => i.done).length;
-  if (items.length === 0) return 1;
-  const ratio = done / items.length;
-  if (ratio >= 0.9) return 5;
-  if (ratio >= 0.7) return 4;
-  if (ratio >= 0.5) return 3;
-  if (ratio >= 0.3) return 2;
-  return 1;
-};
-
-const calcSectionConfidence = (items: CompletionItem[], keys: string[]) => {
-  const filtered = items.filter((i) => keys.some((k) => i.label.includes(k)));
-  if (filtered.length === 0) return 1;
-  return calcConfidence(filtered);
-};
 
 interface ToolContextPanelProps {
   toolType: ToolType;
   session: ToolSession;
+  currentStepId?: string;
   isPolish: boolean;
   orgName?: string | null;
   aiContent?: string;
@@ -89,9 +36,73 @@ interface ToolContextPanelProps {
   chatSnippets?: { role: string; content: string }[];
 }
 
+const getReadinessTone = (readiness: 'blocked' | 'needs-work' | 'ready') =>
+  readiness === 'ready'
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
+    : readiness === 'needs-work'
+      ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
+      : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300';
+
+const getDynamicSwotCoach = (currentStepId: string | undefined, isPolish: boolean) => {
+  const map = {
+    mission: {
+      nextQuestion: isPolish
+        ? 'Jaka decyzja naprawdę ma zostać podjęta po tej sesji?'
+        : 'What concrete decision should this session unlock?',
+      whyNow: isPolish
+        ? 'Bez ostrego pytania AI będzie generować ogólniki zamiast materiału do decyzji.'
+        : 'Without a sharp question, AI will produce generic guidance instead of decision support.',
+    },
+    input: {
+      nextQuestion: isPolish
+        ? 'Jakich dowodów jeszcze brakuje, żeby nie budować SWOT-u na opiniach?'
+        : 'Which evidence is still missing so the SWOT is not built on opinions?',
+      whyNow: isPolish
+        ? 'To jest moment na higienę sygnałów: źródło, typ dowodu, pewność i luki.'
+        : 'This is the moment for signal hygiene: source, evidence type, confidence, and gaps.',
+    },
+    swot: {
+      nextQuestion: isPolish
+        ? 'Które karty są już akceptowalne, a które nadal są tylko propozycją AI?'
+        : 'Which cards are accepted, and which ones are still only AI proposals?',
+      whyNow: isPolish
+        ? 'Macierz ma być warstwą syntezy, nie zrzutem wszystkich notatek.'
+        : 'The matrix should be a synthesis layer, not a dump of all notes.',
+    },
+    insights: {
+      nextQuestion: isPolish
+        ? 'Jakie napięcie lub trade-off naprawdę wymaga ruchu strategicznego teraz?'
+        : 'Which tension or trade-off truly requires a strategic move now?',
+      whyNow: isPolish
+        ? 'To tutaj narzędzie przestaje być tabelą, a staje się materiałem decyzyjnym.'
+        : 'This is where the tool stops being a table and becomes decision material.',
+    },
+    outputs: {
+      nextQuestion: isPolish
+        ? 'Co z tej sesji jest gotowe na inicjatywę, a co wymaga jeszcze decku lub dowodów?'
+        : 'What is ready for an initiative, and what still needs a deck or more evidence?',
+      whyNow: isPolish
+        ? 'Końcowa wartość narzędzia zależy od jakości mostu do outputów.'
+        : 'The tool’s final value depends on the quality of the bridge to outputs.',
+    },
+  } as const;
+
+  return (
+    map[currentStepId as keyof typeof map] || {
+      nextQuestion: isPolish
+        ? 'Co jest teraz najważniejszą luką?'
+        : 'What is the most important gap right now?',
+      whyNow: isPolish
+        ? 'Panel AI pokazuje następny najlepszy ruch.'
+        : 'The AI panel shows the next best move.',
+    }
+  );
+};
+
 export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
   toolType,
   session,
+  currentStepId,
   isPolish,
   orgName,
   aiContent,
@@ -101,89 +112,84 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
   recentInitiatives = [],
   chatSnippets = [],
 }) => {
-  const completionItems = getCompletionItems(toolType, session, isPolish);
-  const confidence = calcConfidence(completionItems);
-  const sectionConfidence = [
-    {
-      label: isPolish ? 'Kontekst' : 'Context',
-      score: calcSectionConfidence(completionItems, ['Strategic', 'Industry', 'Geographic', 'Cel']),
-    },
-    {
-      label: isPolish ? 'Analiza' : 'Analysis',
-      score: calcSectionConfidence(completionItems, ['Items', 'Drivers', 'Korelacje']),
-    },
-  ];
+  const swotData = toolType === 'dynamic-swot' ? (session.inputData as SWOTData) : null;
+  const readiness = swotData ? computeDynamicSwotOverallReadiness(swotData, isPolish) : null;
+  const phaseSummaries = swotData ? computeDynamicSwotPhaseSummaries(swotData, isPolish) : [];
+  const swotSignals = swotData ? computeDynamicSwotSessionSignals(swotData, isPolish) : null;
+  const coach = toolType === 'dynamic-swot' ? getDynamicSwotCoach(currentStepId, isPolish) : null;
+  const proposalQueue = swotData
+    ? [
+        ...swotData.signals
+          .filter((signal) => signal.state === 'proposed')
+          .slice(0, 3)
+          .map((signal) => signal.content),
+        ...swotData.items
+          .filter((item) => item.status === 'proposed')
+          .slice(0, 3)
+          .map((item) => item.text),
+      ].slice(0, 5)
+    : [];
+  const porterData = toolType === 'market-forces' ? (session.inputData as PorterData) : null;
 
   return (
-    <div className="w-96 border-l border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 flex flex-col">
-      <div className="p-4 border-b border-slate-200 dark:border-navy-700">
+    <div className="flex w-96 flex-col border-l border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900">
+      <div className="border-b border-slate-200 p-4 dark:border-navy-700">
         <h3 className="font-medium text-slate-900 dark:text-white">
-          {isPolish ? 'Kontekst i pomoc' : 'Context & Assist'}
+          {isPolish ? 'AI Collaboration Panel' : 'AI Collaboration Panel'}
         </h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <div className="p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
-          <div className="flex items-center gap-2 mb-2">
-            <BookOpen className="w-4 h-4 text-slate-500" />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              {isPolish ? 'Organizacja' : 'Organization'}
-            </span>
-          </div>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {orgName || (isPolish ? 'Brak profilu organizacji' : 'No organization profile')}
-          </p>
-        </div>
-
-        <div className="p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {isPolish ? 'Completion checker' : 'Completion checker'}
-              </span>
+      <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        {swotData && readiness && (
+          <div className={`rounded-2xl border p-4 ${getReadinessTone(readiness.readiness)}`}>
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Target className="h-4 w-4" />
+              <span>{isPolish ? 'Readiness' : 'Readiness'}</span>
             </div>
-            <span className="text-xs text-slate-500">{confidence}/5</span>
+            <div className="mt-2 text-sm">{readiness.label}</div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {phaseSummaries.map((phase) => (
+                <div
+                  key={phase.id}
+                  className="rounded-xl border border-white/50 bg-white/60 px-3 py-2 text-xs dark:border-navy-700/50 dark:bg-navy-950/30"
+                >
+                  <div className="font-medium text-slate-700 dark:text-slate-200">
+                    {phase.label}
+                  </div>
+                  <div className="mt-1 text-slate-500 dark:text-slate-400">
+                    {phase.done
+                      ? isPolish
+                        ? 'gotowe'
+                        : 'ready'
+                      : phase.primaryGap || (isPolish ? 'wymaga pracy' : 'needs work')}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="space-y-1">
-            {completionItems.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-xs text-slate-600">
-                <span className={item.done ? 'text-emerald-500' : 'text-slate-300'}>●</span>
-                <span className={item.done ? 'text-slate-700 dark:text-slate-300' : ''}>
-                  {item.label}
-                </span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-2 text-xs text-slate-500">
-            {sectionConfidence.map((section) => (
-              <div key={section.label}>
-                {section.label}: {section.score}/5
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
 
-        <div className="p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
-          <div className="flex items-center justify-between mb-2">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-navy-700 dark:bg-navy-800">
+          <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MessageSquareText className="w-4 h-4 text-primary-500" />
+              <MessageSquareText className="h-4 w-4 text-primary-500" />
               <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {isPolish ? 'AI Assist' : 'AI Assist'}
+                {isPolish ? 'AI coach brief' : 'AI coach brief'}
               </span>
             </div>
             <button
               onClick={onOpenChat}
               className="text-xs text-primary-600 hover:text-primary-700"
             >
-              {isPolish ? 'Otworz chat' : 'Open chat'}
+              {isPolish ? 'Otwórz chat' : 'Open chat'}
             </button>
           </div>
           <p className="text-xs text-slate-600 dark:text-slate-400">
             {aiContent ||
+              coach?.whyNow ||
               (isPolish
-                ? 'Uzyj przycisku AI Sugestie, aby otrzymac podpowiedzi.'
-                : 'Use AI Suggest to receive inline recommendations.')}
+                ? 'Panel pokazuje następny najlepszy ruch i luki jakościowe dla bieżącej fazy.'
+                : 'This panel shows the next best move and quality gaps for the current phase.')}
           </p>
           {chatSnippets.length > 0 && (
             <div className="mt-2 space-y-1 text-[11px] text-slate-500">
@@ -197,50 +203,215 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
           )}
         </div>
 
-        <div className="p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
-          <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            {isPolish ? 'Generated from this tool' : 'Generated from this tool'}
-          </div>
-          {onOpenInitiatives && (
-            <button
-              onClick={onOpenInitiatives}
-              className="mb-2 text-xs text-primary-600 hover:text-primary-700"
-            >
-              {isPolish ? 'Otworz Initiatives' : 'Open Initiatives'}
-            </button>
-          )}
-          {generatedInitiatives.length > 0 ? (
-            <div className="space-y-2">
-              {generatedInitiatives.map((initiative) => (
-                <div key={initiative.id} className="text-xs text-slate-600 dark:text-slate-400">
-                  {initiative.title}
-                </div>
-              ))}
+        {swotData && (
+          <>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-navy-700 dark:bg-navy-800">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <Sparkles className="h-4 w-4 text-violet-500" />
+                <span>{isPolish ? 'Next question' : 'Next question'}</span>
+              </div>
+              <p className="text-sm text-slate-700 dark:text-slate-300">{coach?.nextQuestion}</p>
+              <div className="mt-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 text-xs text-slate-500 dark:border-navy-700/70 dark:bg-navy-950/40 dark:text-slate-400">
+                {isPolish ? 'Dlaczego teraz:' : 'Why now:'} {coach?.whyNow}
+              </div>
             </div>
-          ) : (
-            <p className="text-xs text-slate-500">
-              {isPolish ? 'Brak wygenerowanych inicjatyw' : 'No initiatives generated yet'}
-            </p>
-          )}
-        </div>
 
-        <div className="p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
-          <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            {isPolish ? 'Ostatnie inicjatywy' : 'Recent initiatives'}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-navy-700 dark:bg-navy-800">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                <span>{isPolish ? 'Proposal queue' : 'Proposal queue'}</span>
+              </div>
+              {proposalQueue.length > 0 ? (
+                <div className="space-y-2">
+                  {proposalQueue.map((proposal, index) => (
+                    <div
+                      key={`${proposal}-${index}`}
+                      className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 text-xs text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/40 dark:text-slate-300"
+                    >
+                      {proposal}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  {isPolish
+                    ? 'Brak niezaakceptowanych propozycji AI.'
+                    : 'No unaccepted AI proposals.'}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-navy-700 dark:bg-navy-800">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <span>{isPolish ? 'Missing evidence' : 'Missing evidence'}</span>
+              </div>
+              {swotSignals && swotSignals.missingEvidence.length > 0 ? (
+                <div className="space-y-2">
+                  {swotSignals.missingEvidence.slice(0, 4).map((gap, index) => (
+                    <div
+                      key={`${gap}-${index}`}
+                      className="text-xs text-slate-600 dark:text-slate-400"
+                    >
+                      {gap}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  {isPolish ? 'Brak krytycznych luk wejściowych.' : 'No critical input gaps.'}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-navy-700 dark:bg-navy-800">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                <BookOpen className="h-4 w-4 text-slate-500" />
+                <span>{isPolish ? 'Session counters' : 'Session counters'}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 dark:border-navy-700/70 dark:bg-navy-950/40">
+                  <div className="text-slate-400">
+                    {isPolish ? 'Akceptowane karty' : 'Accepted cards'}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    {swotSignals?.acceptedItems || 0}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 dark:border-navy-700/70 dark:bg-navy-950/40">
+                  <div className="text-slate-400">{isPolish ? 'Propozycje' : 'Proposals'}</div>
+                  <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    {(swotSignals?.proposedItems || 0) + (swotSignals?.proposedSignals || 0)}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 dark:border-navy-700/70 dark:bg-navy-950/40">
+                  <div className="text-slate-400">{isPolish ? 'Napięcia' : 'Tensions'}</div>
+                  <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    {swotSignals?.tensions || 0}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 dark:border-navy-700/70 dark:bg-navy-950/40">
+                  <div className="text-slate-400">
+                    {isPolish ? 'Gotowe outputy' : 'Ready outputs'}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    {swotSignals?.readyOutputs || 0}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-navy-700 dark:bg-navy-800">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <Lightbulb className="h-4 w-4 text-amber-500" />
+                  <span>{isPolish ? 'Output routes' : 'Output routes'}</span>
+                </div>
+                {onOpenInitiatives && (
+                  <button
+                    onClick={onOpenInitiatives}
+                    className="text-xs text-primary-600 hover:text-primary-700"
+                  >
+                    {isPolish ? 'Otwórz' : 'Open'}
+                  </button>
+                )}
+              </div>
+              {swotData.outputCandidates?.length ? (
+                <div className="space-y-2">
+                  {swotData.outputCandidates.slice(0, 4).map((candidate) => (
+                    <div
+                      key={candidate.id}
+                      className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 text-xs dark:border-navy-700/70 dark:bg-navy-950/40"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="uppercase text-[10px] text-slate-400">
+                          {candidate.outputType}
+                        </span>
+                        <span
+                          className={`rounded-full border px-2 py-0.5 ${getReadinessTone(
+                            candidate.readiness === 'blocked'
+                              ? 'blocked'
+                              : candidate.readiness === 'keep-as-idea'
+                                ? 'needs-work'
+                                : 'ready'
+                          )}`}
+                        >
+                          {candidate.readiness || 'keep-as-idea'}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-slate-700 dark:text-slate-300">
+                        {candidate.title}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  {isPolish ? 'Brak kandydatów do outputów.' : 'No output candidates yet.'}
+                </p>
+              )}
+            </div>
+          </>
+        )}
+
+        {!swotData && porterData && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-navy-700 dark:bg-navy-800">
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+              <ArrowRight className="h-4 w-4 text-slate-500" />
+              <span>{isPolish ? 'Session state' : 'Session state'}</span>
+            </div>
+            <div className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+              <div>
+                {porterData.context.industry || (isPolish ? 'Brak branży' : 'Missing industry')}
+              </div>
+              <div>
+                {porterData.context.geographicScope ||
+                  (isPolish ? 'Brak zakresu geograficznego' : 'Missing geographic scope')}
+              </div>
+            </div>
           </div>
-          {recentInitiatives.length > 0 ? (
+        )}
+
+        {generatedInitiatives.length > 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-navy-700 dark:bg-navy-800">
+            <div className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+              {isPolish ? 'Generated from this tool' : 'Generated from this tool'}
+            </div>
             <div className="space-y-2">
-              {recentInitiatives.map((initiative) => (
+              {generatedInitiatives.slice(0, 4).map((initiative) => (
                 <div key={initiative.id} className="text-xs text-slate-600 dark:text-slate-400">
                   {initiative.title}
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-xs text-slate-500">
-              {isPolish ? 'Brak inicjatyw w projekcie' : 'No initiatives for this project'}
-            </p>
-          )}
+          </div>
+        )}
+
+        {recentInitiatives.length > 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-navy-700 dark:bg-navy-800">
+            <div className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+              {isPolish ? 'Recent initiatives' : 'Recent initiatives'}
+            </div>
+            <div className="space-y-2">
+              {recentInitiatives.slice(0, 4).map((initiative) => (
+                <div key={initiative.id} className="text-xs text-slate-600 dark:text-slate-400">
+                  {initiative.title}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-navy-700 dark:bg-navy-800">
+          <div className="mb-2 flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-slate-500" />
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              {isPolish ? 'Organization context' : 'Organization context'}
+            </span>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            {orgName || (isPolish ? 'Brak profilu organizacji' : 'No organization profile')}
+          </p>
         </div>
       </div>
     </div>

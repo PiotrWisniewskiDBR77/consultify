@@ -11,7 +11,7 @@ interface CalendarSidebarProps {
   onDateChange: (date: Date) => void;
 }
 
-const ALL_SOURCES: CalendarEventSource[] = ['task', 'initiative', 'decision', 'google', 'outlook'];
+const ALL_SOURCES: CalendarEventSource[] = ['task', 'initiative', 'decision', 'consultify', 'google', 'outlook'];
 
 export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   filter,

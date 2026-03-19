@@ -12,6 +12,7 @@ import organizationContextService from '../services/organizationContext/Organiza
 import ToolInitiativeService from '../services/ToolInitiativeService.js';
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import KnownToolsService from '../services/KnownToolsService.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import {
   ToolRuntimeContractSchema,
@@ -477,6 +478,12 @@ export class ToolController {
       const { toolType, name, projectId, derivedFrom, snapshotJson } = req.body;
       if (!toolType || !name) {
         res.status(400).json({ error: 'toolType and name are required' });
+        return;
+      }
+
+      const availability = await KnownToolsService.getKnownToolAvailability(String(toolType));
+      if (availability.exists && !availability.isActive) {
+        res.status(409).json({ error: 'This tool is inactive and cannot start a session yet' });
         return;
       }
 

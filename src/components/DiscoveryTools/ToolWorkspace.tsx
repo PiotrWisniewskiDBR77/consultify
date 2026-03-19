@@ -235,13 +235,16 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     const gaps: string[] = [];
     const data = currentSession.inputData as any;
     if (toolType === 'dynamic-swot') {
-      if (!data.context?.goal || !data.context?.scope) gaps.push('Missing strategic context');
+      if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal) {
+        gaps.push('Missing mission brief');
+      }
       ['strengths', 'weaknesses', 'opportunities', 'threats'].forEach((q) => {
         if (!data.items?.some((i: any) => i.quadrant === q)) {
           gaps.push(`Missing ${q}`);
         }
       });
-      if (!data.correlations?.length) gaps.push('Missing correlations');
+      if (!data.tensions?.length && !data.correlations?.length) gaps.push('Missing strategic tensions');
+      if (!data.recommendedMoves?.length) gaps.push('Missing recommended moves');
     }
     if (toolType === 'market-forces') {
       if (!data.context?.industry) gaps.push('Missing industry');

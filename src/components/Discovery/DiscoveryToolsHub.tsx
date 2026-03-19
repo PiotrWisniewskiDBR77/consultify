@@ -1,6 +1,6 @@
 /**
  * DiscoveryToolsHub (V3: unified "Tools" hub)
- * Single mental model: Library → Sessions → Outputs → Initiatives
+ * Single mental model: Library → Sessions → Reports & Presentations → Initiatives
  * Categories: Strategy, Operations, Digital, Process Automation, Licensed
  *
  * V3-E01: User has one "Tools" entry point, licensed/assessment is a category
@@ -313,11 +313,13 @@ type UnifiedLibraryItem = {
   tags: string[];
   icon: string | null;
   isLicensed: boolean;
+  isActive: boolean;
   isComingSoon: boolean;
   sortOrder: number;
   createdAt: string | null;
   /** Normalized field for table filtering */
   license: 'licensed' | 'free';
+  availability: 'active' | 'inactive';
 };
 
 // Tool metadata
@@ -747,6 +749,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       tags: string[];
       icon: string | null;
       isLicensed: boolean;
+      isActive: boolean;
       isComingSoon: boolean;
       sortOrder: number;
       createdAt: string | null;
@@ -875,7 +878,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         );
         setDiscoveries(discoveryItems);
 
-        // Outputs: real artifacts (assessment reports → redirect to report builder, report builder reports, decks)
+        // Reports & Presentations: real artifacts (assessment reports, report builder reports, decks)
         const mapOutputStatus = (raw: any): ItemStatus => {
           const s = String(raw || '').toUpperCase();
           const map: Record<string, ItemStatus> = {
@@ -1275,6 +1278,16 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     }
 
     const selected = knownTools.find((k) => k.id === previewItemId);
+    if (selected && !selected.isActive) {
+      setPreviewKnownTool(null);
+      setPreviewKnownToolLoading(false);
+      return;
+    }
+    if (!selected && String(previewItemId || '').startsWith('tool:')) {
+      setPreviewKnownTool(null);
+      setPreviewKnownToolLoading(false);
+      return;
+    }
     const toolType =
       String(previewItemId) === 'tool:process-automation'
         ? 'process-automation'
@@ -1367,7 +1380,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       },
       {
         id: 'outputs' as ModuleTab,
-        label: t('tools.hub.tabs.outputs', 'Outputs'),
+        label: isPolish ? 'Raporty i prezentacje' : 'Reports & Presentations',
         icon: <FolderOutput size={16} />,
         count: outputs.length,
       },
@@ -1382,10 +1395,44 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     assessmentSessions.length,
     discoveries.length,
     initiatives.length,
+    isPolish,
     knownTools,
     outputs.length,
     t,
   ]);
+
+  const activeTabGuide = useMemo(() => {
+    if (activeTab === 'library') {
+      return {
+        title: isPolish ? 'Biblioteka metod' : 'Method library',
+        description: isPolish
+          ? 'Tutaj poznajesz narzędzia, wybierasz właściwe podejście i startujesz pracę.'
+          : 'Discover tools, choose the right method, and start working from here.',
+      };
+    }
+    if (activeTab === 'sessions' || activeTab === 'list') {
+      return {
+        title: isPolish ? 'Aktywne sesje' : 'Active sessions',
+        description: isPolish
+          ? 'Tutaj pracujesz na uruchomionych narzędziach. Nowa sesja pojawia się tu automatycznie po starcie z biblioteki.'
+          : 'Work with active tools here. A new session appears here automatically when started from the library.',
+      };
+    }
+    if (activeTab === 'outputs' || activeTab === 'reports') {
+      return {
+        title: isPolish ? 'Raporty i prezentacje' : 'Reports & presentations',
+        description: isPolish
+          ? 'Tutaj otwierasz raporty i decki wygenerowane z zakończonych sesji.'
+          : 'Open reports and decks generated from completed sessions here.',
+      };
+    }
+    return {
+      title: isPolish ? 'Inicjatywy' : 'Initiatives',
+      description: isPolish
+        ? 'Tutaj przechodzisz z wniosków do działań wdrożeniowych.'
+        : 'Turn validated conclusions into implementation actions here.',
+    };
+  }, [activeTab, isPolish]);
 
   // Table columns
   const discoveryColumns: TableColumn[] = useMemo(
@@ -1589,7 +1636,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
               <div
-                className="text-sm font-medium text-slate-900 dark:text-white truncate"
+                className={`truncate text-sm font-medium ${
+                  row.isActive
+                    ? 'text-slate-900 dark:text-white'
+                    : 'text-slate-400 dark:text-slate-500'
+                }`}
                 title={row.name}
               >
                 {row.name}
@@ -1662,8 +1713,29 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           </span>
         ),
       },
+      {
+        id: 'availability',
+        label: isPolish ? 'Status' : 'Status',
+        width: '120px',
+        filterable: true,
+        filterOptions: [
+          { value: 'active', label: isPolish ? 'Aktywny' : 'Active' },
+          { value: 'inactive', label: isPolish ? 'Nieaktywny' : 'Inactive' },
+        ],
+        render: (row) => (
+          <span
+            className={`inline-flex items-center h-6 px-2 rounded-full text-[11px] font-medium border ${
+              row.isActive
+                ? 'border-emerald-200/70 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300'
+                : 'border-rose-200/70 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300'
+            }`}
+          >
+            {row.isActive ? (isPolish ? 'Aktywny' : 'Active') : isPolish ? 'Nieaktywny' : 'Inactive'}
+          </span>
+        ),
+      },
     ],
-    [t]
+    [isPolish, t]
   );
 
   // Columns for Initiatives tab
@@ -1949,6 +2021,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     (row: any) => {
       const toolType = String(row?.toolType || '').trim();
       if (!toolType) return;
+      if (row?.kind === 'tool' && row?.isActive === false) {
+        toast.error(
+          isPolish
+            ? 'To narzędzie jest jeszcze nieaktywne. Dostępny jest tylko podgląd w preview.'
+            : 'This tool is inactive for now. Only the preview is available.'
+        );
+        return;
+      }
 
       const docId = `known:${toolType}`;
       const doc: OpenDocument = {
@@ -1966,7 +2046,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       setActiveDocumentId(docId);
       trackFunnelEvent('tool_preview_opened', { toolType });
     },
-    [setOpenDocuments]
+    [isPolish, setOpenDocuments]
   );
 
   const handleKnownToolSessionCreated = useCallback(
@@ -1982,7 +2062,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         if (prev.find((d) => d.id === doc.id)) return prev;
         return [...prev, doc];
       });
+      setActiveTab('sessions');
       setActiveDocumentId(sessionId);
+      setPreviewItemId(sessionId);
       fetchData(true);
     },
     [fetchData]
@@ -2052,6 +2134,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           name: sessionName,
           projectId: currentProjectId ?? null,
         });
+        setActiveTab('sessions');
+        setPreviewItemId(created.id);
         handleOpenDocument({
           id: created.id,
           name: sessionName,
@@ -2110,6 +2194,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
   const handleRowAction = useCallback(
     (action: string, row: any) => {
+      const isInactiveTool = row?.kind === 'tool' && row?.isActive === false;
+      const notifyInactiveTool = () => {
+        toast.error(
+          isPolish
+            ? 'To narzędzie nie jest jeszcze aktywne. Możesz tylko zobaczyć opis w preview.'
+            : 'This tool is not active yet. You can only view its preview description.'
+        );
+      };
       if (action === 'view' || action === 'edit') {
         if (row?.kind === 'assessmentSession') {
           navigate(`/assessment/${String(row.assessmentType || '').toLowerCase()}/${row.id}`);
@@ -2127,6 +2219,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           });
           return;
         }
+        if (isInactiveTool) {
+          setPreviewItemId(row.id);
+          notifyInactiveTool();
+          return;
+        }
         handleOpenKnownTool(row);
       } else if (action === 'library_start_session') {
         if (row?.kind === 'assessment') {
@@ -2142,6 +2239,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         const toolType = String(row?.toolType || '').trim();
         if (!toolType) return;
         if (row?.isComingSoon) return;
+        if (isInactiveTool) {
+          setPreviewItemId(row.id);
+          notifyInactiveTool();
+          return;
+        }
         void createAndOpenToolSession({
           toolType,
           name: `${row?.name || toolType} — ${isPolish ? 'Sesja' : 'Session'}`,
@@ -2150,6 +2252,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       } else if (action === 'library_chat') {
         const toolType = String(row?.toolType || '').trim();
         if (!toolType) return;
+        if (isInactiveTool) {
+          setPreviewItemId(row.id);
+          notifyInactiveTool();
+          return;
+        }
         (async () => {
           try {
             const convId = await openChatWithContext({
@@ -2347,10 +2454,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         tags: meta.tags,
         icon: null,
         isLicensed: true,
+        isActive: true,
         isComingSoon: false,
         sortOrder: 900 + idx,
         createdAt: null,
         license: 'licensed',
+        availability: 'active',
       };
     });
   }, [isPolish]);
@@ -2371,10 +2480,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       tags: ['automation', 'process', 'pipeline'],
       icon: null,
       isLicensed: false,
+      isActive: false,
       isComingSoon: false,
       sortOrder: 850,
       createdAt: null,
       license: 'free',
+      availability: 'inactive',
     }),
     [isPolish]
   );
@@ -2402,10 +2513,12 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         tags: Array.isArray(t.tags) ? t.tags : [],
         icon: t.icon ?? null,
         isLicensed: !!t.isLicensed,
+        isActive: !!t.isActive,
         isComingSoon: !!t.isComingSoon,
         sortOrder: Number.isFinite(Number(t.sortOrder)) ? Number(t.sortOrder) : 999,
         createdAt: t.createdAt ?? null,
         license: t.isLicensed ? 'licensed' : 'free',
+        availability: t.isActive ? 'active' : 'inactive',
       };
     });
 
@@ -3124,7 +3237,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             tool={item as any}
             full={previewKnownTool}
             fullLoading={previewKnownToolLoading}
-            onOpenFull={() => handleOpenKnownTool(item as any)}
+            onOpenFull={() => handleRowAction('library_open_full', item as any)}
             onStartSession={() => handleRowAction('library_start_session', item as any)}
             onChat={() => handleRowAction('library_chat', item as any)}
           />
@@ -3155,7 +3268,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   if (action === 'open') return handleRowAction('library_open_full', item as any);
                   return handleRowAction(action, item as any);
                 }}
-                emptyMessage={t('tools.hub.empty.library', 'No tools available.')}
+                emptyMessage={t(
+                  'tools.hub.empty.library',
+                  'No tools available in this category yet.'
+                )}
               />
             </TableWithPreviewLayout>
           </div>
@@ -3191,6 +3307,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     label: t('common.open', 'Open'),
                     icon: ExternalLink,
                     variant: 'primary',
+                    disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
                     onClick: () => handleRowAction('library_open_full', row),
                   },
                   {
@@ -3204,7 +3321,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                           ? 'Rozpocznij sesję'
                           : 'Start session',
                     icon: Play,
-                    disabled: !!(row as any)?.isComingSoon,
+                    disabled:
+                      !!(row as any)?.isComingSoon ||
+                      ((row as any)?.kind === 'tool' && !(row as any)?.isActive),
                     onClick: () => handleRowAction('library_start_session', row),
                   },
                   {
@@ -3212,13 +3331,17 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     label: isPolish ? 'Czat' : 'Chat',
                     icon: MessageSquare,
                     divider: true,
+                    disabled: (row as any)?.kind === 'tool' && !(row as any)?.isActive,
                     onClick: () => handleRowAction('library_chat', row),
                   },
                 ] as RowAction[]
               }
               activeFilters={activeFilters}
               onFilterChange={setActiveFilters}
-              emptyMessage={t('tools.hub.empty.library', 'No tools available.')}
+              emptyMessage={t(
+                'tools.hub.empty.library',
+                'No tools available in this category yet.'
+              )}
               canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
               density="compact"
             />
@@ -3373,7 +3496,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               onFilterChange={setActiveFilters}
               emptyMessage={t(
                 'tools.hub.empty.sessions',
-                'No active sessions. Start from the Library.'
+                'No active sessions yet. Start from Library and a new session will appear here automatically.'
               )}
               canvasClassName="pl-4 pr-1.5 pt-3 pb-4"
               density="compact"
@@ -3386,23 +3509,26 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     // Table view (default)
     // Use different columns and empty messages based on active tab
     const isInitiativesTab = activeTab === 'initiatives';
-    const isOutputsTab = activeTab === 'outputs' || activeTab === 'reports';
+    const isReportsAndPresentationsTab = activeTab === 'outputs' || activeTab === 'reports';
     const columns = isInitiativesTab
       ? initiativeColumns
-      : isOutputsTab
+      : isReportsAndPresentationsTab
         ? outputsColumns
         : discoveryColumns;
     const emptyMessage = isInitiativesTab
       ? t(
           'tools.hub.empty.initiatives',
-          'No draft initiatives yet. Run a tool or assessment to generate initiatives.'
+          'No initiatives yet. Generate them from validated tool conclusions.'
         )
-      : isOutputsTab
+      : isReportsAndPresentationsTab
         ? t(
             'tools.hub.empty.outputs',
-            'No outputs yet. Generate reports or presentations from your sessions.'
+            'No reports or presentations yet. Finalize a session and generate them here.'
           )
-        : t('tools.hub.empty.sessions', 'No active sessions. Start from the Library.');
+        : t(
+            'tools.hub.empty.sessions',
+            'No active sessions yet. Start from Library and a new session will appear here automatically.'
+          );
 
     type ToolsPreviewItem = (DisplayItem | OutputItem) & { title: string };
 
@@ -3424,14 +3550,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
           onOpenFull={(id) => {
             const row = currentData.find((d) => d.id === id);
             if (!row) return;
-            if (isOutputsTab) {
+            if (isReportsAndPresentationsTab) {
               openOutput(row as any);
               return;
             }
             handleOpenDocument(row);
           }}
           renderPreview={(item) => {
-            if (isOutputsTab) {
+            if (isReportsAndPresentationsTab) {
               const kind = String((item as any)?.outputKind || '');
               const label =
                 kind === 'assessment_report'
@@ -3669,7 +3795,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             }
 
             const canResume = false;
-            const showOpen = isOutputsTab;
+            const showOpen = isReportsAndPresentationsTab;
 
             const refreshFull = async () => {
               try {
@@ -3739,7 +3865,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             data={currentData}
             onRowClick={(row) => setPreviewItemId(row.id)}
             onRowDoubleClick={(row) => {
-              if (isOutputsTab) {
+              if (isReportsAndPresentationsTab) {
                 openOutput(row as any);
                 return;
               }
@@ -3796,7 +3922,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                       },
                     ] as RowAction[];
                   }
-                : isOutputsTab
+                : isReportsAndPresentationsTab
                   ? (row) => {
                       const id = String(row?.id || '').trim();
                       return [
@@ -3935,6 +4061,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         description: meta.description,
         category: meta.category,
         kind: 'tool' as const,
+        isActive: (knownTools || []).some(
+          (item) =>
+            String(item?.toolType || '').trim() === String(toolType || shortCode).trim() &&
+            item?.isActive === true
+        ),
       };
     });
 
@@ -3947,6 +4078,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         description: isPolish ? 'Framework assessment' : 'Assessment framework',
         category: 'licensed' as ToolCategory,
         kind: 'assessment' as const,
+        isActive: true,
       })
     );
 
@@ -3960,6 +4092,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             description: isPolish ? 'Framework (docs-driven)' : 'Framework (docs-driven)',
             category: 'strategic' as ToolCategory,
             kind: 'catalog' as const,
+            isActive: false,
           }))
         : [];
 
@@ -3979,7 +4112,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         );
       })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [addMenuCategory, addMenuQuery, isPolish, strategyCatalogSlugs, titleFromSlug]);
+  }, [addMenuCategory, addMenuQuery, isPolish, knownTools, strategyCatalogSlugs, titleFromSlug]);
 
   const PrimaryCta = (
     <div ref={addMenuRef} className="relative">
@@ -4070,6 +4203,14 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                             source: 'add_menu',
                           });
                         } else {
+                          if (!item.isActive) {
+                            toast.error(
+                              isPolish
+                                ? 'To narzędzie nie jest jeszcze aktywne.'
+                                : 'This tool is not active yet.'
+                            );
+                            return;
+                          }
                           void createAndOpenToolSession({
                             toolType: item.toolType,
                             name: `${item.name} — ${isPolish ? 'Sesja' : 'Session'}`,
@@ -4077,7 +4218,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                           });
                         }
                       }}
-                      className="w-full flex items-start gap-3 px-3 py-2 rounded-xl text-left hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
+                      className={`w-full flex items-start gap-3 px-3 py-2 rounded-xl text-left transition-colors ${
+                        item.isActive || item.kind === 'assessment'
+                          ? 'hover:bg-slate-50 dark:hover:bg-white/[0.04]'
+                          : 'opacity-60'
+                      }`}
                     >
                       <span className="mt-0.5 font-mono text-xs font-bold text-slate-500 dark:text-slate-400 w-12 truncate">
                         {item.kind === 'catalog' ? 'DOCS' : item.shortCode}
@@ -4089,6 +4234,17 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                         <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
                           {item.description}
                         </div>
+                        {item.kind !== 'assessment' ? (
+                          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                            {item.isActive
+                              ? isPolish
+                                ? 'Aktywne'
+                                : 'Active'
+                              : isPolish
+                                ? 'Nieaktywne'
+                                : 'Inactive'}
+                          </div>
+                        ) : null}
                       </div>
                       <span className="mt-0.5 text-slate-400">
                         <ArrowRight size={16} />
@@ -4176,187 +4332,19 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     </div>
   );
 
-  // AI button (rightmost in topbar cluster; scan from right: AI → Add → Views → Filters)
-  const handleAiContextClick = useCallback(async () => {
-    try {
-      if (activeDocumentId) {
-        toast(
-          t(
-            'tools.hub.toast.closeDocForAi',
-            isPolish ? 'Wróć do listy, aby użyć AI.' : 'Return to list to use AI.'
-          )
-        );
-        return;
-      }
-
-      // If we have a selected item, open chat in that entity context (best UX).
-      if (previewItemId) {
-        if (activeTab === 'library') {
-          const row = filteredLibraryItems.find((k) => k.id === previewItemId);
-          if (row) {
-            const convId = await openChatWithContext({
-              entityType: (row as any)?.kind === 'assessment' ? 'assessment' : 'tool',
-              entityId: String((row as any)?.toolType || row.id),
-              entityName: String(row.name || ''),
-              contextData:
-                (row as any)?.kind === 'assessment'
-                  ? (row as any)
-                  : (previewKnownTool as any) || (row as any),
-              pmoContext: {},
-            });
-            await addChatMessage({
-              conversationId: convId,
-              role: 'user',
-              content: isPolish
-                ? (row as any)?.kind === 'assessment'
-                  ? 'Pomóż mi zdecydować, czy ten framework assessment pasuje. Daj 6–8 punktów: kiedy użyć, jak zebrać dane wejściowe i jak czytać wyniki.'
-                  : 'Pomóż mi zdecydować, czy to narzędzie jest właściwe. Daj 6–8 punktów: kiedy użyć, jak przygotować dane wejściowe, i jakie pułapki.'
-                : (row as any)?.kind === 'assessment'
-                  ? 'Help me decide if this assessment framework fits. Give 6–8 bullets: when to use, how to gather inputs, and how to interpret results.'
-                  : 'Help me decide if this tool fits. Give 6–8 bullets: when to use, how to prepare inputs, and pitfalls.',
-            } as any);
-            return;
-          }
-        }
-
-        if (activeTab === 'initiatives') {
-          const row = initiatives.find((i) => i.id === previewItemId);
-          const init =
-            (selectedInitiative && selectedInitiative.id === previewItemId
-              ? selectedInitiative
-              : (row as any)?._fullData) || {};
-          const convId = await openChatWithContext({
-            entityType: 'initiative',
-            entityId: String(previewItemId),
-            entityName: String(row?.name || (init as any)?.title || '') || previewItemId,
-            contextData: init,
-            pmoContext: { initiativeIds: [String(previewItemId)] },
-          });
-          await addChatMessage({
-            conversationId: convId,
-            role: 'user',
-            content: isPolish
-              ? 'Podsumuj tę inicjatywę i zaproponuj 3 kolejne kroki.'
-              : 'Summarize this initiative and propose 3 next steps.',
-          } as any);
-          return;
-        }
-
-        // Sessions / Outputs
-        const row =
-          activeTab === 'sessions'
-            ? unifiedSessionsData.find((d: any) => d.id === previewItemId)
-            : activeTab === 'outputs'
-              ? outputs.find((r: OutputItem) => r.id === previewItemId)
-              : null;
-        if (row) {
-          const isAssessment = (row as any)?.kind === 'assessmentSession';
-          const isOutput = (row as any)?.kind === 'output';
-          const outputKind = isOutput ? String((row as any)?.outputKind || '') : '';
-          const convId = await openChatWithContext({
-            entityType: isOutput
-              ? outputKind === 'presentation_deck'
-                ? 'presentation'
-                : 'report'
-              : isAssessment
-                ? 'assessment'
-                : 'tool',
-            entityId: String(previewItemId),
-            entityName: String(row.name || '') || previewItemId,
-            contextData: isAssessment
-              ? (previewFullAssessment as any) || (row as any)
-              : isOutput
-                ? (row as any)?._fullData || (row as any)
-                : (previewFullSession as any) || (row as any),
-            pmoContext: {},
-          });
-          await addChatMessage({
-            conversationId: convId,
-            role: 'user',
-            content: isPolish
-              ? isAssessment
-                ? 'Zrób krótki executive brief (6–8 punktów) z tej sesji assessment.'
-                : isOutput
-                  ? 'Zrób krótki executive brief (6–8 punktów) na podstawie tego outputu.'
-                  : 'Zrób krótki executive brief (6–8 punktów) z tej sesji.'
-              : isAssessment
-                ? 'Write a short executive brief (6–8 bullets) from this assessment session.'
-                : isOutput
-                  ? 'Write a short executive brief (6–8 bullets) based on this output.'
-                  : 'Write a short executive brief (6–8 bullets) from this session.',
-          } as any);
-          return;
-        }
-      }
-
-      // Fallback: module context
-      const tabLabel =
-        activeTab === 'library'
-          ? t('tools.hub.tabs.library', 'Library')
-          : activeTab === 'sessions'
-            ? t('tools.hub.tabs.sessions', 'Sessions')
-            : activeTab === 'outputs'
-              ? t('tools.hub.tabs.outputs', 'Outputs')
-              : t('tools.hub.tabs.initiatives', 'Initiatives');
-      const convId = await openChatWithContext({
-        entityType: 'tools',
-        entityId: String(currentProjectId || 'tools'),
-        entityName: isPolish ? `Narzędzia — ${tabLabel}` : `Tools — ${tabLabel}`,
-        contextData: {
-          module: 'tools',
-          tab: activeTab,
-          searchQuery,
-          statusFilter,
-        },
-        pmoContext: {},
-      });
-      await addChatMessage({
-        conversationId: convId,
-        role: 'user',
-        content: isPolish
-          ? 'Pomóż mi w tej zakładce: co warto zrobić dalej i na co uważać?'
-          : 'Help me in this tab: what should I do next and what should I watch out for?',
-      } as any);
-    } catch {
-      toast.error(t('tools.hub.toast.chatOpenError', 'Failed to open chat'));
-    }
-  }, [
-    activeDocumentId,
-    activeTab,
-    addChatMessage,
-    currentProjectId,
-    discoveries,
-    filteredLibraryItems,
-    initiatives,
-    isPolish,
-    openChatWithContext,
-    previewFullAssessment,
-    previewFullSession,
-    previewItemId,
-    previewKnownTool,
-    outputs,
-    searchQuery,
-    selectedInitiative,
-    statusFilter,
-    t,
-    unifiedSessionsData,
-  ]);
-
-  const AiContextButton = (
-    <button
-      type="button"
-      onClick={() => void handleAiContextClick()}
-      className="inline-flex items-center gap-2 h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-primary-600 dark:text-primary-300 hover:bg-primary-50/70 dark:hover:bg-primary-500/10 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 text-sm font-medium"
-      title={isPolish ? 'Kontekst AI' : 'AI Context'}
-      aria-label={isPolish ? 'Kontekst AI' : 'AI Context'}
-    >
-      <Sparkles size={16} />
-      <span>{t('common.ai', 'AI')}</span>
-    </button>
-  );
-
   const CommandRowContent = (
     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+      <div className="mr-2 hidden min-w-0 max-w-[360px] md:flex items-center gap-2 rounded-full border border-slate-200/70 bg-white/80 px-3 py-1.5 dark:border-white/[0.06] dark:bg-white/[0.04]">
+        <span className="h-2 w-2 shrink-0 rounded-full bg-primary-500" />
+        <div className="min-w-0">
+          <div className="truncate text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+            {activeTabGuide.title}
+          </div>
+          <div className="truncate text-[10px] text-slate-500 dark:text-slate-400">
+            {activeTabGuide.description}
+          </div>
+        </div>
+      </div>
       {activeTab === 'library' ? (
         <>
           {(
@@ -4477,7 +4465,6 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         onClearFilters={handleClearFilters}
         commandRowContent={CommandRowContent}
         primaryCta={PrimaryCta}
-        aiControl={AiContextButton}
         availableViewModes={['table']}
         rightControls={
           <div className="flex items-center gap-2">

@@ -539,7 +539,7 @@ Rules:
       items.map((item) => {
         if ('cross_session_pattern' in item) {
           const { cross_session_pattern, ...rest } = item;
-          return { ...rest, crossSessionPattern: Boolean(cross_session_pattern) } as T;
+          return { ...rest, crossSessionPattern: Boolean(cross_session_pattern) } as unknown as T;
         }
         return item;
       });

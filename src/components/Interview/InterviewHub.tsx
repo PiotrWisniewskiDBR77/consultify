@@ -57,7 +57,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
-import { Api } from '@/services/api';
+import { Api, shouldAllowDemoData } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
 // Helper function to safely display error messages
@@ -121,6 +121,7 @@ import {
   type TemplateScope,
   type TemplateSourceFilter,
 } from './templateLibraryMeta';
+import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 
 const INTERVIEW_INBOX_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-inbox-table-view';
 const INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY =
@@ -385,13 +386,13 @@ export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currentProjectId, setCurrentProjectId, currentOrganization } = useAppStore();
+  const { currentProjectId, setCurrentProjectId, currentOrganization, currentUser } = useAppStore();
 
   // Permissions hook
   const {
-    canAssign,
-    canViewManaged,
-    canViewOverdue,
+    canAssign: permissionsCanAssign,
+    canViewManaged: permissionsCanViewManaged,
+    canViewOverdue: permissionsCanViewOverdue,
     isLoading: permissionsLoading,
   } = useInterviewPermissions();
 
@@ -479,12 +480,15 @@ export const InterviewHub: React.FC = () => {
   const [insights, setInsights] = useState<InterviewInsight[]>([]);
   const [templates, setTemplates] = useState<InterviewTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUsingDemoData, setIsUsingDemoData] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Assignments state
   const [myAssignments, setMyAssignments] = useState<InterviewAssignment[]>([]);
   const [managedAssignments, setManagedAssignments] = useState<InterviewAssignment[]>([]);
   const [overdueAssignments, setOverdueAssignments] = useState<InterviewAssignment[]>([]);
   const [assignmentsLoading, setAssignmentsLoading] = useState(false);
+  const allowDemoData = shouldAllowDemoData();
 
   // Modal state
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -494,6 +498,28 @@ export const InterviewHub: React.FC = () => {
   const [showInsightModal, setShowInsightModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<InterviewAssignment | null>(null);
   const [selectedSessionsForInsight, setSelectedSessionsForInsight] = useState<string[]>([]);
+
+  const interviewDemoData = useMemo(
+    () =>
+      createInterviewDemoDataset({
+        currentUserId: currentUser?.id,
+        currentUserName: currentUser?.displayName || (currentUser as any)?.name,
+        currentUserEmail: currentUser?.email,
+        organizationId: currentOrganization?.id,
+        organizationName: currentOrganization?.name,
+      }),
+    [
+      currentOrganization?.id,
+      currentOrganization?.name,
+      currentUser?.displayName,
+      currentUser?.email,
+      currentUser?.id,
+      (currentUser as any)?.name,
+    ]
+  );
+  const canAssign = permissionsCanAssign || isUsingDemoData;
+  const canViewManaged = permissionsCanViewManaged || isUsingDemoData;
+  const canViewOverdue = permissionsCanViewOverdue || isUsingDemoData;
 
   // Interview Inbox preview (Outlook-style) — Assignments
   const [previewAssignmentId, setPreviewAssignmentId] = useState<string | null>(null);
@@ -627,28 +653,40 @@ export const InterviewHub: React.FC = () => {
           Api.get('/interview/templates').catch(() => []),
         ]);
 
-        setSessions(Array.isArray(sessionsRes) ? sessionsRes : []);
-        setInsights(Array.isArray(insightsRes) ? insightsRes : []);
-        setTemplates(
-          (Array.isArray(templatesRes) ? templatesRes : []).map(normalizeTemplateRecord)
+        const apiSessions = Array.isArray(sessionsRes) ? sessionsRes : [];
+        const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
+        const apiTemplates = (Array.isArray(templatesRes) ? templatesRes : []).map(
+          normalizeTemplateRecord
         );
+        setIsUsingDemoData(false);
+        setLoadError(null);
+        setSessions(apiSessions);
+        setInsights(apiInsights);
+        setTemplates(apiTemplates);
       } catch (error) {
         console.error('[InterviewHub] Failed to load data:', error);
+        setIsUsingDemoData(false);
+        setLoadError('Failed to load real interview data from the active data source.');
+        setSessions([]);
+        setInsights([]);
+        setTemplates([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadData();
-  }, []);
+  }, [normalizeTemplateRecord]);
 
   // Load insights function (for refresh)
   const loadInsights = useCallback(async () => {
     try {
       const insightsRes = await Api.get('/interview/insights').catch(() => []);
-      setInsights(Array.isArray(insightsRes) ? insightsRes : []);
+      const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
+      setInsights(apiInsights);
     } catch (error) {
       console.error('[InterviewHub] Failed to load insights:', error);
+      setInsights([]);
     }
   }, []);
 
@@ -661,26 +699,32 @@ export const InterviewHub: React.FC = () => {
       try {
         // Always load my assignments
         const myRes = await Api.get('/interview/assignments/my').catch(() => []);
-        setMyAssignments(Array.isArray(myRes) ? myRes : []);
+        const apiMyAssignments = Array.isArray(myRes) ? myRes : [];
+        setMyAssignments(apiMyAssignments);
 
         // Load managed/overdue only if user has permission
-        if (canViewManaged) {
+        if (permissionsCanViewManaged || isUsingDemoData) {
           const [managedRes, overdueRes] = await Promise.all([
             Api.get('/interview/assignments/managed').catch(() => []),
             Api.get('/interview/assignments/overdue').catch(() => []),
           ]);
-          setManagedAssignments(Array.isArray(managedRes) ? managedRes : []);
-          setOverdueAssignments(Array.isArray(overdueRes) ? overdueRes : []);
+          const apiManagedAssignments = Array.isArray(managedRes) ? managedRes : [];
+          const apiOverdueAssignments = Array.isArray(overdueRes) ? overdueRes : [];
+          setManagedAssignments(apiManagedAssignments);
+          setOverdueAssignments(apiOverdueAssignments);
         }
       } catch (error) {
         console.error('[InterviewHub] Failed to load assignments:', error);
+        setMyAssignments([]);
+        setManagedAssignments([]);
+        setOverdueAssignments([]);
       } finally {
         setAssignmentsLoading(false);
       }
     };
 
     loadAssignments();
-  }, [permissionsLoading, canViewManaged]);
+  }, [permissionsLoading, permissionsCanViewManaged, isUsingDemoData]);
 
   // Open session from URL
   useEffect(() => {
@@ -734,26 +778,50 @@ export const InterviewHub: React.FC = () => {
   // Load template questions when a template doc is opened
   useEffect(() => {
     const doc = openDocuments.find((d) => d.id === activeDocumentId);
-    if (!doc || doc.type !== 'template') return;
-
-    const templateId = doc.id;
+    const templateId =
+      (doc?.type === 'template' ? doc.id : null) ||
+      (activeTab === 'templates' && selectedTemplateId ? selectedTemplateId : null);
+    if (!templateId) return;
     if (templateQuestionsById[templateId] || templateQuestionsLoading[templateId]) return;
 
     setTemplateQuestionsLoading((prev) => ({ ...prev, [templateId]: true }));
+    if (isInterviewDemoId(templateId)) {
+      setTemplateQuestionsById((prev) => ({
+        ...prev,
+        [templateId]: interviewDemoData.templateQuestionsById[templateId] || [],
+      }));
+      setTemplateQuestionsLoading((prev) => ({ ...prev, [templateId]: false }));
+      return;
+    }
+
     Api.get(`/interview/templates/${templateId}/questions`)
       .then((rows) => {
+        const apiRows = Array.isArray(rows) ? rows : [];
         setTemplateQuestionsById((prev) => ({
           ...prev,
-          [templateId]: Array.isArray(rows) ? rows : [],
+          [templateId]:
+            apiRows.length > 0 ? apiRows : interviewDemoData.templateQuestionsById[templateId] || [],
         }));
       })
       .catch((err) => {
         console.error('[InterviewHub] Failed to load template questions:', err);
+        setTemplateQuestionsById((prev) => ({
+          ...prev,
+          [templateId]: interviewDemoData.templateQuestionsById[templateId] || [],
+        }));
       })
       .finally(() => {
         setTemplateQuestionsLoading((prev) => ({ ...prev, [templateId]: false }));
       });
-  }, [activeDocumentId, openDocuments, templateQuestionsById, templateQuestionsLoading]);
+  }, [
+    activeDocumentId,
+    activeTab,
+    interviewDemoData.templateQuestionsById,
+    openDocuments,
+    selectedTemplateId,
+    templateQuestionsById,
+    templateQuestionsLoading,
+  ]);
 
   // Filter sessions
   const filteredSessions = useMemo(() => {
@@ -3147,7 +3215,12 @@ export const InterviewHub: React.FC = () => {
           onClose={() => handleCloseDocument(insight.id)}
           onRegenerate={async () => {
             const insightsRes = await Api.get('/interview/insights').catch(() => []);
-            setInsights(Array.isArray(insightsRes) ? insightsRes : []);
+            const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
+            setInsights(
+              apiInsights.length > 0
+                ? apiInsights
+                : (interviewDemoData.insights as InterviewInsight[])
+            );
           }}
           onSaved={(data) => {
             // Update local insight data
@@ -3170,9 +3243,14 @@ export const InterviewHub: React.FC = () => {
           onClose={() => handleCloseDocument(doc.id)}
           onSuccess={async (savedTemplate) => {
             const templatesRes = await Api.get('/interview/templates').catch(() => []);
-            const refreshedTemplates = (Array.isArray(templatesRes) ? templatesRes : []).map(
+            const refreshedTemplatesApi = (Array.isArray(templatesRes) ? templatesRes : []).map(
               normalizeTemplateRecord
             );
+            const refreshedTemplates = isUsingDemoData
+              ? (interviewDemoData.templates as InterviewTemplate[])
+              : refreshedTemplatesApi.length > 0
+                ? refreshedTemplatesApi
+                : (interviewDemoData.templates as InterviewTemplate[]);
             setTemplates(refreshedTemplates);
 
             if (!savedTemplate?.id) {
@@ -3433,7 +3511,13 @@ export const InterviewHub: React.FC = () => {
 
         const sid = assignment.sessionId || assignment.session?.id;
         if (sid) {
-          const session = await Api.get(`/interview/sessions/${sid}`);
+          const demoSession = interviewDemoData.sessionDetailsById[sid]?.session;
+          const session = isInterviewDemoId(sid)
+            ? demoSession
+            : await Api.get(`/interview/sessions/${sid}`).catch(() => demoSession || null);
+          if (!session) {
+            throw new Error('Failed to load session');
+          }
           handleOpenDocument({
             id: (session as InterviewSession).id,
             type: 'session',
@@ -3471,7 +3555,7 @@ export const InterviewHub: React.FC = () => {
         );
       }
     },
-    [handleOpenDocument, isPolish, startInterviewAssignment]
+    [handleOpenDocument, interviewDemoData.sessionDetailsById, isPolish, startInterviewAssignment]
   );
 
   const runAssignmentAi = useCallback(
@@ -4167,6 +4251,26 @@ Return ONLY the answer text (no markdown fences).`;
       return (
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        </div>
+      );
+    }
+
+    if (loadError) {
+      return (
+        <div className="flex items-center justify-center h-full p-6">
+          <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
+            <div className="text-lg font-semibold text-slate-900 dark:text-white">
+              {isPolish
+                ? 'Realne zrodlo Interview wymaga uwagi'
+                : 'Real interview source needs attention'}
+            </div>
+            <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{loadError}</div>
+            <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {isPolish
+                ? 'Nie wstrzyknieto danych demo. Sprawdz aktywna baze, scope organizacji i data-context.'
+                : 'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context.'}
+            </div>
+          </div>
         </div>
       );
     }
@@ -5468,12 +5572,6 @@ Return ONLY the answer text (no markdown fences).`;
               )}
 
             {/* Area/AI — rightmost in the topbar cluster */}
-            <button
-              className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-              title={isPolish ? 'Kontekst AI' : 'AI Context'}
-            >
-              <Sparkles size={18} />
-            </button>
           </div>
         </div>
       </div>

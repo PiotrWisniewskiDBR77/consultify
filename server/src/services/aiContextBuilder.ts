@@ -6,6 +6,7 @@
 import crypto from 'crypto';
 
 import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
+import { hasColumn } from '../utils/dbSchema.js';
 import organizationContextService from './organizationContext/OrganizationContextService.js';
 import logger from '../utils/Logger.js';
 
@@ -1190,12 +1191,16 @@ export const AIContextBuilder = {
 
       // Initiative success patterns (org-wide)
       if (organizationId) {
+        const hasEstimatedDurationWeeks = await hasColumn('initiatives', 'estimated_duration_weeks');
+        const avgDurationSql = hasEstimatedDurationWeeks
+          ? `AVG(CASE WHEN i.estimated_duration_weeks > 0 THEN i.estimated_duration_weeks ELSE NULL END) as avg_duration_weeks`
+          : `NULL::numeric as avg_duration_weeks`;
         const stats: any = await get(
           `SELECT 
              COUNT(*) as total,
              SUM(CASE WHEN i.status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
              SUM(CASE WHEN i.status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled,
-             AVG(CASE WHEN i.estimated_duration_weeks > 0 THEN i.estimated_duration_weeks ELSE NULL END) as avg_duration_weeks
+             ${avgDurationSql}
            FROM initiatives i
            JOIN projects p ON i.project_id = p.id
            WHERE p.organization_id = ?`,

@@ -114,7 +114,63 @@ We therefore define a **pack** as a content artifact:
 - **Methodology Pack**: structured, compact representation of a licensed/internal methodology (no proprietary leakage; references instead of full copying if required).
 - **Assessment QBank Pack**: questions/examples/evidence patterns per area×level.
 - **Initiatives Pack**: canonical initiative patterns per gap (library of “what typically fixes this”).
-- **Benchmarks Pack**: external benchmark datasets (versioned + provenance).
+- **Benchmarks Pack**: external benchmark datasets, framework comparisons, examples, and reference context (versioned + provenance).
+- **Help Pack**: tool-specific help center content, chat-coach guidance, onboarding checklists, and output guidance aligned with the real runtime.
+
+### 4.2a Support artifacts (non-pack support layer)
+
+Some tool content belongs next to the packs but is not the primary RAG chunk source:
+
+- **Asset Briefs**: preview graphic assumptions, visual legend/caption/alt text, thumbnail rules, teaser/video still guidance.
+
+Canonical location:
+
+- `knowledge/tool-kb/<tool_slug>/assets/v<major>/...`
+
+Rule:
+
+- `assets/` is a support layer, not a primary indexed pack type.
+- It should stay aligned with library preview, help content, and runtime wording.
+
+### 4.2b Canonical 4-block runtime description
+
+Every mature tool should have one canonical runtime-facing description composed of:
+
+1. `Goal`
+2. `Process`
+3. `Outcomes`
+4. `Example`
+
+This is the product-facing explanation layer used for library/detail/help alignment.
+
+Rules:
+
+- `Goal` explains what the tool is for, when to use it, when not to use it, and what minimum input is needed.
+- `Process` explains the real runtime flow in `4-6` user-understandable steps.
+- `Outcomes` explains how to read the result and what downstream outputs it enables.
+- `Example` shows one realistic case from input through insight to action/output.
+
+Authoring size guidance:
+
+- `Goal`: roughly `90-180 words`
+- `Process`: roughly `180-320 words`
+- `Outcomes`: roughly `100-220 words` outside the table/board
+- `Example`: roughly `180-320 words`
+
+Graphics guidance:
+
+- almost every mature tool should have at least one presentation graphic,
+- the primary explainer graphic belongs in `Goal` or `Process`,
+- an optional case graphic may appear in `Example`,
+- canonical asset location remains `knowledge/tool-kb/<tool_slug>/assets/v<major>/...`
+- use one intentional color hierarchy: neutral base, one primary accent, up to `1-2` support accents, and one reserved warning/tension color,
+- highlighted or selected blocks should use consistent emphasis such as tinted background + stronger border + subtle elevation,
+- special graphics are allowed when needed (`flow`, `matrix`, `decision board`, `signal-to-move`, `case walkthrough`), but each must have one clear job,
+- graphics should be authored from a brief with message, hierarchy, legend, semantic colors, and alt text, not improvised ad hoc
+
+The detailed authoring rules for these 4 blocks live in:
+
+- `knowledge/tool-kb/README.md`
 
 ### 4.3 Minimal schema (Tool Knowledge Pack v1)
 
@@ -122,7 +178,7 @@ Each pack must declare:
 
 - **Identity**
   - `tool_slug` (e.g. `drd`, `siri`, `adma`, `balanced_scorecard`)
-  - `pack_type` (qbank / methodology / initiatives / benchmarks)
+  - `pack_type` (qbank / methodology / initiatives / benchmarks / help)
   - `version` (semantic version, e.g. `1.0.0`)
   - `language` (`en` / `pl`)
 - **Provenance**
@@ -136,7 +192,7 @@ Each pack must declare:
 
 ### 4.4 Repo location (SSOT)
 
-Canonical location for packs:
+Canonical location for indexed packs:
 
 - `knowledge/tool-kb/<tool_slug>/<pack_type>/v<major>/...`
 
@@ -144,6 +200,10 @@ Example:
 
 - `knowledge/tool-kb/siri/qbank/v1/siri-qbank.en.md`
 - `knowledge/tool-kb/siri/qbank/v1/siri-qbank.pl.md`
+
+Support artifacts live under:
+
+- `knowledge/tool-kb/<tool_slug>/assets/v<major>/...`
 
 ### 4.5 RAG ingestion mapping (runtime)
 
@@ -157,6 +217,16 @@ Chunking MUST:
 
 - keep stable anchors: `section_id`, `dimension_id`, `level`, etc. in chunk metadata
 - keep chunks small enough for retrieval quality (rule of thumb: 300–1200 tokens)
+
+Indexed pack types in v3:
+
+- `methodology`
+- `qbank`
+- `initiatives`
+- `benchmarks`
+- `help`
+
+Support artifacts under `assets/` are not indexed by default.
 
 ---
 
@@ -183,6 +253,7 @@ When an AI agent produces claims (e.g. “current level is 3 because…”), it 
 For each new tool we add to the Knowledge Bank:
 
 - **Pack files exist** for QBank (min) in EN or PL (prefer both).
+- **Help pack exists** once the tool has a real preview/help surface.
 - **RAG ingestion** loads them into `knowledge_docs` / `knowledge_chunks` with metadata.
 - **Tool UI** uses:
   - QBank questions in the center panel,
@@ -190,6 +261,7 @@ For each new tool we add to the Knowledge Bank:
   - evidence capture,
   - a graphic mirror.
 - **AI assistant** can retrieve tool-scoped chunks and cite them.
+- **Assets brief exists** when the tool exposes a preview graphic, thumbnail, or teaser.
 
 ---
 

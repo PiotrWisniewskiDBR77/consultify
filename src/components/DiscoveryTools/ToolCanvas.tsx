@@ -19,8 +19,9 @@ import { ReportStep } from './steps/ReportStep';
 import { ResultsStep } from './steps/ResultsStep';
 import { SummaryStep } from './steps/SummaryStep';
 import { ToolContextPanel } from './ToolContextPanel';
-import { SWOTCorrelationsStep } from './tools/DynamicSWOT/SWOTCorrelationsStep';
-import { SWOTQuadrantStep } from './tools/DynamicSWOT/SWOTQuadrantStep';
+import { SWOTBuildPhase } from './tools/DynamicSWOT/SWOTBuildPhase';
+import { SWOTInputExplorationPhase } from './tools/DynamicSWOT/SWOTInputExplorationPhase';
+import { SWOTInsightsPhase } from './tools/DynamicSWOT/SWOTInsightsPhase';
 import { GrowthPathQuadrantStep } from './tools/GrowthPaths/GrowthPathQuadrantStep';
 import { ForceStep } from './tools/MarketForces/ForceStep';
 import {
@@ -92,6 +93,40 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
           Loading step...
         </div>
       );
+    }
+
+    if (toolType === 'dynamic-swot') {
+      if (stepDefinition.id === 'mission') {
+        return <ContextStep toolType={toolType} session={session} isPolish={isPolish} />;
+      }
+
+      if (stepDefinition.id === 'input') {
+        return <SWOTInputExplorationPhase session={session} isPolish={isPolish} />;
+      }
+
+      if (stepDefinition.id === 'swot') {
+        return <SWOTBuildPhase session={session} isPolish={isPolish} />;
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return <SWOTInsightsPhase session={session} isPolish={isPolish} />;
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <SummaryStep toolType={toolType} session={session} isPolish={isPolish} />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
+      }
     }
 
     // Context step (first step for all tools)
@@ -170,25 +205,6 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
       }
       if (stepDefinition.id === 'economics') {
         return <ProcessAutomationEconomicsStep session={session} isPolish={isPolish} />;
-      }
-    }
-
-    // Tool-specific steps
-    if (toolType === 'dynamic-swot') {
-      // SWOT quadrant steps
-      if (['strengths', 'weaknesses', 'opportunities', 'threats'].includes(stepDefinition.id)) {
-        return (
-          <SWOTQuadrantStep
-            quadrant={stepDefinition.id as 'strengths' | 'weaknesses' | 'opportunities' | 'threats'}
-            session={session}
-            isPolish={isPolish}
-          />
-        );
-      }
-
-      // Correlations step
-      if (stepDefinition.id === 'correlations') {
-        return <SWOTCorrelationsStep session={session} isPolish={isPolish} />;
       }
     }
 
@@ -379,6 +395,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
         <ToolContextPanel
           toolType={toolType}
           session={session}
+          currentStepId={stepDefinition?.id}
           isPolish={isPolish}
           orgName={orgName}
           aiContent={isStreaming ? streamedContent : undefined}

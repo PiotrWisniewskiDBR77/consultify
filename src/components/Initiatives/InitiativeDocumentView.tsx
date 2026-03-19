@@ -114,6 +114,11 @@ import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
 import { getSourceDisplayLabel } from './InitiativeSourceLink';
 import { InitiativeScrollView } from './InitiativeScrollView';
 import {
+  createInitiativesDemoDataset,
+  isShowcaseArtifactId,
+  isShowcaseInitiativeId,
+} from './initiativesDemoData';
+import {
   DEFAULT_SECTION_ORDER,
   DEFAULT_VISIBLE_SECTIONS,
   GATE_CONFIG,
@@ -249,8 +254,23 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { isChatCollapsed, toggleChatCollapse, setCurrentView, setMyWorkIntent } = useAppStore();
+  const { isChatCollapsed, toggleChatCollapse, setCurrentView, setMyWorkIntent, currentUser } =
+    useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
+
+  const initiativesDemoData = useMemo(() => {
+    const currentUserAny = currentUser as any;
+    const currentUserName =
+      currentUserAny?.name ||
+      [currentUserAny?.firstName, currentUserAny?.lastName].filter(Boolean).join(' ') ||
+      'Piotr Wisniewski';
+
+    return createInitiativesDemoDataset({
+      currentUserId: currentUserAny?.id,
+      currentUserName,
+      currentUserEmail: currentUserAny?.email,
+    });
+  }, [currentUser]);
 
   const normalizeStringList = (value: any): string[] => {
     if (Array.isArray(value)) {
@@ -555,7 +575,6 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
   );
   const [newRaidDescription, setNewRaidDescription] = useState('');
 
-  const currentUser = useAppStore((s) => s.currentUser);
   const currentUserId = currentUser?.id || 'current-user';
   const nModeOrderStorageKey = `initiative:nmode:section-order:v2:${initiativeId}`;
   const initiativeDefinitionDraftStorageKey = `consultify-initiative-definition-draft:v1:${initiativeId}`;
@@ -1408,7 +1427,10 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const data = await Api.getInitiativeById(initiativeId);
+      const showcaseDetail = isShowcaseInitiativeId(initiativeId)
+        ? initiativesDemoData.initiativeDetailsById[initiativeId]
+        : null;
+      const data = showcaseDetail?.initiative || (await Api.getInitiativeById(initiativeId));
       setInitiative(data);
       setInitiativeTemplate(null);
       setTitleDraft(String(data.title || data.name || '').trim());
@@ -1653,6 +1675,30 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       }
       if (data.estimatedDurationMonths != null) {
         setEstimatedDurationMonths(data.estimatedDurationMonths);
+      }
+
+      if (showcaseDetail) {
+        setDecisions(showcaseDetail.decisions || []);
+        setRaidItems(showcaseDetail.raidItems || []);
+        setWatchers(showcaseDetail.watchers || []);
+        setHistory(showcaseDetail.history || []);
+        setTasks(showcaseDetail.tasks || []);
+        setDependencies(showcaseDetail.dependencies || []);
+        setStakeholders(showcaseDetail.stakeholders || []);
+        setUsers(initiativesDemoData.users || []);
+        setPendingApprovals(showcaseDetail.pendingApprovals || []);
+        setComments(showcaseDetail.comments || []);
+        setGateRoles(showcaseDetail.gateRoles || []);
+        setGateReadiness(showcaseDetail.gateReadiness || null);
+        setUserGateRoles(showcaseDetail.gateReadiness?.userRoles || []);
+        setStatusHistory(showcaseDetail.statusHistory || []);
+        setApiResourceItems(showcaseDetail.resources || []);
+        setApiBudgetItems(showcaseDetail.budgetItems || []);
+        setApiToolItems(showcaseDetail.tools || []);
+        setApiIntangibleAssets(showcaseDetail.intangibleAssets || []);
+        setAttachments(showcaseDetail.attachments || []);
+        setLinkedItems(showcaseDetail.linkedItems || []);
+        return;
       }
 
       // Fetch related data (best-effort, parallel)
@@ -1924,7 +1970,13 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [initiativeId, decodeHtmlEntities, initiativeDefinitionDraftStorageKey, isPolish]);
+  }, [
+    initiativeId,
+    decodeHtmlEntities,
+    initiativeDefinitionDraftStorageKey,
+    initiativesDemoData,
+    isPolish,
+  ]);
 
   // Persist local draft continuously so refresh won't lose edits (even before autosave).
   useEffect(() => {
@@ -3533,6 +3585,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const handleOpenTaskArtifact = useCallback(
     (taskId: string) => {
+      if (isShowcaseArtifactId(taskId)) {
+        toast(
+          isPolish
+            ? 'To zadanie demo jest pokazane w kontekście inicjatywy.'
+            : 'This demo task is presented inside the initiative view.'
+        );
+        return;
+      }
       if (onOpenTask) {
         onOpenTask(taskId);
         return;
@@ -3553,6 +3613,14 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
 
   const handleOpenDecisionArtifact = useCallback(
     (decisionId: string) => {
+      if (isShowcaseArtifactId(decisionId)) {
+        toast(
+          isPolish
+            ? 'Ta decyzja demo jest pokazana w kontekście inicjatywy.'
+            : 'This demo decision is presented inside the initiative view.'
+        );
+        return;
+      }
       if (onOpenDecision) {
         onOpenDecision(decisionId);
         return;

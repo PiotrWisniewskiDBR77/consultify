@@ -65,6 +65,10 @@ import {
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useUserCan } from '@/hooks/useUserCan';
 import { useAppStore } from '@/store/useAppStore';
+import { useConversationStore } from '@/store/useConversationStore';
+import { AppView } from '@/types';
+import { createWorkspaceContext, type WorkspaceType } from '@/types/workspace';
+import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { getArtifactPath } from '@/utils/artifactLinks';
 
 import { type DecisionsBulkBarPayload, DecisionsPanelContent } from './DecisionsPanelContent';
@@ -86,43 +90,43 @@ import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
 // Heavy sub-views (TipTap, DnD, calendars, detailed editors) are lazy-loaded.
 // This keeps initial My Work navigation snappy and avoids loading unused tabs upfront.
-const TaskDetailView = React.lazy(() =>
+const TaskDetailView = lazyWithRetry(() =>
   import('./TaskDetailView').then((m) => ({ default: m.TaskDetailView }))
 );
-const IdeaMapWorkspace = React.lazy(() =>
+const IdeaMapWorkspace = lazyWithRetry(() =>
   import('./IdeaMapWorkspace').then((m) => ({ default: m.IdeaMapWorkspace }))
 );
-const DecisionDetailView = React.lazy(() =>
+const DecisionDetailView = lazyWithRetry(() =>
   import('./DecisionDetailView').then((m) => ({ default: m.DecisionDetailView }))
 );
-const NotificationDetailView = React.lazy(() =>
+const NotificationDetailView = lazyWithRetry(() =>
   import('./NotificationDetailView').then((m) => ({ default: m.NotificationDetailView }))
 );
-const ExecutiveDashboard = React.lazy(() =>
+const ExecutiveDashboard = lazyWithRetry(() =>
   import('./Executive/ExecutiveDashboard').then((m) => ({ default: m.ExecutiveDashboard }))
 );
-const HomeView = React.lazy(() =>
+const HomeView = lazyWithRetry(() =>
   import('./Home/HomeView').then((m) => ({ default: m.HomeView }))
 );
-const CalendarView = React.lazy(() =>
+const CalendarView = lazyWithRetry(() =>
   import('./Calendar/CalendarView').then((m) => ({ default: m.CalendarView }))
 );
-const FocusView = React.lazy(() =>
+const FocusView = lazyWithRetry(() =>
   import('./Focus/FocusView').then((m) => ({ default: m.FocusView }))
 );
-const NotebookContent = React.lazy(() =>
+const NotebookContent = lazyWithRetry(() =>
   import('./NotebookContent').then((m) => ({ default: m.NotebookContent }))
 );
-const TasksKanbanBoard = React.lazy(() =>
+const TasksKanbanBoard = lazyWithRetry(() =>
   import('./TasksKanbanBoard').then((m) => ({ default: m.TasksKanbanBoard }))
 );
-const TasksCalendarView = React.lazy(() =>
+const TasksCalendarView = lazyWithRetry(() =>
   import('./TasksCalendarView').then((m) => ({ default: m.TasksCalendarView }))
 );
-const DecisionsKanbanBoard = React.lazy(() =>
+const DecisionsKanbanBoard = lazyWithRetry(() =>
   import('./DecisionsKanbanBoard').then((m) => ({ default: m.DecisionsKanbanBoard }))
 );
-const DecisionsTimelineContainer = React.lazy(() =>
+const DecisionsTimelineContainer = lazyWithRetry(() =>
   import('./DecisionsTimelineView').then((m) => ({ default: m.DecisionsTimelineContainer }))
 );
 
@@ -493,10 +497,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const openChatWithContext = useOpenChatWithContext();
+  const setWorkspaceContext = useConversationStore((s) => s.setWorkspaceContext);
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const {
     currentUser,
+    currentProjectId,
     myWorkIntent,
     clearMyWorkIntent,
     myWorkEvent,
@@ -603,6 +609,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         ? 'ai_suggestions'
         : null;
   const [notebookCreateReqId, setNotebookCreateReqId] = useState(0);
+  const [calendarCreateReqId, setCalendarCreateReqId] = useState(0);
 
   // Focus (KANON v3): no extra toolbars inside content — controls live in Command Row / Tool slot
   const [focusFilter, setFocusFilter] = useState<FocusFilter>('all');
@@ -681,14 +688,71 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
   }, [openDocuments, activeDocumentId]);
 
-  // Auto-open Tools panel for new/unaccepted ideas so the user can fill in title & description
+  // Keep chat "screen context" aligned with My Work sub-page (tab + open artifact)
+  useEffect(() => {
+    const activeDoc = activeDocumentId
+      ? openDocuments.find((d) => d.id === activeDocumentId) || null
+      : null;
+
+    const typeFromActiveDoc: WorkspaceType | null =
+      activeDoc?.type === 'task'
+        ? 'task'
+        : activeDoc?.type === 'decision'
+          ? 'decision'
+          : activeDoc?.type === 'notification'
+            ? 'general'
+            : activeDoc?.type === 'idea'
+              ? 'general'
+              : null;
+
+    const typeFromTab: WorkspaceType =
+      activeTab === 'tasks'
+        ? 'task'
+        : activeTab === 'decisions'
+          ? 'decision'
+          : activeTab === 'calendar'
+            ? 'general'
+            : activeTab === 'notebook'
+              ? 'document'
+              : activeTab === 'manager'
+                ? 'dashboard'
+                : 'general';
+
+    const ctx = createWorkspaceContext(AppView.MY_WORK, typeFromActiveDoc || typeFromTab, {
+      projectId: currentProjectId || undefined,
+      entityId: activeDoc?.id || undefined,
+      entityName: activeDoc?.name || undefined,
+      entityData: {
+        module: 'my_work',
+        tab: activeTab,
+        open: activeDoc ? { type: activeDoc.type, id: activeDoc.id } : null,
+        url: `${location.pathname}${location.search || ''}`,
+      },
+    });
+
+    setWorkspaceContext(ctx);
+  }, [
+    activeTab,
+    activeDocumentId,
+    openDocuments,
+    currentProjectId,
+    location.pathname,
+    location.search,
+    setWorkspaceContext,
+  ]);
+
+  // Auto-open Tools panel only for freshly created ideas.
   const prevDocIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (activeTab !== 'ideas' || !activeDocumentId) return;
     if (activeDocumentId === prevDocIdRef.current) return;
     prevDocIdRef.current = activeDocumentId;
-    setIdeaActivePanel('tools');
-  }, [activeTab, activeDocumentId]);
+    const isNewIdeaDoc = Boolean(
+      openDocuments.find((doc) => doc.id === activeDocumentId)?.data?.isNew ||
+        String(activeDocumentId).startsWith('new-idea-')
+    );
+    setIdeaActivePanel(isNewIdeaDoc ? 'tools' : null);
+  }, [activeTab, activeDocumentId, openDocuments]);
 
   // EventBus refresh counter — incremented when cross-tab events fire.
   // Child tab components include this in their fetch dependency arrays.
@@ -739,11 +803,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   }, []);
 
   // Document handlers (Dynamic Tabs) - defined early to avoid hoisting issues
+  const programmaticTabSwitchRef = useRef(false);
   const handleOpenDocument = useCallback((doc: OpenDocument) => {
     setOpenDocuments((prev) => {
       if (prev.find((d) => d.id === doc.id)) return prev;
       return [...prev, doc];
     });
+    programmaticTabSwitchRef.current = true;
     setActiveTab(getDocumentTab(doc.type));
     setActiveDocumentId(doc.id);
   }, []);
@@ -766,11 +832,15 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setPendingUrlCleanup(null);
   }, [activeDocumentId, pendingUrlCleanup, searchParams, setSearchParams]);
 
-  // Close document only when the user actually switches the main tab.
+  // Close document only when the user manually switches the main tab (not programmatic).
   const previousActiveTabRef = useRef<ModuleTab>(activeTab);
   useEffect(() => {
     if (previousActiveTabRef.current !== activeTab) {
-      setActiveDocumentId(null);
+      if (programmaticTabSwitchRef.current) {
+        programmaticTabSwitchRef.current = false;
+      } else {
+        setActiveDocumentId(null);
+      }
       previousActiveTabRef.current = activeTab;
     }
   }, [activeTab]);
@@ -1040,7 +1110,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     const allTabs = [
       {
         id: 'home' as ModuleTab,
-        label: 'Home',
+        label: 'Radar',
         icon: <Home size={16} />,
         count: tabCounts.home,
         color: 'bg-primary-500',
@@ -1560,40 +1630,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     }
   }, [activeTab]);
 
-  // Plan with AI — opens chat with morning brief context (replaces Morning Brief "Plan with AI" button)
-  const handlePlanWithAI = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/my-work/morning-brief', {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      });
-      const brief = res.ok ? await res.json() : null;
-      const msg =
-        brief &&
-        (brief.overdueTasks?.length ||
-          brief.dueSoon?.length ||
-          brief.pendingDecisions?.length ||
-          brief.newTasks?.length)
-          ? `Help me plan my day. Here's my morning brief:\n` +
-            (brief.overdueTasks?.length ? `- ${brief.overdueTasks.length} overdue tasks\n` : '') +
-            (brief.dueSoon?.length ? `- ${brief.dueSoon.length} tasks due soon\n` : '') +
-            (brief.pendingDecisions?.length
-              ? `- ${brief.pendingDecisions.length} pending decisions\n`
-              : '') +
-            (brief.newTasks?.length ? `- ${brief.newTasks.length} new tasks\n` : '') +
-            `\nSuggest a prioritized plan for today.`
-          : isPolish
-            ? 'Pomóż mi zaplanować dzień.'
-            : 'Help me plan my day.';
-      setChatKickoffMessage(msg);
-      if (isChatCollapsed) toggleChatCollapse();
-    } catch {
-      const msg = isPolish ? 'Pomóż mi zaplanować dzień.' : 'Help me plan my day.';
-      setChatKickoffMessage(msg);
-      if (isChatCollapsed) toggleChatCollapse();
-    }
-  }, [isPolish, isChatCollapsed, setChatKickoffMessage, toggleChatCollapse]);
-
   const handleHomeAction = useCallback(
     async (action: HomeScreenAction) => {
       switch (action.type) {
@@ -1664,7 +1700,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           });
 
           setChatKickoffMessage(packet.starterPrompt);
-          if (isChatCollapsed) toggleChatCollapse();
           return;
         }
         default:
@@ -1678,10 +1713,8 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       handleDecisionClick,
       handleIdeaClick,
       handleTaskClick,
-      isChatCollapsed,
       openChatWithContext,
       setChatKickoffMessage,
-      toggleChatCollapse,
     ]
   );
 
@@ -1692,10 +1725,17 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     switch (activeTab) {
       case 'home':
-      case 'calendar':
       case 'manager':
       case 'inbox':
         return null;
+      case 'calendar':
+        return {
+          label: isPolish ? 'Dodaj wydarzenie' : 'Add event',
+          icon: <Plus size={16} />,
+          onClick: () => setCalendarCreateReqId((v) => v + 1),
+          color: 'from-violet-500 to-purple-600',
+          variant: 'primary' as const,
+        };
       case 'tasks':
         return {
           label: isPolish ? 'Nowe zadanie' : 'New Task',
@@ -1742,6 +1782,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     handleCreateIdea,
     handleCreateDecision,
     setNotebookCreateReqId,
+    setCalendarCreateReqId,
     activeDocumentId,
   ]);
 
@@ -2601,8 +2642,12 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           <React.Suspense fallback={lazyFallback}>
             <CalendarView
               refreshTrigger={refreshTrigger}
+              createRequestId={calendarCreateReqId}
               onTaskClick={handleTaskClick}
               onDecisionClick={handleDecisionClick}
+              onInitiativeClick={(initiativeId) => {
+                navigate(getArtifactPath('initiative', String(initiativeId)));
+              }}
             />
           </React.Suspense>
         );
@@ -2797,9 +2842,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       {/* Navigation Bar (Golden Standard - same as InterviewHub) */}
       <div className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
         {/* Main Navigation Row */}
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between gap-4 px-4 py-3">
           {/* Left: Search + Main Tabs */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Search Toggle */}
             <button
               onClick={() => setShowSearch(!showSearch)}
@@ -2814,7 +2859,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             </button>
 
             {/* Main Tabs */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0 overflow-x-auto whitespace-nowrap">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
@@ -2837,7 +2882,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
           </div>
 
           {/* Right cluster (KANON v3, left→right): Filters → View → Tool → Add → Area */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
+            {/* Scrollable controls (keep primary action always visible) */}
+            <div className="flex items-center gap-3 min-w-0 overflow-x-auto whitespace-nowrap">
             {/* Filters (furthest left in right cluster) */}
             {/* Context-sensitive Filter Dropdown (only show when viewing list) */}
             {currentFilters.length > 0 && (
@@ -3106,6 +3153,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 }}
               />
             )}
+            </div>
 
             {/* Primary Action Button (New Task/Decision/Notification) */}
             {actionButton && (
@@ -3119,23 +3167,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </button>
             )}
 
-            {/* AI (rightmost) */}
-            <button
-              onClick={handlePlanWithAI}
-              className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-              title={isPolish ? 'Kontekst AI' : 'AI Context'}
-              data-testid="mywork-ai-button"
-            >
-              <Sparkles size={18} />
-            </button>
           </div>
         </div>
       </div>
       {/* Command Row (search | dynamic tabs | counters) */}
       {renderCommandRow()}
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto min-h-0">{renderContent()}</div>
+      {/* Main Content Area — calendar needs overflow-hidden + flex-col so FC owns the scroll (sticky headers) */}
+      <div className={`flex-1 min-h-0 ${activeTab === 'calendar' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>{renderContent()}</div>
 
       {/* Startup template picker */}
       <IdeaStartupTemplates

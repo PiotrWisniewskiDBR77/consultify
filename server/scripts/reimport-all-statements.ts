@@ -10,9 +10,13 @@
  *      { periodLabel, periodIndex } so the analytics layer can build
  *      multi-period views.
  */
+import '../src/config/loadEnv.js';
+
 import pg from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import PDFParserService from '../src/services/pdfParserService.js';
+import { requireConfirmation } from './lib/scriptDatabaseTarget.js';
+import { resolveFinanceImportDatabaseUrl, resolveFinanceImportOrgId } from './lib/financeImportTarget.js';
 import {
   autoMapLines,
   classifyStatementDocument,
@@ -32,16 +36,14 @@ import {
 // Config
 // ---------------------------------------------------------------------------
 
-const DB_URL = process.env.DATABASE_URL || process.env.FINANCE_IMPORT_DATABASE_URL;
-if (!DB_URL) {
-  console.error('Set DATABASE_URL or FINANCE_IMPORT_DATABASE_URL');
-  process.exit(1);
-}
+const DB_URL = resolveFinanceImportDatabaseUrl();
+const ORG_ID = resolveFinanceImportOrgId();
 
-const ORG_ID =
-  process.env.FINANCE_IMPORT_ORG_ID ||
-  process.env.TARGET_ORG_ID ||
-  'a3e05d4a-5397-419d-b486-8e44366c0063';
+requireConfirmation(
+  'FINANCE_REIMPORT_CONFIRM',
+  'YES_REIMPORT_ALL_STATEMENTS',
+  'reimport-all-statements'
+);
 
 const DOCUMENTS = [
   // Apator (Polish, PLN, thousands)

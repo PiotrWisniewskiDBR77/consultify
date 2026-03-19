@@ -26,6 +26,7 @@ type KnownToolListItem = {
   tags: string[];
   icon: string | null;
   isLicensed: boolean;
+  isActive: boolean;
   isComingSoon: boolean;
   sortOrder: number;
   createdAt: string | null;
@@ -41,6 +42,7 @@ export type KnownToolFull = {
   tags: string[];
   icon: string | null;
   isLicensed: boolean;
+  isActive: boolean;
   isComingSoon: boolean;
   sortOrder: number;
   createdAt: string | null;
@@ -162,8 +164,64 @@ export const KnownToolPreviewV3Body: React.FC<{
   const [detailsLoading, setDetailsLoading] = useState(false);
 
   const initialDetailsText = useMemo(() => {
-    const lines: string[] = [];
     const desc = String(full?.description || tool.description || '').trim();
+    if (!tool.isActive) {
+      return desc || (isPolish ? 'Narzędzie w przygotowaniu.' : 'Tool in preparation.');
+    }
+
+    if (tool.toolType === 'dynamic-swot') {
+      return isPolish
+        ? [
+            'CEL',
+            'Dynamic SWOT zamienia rozproszoną rozmowę strategiczną w decision-grade diagnozę. Porządkuje evidence z wnętrza firmy i z rynku, buduje napięcia strategiczne oraz prowadzi do ruchów, które realnie zawężają pole decyzji.',
+            '',
+            'KIEDY UŻYĆ',
+            '- gdy zarząd lub zespół ma dużo sygnałów, ale nie ma jednej logiki decyzji',
+            '- gdy trzeba połączyć realia wewnętrzne z rynkiem i dojść do wniosku, a nie tylko opisu sytuacji',
+            '- gdy wynik ma od razu zasilić raport, deck, brief inicjatywy albo dalszą eksplorację',
+            '',
+            'JAK PRACUJE',
+            '- zaczyna od mission briefu: pytania, zakresu, horyzontu, success signal i constraints',
+            '- zbiera sygnały z rozmów, materiałów i benchmarków, a następnie porządkuje je w trybie evidence-first',
+            '- buduje selektywną macierz SWOT i przechodzi do logiki napięć typu attack / repair / defend / protect',
+            '- kończy sesję rekomendowanymi ruchami i materiałem źródłowym do dalszego użycia',
+            '',
+            'CO POWSTAJE',
+            '- rama decyzji i executive diagnoza sytuacji',
+            '- obraz czynników wraz z jakością evidence',
+            '- napięcia strategiczne, rekomendowane ruchy i ich kolejność',
+            '- materiał źródłowy do raportu, prezentacji i inicjatyw',
+            '',
+            'PRZYKŁAD',
+            'Firma myśli o kosztownej automatyzacji, ale Dynamic SWOT pokazuje, że prawdziwym problemem nie jest jeszcze brak technologii. Najpierw trzeba zdiagnozować straty, bottlenecks i brak wspólnej prawdy o sytuacji, a dopiero potem wybierać ruch transformacyjny.',
+          ].join('\n')
+        : [
+            'GOAL',
+            'Dynamic SWOT turns a fragmented strategic conversation into a decision-grade diagnosis. It structures evidence from inside the company and the market, builds strategic tensions, and leads to moves that genuinely narrow the choice.',
+            '',
+            'WHEN TO USE',
+            '- when leadership has many signals but no single decision logic',
+            '- when internal reality must be confronted with market evidence and turned into a conclusion, not just an analysis',
+            '- when the output should immediately feed a report, deck, initiative brief, or follow-on exploration',
+            '',
+            'HOW IT WORKS',
+            '- starts with a mission brief: question, scope, time horizon, success signal, and constraints',
+            '- gathers signals from interviews, materials, and benchmarks, then cleans them in an evidence-first way',
+            '- builds a selective SWOT matrix and moves into attack / repair / defend / protect tension logic',
+            '- closes with recommended moves and a source package for downstream use',
+            '',
+            'WHAT YOU GET',
+            '- a decision frame and an executive diagnosis of the situation',
+            '- a factor picture with visible evidence quality',
+            '- strategic tensions, recommended moves, and move sequence',
+            '- a source package for reports, decks, and initiatives',
+            '',
+            'EXAMPLE',
+            'A company is considering expensive automation, but Dynamic SWOT shows that the real issue is not missing technology yet. The first step is diagnosing losses, bottlenecks, and the missing shared picture of reality, and only then does the transformation move make sense.',
+          ].join('\n');
+    }
+
+    const lines: string[] = [];
     if (desc) lines.push(desc);
     if (full?.whenToUse) {
       lines.push('');
@@ -185,7 +243,7 @@ export const KnownToolPreviewV3Body: React.FC<{
       }
     }
     return lines.join('\n').trim();
-  }, [full, tool.description, tool.whatYouGet, isPolish]);
+  }, [full, isPolish, tool.description, tool.isActive, tool.toolType, tool.whatYouGet]);
 
   useEffect(() => {
     setDetailsText(initialDetailsText);
@@ -268,6 +326,12 @@ export const KnownToolPreviewV3Body: React.FC<{
         ? t('tools.hub.license.licensed', isPolish ? 'Licencja' : 'Licensed')
         : t('tools.hub.license.free', isPolish ? 'Darmowe' : 'Free'),
       className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+    },
+    {
+      label: tool.isActive ? (isPolish ? 'Aktywny' : 'Active') : isPolish ? 'Nieaktywny' : 'Inactive',
+      className: tool.isActive
+        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300'
+        : 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300',
     },
     ...(tool.isComingSoon
       ? [{ label: t('common.comingSoon', isPolish ? 'Wkrótce' : 'Coming soon'), className: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300' }]
@@ -406,13 +470,14 @@ export const KnownToolPreviewV3Footer: React.FC<{
           label: isPolish ? 'Start sesji' : 'Start session',
           onClick: onStartSession,
           colorScheme: 'primary',
-          disabled: tool.isComingSoon,
+          disabled: tool.isComingSoon || !tool.isActive,
           shortcut: 'S',
         },
         {
           label: t('common.open', 'Open'),
           onClick: onOpenFull,
           colorScheme: 'primary',
+          disabled: !tool.isActive,
           shortcut: 'O',
         },
       ],
@@ -424,11 +489,22 @@ export const KnownToolPreviewV3Footer: React.FC<{
           label: isPolish ? 'Czat' : 'Chat',
           onClick: onChat,
           colorScheme: 'neutral',
+          disabled: !tool.isActive,
           shortcut: 'C',
         },
       ],
     },
   ];
+
+  if (!tool.isActive) {
+    return (
+      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-3 text-sm text-slate-600 dark:text-slate-300">
+        {isPolish
+          ? 'To narzędzie jest jeszcze nieaktywne. W preview możesz zobaczyć tylko opis, ale nie otworzysz jeszcze pełnego widoku ani sesji.'
+          : 'This tool is not active yet. In preview you can only see the description, but you cannot open the full view or start a session yet.'}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-0">

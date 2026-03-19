@@ -54,7 +54,7 @@ import {
   TASK_STATUS_FILTER_OPTIONS,
 } from '@/components/ui/ResizableTable';
 import { FilterDropdown } from '@/components/ui/ResizableTable/FilterDropdown';
-import { Api } from '@/services/api';
+import { Api, type DataContextSummary } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { Task } from '@/types';
 
@@ -458,7 +458,8 @@ const TaskTableRow: React.FC<{
   hiddenColumns: hiddenCols,
   focusState,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPolish = i18n.language?.startsWith('pl');
   const [inlineDropdown, setInlineDropdown] = React.useState<'status' | 'priority' | 'date' | null>(
     null
   );
@@ -467,9 +468,12 @@ const TaskTableRow: React.FC<{
   const overdue = isOverdue(task.dueDate, task.status);
   const priorityConfig = getPriorityConfig(task.priority);
   const statusConfig = getStatusConfig(task.status);
-  const assigneeName = task.assignee?.firstName
-    ? `${task.assignee.firstName} ${task.assignee.lastName || ''}`.trim()
-    : 'Unassigned';
+  const assigneeName =
+    task.assignee?.firstName || task.assignee?.lastName
+      ? `${task.assignee.firstName || ''} ${task.assignee.lastName || ''}`.trim()
+      : task.assigneeId
+        ? (isPolish ? 'Ty' : 'You')
+        : 'Unassigned';
   const assigneeInitial = assigneeName !== 'Unassigned' ? assigneeName[0].toUpperCase() : '';
 
   return (
@@ -806,6 +810,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const isPolish = i18n.language?.startsWith('pl');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dataContext, setDataContext] = useState<DataContextSummary | null>(null);
   const [previewTaskId, setPreviewTaskId] = useState<string | null>(null);
 
   // Preview — details kebab + AI zone (Inbox parity)
@@ -935,6 +940,12 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks, refreshTrigger]);
+
+  useEffect(() => {
+    Api.getDataContext()
+      .then((context) => setDataContext(context))
+      .catch(() => setDataContext(null));
+  }, []);
 
   // Group tasks
   const groupedTasks = useMemo(() => {
@@ -1525,6 +1536,26 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   }, [groupedTasks, tableFilters, smartSort]);
 
   const orderedTaskIds = useMemo(() => allFilteredTasks.map((t) => t.id), [allFilteredTasks]);
+  const scopeSummary = useMemo(() => {
+    const orgId = dataContext?.organization.activeOrganizationId || 'unknown-org';
+    const modeLabel =
+      dataContext?.demo.enabled || dataContext?.demo.headerActive
+        ? isPolish
+          ? 'Tryb demo'
+          : 'Demo mode'
+        : isPolish
+          ? 'Dane realne'
+          : 'Real data';
+    return [
+      isPolish ? 'Zakres: zadania osobiste' : 'Scope: personal tasks',
+      'API: /my-work/personal-tasks',
+      `${isPolish ? 'Org' : 'Org'}: ${orgId}`,
+      isPolish
+        ? 'Domyślnie ukryte: done/completed/validated'
+        : 'Hidden by default: done/completed/validated',
+      modeLabel,
+    ];
+  }, [dataContext, isPolish]);
 
   const previewTask = useMemo(
     () => allFilteredTasks.find((t) => t.id === previewTaskId) || null,
@@ -1825,16 +1856,26 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
           }}
         >
           <div className="pl-4 pr-1.5 pt-3 pb-4">
+            <div className="mb-3 flex flex-wrap items-center gap-2 text-[11px]">
+              {scopeSummary.map((item) => (
+                <span
+                  key={item}
+                  className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] px-2.5 py-1 text-slate-600 dark:text-slate-300"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
             {tasks.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-center p-8 bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl">
                 <CheckCircle2 size={48} className="text-slate-400 mb-4" />
                 <h3 className="text-lg font-medium text-slate-700 dark:text-slate-200 mb-2">
-                  {t('myWork.personalTasks.empty.title', 'No tasks yet')}
+                  {t('myWork.personalTasks.empty.title', 'No personal tasks in the current scope')}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                   {t(
                     'myWork.personalTasks.empty.description',
-                    'Create your first task to get started'
+                    'This view shows only personal tasks assigned in the active organization.'
                   )}
                 </p>
                 <button

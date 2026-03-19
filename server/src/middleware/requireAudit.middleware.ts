@@ -13,7 +13,11 @@ import type { AuthRequest } from './auth.middleware.js';
 declare global {
   namespace Express {
     interface Request {
-      emitAuditEvent?: (input: Omit<AuditEventInput, 'actorId' | 'organizationId' | 'ip' | 'userAgent'>) => Promise<string>;
+      emitAuditEvent?: (
+        input: Omit<AuditEventInput, 'actorId' | 'organizationId' | 'ip' | 'userAgent' | 'actorType'> & {
+          actorType?: AuditEventInput['actorType'];
+        }
+      ) => Promise<string>;
     }
   }
 }
@@ -26,6 +30,7 @@ export function requireAudit(
   req.emitAuditEvent = async (input) => {
     return auditEventsService.log({
       ...input,
+      actorType: input.actorType || 'USER',
       actorId: req.user?.id,
       organizationId: req.user?.organizationId,
       ip: req.ip,

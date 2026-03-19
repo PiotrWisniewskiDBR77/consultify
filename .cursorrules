@@ -110,11 +110,11 @@ Nigdy nie zgaduj targetu bazy dla Railway.
    - nie wolno tworzyć ani przywracać local-DB workflowów (`localhost`, `127.0.0.1`, `0.0.0.0`) dla runtime aplikacji, migracji ani importów
    - jeśli external/public DB target jest niedostępny, run ma zostać przerwany; bez fallbacku do lokalnej bazy
 
-4. **Finance import org consistency**:
-   - utrzymuj spójne wartości:
-     - `DEMO_ORG_ID=atelier`
-     - `DEMO_ORG_NAME=Atelier`
-     - `FINANCE_IMPORT_ORG_ID=atelier`
+4. **Organization targeting consistency**:
+   - `dbr77` i `atelier` są równorzędnymi, realnymi tenantami
+   - nie zakładaj już jednego `PRIMARY_BUILD_ORG_ID`
+   - dla importów i seedów zawsze przekazuj jawny `ORG_ID` / `SEED_ORG_ID` / `FINANCE_IMPORT_ORG_ID`
+   - `DEMO_ORG_ID` rezerwuj wyłącznie dla osobnego tenant demo, jeśli faktycznie istnieje
 
 5. **Przed zmianą Railway/staging/prod**:
    - sprawdź aktualny target DB i environment

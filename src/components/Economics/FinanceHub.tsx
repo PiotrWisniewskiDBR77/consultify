@@ -32,7 +32,6 @@ import { BudgetWorkspace } from '../Benefits/BudgetWorkspace';
 import { FinancialAnalysisWorkspace } from '../Benefits/FinancialAnalysisWorkspace';
 import { ValuationWorkspace } from '../Benefits/ValuationWorkspace';
 import { ExportToOutputDialog } from '../Finance/ExportToOutputDialog';
-import { FinancialModelWorkspace } from '../Finance/FinancialModelWorkspace';
 import { FinancialStatementPackWorkspace } from '../Finance/FinancialStatementPackWorkspace';
 import { FinancialStatementImportWizard } from '../Finance/FinancialStatementImportWizard';
 import {
@@ -47,6 +46,7 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { FinanceModelDocumentView } from './FinanceModelDocumentView';
 import { useFinancePreview } from './FinancePreviewPanel';
 import {
   CANVAS_PADDING,
@@ -134,6 +134,7 @@ export const FinanceHub: React.FC = () => {
     valuations,
     budgets,
     loadingTab,
+    loadError,
     loadStatements,
     loadModels,
     loadAnalyses,
@@ -149,12 +150,14 @@ export const FinanceHub: React.FC = () => {
     selectedItem,
     statementPreviewDetail,
     statementPreviewRatios,
+    modelPreviewDetail,
     predictionValidations,
     analysisPreviewRatios,
     budgetPreviewScenarios,
     valuationPreviewResults,
     valuationPreviewDetail,
     getBudgetRawId,
+    loadModelPreview,
     loadPredictionPreview,
     loadBudgetPreviewScenarios,
     loadAnalysisPreviewRatios,
@@ -162,6 +165,17 @@ export const FinanceHub: React.FC = () => {
     onSelectRow,
     deselectRow,
   } = useFinanceSelection(activeTab);
+
+  useEffect(() => {
+    if (!activeDocument) return;
+    if (
+      activeDocument.kind === 'models' ||
+      (activeDocument.kind === 'prediction' &&
+        (activeDocument as FinanceModelRow).predictionType === 'model')
+    ) {
+      void loadModelPreview(activeDocument as FinanceModelRow);
+    }
+  }, [activeDocument, loadModelPreview]);
 
   const statementRows = useMemo(
     () =>
@@ -468,6 +482,7 @@ export const FinanceHub: React.FC = () => {
   const { renderPreviewBody, renderPreviewFooter } = useFinancePreview({
     statementPreviewDetail,
     statementPreviewRatios,
+    modelPreviewDetail,
     predictionValidations,
     analysisPreviewRatios,
     budgetPreviewScenarios,
@@ -697,36 +712,47 @@ export const FinanceHub: React.FC = () => {
         baseTypeCol,
         baseTitleCol,
         {
-          id: 'scenario',
-          label: t('finance.columns.scenario', 'Scenario'),
-          width: '120px',
+          id: 'sourceDocument',
+          label: t('finance.columns.document', 'Document'),
+          width: '220px',
           render: (row: FinanceRow) =>
             row.kind === 'models' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">{row.scenario}</span>
-            ) : (
-              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
-            ),
-        },
-        {
-          id: 'horizon',
-          label: t('finance.columns.horizon', 'Horizon'),
-          width: '100px',
-          render: (row: FinanceRow) =>
-            row.kind === 'models' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">
-                {row.horizonMonths} {t('finance.units.mo', 'mo')}
+              <span className="text-sm text-slate-700 dark:text-slate-200 truncate">
+                {row.sourceDocumentTitle || '—'}
               </span>
             ) : (
               <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
             ),
         },
         {
-          id: 'currency',
-          label: t('common.currency', 'Currency'),
+          id: 'forecastWindow',
+          label: t('finance.columns.forecastWindow', 'Forecast'),
+          width: '120px',
+          render: (row: FinanceRow) =>
+            row.kind === 'models' ? (
+              <span className="text-sm text-slate-700 dark:text-slate-200">{row.forecastWindowLabel}</span>
+            ) : (
+              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+            ),
+        },
+        {
+          id: 'variants',
+          label: t('finance.columns.variants', 'Variants'),
+          width: '190px',
+          render: (row: FinanceRow) =>
+            row.kind === 'models' ? (
+              <span className="text-sm text-slate-700 dark:text-slate-200">{row.variantLabel}</span>
+            ) : (
+              <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
+            ),
+        },
+        {
+          id: 'analyticsDepth',
+          label: t('finance.columns.analyticsDepth', 'Levels'),
           width: '90px',
           render: (row: FinanceRow) =>
             row.kind === 'models' ? (
-              <span className="text-sm text-slate-700 dark:text-slate-200">{row.currency}</span>
+              <span className="text-sm text-slate-700 dark:text-slate-200">{row.analyticalDepthLabel}</span>
             ) : (
               <span className="text-sm text-slate-500 dark:text-slate-400">—</span>
             ),
@@ -900,7 +926,7 @@ export const FinanceHub: React.FC = () => {
           row.kind === 'statements'
             ? `${(row as FinanceStatementRow).completenessLabel || 'PACK'} • ${(row as FinanceStatementRow).currency} • ${((row as FinanceStatementRow).periodLabel || (row as FinanceStatementRow).periodEnd) ?? ''}`
             : row.kind === 'models'
-            ? `${(row as FinanceModelRow).scenario} • ${(row as FinanceModelRow).currency} • ${(row as FinanceModelRow).horizonMonths} ${isPl ? 'mies.' : 'mo'}`
+            ? `${(row as FinanceModelRow).sourceDocumentTitle || (isPl ? 'Model prognostyczny' : 'Forecast model')} • ${(row as FinanceModelRow).forecastWindowLabel || ''} • ${(row as FinanceModelRow).variantLabel || ''}`
             : row.kind === 'prediction'
               ? (row as FinanceModelRow).predictionType === 'budget'
                 ? `${isPl ? 'Budżet' : 'Budget'} • ${(row as FinanceModelRow).periodStart || ''} → ${(row as FinanceModelRow).periodEnd || ''}`
@@ -1226,20 +1252,6 @@ export const FinanceHub: React.FC = () => {
     );
   }, [analyzeActions, showAnalyzeMenu, analyzeActionIcons, isPl, t]);
 
-  const aiControl = useMemo(
-    () => (
-      <button
-        onClick={() => navigate('/chat?context=finance')}
-        className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-full text-sm font-medium bg-gradient-to-r from-purple-500/10 to-violet-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 hover:from-purple-500/15 hover:to-violet-500/15 hover:border-purple-500/30 transition-all duration-150"
-        aria-label={isPl ? 'Otwórz AI Chat w kontekście finansów' : 'Open AI Chat in finance context'}
-      >
-        <Sparkles size={13} />
-        <span>AI</span>
-      </button>
-    ),
-    [navigate, isPl]
-  );
-
   // ---- Command Row ----
   const commandRowContent = useMemo(() => {
     const total = rowsForActiveTab.length;
@@ -1505,10 +1517,9 @@ export const FinanceHub: React.FC = () => {
                 onCreateAnalysisFromPack={handleCreateAnalysisFromStatements}
               />
             ) : isModelWorkspace ? (
-              <FinancialModelWorkspace
-                initialModelId={activeDocument.id}
-                hideSidebar
-                onModelChanged={handleModelChanged}
+              <FinanceModelDocumentView
+                row={activeDocument as FinanceModelRow}
+                detail={modelPreviewDetail}
               />
             ) : openAnalysis ? (
               <FinancialAnalysisWorkspace
@@ -1552,6 +1563,23 @@ export const FinanceHub: React.FC = () => {
         <div className="flex items-center justify-center h-full py-24">
           <div className="text-sm text-slate-500 dark:text-slate-400">
             {t('common.loading', 'Loading…')}
+          </div>
+        </div>
+      );
+    if (!activeDocumentId && loadError)
+      return (
+        <div className="flex items-center justify-center h-full p-6">
+          <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
+            <div className="text-lg font-semibold text-slate-900 dark:text-white">
+              {t('finance.errors.realSourceTitle', 'Real finance source needs attention')}
+            </div>
+            <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{loadError}</div>
+            <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {t(
+                'finance.errors.realSourceHint',
+                'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.'
+              )}
+            </div>
           </div>
         </div>
       );
@@ -1599,6 +1627,7 @@ export const FinanceHub: React.FC = () => {
     return tableWithPreview;
   }, [
     loadingTab,
+    loadError,
     t,
     activeDocumentId,
     activeDocument,
@@ -1632,7 +1661,6 @@ export const FinanceHub: React.FC = () => {
         onClearFilters={handleClearFilters}
         availableViewModes={['table', 'grid']}
         primaryCta={primaryCta}
-        aiControl={aiControl}
         commandRowContent={commandRowContent}
         rightControls={rightControls}
       >

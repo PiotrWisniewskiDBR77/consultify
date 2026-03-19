@@ -69,6 +69,8 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
+import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 type InsightPromptType =
@@ -357,8 +359,26 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const navigate = useNavigate();
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const { isChatCollapsed, toggleChatCollapse } = useAppStore();
+  const { isChatCollapsed, toggleChatCollapse, currentUser, currentOrganization } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
+  const interviewDemoData = useMemo(
+    () =>
+      createInterviewDemoDataset({
+        currentUserId: currentUser?.id,
+        currentUserName: currentUser?.displayName || (currentUser as any)?.name,
+        currentUserEmail: currentUser?.email,
+        organizationId: currentOrganization?.id,
+        organizationName: currentOrganization?.name,
+      }),
+    [
+      currentOrganization?.id,
+      currentOrganization?.name,
+      currentUser?.displayName,
+      currentUser?.email,
+      currentUser?.id,
+      (currentUser as any)?.name,
+    ]
+  );
 
   // N-mode navigation
   const [activeNSection, setActiveNSection] = useState(INSIGHT_SECTIONS[0].id);
@@ -400,10 +420,41 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
   useEffect(() => {
     const loadInsight = async () => {
+      const useDemoInsight = (id: string) => {
+        const demoInsight = interviewDemoData.insightDetailsById[id];
+        if (!demoInsight) return false;
+
+        setInsight(demoInsight as Insight);
+        setTitle(demoInsight.title || '');
+        const demoSessions = demoInsight.sourceSessionIds
+          .map((sessionId: string) => interviewDemoData.sessionDetailsById[sessionId]?.session)
+          .filter(Boolean);
+        setSourceSessions(demoSessions as SourceSession[]);
+        setSourceSessionSummaries(
+          demoInsight.sourceSessionIds.reduce<Record<string, SourceSessionSummary>>((acc, sessionId) => {
+            acc[sessionId] =
+              (interviewDemoData.sessionDetailsById[sessionId]?.summary as SourceSessionSummary) ||
+              DEFAULT_SESSION_SUMMARY;
+            return acc;
+          }, {})
+        );
+        setActivityEntries(
+          (interviewDemoData.insightActivityById[id] || []) as NModeActivityLogEntry[]
+        );
+        setNComments((interviewDemoData.insightCommentsById[id] || []) as CommentItem[]);
+        return true;
+      };
+
       setIsLoading(true);
       setError(null);
       try {
-        const data = await Api.get(`/interview/insights/${insightId}`);
+        if (isInterviewDemoId(insightId) && useDemoInsight(insightId)) return;
+
+        const data = await Api.get(`/interview/insights/${insightId}`).catch(() => null);
+        if (!data) {
+          if (useDemoInsight(insightId)) return;
+          throw new Error('Failed to load insight');
+        }
         setInsight(data);
         setTitle(data.title || '');
 
@@ -454,6 +505,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
         setNComments(Array.isArray(commentsRes) ? commentsRes : []);
       } catch (err: any) {
+        if (useDemoInsight(insightId)) return;
         setError(err?.message || 'Failed to load insight');
         console.error('[InsightViewer] Failed to load insight:', err);
       } finally {
@@ -466,6 +518,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     let lastStatus: InsightStatus | null = null;
     const interval = setInterval(async () => {
       try {
+        if (isInterviewDemoId(insightId)) {
+          clearInterval(interval);
+          return;
+        }
         const data = await Api.get(`/interview/insights/${insightId}`);
         setInsight(data);
         const nextStatus = data?.status as InsightStatus | undefined;
@@ -486,7 +542,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [insightId, isPolish]);
+  }, [insightId, interviewDemoData, isPolish]);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -772,6 +828,30 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       if (!text) return;
 
       try {
+        if (isInterviewDemoId(insightId)) {
+          const created = {
+            id: `demo-comment-${Date.now()}`,
+            authorName: currentUser?.displayName || (currentUser as any)?.name || 'You',
+            content: text,
+            createdAt: new Date().toISOString(),
+            priority: draftPriority,
+          } as CommentItem;
+          setNComments((prev) => [...prev, created]);
+          setActivityEntries((prev) => [
+            {
+              id: `demo-activity-${Date.now()}`,
+              type: 'comment',
+              description: 'Comment added in demo mode.',
+              timestamp: new Date().toISOString(),
+              userName: created.authorName,
+            },
+            ...prev,
+          ]);
+          setCommentDraft('');
+          setDraftPriority('normal');
+          return;
+        }
+
         const created = await Api.post(`/interview/insights/${insightId}/comments`, {
           content: text,
           priority: draftPriority,
@@ -788,12 +868,27 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
       }
     })();
-  }, [commentDraft, draftPriority, insightId, isPolish]);
+  }, [commentDraft, currentUser?.displayName, currentUser?.id, draftPriority, insightId, isPolish, (currentUser as any)?.name]);
 
   const handleDeleteComment = useCallback(
     (commentId: string) => {
       void (async () => {
         try {
+          if (isInterviewDemoId(insightId)) {
+            setNComments((prev) => prev.filter((c) => c.id !== commentId));
+            setActivityEntries((prev) => [
+              {
+                id: `demo-activity-delete-${Date.now()}`,
+                type: 'comment',
+                description: 'Comment removed in demo mode.',
+                timestamp: new Date().toISOString(),
+                userName: currentUser?.displayName || (currentUser as any)?.name || 'You',
+              },
+              ...prev,
+            ]);
+            return;
+          }
+
           await Api.delete(`/interview/insights/${insightId}/comments/${commentId}`);
           setNComments((prev) => prev.filter((c) => c.id !== commentId));
           const activityRes = await Api.get(`/interview/insights/${insightId}/activity`).catch(
@@ -805,7 +900,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }
       })();
     },
-    [insightId, isPolish]
+    [currentUser?.displayName, currentUser?.id, insightId, isPolish, (currentUser as any)?.name]
   );
 
   const getPriorityDotClass = useCallback((p: CommentPriority) => {

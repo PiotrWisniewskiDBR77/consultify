@@ -143,6 +143,205 @@ function normalizeParsedExtraction(parsed: Record<string, unknown>): ExtractionR
   };
 }
 
+// ---------------------------------------------------------------------------
+// Full-document analysis: LLM describes what's in the file and extracts ALL
+// statement sections (P&L, BS, CF) in a single call.
+// ---------------------------------------------------------------------------
+
+export interface DocumentSection {
+  statementType: 'P&L' | 'BS' | 'CF';
+  lines: Array<{
+    originalLabel: string;
+    value: number;
+    confidence: number;
+    sourceRow?: number;
+    suggestedCanonicalId?: string;
+  }>;
+  warnings: string[];
+}
+
+export interface FullDocumentAnalysis {
+  entityName: string;
+  periodLabel: string;
+  periodStart: string;
+  periodEnd: string;
+  currency: string;
+  scaling: string;
+  language: string;
+  documentDescription: string;
+  sections: DocumentSection[];
+  warnings: string[];
+}
+
+function buildFullDocumentPrompt(): string {
+  return `You are a senior financial analyst. Analyze this financial document completely.
+
+Your task:
+1. Identify the company/entity name, reporting period, currency, and scaling (units/thousands/millions).
+2. Find ALL financial statement sections in the document: P&L (Profit & Loss / Income Statement), BS (Balance Sheet), CF (Cash Flow Statement).
+3. For EACH section found, extract ALL financial line items with their values.
+
+CRITICAL RULES:
+- Extract from the MOST RECENT period (typically the leftmost data column after labels).
+- Keep values in the document's native scaling (if the document says "in millions", return the numbers as shown, e.g. 1040 means 1040 million).
+- Keep negative numbers negative. Values in parentheses are negative.
+- For each line, include the original label exactly as it appears in the document.
+- Do NOT skip subtotals or totals — include them (e.g. Total Assets, Net Income, Operating Cash Flow).
+- Ignore page headers, footers, notes, EPS rows, share counts, and narrative text.
+- If a section is not present in the document, omit it from the sections array.
+
+Return ONLY valid JSON in this exact shape:
+{
+  "entityName": "Company Name SA",
+  "periodLabel": "2024",
+  "periodStart": "2024-01-01",
+  "periodEnd": "2024-12-31",
+  "currency": "PLN",
+  "scaling": "millions",
+  "language": "pl",
+  "documentDescription": "Consolidated annual report of Company Name SA for fiscal year 2024. Contains P&L, Balance Sheet, and Cash Flow Statement.",
+  "sections": [
+    {
+      "statementType": "P&L",
+      "lines": [
+        { "originalLabel": "Przychody ze sprzedaży", "value": 3200, "confidence": 0.95, "sourceRow": 1 },
+        { "originalLabel": "Koszty sprzedanych produktów", "value": -2100, "confidence": 0.93, "sourceRow": 2 }
+      ],
+      "warnings": []
+    },
+    {
+      "statementType": "BS",
+      "lines": [
+        { "originalLabel": "Aktywa razem", "value": 5400, "confidence": 0.97, "sourceRow": 1 }
+      ],
+      "warnings": []
+    },
+    {
+      "statementType": "CF",
+      "lines": [
+        { "originalLabel": "Przepływy z działalności operacyjnej", "value": 450, "confidence": 0.90, "sourceRow": 1 }
+      ],
+      "warnings": []
+    }
+  ],
+  "warnings": ["optional document-level warnings"]
+}`;
+}
+
+function normalizeFullDocumentAnalysis(parsed: Record<string, unknown>): FullDocumentAnalysis | null {
+  if (!parsed || !Array.isArray((parsed as any).sections)) return null;
+
+  const sections: DocumentSection[] = ((parsed as any).sections || [])
+    .map((sec: any) => {
+      const st = String(sec?.statementType || '').toUpperCase().trim();
+      const statementType = st === 'PL' || st === 'P&L' ? 'P&L' : st === 'BS' ? 'BS' : st === 'CF' ? 'CF' : null;
+      if (!statementType) return null;
+      const lines = (Array.isArray(sec?.lines) ? sec.lines : [])
+        .map((line: any) => {
+          const originalLabel = String(line?.originalLabel || '').trim();
+          const value = Number(line?.value);
+          if (!originalLabel || !Number.isFinite(value)) return null;
+          return {
+            originalLabel,
+            value,
+            confidence: Math.max(0, Math.min(Number(line?.confidence ?? 0.75), 1)),
+            sourceRow: Number.isFinite(Number(line?.sourceRow)) ? Number(line.sourceRow) : undefined,
+            suggestedCanonicalId: line?.suggestedCanonicalId || undefined,
+          };
+        })
+        .filter(Boolean);
+      if (lines.length === 0) return null;
+      return {
+        statementType,
+        lines,
+        warnings: Array.isArray(sec?.warnings) ? sec.warnings.map(String) : [],
+      };
+    })
+    .filter(Boolean) as DocumentSection[];
+
+  if (sections.length === 0) return null;
+
+  return {
+    entityName: String((parsed as any).entityName || '').trim(),
+    periodLabel: String((parsed as any).periodLabel || '').trim(),
+    periodStart: String((parsed as any).periodStart || '').trim(),
+    periodEnd: String((parsed as any).periodEnd || '').trim(),
+    currency: String((parsed as any).currency || 'PLN').trim().toUpperCase(),
+    scaling: String((parsed as any).scaling || 'units').trim().toLowerCase(),
+    language: String((parsed as any).language || 'en').trim().toLowerCase(),
+    documentDescription: String((parsed as any).documentDescription || '').trim(),
+    sections,
+    warnings: Array.isArray((parsed as any).warnings) ? (parsed as any).warnings.map(String) : [],
+  };
+}
+
+export async function analyzeAndExtractFullDocument(params: {
+  filePath?: string | null;
+  fileName?: string | null;
+  traceId?: string;
+}): Promise<FullDocumentAnalysis | null> {
+  const filePath = String(params.filePath || '').trim();
+  if (!filePath || !fs.existsSync(filePath)) return null;
+
+  const providerConfig = await llmConfigService.getProviderConfig('openai');
+  const apiKey = providerConfig?.apiKey || process.env.OPENAI_API_KEY?.trim();
+  const baseURL = normalizeBaseUrl(providerConfig?.endpoint);
+  if (!apiKey || !isProviderCredentialCompatible('openai', apiKey, baseURL)) return null;
+
+  const fileName = params.fileName || path.basename(filePath);
+  const model = providerConfig?.modelId || 'gpt-4o';
+  const client = new OpenAI({ apiKey, ...(baseURL ? { baseURL } : {}) });
+
+  try {
+    const buffer = fs.readFileSync(filePath);
+    const mimeType = resolveMimeType(fileName);
+    const fileData = `data:${mimeType};base64,${buffer.toString('base64')}`;
+
+    logFinanceEvent('statement.fullAnalysis.started', {
+      traceId: params.traceId, fileName, mimeType, sizeBytes: buffer.length, model,
+    });
+
+    const response = await client.responses.create({
+      model,
+      input: [
+        {
+          role: 'user',
+          content: [
+            { type: 'input_file' as const, filename: fileName, file_data: fileData },
+            { type: 'input_text' as const, text: buildFullDocumentPrompt() },
+          ],
+        },
+      ],
+    });
+
+    const outputText = String((response as any)?.output_text || '');
+    const parsed = extractJsonObject(outputText);
+    if (!parsed) throw new Error('LLM did not return valid JSON for full document analysis');
+
+    const result = normalizeFullDocumentAnalysis(parsed);
+    if (!result) throw new Error('LLM response did not contain valid document sections');
+
+    logFinanceEvent('statement.fullAnalysis.completed', {
+      traceId: params.traceId, fileName, model,
+      entityName: result.entityName, periodLabel: result.periodLabel,
+      sectionCount: result.sections.length,
+      sectionTypes: result.sections.map(s => s.statementType),
+      totalLines: result.sections.reduce((sum, s) => sum + s.lines.length, 0),
+    });
+
+    return result;
+  } catch (error) {
+    logFinanceError('statement.fullAnalysis.failed', error, {
+      traceId: params.traceId, fileName, model,
+    });
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Single-section extraction (original)
+// ---------------------------------------------------------------------------
+
 export async function extractFinancialLinesWithOpenAI(params: {
   filePath?: string | null;
   fileName?: string | null;

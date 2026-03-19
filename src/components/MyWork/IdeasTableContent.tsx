@@ -8,6 +8,7 @@ import {
   Sparkles,
   Sprout,
   Table2,
+  Trash2,
   TreePine,
   Workflow,
 } from 'lucide-react';
@@ -121,6 +122,7 @@ interface IdeasTableContentProps {
   onOpenIdea: (idea: MyIdea) => void;
   onOpenIdeaInProcessFlow: (idea: MyIdea) => void;
   onStartConvert: (idea: MyIdea) => void;
+  onDeleteIdea: (idea: MyIdea) => void;
   onRefresh: () => void;
 }
 
@@ -178,6 +180,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   onOpenIdea,
   onOpenIdeaInProcessFlow,
   onStartConvert,
+  onDeleteIdea,
   onRefresh,
 }) => {
   const [previewIdeaId, setPreviewIdeaId] = useState<string | null>(null);
@@ -590,7 +593,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                 const rowActions: RowAction[] = [
                   {
                     id: 'open',
-                    label: isPolish ? 'Otworz' : 'Open',
+                    label: isPolish ? 'Otwórz' : 'Open',
                     onClick: () => onOpenIdea(idea),
                   },
                   {
@@ -601,9 +604,17 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   },
                   {
                     id: 'flow',
-                    label: isPolish ? 'Otworz w Process Flow' : 'Open in Process Flow',
+                    label: isPolish ? 'Otwórz w Process Flow' : 'Open in Process Flow',
                     icon: Workflow,
                     onClick: () => onOpenIdeaInProcessFlow(idea),
+                  },
+                  {
+                    id: 'delete',
+                    label: isPolish ? 'Usuń' : 'Delete',
+                    icon: Trash2,
+                    variant: 'danger',
+                    divider: true,
+                    onClick: () => onDeleteIdea(idea),
                   },
                 ];
 

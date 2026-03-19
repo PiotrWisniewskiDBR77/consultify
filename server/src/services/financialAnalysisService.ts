@@ -74,8 +74,78 @@ function safeDiv(n: number, d: number): number | null {
   if (!d || d === 0) return null;
   return n / d;
 }
+
+function safePct(n: number, d: number): number | null {
+  const ratio = safeDiv(n, d);
+  return ratio == null ? null : ratio * 100;
+}
+
+type BenchmarkDirection = 'higher' | 'lower';
+
+function describeAgainstBenchmark(
+  value: number | null,
+  benchmark: number | undefined,
+  direction: BenchmarkDirection,
+  message: string
+): string | undefined {
+  if (value == null) return `${message} Insufficient source data to compute this KPI.`;
+  if (benchmark == null) return message;
+
+  const strong =
+    direction === 'higher' ? value >= benchmark : value <= benchmark;
+  const watch =
+    direction === 'higher' ? value >= benchmark * 0.85 : value <= benchmark * 1.15;
+
+  const suffix = strong
+    ? 'Currently within a healthy operating range.'
+    : watch
+      ? 'Close to the reference range but worth monitoring.'
+      : 'Outside the typical reference range and should be reviewed.';
+
+  return `${message} ${suffix}`;
+}
+
+function buildRatio(
+  category: string,
+  code: string,
+  name: string,
+  value: number | null,
+  benchmark: number | undefined,
+  direction: BenchmarkDirection,
+  message: string
+): RatioResult {
+  return {
+    category,
+    code,
+    name,
+    value,
+    benchmark,
+    interpretation: describeAgainstBenchmark(value, benchmark, direction, message),
+  };
+}
+
+function toPersistedRatioCategory(category: string): string {
+  switch (category) {
+    case 'profitability':
+      return 'profitability';
+    case 'cost_control':
+      return 'efficiency';
+    case 'cash_liquidity':
+      return 'liquidity';
+    case 'working_capital':
+      return 'efficiency';
+    case 'leverage':
+      return 'leverage';
+    case 'investment':
+      return 'growth';
+    default:
+      return 'efficiency';
+  }
+}
+
 function safeJsonParse(raw: string | null | undefined, fb: any = {}): any {
   if (!raw) return fb;
+  if (typeof raw !== 'string') return raw;
   try {
     return JSON.parse(raw);
   } catch {
@@ -480,6 +550,7 @@ export function computeHorizontalAnalysis(
 export function computeRatios(data: StatementData, period: string): RatioResult[] {
   const pl = (c: string) => lineVal(data.pl, c, period);
   const bs = (c: string) => lineVal(data.bs, c, period);
+  const cf = (c: string) => lineVal(data.cf, c, period);
   const bsAny = (...codes: string[]) => {
     for (const c of codes) {
       const v = bs(c);
@@ -494,93 +565,226 @@ export function computeRatios(data: StatementData, period: string): RatioResult[
     }
     return 0;
   };
+  const cfAny = (...codes: string[]) => {
+    for (const c of codes) {
+      const v = cf(c);
+      if (v !== 0) return v;
+    }
+    return 0;
+  };
   const ca = bs('CURRENT_ASSETS');
   const cl = bs('CURRENT_LIABILITIES');
   const inv = bs('INVENTORY');
   const cash = bs('CASH');
   const ta = bs('TOTAL_ASSETS');
   const te = bsAny('TOTAL_EQUITY', 'EQUITY');
-  // Align with T054 (financialModelingService) and T050 canonical lines.
-  // We use long-term debt as the default leverage proxy.
-  const td = bsAny('LONG_TERM_DEBT', 'TOTAL_LIABILITIES');
-  const rec = bsAny('AR', 'RECEIVABLES');
+  const td = bsAny('TOTAL_DEBT', 'LONG_TERM_DEBT', 'SHORT_TERM_DEBT', 'TOTAL_LIABILITIES');
+  const rec = bsAny('AR', 'TRADE_RECEIVABLES', 'RECEIVABLES');
+  const payables = bsAny('AP', 'TRADE_PAYABLES', 'CURRENT_LIABILITIES');
   const rev = plAny('REVENUE', 'SALES');
   const cogs = pl('COGS');
-  const gp = plAny('GROSS_PROFIT', 'GROSS_MARGIN');
-  const oi = plAny('EBIT', 'OPERATING_INCOME', 'EBITDA');
+  const gpDirect = plAny('GROSS_PROFIT', 'GROSS_MARGIN');
+  const gp = gpDirect !== 0 ? gpDirect : rev - cogs;
+  const ebitda = plAny('EBITDA', 'OPERATING_INCOME', 'EBIT');
+  const ebit = plAny('EBIT', 'OPERATING_INCOME', 'EBITDA');
   const ni = pl('NET_INCOME');
-  const ie = pl('INTEREST_EXPENSE');
+  const ie = plAny('INTEREST_EXPENSE', 'FINANCIAL_EXPENSE');
+  const directLabor =
+    plAny(
+      'DIRECT_LABOR_COGS',
+      'PRODUCTION_PAYROLL_COGS',
+      'PRODUCTION_COSTS',
+      'PAYROLL_COST'
+    ) + plAny('GNA_PAYROLL', 'SOCIAL_SECURITY');
+  const energy =
+    plAny('MATERIALS_AND_ENERGY', 'ENERGY_COST', 'UTILITIES_EXPENSE') || 0;
+  const operatingCf = cfAny('OPERATING_CF', 'CF_GENERATED', 'OPERATING_CASH_FLOW');
+  const capex = Math.abs(cfAny('CAPEX', 'CAPEX_CF', 'CAPITAL_EXPENDITURES'));
+  const freeCashFlow = cfAny('FREE_CASH_FLOW', 'FCF') || operatingCf - capex;
+  const contributionBaseCosts =
+    cogs || plAny('MATERIALS_COGS', 'RAW_MATERIALS_COGS') + directLabor + energy;
+  const contributionMargin = safePct(rev - contributionBaseCosts, rev);
+  const grossMargin = safePct(gp, rev);
+  const ebitdaMargin = safePct(ebitda, rev);
+  const netMargin = safePct(ni, rev);
+  const cogsRatio = safePct(cogs, rev);
+  const laborCostRatio = safePct(directLabor, rev);
+  const energyCostRatio = safePct(energy, rev);
+  const currentRatio = safeDiv(ca, cl);
+  const quickRatio = safeDiv(ca - inv, cl);
+  const inventoryDays = safeDiv(inv, cogs) != null ? safeDiv(inv, cogs)! * 365 : null;
+  const dso = safeDiv(rec, rev) != null ? safeDiv(rec, rev)! * 365 : null;
+  const dpo = safeDiv(payables, cogs) != null ? safeDiv(payables, cogs)! * 365 : null;
+  const cashConversionCycle =
+    inventoryDays != null && dso != null && dpo != null ? inventoryDays + dso - dpo : null;
+  const operatingCashFlowToEbitda = safeDiv(operatingCf, ebitda);
+  const inventoryTurnover = safeDiv(cogs, inv);
+  const debtToEbitda = safeDiv(td, ebitda);
+  const interestCoverage = safeDiv(ebit, ie);
+
   return [
-    { category: 'liquidity', code: 'current_ratio', name: 'Current Ratio', value: safeDiv(ca, cl) },
-    {
-      category: 'liquidity',
-      code: 'quick_ratio',
-      name: 'Quick Ratio',
-      value: safeDiv(ca - inv, cl),
-    },
-    { category: 'liquidity', code: 'cash_ratio', name: 'Cash Ratio', value: safeDiv(cash, cl) },
-    {
-      category: 'profitability',
-      code: 'gross_margin_pct',
-      name: 'Gross Margin %',
-      value: safeDiv(gp, rev) !== null ? safeDiv(gp, rev)! * 100 : null,
-    },
-    {
-      category: 'profitability',
-      code: 'operating_margin_pct',
-      name: 'Operating Margin %',
-      value: safeDiv(oi, rev) !== null ? safeDiv(oi, rev)! * 100 : null,
-    },
-    {
-      category: 'profitability',
-      code: 'net_margin_pct',
-      name: 'Net Margin %',
-      value: safeDiv(ni, rev) !== null ? safeDiv(ni, rev)! * 100 : null,
-    },
-    {
-      category: 'profitability',
-      code: 'roa_pct',
-      name: 'ROA %',
-      value: safeDiv(ni, ta) !== null ? safeDiv(ni, ta)! * 100 : null,
-    },
-    {
-      category: 'profitability',
-      code: 'roe_pct',
-      name: 'ROE %',
-      value: safeDiv(ni, te) !== null ? safeDiv(ni, te)! * 100 : null,
-    },
-    {
-      category: 'efficiency',
-      code: 'asset_turnover',
-      name: 'Asset Turnover',
-      value: safeDiv(rev, ta),
-    },
-    {
-      category: 'efficiency',
-      code: 'inventory_turnover',
-      name: 'Inventory Turnover',
-      value: safeDiv(cogs, inv),
-    },
-    {
-      category: 'efficiency',
-      code: 'dso',
-      name: 'Days Sales Outstanding',
-      value: safeDiv(rec, rev) !== null ? safeDiv(rec, rev)! * 365 : null,
-    },
-    {
-      category: 'leverage',
-      code: 'debt_to_equity',
-      name: 'Debt-to-Equity',
-      value: safeDiv(td, te),
-    },
-    { category: 'leverage', code: 'debt_ratio', name: 'Debt Ratio', value: safeDiv(td, ta) },
-    {
-      category: 'leverage',
-      code: 'interest_coverage',
-      name: 'Interest Coverage',
-      value: safeDiv(oi, ie),
-    },
-    { category: 'growth', code: 'revenue_growth', name: 'Revenue Growth', value: null },
+    buildRatio(
+      'profitability',
+      'gross_margin_pct',
+      'Gross Margin (%)',
+      grossMargin,
+      30,
+      'higher',
+      'Shows how much revenue remains after direct production costs.'
+    ),
+    buildRatio(
+      'profitability',
+      'ebitda_margin_pct',
+      'EBITDA Margin (%)',
+      ebitdaMargin,
+      15,
+      'higher',
+      'Measures core operating profitability before depreciation, financing, and tax.'
+    ),
+    buildRatio(
+      'profitability',
+      'net_profit_margin_pct',
+      'Net Profit Margin (%)',
+      netMargin,
+      8,
+      'higher',
+      'Shows what portion of revenue is retained as bottom-line profit.'
+    ),
+    buildRatio(
+      'profitability',
+      'contribution_margin_pct',
+      'Contribution Margin (%)',
+      contributionMargin,
+      20,
+      'higher',
+      'Shows how much revenue is available to cover fixed costs after variable cost absorption.'
+    ),
+    buildRatio(
+      'cost_control',
+      'cogs_to_revenue_pct',
+      'COGS / Revenue (%)',
+      cogsRatio,
+      65,
+      'lower',
+      'Tracks whether manufacturing and delivery costs are under control.'
+    ),
+    buildRatio(
+      'cost_control',
+      'labor_cost_ratio_pct',
+      'Labor Cost Ratio (%)',
+      laborCostRatio,
+      18,
+      'lower',
+      'Shows how much of revenue is consumed by payroll and labor-heavy operations.'
+    ),
+    buildRatio(
+      'cost_control',
+      'energy_cost_ratio_pct',
+      'Energy Cost Ratio (%)',
+      energyCostRatio,
+      8,
+      'lower',
+      'Highlights exposure to energy and utilities intensity in operations.'
+    ),
+    buildRatio(
+      'cash_liquidity',
+      'current_ratio',
+      'Current Ratio',
+      currentRatio,
+      1.5,
+      'higher',
+      'Tests short-term liquidity using all current assets against current liabilities.'
+    ),
+    buildRatio(
+      'cash_liquidity',
+      'quick_ratio',
+      'Quick Ratio',
+      quickRatio,
+      1,
+      'higher',
+      'Tests hard liquidity without relying on inventory conversion.'
+    ),
+    buildRatio(
+      'cash_liquidity',
+      'cash_conversion_cycle',
+      'Cash Conversion Cycle (CCC)',
+      cashConversionCycle,
+      45,
+      'lower',
+      'Shows how many days cash is tied up in receivables and inventory net of payables.'
+    ),
+    buildRatio(
+      'cash_liquidity',
+      'operating_cf_to_ebitda',
+      'Operating Cash Flow / EBITDA',
+      operatingCashFlowToEbitda,
+      0.8,
+      'higher',
+      'Checks whether accounting profit is converting into operating cash.'
+    ),
+    buildRatio(
+      'cash_liquidity',
+      'free_cash_flow',
+      'Free Cash Flow (FCF)',
+      freeCashFlow,
+      0,
+      'higher',
+      'Shows how much cash remains after operating needs and capital expenditures.'
+    ),
+    buildRatio(
+      'working_capital',
+      'inventory_days',
+      'Inventory Days',
+      inventoryDays,
+      75,
+      'lower',
+      'Shows how long inventory stays on hand before it is sold.'
+    ),
+    buildRatio(
+      'working_capital',
+      'dso',
+      'DSO (Days Sales Outstanding)',
+      dso,
+      45,
+      'lower',
+      'Measures how long the company waits to collect cash from customers.'
+    ),
+    buildRatio(
+      'working_capital',
+      'dpo',
+      'DPO (Days Payables Outstanding)',
+      dpo,
+      60,
+      'lower',
+      'Shows supplier payment timing and working-capital financing discipline.'
+    ),
+    buildRatio(
+      'working_capital',
+      'inventory_turnover',
+      'Inventory Turnover',
+      inventoryTurnover,
+      5,
+      'higher',
+      'Measures how quickly inventory is converted into revenue.'
+    ),
+    buildRatio(
+      'leverage',
+      'debt_to_ebitda',
+      'Debt / EBITDA',
+      debtToEbitda,
+      3,
+      'lower',
+      'Measures debt load relative to operating cash earnings capacity.'
+    ),
+    buildRatio(
+      'leverage',
+      'interest_coverage',
+      'Interest Coverage Ratio (EBIT / Interest)',
+      interestCoverage,
+      4,
+      'higher',
+      'Shows how comfortably operating profit covers interest burden.'
+    ),
   ];
 }
 export function computeTrends(data: StatementData, periods: string[]): TrendResult[] {
@@ -634,15 +838,15 @@ export function generateInsights(
       description: `Current ratio (${cr.value.toFixed(2)}) below 1.0`,
       priority: 3,
     });
-  const de = ratios.find((r) => r.code === 'debt_to_equity');
+  const de = ratios.find((r) => r.code === 'debt_to_ebitda');
   if (de?.value != null && de.value > 3)
     ins.push({
       type: 'risk',
       title: 'High leverage risk',
-      description: `Debt-to-equity (${de.value.toFixed(2)}) exceeds 3.0`,
+      description: `Debt / EBITDA (${de.value.toFixed(2)}) exceeds 3.0`,
       priority: 3,
     });
-  const nm = ratios.find((r) => r.code === 'net_margin_pct');
+  const nm = ratios.find((r) => r.code === 'net_profit_margin_pct');
   if (nm?.value != null && nm.value < 2)
     ins.push({
       type: 'risk',
@@ -692,7 +896,7 @@ export async function runFullAnalysis(orgId: string, analysisId: string): Promis
           uuidv4(),
           analysisId,
           p,
-          r.category,
+          toPersistedRatioCategory(r.category),
           r.code,
           r.name,
           r.value,

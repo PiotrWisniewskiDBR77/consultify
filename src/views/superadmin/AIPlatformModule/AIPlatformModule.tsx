@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { Api } from '../../../services/api';
 import { InfoButton } from '../../../components/shared/InfoButton';
 import { ModelRegistryHub } from '../../../components/SuperAdmin/ModelRegistry';
 import { useHelpSidePanel } from '../../../contexts/HelpContext';
@@ -184,6 +185,17 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
 }) => {
   const [activeMainTab, setActiveMainTab] = useState(initialTab || 'configuration');
   const [activeSubTab, setActiveSubTab] = useState<string | null>(initialSubTab || null);
+  const [internetSignal, setInternetSignal] = useState<{
+    loading: boolean;
+    internetEnabled: boolean;
+    tavilyConfigured: boolean;
+    webSearchAvailable: boolean;
+  }>({
+    loading: true,
+    internetEnabled: false,
+    tavilyConfigured: false,
+    webSearchAvailable: false,
+  });
   const { setHelpDocumentIdOverride } = useHelpSidePanel();
 
   // Get current main tab configuration
@@ -374,6 +386,44 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
     return byKey[key] || byMainTab[activeMainTab] || 'superadmin-ai-infrastructure';
   };
 
+  // Internet status signal (green/red) in SuperAdmin header.
+  useEffect(() => {
+    let mounted = true;
+    Api.getAIGovernancePolicy()
+      .then((json: any) => {
+        if (!mounted) return;
+        const summary = json?.data?.summary || null;
+        const runtime = json?.data?.runtime || null;
+        setInternetSignal({
+          loading: false,
+          internetEnabled: Boolean(summary?.internetEnabled),
+          tavilyConfigured: Boolean(runtime?.tavilyConfigured),
+          webSearchAvailable: Boolean(runtime?.webSearchAvailable),
+        });
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setInternetSignal((prev) => ({ ...prev, loading: false }));
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const internetDotClass = internetSignal.loading
+    ? 'bg-slate-300 dark:bg-slate-600'
+    : internetSignal.webSearchAvailable
+      ? 'bg-emerald-500'
+      : 'bg-red-500';
+
+  const internetLabel = internetSignal.loading
+    ? 'Internet: checking'
+    : internetSignal.webSearchAvailable
+      ? 'Internet: ON'
+      : internetSignal.internetEnabled && !internetSignal.tavilyConfigured
+        ? 'Internet: KEY MISSING'
+        : 'Internet: OFF';
+
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950 overflow-hidden">
       {/* Header */}
@@ -386,7 +436,24 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
               {currentMainTab?.description || 'Unified AI management and configuration'}
             </p>
           </div>
-          <InfoButton cardId={getHelpCardId()} position="header-inline" size="md" />
+          <div className="flex items-center gap-3">
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950"
+              title={
+                internetSignal.loading
+                  ? 'Checking internet & web search configuration'
+                  : `Policy: ${internetSignal.internetEnabled ? 'enabled' : 'disabled'}; Tavily key: ${
+                      internetSignal.tavilyConfigured ? 'configured' : 'missing'
+                    }`
+              }
+            >
+              <span className={`w-2 h-2 rounded-full ${internetDotClass}`} />
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                {internetLabel}
+              </span>
+            </div>
+            <InfoButton cardId={getHelpCardId()} position="header-inline" size="md" />
+          </div>
         </div>
 
         {/* Main Tabs */}

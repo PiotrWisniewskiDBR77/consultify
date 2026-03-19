@@ -6,13 +6,10 @@
  * Connected to backend: /api/report-builder, /api/presentations
  */
 
-import { BookTemplate, FileText, Filter, Presentation, Sparkles } from 'lucide-react';
+import { BookTemplate, FileText, Filter, Presentation } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
-import { useConversationStore } from '@/store/useConversationStore';
 
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
@@ -33,9 +30,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-  const openChatWithContext = useOpenChatWithContext();
-  const displayMode = useConversationStore((s) => s.displayMode);
-  const setDisplayMode = useConversationStore((s) => s.setDisplayMode);
 
   const initialTab = useMemo<RapTab>(() => {
     const params = new URLSearchParams(location.search || '');
@@ -56,9 +50,14 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
     useModuleOpenDocuments('reports_presentations');
 
-  const { reports, loading: reportsLoading, fetchReports } = useReports();
-  const { presentations, loading: presLoading, fetchPresentations } = usePresentations();
-  const { templates, loading: templatesLoading } = useTemplates();
+  const { reports, loading: reportsLoading, error: reportsError, fetchReports } = useReports();
+  const {
+    presentations,
+    loading: presLoading,
+    error: presentationsError,
+    fetchPresentations,
+  } = usePresentations();
+  const { templates, loading: templatesLoading, error: templatesError } = useTemplates();
   const actions = useRapActions();
 
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -125,35 +124,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const handleClearFilters = useCallback(() => {
     setActiveFilters([]);
   }, []);
-
-  const handleOpenAI = useCallback(async () => {
-    try {
-      await openChatWithContext({
-        entityType: 'reports_presentations',
-        entityId: `rap:${activeTab}`,
-        entityName: t('rap.title', 'Reports & Presentations'),
-        contextData: { activeTab, searchQuery, activeFilters },
-      });
-      if (displayMode === 'collapsed') setDisplayMode('split');
-    } catch {
-      // silent
-    }
-  }, [activeFilters, activeTab, displayMode, openChatWithContext, searchQuery, setDisplayMode, t]);
-
-  const aiControl = useMemo(
-    () => (
-      <button
-        type="button"
-        onClick={handleOpenAI}
-        data-testid="rap-ai-button"
-        className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-        title={t('common.ai', 'AI')}
-      >
-        <Sparkles size={18} />
-      </button>
-    ),
-    [handleOpenAI, t]
-  );
 
   const toggleFilter = useCallback(
     (column: string, value: string, label: string, color?: string) => {
@@ -526,6 +496,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onFilterChange={setActiveFilters}
             templates={templates}
             loading={templatesLoading}
+            error={templatesError}
           />
         );
       case 'reports':
@@ -537,6 +508,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onFilterChange={setActiveFilters}
             reports={reports}
             loading={reportsLoading}
+            error={reportsError}
             onRefresh={fetchReports}
             actions={actions}
           />
@@ -550,6 +522,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             onFilterChange={setActiveFilters}
             presentations={presentations}
             loading={presLoading}
+            error={presentationsError}
             onRefresh={fetchPresentations}
             actions={actions}
           />
@@ -585,7 +558,6 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         newItemLabel={ctaLabels[activeTab]}
         availableViewModes={['table', 'grid']}
         rightControls={rightControls}
-        aiControl={aiControl}
         commandRowContent={commandRowContent}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderTabContent()}</div>

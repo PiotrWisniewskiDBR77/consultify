@@ -7,16 +7,19 @@
  * - Tool-specific analysis generation
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useAIStream } from '@/hooks/useAIStream';
 import {
-  InitiativeDraft,
-  SWOTCorrelation,
-  SWOTItem,
-  ToolType,
-  useToolStore,
-} from '@/store/useToolStore';
+  CONSULTING_TOOL_AI_BEHAVIOR_RULES,
+  CONSULTING_TOOL_CONTEXT_SOURCES,
+  CONSULTING_TOOL_CONVERSATION_LAYERS,
+  CONSULTING_TOOL_EXPERIENCE_PRINCIPLES,
+  CONSULTING_TOOL_RUNTIME_STAGES,
+  CONSULTING_TOOL_SOURCE_ARTIFACTS,
+  CONSULTING_TOOL_STANDARD_OUTPUTS,
+} from '@/config/consultingToolsStandard';
+import { useAIStream } from '@/hooks/useAIStream';
+import { SWOTCorrelation, SWOTData, SWOTItem, ToolType, useToolStore } from '@/store/useToolStore';
 
 import { useOrganizationContext } from './useOrganizationContext';
 
@@ -45,21 +48,37 @@ interface UseToolAIReturn {
 
 // ==================== SYSTEM PROMPTS ====================
 
-const BASE_SYSTEM_PROMPT = `You are an expert strategic consultant helping users perform strategic analysis.
-You have deep knowledge of business strategy frameworks and can provide actionable insights.
+const BASE_SYSTEM_PROMPT = `You are an expert consulting AI helping users think, not just generate text.
+You act as a consultant, mentor, and challenger. Your job is to reduce friction, guide the conversation, structure evidence, explain your reasoning, and help the user reach practical conclusions.
 
 RESPONSE GUIDELINES:
 1. Be concise but comprehensive
 2. Use bullet points for clarity
-3. Provide specific, actionable recommendations
-4. Reference the organization's context when relevant
-5. When generating JSON, ensure it's valid and properly formatted
+3. Ask short purposeful questions when information is missing
+4. Provide specific, actionable recommendations
+5. Reference the organization's context when relevant
+6. When using benchmarks or external points of reference, say so explicitly
+7. When generating JSON, ensure it's valid and properly formatted
 
 LANGUAGE: Respond in the same language as the user's input (Polish or English).`;
 
-const SWOT_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}
+const CONSULTING_TOOLS_STANDARD_PROMPT = `
+
+CONSULTING TOOLS STANDARD:
+- Canonical runtime flow: ${CONSULTING_TOOL_RUNTIME_STAGES.join(' -> ')}
+- Canonical outputs: ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
+- AI behavior rules: ${CONSULTING_TOOL_AI_BEHAVIOR_RULES.join('; ')}
+- Experience principles: ${CONSULTING_TOOL_EXPERIENCE_PRINCIPLES.join('; ')}
+- Conversation layers: ${CONSULTING_TOOL_CONVERSATION_LAYERS.join(' -> ')}
+- Context sources to consider: ${CONSULTING_TOOL_CONTEXT_SOURCES.join(', ')}
+- Source artifacts: ${CONSULTING_TOOL_SOURCE_ARTIFACTS.join(', ')}
+- Always preserve explicit context, analysis, applied conclusions, final summary, and output readiness.
+`;
+
+const SWOT_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}${CONSULTING_TOOLS_STANDARD_PROMPT}
 
 You are guiding the user through a Dynamic SWOT analysis.
+Do not behave like a static template filler. Behave like a strategic advisor who explains what matters and why.
 
 SWOT FRAMEWORK:
 - Strengths: Internal positive attributes and resources
@@ -82,9 +101,10 @@ When generating correlations, use this JSON format:
 When generating initiatives, use this JSON format:
 {"initiatives": [{"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "rationale": "..."}]}`;
 
-const PORTER_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}
+const PORTER_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}${CONSULTING_TOOLS_STANDARD_PROMPT}
 
 You are guiding the user through Porter's Five Forces analysis.
+Challenge assumptions, explain strategic implications, and connect findings to defensibility, margin, and positioning.
 
 PORTER'S FIVE FORCES:
 1. Competitive Rivalry - Intensity of competition among existing firms
@@ -109,9 +129,10 @@ When generating initiatives, focus on:
 - Reducing substitute threat
 - Improving bargaining power`;
 
-const GROWTH_PATHS_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}
+const GROWTH_PATHS_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}${CONSULTING_TOOLS_STANDARD_PROMPT}
 
 You are guiding the user through the Ansoff Matrix (Growth Paths).
+Help the user compare options, challenge wishful thinking, and keep the finish presentation-ready.
 
 QUADRANTS:
 1. Market Penetration - current products, current markets
@@ -122,9 +143,10 @@ QUADRANTS:
 When generating initiatives, return JSON:
 {"initiatives": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
 
-const PORTFOLIO_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}
+const PORTFOLIO_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}${CONSULTING_TOOLS_STANDARD_PROMPT}
 
 You are guiding the user through a BCG-style portfolio prioritization.
+Push toward explicit trade-offs, sequencing, and what should not be prioritized.
 
 DIMENSIONS:
 - Market Growth (1-5)
@@ -133,30 +155,30 @@ DIMENSIONS:
 Categories: star, cash-cow, question-mark, dog.
 Provide priority and rationale where relevant.`;
 
-const RISK_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}
+const RISK_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}${CONSULTING_TOOLS_STANDARD_PROMPT}
 
 You are guiding the user through a Strategic Risk & Uncertainty assessment.
 
-Provide assumptions, risks, scenarios, and mitigation suggestions.
+Provide assumptions, risks, scenarios, applied implications, and mitigation suggestions.
 Use concise, actionable entries.`;
 
-const OPERATIONAL_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}
+const OPERATIONAL_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}${CONSULTING_TOOLS_STANDARD_PROMPT}
 
 You are guiding the user through an Operational Excellence tool.
 
-Provide concise, actionable items for each operational section.
+Provide concise, actionable items for each operational section and explain operational implications, not only observations.
 When generating items, return JSON:
 {"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
 
-const PROCESS_AUTOMATION_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}
+const PROCESS_AUTOMATION_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}${CONSULTING_TOOLS_STANDARD_PROMPT}
 
-You are guiding the user through a Process Automation (Speed Tool) wizard.
+You are guiding the user through a Process Automation (Speed Tool) workflow.
 
 Focus on:
 - identifying automation candidates
 - estimating baseline vs target time and error rates
 - building a fast business case (hours saved, savings, payback)
-- turning outcomes into execution-ready initiatives
+- turning outcomes into applied conclusions and execution-ready initiatives
 
 When generating items for mapping/redesign steps, return JSON:
 {"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
@@ -169,12 +191,21 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     currentSession,
     currentStep,
     getStepDefinitions,
+    updateInputData,
+    addSWOTSignal,
     addSWOTItem,
     addCorrelation,
-    addInitiative,
+    setSWOTTensions,
+    setSWOTMoves,
+    setSWOTOutputCandidates,
+    setSWOTSummary,
+    setInitiatives,
   } = useToolStore();
 
   const [error, setError] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<
+    'suggestions' | 'correlations' | 'summary' | null
+  >(null);
 
   const { startStream, isStreaming, streamedContent, abortStream } = useAIStream();
 
@@ -223,20 +254,21 @@ ${orgContext}
 === END CONTEXT ===`;
   }, [toolType, formatForPrompt]);
 
-  // Extract JSON from AI response
-  const extractJSON = useCallback((content: string, key: string): any[] => {
+  const extractObject = useCallback((content: string): Record<string, any> | null => {
     try {
-      // Try to find JSON in the response
       const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return parsed[key] || [];
-      }
+      if (!jsonMatch) return null;
+      return JSON.parse(jsonMatch[0]);
     } catch (e) {
-      console.error('[useToolAI] Failed to extract JSON:', e);
+      console.error('[useToolAI] Failed to extract object:', e);
+      return null;
     }
-    return [];
   }, []);
+
+  const currentStepDef = useMemo(() => {
+    const stepDefs = getStepDefinitions();
+    return stepDefs[currentStep - 1];
+  }, [currentStep, getStepDefinitions]);
 
   // Send a message to the AI
   const sendMessage = useCallback(
@@ -245,9 +277,6 @@ ${orgContext}
 
       try {
         const systemPrompt = getSystemPrompt();
-        const stepDefs = getStepDefinitions();
-        const currentStepDef = stepDefs[currentStep - 1];
-
         // Build context about current step
         const stepContext = currentStepDef
           ? `\n\nCURRENT STEP: ${currentStepDef.name}\nSTEP DESCRIPTION: ${currentStepDef.description}`
@@ -266,7 +295,7 @@ ${orgContext}
         console.error('[useToolAI] Error sending message:', e);
       }
     },
-    [getSystemPrompt, currentSession, currentStep, getStepDefinitions, startStream]
+    [currentSession, currentStepDef, getSystemPrompt, startStream]
   );
 
   // Request AI suggestions for current step
@@ -281,15 +310,48 @@ ${orgContext}
     let prompt = '';
 
     if (toolType === 'dynamic-swot') {
-      if (['strengths', 'weaknesses', 'opportunities', 'threats'].includes(currentStepDef.id)) {
-        prompt = `Based on the organization context, suggest 5 ${currentStepDef.id} for this SWOT analysis.
+      if (currentStepDef.id === 'mission') {
+        const swotData = currentSession?.inputData as SWOTData | undefined;
+        prompt = `Act as an AI strategy mentor. Improve the mission brief for this Dynamic SWOT session.
 
-Consider the industry, company size, and current strategic situation.
+Current mission context:
+- Strategic question: ${swotData?.context?.goal || 'missing'}
+- Scope: ${swotData?.context?.scope || 'missing'}
+- Success signal: ${swotData?.context?.successSignal || 'missing'}
+- Time horizon: ${swotData?.context?.timeframe || 'missing'}
 
-Return your suggestions as JSON in this exact format:
-{"items": [{"text": "specific item description", "impact": "high|medium|low", "quadrant": "${currentStepDef.id}"}]}
+Return JSON:
+{"mission": {"goal": "...", "scope": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+      } else if (currentStepDef.id === 'input') {
+        const swotData = currentSession?.inputData as SWOTData | undefined;
+        prompt = `Act as an AI strategy mentor. Based on the mission and organization context, propose 4-6 high-value signals for the Input & Exploration phase.
 
-Provide specific, actionable items relevant to this organization.`;
+Mission:
+- Strategic question: ${swotData?.context?.goal || 'missing'}
+- Scope: ${swotData?.context?.scope || 'missing'}
+- Success signal: ${swotData?.context?.successSignal || 'missing'}
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["..."], "evidenceType": "fact|observation|hypothesis", "state": "accepted|proposed|needs-evidence", "provenance": "..."}]}`;
+      } else if (currentStepDef.id === 'swot') {
+        const swotData = currentSession?.inputData as SWOTData | undefined;
+        const signalsSummary = (swotData?.signals || [])
+          .slice(0, 20)
+          .map((signal) => `- [${signal.type}] ${signal.content}`)
+          .join('\n');
+
+        prompt = `Act as an AI strategy mentor. Turn the following signals into candidate SWOT items.
+
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- keep items concrete
+- avoid duplicates
+- separate internal vs external
+- classify each item into strengths, weaknesses, opportunities, or threats
+
+Return JSON:
+{"items": [{"text": "...", "impact": "high|medium|low", "quadrant": "strengths|weaknesses|opportunities|threats", "confidence": 1-5, "status": "accepted|proposed"}]}`;
       }
     } else if (toolType === 'market-forces') {
       if (
@@ -297,7 +359,7 @@ Provide specific, actionable items relevant to this organization.`;
           currentStepDef.id
         )
       ) {
-        prompt = `Analyze the ${currentStepDef.name} force for this industry.
+        prompt = `Act as an AI strategy mentor. Analyze the ${currentStepDef.name} force for this industry.
 
 Provide:
 1. A score from 1-5 (1=very low, 5=very high)
@@ -305,7 +367,7 @@ Provide:
 3. Current trend (increasing/stable/decreasing)
 4. Strategic implications
 
-Be specific to the organization's industry and market position.`;
+Be specific to the organization's industry and market position. Explain the "why", not only the score.`;
       }
     } else if (toolType === 'growth-paths') {
       if (
@@ -316,29 +378,33 @@ Be specific to the organization's industry and market position.`;
           'diversification',
         ].includes(currentStepDef.id)
       ) {
-        prompt = `Suggest 3-5 initiatives for the ${currentStepDef.name} quadrant.
+        prompt = `Act as an AI growth mentor. Suggest 3-5 initiatives for the ${currentStepDef.name} quadrant.
+
+Keep them realistic, mutually distinguishable, and easy to compare in later discussion.
 
 Return JSON:
 {"initiatives": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
       }
     } else if (toolType === 'portfolio-priority') {
       if (currentStepDef.id === 'portfolio-items') {
-        prompt = `Propose 3-5 portfolio initiatives with market growth and share scores.
+        prompt = `Act as an AI portfolio mentor. Propose 3-5 portfolio initiatives with market growth and share scores.
+
+Bias toward explicit trade-offs and prioritization clarity.
 
 Return JSON:
 {"items": [{"title": "...", "description": "...", "marketGrowth": 3, "marketShare": 3, "investmentLevel": 3}]}`;
       }
     } else if (toolType === 'risk-uncertainty') {
       if (currentStepDef.id === 'assumptions') {
-        prompt = `List 3-5 key assumptions with confidence (1-5). Return JSON:
+        prompt = `Act as an AI risk mentor. List 3-5 key assumptions with confidence (1-5). Return JSON:
 {"assumptions": [{"text": "...", "confidence": 3}]}`;
       }
       if (currentStepDef.id === 'risks') {
-        prompt = `List 3-5 strategic risks with probability/impact (1-5) and mitigation. Return JSON:
+        prompt = `Act as an AI risk mentor. List 3-5 strategic risks with probability/impact (1-5) and mitigation. Return JSON:
 {"risks": [{"description": "...", "probability": 3, "impact": 3, "mitigation": "..."}]}`;
       }
       if (currentStepDef.id === 'scenarios') {
-        prompt = `List 2-4 scenarios with likelihood (1-5) and notes. Return JSON:
+        prompt = `Act as an AI risk mentor. List 2-4 scenarios with likelihood (1-5) and notes. Return JSON:
 {"scenarios": [{"title": "...", "likelihood": 3, "notes": "..."}]}`;
       }
     } else if (
@@ -367,7 +433,9 @@ Return JSON:
       ].includes(toolType)
     ) {
       if (currentStepDef.id !== 'context' && currentStepDef.id !== 'summary') {
-        prompt = `Provide 3-5 concise items for ${currentStepDef.name}.
+        prompt = `Act as an AI operations mentor. Provide 3-5 concise items for ${currentStepDef.name}.
+
+Prefer items that can later support applied conclusions and concrete outputs.
 
 Return JSON:
 {"items": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
@@ -375,9 +443,10 @@ Return JSON:
     }
 
     if (prompt) {
+      setPendingAction('suggestions');
       await sendMessage(prompt);
     }
-  }, [toolType, currentStep, getStepDefinitions, sendMessage]);
+  }, [toolType, currentStep, currentSession?.inputData, getStepDefinitions, sendMessage]);
 
   // Generate correlations (SWOT-specific)
   const generateCorrelations = useCallback(async () => {
@@ -400,7 +469,8 @@ Return JSON:
       )
       .join('\n');
 
-    const prompt = `Analyze these SWOT items and identify strategic correlations:
+    const prompt = `Analyze these SWOT items and identify strategic correlations.
+Act as an AI strategy mentor: explain the most meaningful tensions, not just mechanically pair items.
 
 ${itemsSummary}
 
@@ -413,6 +483,7 @@ Generate 4-6 strategic correlations that connect:
 Return as JSON:
 {"correlations": [{"items": ["id1", "id2"], "type": "SO|WO|ST|WT", "insight": "strategic insight", "initiativeProposal": "proposed action"}]}`;
 
+    setPendingAction('correlations');
     await sendMessage(prompt);
   }, [toolType, currentSession, sendMessage]);
 
@@ -430,24 +501,63 @@ Return as JSON:
         .map((item: SWOTItem) => `- ${item.quadrant.toUpperCase()}: ${item.text}`)
         .join('\n');
 
-      prompt = `Based on this completed SWOT analysis:
+      prompt = `Based on this completed SWOT analysis, produce a consulting-grade finish:
 
 ${itemsSummary}
 
 Provide:
 1. Executive Summary (3-4 sentences)
 2. Top 3 Key Insights
-3. 3-5 Strategic Initiative Recommendations
+3. Applied Conclusions: what this means, what to do, what not to do, what to validate next
+4. 3-5 Recommended Strategic Moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
 
-For initiatives, return as JSON:
-{"summary": "executive summary text", "insights": ["insight 1", "insight 2", "insight 3"], "initiatives": [{"title": "Initiative Name", "description": "What it does", "type": "strategic|operational|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "Why this matters"}]}`;
+The executive summary should function as the final source summary for downstream outputs.
+
+Return as JSON:
+{
+  "summary": "executive summary text",
+  "insights": ["insight 1", "insight 2", "insight 3"],
+  "appliedConclusions": [
+    "practical implication 1",
+    "practical implication 2"
+  ],
+  "moves": [{
+    "title": "Move name",
+    "category": "quick-win|big-bet|defensive-move|capability-build",
+    "rationale": "Why this matters",
+    "linkedItemIds": ["item1"],
+    "expectedImpact": "high|medium|low",
+    "estimatedEffort": "high|medium|low",
+    "riskLevel": "high|medium|low",
+    "confidence": 4,
+    "firstStep": "first action"
+  }],
+  "initiatives": [{
+    "title": "Initiative Name",
+    "description": "What it does",
+    "type": "strategic|operational|defensive|growth",
+    "estimatedImpact": "high|medium|low",
+    "estimatedEffort": "high|medium|low",
+    "rationale": "Why this matters",
+    "linkedItems": ["item1"]
+  }],
+  "outputCandidates": [{
+    "outputType": "initiative|report|presentation|idea",
+    "title": "Output title",
+    "description": "What should be created",
+    "linkedItemIds": ["item1"],
+    "rationale": "Why this output now",
+    "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"
+  }]
+}`;
     } else if (toolType === 'market-forces') {
       const porterData = currentSession.inputData as any;
       const forcesSummary = Object.entries(porterData.forces || {})
         .map(([key, force]: [string, any]) => `- ${force.name}: ${force.score}/5 (${force.trend})`)
         .join('\n');
 
-      prompt = `Based on this Porter's Five Forces analysis:
+      prompt = `Based on this Porter's Five Forces analysis, create a consulting-grade final summary:
 
 ${forcesSummary}
 
@@ -455,34 +565,38 @@ Provide:
 1. Overall Industry Attractiveness Score (1-5)
 2. Executive Summary (3-4 sentences)
 3. Top 3 Strategic Implications
-4. 3-5 Competitive Initiative Recommendations
+4. Applied Conclusions for the organization
+5. 3-5 Competitive Initiative Recommendations
 
 Return as JSON:
-{"attractiveness": 3, "summary": "executive summary", "insights": ["insight 1", "insight 2"], "initiatives": [{"title": "...", "description": "...", "type": "...", "rationale": "..."}]}`;
+{"attractiveness": 3, "summary": "executive summary", "insights": ["insight 1", "insight 2"], "appliedConclusions": ["..."], "initiatives": [{"title": "...", "description": "...", "type": "...", "rationale": "..."}]}`;
     } else if (toolType === 'growth-paths') {
-      prompt = `Summarize the Ansoff Matrix analysis:
+      prompt = `Summarize the Ansoff Matrix analysis in a way that can feed report and presentation creation:
 1. Executive Summary (3-4 sentences)
 2. Top 3 insights
-3. 3-5 initiative recommendations (with impact/effort)
+3. Applied Conclusions
+4. 3-5 initiative recommendations (with impact/effort)
 
 Return JSON:
-{"summary": "...", "insights": ["..."], "initiatives": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
+{"summary": "...", "insights": ["..."], "appliedConclusions": ["..."], "initiatives": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
     } else if (toolType === 'portfolio-priority') {
-      prompt = `Summarize portfolio priorities:
+      prompt = `Summarize portfolio priorities in a consulting-grade way:
 1. Executive Summary
 2. Top 3 insights
-3. 3-5 initiatives (with rationale)
+3. Applied Conclusions
+4. 3-5 initiatives (with rationale)
 
 Return JSON:
-{"summary": "...", "insights": ["..."], "initiatives": [{"title": "...", "description": "...", "rationale": "..."}]}`;
+{"summary": "...", "insights": ["..."], "appliedConclusions": ["..."], "initiatives": [{"title": "...", "description": "...", "rationale": "..."}]}`;
     } else if (toolType === 'risk-uncertainty') {
-      prompt = `Summarize risks and scenarios:
+      prompt = `Summarize risks and scenarios in a consulting-grade way:
 1. Executive Summary
 2. Top 3 insights
-3. 3-5 resilience initiatives
+3. Applied Conclusions
+4. 3-5 resilience initiatives
 
 Return JSON:
-{"summary": "...", "insights": ["..."], "initiatives": [{"title": "...", "description": "...", "rationale": "..."}]}`;
+{"summary": "...", "insights": ["..."], "appliedConclusions": ["..."], "initiatives": [{"title": "...", "description": "...", "rationale": "..."}]}`;
     } else if (
       [
         'sop-builder',
@@ -518,9 +632,246 @@ Return JSON:
     }
 
     if (prompt) {
+      setPendingAction('summary');
       await sendMessage(prompt);
     }
   }, [toolType, currentSession, sendMessage]);
+
+  useEffect(() => {
+    if (isStreaming || !pendingAction || !streamedContent || toolType !== 'dynamic-swot') return;
+
+    const parsed = extractObject(streamedContent);
+    if (!parsed) {
+      setPendingAction(null);
+      return;
+    }
+
+    if (pendingAction === 'suggestions' && currentStepDef) {
+      if (currentStepDef.id === 'mission' && parsed.mission) {
+        updateInputData({
+          context: {
+            ...(currentSession?.inputData as SWOTData | undefined)?.context,
+            goal: typeof parsed.mission.goal === 'string' ? parsed.mission.goal : '',
+            scope: typeof parsed.mission.scope === 'string' ? parsed.mission.scope : '',
+            successSignal:
+              typeof parsed.mission.successSignal === 'string' ? parsed.mission.successSignal : '',
+            constraints:
+              typeof parsed.mission.constraints === 'string' ? parsed.mission.constraints : '',
+            assumptions:
+              typeof parsed.mission.assumptions === 'string' ? parsed.mission.assumptions : '',
+            kpiTarget: typeof parsed.mission.kpiTarget === 'string' ? parsed.mission.kpiTarget : '',
+            timeframe:
+              parsed.mission.timeframe === 'short' ||
+              parsed.mission.timeframe === 'medium' ||
+              parsed.mission.timeframe === 'long'
+                ? parsed.mission.timeframe
+                : 'medium',
+          },
+        } as Partial<SWOTData>);
+      }
+
+      if (currentStepDef.id === 'input') {
+        const signals = Array.isArray(parsed.signals) ? parsed.signals : [];
+        const existingSignals = (
+          (currentSession?.inputData as SWOTData | undefined)?.signals || []
+        ).map((signal) => `${signal.type}:${signal.content.toLowerCase().trim()}`);
+
+        signals.forEach((signal) => {
+          if (!signal?.content || !signal?.type) return;
+          const key = `${signal.type}:${String(signal.content).toLowerCase().trim()}`;
+          if (existingSignals.includes(key)) return;
+          addSWOTSignal({
+            type: signal.type,
+            content: String(signal.content),
+            sourceLabel: String(signal.sourceLabel || 'AI mentor'),
+            confidence: typeof signal.confidence === 'number' ? signal.confidence : 3,
+            tags: Array.isArray(signal.tags) ? signal.tags.filter(Boolean) : [],
+            evidenceType:
+              signal.evidenceType === 'fact' ||
+              signal.evidenceType === 'observation' ||
+              signal.evidenceType === 'hypothesis'
+                ? signal.evidenceType
+                : 'observation',
+            state:
+              signal.state === 'accepted' ||
+              signal.state === 'proposed' ||
+              signal.state === 'needs-evidence'
+                ? signal.state
+                : 'proposed',
+            provenance: String(signal.provenance || signal.sourceLabel || 'AI mentor'),
+          });
+        });
+      }
+
+      if (currentStepDef.id === 'swot') {
+        const items = Array.isArray(parsed.items) ? parsed.items : [];
+        const existingItems = (
+          (currentSession?.inputData as SWOTData | undefined)?.items || []
+        ).map((item) => `${item.quadrant}:${item.text.toLowerCase().trim()}`);
+        items.forEach((item) => {
+          if (!item?.text || !item?.quadrant) return;
+          const key = `${item.quadrant}:${String(item.text).toLowerCase().trim()}`;
+          if (existingItems.includes(key)) return;
+          addSWOTItem({
+            text: String(item.text),
+            quadrant: item.quadrant,
+            impact: item.impact || 'medium',
+            source: 'ai',
+            confidence: typeof item.confidence === 'number' ? item.confidence : 3,
+            status: item.status === 'accepted' ? 'accepted' : 'proposed',
+          });
+        });
+      }
+    }
+
+    if (pendingAction === 'correlations') {
+      const correlations = Array.isArray(parsed.correlations) ? parsed.correlations : [];
+      const currentCorrelations = ((currentSession?.inputData as SWOTData | undefined)
+        ?.correlations || []) as SWOTCorrelation[];
+      const normalizedCorrelations = correlations.filter(
+        (corr) =>
+          Array.isArray(corr?.items) &&
+          corr.items.length >= 2 &&
+          typeof corr?.type === 'string' &&
+          typeof corr?.insight === 'string'
+      );
+      normalizedCorrelations.forEach((corr) => {
+        const duplicate = currentCorrelations.some(
+          (existing) =>
+            existing.type === corr.type &&
+            existing.insight === corr.insight &&
+            existing.items.join('|') === corr.items.join('|')
+        );
+        if (!duplicate) {
+          addCorrelation({
+            items: corr.items,
+            type: corr.type,
+            insight: corr.insight,
+            initiativeProposal: corr.initiativeProposal,
+          });
+        }
+      });
+
+      setSWOTTensions(
+        normalizedCorrelations.map((corr) => ({
+          title:
+            corr.type === 'SO'
+              ? 'Attack opportunity'
+              : corr.type === 'WO'
+                ? 'Repair to capture'
+                : corr.type === 'ST'
+                  ? 'Defend with strength'
+                  : 'Protect against exposure',
+          type:
+            corr.type === 'SO'
+              ? 'attack'
+              : corr.type === 'WO'
+                ? 'repair'
+                : corr.type === 'ST'
+                  ? 'defend'
+                  : 'protect',
+          linkedCorrelationIds: [],
+          linkedItemIds: corr.items,
+          insight: corr.insight,
+          whyNow: corr.initiativeProposal,
+          confidence: 4,
+        }))
+      );
+    }
+
+    if (pendingAction === 'summary') {
+      const initiatives = Array.isArray(parsed.initiatives) ? parsed.initiatives : [];
+      const moves = Array.isArray(parsed.moves) ? parsed.moves : [];
+      const outputCandidates = Array.isArray(parsed.outputCandidates)
+        ? parsed.outputCandidates
+        : [];
+
+      setSWOTSummary({
+        executiveSummary: typeof parsed.summary === 'string' ? parsed.summary : '',
+        keyInsights: Array.isArray(parsed.insights) ? parsed.insights.filter(Boolean) : [],
+        appliedConclusions: Array.isArray(parsed.appliedConclusions)
+          ? parsed.appliedConclusions.filter(Boolean)
+          : [],
+        recommendedInitiatives: initiatives.map((initiative) => ({
+          id: '',
+          title: initiative.title,
+          description: initiative.description || '',
+          type: initiative.type || 'strategic',
+          source: toolType,
+          linkedItems: initiative.linkedItems || [],
+          estimatedImpact: initiative.estimatedImpact || 'medium',
+          estimatedEffort: initiative.estimatedEffort || 'medium',
+          rationale: initiative.rationale || '',
+        })),
+      });
+
+      setSWOTMoves(
+        moves.map((move) => ({
+          title: move.title,
+          category: move.category || 'quick-win',
+          rationale: move.rationale || '',
+          linkedTensionIds: move.linkedTensionIds || [],
+          linkedItemIds: move.linkedItemIds || [],
+          expectedImpact: move.expectedImpact || 'medium',
+          estimatedEffort: move.estimatedEffort || 'medium',
+          riskLevel: move.riskLevel || 'medium',
+          confidence: typeof move.confidence === 'number' ? move.confidence : 3,
+          firstStep: move.firstStep || '',
+        }))
+      );
+
+      setSWOTOutputCandidates(
+        outputCandidates.map((candidate) => ({
+          outputType: candidate.outputType || 'initiative',
+          title: candidate.title,
+          description: candidate.description || '',
+          linkedMoveIds: candidate.linkedMoveIds || [],
+          linkedItemIds: candidate.linkedItemIds || [],
+          rationale: candidate.rationale || '',
+          readiness:
+            candidate.readiness === 'ready-for-initiative' ||
+            candidate.readiness === 'ready-for-presentation' ||
+            candidate.readiness === 'ready-for-report' ||
+            candidate.readiness === 'keep-as-idea' ||
+            candidate.readiness === 'blocked'
+              ? candidate.readiness
+              : 'keep-as-idea',
+        }))
+      );
+
+      setInitiatives(
+        initiatives.map((initiative) => ({
+          title: initiative.title,
+          description: initiative.description || '',
+          type: initiative.type || 'strategic',
+          source: toolType,
+          linkedItems: initiative.linkedItems || [],
+          estimatedImpact: initiative.estimatedImpact || 'medium',
+          estimatedEffort: initiative.estimatedEffort || 'medium',
+          rationale: initiative.rationale || '',
+        }))
+      );
+    }
+
+    setPendingAction(null);
+  }, [
+    addSWOTSignal,
+    addCorrelation,
+    addSWOTItem,
+    currentSession?.inputData,
+    currentStepDef,
+    extractObject,
+    isStreaming,
+    pendingAction,
+    updateInputData,
+    setInitiatives,
+    setSWOTMoves,
+    setSWOTOutputCandidates,
+    setSWOTSummary,
+    setSWOTTensions,
+    streamedContent,
+    toolType,
+  ]);
 
   // Get opening question for current step
   const getStepOpeningQuestion = useCallback((): string => {
@@ -531,14 +882,14 @@ Return JSON:
 
     const questions: Record<string, Record<string, string>> = {
       'dynamic-swot': {
-        context: 'What strategic goal are you analyzing? Define the scope and timeframe.',
-        strengths: 'What internal strengths give your organization a competitive advantage?',
-        weaknesses: 'What internal weaknesses need to be addressed?',
-        opportunities: 'What external opportunities can your organization leverage?',
-        threats: 'What external threats could impact your organization?',
-        correlations:
-          "I'll analyze connections between your SWOT elements to identify strategic patterns.",
-        summary: 'Let me summarize the analysis and propose strategic initiatives.',
+        mission:
+          'What decision are we supporting, what is the scope, and what will success look like?',
+        input:
+          'What signals do we already have from interviews, materials, and external context that should shape this analysis?',
+        swot: 'Let me turn the captured signals into a high-quality SWOT structure.',
+        insights:
+          "I'll synthesize the matrix into tensions, applied conclusions, and strategic moves.",
+        outputs: 'Let me prepare the final source summary and downstream outputs.',
       },
       'market-forces': {
         context: 'What industry and market are you analyzing? Define your competitive position.',

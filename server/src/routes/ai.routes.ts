@@ -7,6 +7,7 @@ import { Response, Router } from 'express';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+import * as cheerio from 'cheerio';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { aiRateLimiter } from '../middleware/rateLimiting.middleware.js';
@@ -260,6 +261,322 @@ router.post(
       docId,
       filename,
       mimeType,
+      totalChunks: chunks.length,
+      embeddedChunks,
+    });
+  })
+);
+
+// -------------------- URL attachments ingestion --------------------
+// Fetches a public URL, extracts text, chunks, stores into knowledge_docs/knowledge_chunks.
+// Policy: requires org internetEnabled (but does NOT depend on Tavily).
+const IngestUrlAttachmentRequestSchema = z.object({
+  url: z.string().trim().url(),
+  title: z.string().trim().min(1).max(200).optional(),
+});
+
+router.post(
+  '/attachments/ingest-url',
+  verifyToken,
+  validateBody(IngestUrlAttachmentRequestSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const orgId = req.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const inputUrl = String((req.body as any)?.url || '').trim();
+    const providedTitle = String((req.body as any)?.title || '').trim();
+
+    let urlObj: URL;
+    try {
+      urlObj = new URL(inputUrl);
+    } catch {
+      return res.status(400).json({ error: 'Invalid URL' });
+    }
+
+    if (urlObj.protocol !== 'http:' && urlObj.protocol !== 'https:') {
+      return res.status(400).json({ error: 'Only http(s) URLs are supported' });
+    }
+
+    // Enforce org internet policy (independent from Tavily).
+    try {
+      const polMod = await import('../services/aiPolicyEngine.js');
+      const AIPolicyEngine = (polMod.default || polMod) as any;
+      const policy = await AIPolicyEngine.getEffectivePolicy(
+        orgId,
+        null,
+        (req as any)?.userId || null
+      );
+      if (!policy?.internetEnabled) {
+        return res.status(403).json({ error: 'Internet access is disabled by policy' });
+      }
+    } catch (err: any) {
+      logger.warn('[AI URL Attachments] Policy engine unavailable:', err?.message || String(err));
+      return res.status(403).json({ error: 'Internet access is disabled by policy' });
+    }
+
+    // SSRF + domain allow/deny checks (reuse governance utility; does not require Tavily)
+    let isUrlSafeFn: any = null;
+    let getDefaultPolicyFn: any = null;
+    try {
+      const gov = await import('../services/ai/webSearchGovernance.js');
+      isUrlSafeFn = (gov as any).isUrlSafe || (gov as any).default?.isUrlSafe;
+      getDefaultPolicyFn = (gov as any).getDefaultPolicy || (gov as any).default?.getDefaultPolicy;
+    } catch {
+      // ignore; we will fallback to a minimal check below
+    }
+
+    if (typeof isUrlSafeFn === 'function' && typeof getDefaultPolicyFn === 'function') {
+      const basePolicy = getDefaultPolicyFn();
+      const check = isUrlSafeFn(inputUrl, { ...basePolicy, internetEnabled: true });
+      if (!check?.safe) {
+        return res.status(400).json({ error: check?.reason || 'URL blocked by security policy' });
+      }
+    } else {
+      // Minimal SSRF check fallback (block localhost/private ranges)
+      const s = inputUrl.toLowerCase();
+      if (
+        s.startsWith('http://localhost') ||
+        s.startsWith('https://localhost') ||
+        s.startsWith('http://127.') ||
+        s.startsWith('https://127.') ||
+        s.startsWith('http://10.') ||
+        s.startsWith('https://10.') ||
+        s.startsWith('http://192.168.') ||
+        s.startsWith('https://192.168.') ||
+        s.startsWith('http://0.0.0.0') ||
+        s.startsWith('https://0.0.0.0')
+      ) {
+        return res.status(400).json({ error: 'URL blocked by security policy' });
+      }
+    }
+
+    const MAX_BYTES = 6 * 1024 * 1024; // 6MB
+    const MAX_TEXT_CHARS = 220_000;
+
+    // Fetch with timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12_000);
+    let resp: globalThis.Response;
+    try {
+      resp = await fetch(inputUrl, {
+        method: 'GET',
+        redirect: 'follow',
+        signal: controller.signal,
+        headers: {
+          'user-agent': 'ConsultifyBot/1.0 (+attachments/ingest-url)',
+          accept: 'text/html,text/plain,application/pdf;q=0.9,*/*;q=0.1',
+        },
+      });
+    } catch (err: any) {
+      clearTimeout(timeout);
+      const msg = String(err?.name || err?.message || err);
+      return res.status(502).json({ error: `Failed to fetch URL (${msg})` });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!resp.ok) {
+      return res.status(502).json({ error: `Failed to fetch URL (HTTP ${resp.status})` });
+    }
+
+    const finalUrl = String((resp as any)?.url || inputUrl);
+    if (finalUrl && finalUrl !== inputUrl && typeof isUrlSafeFn === 'function' && typeof getDefaultPolicyFn === 'function') {
+      const basePolicy = getDefaultPolicyFn();
+      const check = isUrlSafeFn(finalUrl, { ...basePolicy, internetEnabled: true });
+      if (!check?.safe) {
+        return res.status(400).json({ error: check?.reason || 'Redirected URL blocked by security policy' });
+      }
+    }
+
+    const contentType = String(resp.headers.get('content-type') || '').toLowerCase();
+    let buf: Buffer;
+    try {
+      const ab = await resp.arrayBuffer();
+      buf = Buffer.from(ab);
+    } catch (err: any) {
+      return res.status(502).json({ error: 'Failed to read URL response body' });
+    }
+
+    if (buf.byteLength > MAX_BYTES) {
+      return res.status(413).json({ error: `URL content too large (${buf.byteLength} bytes)` });
+    }
+
+    // Extract text
+    let extractedText = '';
+    let detectedTitle = providedTitle;
+    let detectedMimeType = contentType || 'text/plain';
+
+    try {
+      const isPdf =
+        contentType.includes('application/pdf') ||
+        finalUrl.toLowerCase().includes('.pdf') ||
+        urlObj.pathname.toLowerCase().endsWith('.pdf');
+      if (isPdf) {
+        detectedMimeType = 'application/pdf';
+        const pdfParseMod = (await import('pdf-parse')) as any;
+        const pdf = pdfParseMod.default || pdfParseMod;
+        const out = await pdf(buf);
+        extractedText = String(out?.text || '');
+      } else if (contentType.includes('text/html') || contentType.includes('application/xhtml')) {
+        detectedMimeType = 'text/html';
+        const html = buf.toString('utf8');
+        const $ = cheerio.load(html);
+        $('script, style, noscript, svg, canvas, iframe').remove();
+        if (!detectedTitle) {
+          const t = String($('title').first().text() || '').trim();
+          if (t) detectedTitle = t;
+        }
+        const bodyText = $('body').text();
+        extractedText = String(bodyText || '');
+      } else {
+        // Treat as plain text; best-effort utf8 decode.
+        extractedText = buf.toString('utf8');
+      }
+    } catch (err: any) {
+      logger.warn('[AI URL Attachments] Text extraction failed:', err?.message || String(err));
+      extractedText = '';
+    }
+
+    extractedText = String(extractedText || '')
+      .replace(/\r\n/g, '\n')
+      .replace(/[ \t]+\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]{2,}/g, ' ')
+      .trim();
+
+    if (!extractedText) {
+      return res.status(400).json({ error: 'Could not extract any text from URL' });
+    }
+    if (extractedText.length > MAX_TEXT_CHARS) {
+      extractedText = extractedText.slice(0, MAX_TEXT_CHARS);
+    }
+
+    const hostname = (() => {
+      try {
+        return new URL(finalUrl).hostname;
+      } catch {
+        return urlObj.hostname;
+      }
+    })();
+    const fallbackName = `${hostname}${urlObj.pathname || ''}`.replace(/\/+$/, '') || hostname || 'url';
+    const filename = (detectedTitle || fallbackName).slice(0, 180);
+    const docId = uuidv4();
+
+    await dbRun(
+      `INSERT INTO knowledge_docs (id, filename, filepath, status, created_at)
+       VALUES (?, ?, ?, 'indexed', CURRENT_TIMESTAMP)`,
+      [docId, filename, finalUrl || inputUrl],
+      { fallback: true } as any
+    );
+    try {
+      await dbRun(`UPDATE knowledge_docs SET category = ? WHERE id = ?`, ['chat_url_attachment', docId], {
+        fallback: true,
+      } as any);
+    } catch {
+      /* ignore */
+    }
+    try {
+      await dbRun(`UPDATE knowledge_docs SET organization_id = ? WHERE id = ?`, [orgId, docId], {
+        fallback: true,
+      } as any);
+    } catch {
+      /* ignore */
+    }
+
+    const makeChunks = (raw: string): Array<{ chunkIndex: number; content: string }> => {
+      const normalized = String(raw || '').replace(/\r\n/g, '\n').trim();
+      const MAX = 1200;
+      const OVERLAP = 150;
+      const out: Array<{ chunkIndex: number; content: string }> = [];
+      if (!normalized) return out;
+
+      const paras = normalized
+        .split(/\n\s*\n/g)
+        .map((p) => p.trim())
+        .filter(Boolean);
+
+      let buf = '';
+      const flush = () => {
+        const c = buf.trim();
+        if (c) out.push({ chunkIndex: out.length, content: c });
+        buf = '';
+      };
+
+      const pushLong = (p: string) => {
+        const s = p.trim();
+        if (!s) return;
+        if (s.length <= MAX) {
+          out.push({ chunkIndex: out.length, content: s });
+          return;
+        }
+        let i = 0;
+        while (i < s.length) {
+          const chunk = s.slice(i, i + MAX).trim();
+          if (chunk) out.push({ chunkIndex: out.length, content: chunk });
+          if (i + MAX >= s.length) break;
+          i = Math.max(0, i + MAX - OVERLAP);
+        }
+      };
+
+      for (const p of paras) {
+        if (!p) continue;
+        if (!buf) {
+          if (p.length <= MAX) buf = p;
+          else pushLong(p);
+          continue;
+        }
+        if (buf.length + 2 + p.length <= MAX) {
+          buf += `\n\n${p}`;
+        } else {
+          flush();
+          if (p.length <= MAX) buf = p;
+          else pushLong(p);
+        }
+      }
+      flush();
+      if (out.length === 0) pushLong(normalized);
+      return out;
+    };
+
+    const ragModule = await import('../services/ragService.js');
+    const ragService = (ragModule.default || ragModule) as any;
+
+    const chunks = makeChunks(extractedText);
+    let embeddedChunks = 0;
+    for (const c of chunks) {
+      const chunkIndex = Number(c.chunkIndex || 0);
+      const content = String(c.content || '').trim();
+      if (!content) continue;
+      const embedding = await ragService.generateEmbedding(content);
+      await dbRun(
+        `INSERT INTO knowledge_chunks (id, doc_id, content, chunk_index, embedding)
+         VALUES (?, ?, ?, ?, ?)`,
+        [`${docId}-chk-${chunkIndex}`, docId, content, chunkIndex, JSON.stringify(embedding || [])],
+        { fallback: true } as any
+      );
+      if (embedding && Array.isArray(embedding) && embedding.length > 0) embeddedChunks += 1;
+    }
+
+    await organizationContextService.recordAttachmentExtraction({
+      organizationId: orgId,
+      userId: req.userId || null,
+      payload: {
+        docId,
+        filename,
+        mimeType: detectedMimeType,
+        sourceUrl: finalUrl || inputUrl,
+        extractedTextPreview: extractedText.slice(0, 2000),
+        totalChunks: chunks.length,
+        embeddedChunks,
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      docId,
+      filename,
+      mimeType: detectedMimeType,
+      sourceUrl: finalUrl || inputUrl,
       totalChunks: chunks.length,
       embeddedChunks,
     });
@@ -687,9 +1004,9 @@ router.post(
       ja: 'Japanese (日本語)',
       ar: 'Arabic (العربية)',
     };
-    const langCode = (language || 'pl').split('-')[0];
-    const langName = languageMap[langCode] || languageMap['pl'];
-    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Always respond in ${langName}.]\n`;
+    const langCode = (language || 'en').split('-')[0];
+    const langName = languageMap[langCode] || 'English';
+    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Respond in the same language the user writes to you. Match the user's language naturally. The UI locale is ${langName}.]\n`;
 
     // Confirm schema (structured output)
     // NOTE: OpenAI Structured Outputs requires ALL properties to be in 'required' array.
@@ -997,8 +1314,9 @@ router.post(
       ja: 'Japanese (日本語)',
       ar: 'Arabic (العربية)',
     };
-    const langName = languageMap[language || 'pl'] || languageMap['pl'];
-    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Always respond in ${langName}. This is critical - the user's interface is set to ${langName}, so ALL your responses MUST be in ${langName}.]\n`;
+    const langCode = (language || 'en').split('-')[0];
+    const langName = languageMap[langCode] || 'English';
+    const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: Respond in the same language the user writes to you. If the user writes in English, respond in English. If the user writes in Polish, respond in Polish. Match the user's language naturally. The UI locale is ${langName} but always prioritize the language of the user's message.]\n`;
 
     let enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
 

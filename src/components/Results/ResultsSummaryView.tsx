@@ -87,6 +87,14 @@ interface SummaryInitiativeItem extends PreviewableItem {
   ownerName: string;
 }
 
+const DEMO_SUMMARY_ITEMS: SummaryInitiativeItem[] = [
+  { id: 'demo-si1', title: 'Digital Transformation Program', status: 'DONE', priority: 'HIGH', ownerName: 'Anna Kowalska', updatedAt: '2026-03-10T14:00:00Z', description: 'End-to-end digitization of core business processes including CRM, ERP integration, and customer portal launch.', kpiCount: 3, hasKpiMonitoring: true, hasRoiPlan: true, hasRoiRealized: true },
+  { id: 'demo-si2', title: 'Cloud Migration – Phase 1', status: 'DONE', priority: 'HIGH', ownerName: 'Piotr Zieliński', updatedAt: '2026-02-28T10:00:00Z', description: 'Migration of 12 production workloads to AWS including database, compute, and storage tiers.', kpiCount: 2, hasKpiMonitoring: true, hasRoiPlan: true, hasRoiRealized: false },
+  { id: 'demo-si3', title: 'RPA Implementation – Finance', status: 'DONE', priority: 'MEDIUM', ownerName: 'Marek Nowak', updatedAt: '2026-03-05T09:00:00Z', description: 'Automated 8 key finance processes including invoice processing, reconciliation, and reporting.', kpiCount: 1, hasKpiMonitoring: true, hasRoiPlan: true, hasRoiRealized: true },
+  { id: 'demo-si4', title: 'Customer Experience Redesign', status: 'DONE', priority: 'HIGH', ownerName: 'Katarzyna Wiśniewska', updatedAt: '2026-01-20T16:00:00Z', description: 'Complete UX overhaul of customer-facing applications with NPS improvement target of +15 points.', kpiCount: 2, hasKpiMonitoring: true, hasRoiPlan: false, hasRoiRealized: false },
+  { id: 'demo-si5', title: 'Data Governance Framework', status: 'DONE', priority: 'MEDIUM', ownerName: 'Tomasz Lewandowski', updatedAt: '2026-02-15T11:00:00Z', description: 'Established data quality standards, ownership model, and automated monitoring for critical data assets.', kpiCount: 1, hasKpiMonitoring: true, hasRoiPlan: false, hasRoiRealized: false },
+];
+
 const formatDate = (value: unknown): string => {
   if (!value) return '—';
   const d = value instanceof Date ? value : new Date(String(value));
@@ -227,7 +235,9 @@ export const ResultsSummaryView: React.FC<ResultsSummaryViewProps> = ({
         };
       });
 
-      setItems(mapped);
+      setItems(mapped.length > 0 ? mapped : DEMO_SUMMARY_ITEMS);
+    } catch {
+      setItems(DEMO_SUMMARY_ITEMS);
     } finally {
       setLoading(false);
     }

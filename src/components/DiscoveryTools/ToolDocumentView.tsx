@@ -1,89 +1,70 @@
-/**
- * ToolDocumentView
- *
- * Canonical full tool "document" view following Task/Initiative Golden Standard.
- * Two-column layout: LEFT = content/merit, RIGHT = control/management.
- *
- * LEFT COLUMN ORDER:
- * 1. Context (Strategic context, scope, goals)
- * 2. Tool Content (step-specific findings - collapsible sections)
- * 3. Correlations / Analysis (AI-generated insights)
- * 4. Summary & Key Findings
- * 5. Comments
- * 6. Activity Log
- *
- * RIGHT COLUMN ORDER:
- * 1. Control (Status, Progress, Session info, Quick Actions)
- * 2. DoD Checklist (Completion items)
- * 3. AI Configuration (Methodology, count, settings)
- * 4. Decisions (Gate decisions)
- * 5. Generated Initiatives
- * 6. Team / Permissions
- */
-
-import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertTriangle,
-  ArrowLeft,
-  BarChart3,
   BookOpen,
   Check,
   CheckCircle2,
-  ChevronDown,
-  ChevronRight,
   Clock,
-  Copy,
-  Download,
   ExternalLink,
-  FileText,
   History,
   Lightbulb,
   Loader2,
   MessageSquare,
-  MoreVertical,
-  Plus,
-  Save,
   Send,
-  Settings,
   Sparkles,
   Target,
-  Trash2,
-  User,
-  Users,
-  Wand2,
-  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
+import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 import { useConversationStore } from '@/store/useConversationStore';
-import { SWOTData, ToolType, useToolStore } from '@/store/useToolStore';
+import {
+  type StepDefinition,
+  type SWOTData,
+  type ToolType,
+  useToolStore,
+} from '@/store/useToolStore';
 import { AppView } from '@/types';
-import { buildArtifactPermalink } from '@/utils/artifactLinks';
 import { exportToPDF } from '@/utils/pdfExport';
 
-import { type Comment, CommentsSection } from '../MyWork/shared';
-import { ArtifactPermalinkButton } from '../shared/ArtifactPermalinkButton';
 import { EmbeddedView } from '../shared/NModeBlocks';
+import {
+  type NModeAction,
+  type NModePropertyField,
+  type NModeSection,
+  NModeShell,
+} from '../shared/NModeLayout';
+import {
+  ActivityLogCanvas,
+  type ActivityLogEntry,
+  type ActivityStats,
+  type ActivityTypeMeta,
+  type CommentItem,
+  type CommentPriority,
+  CommentsCanvas,
+  type DateFilter,
+  type SortOrder,
+} from '../shared/NModeSections';
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 import { ToolCanvas } from './ToolCanvas';
-import { computeToolCompletionItems, computeToolReviewGaps } from './toolCompletion';
-
-// ==================== TYPES ====================
+import {
+  computeDynamicSwotOverallReadiness,
+  computeDynamicSwotPhaseSummaries,
+  computeToolCompletionItems,
+  computeToolReviewGaps,
+} from './toolCompletion';
 
 interface ToolDocumentViewProps {
   toolType: ToolType;
   sessionId?: string;
   onBack: () => void;
   onOpenInitiative?: (initiativeId: string) => void;
-  /** If true, auto-triggers PDF export once content is ready. */
   autoExportPdf?: boolean;
-  /** Called after auto-export was triggered (to clear one-shot flag). */
   onAutoExportPdfConsumed?: () => void;
 }
 
@@ -104,315 +85,138 @@ interface Decision {
   due_date?: string;
 }
 
-// ==================== CONSTANTS ====================
-
-const TOOL_METADATA: Record<
-  ToolType,
-  {
-    name: string;
-    namePl: string;
-    color: string;
-    badge: string;
-    gradient: string;
-  }
+const TOOL_META: Partial<
+  Record<
+    ToolType,
+    {
+      name: string;
+      namePl: string;
+      badge: string;
+      category: 'strategic' | 'operational' | 'digital' | 'automation';
+      statusDot: string;
+    }
+  >
 > = {
   'dynamic-swot': {
     name: 'Dynamic SWOT',
     namePl: 'Dynamiczny SWOT',
-    color: 'emerald',
     badge: 'SWT',
-    gradient: 'from-emerald-500 to-teal-500',
+    category: 'strategic',
+    statusDot: 'bg-emerald-400',
   },
   'market-forces': {
     name: 'Market Forces',
     namePl: 'Siły Rynkowe',
-    color: 'blue',
     badge: 'PTR',
-    gradient: 'from-blue-500 to-cyan-500',
+    category: 'strategic',
+    statusDot: 'bg-blue-400',
   },
   'growth-paths': {
     name: 'Growth Paths',
     namePl: 'Ścieżki Wzrostu',
-    color: 'purple',
     badge: 'ANS',
-    gradient: 'from-purple-500 to-pink-500',
-  },
-  'value-chain': {
-    name: 'Value Chain',
-    namePl: 'Łańcuch Wartości',
-    color: 'orange',
-    badge: 'VCH',
-    gradient: 'from-orange-500 to-amber-500',
+    category: 'strategic',
+    statusDot: 'bg-purple-400',
   },
   'portfolio-priority': {
     name: 'Portfolio Priority',
     namePl: 'Priorytetyzacja Portfolio',
-    color: 'pink',
     badge: 'BCG',
-    gradient: 'from-pink-500 to-rose-500',
-  },
-  'ambition-decomposer': {
-    name: 'Ambition Decomposer',
-    namePl: 'Dekompozycja Ambicji',
-    color: 'cyan',
-    badge: 'AMB',
-    gradient: 'from-cyan-500 to-blue-500',
-  },
-  'focus-tradeoff': {
-    name: 'Focus & Trade-off',
-    namePl: 'Fokus i Kompromisy',
-    color: 'red',
-    badge: 'FOC',
-    gradient: 'from-red-500 to-orange-500',
+    category: 'strategic',
+    statusDot: 'bg-pink-400',
   },
   'risk-uncertainty': {
     name: 'Risk & Uncertainty',
     namePl: 'Ryzyko i Niepewność',
-    color: 'amber',
     badge: 'RSK',
-    gradient: 'from-amber-500 to-yellow-500',
-  },
-  'capability-mapper': {
-    name: 'Capability Mapper',
-    namePl: 'Mapa Kompetencji',
-    color: 'indigo',
-    badge: 'CAP',
-    gradient: 'from-indigo-500 to-purple-500',
-  },
-  'narrative-engine': {
-    name: 'Narrative Engine',
-    namePl: 'Silnik Narracji',
-    color: 'teal',
-    badge: 'NAR',
-    gradient: 'from-teal-500 to-emerald-500',
-  },
-  'sop-builder': {
-    name: 'SOP Builder',
-    namePl: 'Kreator SOP',
-    color: 'blue',
-    badge: 'SOP',
-    gradient: 'from-blue-500 to-indigo-500',
-  },
-  'a3-problem-solving': {
-    name: 'A3 Problem Solving',
-    namePl: 'A3 Rozwiązywanie',
-    color: 'amber',
-    badge: 'A3',
-    gradient: 'from-amber-500 to-orange-500',
-  },
-  'smed-planner': {
-    name: 'SMED Planner',
-    namePl: 'Planer SMED',
-    color: 'orange',
-    badge: 'SMD',
-    gradient: 'from-orange-500 to-red-500',
-  },
-  'dms-builder': {
-    name: 'DMS Builder',
-    namePl: 'Kreator DMS',
-    color: 'emerald',
-    badge: 'DMS',
-    gradient: 'from-emerald-500 to-green-500',
-  },
-  'inventory-autopilot': {
-    name: 'Inventory Autopilot',
-    namePl: 'Autopilot Zapasów',
-    color: 'purple',
-    badge: 'INV',
-    gradient: 'from-purple-500 to-violet-500',
-  },
-  'vsm-builder': {
-    name: 'VSM Builder',
-    namePl: 'Kreator VSM',
-    color: 'blue',
-    badge: 'VSM',
-    gradient: 'from-blue-500 to-indigo-500',
-  },
-  'constraint-control': {
-    name: 'Constraint Control',
-    namePl: 'Kontrola Ograniczeń',
-    color: 'amber',
-    badge: 'CON',
-    gradient: 'from-amber-500 to-orange-500',
-  },
-  'decision-engine': {
-    name: 'Decision Engine',
-    namePl: 'Silnik Decyzji',
-    color: 'slate',
-    badge: 'DEC',
-    gradient: 'from-slate-500 to-zinc-500',
-  },
-  'control-tower': {
-    name: 'Control Tower',
-    namePl: 'Control Tower',
-    color: 'teal',
-    badge: 'CTW',
-    gradient: 'from-teal-500 to-cyan-500',
-  },
-  'automation-pipeline': {
-    name: 'Automation Pipeline',
-    namePl: 'Pipeline Automatyzacji',
-    color: 'purple',
-    badge: 'AUT',
-    gradient: 'from-purple-500 to-fuchsia-500',
-  },
-  'robotics-feasibility': {
-    name: 'Robotics Feasibility',
-    namePl: 'Wykonalność Robotyki',
-    color: 'purple',
-    badge: 'ROB',
-    gradient: 'from-purple-500 to-indigo-500',
-  },
-  'logistics-automation': {
-    name: 'Logistics Automation',
-    namePl: 'Automatyzacja Logistyki',
-    color: 'blue',
-    badge: 'LOG',
-    gradient: 'from-blue-500 to-cyan-500',
-  },
-  'rpa-scanner': {
-    name: 'RPA Scanner',
-    namePl: 'Skaner RPA',
-    color: 'emerald',
-    badge: 'RPA',
-    gradient: 'from-emerald-500 to-teal-500',
-  },
-  'ai-discovery': {
-    name: 'AI Discovery',
-    namePl: 'AI Discovery',
-    color: 'cyan',
-    badge: 'AID',
-    gradient: 'from-cyan-500 to-blue-500',
-  },
-  'integration-diagnostic': {
-    name: 'Integration Diagnostic',
-    namePl: 'Diagnostyka Integracji',
-    color: 'indigo',
-    badge: 'INT',
-    gradient: 'from-indigo-500 to-purple-500',
-  },
-  'digital-value-pool': {
-    name: 'Digital Value Pool',
-    namePl: 'Pula Wartości Digital',
-    color: 'pink',
-    badge: 'DVP',
-    gradient: 'from-pink-500 to-rose-500',
-  },
-  'legacy-analyzer': {
-    name: 'Legacy Analyzer',
-    namePl: 'Analizator Legacy',
-    color: 'orange',
-    badge: 'LEG',
-    gradient: 'from-orange-500 to-amber-500',
-  },
-  'data-inventory': {
-    name: 'Data Inventory',
-    namePl: 'Inwentaryzacja Danych',
-    color: 'teal',
-    badge: 'DAT',
-    gradient: 'from-teal-500 to-emerald-500',
-  },
-  'pain-to-solution': {
-    name: 'Pain to Solution',
-    namePl: 'Pain → Solution',
-    color: 'red',
-    badge: 'P2S',
-    gradient: 'from-red-500 to-orange-500',
-  },
-  'pain-explorer': {
-    name: 'Pain Explorer',
-    namePl: 'Eksplorator Pain',
-    color: 'amber',
-    badge: 'SPE',
-    gradient: 'from-amber-500 to-yellow-500',
-  },
-  'process-automation': {
-    name: 'Process Automation',
-    namePl: 'Automatyzacja Procesu',
-    color: 'amber',
-    badge: 'PAI',
-    gradient: 'from-amber-500 to-orange-500',
+    category: 'strategic',
+    statusDot: 'bg-amber-400',
   },
 };
 
-const STATUS_CONFIG = {
-  DRAFT: {
-    label: { en: 'Draft', pl: 'Wersja robocza' },
-    color: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-    dotColor: 'bg-slate-400',
-  },
-  REVIEW: {
-    label: { en: 'In Review', pl: 'W przeglądzie' },
-    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    dotColor: 'bg-amber-500',
-  },
-  APPROVED: {
-    label: { en: 'Approved', pl: 'Zatwierdzony' },
-    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-    dotColor: 'bg-emerald-500',
-  },
-  COMPLETED: {
-    label: { en: 'Completed', pl: 'Ukończony' },
-    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    dotColor: 'bg-blue-500',
-  },
-  GENERATED: {
-    label: { en: 'Generated', pl: 'Wygenerowano' },
-    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    dotColor: 'bg-blue-500',
-  },
+const prettifyToolType = (toolType: string) =>
+  toolType
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+const buildToolMeta = (toolType: ToolType) => {
+  const predefined = TOOL_META[toolType];
+  if (predefined) return predefined;
+
+  const pretty = prettifyToolType(toolType);
+  return {
+    name: pretty,
+    namePl: pretty,
+    badge: pretty
+      .split(' ')
+      .map((part) => part[0])
+      .join('')
+      .slice(0, 3)
+      .toUpperCase(),
+    category: 'strategic' as const,
+    statusDot: 'bg-slate-400',
+  };
 };
 
-// ==================== COLLAPSIBLE SECTION ====================
+const getConsultingJourneyStage = (stepId?: string) => {
+  if (!stepId) return 'entry';
+  if (['mission', 'context'].includes(stepId)) return 'entry';
+  if (['input', 'strengths', 'weaknesses', 'opportunities', 'threats'].includes(stepId)) {
+    return 'conversation';
+  }
+  if (
+    ['outputs', 'summary', 'results', 'reasoning', 'prepare', 'report', 'initiatives'].includes(
+      stepId
+    )
+  ) {
+    return 'summary';
+  }
+  if (['insights', 'correlations', 'swot'].includes(stepId)) return 'analysis';
+  return 'conversation';
+};
 
-const CollapsibleSection: React.FC<{
-  id: string;
-  title: string;
-  icon: React.ReactNode;
-  iconBg: string;
-  expanded: boolean;
-  onToggle: () => void;
-  badge?: React.ReactNode;
-  children: React.ReactNode;
-  actions?: React.ReactNode;
-}> = ({ id, title, icon, iconBg, expanded, onToggle, badge, children, actions }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 shadow-lg shadow-slate-200/50 dark:shadow-navy-900/50 overflow-hidden"
-  >
-    <div
-      className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 dark:hover:bg-navy-800/50 transition-colors cursor-pointer"
-      onClick={onToggle}
-    >
-      <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-xl ${iconBg}`}>{icon}</div>
-        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{title}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        {badge}
-        {expanded && actions}
-        <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronDown size={18} className="text-slate-500 dark:text-slate-400" />
-        </motion.div>
-      </div>
-    </div>
-    <AnimatePresence>
-      {expanded && (
-        <motion.div
-          initial={{ height: 0 }}
-          animate={{ height: 'auto' }}
-          exit={{ height: 0 }}
-          className="border-t border-slate-200 dark:border-navy-700 overflow-hidden"
-        >
-          <div className="p-5">{children}</div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  </motion.div>
-);
+const statusLabel = (
+  status: 'DRAFT' | 'REVIEW' | 'APPROVED' | 'GENERATED' | 'COMPLETED',
+  isPolish: boolean
+) =>
+  (
+    ({
+      DRAFT: isPolish ? 'Draft' : 'Draft',
+      REVIEW: isPolish ? 'Review' : 'Review',
+      APPROVED: isPolish ? 'Approved' : 'Approved',
+      GENERATED: isPolish ? 'Generated' : 'Generated',
+      COMPLETED: isPolish ? 'Completed' : 'Completed',
+    }) as const
+  )[status] || status;
 
-// ==================== MAIN COMPONENT ====================
+const getPriorityDotClass = (priority: CommentPriority) =>
+  priority === 'high' ? 'bg-red-500' : priority === 'low' ? 'bg-emerald-500' : 'bg-blue-500';
+
+const getPriorityButtonClass = (priority: CommentPriority, isActive: boolean) =>
+  isActive
+    ? priority === 'high'
+      ? 'border-red-400/80 text-red-300 bg-red-500/20'
+      : priority === 'low'
+        ? 'border-emerald-400/80 text-emerald-300 bg-emerald-500/20'
+        : 'border-indigo-400/70 text-indigo-300 bg-indigo-500/15'
+    : 'border-slate-300/55 dark:border-navy-600/60 text-slate-500 dark:text-slate-400 hover:border-slate-400/70 hover:text-slate-700 dark:hover:text-slate-300';
+
+const getPriorityLabel = (priority: CommentPriority) =>
+  priority === 'high' ? 'High' : priority === 'low' ? 'Low' : 'Normal';
+
+const getPriorityHint = (priority: CommentPriority, isPolish: boolean) =>
+  priority === 'high'
+    ? isPolish
+      ? 'Wymaga natychmiastowej uwagi'
+      : 'Requires immediate attention'
+    : priority === 'low'
+      ? isPolish
+        ? 'Komentarz informacyjny'
+        : 'Informational comment'
+      : isPolish
+        ? 'Komentarz standardowy'
+        : 'Standard comment';
 
 export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   toolType,
@@ -434,12 +238,11 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     currentProjectId,
     isChatCollapsed,
     toggleChatCollapse,
-    setCurrentView,
     activeChatMessages,
   } = useAppStore();
   const { updateWorkspaceFromView } = useConversationStore();
+  const { mode, setMode } = usePresentationMode({ entityType: 'tool', syncURL: false });
 
-  // Tool store
   const {
     currentSession,
     currentStep,
@@ -455,7 +258,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     hydrateSessionFromApi,
   } = useToolStore();
 
-  // AI integration
   const {
     isStreaming,
     streamedContent,
@@ -464,7 +266,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     generateSummary,
   } = useToolAI({ toolType });
 
-  // Local state
+  const isDynamicSwot = toolType === 'dynamic-swot';
+  const toolMeta = buildToolMeta(toolType);
+  const stepDefs = getStepDefinitions();
+  const currentStepDef = stepDefs[currentStep - 1];
+  const progress = calculateProgress();
+
   const [toolSessionId, setToolSessionId] = useState<string | null>(sessionId || null);
   const [toolStatus, setToolStatus] = useState<
     'DRAFT' | 'REVIEW' | 'APPROVED' | 'GENERATED' | 'COMPLETED'
@@ -472,11 +279,14 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const [sessionName, setSessionName] = useState('');
   const [createdAt, setCreatedAt] = useState('');
   const [lastModified, setLastModified] = useState('');
-  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>(isDynamicSwot ? 'mission' : 'work');
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [showRequestReviewModal, setShowRequestReviewModal] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
-  // Data state
   const [generatedInitiatives, setGeneratedInitiatives] = useState<
     { id: string; title: string; status?: string }[]
   >([]);
@@ -486,59 +296,77 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     canApproveTool?: boolean;
     canGenerate?: boolean;
   }>({});
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<any[]>([]);
   const [history, setHistory] = useState<HistoryEvent[]>([]);
   const [toolBacklinks, setToolBacklinks] = useState<
     Array<{ id: string; sourceType: string; sourceId: string }>
   >([]);
   const [toolBacklinksLoading, setToolBacklinksLoading] = useState(false);
   const [users, setUsers] = useState<
-    { id: string; firstName: string; lastName: string; email?: string }[]
+    { id: string; firstName?: string; lastName?: string; email?: string; name?: string }[]
   >([]);
 
-  // UI state
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-  const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const [showGenerateModal, setShowGenerateModal] = useState(false);
-  const [showRequestReviewModal, setShowRequestReviewModal] = useState(false);
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-
-  // Review request form
   const [reviewDueDate, setReviewDueDate] = useState('');
   const [reviewPriority, setReviewPriority] = useState<'low' | 'medium' | 'high' | 'critical'>(
     'medium'
   );
   const [reviewDecisionOwnerId, setReviewDecisionOwnerId] = useState('');
 
-  // Generation settings
   const [generationDefaults, setGenerationDefaults] = useState({
     methodologyId: 'impact-feasibility',
     count: 3,
     includeChatContext: true,
   });
 
-  const toolMeta = TOOL_METADATA[toolType];
-  const stepDefs = getStepDefinitions();
-  const progress = calculateProgress();
+  const [commentDraft, setCommentDraft] = useState('');
+  const [commentDateFilter, setCommentDateFilter] = useState<DateFilter>('all');
+  const [commentSortOrder, setCommentSortOrder] = useState<SortOrder>('desc');
+  const [draftPriority, setDraftPriority] = useState<CommentPriority>('normal');
 
-  // ==================== COMPUTED VALUES ====================
+  useEffect(() => {
+    if (mode !== 'n') setMode('n');
+  }, [mode, setMode]);
 
   const reviewGaps = useMemo(
     () => computeToolReviewGaps(toolType, currentSession?.inputData, isPolish),
     [toolType, currentSession?.inputData, isPolish]
   );
-
-  const completionReady = reviewGaps.length === 0;
-
   const completionItems = useMemo(
     () => computeToolCompletionItems(toolType, currentSession?.inputData, isPolish),
     [toolType, currentSession?.inputData, isPolish]
   );
+  const completionReady = reviewGaps.length === 0;
+
+  const swotData = useMemo(
+    () =>
+      toolType === 'dynamic-swot' ? (currentSession?.inputData as SWOTData | undefined) : undefined,
+    [currentSession?.inputData, toolType]
+  );
+  const dynamicSwotPhaseSummaries = useMemo(
+    () => (toolType === 'dynamic-swot' ? computeDynamicSwotPhaseSummaries(swotData, isPolish) : []),
+    [isPolish, swotData, toolType]
+  );
+  const dynamicSwotReadiness = useMemo(
+    () =>
+      toolType === 'dynamic-swot' ? computeDynamicSwotOverallReadiness(swotData, isPolish) : null,
+    [isPolish, swotData, toolType]
+  );
+  const consultingJourneyStage = useMemo(
+    () => getConsultingJourneyStage(currentStepDef?.id),
+    [currentStepDef?.id]
+  );
+
+  useEffect(() => {
+    if (!isDynamicSwot) return;
+    if (currentStepDef?.id && activeSection !== currentStepDef.id) {
+      setActiveSection(currentStepDef.id);
+    }
+  }, [activeSection, currentStepDef?.id, isDynamicSwot]);
 
   const handleExportPdf = useCallback(async () => {
     try {
       setIsExportingPdf(true);
-      const safeName = (sessionName || toolMeta.name || toolType)
+      const safeName = (sessionName || toolMeta.name)
         .replace(/[^\w\s-]/g, '')
         .trim()
         .replace(/\s+/g, '-')
@@ -557,26 +385,16 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     }
   }, [isPolish, sessionName, toolMeta.name, toolType]);
 
-  // One-shot auto-export (triggered from Outputs preview).
   const autoExportRanRef = useRef(false);
   useEffect(() => {
     if (!autoExportPdf) {
       autoExportRanRef.current = false;
       return;
     }
-    if (loading) return;
-    if (isExportingPdf) return;
-    if (autoExportRanRef.current) return;
-
+    if (loading || isExportingPdf || autoExportRanRef.current) return;
     autoExportRanRef.current = true;
-    void handleExportPdf().finally(() => {
-      onAutoExportPdfConsumed?.();
-    });
+    void handleExportPdf().finally(() => onAutoExportPdfConsumed?.());
   }, [autoExportPdf, handleExportPdf, isExportingPdf, loading, onAutoExportPdfConsumed]);
-
-  const statusConfig = STATUS_CONFIG[toolStatus] || STATUS_CONFIG.DRAFT;
-
-  // ==================== DATA FETCHING ====================
 
   const fetchAll = useCallback(async () => {
     if (!toolSessionId) {
@@ -586,7 +404,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
     setLoading(true);
     try {
-      // Fetch tool session data
       const sessionData = await Api.getToolSession(toolSessionId);
       setToolStatus((sessionData.status || 'DRAFT').toUpperCase() as any);
       setSessionName(sessionData.name || '');
@@ -596,7 +413,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       setToolDecisions(sessionData.decisions || []);
       setToolPermissions(sessionData.permissions || {});
 
-      // Hydrate answers into store so step components are editable
       hydrateSessionFromApi({
         id: toolSessionId,
         toolType,
@@ -608,22 +424,21 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         completionPercent: sessionData.completion_percent ?? sessionData.completionPercent,
       });
 
-      // Fetch users
       const fetchedUsers = await Api.getUsers();
       setUsers(fetchedUsers || []);
 
-      // Fetch comments and history (non-blocking — don't fail the main load)
       try {
         const commentsRes = await Api.get(`/api/tools/${toolSessionId}/comments`);
         setComments(commentsRes || []);
       } catch {
-        // Endpoint may not exist yet — leave comments empty
+        setComments([]);
       }
+
       try {
         const historyRes = await Api.get(`/api/tools/${toolSessionId}/history`);
         setHistory(historyRes || []);
       } catch {
-        // Endpoint may not exist yet — leave history empty
+        setHistory([]);
       }
     } catch (error) {
       console.error('Failed to fetch tool session:', error);
@@ -631,9 +446,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [toolSessionId, loadSession, isPolish]);
+  }, [hydrateSessionFromApi, isPolish, toolSessionId, toolType]);
 
-  // V4-IDEA-09: Fetch LinkGraph backlinks for "Used in" section
   useEffect(() => {
     if (!toolSessionId) return;
     setToolBacklinksLoading(true);
@@ -641,30 +455,29 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       .then((rows: any) => {
         setToolBacklinks(
           (Array.isArray(rows) ? rows : [])
-            .map((x: any) => ({
-              id: String(x?.id || ''),
-              sourceType: String(x?.sourceType || ''),
-              sourceId: String(x?.sourceId || ''),
+            .map((row: any) => ({
+              id: String(row?.id || ''),
+              sourceType: String(row?.sourceType || ''),
+              sourceId: String(row?.sourceId || ''),
             }))
-            .filter((x) => x.sourceType && x.sourceId)
+            .filter((row) => row.sourceType && row.sourceId)
         );
       })
       .catch(() => setToolBacklinks([]))
       .finally(() => setToolBacklinksLoading(false));
   }, [toolSessionId]);
 
-  // ==================== EFFECTS ====================
-
-  // Initialize or create session
   useEffect(() => {
     const initSession = async () => {
       if (sessionId) {
         setToolSessionId(sessionId);
         loadSession(sessionId);
-      } else if (!currentSession || currentSession.toolType !== toolType) {
-        // Create new session
+        return;
+      }
+
+      if (!currentSession || currentSession.toolType !== toolType) {
         createSession(toolType);
-        const name = `${toolMeta.name} - ${new Date().toLocaleDateString()}`;
+        const name = `${toolMeta.name} — Session`;
         try {
           const created = await Api.createToolSession({
             toolType,
@@ -672,64 +485,47 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             projectId: currentProjectId || null,
           });
           setToolSessionId(created.id);
-          setToolStatus('DRAFT');
           setSessionName(name);
-          setCreatedAt(new Date().toISOString());
+          setToolStatus('DRAFT');
         } catch (error) {
           console.error('Failed to create tool session:', error);
+          toast.error(isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session');
         }
       }
     };
-    initSession();
+
+    void initSession();
   }, [
-    sessionId,
-    toolType,
-    currentSession,
     createSession,
-    loadSession,
     currentProjectId,
+    currentSession,
+    isPolish,
+    loadSession,
+    sessionId,
     toolMeta.name,
+    toolType,
   ]);
 
-  // Fetch data when session ID is set
   useEffect(() => {
-    if (toolSessionId) {
-      fetchAll();
-    }
-  }, [toolSessionId, fetchAll]);
+    if (toolSessionId) void fetchAll();
+  }, [fetchAll, toolSessionId]);
 
-  // Auto-save
   useEffect(() => {
-    if (currentSession && toolSessionId) {
-      const saveTimeout = setTimeout(async () => {
-        try {
-          await Api.updateToolSession(toolSessionId, {
-            answers: currentSession.inputData as Record<string, unknown>,
-            completionPercent: completionReady ? 100 : progress,
-          });
-          setLastModified(new Date().toISOString());
-        } catch (error) {
-          console.error('Auto-save failed:', error);
-        }
-      }, 2000);
-      return () => clearTimeout(saveTimeout);
-    }
-    return undefined;
-  }, [currentSession, toolSessionId, progress, completionReady]);
-
-  // ==================== HANDLERS ====================
-
-  const toggleSection = (id: string) => {
-    setExpandedSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
+    if (!currentSession || !toolSessionId) return;
+    const timeout = setTimeout(async () => {
+      try {
+        await Api.updateToolSession(toolSessionId, {
+          answers: currentSession.inputData as Record<string, unknown>,
+          completionPercent: completionReady ? 100 : progress,
+        });
+        setLastModified(new Date().toISOString());
+      } catch (error) {
+        console.error('Auto-save failed:', error);
       }
-      return next;
-    });
-  };
+    }, 2000);
+
+    return () => clearTimeout(timeout);
+  }, [completionReady, currentSession, progress, toolSessionId]);
 
   const handleSave = async () => {
     if (!toolSessionId || !currentSession) return;
@@ -740,8 +536,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         completionPercent: completionReady ? 100 : progress,
       });
       await saveSession();
+      setLastModified(new Date().toISOString());
       toast.success(isPolish ? 'Zapisano' : 'Saved');
-    } catch (error) {
+    } catch {
       toast.error(isPolish ? 'Błąd zapisu' : 'Save failed');
     } finally {
       setSaving(false);
@@ -749,15 +546,11 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   };
 
   const handleOpenChat = () => {
-    if (currentSession) {
-      updateWorkspaceFromView(AppView.DISCOVERY_TOOLS_STRATEGIC, toolSessionId || undefined, {
-        toolType,
-        sessionName,
-      });
-    }
-    if (isChatCollapsed) {
-      toggleChatCollapse();
-    }
+    updateWorkspaceFromView(AppView.DISCOVERY_TOOLS_STRATEGIC, toolSessionId || undefined, {
+      toolType,
+      sessionName,
+    });
+    if (isChatCollapsed) toggleChatCollapse();
   };
 
   const handleOpenKnowledgeBase = () => {
@@ -766,20 +559,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     setHelpOpen(true);
   };
 
-  const handleCopyToolPermalink = async () => {
-    if (!toolSessionId) return;
-    try {
-      await navigator.clipboard.writeText(buildArtifactPermalink('tool', toolSessionId));
-      toast.success(isPolish ? 'Link do narzędzia skopiowany' : 'Tool permalink copied');
-    } catch {
-      toast.error(isPolish ? 'Nie udało się skopiować linku' : 'Failed to copy link');
-    }
-  };
-
   const handleRequestReview = async () => {
     if (!toolSessionId || !completionReady) {
       toast.error(
-        isPolish ? 'Wypełnij wszystkie wymagane pola' : 'Complete all required fields first'
+        isPolish ? 'Wypełnij wszystkie wymagane elementy' : 'Complete all required items first'
       );
       return;
     }
@@ -795,12 +578,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         priority: reviewPriority,
       });
       setToolStatus((result.status || 'REVIEW').toUpperCase() as any);
-      toast.success(isPolish ? 'Wysłano do przeglądu' : 'Sent for review');
-      await fetchAll();
+      toast.success(isPolish ? 'Wysłano do review' : 'Sent to review');
       setShowRequestReviewModal(false);
       setReviewDecisionOwnerId('');
       setReviewDueDate('');
       setReviewPriority('medium');
+      await fetchAll();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to request review');
     }
@@ -812,7 +595,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       const result = await Api.approveTool(toolSessionId);
       setToolStatus((result.status || 'APPROVED').toUpperCase() as any);
       toast.success(isPolish ? 'Zatwierdzono' : 'Approved');
-      setShowGenerateModal(true);
       await fetchAll();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to approve');
@@ -821,12 +603,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   const handleSendBack = async () => {
     if (!toolSessionId) return;
-    const comment = prompt(isPolish ? 'Powód odesłania:' : 'Reason for sending back:');
-    if (!comment) return;
+    const reason = prompt(isPolish ? 'Powód odesłania:' : 'Reason for sending back:');
+    if (!reason) return;
     try {
-      const result = await Api.sendToolBackToDraft(toolSessionId, comment);
+      const result = await Api.sendToolBackToDraft(toolSessionId, reason);
       setToolStatus((result.status || 'DRAFT').toUpperCase() as any);
-      toast.success(isPolish ? 'Odesłano do wersji roboczej' : 'Sent back to draft');
+      toast.success(isPolish ? 'Odesłano do draftu' : 'Sent back to draft');
       await fetchAll();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to send back');
@@ -852,52 +634,1390 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       }
       const updated = await Api.getToolGeneratedInitiatives(toolSessionId);
       setGeneratedInitiatives(updated.initiatives || []);
-      await fetchAll();
       setShowGenerateModal(false);
+      await fetchAll();
       toast.success(isPolish ? 'Wygenerowano inicjatywy' : 'Initiatives generated');
     } catch (err: any) {
       toast.error(err?.message || 'Failed to generate');
     }
   };
 
-  const handleGenerateAI = async (section: string) => {
+  const handleGenerateAI = async () => {
     setIsGeneratingAI(true);
     try {
-      if (section === 'tool-content') {
-        const currentStepDef = stepDefs[currentStep - 1];
-        if (currentStepDef?.id === 'correlations') {
-          await generateCorrelations();
-        } else if (
-          ['summary', 'results', 'reasoning', 'prepare', 'initiatives'].includes(
-            currentStepDef?.id || ''
-          )
-        ) {
-          await generateSummary();
-        } else {
-          await requestSuggestions();
-        }
-      } else if (section === 'correlations') {
+      const stepId = currentStepDef?.id || '';
+      if (stepId === 'insights' || stepId === 'correlations') {
         await generateCorrelations();
-      } else if (section === 'summary') {
+      } else if (
+        ['outputs', 'summary', 'results', 'reasoning', 'prepare', 'initiatives'].includes(stepId)
+      ) {
         await generateSummary();
       } else {
         await requestSuggestions();
       }
-      toast.success(isPolish ? 'Wygenerowano sugestie AI' : 'AI suggestions generated');
-    } catch (error) {
+      toast.success(isPolish ? 'AI zakończyło generowanie' : 'AI generation finished');
+    } catch {
       toast.error(isPolish ? 'Błąd generowania AI' : 'AI generation failed');
     } finally {
       setIsGeneratingAI(false);
     }
   };
 
-  // ==================== RENDER ====================
+  const handleAddComment = async (content: string) => {
+    if (!toolSessionId || !content.trim()) return;
+    try {
+      await Api.post(`/api/tools/${toolSessionId}/comments`, { text: content.trim() });
+      const updated = await Api.get(`/api/tools/${toolSessionId}/comments`);
+      setComments(updated || []);
+      toast.success(isPolish ? 'Dodano komentarz' : 'Comment added');
+    } catch {
+      toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!toolSessionId) return;
+    try {
+      await Api.delete(`/api/tools/${toolSessionId}/comments/${commentId}`);
+      const updated = await Api.get(`/api/tools/${toolSessionId}/comments`);
+      setComments(updated || []);
+      toast.success(isPolish ? 'Usunięto komentarz' : 'Comment deleted');
+    } catch {
+      toast.error(isPolish ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
+    }
+  };
+
+  const nModeComments: CommentItem[] = useMemo(
+    () =>
+      comments
+        .filter((comment) => {
+          if (commentDateFilter === 'all') return true;
+          const date = new Date(comment.createdAt);
+          const now = new Date();
+          if (commentDateFilter === 'today') return date.toDateString() === now.toDateString();
+          if (commentDateFilter === '7d') return now.getTime() - date.getTime() < 7 * 86400000;
+          if (commentDateFilter === '30d') return now.getTime() - date.getTime() < 30 * 86400000;
+          return true;
+        })
+        .sort((a, b) =>
+          commentSortOrder === 'desc'
+            ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        )
+        .map((comment) => ({
+          id: comment.id,
+          authorName: comment.authorName || comment.author_name || 'User',
+          content: comment.content || comment.text || '',
+          createdAt: comment.createdAt || comment.created_at || new Date().toISOString(),
+          isAIGenerated: comment.authorId === 'ai-assistant',
+          priority: 'normal' as CommentPriority,
+        })),
+    [commentDateFilter, commentSortOrder, comments]
+  );
+
+  const activityEntries: ActivityLogEntry[] = useMemo(
+    () =>
+      history.map((entry) => ({
+        id: entry.id,
+        type: entry.eventType,
+        description: entry.eventType,
+        timestamp: entry.createdAt,
+        userName: entry.actorName,
+        oldValue: entry.payload?.oldValue ? String(entry.payload.oldValue) : undefined,
+        newValue: entry.payload?.newValue ? String(entry.payload.newValue) : undefined,
+      })),
+    [history]
+  );
+
+  const activityStats: ActivityStats = useMemo(() => {
+    const total = history.length;
+    const edited = history.filter((entry) => entry.eventType.includes('edit')).length;
+    const escalations = history.filter((entry) => entry.eventType.includes('review')).length;
+    const collaboration = history.filter(
+      (entry) => entry.eventType.includes('comment') || entry.eventType.includes('share')
+    ).length;
+    return { total, edited, escalations, collaboration };
+  }, [history]);
+
+  const activityTypeMeta = useCallback(
+    (type: string): ActivityTypeMeta => {
+      const map: Record<string, ActivityTypeMeta> = {
+        created: {
+          icon: <CheckCircle2 size={10} />,
+          label: isPolish ? 'Utworzono' : 'Created',
+          style: 'border-emerald-300/50 bg-emerald-500/10 text-emerald-600',
+        },
+        comment: {
+          icon: <MessageSquare size={10} />,
+          label: isPolish ? 'Komentarz' : 'Comment',
+          style: 'border-amber-300/50 bg-amber-500/10 text-amber-600',
+        },
+        review_requested: {
+          icon: <Send size={10} />,
+          label: isPolish ? 'Review' : 'Review',
+          style: 'border-blue-300/50 bg-blue-500/10 text-blue-600',
+        },
+      };
+      return (
+        map[type] || {
+          icon: <Clock size={10} />,
+          label: type,
+          style: 'border-slate-300/50 bg-slate-500/10 text-slate-600',
+        }
+      );
+    },
+    [isPolish]
+  );
+
+  const properties: NModePropertyField[] = useMemo(
+    () => [
+      {
+        id: 'toolType',
+        label: { en: 'Tool type', pl: 'Typ narzędzia' },
+        type: 'text',
+        value: toolType,
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
+        id: 'category',
+        label: { en: 'Category', pl: 'Kategoria' },
+        type: 'text',
+        value: toolMeta.category,
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
+        id: 'status',
+        label: { en: 'Status', pl: 'Status' },
+        type: 'text',
+        value: statusLabel(toolStatus, isPolish),
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
+        id: 'runtimeStage',
+        label: { en: 'Consulting stage', pl: 'Etap konsultingowy' },
+        type: 'text',
+        value:
+          {
+            entry: isPolish ? 'Wejście i cel' : 'Entry & purpose',
+            conversation: isPolish ? 'Rozmowa i zbieranie' : 'Conversation & capture',
+            analysis: isPolish ? 'Analiza' : 'Analysis',
+            summary: isPolish ? 'Wnioski i summary' : 'Conclusions & summary',
+          }[consultingJourneyStage] || consultingJourneyStage,
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
+        id: 'currentStep',
+        label: { en: 'Current step', pl: 'Aktualny krok' },
+        type: 'text',
+        value: currentStepDef ? (isPolish ? currentStepDef.namePl : currentStepDef.name) : '-',
+        onChange: () => {},
+        readOnly: true,
+      },
+      {
+        id: 'progress',
+        label: { en: 'Progress', pl: 'Postęp' },
+        type: 'text',
+        value: `${progress}%`,
+        onChange: () => {},
+        readOnly: true,
+      },
+    ],
+    [
+      consultingJourneyStage,
+      currentStepDef,
+      isPolish,
+      progress,
+      toolMeta.category,
+      toolStatus,
+      toolType,
+    ]
+  );
+
+  const actions: NModeAction[] = useMemo(() => {
+    const result: NModeAction[] = [
+      {
+        id: 'kb',
+        label: { en: 'How to / KB', pl: 'How to / KB' },
+        icon: BookOpen,
+        variant: 'neutral',
+        onClick: handleOpenKnowledgeBase,
+      },
+    ];
+
+    if (toolStatus === 'DRAFT') {
+      result.push({
+        id: 'review',
+        label: { en: 'Request Review', pl: 'Request Review' },
+        icon: Send,
+        variant: 'neutral',
+        onClick: handleRequestReview,
+        disabled: !completionReady || toolPermissions.canRequestReview === false,
+      });
+    }
+
+    if (toolStatus === 'REVIEW') {
+      result.push({
+        id: 'approve',
+        label: { en: 'Approve', pl: 'Approve' },
+        icon: CheckCircle2,
+        variant: 'success',
+        onClick: handleApprove,
+        disabled: toolPermissions.canApproveTool === false,
+      });
+    }
+
+    if (['APPROVED', 'GENERATED', 'COMPLETED'].includes(toolStatus)) {
+      result.push({
+        id: 'generate',
+        label: { en: 'Generate initiatives', pl: 'Generuj inicjatywy' },
+        icon: Lightbulb,
+        variant: 'ai',
+        onClick: () => setShowGenerateModal(true),
+        disabled: toolPermissions.canGenerate === false,
+      });
+    }
+
+    return result;
+  }, [
+    completionReady,
+    handleOpenKnowledgeBase,
+    isPolish,
+    toolPermissions.canApproveTool,
+    toolPermissions.canGenerate,
+    toolPermissions.canRequestReview,
+    toolStatus,
+  ]);
+
+  const sections: NModeSection[] = useMemo(() => {
+    const workSection = (
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="space-y-2">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                {isPolish ? 'Visible human + AI loop' : 'Visible human + AI loop'}
+              </div>
+              <div className="text-sm text-slate-700 dark:text-slate-300">
+                {isPolish
+                  ? 'Sesja ma pokazywać pytanie decyzyjne, jakość dowodów, warstwę syntezy i gotowość outputów bez ukrywania pracy AI.'
+                  : 'The session should keep the decision question, evidence quality, synthesis layer, and output readiness visible without hiding AI work.'}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {CONSULTING_TOOL_STANDARD_OUTPUTS.map((outputType) => (
+                <span
+                  key={outputType}
+                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-medium text-slate-600 dark:border-navy-700 dark:bg-navy-900/70 dark:text-slate-300"
+                >
+                  {outputType}
+                </span>
+              ))}
+              {toolType === 'dynamic-swot' && dynamicSwotReadiness && (
+                <span
+                  className={`rounded-full border px-3 py-1 text-[11px] font-medium ${
+                    dynamicSwotReadiness.readiness === 'ready'
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300'
+                      : dynamicSwotReadiness.readiness === 'needs-work'
+                        ? 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300'
+                        : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/20 dark:text-rose-300'
+                  }`}
+                >
+                  {dynamicSwotReadiness.label}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+              {isPolish ? 'Aktualny etap' : 'Current stage'}:{' '}
+              {
+                {
+                  entry: isPolish ? 'Wejście i cel' : 'Entry & purpose',
+                  conversation: isPolish ? 'Rozmowa i zbieranie' : 'Conversation & capture',
+                  analysis: isPolish ? 'Analiza i benchmarking' : 'Analysis & benchmarking',
+                  summary: isPolish ? 'Wnioski i final summary' : 'Conclusions & final summary',
+                }[consultingJourneyStage]
+              }
+            </div>
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+              {currentStepDef
+                ? isPolish
+                  ? currentStepDef.namePl
+                  : currentStepDef.name
+                : toolMeta.name}
+            </h2>
+            {currentStepDef && (
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {isPolish ? currentStepDef.descriptionPl : currentStepDef.description}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => void handleGenerateAI()}
+            disabled={isGeneratingAI}
+            className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-300 hover:bg-primary-500/15 disabled:opacity-60"
+          >
+            {isGeneratingAI ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Sparkles size={14} />
+            )}
+            {isPolish ? 'AI mentor' : 'AI mentor'}
+          </button>
+        </div>
+
+        {toolType === 'dynamic-swot' ? (
+          <div className="grid gap-3 xl:grid-cols-5">
+            {dynamicSwotPhaseSummaries.map((phase, index) => {
+              const isActive = currentStepDef?.id === phase.id;
+              return (
+                <button
+                  key={phase.id}
+                  type="button"
+                  onClick={() => setCurrentStep(index + 1)}
+                  className={`rounded-2xl border px-4 py-3 text-left transition ${
+                    isActive
+                      ? 'border-primary-300 bg-primary-500/10 shadow-sm'
+                      : phase.readiness === 'ready'
+                        ? 'border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/10'
+                        : phase.readiness === 'needs-work'
+                          ? 'border-amber-200 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/10'
+                          : 'border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900/60'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      {index + 1}
+                    </span>
+                    {phase.done ? (
+                      <Check size={12} className="text-emerald-500" />
+                    ) : (
+                      <span className="text-[11px] text-slate-400">{phase.gapCount}</span>
+                    )}
+                  </div>
+                  <div className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    {phase.label}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {phase.primaryGap ||
+                      (phase.done
+                        ? isPolish
+                          ? 'Gotowe'
+                          : 'Ready'
+                        : isPolish
+                          ? 'Wymaga pracy'
+                          : 'Needs work')}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {stepDefs.map((step: StepDefinition, index: number) => {
+              const stepNum = index + 1;
+              const isCompleted = currentSession?.steps?.some(
+                (sessionStep) =>
+                  sessionStep.stepId === step.id && sessionStep.status === 'completed'
+              );
+              const isActive = currentStep === stepNum;
+
+              return (
+                <button
+                  key={step.id}
+                  type="button"
+                  onClick={() => setCurrentStep(stepNum)}
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs transition-colors ${
+                    isActive
+                      ? 'bg-primary-500/15 text-primary-700 dark:text-primary-300'
+                      : isCompleted
+                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                        : 'bg-slate-100 dark:bg-navy-900/70 text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  {isCompleted ? (
+                    <Check size={12} />
+                  ) : (
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-slate-200/80 dark:bg-navy-800 text-[10px]">
+                      {stepNum}
+                    </span>
+                  )}
+                  <span>{isPolish ? step.namePl : step.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4">
+          {currentSession ? (
+            <ToolCanvas
+              toolType={toolType}
+              currentStep={currentStep}
+              stepDefinition={currentStepDef}
+              session={currentSession}
+              isStreaming={isStreaming}
+              streamedContent={streamedContent || ''}
+              isPolish={isPolish}
+              orgName={currentOrganization?.name}
+              onOpenChat={handleOpenChat}
+              onOpenInitiatives={() => setShowGenerateModal(true)}
+              generatedInitiatives={generatedInitiatives}
+              recentInitiatives={generatedInitiatives.slice(0, 5)}
+              chatSnippets={(activeChatMessages || []).slice(-6).map((message: any) => ({
+                role: message.role,
+                content: message.content,
+              }))}
+              showContextPanel={toolType === 'dynamic-swot'}
+            />
+          ) : (
+            <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+              {isPolish ? 'Brak danych sesji' : 'No session data'}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between pt-2">
+          <button
+            type="button"
+            onClick={() => prevStep()}
+            disabled={currentStep <= 1}
+            className="rounded-lg bg-slate-100 dark:bg-navy-900/70 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 disabled:opacity-50"
+          >
+            {isPolish ? 'Previous' : 'Previous'}
+          </button>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Krok' : 'Step'} {currentStep}/{stepDefs.length}
+          </div>
+          <button
+            type="button"
+            onClick={() => nextStep()}
+            disabled={currentStep >= stepDefs.length || !canAdvanceStep()}
+            className="rounded-lg bg-primary-500 px-3 py-2 text-sm text-white disabled:opacity-50"
+          >
+            {isPolish ? 'Next' : 'Next'}
+          </button>
+        </div>
+      </div>
+    );
+
+    const reviewSection = (
+      <div className="space-y-8">
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            {isPolish ? 'Applied conclusions i gotowość' : 'Applied conclusions & readiness'}
+          </h2>
+          <div className="rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4 space-y-4">
+            <div className="rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 text-sm text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300">
+              {isPolish
+                ? 'Ta sekcja zamienia analizę w praktyczne wnioski i sprawdza, czy sesja ma już jakość źródła do raportu, prezentacji, inicjatywy lub idei.'
+                : 'This section turns analysis into applied conclusions and checks whether the session is source-grade enough for a report, presentation, initiative, or idea.'}
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
+                <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  {isPolish ? 'Status' : 'Status'}
+                </div>
+                <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                  {statusLabel(toolStatus, isPolish)}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  {isPolish ? 'Progress' : 'Progress'}
+                </div>
+                <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">{progress}%</div>
+              </div>
+              <div>
+                <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  {isPolish ? 'Created' : 'Created'}
+                </div>
+                <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                  {createdAt ? new Date(createdAt).toLocaleDateString() : '—'}
+                </div>
+              </div>
+              <div>
+                <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  {isPolish ? 'Last modified' : 'Last modified'}
+                </div>
+                <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                  {lastModified ? new Date(lastModified).toLocaleString() : '—'}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {completionItems.map((item, index) => (
+                <div key={`${item.label}-${index}`} className="flex items-center gap-3 text-sm">
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      item.done ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
+                    }`}
+                  />
+                  <span
+                    className={
+                      item.done
+                        ? 'text-slate-700 dark:text-slate-300'
+                        : 'text-slate-500 dark:text-slate-400'
+                    }
+                  >
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {toolType === 'dynamic-swot' &&
+              (swotData?.summary?.appliedConclusions?.length || 0) > 0 && (
+                <div className="rounded-xl border border-emerald-200/80 bg-emerald-500/5 px-4 py-3">
+                  <div className="mb-2 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                    {isPolish ? 'Applied conclusions' : 'Applied conclusions'}
+                  </div>
+                  <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
+                    {swotData?.summary?.appliedConclusions?.map((conclusion, index) => (
+                      <li key={`${conclusion}-${index}`}>• {conclusion}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+            {toolType === 'dynamic-swot' && swotData?.summary?.executiveSummary && (
+              <div className="rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 dark:border-navy-700/70 dark:bg-navy-950/30">
+                <div className="mb-2 text-sm font-medium text-slate-800 dark:text-slate-100">
+                  {isPolish ? 'Final source summary' : 'Final source summary'}
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  {swotData.summary.executiveSummary}
+                </p>
+              </div>
+            )}
+
+            {reviewGaps.length > 0 && (
+              <div className="rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
+                <div className="mb-2 font-medium">
+                  {isPolish ? 'Brakujące elementy' : 'Missing items'}
+                </div>
+                <ul className="space-y-1">
+                  {reviewGaps.map((gap, index) => (
+                    <li key={`${gap}-${index}`}>• {gap}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2 pt-2">
+              {toolStatus === 'DRAFT' && (
+                <button
+                  type="button"
+                  onClick={handleRequestReview}
+                  disabled={!completionReady || toolPermissions.canRequestReview === false}
+                  className="rounded-lg bg-amber-500 px-3 py-2 text-sm text-white disabled:opacity-50"
+                >
+                  {isPolish ? 'Request Review' : 'Request Review'}
+                </button>
+              )}
+              {toolStatus === 'REVIEW' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleApprove}
+                    disabled={toolPermissions.canApproveTool === false}
+                    className="rounded-lg bg-emerald-500 px-3 py-2 text-sm text-white disabled:opacity-50"
+                  >
+                    {isPolish ? 'Approve' : 'Approve'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSendBack}
+                    className="rounded-lg bg-slate-100 dark:bg-navy-900/70 px-3 py-2 text-sm text-slate-700 dark:text-slate-300"
+                  >
+                    {isPolish ? 'Send back' : 'Send back'}
+                  </button>
+                </>
+              )}
+              {['APPROVED', 'GENERATED', 'COMPLETED'].includes(toolStatus) && (
+                <button
+                  type="button"
+                  onClick={() => setShowGenerateModal(true)}
+                  disabled={toolPermissions.canGenerate === false}
+                  className="rounded-lg bg-primary-500 px-3 py-2 text-sm text-white disabled:opacity-50"
+                >
+                  {isPolish ? 'Generate initiatives' : 'Generate initiatives'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            {isPolish ? 'Generation settings' : 'Generation settings'}
+          </h2>
+          <div className="grid gap-4 md:grid-cols-3 rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4">
+            <label className="space-y-1">
+              <span className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                {isPolish ? 'Methodology' : 'Methodology'}
+              </span>
+              <select
+                value={generationDefaults.methodologyId}
+                onChange={(e) =>
+                  setGenerationDefaults((prev) => ({ ...prev, methodologyId: e.target.value }))
+                }
+                className="h-9 w-full rounded-lg border border-slate-300/60 bg-white px-3 text-sm dark:border-navy-600/40 dark:bg-navy-900"
+              >
+                <option value="impact-feasibility">Impact-Feasibility Matrix</option>
+                <option value="strategic-alignment">Strategic Alignment</option>
+                <option value="quick-wins">Quick Wins First</option>
+              </select>
+            </label>
+            <label className="space-y-1">
+              <span className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                {isPolish ? 'Initiatives count' : 'Initiatives count'}
+              </span>
+              <input
+                type="number"
+                min={1}
+                max={10}
+                value={generationDefaults.count}
+                onChange={(e) =>
+                  setGenerationDefaults((prev) => ({
+                    ...prev,
+                    count: Math.max(1, Number(e.target.value) || 3),
+                  }))
+                }
+                className="h-9 w-full rounded-lg border border-slate-300/60 bg-white px-3 text-sm dark:border-navy-600/40 dark:bg-navy-900"
+              />
+            </label>
+            <label className="flex items-end gap-2 rounded-xl bg-white/70 dark:bg-navy-950/40 px-3 py-2 text-sm text-slate-600 dark:text-slate-400">
+              <input
+                type="checkbox"
+                checked={generationDefaults.includeChatContext}
+                onChange={(e) =>
+                  setGenerationDefaults((prev) => ({
+                    ...prev,
+                    includeChatContext: e.target.checked,
+                  }))
+                }
+              />
+              <span>{isPolish ? 'Include chat context' : 'Include chat context'}</span>
+            </label>
+          </div>
+        </div>
+
+        {toolDecisions.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+              {isPolish ? 'Gate decisions' : 'Gate decisions'}
+            </h2>
+            <div className="space-y-2 rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4">
+              {toolDecisions.map((decision, index) => (
+                <div
+                  key={`${decision.decision_id || decision.decision_type}-${index}`}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-white/70 dark:bg-navy-950/40 px-3 py-2 text-sm"
+                >
+                  <span className="text-slate-700 dark:text-slate-300">
+                    {decision.decision_type}
+                  </span>
+                  <span className="text-slate-500 dark:text-slate-400">
+                    {decision.decision_status || decision.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+
+    const outputsSection = (
+      <div className="space-y-8">
+        {toolType === 'dynamic-swot' && swotData?.summary?.executiveSummary && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+              {isPolish ? 'Source artifact' : 'Source artifact'}
+            </h2>
+            <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
+              <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                {isPolish ? 'Final source summary' : 'Final source summary'}
+              </div>
+              <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+                {swotData.summary.executiveSummary}
+              </p>
+              {(swotData.summary.appliedConclusions?.length || 0) > 0 && (
+                <div className="mt-4">
+                  <div className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Applied conclusions' : 'Applied conclusions'}
+                  </div>
+                  <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
+                    {swotData.summary.appliedConclusions?.map((conclusion, index) => (
+                      <li key={`${conclusion}-${index}`}>• {conclusion}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            {isPolish ? 'Kontrakt outputów' : 'Output contract'}
+          </h2>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {CONSULTING_TOOL_STANDARD_OUTPUTS.map((outputType) => (
+              <div
+                key={outputType}
+                className="rounded-2xl bg-slate-50/70 p-4 text-sm text-slate-600 dark:bg-navy-900/40 dark:text-slate-300"
+              >
+                <div className="font-medium text-slate-800 dark:text-slate-100">{outputType}</div>
+                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {outputType === 'initiative'
+                    ? isPolish
+                      ? 'Dla ruchów lub wniosków gotowych do wdrożenia.'
+                      : 'For moves or conclusions ready for execution.'
+                    : outputType === 'report'
+                      ? isPolish
+                        ? 'Dla final source summary gotowego do pokazania.'
+                        : 'For a final source summary ready to be reviewed.'
+                      : outputType === 'presentation'
+                        ? isPolish
+                          ? 'Dla komunikacji wizualnej bez ponownego składania narracji.'
+                          : 'For visual communication without rebuilding the narrative.'
+                        : isPolish
+                          ? 'Dla obiecujących hipotez lub kierunków do dalszej pracy.'
+                          : 'For promising hypotheses or directions that need further work.'}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            {isPolish ? 'Inicjatywy z tej sesji' : 'Initiatives from this session'}
+          </h2>
+          <EmbeddedView
+            title={isPolish ? 'Generated initiatives' : 'Generated initiatives'}
+            count={generatedInitiatives.length}
+            viewModes={['list']}
+            readOnly
+          >
+            {generatedInitiatives.length === 0 ? (
+              <div className="px-1 text-[11px] text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Brak wygenerowanych inicjatyw' : 'No initiatives generated yet'}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {generatedInitiatives.map((initiative) => (
+                  <button
+                    key={initiative.id}
+                    type="button"
+                    onClick={() => onOpenInitiative?.(initiative.id)}
+                    className="flex w-full items-center justify-between rounded-xl bg-white/70 dark:bg-navy-950/40 px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-300"
+                  >
+                    <span className="truncate">{initiative.title}</span>
+                    <ExternalLink size={14} className="shrink-0 text-slate-400" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </EmbeddedView>
+        </div>
+
+        {toolType === 'dynamic-swot' && (
+          <>
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                {isPolish ? 'Recommended moves' : 'Recommended moves'}
+              </h2>
+              <div className="space-y-2">
+                {(swotData?.recommendedMoves || []).length === 0 ? (
+                  <div className="rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4 text-sm text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Brak wygenerowanych ruchów.' : 'No moves generated yet.'}
+                  </div>
+                ) : (
+                  swotData?.recommendedMoves?.map((move) => (
+                    <div
+                      key={move.id}
+                      className="rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4 space-y-2"
+                    >
+                      <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                        {move.title}
+                      </div>
+                      <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        {move.category}
+                      </div>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">{move.rationale}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                {isPolish ? 'Output candidates' : 'Output candidates'}
+              </h2>
+              <div className="space-y-2">
+                {(swotData?.outputCandidates || []).length === 0 ? (
+                  <div className="rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4 text-sm text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Brak kandydatów outputów.' : 'No output candidates yet.'}
+                  </div>
+                ) : (
+                  swotData?.outputCandidates?.map((candidate) => (
+                    <div
+                      key={candidate.id}
+                      className="rounded-2xl bg-slate-50/70 dark:bg-navy-900/40 p-4 space-y-1"
+                    >
+                      <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                        {candidate.title}
+                      </div>
+                      <div className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        {candidate.outputType}
+                      </div>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        {candidate.description}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+
+    if (isDynamicSwot) {
+      const renderPhaseCanvas = (phaseStep: StepDefinition, extras?: React.ReactNode) => {
+        const phaseIndex = stepDefs.findIndex((step) => step.id === phaseStep.id) + 1;
+
+        return (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-2">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'AI consultant flow' : 'AI consultant flow'}
+                  </div>
+                  <div className="text-sm text-slate-700 dark:text-slate-300">
+                    {isPolish ? phaseStep.descriptionPl : phaseStep.description}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleGenerateAI()}
+                  disabled={isGeneratingAI}
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary-500/10 px-3 py-2 text-xs font-medium text-primary-600 hover:bg-primary-500/15 disabled:opacity-60 dark:text-primary-300"
+                >
+                  {isGeneratingAI ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Sparkles size={14} />
+                  )}
+                  {isPolish ? 'AI mentor' : 'AI mentor'}
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-slate-50/70 dark:border-navy-700/70 dark:bg-navy-900/40">
+              {currentSession ? (
+                <ToolCanvas
+                  toolType={toolType}
+                  currentStep={phaseIndex}
+                  stepDefinition={phaseStep}
+                  session={currentSession}
+                  isStreaming={isStreaming}
+                  streamedContent={streamedContent || ''}
+                  isPolish={isPolish}
+                  orgName={currentOrganization?.name}
+                  onOpenChat={handleOpenChat}
+                  onOpenInitiatives={() => setShowGenerateModal(true)}
+                  generatedInitiatives={generatedInitiatives}
+                  recentInitiatives={generatedInitiatives.slice(0, 5)}
+                  chatSnippets={(activeChatMessages || []).slice(-6).map((message: any) => ({
+                    role: message.role,
+                    content: message.content,
+                  }))}
+                  showContextPanel
+                />
+              ) : (
+                <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Brak danych sesji' : 'No session data'}
+                </div>
+              )}
+            </div>
+
+            {extras}
+
+            <div className="flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => setCurrentStep(Math.max(1, phaseIndex - 1))}
+                disabled={phaseIndex <= 1}
+                className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 disabled:opacity-50 dark:bg-navy-900/70 dark:text-slate-300"
+              >
+                {isPolish ? 'Previous' : 'Previous'}
+              </button>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Faza' : 'Phase'} {phaseIndex}/{stepDefs.length}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (phaseIndex === currentStep) {
+                    nextStep();
+                    return;
+                  }
+                  setCurrentStep(Math.min(stepDefs.length, phaseIndex + 1));
+                }}
+                disabled={
+                  phaseIndex >= stepDefs.length || (phaseIndex === currentStep && !canAdvanceStep())
+                }
+                className="rounded-lg bg-primary-500 px-3 py-2 text-sm text-white disabled:opacity-50"
+              >
+                {isPolish ? 'Next' : 'Next'}
+              </button>
+            </div>
+          </div>
+        );
+      };
+
+      const missionStep = stepDefs.find((step) => step.id === 'mission');
+      const inputStep = stepDefs.find((step) => step.id === 'input');
+      const swotStep = stepDefs.find((step) => step.id === 'swot');
+      const insightsStep = stepDefs.find((step) => step.id === 'insights');
+      const outputsStep = stepDefs.find((step) => step.id === 'outputs');
+
+      return [
+        ...(missionStep
+          ? [
+              {
+                id: 'mission',
+                icon: Target,
+                label: { en: 'Mission & Context', pl: 'Mission & Context' },
+                component: renderPhaseCanvas(missionStep),
+              },
+            ]
+          : []),
+        ...(inputStep
+          ? [
+              {
+                id: 'input',
+                icon: MessageSquare,
+                label: { en: 'Input & Exploration', pl: 'Input & Exploration' },
+                component: renderPhaseCanvas(inputStep),
+              },
+            ]
+          : []),
+        ...(swotStep
+          ? [
+              {
+                id: 'swot',
+                icon: Target,
+                label: { en: 'SWOT Build', pl: 'SWOT Build' },
+                component: renderPhaseCanvas(swotStep),
+              },
+            ]
+          : []),
+        ...(insightsStep
+          ? [
+              {
+                id: 'insights',
+                icon: Lightbulb,
+                label: { en: 'Synthesis & Insights', pl: 'Synthesis & Insights' },
+                badge:
+                  (swotData?.tensions?.length || 0) + (swotData?.recommendedMoves?.length || 0),
+                component: renderPhaseCanvas(
+                  insightsStep,
+                  <CommentsCanvas
+                    comments={nModeComments}
+                    onDeleteComment={handleDeleteComment}
+                    dateFilter={commentDateFilter}
+                    onDateFilterChange={setCommentDateFilter}
+                    sortOrder={commentSortOrder}
+                    onToggleSort={() =>
+                      setCommentSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
+                    }
+                    commentDraft={commentDraft}
+                    onCommentDraftChange={setCommentDraft}
+                    onSubmitComment={() => {
+                      void handleAddComment(commentDraft);
+                      setCommentDraft('');
+                      setDraftPriority('normal');
+                    }}
+                    draftPriority={draftPriority}
+                    onDraftPriorityChange={setDraftPriority}
+                    getPriorityDotClass={getPriorityDotClass}
+                    getCommentPriority={() => 'normal'}
+                    getPriorityButtonClass={getPriorityButtonClass}
+                    getCommentPriorityLabel={getPriorityLabel}
+                    getCommentPriorityHint={(priority) => getPriorityHint(priority, isPolish)}
+                  />
+                ),
+              },
+            ]
+          : []),
+        ...(outputsStep
+          ? [
+              {
+                id: 'outputs',
+                icon: CheckCircle2,
+                label: { en: 'Outputs & Actions', pl: 'Outputs & Actions' },
+                badge: generatedInitiatives.length + (swotData?.outputCandidates?.length || 0),
+                component: renderPhaseCanvas(
+                  outputsStep,
+                  <div className="space-y-8">
+                    <div className="space-y-3">
+                      <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                        {isPolish ? 'Readiness & governance' : 'Readiness & governance'}
+                      </h2>
+                      <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <div>
+                            <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                              {isPolish ? 'Status' : 'Status'}
+                            </div>
+                            <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                              {statusLabel(toolStatus, isPolish)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                              {isPolish ? 'Progress' : 'Progress'}
+                            </div>
+                            <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                              {progress}%
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-4 space-y-2">
+                          {completionItems.map((item, index) => (
+                            <div
+                              key={`${item.label}-${index}`}
+                              className="flex items-center gap-3 text-sm"
+                            >
+                              <span
+                                className={`h-2 w-2 rounded-full ${
+                                  item.done ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
+                                }`}
+                              />
+                              <span
+                                className={
+                                  item.done
+                                    ? 'text-slate-700 dark:text-slate-300'
+                                    : 'text-slate-500 dark:text-slate-400'
+                                }
+                              >
+                                {item.label}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        {reviewGaps.length > 0 && (
+                          <div className="mt-4 rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
+                            <div className="mb-2 font-medium">
+                              {isPolish ? 'Brakujące elementy' : 'Missing items'}
+                            </div>
+                            <ul className="space-y-1">
+                              {reviewGaps.map((gap, index) => (
+                                <li key={`${gap}-${index}`}>• {gap}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {toolStatus === 'DRAFT' && (
+                            <button
+                              type="button"
+                              onClick={handleRequestReview}
+                              disabled={
+                                !completionReady || toolPermissions.canRequestReview === false
+                              }
+                              className="rounded-lg bg-amber-500 px-3 py-2 text-sm text-white disabled:opacity-50"
+                            >
+                              {isPolish ? 'Request Review' : 'Request Review'}
+                            </button>
+                          )}
+                          {toolStatus === 'REVIEW' && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={handleApprove}
+                                disabled={toolPermissions.canApproveTool === false}
+                                className="rounded-lg bg-emerald-500 px-3 py-2 text-sm text-white disabled:opacity-50"
+                              >
+                                {isPolish ? 'Approve' : 'Approve'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSendBack}
+                                className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 dark:bg-navy-900/70 dark:text-slate-300"
+                              >
+                                {isPolish ? 'Send back' : 'Send back'}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                        {isPolish ? 'Output candidates' : 'Output candidates'}
+                      </h2>
+                      {(swotData?.outputCandidates || []).length === 0 ? (
+                        <div className="rounded-2xl bg-slate-50/70 p-4 text-sm text-slate-500 dark:bg-navy-900/40 dark:text-slate-400">
+                          {isPolish ? 'Brak kandydatów outputów.' : 'No output candidates yet.'}
+                        </div>
+                      ) : (
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {swotData?.outputCandidates?.map((candidate) => (
+                            <div
+                              key={candidate.id}
+                              className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40"
+                            >
+                              <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                                {candidate.title}
+                              </div>
+                              <div className="mt-1 text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                                {candidate.outputType}
+                              </div>
+                              <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                                {candidate.description}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid gap-4 xl:grid-cols-2">
+                      <ActivityLogCanvas
+                        entries={activityEntries}
+                        stats={activityStats}
+                        typeMeta={activityTypeMeta}
+                      />
+                      <EmbeddedView
+                        title={isPolish ? 'Powiązania' : 'Backlinks'}
+                        count={toolBacklinks.length}
+                        loading={toolBacklinksLoading}
+                        readOnly
+                        viewModes={['list']}
+                      >
+                        {toolBacklinks.length === 0 && !toolBacklinksLoading ? (
+                          <div className="px-1 text-[11px] text-slate-500 dark:text-slate-400">
+                            {isPolish ? 'Brak powiązań' : 'No links yet'}
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {toolBacklinks.map((item) => (
+                              <div
+                                key={item.id}
+                                className="rounded-xl bg-white/70 px-3 py-2 dark:bg-navy-950/40"
+                              >
+                                <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200">
+                                  {item.sourceType}
+                                </div>
+                                <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                  {item.sourceId}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </EmbeddedView>
+                    </div>
+                  </div>
+                ),
+              },
+            ]
+          : []),
+      ] as NModeSection[];
+    }
+
+    return [
+      {
+        id: 'work',
+        icon: Target,
+        label: { en: 'Work', pl: 'Praca' },
+        component: workSection,
+      },
+      {
+        id: 'review',
+        icon: CheckCircle2,
+        label: { en: 'Review', pl: 'Review' },
+        badge: reviewGaps.length,
+        component: reviewSection,
+      },
+      {
+        id: 'outputs',
+        icon: Lightbulb,
+        label: { en: 'Outputs', pl: 'Outputs' },
+        badge: generatedInitiatives.length + (swotData?.outputCandidates?.length || 0),
+        component: outputsSection,
+      },
+      {
+        id: 'comments',
+        icon: MessageSquare,
+        label: { en: 'Comments', pl: 'Komentarze' },
+        badge: nModeComments.length,
+        component: (
+          <CommentsCanvas
+            comments={nModeComments}
+            onDeleteComment={handleDeleteComment}
+            dateFilter={commentDateFilter}
+            onDateFilterChange={setCommentDateFilter}
+            sortOrder={commentSortOrder}
+            onToggleSort={() => setCommentSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
+            commentDraft={commentDraft}
+            onCommentDraftChange={setCommentDraft}
+            onSubmitComment={() => {
+              void handleAddComment(commentDraft);
+              setCommentDraft('');
+              setDraftPriority('normal');
+            }}
+            draftPriority={draftPriority}
+            onDraftPriorityChange={setDraftPriority}
+            getPriorityDotClass={getPriorityDotClass}
+            getCommentPriority={() => 'normal'}
+            getPriorityButtonClass={getPriorityButtonClass}
+            getCommentPriorityLabel={getPriorityLabel}
+            getCommentPriorityHint={(priority) => getPriorityHint(priority, isPolish)}
+          />
+        ),
+      },
+      {
+        id: 'activity',
+        icon: History,
+        label: { en: 'Activity', pl: 'Aktywność' },
+        badge: history.length,
+        component: (
+          <ActivityLogCanvas
+            entries={activityEntries}
+            stats={activityStats}
+            typeMeta={activityTypeMeta}
+          />
+        ),
+      },
+      {
+        id: 'used-in',
+        icon: ExternalLink,
+        label: { en: 'Used in', pl: 'Used in' },
+        badge: toolBacklinks.length,
+        component: (
+          <EmbeddedView
+            title={isPolish ? 'Powiązania' : 'Backlinks'}
+            count={toolBacklinks.length}
+            loading={toolBacklinksLoading}
+            readOnly
+            viewModes={['list']}
+          >
+            {toolBacklinks.length === 0 && !toolBacklinksLoading ? (
+              <div className="px-1 text-[11px] text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Brak powiązań' : 'No links yet'}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {toolBacklinks.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-xl bg-white/70 dark:bg-navy-950/40 px-3 py-2"
+                  >
+                    <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200">
+                      {item.sourceType}
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                      {item.sourceId}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </EmbeddedView>
+        ),
+      },
+    ];
+  }, [
+    activeChatMessages,
+    activityEntries,
+    activityStats,
+    activityTypeMeta,
+    canAdvanceStep,
+    commentDateFilter,
+    commentDraft,
+    commentSortOrder,
+    comments.length,
+    completionItems,
+    completionReady,
+    createdAt,
+    currentOrganization?.name,
+    currentSession,
+    currentStep,
+    currentStepDef,
+    draftPriority,
+    dynamicSwotPhaseSummaries,
+    dynamicSwotReadiness,
+    generatedInitiatives,
+    handleAddComment,
+    handleDeleteComment,
+    handleGenerateAI,
+    handleOpenChat,
+    history.length,
+    isDynamicSwot,
+    isGeneratingAI,
+    isPolish,
+    isStreaming,
+    lastModified,
+    nModeComments,
+    nextStep,
+    onOpenInitiative,
+    prevStep,
+    progress,
+    reviewGaps,
+    setCurrentStep,
+    showGenerateModal,
+    stepDefs,
+    streamedContent,
+    swotData?.outputCandidates,
+    swotData?.recommendedMoves,
+    toolBacklinks,
+    toolBacklinksLoading,
+    toolMeta.name,
+    toolPermissions.canApproveTool,
+    toolPermissions.canGenerate,
+    toolPermissions.canRequestReview,
+    toolStatus,
+    toolType,
+  ]);
+
+  const handleSectionChange = useCallback(
+    (sectionId: string) => {
+      setActiveSection(sectionId);
+
+      if (!isDynamicSwot) return;
+
+      const targetIndex = stepDefs.findIndex((step) => step.id === sectionId);
+      if (targetIndex >= 0) {
+        setCurrentStep(targetIndex + 1);
+      }
+    },
+    [isDynamicSwot, setCurrentStep, stepDefs]
+  );
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full bg-slate-50 dark:bg-navy-950">
+      <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-navy-950">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
           <p className="text-sm text-slate-500">{isPolish ? 'Ładowanie...' : 'Loading...'}</p>
         </div>
       </div>
@@ -905,854 +2025,52 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-navy-950 dark:via-navy-900 dark:to-navy-950">
-      {/* ==================== HEADER ==================== */}
-      <div className="bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-navy-700/60 px-6 py-4">
-        <div className="flex items-center justify-between">
-          {/* Left: Back + Title */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onBack}
-              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-400 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+    <>
+      <NModeShell
+        loading={loading}
+        presentationMode="n"
+        onPresentationModeChange={() => {}}
+        showModeSwitcher={false}
+        header={{
+          title: sessionName || `${toolMeta.name} — Session`,
+          onTitleChange: setSessionName,
+          titleReadOnly: true,
+          artifactId: toolSessionId || toolType,
+          artifactType: 'tool',
+          onSave: handleSave,
+          saving,
+          isDirty: false,
+          onChat: handleOpenChat,
+          onClose: onBack,
+          draftSavedLabel: statusLabel(toolStatus, isPolish),
+          statusDotColor: toolMeta.statusDot,
+        }}
+        properties={properties}
+        sections={sections}
+        actions={actions}
+        actionsVisible={actions.length > 0}
+        activeSection={activeSection}
+        onSectionChange={handleSectionChange}
+      >
+        {null}
+      </NModeShell>
 
-            <div className="flex items-center gap-3">
-              <span
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r ${toolMeta.gradient} text-white`}
-              >
-                {toolMeta.badge}
-              </span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="font-semibold text-slate-900 dark:text-white">
-                    {isPolish ? toolMeta.namePl : toolMeta.name}
-                  </h1>
-                  {toolSessionId && (
-                    <ArtifactPermalinkButton
-                      artifactType="tool"
-                      artifactId={toolSessionId}
-                      isPolish={isPolish}
-                      size={14}
-                      className="p-1"
-                    />
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{sessionName}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Center: Status Badge */}
-          <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${statusConfig.color}`}>
-            <span className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
-            <span className="text-sm font-medium">
-              {isPolish ? statusConfig.label.pl : statusConfig.label.en}
-            </span>
-            <span className="text-xs opacity-70">({progress}%)</span>
-          </div>
-
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {isPolish ? 'Zapisz' : 'Save'}
-            </button>
-
-            <button
-              onClick={handleOpenChat}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
-            >
-              <MessageSquare className="w-4 h-4" />
-              Chat
-            </button>
-
-            <button
-              onClick={handleOpenKnowledgeBase}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700 transition-colors"
-            >
-              <BookOpen className="w-4 h-4" />
-              {isPolish ? 'How to' : 'How to'}
-            </button>
-
-            {/* More Menu */}
-            <div className="relative">
-              <button
-                onClick={() => setShowMoreMenu(!showMoreMenu)}
-                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-400 transition-colors"
-              >
-                <MoreVertical className="w-5 h-5" />
-              </button>
-
-              <AnimatePresence>
-                {showMoreMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-navy-800 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 py-2 z-50"
-                  >
-                    <button
-                      onClick={() => {
-                        void handleCopyToolPermalink();
-                        setShowMoreMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                    >
-                      <Copy className="w-4 h-4" />
-                      {isPolish ? 'Kopiuj link' : 'Copy link'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        window.open(window.location.href, '_blank');
-                        setShowMoreMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      {isPolish ? 'Otwórz w nowej karcie' : 'Open in new tab'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowMoreMenu(false);
-                        void handleExportPdf();
-                      }}
-                      disabled={isExportingPdf}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700 ${
-                        isExportingPdf ? 'opacity-60 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      <Download className="w-4 h-4" />
-                      {isExportingPdf
-                        ? isPolish
-                          ? 'Eksportuję...'
-                          : 'Exporting...'
-                        : isPolish
-                          ? 'Eksportuj PDF'
-                          : 'Export PDF'}
-                    </button>
-                    <div className="border-t border-slate-200 dark:border-navy-700 my-2" />
-                    <button
-                      onClick={() => {
-                        toast.error('Unable to delete this item.');
-                        setShowMoreMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      {isPolish ? 'Usuń' : 'Delete'}
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
+      <div id="tool-report-export" className="hidden p-8 bg-white text-slate-900">
+        <h1 className="text-2xl font-semibold">{sessionName || `${toolMeta.name} — Session`}</h1>
+        <p className="mt-2 text-sm text-slate-600">{toolType}</p>
+        <div className="mt-6 space-y-2">
+          <div>Status: {statusLabel(toolStatus, false)}</div>
+          <div>Progress: {progress}%</div>
+          <div>Current step: {currentStepDef?.name || '-'}</div>
         </div>
-
-        {/* Step Progress Pills */}
-        <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-2">
-          {stepDefs.map((step, index) => {
-            const stepNum = index + 1;
-            const isCompleted = currentSession?.steps?.some(
-              (s) => s.stepId === step.id && s.status === 'completed'
-            );
-            const isActive = currentStep === stepNum;
-            return (
-              <button
-                key={step.id}
-                type="button"
-                onClick={() => setCurrentStep(stepNum)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs whitespace-nowrap ${
-                  isActive
-                    ? `bg-gradient-to-r ${toolMeta.gradient} text-white shadow-sm`
-                    : isCompleted
-                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                {isCompleted ? (
-                  <Check className="w-3 h-3" />
-                ) : (
-                  <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-navy-700 flex items-center justify-center text-[10px]">
-                    {stepNum}
-                  </span>
-                )}
-                <span>{isPolish ? step.namePl : step.name}</span>
-              </button>
-            );
-          })}
-        </div>
+        {toolType === 'dynamic-swot' && swotData?.summary?.executiveSummary && (
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold">Executive summary</h2>
+            <p className="mt-2 text-sm">{swotData.summary.executiveSummary}</p>
+          </div>
+        )}
       </div>
 
-      {/* ==================== MAIN CONTENT ==================== */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full flex">
-          {/* ==================== LEFT COLUMN ==================== */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {/* Tool Content Section */}
-            <CollapsibleSection
-              id="tool-content"
-              title={isPolish ? 'Zawartość narzędzia' : 'Tool Content'}
-              icon={<BarChart3 size={18} className="text-white" />}
-              iconBg={`bg-gradient-to-br ${toolMeta.gradient}`}
-              expanded={expandedSections.has('tool-content')}
-              onToggle={() => toggleSection('tool-content')}
-              badge={
-                <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">
-                  {completionItems.filter((i) => i.done).length}/{completionItems.length}
-                </span>
-              }
-              actions={
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleGenerateAI('suggestions');
-                  }}
-                  disabled={isGeneratingAI}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-200"
-                >
-                  {isGeneratingAI ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-3 h-3" />
-                  )}
-                  AI
-                </button>
-              }
-            >
-              {currentSession ? (
-                <div className="space-y-4">
-                  <div className="rounded-xl border border-slate-200 dark:border-navy-700/60 overflow-hidden bg-white/50 dark:bg-navy-900/40">
-                    <ToolCanvas
-                      toolType={toolType}
-                      currentStep={currentStep}
-                      stepDefinition={stepDefs[currentStep - 1]}
-                      session={currentSession}
-                      isStreaming={isStreaming}
-                      streamedContent={streamedContent || ''}
-                      isPolish={isPolish}
-                      orgName={currentOrganization?.name}
-                      onOpenChat={handleOpenChat}
-                      onOpenInitiatives={() => setShowGenerateModal(true)}
-                      generatedInitiatives={generatedInitiatives}
-                      recentInitiatives={generatedInitiatives.slice(0, 5)}
-                      chatSnippets={(activeChatMessages || []).slice(-6).map((m: any) => ({
-                        role: m.role,
-                        content: m.content,
-                      }))}
-                      showContextPanel={false}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <button
-                      type="button"
-                      onClick={() => prevStep()}
-                      disabled={currentStep <= 1}
-                      className="px-3 py-2 rounded-lg text-sm bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 disabled:opacity-50"
-                    >
-                      {isPolish ? 'Wstecz' : 'Previous'}
-                    </button>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {isPolish ? 'Krok' : 'Step'} {currentStep}/{stepDefs.length} —{' '}
-                      {isPolish
-                        ? stepDefs[currentStep - 1]?.namePl
-                        : stepDefs[currentStep - 1]?.name}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => nextStep()}
-                      disabled={currentStep >= stepDefs.length || !canAdvanceStep()}
-                      className={`px-3 py-2 rounded-lg text-sm text-white disabled:opacity-50 ${
-                        currentStep >= stepDefs.length || !canAdvanceStep()
-                          ? 'bg-slate-400'
-                          : `bg-gradient-to-r ${toolMeta.gradient}`
-                      }`}
-                    >
-                      {isPolish ? 'Dalej' : 'Next'}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {isPolish ? 'Brak danych sesji' : 'No session data'}
-                </div>
-              )}
-            </CollapsibleSection>
-
-            {/* Analysis / Correlations Section */}
-            <CollapsibleSection
-              id="analysis"
-              title={isPolish ? 'Analiza i wnioski' : 'Analysis & Insights'}
-              icon={<Wand2 size={18} className="text-white" />}
-              iconBg="bg-gradient-to-br from-purple-500 to-pink-500"
-              expanded={expandedSections.has('analysis')}
-              onToggle={() => toggleSection('analysis')}
-              actions={
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleGenerateAI('correlations');
-                  }}
-                  disabled={isGeneratingAI}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-200"
-                >
-                  {isGeneratingAI ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-3 h-3" />
-                  )}
-                  {isPolish ? 'Generuj' : 'Generate'}
-                </button>
-              }
-            >
-              <div className="space-y-4">
-                {isStreaming && (
-                  <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Loader2 className="w-4 h-4 animate-spin text-purple-500" />
-                      <span className="text-sm font-medium text-purple-700 dark:text-purple-400">
-                        {isPolish ? 'Generowanie...' : 'Generating...'}
-                      </span>
-                    </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
-                      {streamedContent}
-                    </p>
-                  </div>
-                )}
-                {!isStreaming && (
-                  <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
-                    {isPolish
-                      ? 'Kliknij "Generuj" aby AI przeanalizowało dane i wygenerowało wnioski.'
-                      : 'Click "Generate" for AI to analyze data and generate insights.'}
-                  </p>
-                )}
-              </div>
-            </CollapsibleSection>
-
-            {/* Summary Section */}
-            <CollapsibleSection
-              id="summary"
-              title={isPolish ? 'Podsumowanie' : 'Summary'}
-              icon={<FileText size={18} className="text-white" />}
-              iconBg="bg-gradient-to-br from-teal-500 to-emerald-500"
-              expanded={expandedSections.has('summary')}
-              onToggle={() => toggleSection('summary')}
-              actions={
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleGenerateAI('summary');
-                  }}
-                  disabled={isGeneratingAI}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-200"
-                >
-                  {isGeneratingAI ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-3 h-3" />
-                  )}
-                  AI
-                </button>
-              }
-            >
-              <div className="prose prose-sm dark:prose-invert max-w-none">
-                <p className="text-slate-600 dark:text-slate-400">
-                  {(currentSession?.inputData as any)?.summary?.keyInsights?.join('. ') ||
-                    (isPolish
-                      ? 'Brak podsumowania. Wygeneruj je za pomocą AI.'
-                      : 'No summary yet. Generate one using AI.')}
-                </p>
-              </div>
-            </CollapsibleSection>
-
-            {/* Comments Section */}
-            <CollapsibleSection
-              id="comments"
-              title={isPolish ? 'Komentarze' : 'Comments'}
-              icon={<MessageSquare size={18} className="text-white" />}
-              iconBg="bg-gradient-to-br from-blue-500 to-indigo-500"
-              expanded={expandedSections.has('comments')}
-              onToggle={() => toggleSection('comments')}
-              badge={
-                comments.length > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-                    {comments.length}
-                  </span>
-                )
-              }
-            >
-              <CommentsSection
-                comments={comments}
-                onAddComment={async (content) => {
-                  try {
-                    await Api.post(`/api/tools/${toolSessionId}/comments`, { text: content });
-                    const updated = await Api.get(`/api/tools/${toolSessionId}/comments`);
-                    setComments(updated || []);
-                    toast.success(isPolish ? 'Komentarz dodany' : 'Comment added');
-                  } catch {
-                    toast.error(
-                      isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment'
-                    );
-                  }
-                }}
-                onDeleteComment={async (commentId) => {
-                  try {
-                    await Api.delete(`/api/tools/${toolSessionId}/comments/${commentId}`);
-                    const updated = await Api.get(`/api/tools/${toolSessionId}/comments`);
-                    setComments(updated || []);
-                    toast.success(isPolish ? 'Komentarz usunięty' : 'Comment deleted');
-                  } catch {
-                    toast.error(
-                      isPolish ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment'
-                    );
-                  }
-                }}
-                onLikeComment={async (commentId) => {
-                  try {
-                    await Api.post(`/api/tools/${toolSessionId}/comments/${commentId}/like`, {});
-                    const updated = await Api.get(`/api/tools/${toolSessionId}/comments`);
-                    setComments(updated || []);
-                  } catch {
-                    // silent — like is non-critical
-                  }
-                }}
-                onGenerateAIComment={async () => {
-                  await handleGenerateAI('comments');
-                }}
-                isGeneratingAI={isGeneratingAI}
-              />
-            </CollapsibleSection>
-
-            {/* Activity Log Section */}
-            <CollapsibleSection
-              id="activity"
-              title={isPolish ? 'Historia aktywności' : 'Activity Log'}
-              icon={<History size={18} className="text-white" />}
-              iconBg="bg-gradient-to-br from-slate-500 to-slate-600"
-              expanded={expandedSections.has('activity')}
-              onToggle={() => toggleSection('activity')}
-            >
-              <div className="space-y-3">
-                {history.length === 0 && (
-                  <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
-                    {isPolish ? 'Brak historii' : 'No activity yet'}
-                  </p>
-                )}
-                {history.map((event) => (
-                  <div key={event.id} className="flex items-start gap-3 text-sm">
-                    <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 mt-2" />
-                    <div>
-                      <p className="text-slate-700 dark:text-slate-300">{event.eventType}</p>
-                      <p className="text-xs text-slate-500">
-                        {event.actorName} • {new Date(event.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CollapsibleSection>
-
-            {/* V4-IDEA-09: Used in (backlinks) — LinkGraph parity with Ideas/Notebook/Initiatives */}
-            <CollapsibleSection
-              id="used-in"
-              title={isPolish ? 'Użyte w (powiązania)' : 'Used in (backlinks)'}
-              icon={<Target size={18} className="text-white" />}
-              iconBg="bg-gradient-to-br from-cyan-500 to-blue-500"
-              expanded={expandedSections.has('used-in')}
-              onToggle={() => toggleSection('used-in')}
-            >
-              <EmbeddedView
-                title={isPolish ? 'Użyte w (powiązania)' : 'Used in (backlinks)'}
-                count={toolBacklinks.length}
-                loading={toolBacklinksLoading}
-                readOnly
-                viewModes={['list']}
-              >
-                {toolBacklinks.length === 0 && !toolBacklinksLoading ? (
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 px-1">
-                    {isPolish ? 'Brak powiązań' : 'No links yet'}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {toolBacklinks.slice(0, 10).map((bl) => (
-                      <div
-                        key={bl.id}
-                        className="rounded-xl border border-slate-200/40 dark:border-white/[0.04] bg-white/40 dark:bg-white/[0.02] p-2.5 flex items-center justify-between gap-2"
-                      >
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">
-                            {bl.sourceType}
-                          </div>
-                          <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                            {bl.sourceId}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() =>
-                            window.dispatchEvent(
-                              new CustomEvent('mywork-open-item', {
-                                detail: {
-                                  type: bl.sourceType,
-                                  id: bl.sourceId,
-                                  name: `${bl.sourceType} ${bl.sourceId}`,
-                                },
-                              })
-                            )
-                          }
-                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0"
-                        >
-                          <ExternalLink size={12} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </EmbeddedView>
-            </CollapsibleSection>
-          </div>
-
-          {/* ==================== RIGHT COLUMN ==================== */}
-          <div className="w-96 border-l border-slate-200 dark:border-navy-700/60 bg-slate-50/50 dark:bg-navy-900/50 overflow-y-auto p-6 space-y-4">
-            {/* Control Panel */}
-            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 p-5">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">
-                {isPolish ? 'Panel sterowania' : 'Control Panel'}
-              </h3>
-
-              {/* Status */}
-              <div className="mb-4">
-                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
-                  {isPolish ? 'Status' : 'Status'}
-                </label>
-                <div
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${statusConfig.color}`}
-                >
-                  <span className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
-                  <span className="text-sm font-medium">
-                    {isPolish ? statusConfig.label.pl : statusConfig.label.en}
-                  </span>
-                </div>
-              </div>
-
-              {/* Progress */}
-              <div className="mb-4">
-                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
-                  {isPolish ? 'Postęp' : 'Progress'}
-                </label>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-2 rounded-full bg-slate-200 dark:bg-navy-700 overflow-hidden">
-                    <div
-                      className={`h-full bg-gradient-to-r ${toolMeta.gradient} transition-all duration-500`}
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {progress}%
-                  </span>
-                </div>
-              </div>
-
-              {/* Session Info */}
-              <div className="space-y-2 text-xs text-slate-500 dark:text-slate-400">
-                <div className="flex justify-between">
-                  <span>{isPolish ? 'Utworzono' : 'Created'}</span>
-                  <span>{createdAt ? new Date(createdAt).toLocaleDateString() : '-'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>{isPolish ? 'Ostatnia zmiana' : 'Last modified'}</span>
-                  <span>{lastModified ? new Date(lastModified).toLocaleString() : '-'}</span>
-                </div>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700 space-y-2">
-                {toolStatus === 'DRAFT' && (
-                  <button
-                    onClick={handleRequestReview}
-                    disabled={!completionReady || toolPermissions.canRequestReview === false}
-                    className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                      completionReady && toolPermissions.canRequestReview !== false
-                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
-                        : 'bg-slate-100 dark:bg-navy-800 text-slate-400 cursor-not-allowed'
-                    }`}
-                  >
-                    <Send className="w-4 h-4" />
-                    {isPolish ? 'Wyślij do przeglądu' : 'Request Review'}
-                  </button>
-                )}
-
-                {toolStatus === 'REVIEW' && (
-                  <>
-                    <button
-                      onClick={handleApprove}
-                      disabled={toolPermissions.canApproveTool === false}
-                      className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                        toolPermissions.canApproveTool !== false
-                          ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                          : 'bg-slate-100 dark:bg-navy-800 text-slate-400 cursor-not-allowed'
-                      }`}
-                    >
-                      <Check className="w-4 h-4" />
-                      {isPolish ? 'Zatwierdź' : 'Approve'}
-                    </button>
-                    <button
-                      onClick={handleSendBack}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700"
-                    >
-                      <ArrowLeft className="w-4 h-4" />
-                      {isPolish ? 'Odeślij do draftu' : 'Send Back'}
-                    </button>
-                  </>
-                )}
-
-                {(toolStatus === 'APPROVED' ||
-                  toolStatus === 'GENERATED' ||
-                  toolStatus === 'COMPLETED') && (
-                  <button
-                    onClick={() => setShowGenerateModal(true)}
-                    disabled={toolPermissions.canGenerate === false}
-                    className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                      toolPermissions.canGenerate !== false
-                        ? `bg-gradient-to-r ${toolMeta.gradient} hover:opacity-90 text-white`
-                        : 'bg-slate-100 dark:bg-navy-800 text-slate-400 cursor-not-allowed'
-                    }`}
-                  >
-                    <Lightbulb className="w-4 h-4" />
-                    {isPolish ? 'Generuj inicjatywy' : 'Generate Initiatives'}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* DoD Checklist */}
-            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {isPolish ? 'Lista kontrolna (DoD)' : 'Completion Checklist (DoD)'}
-                </h3>
-                {completionReady ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                ) : (
-                  <AlertTriangle className="w-5 h-5 text-amber-500" />
-                )}
-              </div>
-
-              <div className="space-y-2">
-                {completionItems.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <span
-                      className={`w-2 h-2 rounded-full ${item.done ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
-                    />
-                    <span
-                      className={`text-sm ${item.done ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}
-                    >
-                      {item.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {reviewGaps.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-slate-200 dark:border-navy-700">
-                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mb-2">
-                    {isPolish ? 'Brakujące elementy:' : 'Missing items:'}
-                  </p>
-                  <ul className="space-y-1">
-                    {reviewGaps.map((gap, idx) => (
-                      <li key={idx} className="text-xs text-slate-500 dark:text-slate-400">
-                        • {gap}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            {/* AI Configuration */}
-            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 p-5">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                {isPolish ? 'Ustawienia generowania' : 'Generation Settings'}
-              </h3>
-
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
-                    {isPolish ? 'Metodyka' : 'Methodology'}
-                  </label>
-                  <select
-                    value={generationDefaults.methodologyId}
-                    onChange={(e) =>
-                      setGenerationDefaults({
-                        ...generationDefaults,
-                        methodologyId: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-slate-700 dark:text-slate-300"
-                  >
-                    <option value="impact-feasibility">Impact-Feasibility Matrix</option>
-                    <option value="strategic-alignment">Strategic Alignment</option>
-                    <option value="quick-wins">Quick Wins First</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
-                    {isPolish ? 'Liczba inicjatyw' : 'Number of initiatives'}
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={generationDefaults.count}
-                    onChange={(e) =>
-                      setGenerationDefaults({
-                        ...generationDefaults,
-                        count: parseInt(e.target.value) || 3,
-                      })
-                    }
-                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-sm text-slate-700 dark:text-slate-300"
-                  />
-                </div>
-
-                <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                  <input
-                    type="checkbox"
-                    checked={generationDefaults.includeChatContext}
-                    onChange={(e) =>
-                      setGenerationDefaults({
-                        ...generationDefaults,
-                        includeChatContext: e.target.checked,
-                      })
-                    }
-                    className="rounded border-slate-300 dark:border-navy-600"
-                  />
-                  {isPolish ? 'Uwzględnij kontekst z chatu' : 'Include chat context'}
-                </label>
-              </div>
-            </div>
-
-            {/* Decisions */}
-            {toolDecisions.length > 0 && (
-              <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 p-5">
-                <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">
-                  {isPolish ? 'Decyzje bramkowe' : 'Gate Decisions'}
-                </h3>
-
-                <div className="space-y-3">
-                  {toolDecisions.map((decision, idx) => (
-                    <div key={idx} className="flex items-center justify-between">
-                      <span className="text-sm text-slate-600 dark:text-slate-400">
-                        {decision.decision_type}
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full ${
-                          decision.decision_status === 'APPROVED' || decision.status === 'APPROVED'
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                            : decision.decision_status === 'REJECTED' ||
-                                decision.status === 'REJECTED'
-                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                              : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                        }`}
-                      >
-                        {decision.decision_status || decision.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Generated Initiatives */}
-            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 p-5">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
-                <Lightbulb className="w-4 h-4 text-amber-500" />
-                {isPolish ? 'Wygenerowane inicjatywy' : 'Generated Initiatives'}
-              </h3>
-
-              {generatedInitiatives.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
-                  {isPolish ? 'Brak wygenerowanych inicjatyw' : 'No initiatives generated yet'}
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {generatedInitiatives.map((initiative) => (
-                    <button
-                      key={initiative.id}
-                      onClick={() => onOpenInitiative?.(initiative.id)}
-                      className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-navy-800 hover:bg-slate-100 dark:hover:bg-navy-700 transition-colors text-left"
-                    >
-                      <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
-                        {initiative.title}
-                      </span>
-                      <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Team / Permissions */}
-            <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-navy-700/60 p-5">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                {isPolish ? 'Uprawnienia' : 'Permissions'}
-              </h3>
-
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">
-                    {isPolish ? 'Request Review' : 'Request Review'}
-                  </span>
-                  <span
-                    className={
-                      toolPermissions.canRequestReview !== false
-                        ? 'text-emerald-500'
-                        : 'text-slate-400'
-                    }
-                  >
-                    {toolPermissions.canRequestReview !== false ? '✓' : '✗'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">
-                    {isPolish ? 'Approve' : 'Approve'}
-                  </span>
-                  <span
-                    className={
-                      toolPermissions.canApproveTool !== false
-                        ? 'text-emerald-500'
-                        : 'text-slate-400'
-                    }
-                  >
-                    {toolPermissions.canApproveTool !== false ? '✓' : '✗'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">
-                    {isPolish ? 'Generate' : 'Generate'}
-                  </span>
-                  <span
-                    className={
-                      toolPermissions.canGenerate !== false ? 'text-emerald-500' : 'text-slate-400'
-                    }
-                  >
-                    {toolPermissions.canGenerate !== false ? '✓' : '✗'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ==================== MODALS ==================== */}
       {showGenerateModal && (
         <GenerateInitiativesModal
           isPolish={isPolish}
@@ -1763,198 +2081,90 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       )}
 
       {showRequestReviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-navy-900 rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden"
-          >
-            <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {isPolish ? 'Wyślij do przeglądu' : 'Request Review'}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-5 dark:bg-navy-900">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {isPolish ? 'Request review' : 'Request review'}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {isPolish
-                  ? 'Sprawdź kompletność i potwierdź wysłanie do review.'
-                  : 'Check completeness and confirm sending to review.'}
+                  ? 'Skonfiguruj właściciela decyzji i termin review.'
+                  : 'Configure decision owner and review due date.'}
               </p>
             </div>
 
-            <div className="p-6 space-y-4">
-              <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                    {isPolish ? 'Wszystkie wymagania spełnione' : 'All requirements met'}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {isPolish ? 'Decision Owner (opcjonalnie)' : 'Decision Owner (optional)'}
-                </label>
+            <div className="space-y-4">
+              <label className="block space-y-1">
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  {isPolish ? 'Decision owner' : 'Decision owner'}
+                </span>
                 <select
                   value={reviewDecisionOwnerId}
                   onChange={(e) => setReviewDecisionOwnerId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  className="h-10 w-full rounded-lg border border-slate-300/60 bg-white px-3 text-sm dark:border-navy-600/40 dark:bg-navy-950"
                 >
                   <option value="">{isPolish ? '-- Wybierz --' : '-- Select --'}</option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
-                      {user.firstName} {user.lastName}
+                      {user.name ||
+                        [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+                        user.email ||
+                        user.id}
                     </option>
                   ))}
                 </select>
-              </div>
+              </label>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {isPolish ? 'Termin' : 'Due date'}
-                </label>
+              <label className="block space-y-1">
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  {isPolish ? 'Due date' : 'Due date'}
+                </span>
                 <input
                   type="date"
                   value={reviewDueDate}
                   onChange={(e) => setReviewDueDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  className="h-10 w-full rounded-lg border border-slate-300/60 bg-white px-3 text-sm dark:border-navy-600/40 dark:bg-navy-950"
                 />
-              </div>
+              </label>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {isPolish ? 'Priorytet' : 'Priority'}
-                </label>
+              <label className="block space-y-1">
+                <span className="text-sm text-slate-600 dark:text-slate-400">
+                  {isPolish ? 'Priority' : 'Priority'}
+                </span>
                 <select
                   value={reviewPriority}
                   onChange={(e) => setReviewPriority(e.target.value as any)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 text-slate-900 dark:text-white"
+                  className="h-10 w-full rounded-lg border border-slate-300/60 bg-white px-3 text-sm dark:border-navy-600/40 dark:bg-navy-950"
                 >
-                  <option value="low">{isPolish ? 'Niski' : 'Low'}</option>
-                  <option value="medium">{isPolish ? 'Średni' : 'Medium'}</option>
-                  <option value="high">{isPolish ? 'Wysoki' : 'High'}</option>
-                  <option value="critical">{isPolish ? 'Krytyczny' : 'Critical'}</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
                 </select>
-              </div>
+              </label>
             </div>
 
-            <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
+            <div className="mt-6 flex justify-end gap-2">
               <button
+                type="button"
                 onClick={() => setShowRequestReviewModal(false)}
-                className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg"
+                className="rounded-lg border border-slate-300/60 px-4 py-2 text-sm text-slate-700 dark:border-navy-600/40 dark:text-slate-300"
               >
-                {isPolish ? 'Anuluj' : 'Cancel'}
+                {isPolish ? 'Cancel' : 'Cancel'}
               </button>
               <button
-                onClick={handleConfirmRequestReview}
-                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium"
+                type="button"
+                onClick={() => void handleConfirmRequestReview()}
+                className="rounded-lg bg-primary-500 px-4 py-2 text-sm text-white"
               >
-                {isPolish ? 'Wyślij do review' : 'Send to review'}
+                {isPolish ? 'Send review' : 'Send review'}
               </button>
             </div>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Hidden printable Tool Report (used for PDF export) */}
-      <div
-        id="tool-report-export"
-        className="fixed left-[-10000px] top-0 w-[210mm] bg-white text-slate-900 p-8"
-      >
-        <div className="flex items-start justify-between gap-6">
-          <div className="min-w-0">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Consultify • Tools</div>
-            <h1 className="text-2xl font-bold mt-1">Tool Report</h1>
-            <div className="text-sm text-slate-700 mt-1">
-              {toolMeta.name} • {sessionName || toolSessionId || '—'}
-            </div>
-            <div className="text-xs text-slate-500 mt-1">
-              Organization: {currentOrganization?.name || currentOrganization?.id || '—'}
-              {currentProjectId ? ` • Project: ${currentProjectId}` : ''}
-            </div>
-          </div>
-          <div className="text-right text-xs text-slate-600">
-            <div>
-              <span className="font-semibold text-slate-800">Status:</span> {toolStatus}
-            </div>
-            <div>
-              <span className="font-semibold text-slate-800">Completion:</span>{' '}
-              {Math.round(progress)}%
-            </div>
-            <div>
-              <span className="font-semibold text-slate-800">Generated:</span>{' '}
-              {new Date().toLocaleString()}
-            </div>
           </div>
         </div>
-
-        <hr className="my-5 border-slate-200" />
-
-        <section className="mb-5">
-          <h2 className="text-sm font-semibold text-slate-900">Executive Summary</h2>
-          <p className="text-xs text-slate-600 mt-1">
-            Snapshot export of the current tool session. Use the Reports module for governance /
-            management reporting.
-          </p>
-        </section>
-
-        <section className="mb-5">
-          <h2 className="text-sm font-semibold text-slate-900">DoD / Quality</h2>
-          <ul className="mt-2 space-y-1 text-xs text-slate-700">
-            <li>
-              <span className="font-semibold">Completion:</span> {Math.round(progress)}%
-            </li>
-            <li>
-              <span className="font-semibold">Review gaps:</span> {reviewGaps.length}
-            </li>
-          </ul>
-        </section>
-
-        <section className="mb-5">
-          <h2 className="text-sm font-semibold text-slate-900">Findings (tool data)</h2>
-          <pre className="mt-2 text-[10px] leading-4 bg-slate-50 border border-slate-200 rounded-lg p-3 whitespace-pre-wrap break-words">
-            {JSON.stringify(currentSession?.inputData || {}, null, 2)}
-          </pre>
-        </section>
-
-        <section className="mb-5">
-          <h2 className="text-sm font-semibold text-slate-900">Review & approval log</h2>
-          {toolDecisions.length === 0 ? (
-            <div className="text-xs text-slate-500 mt-2">No decisions recorded.</div>
-          ) : (
-            <ul className="mt-2 space-y-1 text-xs text-slate-700">
-              {toolDecisions.map((d, idx) => (
-                <li key={`${d.decision_type}-${d.decision_id || idx}`}>
-                  <span className="font-semibold">{d.decision_type}</span> • {d.status}
-                  {d.owner_name ? ` • owner: ${d.owner_name}` : ''}
-                  {d.due_date ? ` • due: ${d.due_date}` : ''}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="mb-2">
-          <h2 className="text-sm font-semibold text-slate-900">Generated initiatives</h2>
-          {generatedInitiatives.length === 0 ? (
-            <div className="text-xs text-slate-500 mt-2">No initiatives generated.</div>
-          ) : (
-            <ol className="mt-2 space-y-1 text-xs text-slate-700 list-decimal list-inside">
-              {generatedInitiatives.map((i) => (
-                <li key={i.id}>
-                  {i.title}
-                  {i.status ? ` • ${i.status}` : ''}
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
-      </div>
-
-      {/* Click outside handler for more menu */}
-      {showMoreMenu && (
-        <div className="fixed inset-0 z-40" onClick={() => setShowMoreMenu(false)} />
       )}
-    </div>
+    </>
   );
 };
 

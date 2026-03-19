@@ -46,10 +46,13 @@ run_check "Backend build" npm run build:backend
 # Gate 4: Frontend build
 run_check "Frontend build" npm run build
 
-# Gate 5: Health endpoint check (if server running)
-if curl -sf http://localhost:3005/ping > /dev/null 2>&1; then
-  run_check "Health: /ping" curl -sf http://localhost:3005/ping
-  run_check "Health: /api/ready" curl -sf http://localhost:3005/api/ready
+# Gate 5: Data truth release gate
+run_check "Data truth release gate" npm run release:gate:data-truth
+
+# Gate 6: Health endpoint check (if server running)
+if curl -sf http://localhost:3005/api/health/ping > /dev/null 2>&1; then
+  run_check "Health: /api/health/ping" curl -sf http://localhost:3005/api/health/ping
+  run_check "Health: /api/health/ready" curl -sf http://localhost:3005/api/health/ready
   run_check "Health: /api/health/database" curl -sf http://localhost:3005/api/health/database
 else
   echo "▶ Health checks: SKIP (server not running)"

@@ -101,7 +101,8 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
     setViewLayout,
   } = opts;
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(open);
+  const hydratedOnceRef = useRef(false);
   const didPersistPreferredRef = useRef(false);
   const {
     saving,
@@ -255,13 +256,17 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
       setEdges([]);
       setExtensions({});
     } finally {
+      hydratedOnceRef.current = true;
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language, ideaId, isPl, open]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      hydratedOnceRef.current = false;
+      return;
+    }
     didPersistPreferredRef.current = false;
     hydrate();
   }, [hydrate, open, refreshToken]);
@@ -282,7 +287,7 @@ export function useTablePersistence(opts: UseTablePersistenceOpts): UseTablePers
   }, [buildPayload, flushNow, isPl, locked, onSaved]);
 
   useEffect(() => {
-    if (!open || locked || loading) return;
+    if (!open || locked || loading || !hydratedOnceRef.current) return;
     queueSync(buildPayload(), { reason: 'draft' });
   }, [buildPayload, loading, locked, open, queueSync]);
 

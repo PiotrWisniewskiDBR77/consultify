@@ -38,6 +38,29 @@ export function getDatabaseHost(url: string): string | null {
   }
 }
 
+function assertResolvedDatabaseUrlIsReachable(
+  databaseUrl: string,
+  env: NodeJS.ProcessEnv,
+  source: 'DATABASE_URL' | 'DATABASE_PUBLIC_URL'
+): void {
+  const host = getDatabaseHost(databaseUrl);
+  if (!host) {
+    throw new Error(`Selected ${source} is not a valid database URL.`);
+  }
+
+  if (!allowLocalDatabaseForTests(env) && isLocalHost(host)) {
+    throw new Error(
+      `Selected ${source} points to local host ${host}. This project requires the external Postgres target outside tests.`
+    );
+  }
+
+  if (!isRunningInsideRailway(env) && isRailwayPrivateHost(host)) {
+    throw new Error(
+      `Selected ${source} points to private Railway host ${host}, which is unreachable outside Railway. Use a public/external Postgres proxy URL.`
+    );
+  }
+}
+
 export function resolveReachableDatabaseUrl(options: ResolveOptions = {}): {
   databaseUrl?: string;
   source: 'DATABASE_URL' | 'DATABASE_PUBLIC_URL' | 'none';
@@ -71,9 +94,11 @@ export function resolveReachableDatabaseUrl(options: ResolveOptions = {}): {
   }
 
   if (databaseUrl) {
+    assertResolvedDatabaseUrlIsReachable(databaseUrl, env, 'DATABASE_URL');
     return { databaseUrl, source: 'DATABASE_URL' };
   }
 
+  assertResolvedDatabaseUrlIsReachable(publicDatabaseUrl!, env, 'DATABASE_PUBLIC_URL');
   return {
     databaseUrl: publicDatabaseUrl,
     source: 'DATABASE_PUBLIC_URL',

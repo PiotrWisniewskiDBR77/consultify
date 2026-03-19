@@ -12,8 +12,32 @@ import { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { API_URL, getHeaders } from '../../services/api';
+import { API_URL, getHeaders, shouldAllowDemoData } from '../../services/api';
 import type { PresentationItem, ReportItem, TemplateItem } from './types';
+
+const DEMO_REPORTS: ReportItem[] = [
+  { id: 'demo-r1', title: 'Weekly Execution Report – Sprint 14', reportType: 'R1', status: 'ready', owner: 'Anna Kowalska', goal: 'Stakeholder update', periodFrom: '2026-03-04', periodTo: '2026-03-10', createdAt: '2026-03-10T09:00:00Z', updatedAt: '2026-03-10T14:30:00Z', exportFormats: ['pdf', 'pptx'], sourceRefs: [] },
+  { id: 'demo-r2', title: 'Steering Committee – Q1 2026', reportType: 'R2', status: 'ready', owner: 'Marek Nowak', goal: 'Board review', periodFrom: '2026-01-01', periodTo: '2026-03-31', createdAt: '2026-03-08T10:00:00Z', updatedAt: '2026-03-12T11:00:00Z', exportFormats: ['pdf'], sourceRefs: [] },
+  { id: 'demo-r3', title: 'Benefits Tracking – Digital Transformation', reportType: 'R3', status: 'draft', owner: 'Katarzyna Wiśniewska', createdAt: '2026-03-14T08:00:00Z', updatedAt: '2026-03-15T16:00:00Z', exportFormats: [], sourceRefs: [] },
+  { id: 'demo-r4', title: 'Portfolio Overview – All Initiatives', reportType: 'R4', status: 'exported', owner: 'Piotr Zieliński', periodFrom: '2025-07-01', periodTo: '2026-03-31', createdAt: '2026-02-20T12:00:00Z', updatedAt: '2026-03-01T09:00:00Z', exportFormats: ['pdf', 'xlsx'], sourceRefs: [] },
+  { id: 'demo-r5', title: 'Monthly Operations Review – Feb 2026', reportType: 'R1', status: 'ready', owner: 'Anna Kowalska', periodFrom: '2026-02-01', periodTo: '2026-02-28', createdAt: '2026-03-01T08:00:00Z', updatedAt: '2026-03-02T10:00:00Z', exportFormats: ['pdf'], sourceRefs: [] },
+];
+
+const DEMO_PRESENTATIONS: PresentationItem[] = [
+  { id: 'demo-p1', title: 'Digital Transformation Roadmap 2026', sourceType: 'tool', owner: 'Anna Kowalska', status: 'ready', presentationMode: 'briefing', createdAt: '2026-03-05T10:00:00Z', updatedAt: '2026-03-12T15:00:00Z', slideCount: 18, exportFormats: ['pptx'], sourceRefs: [] },
+  { id: 'demo-p2', title: 'Q1 Financial Results – Board Deck', sourceType: 'finance', owner: 'Marek Nowak', status: 'shared', presentationMode: 'formal', createdAt: '2026-03-10T09:00:00Z', updatedAt: '2026-03-14T11:00:00Z', slideCount: 24, exportFormats: ['pptx', 'pdf'], sourceRefs: [] },
+  { id: 'demo-p3', title: 'SWOT Analysis – Market Entry Strategy', sourceType: 'tool', owner: 'Katarzyna Wiśniewska', status: 'editing', presentationMode: 'workshop', createdAt: '2026-03-13T14:00:00Z', updatedAt: '2026-03-15T09:00:00Z', slideCount: 12, exportFormats: [], sourceRefs: [] },
+  { id: 'demo-p4', title: 'Investment Case – Cloud Migration', sourceType: 'finance', owner: 'Piotr Zieliński', status: 'draft', presentationMode: 'briefing', createdAt: '2026-03-16T08:00:00Z', updatedAt: '2026-03-16T16:00:00Z', slideCount: 8, exportFormats: [], sourceRefs: [] },
+];
+
+const DEMO_TEMPLATES: TemplateItem[] = [
+  { id: 'demo-t1', title: 'Weekly Execution Report', description: 'Standard weekly sprint/execution report template with KPI tracking', type: 'report', category: 'R1', scope: 'application', status: 'active', updatedAt: '2026-02-01T10:00:00Z', createdBy: 'System', sectionCount: 6 },
+  { id: 'demo-t2', title: 'Steering Committee Deck', description: 'Formal board-level steering committee presentation', type: 'presentation', category: 'R2', scope: 'application', status: 'active', updatedAt: '2026-02-01T10:00:00Z', createdBy: 'System', slideCount: 15 },
+  { id: 'demo-t3', title: 'Benefits Tracking Report', description: 'KPI and benefits realization tracking template', type: 'report', category: 'R3', scope: 'application', status: 'active', updatedAt: '2026-01-15T10:00:00Z', createdBy: 'System', sectionCount: 5 },
+  { id: 'demo-t4', title: 'Portfolio Overview', description: 'Cross-initiative portfolio health and progress overview', type: 'report', category: 'R4', scope: 'application', status: 'active', updatedAt: '2026-01-15T10:00:00Z', createdBy: 'System', sectionCount: 8 },
+  { id: 'demo-t5', title: 'Workshop Facilitation Deck', description: 'Interactive workshop presentation with exercises', type: 'presentation', category: 'initiative_review', scope: 'application', status: 'active', updatedAt: '2026-02-10T10:00:00Z', createdBy: 'System', slideCount: 20 },
+  { id: 'demo-t6', title: 'Investment Case Template', description: 'NPV/IRR/ROI investment decision support template', type: 'report', category: 'financial_review', scope: 'application', status: 'active', updatedAt: '2026-02-20T10:00:00Z', createdBy: 'System', sectionCount: 7 },
+];
 
 // ─── Reports ──────────────────────────────────────────────────────
 
@@ -57,6 +81,8 @@ function mapReport(raw: any): ReportItem {
 export function useReports() {
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const allowDemoData = shouldAllowDemoData();
+  const [error, setError] = useState<string | null>(null);
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -65,14 +91,20 @@ export function useReports() {
       if (res.ok) {
         const data = await res.json();
         const list = data.reports || data.data || [];
-        setReports(list.map(mapReport));
+        const mapped = list.map(mapReport);
+        setReports(mapped);
+        setError(null);
+      } else {
+        setReports([]);
+        setError('Failed to load real reports from the active data source.');
       }
     } catch {
-      /* noop */
+      setReports([]);
+      setError('Failed to load real reports from the active data source.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [allowDemoData]);
 
   useEffect(() => {
     fetchReports();
@@ -94,7 +126,7 @@ export function useReports() {
     return false;
   }, []);
 
-  return { reports, loading, fetchReports, deleteReport };
+  return { reports, loading, error, fetchReports, deleteReport };
 }
 
 // ─── Presentations (Decks) ────────────────────────────────────────
@@ -130,6 +162,8 @@ function mapDeck(raw: any): PresentationItem {
 export function usePresentations() {
   const [presentations, setPresentations] = useState<PresentationItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const allowDemoData = shouldAllowDemoData();
+  const [error, setError] = useState<string | null>(null);
 
   const fetchPresentations = useCallback(async () => {
     setLoading(true);
@@ -138,14 +172,20 @@ export function usePresentations() {
       if (res.ok) {
         const data = await res.json();
         const list = data.data || data.decks || [];
-        setPresentations(list.map(mapDeck));
+        const mapped = list.map(mapDeck);
+        setPresentations(mapped);
+        setError(null);
+      } else {
+        setPresentations([]);
+        setError('Failed to load real presentations from the active data source.');
       }
     } catch {
-      /* noop */
+      setPresentations([]);
+      setError('Failed to load real presentations from the active data source.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [allowDemoData]);
 
   useEffect(() => {
     fetchPresentations();
@@ -167,7 +207,7 @@ export function usePresentations() {
     return false;
   }, []);
 
-  return { presentations, loading, fetchPresentations, deleteDeck };
+  return { presentations, loading, error, fetchPresentations, deleteDeck };
 }
 
 // ─── Templates (merged: report + presentation) ───────────────────
@@ -213,6 +253,8 @@ function mapPresentationTemplate(raw: any): TemplateItem {
 export function useTemplates() {
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const allowDemoData = shouldAllowDemoData();
+  const [error, setError] = useState<string | null>(null);
 
   const fetchTemplates = useCallback(async () => {
     setLoading(true);
@@ -238,18 +280,20 @@ export function useTemplates() {
 
       merged.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
       setTemplates(merged);
+      setError(null);
     } catch {
-      /* noop */
+      setTemplates([]);
+      setError('Failed to load real templates from the active data source.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [allowDemoData]);
 
   useEffect(() => {
     fetchTemplates();
   }, [fetchTemplates]);
 
-  return { templates, loading, fetchTemplates };
+  return { templates, loading, error, fetchTemplates };
 }
 
 // ─── Actions ─────────────────────────────────────────────────────

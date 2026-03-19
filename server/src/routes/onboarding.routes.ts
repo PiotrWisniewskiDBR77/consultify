@@ -232,4 +232,32 @@ router.post('/complete', async (req: AuthRequest, res: Response) => {
   }
 });
 
+/**
+ * POST /api/onboarding/skip
+ * Skip org setup wizard — marks organization onboarding as completed
+ */
+router.post('/skip', async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const orgId = (req as any).organizationId;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (orgId) {
+      await db.query(
+        `UPDATE organizations SET onboarding_status = 'ORG_SETUP_COMPLETED' WHERE id = $1`,
+        [orgId],
+      );
+    }
+
+    await db.query(`UPDATE users SET onboarding_completed = true WHERE id = $1`, [userId]);
+
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Error skipping onboarding:', error);
+    res.status(500).json({ error: 'Failed to skip onboarding' });
+  }
+});
+
 export default router;

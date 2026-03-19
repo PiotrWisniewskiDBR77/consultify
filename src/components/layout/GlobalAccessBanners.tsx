@@ -89,15 +89,15 @@ const GlobalAccessBanners: React.FC<GlobalAccessBannersProps> = ({
     return null;
   }
 
-  // PAID orgs see no banners
-  if (snapshot.isPaid) {
+  // PAID orgs see no banners unless user explicitly switched into demo mode.
+  if (snapshot.isPaid && !isDemoMode) {
     return null;
   }
 
   return (
     <>
       {/* Demo Banner — skip when DemoModeBanner already shows (toggle flow) */}
-      {isDemo && !isDemoMode && <DemoBanner onStartTrialClick={onStartTrial || (() => {})} />}
+      {(isDemo || isDemoMode) && <DemoBanner onStartTrialClick={onStartTrial || (() => {})} />}
 
       {/* Trial Banner */}
       {isTrial && !isTrialExpired && (

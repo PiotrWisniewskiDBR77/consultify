@@ -329,6 +329,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   // The canvas must stay editable even before formal acceptance.
   // Acceptance still gates downstream actions like AI/convert, but not node manipulation.
   const canvasLocked = false;
+  const autoCollapsedTablePanelRef = useRef(false);
 
   const setActiveTool = useCallback(
     (tool: CanvasToolType) => {
@@ -972,6 +973,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const toolsPanelOpen = activePanel === 'tools';
   const contextPanelOpen = activePanel === 'context';
   const aiPanelOpen = activePanel === 'ai_suggestions';
+
+  useEffect(() => {
+    if (activeTool !== 'table') {
+      autoCollapsedTablePanelRef.current = false;
+      return;
+    }
+    if (activePanel !== 'tools') return;
+    if (autoCollapsedTablePanelRef.current) return;
+    autoCollapsedTablePanelRef.current = true;
+    setActivePanel(null);
+  }, [activePanel, activeTool, setActivePanel]);
 
   const persistWorkspaceExtensions = useCallback(
     async (patch: Record<string, unknown>) => {
@@ -2255,7 +2267,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               locked={canvasLocked}
               refreshToken={mapRefreshToken}
               onSelectionChange={handleSelectionChange}
-              onGraphChange={(graph) => graphRuntime.replaceGraph(graph)}
+              onGraphChange={replaceRuntimeGraph}
               onConvert={(target) =>
                 handleConvert(target === 'task' ? 'task_set' : (target as any))
               }
@@ -2276,7 +2288,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               locked={canvasLocked}
               refreshToken={mapRefreshToken}
               onSelectionChange={handleSelectionChange}
-              onGraphChange={(graph) => graphRuntime.replaceGraph(graph)}
+              onGraphChange={replaceRuntimeGraph}
               onNodeDetail={handleOpenNodeDetail}
               focusMode={toolFocusMode}
               focusObjectId={focusObjectId}
@@ -2297,7 +2309,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               locked={canvasLocked}
               refreshToken={mapRefreshToken}
               onSelectionChange={handleSelectionChange}
-              onGraphChange={(graph) => graphRuntime.replaceGraph(graph)}
+              onGraphChange={replaceRuntimeGraph}
               onNodeDetail={handleOpenNodeDetail}
               focusMode={toolFocusMode}
               focusObjectId={focusObjectId}
@@ -2535,7 +2547,11 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         onClose={() => setGovernancePanelOpen(false)}
         mapExtensions={mapExtensions}
         graphNodes={graphNodes}
-        currentUserName={String(currentUser?.name || currentUser?.email || 'User')}
+        currentUserName={String(
+          [currentUser?.firstName, currentUser?.lastName].filter(Boolean).join(' ') ||
+            currentUser?.email ||
+            'User'
+        )}
         onGovernanceUpdate={handleGovernanceUpdate}
       />
 

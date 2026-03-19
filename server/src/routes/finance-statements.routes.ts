@@ -61,6 +61,7 @@ import {
   updateStatementStatus,
   validateStatement,
 } from '../services/financialStatementService.js';
+import type { DetectionResult } from '../services/financialStatementService.js';
 import {
   getFinanceTraceId,
   logFinanceError,
@@ -74,6 +75,7 @@ import {
 import { ensureCanonicalRegistryInDatabase } from '../services/financeCanonicalRegistrySyncService.js';
 import PDFParserService from '../services/pdfParserService.js';
 import {
+  analyzeAndExtractFullDocument,
   extractFinancialLinesWithAnthropic,
   extractFinancialLinesWithOpenAI,
 } from '../services/openAIFinancialExtractionService.js';
@@ -545,6 +547,253 @@ router.post(
   })
 );
 
+// ════════════════════════════════════════════════
+// Smart Upload: Upload + LLM Full Document Analysis + Multi-Statement Pack
+// One PDF → LLM analyzes everything → creates pack with P&L + BS + CF
+// ════════════════════════════════════════════════
+
+router.post(
+  '/upload-and-analyze',
+  verifyToken,
+  isAuthenticated,
+  upload.single('file'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = getUserId(req);
+    const orgId = getOrgId(req);
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: 'File required (PDF, XLSX, XLS, or CSV)' });
+    if (!userId || !orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const traceId = getFinanceTraceId((req as any).correlationId);
+
+    await ensureCanonicalRegistryInDatabase();
+
+    // 1. Extract text (for fallback and notes)
+    let text: string;
+    let parseMethod: string;
+    try {
+      const result = await extractTextFromFile(file.path, file.originalname);
+      text = result.text.replace(/\0/g, '');
+      parseMethod = result.parseMethod;
+    } catch (e: any) {
+      return res.status(422).json({ error: 'File extraction failed', detail: e?.message });
+    }
+
+    const effectiveParseMethod = DB_ALLOWED_PARSE_METHODS.has(parseMethod) ? parseMethod : 'manual';
+
+    logFinanceEvent('statement.smartUpload.started', {
+      traceId, organizationId: orgId, userId,
+      fileName: file.originalname, sizeBytes: file.size,
+    });
+
+    // 2. LLM analyzes entire document — finds all sections, extracts all lines
+    const analysis = await analyzeAndExtractFullDocument({
+      filePath: file.path,
+      fileName: file.originalname,
+      traceId,
+    });
+
+    if (!analysis || analysis.sections.length === 0) {
+      // Fallback: create single statement with heuristic detection (old behavior)
+      const detection = detectStatementType(text);
+      const documentProfile = classifyStatementDocument({
+        fileName: file.originalname, parseMethod: effectiveParseMethod, text,
+      });
+      const statementId = await createStatement({
+        organizationId: orgId,
+        statementType: detection.statementType === 'UNKNOWN' ? 'P&L' : detection.statementType,
+        periodStart: detection.periodStart || new Date().getFullYear() + '-01-01',
+        periodEnd: detection.periodEnd || new Date().getFullYear() + '-12-31',
+        periodLabel: detection.periodLabel || undefined,
+        currency: detection.currency,
+        scaling: detection.scaling,
+        sourceFileName: file.originalname,
+        sourceFilePath: file.path,
+        parseMethod: effectiveParseMethod,
+        overallConfidence: detection.confidence,
+        documentClass: documentProfile.documentClass,
+        extractionStrategy: documentProfile.extractionStrategy,
+        templateFamily: documentProfile.templateFamily,
+        createdBy: userId,
+      });
+      const statementPackId = await syncStatementToPack(statementId);
+      await dbRun(`UPDATE financial_statements SET notes = ? WHERE id = ?`,
+        [`${text.substring(0, 100000)}`, statementId], { fallback: false });
+
+      return res.status(201).json({
+        success: true, mode: 'fallback',
+        statementPackId, statementIds: [statementId],
+        analysis: null,
+        message: 'LLM analysis unavailable — created single statement with heuristic detection.',
+      });
+    }
+
+    // 3. Create statements for each section found by LLM
+    const createdStatements: Array<{ statementId: string; statementType: string; lineCount: number }> = [];
+    let packId: string | null = null;
+
+    for (const section of analysis.sections) {
+      const statementId = await createStatement({
+        organizationId: orgId,
+        statementType: section.statementType,
+        periodStart: analysis.periodStart || new Date().getFullYear() + '-01-01',
+        periodEnd: analysis.periodEnd || new Date().getFullYear() + '-12-31',
+        periodLabel: analysis.periodLabel || undefined,
+        currency: analysis.currency,
+        scaling: analysis.scaling,
+        sourceFileName: file.originalname,
+        sourceFilePath: file.path,
+        parseMethod: effectiveParseMethod,
+        overallConfidence: 0.9,
+        documentClass: 'mixed_report',
+        extractionStrategy: 'llm_full_document',
+        templateFamily: null,
+        createdBy: userId,
+      });
+
+      // Store text for later reference
+      await dbRun(`UPDATE financial_statements SET notes = ? WHERE id = ?`,
+        [`${text.substring(0, 100000)}`, statementId], { fallback: false });
+
+      // Sync to pack (first statement creates the pack, rest join it)
+      const thisPackId = await syncStatementToPack(statementId);
+      if (!packId && thisPackId) packId = thisPackId;
+
+      // Update pack metadata with entity name from LLM
+      if (packId && analysis.entityName) {
+        await dbRun(
+          `UPDATE financial_statement_packs SET entity_name = ? WHERE id = ? AND (entity_name IS NULL OR entity_name = '')`,
+          [analysis.entityName, packId]
+        );
+      }
+
+      const ingestRunId = await startStatementIngestRun({
+        statementId, organizationId: orgId,
+        sourceFileName: file.originalname, sourceFilePath: file.path,
+        parseMethod: effectiveParseMethod,
+        documentClass: 'mixed_report', extractionStrategy: 'llm_full_document',
+        templateFamily: null, rawTextLength: text.length,
+        summary: { analysis: { entityName: analysis.entityName, sectionType: section.statementType } },
+        createdBy: userId,
+      });
+
+      // 4. Save LLM-extracted lines as values and auto-map
+      const extractedLines = section.lines.map((line, idx) => ({
+        originalLabel: line.originalLabel,
+        value: line.value,
+        confidence: line.confidence,
+        sourceRow: line.sourceRow ?? idx + 1,
+        suggestedCanonicalId: line.suggestedCanonicalId || undefined,
+        suggestedCanonicalLabel: undefined as string | undefined,
+        isNonFinancial: false,
+      }));
+
+      let mappedLines = extractedLines;
+      try {
+        const autoMapped = await autoMapLines(extractedLines as any, section.statementType, { organizationId: orgId });
+        if (autoMapped && autoMapped.length > 0) mappedLines = autoMapped as any;
+      } catch (mapError) {
+        logger.warn('[SmartUpload] Auto-map failed, saving raw lines', {
+          statementId, statementType: section.statementType, error: String(mapError),
+        });
+      }
+
+      const valuesToSave = mappedLines.map(l => ({
+        canonicalLineId: (l as any).suggestedCanonicalId || null,
+        originalLabel: l.originalLabel,
+        value: l.value,
+        confidence: l.confidence,
+        sourceRow: l.sourceRow,
+        mappingStatus: ((l as any).suggestedCanonicalId ? 'auto' : 'unmapped') as 'auto' | 'unmapped',
+        isNonFinancial: !!(l as any).isNonFinancial,
+      }));
+
+      await saveStatementValues(statementId, valuesToSave);
+      await updateStatementStatus(statementId, 'imported');
+
+      // 5. Run validation + readiness
+      try {
+        const validationResult = validateStatement(valuesToSave, section.statementType);
+        if (validationResult) {
+          await persistStatementValidationLedger({
+            statementId,
+            statementType: section.statementType,
+            messages: validationResult.messages || [],
+            values: valuesToSave.map((value) => ({
+              canonicalLineId: value.canonicalLineId,
+              value: Number(value.value || 0),
+              isNonFinancial: value.isNonFinancial,
+            })),
+          });
+          const readinessResult = evaluateStatementReadiness({
+            rawStatus: 'imported',
+            statementType: section.statementType,
+            validationStatus: validationResult.status,
+            currency: analysis.currency,
+            scaling: analysis.scaling,
+            validationMessages: validationResult.messages,
+            values: valuesToSave,
+          });
+          if (readinessResult) {
+            await updateStatementReadinessState(statementId, readinessResult);
+          }
+        }
+      } catch (valError) {
+        logger.warn('[SmartUpload] Validation/readiness failed, continuing', {
+          statementId, error: String(valError),
+        });
+      }
+
+      await updateStatementIngestRun({
+        ingestRunId, currentStage: 'complete', runStatus: 'completed',
+        documentClass: 'mixed_report', extractionStrategy: 'llm_full_document',
+        templateFamily: null, rawTextLength: text.length,
+      });
+
+      createdStatements.push({
+        statementId,
+        statementType: section.statementType,
+        lineCount: section.lines.length,
+      });
+    }
+
+    // 8. Recompute pack quality
+    if (packId) {
+      try {
+        await recomputeStatementPackForOrganization(orgId, packId);
+      } catch (recomputeError) {
+        logger.warn('[SmartUpload] Pack recompute failed', { packId, error: String(recomputeError) });
+      }
+    }
+
+    logFinanceEvent('statement.smartUpload.completed', {
+      traceId, packId, entityName: analysis.entityName,
+      sectionCount: analysis.sections.length,
+      statementIds: createdStatements.map(s => s.statementId),
+    });
+
+    res.status(201).json({
+      success: true,
+      mode: 'smart',
+      statementPackId: packId,
+      statementIds: createdStatements.map(s => s.statementId),
+      statements: createdStatements,
+      analysis: {
+        entityName: analysis.entityName,
+        periodLabel: analysis.periodLabel,
+        periodStart: analysis.periodStart,
+        periodEnd: analysis.periodEnd,
+        currency: analysis.currency,
+        scaling: analysis.scaling,
+        language: analysis.language,
+        documentDescription: analysis.documentDescription,
+        sectionTypes: analysis.sections.map(s => s.statementType),
+        totalLines: analysis.sections.reduce((sum, s) => sum + s.lines.length, 0),
+        warnings: analysis.warnings,
+      },
+    });
+  })
+);
+
 router.post(
   '/:id/detect',
   verifyToken,
@@ -583,14 +832,16 @@ router.post(
       normalizeStatementTypeInput(autoDetection.statementType) ||
       normalizeStatementTypeInput(stmt.statement_type) ||
       'P&L';
-    const detection = {
+    const detection: DetectionResult = {
       ...autoDetection,
       statementType: effectiveStatementType,
       periodStart: String(req.body?.periodStart || '').trim() || autoDetection.periodStart,
       periodEnd: String(req.body?.periodEnd || '').trim() || autoDetection.periodEnd,
       periodLabel: String(req.body?.periodLabel || '').trim() || autoDetection.periodLabel,
       currency: String(req.body?.currency || '').trim() || autoDetection.currency,
-      scaling: String(req.body?.scaling || '').trim() || autoDetection.scaling,
+      scaling:
+        ((String(req.body?.scaling || '').trim() || autoDetection.scaling) as DetectionResult['scaling']) ||
+        'thousands',
       confidence:
         manualSelectionApplied &&
         ((autoDetection.containedStatementTypes || []).length > 1 ||
@@ -649,12 +900,12 @@ router.post(
         statementId,
         organizationId: orgId,
         stage: 'detect',
-        resultStatus: detection.statementType === 'UNKNOWN' ? 'warning' : 'pass',
+        resultStatus: autoDetection.statementType === 'UNKNOWN' ? 'warning' : 'pass',
         readinessStatus: 'pending',
         strategy: documentProfile.extractionStrategy,
         summary: 'Detection metadata persisted for statement.',
         reasonCodes:
-          detection.statementType === 'UNKNOWN'
+          autoDetection.statementType === 'UNKNOWN'
             ? ['DETECTION_UNKNOWN_FALLBACK']
             : ['DETECTION_METADATA_UPDATED'],
         payload: detection,
@@ -892,6 +1143,7 @@ router.post(
     const userId = getUserId(req);
     const stmt = await getStatementOrFail(statementId, orgId, res);
     if (!stmt) return;
+    const traceId = getFinanceTraceId((req as any).correlationId);
 
     const ingestRunId = await ensureIngestRun({
       statementId,
@@ -1097,13 +1349,34 @@ router.put(
     const candidateRowLookup = await loadCandidateRowLookup(statementId);
     const selectedMappingLookup = await loadSelectedMappingLookup(statementId);
 
-    const normalizedValues = values.map((value: any) => {
-      const sourceRow = value.sourceRow != null ? Number(value.sourceRow) : null;
+    const normalizedValues: Array<{
+      canonicalLineId: string | null;
+      originalLabel: string;
+      value: number;
+      confidence: number;
+      sourcePage?: number | null;
+      sourceRow?: number;
+      mappingStatus: string;
+      isNonFinancial: boolean;
+      classificationReason?: string;
+      valueOrigin: 'source' | 'mapped' | 'manual' | 'computed' | 'estimated';
+      mappingConfidence: number;
+      sourceCandidateRowId: string | null;
+      selectedMappingCandidateId: string | null;
+      periodGranularity: string | null;
+      periodLabel: string | null;
+      periodIndex: number | null;
+      lineageType: 'direct' | 'aggregated' | 'split' | 'derived' | 'manual_note';
+      derivedFromLineCodes: string[] | null;
+      evidenceJson: Record<string, unknown> | null;
+      manualOverrideReason: string | null;
+    }> = values.map((value: any) => {
+      const sourceRow = value.sourceRow != null ? Number(value.sourceRow) : undefined;
       const candidate = sourceRow != null ? candidateRowLookup.get(sourceRow) : undefined;
       const canonicalLineId = value.canonicalLineId || null;
       const mappingStatus = String(value.mappingStatus || (canonicalLineId ? 'auto' : 'unmapped'));
       const isNonFinancial = Boolean(value.isNonFinancial);
-      const valueOrigin =
+      const valueOrigin = (
         String(value.valueOrigin || '').trim() ||
         (mappingStatus === 'manual'
           ? 'manual'
@@ -1111,7 +1384,8 @@ router.put(
             ? 'computed'
             : canonicalLineId
               ? 'mapped'
-              : 'source');
+              : 'source')
+      ) as 'source' | 'mapped' | 'manual' | 'computed' | 'estimated';
       const evidenceJson =
         value.evidenceJson && typeof value.evidenceJson === 'object'
           ? value.evidenceJson
@@ -1148,7 +1422,7 @@ router.put(
           ? String(value.classificationReason)
           : isNonFinancial
             ? 'NON_FINANCIAL_LINE'
-            : null,
+            : undefined,
         valueOrigin,
         mappingConfidence: Number(value.mappingConfidence ?? value.confidence ?? 0),
         sourceCandidateRowId: value.sourceCandidateRowId || candidate?.candidateRowId || null,
@@ -1156,7 +1430,12 @@ router.put(
         periodGranularity: String(value.periodGranularity || 'annual'),
         periodLabel: value.periodLabel ? String(value.periodLabel) : null,
         periodIndex: value.periodIndex != null ? Number(value.periodIndex) : 0,
-        lineageType: value.lineageType ? String(value.lineageType) : 'direct',
+        lineageType: (value.lineageType ? String(value.lineageType) : 'direct') as
+          | 'direct'
+          | 'aggregated'
+          | 'split'
+          | 'derived'
+          | 'manual_note',
         derivedFromLineCodes: Array.isArray(value.derivedFromLineCodes)
           ? value.derivedFromLineCodes.map((code: unknown) => String(code))
           : [],
@@ -1268,8 +1547,20 @@ router.put(
         mappingStatus: 'auto',
         isNonFinancial: false,
         confidence: 0.8,
-        sourceRow: null,
+        sourcePage: null,
+        sourceRow: undefined,
+        classificationReason: undefined,
         valueOrigin: 'computed',
+        mappingConfidence: 0.8,
+        sourceCandidateRowId: null,
+        selectedMappingCandidateId: null,
+        periodGranularity: 'annual',
+        periodLabel: stmt.period_label || null,
+        periodIndex: 0,
+        lineageType: 'derived',
+        derivedFromLineCodes: [],
+        evidenceJson: null,
+        manualOverrideReason: null,
       });
     }
 

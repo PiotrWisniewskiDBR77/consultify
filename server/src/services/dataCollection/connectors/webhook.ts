@@ -38,7 +38,7 @@ export const webhookConnector: IConnector = {
     const db = getDatabase();
     const connectorId = config._connectorId as string | undefined;
     if (connectorId) {
-      const result = await db.query(
+      const result = await db.query<{ payload: Record<string, unknown> }>(
         `SELECT payload FROM tp_webhook_buffer
          WHERE connector_id = $1 AND processed_at IS NULL
          ORDER BY received_at ASC LIMIT 1`,
@@ -67,7 +67,7 @@ export const webhookConnector: IConnector = {
     }
 
     const db = getDatabase();
-    const result = await db.query(
+    const result = await db.query<{ id: string; payload: Record<string, unknown> }>(
       `SELECT id, payload FROM tp_webhook_buffer
        WHERE connector_id = $1 AND processed_at IS NULL
        ORDER BY received_at ASC

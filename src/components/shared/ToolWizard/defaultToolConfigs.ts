@@ -5,7 +5,22 @@
  * Reference tool: Dynamic SWOT (demonstrates full wizard flow)
  */
 
+import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
+
 import type { WizardInputField, WizardStepConfig, WizardStepId, WizardToolConfig } from './types';
+
+const STANDARD_OUTPUT_CAPABILITIES: WizardToolConfig['outputCapabilities'] = [
+  ...CONSULTING_TOOL_STANDARD_OUTPUTS,
+];
+
+function withStandardOutputs(config: WizardToolConfig): WizardToolConfig {
+  return {
+    ...config,
+    outputCapabilities: Array.from(
+      new Set([...config.outputCapabilities, ...STANDARD_OUTPUT_CAPABILITIES])
+    ) as WizardToolConfig['outputCapabilities'],
+  };
+}
 
 /** Canonical 6-step wizard flow */
 export const DEFAULT_WIZARD_STEPS: WizardStepConfig[] = [
@@ -47,8 +62,8 @@ export const DEFAULT_WIZARD_STEPS: WizardStepConfig[] = [
     id: 'outputs',
     label: { en: 'Outputs', pl: 'Wyniki' },
     description: {
-      en: 'Create initiatives, reports, presentations',
-      pl: 'Twórz inicjatywy, raporty, prezentacje',
+      en: 'Create initiatives, reports, presentations, and ideas',
+      pl: 'Twórz inicjatywy, raporty, prezentacje i pomysły',
     },
   },
 ];
@@ -1488,10 +1503,10 @@ export const TOOL_WIZARD_CONFIGS: Record<string, WizardToolConfig> = {
 /** Create a generic config for tools not in the registry */
 export function getToolWizardConfig(toolType: string, toolName?: string): WizardToolConfig {
   if (TOOL_WIZARD_CONFIGS[toolType]) {
-    return TOOL_WIZARD_CONFIGS[toolType];
+    return withStandardOutputs(TOOL_WIZARD_CONFIGS[toolType]);
   }
 
-  return {
+  return withStandardOutputs({
     toolType,
     toolName: { en: toolName || toolType, pl: toolName || toolType },
     category: 'strategic',
@@ -1499,5 +1514,5 @@ export function getToolWizardConfig(toolType: string, toolName?: string): Wizard
     steps: DEFAULT_WIZARD_STEPS,
     inputFields: [],
     outputCapabilities: ['initiative', 'report'],
-  };
+  });
 }

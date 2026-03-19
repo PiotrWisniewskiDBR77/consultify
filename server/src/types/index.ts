@@ -15,6 +15,8 @@ export interface AuthenticatedUser {
   id: string;
   email: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   role: UserRole;
   organizationId: string;
   organization_id?: string; // Legacy support

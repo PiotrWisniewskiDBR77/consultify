@@ -194,6 +194,20 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     [t]
   );
 
+  // Smart analysis result state
+  const [smartAnalysis, setSmartAnalysis] = useState<{
+    mode: string;
+    entityName?: string;
+    periodLabel?: string;
+    currency?: string;
+    scaling?: string;
+    documentDescription?: string;
+    sectionTypes?: string[];
+    totalLines?: number;
+    statementPackId?: string;
+    statements?: Array<{ statementId: string; statementType: string; lineCount: number }>;
+  } | null>(null);
+
   const handleUpload = async () => {
     if (!file) return;
     setLoading(true);
@@ -201,18 +215,51 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const data = await Api.postMultipart('/api/finance-statements/upload', formData);
-      setStatementId(data.statementId);
-      const detectionPayload: Detection = {
-        ...(data.detection || {}),
-        documentClass: data.documentProfile?.documentClass || undefined,
-      };
-      setDetection(detectionPayload);
-      setOverrideType(detectionPayload.statementType);
-      setOverrideCurrency(detectionPayload.currency);
-      setOverridePeriod(detectionPayload.periodLabel || '');
-      trackFunnelEvent('financial_statement_import_started', { statementId: data.statementId });
-      setStep('detect');
+
+      // Try smart upload first (LLM analyzes entire document)
+      const data = await Api.postMultipart('/api/finance-statements/upload-and-analyze', formData);
+
+      if (data.mode === 'smart' && data.analysis) {
+        // LLM successfully analyzed the document — skip detect/extract steps
+        setSmartAnalysis({
+          mode: 'smart',
+          entityName: data.analysis.entityName,
+          periodLabel: data.analysis.periodLabel,
+          currency: data.analysis.currency,
+          scaling: data.analysis.scaling,
+          documentDescription: data.analysis.documentDescription,
+          sectionTypes: data.analysis.sectionTypes,
+          totalLines: data.analysis.totalLines,
+          statementPackId: data.statementPackId,
+          statements: data.statements,
+        });
+        setStatementId(data.statementPackId || data.statementIds?.[0]);
+        trackFunnelEvent('financial_statement_import_started', {
+          packId: data.statementPackId,
+          sections: data.analysis.sectionTypes?.length,
+          totalLines: data.analysis.totalLines,
+        });
+        setStep('confirm');
+      } else {
+        // Fallback: old flow with manual section selection
+        setStatementId(data.statementIds?.[0] || data.statementPackId);
+        const fallbackDetection: Detection = {
+          statementType: 'P&L',
+          confidence: 0.5,
+          periodStart: null,
+          periodEnd: null,
+          periodLabel: null,
+          currency: 'PLN',
+          scaling: 'units',
+          language: 'pl',
+        };
+        setDetection(fallbackDetection);
+        setOverrideType(fallbackDetection.statementType);
+        setOverrideCurrency(fallbackDetection.currency);
+        setOverridePeriod(fallbackDetection.periodLabel || '');
+        trackFunnelEvent('financial_statement_import_started', { statementId: data.statementIds?.[0] });
+        setStep('detect');
+      }
     } catch (e: any) {
       setError(e?.response?.data?.error || e?.message || String(e));
     } finally {
@@ -389,12 +436,22 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
     return <CheckCircle2 size={14} className="text-emerald-500" />;
   };
 
-  const stepLabels = [
-    t('finance.importWizard.stepUpload', 'Upload'),
-    t('finance.importWizard.stepDetect', 'Detect'),
-    t('finance.importWizard.stepMap', 'Map & Correct'),
-    t('finance.importWizard.stepConfirm', 'Confirm'),
-  ];
+  const stepLabels = smartAnalysis
+    ? [
+        isPl ? 'Wgraj' : 'Upload',
+        isPl ? 'Analiza AI' : 'AI Analysis',
+        isPl ? 'Gotowe' : 'Done',
+      ]
+    : [
+        t('finance.importWizard.stepUpload', 'Upload'),
+        t('finance.importWizard.stepDetect', 'Detect'),
+        t('finance.importWizard.stepMap', 'Map & Correct'),
+        t('finance.importWizard.stepConfirm', 'Confirm'),
+      ];
+
+  const displaySteps = smartAnalysis
+    ? (['upload', 'detect', 'confirm'] as WizardStep[])
+    : STEPS;
   const detectedStatementTypes = Array.isArray(detection?.containedStatementTypes)
     ? detection!.containedStatementTypes.filter(Boolean)
     : [];
@@ -436,9 +493,10 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
 
       {/* Steps indicator with progress line */}
       <div className="flex items-center mb-8" role="navigation" aria-label={isPl ? 'Kroki importu' : 'Import steps'}>
-        {STEPS.map((s, i) => {
-          const isCompleted = i < stepIdx;
-          const isCurrent = i === stepIdx;
+        {displaySteps.map((s, i) => {
+          const displayStepIdx = displaySteps.indexOf(step);
+          const isCompleted = i < displayStepIdx;
+          const isCurrent = i === displayStepIdx;
           return (
             <React.Fragment key={s}>
               <div className="flex items-center gap-2">
@@ -466,7 +524,7 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
                   {stepLabels[i]}
                 </span>
               </div>
-              {i < STEPS.length - 1 && (
+              {i < displaySteps.length - 1 && (
                 <div className="mx-3 h-0.5 flex-1 rounded-full bg-slate-200 dark:bg-white/[0.08]">
                   <div
                     className="h-full rounded-full bg-emerald-500 transition-all duration-500"
@@ -568,7 +626,9 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
             className="mt-6 w-full flex items-center justify-center gap-2 px-6 py-3 bg-cyan-600 text-white font-medium rounded-xl shadow-sm hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 active:scale-[0.98]"
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-            {t('finance.importWizard.uploadAndDetect', 'Upload & Detect')}
+            {loading
+              ? (isPl ? 'AI analizuje dokument...' : 'AI is analyzing document...')
+              : (isPl ? 'Wgraj i analizuj' : 'Upload & Analyze')}
           </button>
         </div>
       )}
@@ -835,8 +895,104 @@ export const FinancialStatementImportWizard: React.FC<Props> = ({ onClose, onCom
         </div>
       )}
 
-      {/* Step 4: Confirm */}
-      {step === 'confirm' && validation && (
+      {/* Step 4: Confirm — Smart Analysis Result */}
+      {step === 'confirm' && smartAnalysis && (
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div className="overflow-hidden rounded-2xl border border-emerald-200 dark:border-emerald-800">
+            <div className="h-1.5 bg-emerald-500" />
+            <div className="p-6 bg-emerald-50/80 dark:bg-emerald-900/10">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-500/15">
+                  <CheckCircle2 size={24} className="text-emerald-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                    {isPl ? 'Dokument przeanalizowany przez AI' : 'Document analyzed by AI'}
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    {smartAnalysis.documentDescription || (isPl ? 'Analiza zakończona pomyślnie' : 'Analysis completed successfully')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Sections found */}
+              <div className="mb-4 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {isPl ? 'Znalezione sekcje' : 'Sections found'}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(smartAnalysis.statements || []).map((stmt) => (
+                    <div
+                      key={stmt.statementId}
+                      className="flex items-center gap-2 rounded-xl bg-white/70 px-3 py-2 text-sm dark:bg-white/[0.06]"
+                    >
+                      <span className="inline-flex items-center justify-center h-6 w-10 rounded-md bg-cyan-100 text-[10px] font-bold text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-300">
+                        {stmt.statementType}
+                      </span>
+                      <span className="text-slate-700 dark:text-slate-300">
+                        {stmt.lineCount} {isPl ? 'pozycji' : 'lines'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Summary grid */}
+          <div className="bg-slate-50 dark:bg-navy-900 rounded-xl p-5 grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-slate-500">{isPl ? 'Podmiot' : 'Entity'}</span>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {smartAnalysis.entityName || '—'}
+              </p>
+            </div>
+            <div>
+              <span className="text-slate-500">{isPl ? 'Okres' : 'Period'}</span>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {smartAnalysis.periodLabel || '—'}
+              </p>
+            </div>
+            <div>
+              <span className="text-slate-500">{isPl ? 'Waluta' : 'Currency'}</span>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {smartAnalysis.currency || 'PLN'}
+              </p>
+            </div>
+            <div>
+              <span className="text-slate-500">{isPl ? 'Skala' : 'Scaling'}</span>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {smartAnalysis.scaling || 'units'}
+              </p>
+            </div>
+            <div>
+              <span className="text-slate-500">{isPl ? 'Łącznie pozycji' : 'Total lines'}</span>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {smartAnalysis.totalLines || 0}
+              </p>
+            </div>
+            <div>
+              <span className="text-slate-500">{isPl ? 'Plik źródłowy' : 'Source file'}</span>
+              <p className="font-medium text-slate-900 dark:text-white truncate">{file?.name}</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                onComplete?.(smartAnalysis.statementPackId || statementId || '');
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-500"
+            >
+              <CheckCircle2 size={16} />
+              {isPl ? 'Gotowe — przejdź do przeglądu' : 'Done — go to review'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 4: Confirm — Manual flow (old) */}
+      {step === 'confirm' && !smartAnalysis && validation && (
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Readiness gauge + validation summary */}
           <div

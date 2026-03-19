@@ -2896,9 +2896,13 @@ export const InterviewController = {
       [user.organizationId, user.organizationId, user.organizationId, user.id, user.role, user.id]
     );
 
-    const templates = (rows || []).map(buildTemplateResponse).filter(Boolean) as Array<
-      ReturnType<typeof buildTemplateResponse>
-    >;
+    const templates = (rows || [])
+      .map(buildTemplateResponse)
+      .filter(
+        (
+          template
+        ): template is NonNullable<ReturnType<typeof buildTemplateResponse>> => Boolean(template)
+      );
 
     const filtered = templates.filter((template) => {
       if (!matchesTemplateSourceFilter(template.scope, sourceFilter)) {
@@ -5285,11 +5289,11 @@ ${JSON.stringify(questions || [], null, 2)}
       location: resolved.profile.location,
       employeeCount: resolved.profile.employeeCount,
       annualRevenue: resolved.profile.annualRevenue,
-      keyMetrics: resolved.operatingContext.keyMetrics || [],
-      stakeholders: resolved.operatingContext.stakeholders || [],
-      openGaps: resolved.operatingContext.openGaps || [],
+      keyMetrics: resolved.operations.keyMetrics || [],
+      stakeholders: resolved.stakeholders || [],
+      openGaps: resolved.operations.gaps || [],
       lastInterviewId:
-        resolved.operatingContext.lastInterviewId || (compatibility as any)?.last_interview_id || null,
+        (compatibility as any)?.last_interview_id || null,
       completenessPercent: (compatibility as any)?.completeness_percent || completeness,
     });
   }),

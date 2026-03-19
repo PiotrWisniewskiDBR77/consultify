@@ -608,6 +608,19 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
     setAttachments((prev) => [...prev, ...files]);
   }, []);
 
+  const handleUrlAdd = useCallback((url: string) => {
+    const clean = String(url || '').trim();
+    if (!clean) return;
+    setAttachments((prev) => [
+      ...prev,
+      {
+        kind: 'url',
+        url: clean,
+        name: clean,
+      },
+    ]);
+  }, []);
+
   // Cloud file selection handler - opens file picker for connected provider
   const handleCloudFileSelect = useCallback(
     (provider: CloudProviderId, _fileId: string, _fileName: string) => {
@@ -771,6 +784,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           <div className="flex items-center gap-1">
             <AddFilesMenu
               onFileSelect={handleFileSelect}
+              onUrlAdd={handleUrlAdd}
               onCloudFileSelect={handleCloudFileSelect}
               onConnectCloud={handleConnectCloud}
               connectedProviders={connectedProviderIds}

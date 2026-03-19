@@ -42,6 +42,36 @@ describe('databaseTargetResolver', () => {
     ).toThrow(/unreachable outside Railway/);
   });
 
+  it('rejects localhost public database url outside tests when DATABASE_URL is absent', () => {
+    expect(() =>
+      resolveReachableDatabaseUrl({
+        publicDatabaseUrl: 'postgresql://user:pass@localhost:5432/consultify',
+        env: {},
+      })
+    ).toThrow(/external Postgres target/);
+  });
+
+  it('rejects private Railway public database url outside Railway', () => {
+    expect(() =>
+      resolveReachableDatabaseUrl({
+        publicDatabaseUrl: 'postgresql://user:pass@pgvector.railway.internal:5432/railway',
+        env: {},
+      })
+    ).toThrow(/private Railway host/);
+  });
+
+  it('uses finance import public fallback only when final host is reachable', () => {
+    const result = resolveReachableDatabaseUrl({
+      env: {
+        FINANCE_IMPORT_DATABASE_URL:
+          'postgresql://user:pass@caboose.proxy.rlwy.net:15646/railway',
+      } as NodeJS.ProcessEnv,
+    });
+
+    expect(result.databaseUrl).toBe('postgresql://user:pass@caboose.proxy.rlwy.net:15646/railway');
+    expect(result.source).toBe('DATABASE_PUBLIC_URL');
+  });
+
   it('rejects DB_HOST private Railway host outside Railway', () => {
     expect(() =>
       assertNoPrivateRailwayDbHostOutsideRailway({

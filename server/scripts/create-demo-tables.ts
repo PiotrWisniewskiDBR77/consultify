@@ -1,7 +1,8 @@
 /**
- * Create 3 demo tables in Railway DB for testing the Table Platform.
+ * Create 3 demo tables in the explicitly selected Postgres target.
  *
- * Usage: npx tsx server/scripts/create-demo-tables.ts
+ * Usage:
+ *   DATABASE_PUBLIC_URL="<public-postgres-url>" TP_DEMO_SEED_CONFIRM=YES_CREATE_DEMO_TABLES npx tsx server/scripts/create-demo-tables.ts
  *
  * Tables:
  * 1. Project Tracker — projects with status, owner, deadline, budget
@@ -10,13 +11,21 @@
  */
 
 import pg from 'pg';
+import {
+  logSelectedDatabaseTarget,
+  requireConfirmation,
+  resolveScriptDatabaseTarget,
+} from './lib/scriptDatabaseTarget.js';
+
 const { Pool } = pg;
 
-const DATABASE_URL =
-  process.env.DATABASE_URL ||
-  'postgresql://postgres:2evh7mlls1n00vmwhzm180ner3xndjo3@trolley.proxy.rlwy.net:28146/railway';
-
-const pool = new Pool({ connectionString: DATABASE_URL });
+const target = resolveScriptDatabaseTarget({
+  label: 'create-demo-tables',
+  databaseUrl: process.env.DATABASE_URL,
+  publicDatabaseUrl: process.env.DATABASE_PUBLIC_URL,
+  requireExplicitTarget: true,
+});
+const pool = new Pool({ connectionString: target.connectionString });
 
 async function q(sql: string, params?: unknown[]) {
   return pool.query(sql, params);
@@ -28,7 +37,9 @@ async function uuid(): Promise<string> {
 }
 
 async function main() {
-  console.log('⏳ Connecting to Railway DB...');
+  requireConfirmation('TP_DEMO_SEED_CONFIRM', 'YES_CREATE_DEMO_TABLES', 'create-demo-tables');
+  logSelectedDatabaseTarget('create-demo-tables', target);
+  console.log('⏳ Connecting to selected Postgres target...');
 
   // Check connection
   const ver = await q('SELECT version()');
@@ -56,13 +67,19 @@ async function main() {
     console.log(`No ideas found — using synthetic workspace ID: ${workspaceId}`);
   }
 
-  const orgRes = await q(`SELECT id, name FROM organizations WHERE id != 'system' LIMIT 1`);
+  const requestedOrganizationId = String(process.env.TP_DEMO_ORG_ID || '').trim();
+  const orgRes = requestedOrganizationId
+    ? await q(`SELECT id, name FROM organizations WHERE id = $1 LIMIT 1`, [requestedOrganizationId])
+    : await q(`SELECT id, name FROM organizations WHERE id != 'system' LIMIT 1`);
   if (orgRes.rows.length > 0) {
     organizationId = orgRes.rows[0].id;
     console.log(`Using organization: ${orgRes.rows[0].name} (${organizationId})`);
   } else {
-    organizationId = 'demo-org';
-    console.log(`No org found — using synthetic: ${organizationId}`);
+    throw new Error(
+      requestedOrganizationId
+        ? `Requested TP_DEMO_ORG_ID=${requestedOrganizationId} was not found in organizations.`
+        : 'No non-system organization found. Set TP_DEMO_ORG_ID explicitly to continue.'
+    );
   }
 
   // Clean up existing demo base

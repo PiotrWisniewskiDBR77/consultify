@@ -13,7 +13,7 @@
  *   DB_TYPE=postgres DATABASE_URL="postgresql://..." tsx server/scripts/seed-finance.ts
  *
  * Options (env):
- *   ORG_ID=<organization id>   (optional; auto-picks first org)
+*   ORG_ID=<organization id>   (required)
  *   USER_ID=<user id>          (optional; auto-picks first user in org)
  *   SEED_PREFIX="Seed: Finance" (optional)
  */
@@ -28,7 +28,6 @@ import {
 import { createBudget, generateScenarioProjections } from '../src/services/budgetingService.js';
 import { createAnalysis, runFullAnalysis } from '../src/services/financialAnalysisService.js';
 import { computeValuation, createValuation } from '../src/services/valuationService.js';
-
 function env(name: string, fb?: string): string | undefined {
   const v = process.env[name];
   const s = v != null ? String(v).trim() : '';
@@ -40,9 +39,11 @@ function isoDateOnly(d: Date): string {
 }
 
 async function pickOrgId(): Promise<string | undefined> {
-  const fromEnv = env('ORG_ID');
-  if (fromEnv) return fromEnv;
-  const row = await dbGet<{ id: string }>(`SELECT id FROM organizations LIMIT 1`, []);
+  const requestedOrgId = env('ORG_ID');
+  if (!requestedOrgId) return undefined;
+  const row = await dbGet<{ id: string }>(`SELECT id FROM organizations WHERE id = ? LIMIT 1`, [
+    requestedOrgId,
+  ]);
   return row?.id ? String(row.id) : undefined;
 }
 
@@ -73,9 +74,7 @@ async function main() {
   const prefix = env('SEED_PREFIX', 'Seed: Finance')!;
   const orgId = await pickOrgId();
   if (!orgId) {
-    throw new Error(
-      'No organizations found. Create an organization first or pass ORG_ID=<id>.'
-    );
+    throw new Error('Target organization not found. Pass ORG_ID=<id> explicitly.');
   }
   const userId = await pickUserId(orgId);
   if (!userId) {

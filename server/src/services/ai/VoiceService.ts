@@ -46,7 +46,7 @@ export class VoiceService {
       return { client: this.groq, model: 'whisper-large-v3' };
     }
 
-    const allProviders = await llmConfigService.getActiveProviders();
+    const allProviders = await llmConfigService.getAllProviders();
     for (const p of allProviders) {
       const key = p.api_key || '';
       const endpoint = (p as any).endpoint || '';
@@ -94,7 +94,7 @@ export class VoiceService {
     voice: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' = 'alloy'
   ): Promise<Buffer> {
     try {
-      const client = await this.getClient();
+      const { client } = await this.getClient();
 
       const mp3 = await client.audio.speech.create({
         model: 'tts-1',

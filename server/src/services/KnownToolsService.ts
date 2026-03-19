@@ -31,6 +31,7 @@ export type KnownToolListItem = {
   tags: string[];
   icon: string | null;
   isLicensed: boolean;
+  isActive: boolean;
   isComingSoon: boolean;
   sortOrder: number;
   createdAt: string | null;
@@ -80,6 +81,102 @@ function pickLibraryContent(rawJson: string | null | undefined, lang: 'en' | 'pl
   return { ...(en as Record<string, unknown>), ...(picked as Record<string, unknown>) };
 }
 
+function getFallbackLibraryContent(toolType: string, lang: 'en' | 'pl') {
+  if (toolType === 'dynamic-swot') {
+    return lang === 'pl'
+      ? {
+          whatYouGet: [
+            'Decision-grade diagnozę sytuacji i pola decyzji',
+            'Napięcia strategiczne z widoczną logiką evidence',
+            'Rekomendowane ruchy, ich kolejność i sens biznesowy',
+            'Źródło do raportu, decka, inicjatyw i dalszej eksploracji',
+          ],
+          whenToUse:
+            'Użyj Dynamic SWOT, gdy musisz zamienić rozproszoną rozmowę strategiczną w uporządkowaną diagnozę, zderzyć realia wewnętrzne z rynkiem i dojść do jasnej decyzji, a nie tylko do długiej listy obserwacji.',
+          inputs: [
+            'Pytanie strategiczne, które naprawdę ma zostać rozstrzygnięte',
+            'Zakres, horyzont czasu, success signal i constraints',
+            'Sygnały wewnętrzne i zewnętrzne: fakty, obserwacje i hipotezy',
+            'Pliki, linki, benchmarki, wcześniejsze analizy lub notatki',
+          ],
+          steps: [
+            'Ustal mission brief: decyzję, zakres, success signal, horyzont i ograniczenia',
+            'Zbierz evidence i sygnały z wnętrza firmy, materiałów oraz z rynku',
+            'Przepisz sygnały na selektywną macierz mocnych stron, słabości, szans i zagrożeń',
+            'Połącz karty w napięcia strategiczne typu attack, repair, defend lub protect',
+            'Sformułuj ruchy, które realnie zawężają pole decyzji i porządkują kolejność działań',
+            'Zamknij sesję source summary gotowym do raportu, decka, inicjatyw lub dalszej eksploracji',
+          ],
+          outputs: [
+            'Executive summary sytuacji, pytania decyzyjnego i logiki wyboru',
+            'Rekomendowane ruchy strategiczne z priorytetami i sekwencją',
+            'Source summary do raportu, prezentacji lub briefu sponsorskiego',
+            'Kandydatów na inicjatywy, dalsze pomysły i kolejne analizy',
+          ],
+          commonMistakes: [
+            'Wpisywanie ogólników zamiast krótkich, konkretnych sygnałów',
+            'Mieszanie faktów, obserwacji i hipotez bez oznaczenia jakości evidence',
+            'Traktowanie macierzy SWOT jako końca pracy zamiast etapu przejścia do napięć i ruchów',
+            'Proponowanie inwestycji lub CAPEX-u zanim wiadomo, gdzie naprawdę leży problem',
+          ],
+          example:
+            'Przykład: firma premium po kryzysie marży rozważa kosztowną automatyzację. Dynamic SWOT pokazuje, że sednem problemu nie jest jeszcze brak technologii, ale brak wspólnej diagnozy strat, priorytetów i realnych wąskich gardeł. Efektem są napięcia strategiczne, kolejność ruchów i materiał gotowy do decyzji zarządu.',
+          nextSteps: [
+            'Uruchom sesję od ostrego mission briefu, nie od samej macierzy',
+            'Zbieraj sygnały w trybie evidence-first i czyść ogólniki razem z AI',
+            'Domknij napięcia oraz ruchy zanim przejdziesz do outputów',
+            'Wygeneruj raport, deck, brief inicjatywy albo dalsze artefakty z jednego źródła prawdy',
+          ],
+        }
+      : {
+          whatYouGet: [
+            'A decision-grade diagnosis of the situation and choice space',
+            'Strategic tensions with visible evidence logic',
+            'Recommended moves, sequencing, and business rationale',
+            'A source package for reports, decks, initiatives, and follow-on exploration',
+          ],
+          whenToUse:
+            'Use Dynamic SWOT when you need to turn a fragmented strategic conversation into a structured diagnosis, connect internal reality with market evidence, and arrive at a clear choice rather than a long list of observations.',
+          inputs: [
+            'The strategic question that truly needs a decision',
+            'Scope, time horizon, success signal, and key constraints',
+            'Internal and external signals: facts, observations, and hypotheses',
+            'Files, links, benchmarks, and prior analyses or notes',
+          ],
+          steps: [
+            'Define the mission brief: decision, scope, success signal, time horizon, and constraints',
+            'Collect evidence and signals from inside the company, from materials, and from the market',
+            'Translate the signals into a selective matrix of strengths, weaknesses, opportunities, and threats',
+            'Connect the cards into attack, repair, defend, or protect strategic tensions',
+            'Formulate moves that genuinely narrow the decision space and sequence the response',
+            'Close with a source summary ready for reports, decks, initiatives, or further exploration',
+          ],
+          outputs: [
+            'An executive summary of the situation, the decision question, and the choice logic',
+            'Recommended strategic moves with priorities and sequence',
+            'A source summary for a report, presentation, or sponsor brief',
+            'Initiative candidates, follow-on ideas, and next analyses',
+          ],
+          commonMistakes: [
+            'Writing generic statements instead of short evidence-backed signals',
+            'Mixing facts, observations, and hypotheses without marking evidence quality',
+            'Treating the SWOT matrix as the finish line instead of a bridge to tensions and moves',
+            'Jumping to investments or CAPEX before understanding the real problem',
+          ],
+          example:
+            'Example: a premium company facing margin pressure is considering expensive automation. Dynamic SWOT shows that the real issue is not missing technology yet, but the absence of a shared diagnosis of losses, priorities, and bottlenecks. The output is a set of tensions, a move sequence, and a board-ready narrative.',
+          nextSteps: [
+            'Start from a sharp mission brief, not from the matrix itself',
+            'Use AI to clean signals and strengthen evidence quality',
+            'Close tensions and moves before jumping into outputs',
+            'Generate a report, deck, initiative brief, or follow-on artifacts from one source of truth',
+          ],
+        };
+  }
+
+  return {};
+}
+
 type SeedKnownTool = {
   id: string;
   toolType: string;
@@ -94,17 +191,32 @@ type SeedKnownTool = {
   sortOrder: number;
 };
 
+// Only tools that are actually prepared in our current library
+// should be openable from the Tools table.
+const ACTIVE_KNOWN_TOOL_TYPES = new Set<string>(['dynamic-swot']);
+
 const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
   {
     id: 'tool-known-dynamic-swot',
     toolType: 'dynamic-swot',
     displayName: 'Dynamic SWOT',
     libraryCategory: 'strategic',
-    descriptionEn: 'AI-powered SWOT that ends with actionable takeaways and initiative concepts.',
+    descriptionEn:
+      'AI-guided strategic SWOT that starts with conversation and ends with tensions, moves, and traceable outputs.',
     descriptionPl:
-      'SWOT wspierany przez AI, kończący się konkretnymi wnioskami i koncepcjami inicjatyw.',
-    whatYouGetEn: ['Key takeaways', 'Risks & unknowns', 'Draft initiatives'],
-    whatYouGetPl: ['Najważniejsze wnioski', 'Ryzyka i niewiadome', 'Draft inicjatyw'],
+      'SWOT prowadzony przez AI, który zaczyna się rozmową i kończy napięciami strategicznymi, ruchami oraz traceable outputami.',
+    whatYouGetEn: [
+      'Strategic tensions',
+      'Recommended moves',
+      'Initiative and idea candidates',
+      'Report and presentation path',
+    ],
+    whatYouGetPl: [
+      'Napięcia strategiczne',
+      'Rekomendowane ruchy',
+      'Kandydaci na inicjatywy i pomysły',
+      'Ścieżka do raportu i prezentacji',
+    ],
     tags: ['strategy', 'swot', 'diagnosis'],
     icon: 'Target',
     sortOrder: 101,
@@ -114,10 +226,12 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     toolType: 'market-forces',
     displayName: 'Market Forces (Porter)',
     libraryCategory: 'strategic',
-    descriptionEn: 'Porter 5 Forces analysis translated into strategic risks and initiatives.',
-    descriptionPl: 'Analiza 5 sił Portera przełożona na ryzyka strategiczne i inicjatywy.',
-    whatYouGetEn: ['Force scorecard', 'Strategic levers', 'Draft initiatives'],
-    whatYouGetPl: ['Scorecard 5 sił', 'Dźwignie strategiczne', 'Draft inicjatyw'],
+    descriptionEn:
+      'AI-guided Porter analysis that turns market structure into applied conclusions, strategic levers, and downstream outputs.',
+    descriptionPl:
+      'Analiza 5 sił Portera prowadzona przez AI, która zamienia strukturę rynku w praktyczne wnioski, dźwignie strategiczne i dalsze outputy.',
+    whatYouGetEn: ['Force scorecard', 'Applied conclusions', 'Initiative, report, and deck path'],
+    whatYouGetPl: ['Scorecard 5 sił', 'Wnioski praktyczne', 'Ścieżka do inicjatywy, raportu i decka'],
     tags: ['strategy', 'porter', 'competition'],
     icon: 'TrendingUp',
     sortOrder: 102,
@@ -128,10 +242,11 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     displayName: 'Growth Paths (Ansoff)',
     libraryCategory: 'strategic',
     descriptionEn:
-      'Ansoff matrix to explore growth options and select viable paths with risk framing.',
-    descriptionPl: 'Macierz Ansoffa do wyboru ścieżek wzrostu wraz z oceną ryzyk.',
-    whatYouGetEn: ['Option map', 'Risk framing', 'Draft initiatives'],
-    whatYouGetPl: ['Mapa opcji', 'Ocena ryzyk', 'Draft inicjatyw'],
+      'AI-guided Ansoff workflow that compares growth options, frames risk, and prepares presentation-ready recommendations.',
+    descriptionPl:
+      'Przepływ Ansoffa prowadzony przez AI, który porównuje opcje wzrostu, ramuje ryzyko i przygotowuje rekomendacje gotowe do prezentacji.',
+    whatYouGetEn: ['Option map', 'Applied conclusions', 'Initiative, report, and deck path'],
+    whatYouGetPl: ['Mapa opcji', 'Wnioski praktyczne', 'Ścieżka do inicjatywy, raportu i decka'],
     tags: ['strategy', 'ansoff', 'growth'],
     icon: 'ArrowRight',
     sortOrder: 103,
@@ -155,11 +270,12 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     toolType: 'portfolio-priority',
     displayName: 'Portfolio Prioritization',
     libraryCategory: 'strategic',
-    descriptionEn: 'Prioritize initiatives and bets using impact/effort and constraints.',
+    descriptionEn:
+      'AI-guided prioritization that turns portfolio discussion into explicit trade-offs, top bets, and traceable outputs.',
     descriptionPl:
-      'Priorytetyzacja inicjatyw i zakładów (impact/effort) z uwzględnieniem ograniczeń.',
-    whatYouGetEn: ['Priority matrix', 'Top picks', 'Draft initiatives'],
-    whatYouGetPl: ['Macierz priorytetów', 'Top wybory', 'Draft inicjatyw'],
+      'Priorytetyzacja prowadzona przez AI, która zamienia rozmowę o portfolio w jawne trade-offy, top bety i traceable outputy.',
+    whatYouGetEn: ['Priority matrix', 'Trade-off view', 'Initiative, report, and idea path'],
+    whatYouGetPl: ['Macierz priorytetów', 'Widok trade-offów', 'Ścieżka do inicjatywy, raportu i idei'],
     tags: ['strategy', 'prioritization', 'portfolio'],
     icon: 'ListTodo',
     sortOrder: 105,
@@ -169,10 +285,12 @@ const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
     toolType: 'risk-uncertainty',
     displayName: 'Risk & Uncertainty',
     libraryCategory: 'strategic',
-    descriptionEn: 'Structure risks, unknowns and mitigations before committing to initiatives.',
-    descriptionPl: 'Strukturyzacja ryzyk, niewiadomych i mitigacji przed zatwierdzeniem inicjatyw.',
-    whatYouGetEn: ['Risk register', 'Unknowns', 'Mitigations'],
-    whatYouGetPl: ['Rejestr ryzyk', 'Niewiadome', 'Mitigacje'],
+    descriptionEn:
+      'AI-guided risk framing that structures assumptions, scenarios, and mitigations before decisions and outputs are created.',
+    descriptionPl:
+      'Ramowanie ryzyk prowadzone przez AI, które porządkuje założenia, scenariusze i mitigacje przed decyzjami oraz tworzeniem outputów.',
+    whatYouGetEn: ['Risk register', 'Scenario view', 'Initiative, report, and idea path'],
+    whatYouGetPl: ['Rejestr ryzyk', 'Widok scenariuszy', 'Ścieżka do inicjatywy, raportu i idei'],
     tags: ['strategy', 'risk', 'uncertainty'],
     icon: 'AlertTriangle',
     sortOrder: 106,
@@ -598,6 +716,36 @@ class KnownToolsService {
     this.ensuredSqliteSeed = true;
   }
 
+  private isKnownToolActive(toolTypeRaw: string, rowIsActive?: number | null): boolean {
+    const toolType = String(toolTypeRaw || '').trim().toLowerCase();
+    if (!toolType) return false;
+    return Boolean(rowIsActive) && ACTIVE_KNOWN_TOOL_TYPES.has(toolType);
+  }
+
+  async getKnownToolAvailability(toolTypeOrName: string): Promise<{ exists: boolean; isActive: boolean }> {
+    await this.ensureToolsSeedOnce();
+    const db = await this.getDb();
+    const q = new QueryAdapter(db);
+    const toolType = String(toolTypeOrName || '').trim();
+    if (!toolType) return { exists: false, isActive: false };
+
+    const row = await q.get<Pick<ToolRow, 'name' | 'tool_type' | 'is_active'>>(
+      `SELECT name, tool_type, is_active
+         FROM tools
+        WHERE tool_type IS NOT NULL
+          AND (tool_type = ? OR name = ?)
+        LIMIT 1`,
+      [toolType, toolType]
+    );
+
+    if (!row) return { exists: false, isActive: false };
+    const resolvedToolType = row.tool_type || row.name || toolType;
+    return {
+      exists: true,
+      isActive: this.isKnownToolActive(resolvedToolType, row.is_active),
+    };
+  }
+
   async listKnownTools(params: {
     lang?: string;
     category?: string;
@@ -612,7 +760,7 @@ class KnownToolsService {
     const limit = Math.min(50, Math.max(1, Number(params.limit || 20)));
     const offset = Math.max(0, Number(params.offset || 0));
 
-    const where: string[] = ['is_active = 1', 'tool_type IS NOT NULL'];
+    const where: string[] = ['tool_type IS NOT NULL'];
     const args: unknown[] = [];
 
     if (params.category) {
@@ -636,7 +784,7 @@ class KnownToolsService {
 
     const rows = await q.all<ToolRow>(
       `SELECT id, name, tool_type, display_name, library_category, description, description_translations,
-              library_content_translations, icon, is_licensed, is_coming_soon, tags_json, sort_order, created_at
+              library_content_translations, icon, is_licensed, is_active, is_coming_soon, tags_json, sort_order, created_at
          FROM tools
          ${whereSql}
          ORDER BY sort_order ASC, display_name ASC
@@ -664,6 +812,7 @@ class KnownToolsService {
         tags,
         icon: row.icon || null,
         isLicensed: Boolean(row.is_licensed),
+        isActive: this.isKnownToolActive(toolType, row.is_active),
         isComingSoon: Boolean(row.is_coming_soon),
         sortOrder: Number(row.sort_order || 0),
         createdAt: row.created_at || null,
@@ -683,9 +832,9 @@ class KnownToolsService {
 
     const row = await q.get<ToolRow>(
       `SELECT id, name, tool_type, display_name, library_category, description, description_translations,
-              library_content_translations, icon, is_licensed, is_coming_soon, tags_json, sort_order, created_at
+              library_content_translations, icon, is_licensed, is_active, is_coming_soon, tags_json, sort_order, created_at
          FROM tools
-        WHERE is_active = 1
+        WHERE tool_type IS NOT NULL
           AND (tool_type = ? OR name = ?)
         LIMIT 1`,
       [toolType, toolType]
@@ -694,8 +843,13 @@ class KnownToolsService {
     if (!row) return null;
 
     const resolvedToolType = row.tool_type || row.name;
+    const isActive = this.isKnownToolActive(resolvedToolType, row.is_active);
+    if (!isActive) return null;
     const description = pickTranslation(row.description_translations, lang, row.description || '');
-    const content = pickLibraryContent(row.library_content_translations, lang);
+    const content = {
+      ...getFallbackLibraryContent(resolvedToolType, lang),
+      ...pickLibraryContent(row.library_content_translations, lang),
+    };
 
     const detail: KnownToolDetail = {
       id: row.id,
@@ -707,6 +861,7 @@ class KnownToolsService {
       tags: safeJsonParse<string[]>(row.tags_json, []),
       icon: row.icon || null,
       isLicensed: Boolean(row.is_licensed),
+      isActive,
       isComingSoon: Boolean(row.is_coming_soon),
       sortOrder: Number(row.sort_order || 0),
       createdAt: row.created_at || null,

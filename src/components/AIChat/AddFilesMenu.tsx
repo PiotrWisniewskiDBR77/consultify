@@ -9,11 +9,13 @@
  * @version 4.0.0
  */
 
-import { ChevronRight, ExternalLink, Plus, Upload } from 'lucide-react';
+import { ChevronRight, ExternalLink, Link2, Plus, Upload } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Button } from '../ui/primitives/Button';
+import { Modal } from '../ui/primitives/Modal';
 import {
   SUPPORTED_CHAT_ATTACHMENT_ACCEPT,
   SUPPORTED_CHAT_ATTACHMENT_LABEL,
@@ -145,6 +147,7 @@ const FileIcon: React.FC<{ name: string }> = ({ name }) => {
 
 interface AddFilesMenuProps {
   onFileSelect: (files: File[]) => void;
+  onUrlAdd?: (url: string) => void;
   onCloudFileSelect?: (provider: CloudProviderId, fileId: string, fileName: string) => void;
   onConnectCloud?: (provider: CloudProviderId) => void;
   connectedProviders?: CloudProviderId[];
@@ -168,6 +171,7 @@ const PROVIDERS: ProviderDef[] = [
 
 export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   onFileSelect,
+  onUrlAdd,
   onCloudFileSelect,
   onConnectCloud,
   connectedProviders = [],
@@ -178,6 +182,8 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [recentHover, setRecentHover] = useState(false);
   const [recentItems, setRecentItems] = useState<RecentAttachment[]>([]);
+  const [urlModalOpen, setUrlModalOpen] = useState(false);
+  const [urlValue, setUrlValue] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recentTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -259,6 +265,25 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
     setIsOpen(false);
   };
 
+  const submitUrl = () => {
+    const raw = urlValue.trim();
+    if (!raw) return;
+    try {
+      const u = new URL(raw);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') {
+        toast.error(t('aiChat.menu.urlUnsupportedProtocol', 'Only http(s) links are supported'));
+        return;
+      }
+      onUrlAdd?.(u.toString());
+      toast.success(t('aiChat.menu.toast.urlAdded', 'Link added to attachments'), { duration: 1500 });
+      setUrlValue('');
+      setUrlModalOpen(false);
+      setIsOpen(false);
+    } catch {
+      toast.error(t('aiChat.menu.urlInvalid', 'Invalid link'));
+    }
+  };
+
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
@@ -303,6 +328,16 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
               { types: SUPPORTED_CHAT_ATTACHMENT_LABEL }
             )}
           />
+
+          {/* Add URL */}
+          {onUrlAdd && (
+            <MenuItem
+              onClick={() => setUrlModalOpen(true)}
+              icon={<Link2 size={15} className="text-slate-500 dark:text-slate-400" />}
+              label={t('aiChat.menu.addLink', 'Add link')}
+              description={t('aiChat.menu.addLinkHint', 'Paste a URL to read and cite')}
+            />
+          )}
 
           {isCloudImplemented && connectedCloudProviders.length > 0 ? (
             <>
@@ -387,6 +422,55 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
           </div>
         </div>
       )}
+
+      <Modal
+        open={urlModalOpen}
+        onClose={() => {
+          setUrlModalOpen(false);
+          setUrlValue('');
+        }}
+        title={t('aiChat.menu.addLink', 'Add link')}
+        description={t('aiChat.menu.addLinkModalDesc', 'We will fetch and attach the page content to this chat.')}
+        size="md"
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setUrlModalOpen(false);
+                setUrlValue('');
+              }}
+            >
+              {t('common.cancel', 'Cancel')}
+            </Button>
+            <Button variant="primary" onClick={submitUrl} disabled={!urlValue.trim()}>
+              {t('common.add', 'Add')}
+            </Button>
+          </div>
+        }
+      >
+        <div className="p-6 pt-4">
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-2">
+            {t('aiChat.menu.urlLabel', 'URL')}
+          </label>
+          <input
+            autoFocus
+            value={urlValue}
+            onChange={(e) => setUrlValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submitUrl();
+            }}
+            placeholder={t('aiChat.menu.urlPlaceholder', 'https://…')}
+            className="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-primary-500"
+          />
+          <p className="mt-2 text-[12px] text-slate-500 dark:text-slate-400">
+            {t(
+              'aiChat.menu.urlPrivacyHint',
+              'Only public http(s) links. Your organization policy may block internet access.'
+            )}
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -8,6 +8,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
+import logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 
 class InboxEnterpriseService {
@@ -372,7 +373,11 @@ class InboxEnterpriseService {
     const params: unknown[] = [userId, orgId];
     let idx = 3;
 
-    if (filters.status) { conditions.push(`status=$${idx++}`); params.push(filters.status); }
+    if (filters.status && filters.status !== 'all') {
+      const statusMap: Record<string, string> = { open: 'pending', done: 'resolved', saved: 'snoozed' };
+      conditions.push(`status=$${idx++}`);
+      params.push(statusMap[filters.status] ?? filters.status);
+    }
     if (filters.priority) { conditions.push(`priority=$${idx++}`); params.push(filters.priority); }
     if (filters.section) { conditions.push(`section=$${idx++}`); params.push(filters.section); }
     if (filters.slaStatus) { conditions.push(`sla_status=$${idx++}`); params.push(filters.slaStatus); }
@@ -386,12 +391,57 @@ class InboxEnterpriseService {
     const countSql = `SELECT COUNT(*) as total FROM canonical_inbox_items WHERE ${conditions.join(' AND ')}`;
     const dataSql = `SELECT * FROM canonical_inbox_items WHERE ${conditions.join(' AND ')} ORDER BY ${sortCol} ${sortDir} LIMIT ${limit} OFFSET ${offset}`;
 
-    const [countResult, items] = await Promise.all([
+    const [countResult, rawItems] = await Promise.all([
       queryHelpers.queryFirst<{ total: number }>(countSql, params),
-      queryHelpers.queryAll(dataSql, params),
+      queryHelpers.queryAll<any>(dataSql, params),
     ]);
 
-    return { items, total: countResult?.total ?? 0, limit, offset };
+    const priorityToUrgency = (p: string | null): string => {
+      const lp = (p || '').toLowerCase();
+      if (lp === 'critical') return 'critical';
+      if (lp === 'high') return 'high';
+      if (lp === 'low') return 'low';
+      return 'normal';
+    };
+
+    const items = (rawItems || []).map((r: any) => {
+      const srcType = r.source_entity_type || 'notification';
+      const srcId = r.source_entity_id || r.id;
+      return {
+        id: r.id,
+        type: r.item_type || 'system_alert',
+        itemType: r.item_type || 'signal',
+        section: r.section || 'fyi_system',
+        title: r.title || '',
+        description: r.description || '',
+        source: { type: (srcType === 'ai' ? 'ai' : 'system') as 'ai' | 'system' | 'user' },
+        receivedAt: r.created_at ? new Date(r.created_at).toISOString() : new Date().toISOString(),
+        dueDate: r.sla_deadline ? new Date(r.sla_deadline).toISOString() : undefined,
+        urgency: priorityToUrgency(r.priority),
+        priority: r.priority,
+        itemStatus: r.status === 'pending' ? 'open' : r.status === 'resolved' ? 'done' : r.status === 'snoozed' ? 'saved' : r.status,
+        isActionable: ['approvals_gates', 'decisions_required', 'assigned_tasks', 'blocked_escalations'].includes(r.section),
+        _key: `${srcType}:${srcId}`,
+        linkedTaskId: srcType === 'task' ? srcId : undefined,
+        linkedDecisionId: srcType === 'decision' ? srcId : undefined,
+        sourceEntityType: srcType,
+        sourceEntityId: srcId,
+        sla: r.sla_deadline ? { dueAt: new Date(r.sla_deadline).toISOString(), isBreached: r.sla_status === 'breached' } : undefined,
+      };
+    });
+
+    const total = countResult?.total ?? 0;
+    const critical = items.filter((i: any) => i.urgency === 'critical').length;
+    const actionRequired = items.filter((i: any) => i.isActionable).length;
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const newToday = items.filter((i: any) => new Date(i.receivedAt) >= todayStart).length;
+
+    logger.info(`[inbox-v4-table] user=${userId} org=${orgId} filters=${JSON.stringify(filters)} => total=${total} items=${items.length}`);
+    return {
+      summary: { total, critical, newToday, actionRequired, counts: { open: total, done: 0, saved: 0, dismissed: 0 } },
+      items,
+      total, limit, offset,
+    };
   }
 
   async getInboxItemPreview(userId: string, itemId: string) {

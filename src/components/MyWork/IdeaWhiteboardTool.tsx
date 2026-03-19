@@ -6,6 +6,7 @@
  * Data lives in shared IdeaWorkspaceGraph (nodes/edges/extensions.whiteboard).
  */
 import 'reactflow/dist/style.css';
+import './whiteboard/whiteboard-neon.css';
 
 import {
   AlignCenter,
@@ -117,44 +118,60 @@ import { useWhiteboardQuickActions } from './whiteboard/useWhiteboardQuickAction
 
 const STICKY_COLORS = [
   {
-    bg: 'bg-yellow-100 dark:bg-yellow-900/40',
-    border: 'border-yellow-300 dark:border-yellow-700',
+    bg: 'bg-yellow-100 dark:bg-yellow-950/60',
+    border: 'border-yellow-300 dark:border-yellow-400/60',
     hex: '#fef9c3',
+    darkHex: '#422006',
+    glow: '0 0 14px rgba(250,204,21,0.28)',
   },
   {
-    bg: 'bg-blue-100 dark:bg-blue-900/40',
-    border: 'border-blue-300 dark:border-blue-700',
+    bg: 'bg-blue-100 dark:bg-blue-950/60',
+    border: 'border-blue-300 dark:border-blue-400/60',
     hex: '#dbeafe',
+    darkHex: '#172554',
+    glow: '0 0 14px rgba(96,165,250,0.28)',
   },
   {
-    bg: 'bg-green-100 dark:bg-green-900/40',
-    border: 'border-green-300 dark:border-green-700',
+    bg: 'bg-green-100 dark:bg-green-950/60',
+    border: 'border-green-300 dark:border-green-400/60',
     hex: '#dcfce7',
+    darkHex: '#052e16',
+    glow: '0 0 14px rgba(74,222,128,0.28)',
   },
   {
-    bg: 'bg-pink-100 dark:bg-pink-900/40',
-    border: 'border-pink-300 dark:border-pink-700',
+    bg: 'bg-pink-100 dark:bg-pink-950/60',
+    border: 'border-pink-300 dark:border-pink-400/60',
     hex: '#fce7f3',
+    darkHex: '#500724',
+    glow: '0 0 14px rgba(244,114,182,0.28)',
   },
   {
-    bg: 'bg-purple-100 dark:bg-purple-900/40',
-    border: 'border-purple-300 dark:border-purple-700',
+    bg: 'bg-purple-100 dark:bg-purple-950/60',
+    border: 'border-purple-300 dark:border-purple-400/60',
     hex: '#f3e8ff',
+    darkHex: '#3b0764',
+    glow: '0 0 14px rgba(192,132,252,0.28)',
   },
   {
-    bg: 'bg-orange-100 dark:bg-orange-900/40',
-    border: 'border-orange-300 dark:border-orange-700',
+    bg: 'bg-orange-100 dark:bg-orange-950/60',
+    border: 'border-orange-300 dark:border-orange-400/60',
     hex: '#ffedd5',
+    darkHex: '#431407',
+    glow: '0 0 14px rgba(251,146,60,0.28)',
   },
   {
-    bg: 'bg-teal-100 dark:bg-teal-900/40',
-    border: 'border-teal-300 dark:border-teal-700',
+    bg: 'bg-teal-100 dark:bg-teal-950/60',
+    border: 'border-teal-300 dark:border-teal-400/60',
     hex: '#ccfbf1',
+    darkHex: '#042f2e',
+    glow: '0 0 14px rgba(45,212,191,0.28)',
   },
   {
-    bg: 'bg-rose-100 dark:bg-rose-900/40',
-    border: 'border-rose-300 dark:border-rose-700',
+    bg: 'bg-rose-100 dark:bg-rose-950/60',
+    border: 'border-rose-300 dark:border-rose-400/60',
     hex: '#ffe4e6',
+    darkHex: '#4c0519',
+    glow: '0 0 14px rgba(251,113,133,0.28)',
   },
 ];
 
@@ -166,9 +183,40 @@ const STICKY_SIZES: Record<string, { w: number; h: number; textRows: number }> =
   l: { w: 240, h: 140, textRows: 5 },
 };
 
+// ── Dark mode detection & color helpers for inline styles ─────────────────────
+
+const darkenHex = (hex: string, factor = 0.7): string => {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  if (!m) return '#1e1b4b';
+  const r = Math.round(parseInt(m[1], 16) * (1 - factor));
+  const g = Math.round(parseInt(m[2], 16) * (1 - factor));
+  const b = Math.round(parseInt(m[3], 16) * (1 - factor));
+  return `rgb(${r},${g},${b})`;
+};
+
+const hexToGlow = (hex: string): string => {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  if (!m) return 'rgba(148,163,184,0.25)';
+  return `rgba(${parseInt(m[1], 16)},${parseInt(m[2], 16)},${parseInt(m[3], 16)},0.25)`;
+};
+
+const useIsDark = () => {
+  const [isDark, setIsDark] = React.useState(() =>
+    typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  );
+  React.useEffect(() => {
+    const el = document.documentElement;
+    const obs = new MutationObserver(() => setIsDark(el.classList.contains('dark')));
+    obs.observe(el, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+  return isDark;
+};
+
 // ── Custom nodes ─────────────────────────────────────────────────────────────
 
 const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => {
+  const isDark = useIsDark();
   const colorIdx = (data?.colorIndex ?? 0) % STICKY_COLORS.length;
   const color = STICKY_COLORS[colorIdx];
   const sizeKey = (data?.size as string) || 'm';
@@ -202,8 +250,12 @@ const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected }) => 
 
   return (
     <div
-      className={`relative p-3 rounded-lg border shadow-md transition-all ${color.bg} ${color.border} ${priorityBorder} ${selected ? 'ring-2 ring-primary-500/60 shadow-lg' : ''} ${data?.isAI ? 'ring-1 ring-violet-400/30' : ''} ${data?._isNew ? 'animate-[pulse_1s_ease-in-out_1]' : ''}`}
-      style={{ width: size.w, minHeight: size.h }}
+      className={`wb-neon-node relative p-3 rounded-xl border shadow-lg transition-all ${color.bg} ${color.border} ${priorityBorder} ${selected ? 'ring-2 ring-primary-500/60 shadow-xl shadow-primary-500/10' : ''} ${data?.isAI ? 'ring-1 ring-violet-400/30' : ''} ${data?._isNew ? 'animate-[pulse_1s_ease-in-out_1]' : ''}`}
+      style={{
+        width: size.w,
+        minHeight: size.h,
+        ...(isDark ? { boxShadow: selected ? `${color.glow}, 0 0 24px rgba(168,85,247,0.2)` : color.glow } : {}),
+      }}
       onDoubleClick={() => {
         if (!data?.locked) {
           setEditValue(String(data?.label || ''));
@@ -289,7 +341,7 @@ const TextBlockNode: React.FC<NodeProps> = ({ data, selected }) => {
 
   return (
     <div
-      className={`relative w-[220px] min-h-[60px] p-3 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 shadow-sm transition-shadow ${selected ? 'ring-2 ring-primary-500/60 shadow-lg' : ''}`}
+      className={`wb-neon-node relative w-[220px] min-h-[60px] p-3 rounded-xl border border-slate-200/80 dark:border-slate-400/25 bg-white/95 dark:bg-navy-900/80 dark:backdrop-blur-md shadow-lg shadow-slate-200/50 dark:shadow-[0_0_12px_rgba(148,163,184,0.15)] transition-shadow ${selected ? 'ring-2 ring-primary-500/60 shadow-xl' : ''}`}
       onDoubleClick={() => {
         if (!data?.locked) {
           setEditValue(String(data?.label || ''));
@@ -340,9 +392,9 @@ const TextBlockNode: React.FC<NodeProps> = ({ data, selected }) => {
 
 const GroupNode: React.FC<NodeProps> = ({ data, selected }) => (
   <div
-    className={`relative w-[300px] min-h-[200px] p-2 rounded-2xl border-2 border-dashed border-slate-300 dark:border-navy-600 bg-slate-50/50 dark:bg-navy-900/50 transition-shadow ${selected ? 'ring-2 ring-primary-500/60' : ''}`}
+    className={`wb-neon-node relative w-[300px] min-h-[200px] p-2 rounded-2xl border-2 border-dashed border-slate-300 dark:border-purple-500/30 bg-slate-50/50 dark:bg-purple-950/20 dark:shadow-[0_0_18px_rgba(168,85,247,0.12)] transition-shadow ${selected ? 'ring-2 ring-primary-500/60' : ''}`}
   >
-    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">
+    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-purple-300/70 px-1">
       {data?.label || 'Group'}
     </div>
   </div>
@@ -358,8 +410,10 @@ const SHAPE_STYLES: Record<string, { className: string; svgPath?: string }> = {
 };
 
 const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
+  const isDark = useIsDark();
   const shape = data?.shape || 'rectangle';
-  const bgColor = data?.bgColor || '#e0e7ff';
+  const lightBg = data?.bgColor || '#e0e7ff';
+  const darkBg = data?.bgColor ? darkenHex(data.bgColor, 0.7) : '#1e1b4b';
   const [editing, setEditing] = React.useState(false);
   const [editValue, setEditValue] = React.useState(String(data?.label || ''));
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -379,14 +433,17 @@ const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
 
   return (
     <div
-      className={`relative flex items-center justify-center transition-shadow ${selected ? 'ring-2 ring-primary-500/60 shadow-lg' : 'shadow-sm'}`}
+      className={`wb-neon-node relative flex items-center justify-center transition-all ${selected ? 'ring-2 ring-primary-500/60 shadow-lg' : 'shadow-md shadow-slate-300/40 dark:shadow-navy-900/40'}`}
       style={{
         width: isCircle ? 120 : isDiamond ? 100 : isHexagon ? 140 : 160,
         height: isCircle ? 120 : isDiamond ? 100 : isHexagon ? 120 : 80,
-        backgroundColor: bgColor,
+        backgroundColor: isDark ? darkBg : lightBg,
         borderRadius: isCircle ? '50%' : isDiamond ? 8 : isHexagon ? 0 : 12,
         transform: isDiamond ? 'rotate(45deg)' : undefined,
-        border: isHexagon ? 'none' : '2px solid rgba(0,0,0,0.1)',
+        border: isHexagon ? 'none' : isDark ? `2px solid ${hexToGlow(lightBg)}` : '2px solid rgba(255,255,255,0.4)',
+        boxShadow: isHexagon ? undefined : isDark
+          ? `0 0 14px ${hexToGlow(lightBg)}, inset 0 1px 0 rgba(255,255,255,0.05)`
+          : 'inset 0 1px 0 rgba(255,255,255,0.3), 0 2px 8px rgba(0,0,0,0.08)',
         clipPath: isHexagon ? 'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)' : undefined,
       }}
       onDoubleClick={() => {
@@ -411,10 +468,10 @@ const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
               if (e.key === 'Enter') commitEdit();
               if (e.key === 'Escape') setEditing(false);
             }}
-            className="w-full bg-transparent text-[11px] font-medium text-slate-800 text-center outline-none border-b border-primary-400"
+            className="w-full bg-transparent text-[11px] font-medium text-slate-800 dark:text-slate-200 text-center outline-none border-b border-primary-400"
           />
         ) : (
-          <div className="text-[11px] font-medium text-slate-800 truncate">{data?.label || ''}</div>
+          <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200 truncate">{data?.label || ''}</div>
         )}
       </div>
       <Handle
@@ -429,7 +486,9 @@ const ShapeNode: React.FC<NodeProps> = ({ data, selected }) => {
 // ── Frame Node (section container with title and background) ──────────────
 
 const FrameNode: React.FC<NodeProps> = ({ data, selected }) => {
-  const bgColor = data?.bgColor || 'rgba(241,245,249,0.6)';
+  const isDark = useIsDark();
+  const lightBg = data?.bgColor || 'rgba(241,245,249,0.6)';
+  const darkBg = 'rgba(15,23,42,0.7)';
   const collapsed = Boolean(data?.collapsed);
   const [editing, setEditing] = React.useState(false);
   const [editValue, setEditValue] = React.useState(String(data?.label || ''));
@@ -453,11 +512,11 @@ const FrameNode: React.FC<NodeProps> = ({ data, selected }) => {
 
   return (
     <div
-      className={`relative p-3 rounded-2xl border-2 transition-shadow ${selected ? 'ring-2 ring-primary-500/60 border-primary-400' : 'border-slate-300 dark:border-navy-600'}`}
+      className={`wb-neon-node relative p-3 rounded-2xl border-2 transition-all ${selected ? 'ring-2 ring-primary-500/60 border-primary-400/80 shadow-lg shadow-primary-500/10' : 'border-slate-300/80 dark:border-indigo-400/25'} shadow-xl shadow-slate-300/25 dark:shadow-[0_0_20px_rgba(99,102,241,0.12)]`}
       style={{
         width: data?.width || 400,
         minHeight: collapsed ? 'auto' : data?.height || 300,
-        backgroundColor: bgColor,
+        backgroundColor: isDark ? darkBg : lightBg,
       }}
     >
       <div className="flex items-center gap-1.5 mb-2">
@@ -558,7 +617,7 @@ const ImageNode: React.FC<NodeProps> = ({ data, selected }) => {
 
   return (
     <div
-      className={`relative rounded-xl overflow-hidden border border-slate-200 dark:border-navy-700 shadow-sm transition-shadow ${selected ? 'ring-2 ring-primary-500/60 shadow-lg' : ''}`}
+      className={`wb-neon-node relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-500/20 shadow-sm dark:shadow-[0_0_12px_rgba(148,163,184,0.1)] transition-shadow ${selected ? 'ring-2 ring-primary-500/60 shadow-lg' : ''}`}
       style={{ width: nodeWidth }}
     >
       <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-slate-400 !-top-1" />
@@ -571,7 +630,7 @@ const ImageNode: React.FC<NodeProps> = ({ data, selected }) => {
         />
       ) : (
         <div
-          className="w-full flex flex-col items-center justify-center bg-slate-100 dark:bg-navy-800 text-slate-400"
+          className="w-full flex flex-col items-center justify-center bg-slate-100 dark:bg-navy-900/80 text-slate-400"
           style={{ height: data?.height || 150 }}
         >
           <ImageIcon size={24} />
@@ -633,18 +692,18 @@ const LinkNode: React.FC<NodeProps> = ({ data, selected }) => {
 
   return (
     <div
-      className={`relative w-[220px] rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-800 shadow-sm transition-shadow overflow-hidden cursor-pointer hover:shadow-md ${selected ? 'ring-2 ring-primary-500/60 shadow-lg' : ''}`}
+      className={`wb-neon-node relative w-[220px] rounded-xl border border-slate-200 dark:border-cyan-500/25 bg-white dark:bg-navy-900/80 dark:backdrop-blur-md shadow-sm dark:shadow-[0_0_12px_rgba(34,211,238,0.15)] transition-shadow overflow-hidden cursor-pointer hover:shadow-md ${selected ? 'ring-2 ring-primary-500/60 shadow-lg' : ''}`}
       onClick={handleClick}
     >
       <Handle type="target" position={Position.Top} className="!w-2 !h-2 !bg-slate-400 !-top-1" />
       {ogImage && (
-        <div className="w-full h-[100px] bg-slate-100 dark:bg-navy-700 overflow-hidden">
+        <div className="w-full h-[100px] bg-slate-100 dark:bg-navy-900/60 overflow-hidden">
           <img src={ogImage} alt="" className="w-full h-full object-cover" />
         </div>
       )}
       <div className="p-3">
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-700 flex items-center justify-center shrink-0">
+          <div className="w-5 h-5 rounded bg-slate-100 dark:bg-navy-900/60 flex items-center justify-center shrink-0">
             {favicon ? (
               <img src={favicon} alt="" className="w-3.5 h-3.5" />
             ) : (
@@ -853,6 +912,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
   isFullscreen: externalIsFullscreen = false,
 }) => {
   const { screenToFlowPosition, setViewport } = useReactFlow();
+  const isDarkCanvas = useIsDark();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [showMiniMap, setShowMiniMap] = React.useState(false);
   const [internalFullscreen, setInternalFullscreen] = React.useState(false);
@@ -1055,7 +1115,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
         selectionOnDrag
         panOnDrag={[1, 2]}
         deleteKeyCode={locked ? null : 'Delete'}
-        className="bg-slate-50/50 dark:bg-navy-950"
+        className="bg-slate-100/80 dark:bg-[#0b1020]"
         defaultEdgeOptions={{ type: 'labeled' }}
         onMoveEnd={(_event: unknown, viewport: { x: number; y: number; zoom: number }) =>
           onViewportChange?.(viewport)
@@ -1065,7 +1125,7 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
           <Background
             gap={bgPattern === 'lines' ? 48 : 24}
             size={bgPattern === 'grid' ? 24 : 1}
-            color="rgba(148,163,184,0.12)"
+            color="rgba(148,163,184,0.18)"
             variant={
               bgPattern === 'grid'
                 ? ('cross' as any)
@@ -1080,7 +1140,8 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
             nodeColor={(n: Node) => {
               if (n.type === 'stickyNote') {
                 const idx = (n.data?.colorIndex ?? 0) % STICKY_COLORS.length;
-                return STICKY_COLORS[idx].hex;
+                const c = STICKY_COLORS[idx];
+                return isDarkCanvas ? (c.darkHex || c.hex) : c.hex;
               }
               if (n.type === 'kpiBadge') {
                 const s = n.data?.status;
@@ -1095,13 +1156,13 @@ const WhiteboardCanvas: React.FC<WhiteboardCanvasProps> = ({
               if (n.type === 'scoreNode') return '#8b5cf6';
               if (n.type === 'progressNode') return '#60a5fa';
               if (n.type === 'summaryCard') return '#a78bfa';
-              if (n.type === 'frameNode') return '#f1f5f9';
+              if (n.type === 'frameNode') return isDarkCanvas ? '#0f172a' : '#f1f5f9';
               if (n.type === 'shapeNode') return n.data?.bgColor || '#e0e7ff';
-              if (n.type === 'groupNode') return '#f8fafc';
-              return '#e2e8f0';
+              if (n.type === 'groupNode') return isDarkCanvas ? '#1e1b4b' : '#f8fafc';
+              return isDarkCanvas ? '#1e293b' : '#e2e8f0';
             }}
-            maskColor="rgba(0,0,0,0.08)"
-            className="!bg-white/80 dark:!bg-navy-900/80 !border-slate-200 dark:!border-navy-700 !rounded-xl"
+            maskColor={isDarkCanvas ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.08)'}
+            className="!bg-white/80 dark:!bg-navy-950/90 !border-slate-200 dark:!border-white/[0.06] !rounded-xl"
           />
         )}
         <CanvasZoomControls
@@ -2892,9 +2953,9 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   useEffect(() => {
     if (!open || locked || loading) return;
-    if (nodes.length === 0 && edges.length === 0) return;
+    if (nodes.length === 0 && edges.length === 0 && drawingPaths.length === 0) return;
     queueSync(buildPersistPayload(), { reason: 'draft' });
-  }, [buildPersistPayload, loading, locked, nodes.length, edges.length, open, queueSync]);
+  }, [buildPersistPayload, drawingPaths.length, loading, locked, nodes.length, edges.length, open, queueSync]);
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────
 
@@ -2974,14 +3035,14 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
   return (
     <div
-      className="w-full h-full flex flex-col bg-white dark:bg-navy-950"
+      className="w-full h-full flex flex-col bg-white dark:bg-[#060a18]"
       role="region"
       aria-label={
         isPl ? 'Tablica idei z elementami swobodnymi' : 'Idea whiteboard with freeform elements'
       }
     >
       {/* Toolbar */}
-      <div className="flex items-center gap-1 px-3 py-1.5 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0 overflow-x-auto">
+      <div className="flex items-center gap-1 px-3 py-1.5 border-b border-slate-200/60 dark:border-white/[0.06] bg-slate-50/80 dark:bg-navy-950/90 flex-shrink-0 overflow-x-auto">
         <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mr-1.5 shrink-0">
           {isPl ? 'Tablica' : 'Whiteboard'}
         </div>
@@ -3038,6 +3099,18 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           disabled={locked}
           active={whiteboardMode === 'draw'}
         />
+        {drawingPaths.length > 0 && (
+          <ToolbarBtn
+            icon={Trash2}
+            label={isPl ? 'Wyczyść rysunki' : 'Clear drawings'}
+            onClick={() => {
+              setDrawingPaths([]);
+              toast.success(isPl ? 'Rysunki wyczyszczone' : 'Drawings cleared');
+            }}
+            disabled={locked}
+            danger
+          />
+        )}
         <ToolbarBtn
           icon={ThumbsUp}
           label={sessionState.votingOpen ? (isPl ? 'Voting on' : 'Voting on') : 'Voting'}
@@ -3111,7 +3184,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           }
         />
 
-        <div className="px-2 py-1 rounded-xl bg-white/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-700/60 shrink-0">
+        <div className="px-2 py-1 rounded-xl bg-white/70 dark:bg-navy-950/80 border border-slate-200/60 dark:border-white/[0.08] dark:backdrop-blur-xl shrink-0">
           <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
             {sharePolicy.classification}
           </div>
@@ -3119,7 +3192,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             {sharePolicy.watermark}
           </div>
         </div>
-        <div className="px-2 py-1 rounded-xl bg-white/70 dark:bg-navy-800/70 border border-slate-200/60 dark:border-navy-700/60 shrink-0">
+        <div className="px-2 py-1 rounded-xl bg-white/70 dark:bg-navy-950/80 border border-slate-200/60 dark:border-white/[0.08] dark:backdrop-blur-xl shrink-0">
           <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
             {isPl ? 'Presence' : 'Presence'}
           </div>
@@ -3154,7 +3227,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
       ) : (
         <div className="flex-1 relative">
           <div className="absolute top-3 left-3 z-20 flex flex-col gap-2 max-w-[280px]">
-            <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm shadow-lg px-3 py-2.5">
+            <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.08] bg-white/95 dark:bg-navy-950/90 dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
@@ -3209,7 +3282,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
             </div>
 
             {(activityLog.length > 0 || libraryItems.length > 0 || historyLog.length > 0) && (
-              <div className="rounded-2xl border border-slate-200/60 dark:border-navy-700/60 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm shadow-lg px-3 py-2.5 space-y-2">
+              <div className="rounded-2xl border border-slate-200/60 dark:border-white/[0.08] bg-white/95 dark:bg-navy-950/90 dark:backdrop-blur-xl backdrop-blur-sm shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-3 py-2.5 space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                     {isPl ? 'Ops + governance' : 'Ops + governance'}
@@ -3246,7 +3319,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
           </div>
 
           {selectedCount > 0 && (
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-lg px-2 py-1.5">
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-white/95 dark:bg-navy-950/90 dark:backdrop-blur-xl backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-white/[0.08] shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] px-2 py-1.5">
               <span className="px-2 text-[10px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
                 {isPl
                   ? `${selectedCount} zazn.`
@@ -3452,7 +3525,7 @@ export const IdeaWhiteboardTool: React.FC<IdeaWhiteboardToolProps> = ({
 
           {outlineImportOpen && (
             <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/20 backdrop-blur-[1px]">
-              <div className="w-full max-w-lg rounded-2xl border border-slate-200/70 bg-white p-4 shadow-2xl dark:border-navy-700/70 dark:bg-navy-900">
+              <div className="w-full max-w-lg rounded-2xl border border-slate-200/70 bg-white p-4 shadow-2xl dark:border-white/[0.08] dark:bg-navy-950/95 dark:shadow-[0_0_40px_rgba(0,0,0,0.5)]">
                 <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                   {isPl ? 'Import outline' : 'Import outline'}
                 </div>
@@ -3602,7 +3675,7 @@ const ToolbarDropdown: React.FC<{
         </button>
       </div>
       {open && (
-        <div className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl shadow-lg py-1 min-w-[140px]">
+        <div className="absolute top-full left-0 mt-1 z-50 bg-white dark:bg-navy-950/95 border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-lg dark:shadow-[0_0_20px_rgba(0,0,0,0.4)] py-1 min-w-[140px]">
           {items.map((item) => (
             <button
               key={item.id}

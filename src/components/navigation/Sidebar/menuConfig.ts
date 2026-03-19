@@ -94,7 +94,6 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.execution', 'Execution'),
       icon: React.createElement(Rocket, { size: 20 }),
       viewId: AppView.IMPLEMENTATION,
-      badge: 'soon',
     },
     // 7. Resultaty - śledzenie efektów (KPI/ROI) zrealizowanych inicjatyw
     {
@@ -102,7 +101,6 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.results', 'Results'),
       icon: React.createElement(TrendingUp, { size: 20 }),
       viewId: AppView.BENEFITS_REALIZATION,
-      badge: 'soon',
     },
     // 8. Finanse - Financial Analysis v3
     {
@@ -110,7 +108,6 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.economics', 'Finance'),
       icon: React.createElement(Calculator, { size: 20 }),
       viewId: AppView.ECONOMICS,
-      badge: 'soon',
     },
     // 9. Prezentacje (V3 unified hub contains reports & templates)
     {
@@ -118,7 +115,6 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       label: t('sidebar.presentations', 'Presentations'),
       icon: React.createElement(Presentation, { size: 20 }),
       viewId: AppView.PRESENTATIONS,
-      badge: 'soon',
     },
     {
       id: 'MODULE_MEETING',

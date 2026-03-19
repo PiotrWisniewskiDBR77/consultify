@@ -15,7 +15,6 @@ import {
   Plus,
   RefreshCw,
   Shield,
-  Sparkles,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -24,7 +23,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { ROUTES } from '@/routes/routeConfig';
-import { Api } from '@/services/api';
+import { Api, shouldAllowDemoData } from '@/services/api';
 import { getStatusesForModule, STATUS_METADATA } from '@/services/initiativeLifecycle';
 import { useConversationStore } from '@/store/useConversationStore';
 import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
@@ -60,8 +59,10 @@ import {
   type InitiativePreviewV3Model,
 } from './InitiativePreviewV3';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
+import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
+const MIN_SHOWCASE_INITIATIVES = 10;
 // D1.2: Complete status set — includes execution/done + archived/cancelled for restoration
 const ALLOWED_STATUSES: InitiativeStatus[] =
   MODULE_STATUSES.length > 0
@@ -178,6 +179,28 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   // Filter state for API
   const [filters, setFilters] = useState<PortfolioFilters>({});
+  const allowDemoData = shouldAllowDemoData();
+
+  const initiativesDemoData = useMemo(() => {
+    const currentUserAny = currentUser as any;
+    const currentUserName =
+      currentUserAny?.name ||
+      [currentUserAny?.firstName, currentUserAny?.lastName].filter(Boolean).join(' ') ||
+      'Piotr Wisniewski';
+
+    return createInitiativesDemoDataset({
+      currentUserId: currentUserAny?.id,
+      currentUserName,
+      currentUserEmail: currentUserAny?.email,
+    });
+  }, [currentUser]);
+
+  const mergeShowcaseInitiatives = useCallback(
+    (items: PortfolioInitiative[]) => {
+      return items;
+    },
+    []
+  );
 
   // ============================================
   // DATA FETCHING - Real API
@@ -241,15 +264,30 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         }
       } catch (error: any) {
         console.error('[InitiativesHub] Fetch error:', error);
+        setInitiatives([]);
+        setAllInitiatives([]);
         setLoadError(
-          error?.response?.data?.error || error?.message || 'Failed to load initiatives'
+          t(
+            'initiatives.errors.loadFailed',
+            'Failed to load initiatives from the active data source.'
+          )
         );
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
       }
     },
-    [currentProjectId, activeStatusFilter, filters.priority, searchQuery, scope]
+    [
+      currentProjectId,
+      allowDemoData,
+      activeStatusFilter,
+      filters.priority,
+      initiativesDemoData,
+      mergeShowcaseInitiatives,
+      searchQuery,
+      scope,
+      t,
+    ]
   );
 
   useEffect(() => {
@@ -260,9 +298,11 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     const loadUsers = async () => {
       try {
         const data = await Api.getUsers();
-        setUsers(Array.isArray(data) ? data : []);
+        const rows = Array.isArray(data) ? data : [];
+        setUsers(rows);
       } catch (error: any) {
         console.error('[InitiativesHub] Failed to load users:', error);
+        setUsers([]);
       }
     };
     loadUsers();
@@ -452,8 +492,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       try {
         // Prefer list row if already loaded; fallback to GET by id
         const fromList = initiatives.find((i) => i.id === openId);
-        const response = fromList ? null : await Api.get(`/initiatives/${openId}`);
-        const initiative = (fromList || response?.initiative || response) as any;
+        const fromShowcase = initiativesDemoData.initiatives.find((i) => i.id === openId);
+        const response = fromList || fromShowcase ? null : await Api.get(`/initiatives/${openId}`);
+        const initiative = (fromList || fromShowcase || response?.initiative || response) as any;
 
         if (!initiative?.id) {
           toast.error(t('initiatives.toast.notFound', 'Nie znaleziono inicjatywy'));
@@ -487,6 +528,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     searchParams,
     setSearchParams,
     initiatives,
+    initiativesDemoData,
     handleInitiativeClick,
     handleOpenFullScreen,
   ]);
@@ -510,6 +552,25 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     async (initiativeId: string, newStatus: InitiativeStatus) => {
       // Preflight via backend gate-readiness-check (source of truth).
       // This avoids local heuristics drifting from canonical gate DoD rules.
+      if (isShowcaseInitiativeId(initiativeId)) {
+        setInitiatives((prev) =>
+          prev.map((initiative) =>
+            initiative.id === initiativeId ? { ...initiative, status: newStatus } : initiative
+          )
+        );
+        setAllInitiatives((prev) =>
+          prev.map((initiative) =>
+            initiative.id === initiativeId ? { ...initiative, status: newStatus } : initiative
+          )
+        );
+        setOpenDocuments((prev) =>
+          prev.map((document) =>
+            document.id === initiativeId ? { ...document, status: newStatus as any } : document
+          )
+        );
+        toast.success(t('initiatives.toast.statusUpdated', 'Status zaktualizowany'));
+        return;
+      }
       try {
         const rc = await Api.get(`/initiatives/${initiativeId}/gate-readiness-check`);
         const transitions = Array.isArray(rc?.availableTransitions) ? rc.availableTransitions : [];
@@ -564,7 +625,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         );
       }
     },
-    [initiatives]
+    [setOpenDocuments, t]
   );
 
   const handleQuickUpdate = useCallback(
@@ -590,6 +651,19 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           return;
         }
       }
+      if (isShowcaseInitiativeId(initiativeId)) {
+        setInitiatives((prev) =>
+          prev.map((initiative) =>
+            initiative.id === initiativeId ? ({ ...initiative, ...updates } as any) : initiative
+          )
+        );
+        setAllInitiatives((prev) =>
+          prev.map((initiative) =>
+            initiative.id === initiativeId ? ({ ...initiative, ...updates } as any) : initiative
+          )
+        );
+        return;
+      }
       try {
         await Api.patch(`/initiatives/${initiativeId}/quick-update`, updates);
         setInitiatives((prev) =>
@@ -599,7 +673,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         toast.error(t('initiatives.toast.updateFailed', 'Nie udało się zaktualizować'));
       }
     },
-    [initiatives]
+    [initiatives, t]
   );
 
   const handleRemoveFilter = useCallback((id: string) => {
@@ -1023,65 +1097,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     </div>
   );
 
-  const aiControl = (
-    <button
-      type="button"
-      onClick={() => {
-        const selected = previewInitiativeId
-          ? initiatives.find((i) => i.id === previewInitiativeId)
-          : null;
-        const prompt = i18n.language?.startsWith('pl')
-          ? 'Pomóż mi w tym widoku: pokaż krytyczne inicjatywy, luki w danych i następne kroki. Jeśli jest zaznaczona inicjatywa, skup się na niej.'
-          : 'Help me in this view: highlight critical initiatives, missing data, and next steps. If an initiative is selected, focus on it.';
-
-        (async () => {
-          try {
-            if (selected) {
-              const convId = await openChatWithContext({
-                entityType: 'initiative',
-                entityId: selected.id,
-                entityName: selected.name,
-                contextData: selected as unknown as Record<string, unknown>,
-                pmoContext: { initiativeIds: [selected.id] },
-              });
-              await addChatMessage({
-                conversationId: convId,
-                role: 'user',
-                content: prompt,
-              } as any);
-            } else {
-              const convId = await openChatWithContext({
-                entityType: 'initiative',
-                entityId: 'initiatives',
-                entityName: 'Initiatives',
-                contextData: {
-                  scope,
-                  status: activeStatusFilter || 'all',
-                  tab: activeTab,
-                },
-                pmoContext: {},
-              });
-              await addChatMessage({
-                conversationId: convId,
-                role: 'user',
-                content: prompt,
-              } as any);
-            }
-            toast.success(t('initiatives.toast.chatOpened', 'Chat opened'), { duration: 1500 });
-          } catch {
-            toast.error(t('initiatives.toast.chatOpenError', 'Failed to open chat'));
-          }
-        })();
-      }}
-      className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-      title={i18n.language?.startsWith('pl') ? 'Kontekst AI' : 'AI Context'}
-      aria-label={i18n.language?.startsWith('pl') ? 'Kontekst AI' : 'AI Context'}
-      data-testid="initiatives-ai-button"
-    >
-      <Sparkles size={18} />
-    </button>
-  );
-
   const commandRowContent = (
     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
       <button
@@ -1149,7 +1164,6 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         newItemLabel={`+ ${t('initiatives.form.newInitiative')}`}
         filterActions={filterActions}
         rightControls={rightControls}
-        aiControl={aiControl}
         commandRowContent={activeTab === 'analysis' ? null : commandRowContent}
         availableViewModes={availableViewModes}
       >

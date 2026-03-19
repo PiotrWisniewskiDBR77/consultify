@@ -1,13 +1,14 @@
 import { URL } from 'node:url';
 
 import { resolveReachableDatabaseUrl } from '../../src/config/databaseTargetResolver.js';
+import { isDemoOrgId } from './organizationTargetPolicy.js';
 
 function env(name: string): string | undefined {
   const value = String(process.env[name] || '').trim();
   return value || undefined;
 }
 
-const BLOCKED_FINANCE_IMPORT_ORGS = new Set(['atelier', 'demo-org', 'e2e-org-id']);
+const BLOCKED_FINANCE_IMPORT_ORGS = new Set(['demo-org', 'e2e-org-id']);
 
 function printableEnvValue(value: string | undefined): string {
   return value ? `"${value}"` : '<unset>';
@@ -68,11 +69,12 @@ export function resolveFinanceImportOrgId(): string {
     );
   }
   const allowDemoOrg = env('ALLOW_DEMO_FINANCE_IMPORT') === '1';
-  if (!allowDemoOrg && BLOCKED_FINANCE_IMPORT_ORGS.has(orgId.toLowerCase())) {
+  if (!allowDemoOrg && (isDemoOrgId(orgId) || BLOCKED_FINANCE_IMPORT_ORGS.has(orgId.toLowerCase()))) {
     throw new Error(
       `Refusing finance import target "${orgId}". Demo/staging orgs are blocked by default. Current inputs: ${describeFinanceImportOrgInputs()}. Set ALLOW_DEMO_FINANCE_IMPORT=1 only if that target is intentional.`
     );
   }
+
   return orgId;
 }
 

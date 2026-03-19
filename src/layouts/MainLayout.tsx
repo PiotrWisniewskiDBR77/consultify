@@ -89,13 +89,26 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   // Update conversation store with workspace context
   React.useEffect(() => {
-    // Only keep chat workspace context updated when the split chat panel is actually visible.
-    // This avoids extra store updates/renders when user keeps AI collapsed.
-    if (workspaceContext && shouldShowChatPanel && !isChatCollapsed) {
-      setWorkspaceContext(workspaceContext);
+    // Keep workspace context updated so the AI always knows where the user is.
+    // Important: do NOT overwrite context when user is on the full-screen chat view,
+    // so the chat can retain the "last non-chat screen" context.
+    if (!workspaceContext) return;
+    if (currentView === AppView.AI_CHAT) return;
+
+    setWorkspaceContext(workspaceContext);
+
+    // Only push the UI into split mode when the split panel is actually visible.
+    if (shouldShowChatPanel && !isChatCollapsed) {
       setDisplayMode('split');
     }
-  }, [workspaceContext, shouldShowChatPanel, isChatCollapsed, setWorkspaceContext, setDisplayMode]);
+  }, [
+    workspaceContext,
+    shouldShowChatPanel,
+    isChatCollapsed,
+    currentView,
+    setWorkspaceContext,
+    setDisplayMode,
+  ]);
 
   // Resizer state
   const [isResizing, setIsResizing] = React.useState(false);

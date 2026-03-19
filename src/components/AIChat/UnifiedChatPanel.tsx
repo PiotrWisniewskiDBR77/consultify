@@ -32,6 +32,7 @@ import {
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 
 import type {
   IdeaWorkspaceCreationPayload,
@@ -271,9 +272,19 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   onKickoffConsumed,
   quickPrompts,
 }) => {
+  const route = useLocation();
   const { t, i18n } = useTranslation();
   const { isEnabled } = useFeatureFlagsContext();
   const signalsEnabled = isEnabled('myWorkSignalsV2');
+
+  const routeInfo = useMemo(
+    () => ({
+      pathname: route.pathname,
+      search: route.search,
+      hash: route.hash,
+    }),
+    [route.hash, route.pathname, route.search]
+  );
 
   // ========================================================================
   // Store hooks
@@ -337,7 +348,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
   const chatLanguage: SupportedLanguage = useMemo(() => {
     // 1. User's explicit preference (set via ChatLanguageSelector) - highest priority
-    // Backward-compatible keys (older builds used consultinity-*).
     const explicitPref =
       localStorage.getItem('consultinity-preferred-chat-lang') ||
       localStorage.getItem('consultify-preferred-chat-lang');
@@ -345,15 +355,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     const activeLang = activeConversationId
       ? chatLanguageByConversationId[activeConversationId]
       : undefined;
-    // Priority: explicit preference > conversation-specific > draft > 'pl' default
-    // NOTE: We do NOT use i18nextLng here because it reflects UI language (auto-detected
-    // from browser), not the user's chat language preference. For this Polish product,
-    // the default chat language is 'pl'.
-    const candidate = explicitPref || activeLang || draftChatLanguage || 'pl';
+    // 3. Fall back to UI language (i18n), then 'en'
+    const uiLang = i18n.language?.split('-')[0] || 'en';
+    const candidate = explicitPref || activeLang || draftChatLanguage || uiLang;
     const base = String(candidate).split('-')[0];
     return (normalizeLanguageCode(base) ||
-      (isValidLanguage(base) ? (base as SupportedLanguage) : 'pl')) as SupportedLanguage;
-  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage]);
+      (isValidLanguage(base) ? (base as SupportedLanguage) : 'en')) as SupportedLanguage;
+  }, [activeConversationId, chatLanguageByConversationId, draftChatLanguage, i18n.language]);
 
   // Voice Hook (uses autoReadEnabled state)
   const {
@@ -1348,24 +1356,42 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           )
         : [];
 
+      const urlAttachments: Array<{ kind?: string; url: string; title?: string; name?: string }> =
+        Array.isArray(attachments)
+          ? attachments
+              .filter((a: any) => a && typeof a === 'object' && typeof a.url === 'string')
+              .map((a: any) => ({
+                kind: a.kind,
+                url: String(a.url),
+                title: a.title ? String(a.title) : undefined,
+                name: a.name ? String(a.name) : undefined,
+              }))
+          : [];
+
       const uploadedAttachments: Array<{
         docId: string;
         filename: string;
         mimeType?: string;
         size?: number;
+        sourceUrl?: string;
+        kind?: 'file' | 'url';
       }> = [];
 
       // Show a visible "Analyzing file..." status message while files are being processed (C4.1)
-      const fileAnalysisMessageId = files.length > 0 ? `file-analysis-${Date.now()}` : null;
-      if (files.length > 0 && fileAnalysisMessageId) {
-        const fileNames = files.map((f) => f.name).join(', ');
+      const sourcesCount = files.length + urlAttachments.length;
+      const fileAnalysisMessageId = sourcesCount > 0 ? `file-analysis-${Date.now()}` : null;
+      if (sourcesCount > 0 && fileAnalysisMessageId) {
+        const sourceNames = [
+          ...files.map((f) => f.name),
+          ...urlAttachments.map((u) => u.name || u.url),
+        ].join(', ');
         addChatMessage({
           id: fileAnalysisMessageId,
           role: 'assistant',
           content: t(
-            'aiChat.attachments.analyzingFiles',
-            '📎 Analyzing {{count}} file(s): {{names}}... Extracting content for AI analysis.',
-            { count: files.length, names: fileNames }
+            'aiChat.attachments.analyzingSources',
+            '📎 Analyzing {{count}} attachment(s): {{names}}... Extracting content for AI analysis.',
+            { count: sourcesCount, names: sourceNames }
           ),
           timestamp: new Date(),
           isStreaming: true,
@@ -1408,6 +1434,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             filename: file.name,
             mimeType: file.type || undefined,
             size: file.size,
+            kind: 'file',
           });
           toast.success(
             t('aiChat.attachments.uploadSuccess', 'Załącznik "{{name}}" przetworzony.', {
@@ -1436,6 +1463,41 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }
       }
 
+      for (const urlAtt of urlAttachments) {
+        const url = String(urlAtt.url || '').trim();
+        if (!url) continue;
+        try {
+          const resp = await Api.ingestChatUrlAttachment(url, { title: urlAtt.title });
+          const docId = String((resp as any)?.docId || '');
+          if (!docId) {
+            toast.error(t('aiChat.attachments.urlIngestFailed', 'Nie udało się przetworzyć linku.'), {
+              duration: 4000,
+            });
+            continue;
+          }
+          const filename =
+            String((resp as any)?.filename || '').trim() ||
+            urlAtt.name ||
+            url;
+          uploadedAttachments.push({
+            docId,
+            filename,
+            mimeType: (resp as any)?.mimeType || 'text/html',
+            sourceUrl: String((resp as any)?.sourceUrl || url),
+            kind: 'url',
+          });
+          toast.success(t('aiChat.attachments.urlReady', 'Link przetworzony.'), { duration: 1500 });
+        } catch (err: any) {
+          console.error('[UnifiedChatPanel] Failed to ingest URL attachment:', err);
+          toast.error(
+            t('aiChat.attachments.urlError', 'Błąd przetwarzania linku: {{error}}', {
+              error: String(err?.message || '').slice(0, 120),
+            }),
+            { duration: 5000 }
+          );
+        }
+      }
+
       // Remove the "Analyzing file..." message once processing is done
       if (fileAnalysisMessageId) {
         // Replace with a summary of processed attachments
@@ -1447,7 +1509,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             role: 'assistant',
             content: t(
               'aiChat.attachments.filesReady',
-              '📎 {{count}} file(s) ready for analysis: {{names}}. The AI will reference these files in its response.',
+              '📎 {{count}} attachment(s) ready for analysis: {{names}}. The AI will reference these sources in its response.',
               { count: uploadedAttachments.length, names: processedNames }
             ),
             timestamp: new Date(),
@@ -1505,6 +1567,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           currentScreen: workspaceContext?.type || null,
           selectedObjectId: workspaceContext?.entityId || null,
           selectedObjectType: workspaceContext?.type || null,
+          route: routeInfo,
+          page: (workspaceContext as any)?.entityData || null,
         },
         workspaceContext,
         conversationId,
@@ -2410,6 +2474,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           currentScreen: workspaceContext?.type || null,
           selectedObjectId: workspaceContext?.entityId || null,
           selectedObjectType: workspaceContext?.type || null,
+          route: routeInfo,
+          page: (workspaceContext as any)?.entityData || null,
         },
         conversationId: activeConversationId,
         conversationLanguage: chatLanguage,

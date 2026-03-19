@@ -32,6 +32,34 @@ export type FinanceModelRow = FinanceRowBase & {
   sourceStatementId?: string;
   sourceStatementPackId?: string;
   seedSourceType?: string;
+  sourceDocumentTitle?: string;
+  forecastWindowLabel?: string;
+  variantLabel?: string;
+  analyticalDepthLabel?: string;
+};
+
+export type FinanceModelForecastLine = {
+  lineCode: string;
+  lineName: string;
+  level: number;
+  isSubtotal?: boolean;
+  isTotal?: boolean;
+  values: Record<string, number>;
+};
+
+export type FinanceModelPreviewDetail = {
+  sourceDocumentTitle: string;
+  sourcePeriodLabel: string;
+  currency: string;
+  forecastYears: string[];
+  selectedScenario: string;
+  variants: Array<'base' | 'optimistic' | 'conservative'>;
+  analyticalDepthLabel: string;
+  sourceStatementCount: number;
+  scenarioTables: Record<
+    'base' | 'optimistic' | 'conservative',
+    Record<'P&L' | 'BS' | 'CF', FinanceModelForecastLine[]>
+  >;
 };
 
 export type FinanceAnalysisRow = FinanceRowBase & {
@@ -411,6 +439,7 @@ export interface PreviewDataState {
     total: number;
     topRatios: { code: string; name: string; value: number | null }[];
   } | null;
+  modelPreviewDetail: FinanceModelPreviewDetail | null;
   predictionValidations: { total: number; pass: number; fail: number; warning: number } | null;
   analysisPreviewRatios:
     | { category: string; ratio_code: string; ratio_name: string; value: number | null }[]

@@ -68,7 +68,8 @@ router.put(
   verifyToken,
   isAuthenticated,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const orgId = req.user?.organizationId;
     const { name, content, isActive, priority } = req.body;
     const updates: string[] = [];
     const params: any[] = [];

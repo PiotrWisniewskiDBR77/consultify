@@ -244,8 +244,7 @@ async function mapWithAnthropic(
     });
 
     const outputText = response.content
-      .filter((block: { type: string }) => block.type === 'text')
-      .map((block: { text: string }) => block.text)
+      .flatMap((block) => (block.type === 'text' ? [block.text] : []))
       .join('\n');
 
     const parsed = extractJsonArray(outputText);

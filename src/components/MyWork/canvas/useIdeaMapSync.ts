@@ -145,6 +145,18 @@ export function resolveIdeaMapHydration(
     Array.isArray(draft.payload.edges) &&
     draft.updatedAt > 0
   ) {
+    const serverVersion = Math.max(1, Number(serverMap.version || 1));
+    const draftBaseVersion = Math.max(1, Number(draft.baseVersion || 1));
+    if (draftBaseVersion < serverVersion) {
+      clearIdeaMapDraft(ideaId);
+      return { map: serverMap, draft: null, usedDraft: false };
+    }
+    const serverNodeCount = Array.isArray(serverMap.nodes) ? serverMap.nodes.length : 0;
+    const draftNodeCount = draft.payload.nodes.length;
+    if (draftNodeCount === 0 && serverNodeCount > 0) {
+      clearIdeaMapDraft(ideaId);
+      return { map: serverMap, draft: null, usedDraft: false };
+    }
     return {
       map: {
         ...serverMap,

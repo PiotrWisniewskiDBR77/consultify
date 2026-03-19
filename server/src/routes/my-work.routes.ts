@@ -26,7 +26,11 @@ import type { OutcomeType } from '../services/ideaClusterService.js';
 import { createOutcomeFromCluster, materializeClusters } from '../services/ideaClusterService.js';
 import inboxService from '../services/inboxService.js';
 import NotificationService from '../services/notificationService.js';
+import { getAiNews, pickTipOfDay } from '../services/homeCoverFeedService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
+import { radarActionService } from '../services/radar/radarActionService.js';
+import { radarService } from '../services/radar/radarService.js';
+import { radarRankingService } from '../services/radar/radarRankingService.js';
 import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { getTableColumns } from '../utils/dbSchema.js';
@@ -429,6 +433,117 @@ const requireUser = (req: AuthRequest, res: Response): { userId: string; orgId: 
   return { userId, orgId };
 };
 
+const resolveCanonicalPersonalTaskIdentity = async (
+  req: AuthRequest,
+  identity: { userId: string; orgId: string }
+): Promise<{ userId: string; orgId: string }> => {
+  const allowLegacyCanonicalRemap =
+    String(process.env.ENABLE_PERSONAL_TASK_CANONICAL_REMAP || '').trim() === '1';
+  if (!allowLegacyCanonicalRemap) {
+    return identity;
+  }
+
+  const email =
+    typeof req.user?.email === 'string' ? req.user.email.trim().toLowerCase() : '';
+  if (!email) return identity;
+
+  try {
+    const { getDatabaseAsync } = await import('../database/Database.js');
+    const db = await getDatabaseAsync();
+    const result = await db.query<{ id: string; organization_id: string }>(
+      `SELECT id, organization_id FROM users WHERE lower(coalesce(email,'')) = $1 ORDER BY CASE WHEN organization_id = $2 THEN 0 ELSE 1 END, id ASC LIMIT 5`,
+      [email, identity.orgId]
+    );
+    const matches: Array<{ id: string; organization_id: string }> = result?.rows || [];
+
+    logger.info('[MyWork] resolveCanonical lookup', {
+      email,
+      sessionUserId: identity.userId,
+      sessionOrgId: identity.orgId,
+      matchCount: matches.length,
+      matches: matches.map((m) => ({ id: m.id, org: m.organization_id })),
+    });
+
+    if (matches.length === 0) return identity;
+
+    const exact = matches.find(
+      (row) => row.id === identity.userId && row.organization_id === identity.orgId
+    );
+    if (exact) return identity;
+
+    if (matches.length === 1) {
+      return { userId: matches[0].id, orgId: matches[0].organization_id };
+    }
+
+    const sameOrg = matches.find((row) => row.organization_id === identity.orgId);
+    if (sameOrg) {
+      return { userId: sameOrg.id, orgId: sameOrg.organization_id };
+    }
+
+    return { userId: matches[0].id, orgId: matches[0].organization_id };
+  } catch (err) {
+    logger.error('[MyWork] resolveCanonical error', { error: String(err), email });
+    return identity;
+  }
+};
+
+const buildPersonalTaskOwnerScope = (
+  req: AuthRequest,
+  taskAlias = 't',
+  overrides?: { userId?: string; email?: string }
+) => {
+  const allowLegacyEmailOwnerMatch =
+    String(process.env.ENABLE_PERSONAL_TASK_EMAIL_MATCH || '').trim() === '1';
+  const userId = overrides?.userId || (req as any).userId || req.user?.id;
+  const email =
+    overrides?.email ||
+    (typeof req.user?.email === 'string' ? req.user.email.trim().toLowerCase() : '');
+  const assigneeIdCol = taskAlias ? `${taskAlias}.assignee_id` : 'assignee_id';
+
+  if (allowLegacyEmailOwnerMatch && email) {
+    return {
+      whereSql: `(${assigneeIdCol} = ? OR EXISTS (SELECT 1 FROM users pu WHERE pu.id = ${assigneeIdCol} AND lower(coalesce(pu.email,'')) = ?))`,
+      params: [userId, email],
+    };
+  }
+
+  return {
+    whereSql: `${assigneeIdCol} = ?`,
+    params: [userId],
+  };
+};
+
+const radarProfilePatchSchema = z.object({
+  trackedTopics: z.array(z.string()).optional(),
+  trackedCompanies: z.array(z.string()).optional(),
+  mutedTopics: z.array(z.string()).optional(),
+  mutedSources: z.array(z.string()).optional(),
+  preferredContentTypes: z.array(z.string()).optional(),
+  strategicInterests: z.array(z.string()).optional(),
+  personalizationWeights: z.record(z.string(), z.number()).optional(),
+});
+
+const radarActionSchema = z.object({
+  signalId: z.string().optional(),
+  actionType: z.enum([
+    'view_briefing',
+    'open_signal',
+    'ask_ai',
+    'save',
+    'add_to_note',
+    'create_task',
+    'add_to_decision',
+    'add_to_watchlist',
+    'more_like_this',
+    'less_like_this',
+    'dismiss',
+  ]),
+  sourceContext: z.string().optional(),
+  createdObjectType: z.string().optional(),
+  createdObjectId: z.string().optional(),
+  payload: z.record(z.string(), z.unknown()).optional(),
+});
+
 const requireTables = async (res: Response, tables: string[]): Promise<boolean> => {
   const isTestGateway =
     process.env.NODE_ENV === 'test' ||
@@ -764,9 +879,14 @@ router.get(
 router.get(
   '/personal-tasks',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const identity = requireUser(req, res);
-    if (!identity) return;
+    const baseIdentity = requireUser(req, res);
+    if (!baseIdentity) return;
+    const identity = await resolveCanonicalPersonalTaskIdentity(req, baseIdentity);
     const { userId, orgId } = identity;
+    const ownerScope = buildPersonalTaskOwnerScope(req, 't', {
+      userId,
+      email: req.user?.email?.trim().toLowerCase(),
+    });
 
     const includeDone = String(req.query.includeDone || 'false') === 'true';
     const status = req.query.status ? String(req.query.status).trim().toLowerCase() : '';
@@ -778,7 +898,7 @@ router.get(
     const sourceTypeSelect = taskCols.has('source_type') ? 't.source_type' : 'NULL as source_type';
     const sourceIdSelect = taskCols.has('source_id') ? 't.source_id' : 'NULL as source_id';
 
-    const params: any[] = [orgId, userId];
+    const params: any[] = [orgId, ...ownerScope.params];
     let whereExtra = '';
 
     if (!includeDone) {
@@ -810,11 +930,16 @@ router.get(
           t.created_at as "createdAt",
           t.updated_at as "updatedAt",
           t.completed_at as "completedAt",
+          t.assignee_id as "assigneeId",
+          a.first_name as "assigneeFirstName",
+          a.last_name as "assigneeLastName",
+          a.avatar_url as "assigneeAvatarUrl",
           ${sourceTypeSelect} as "sourceType",
           ${sourceIdSelect} as "sourceId"
         FROM tasks t
+        LEFT JOIN users a ON t.assignee_id = a.id
         WHERE t.organization_id = ?
-          AND t.assignee_id = ?
+          AND ${ownerScope.whereSql}
           AND lower(coalesce(t.task_type,'')) = 'personal'
           ${whereExtra}
         ORDER BY
@@ -826,15 +951,42 @@ router.get(
         params
       )) || [];
 
-    res.json(rows.map((r: any) => ({ ...r, tags: parseTagsArray(r?.tags) })));
+    logger.info('[MyWork] personal-tasks resolved identity', {
+      sessionEmail: req.user?.email || null,
+      sessionUserId: baseIdentity.userId,
+      sessionOrgId: baseIdentity.orgId,
+      resolvedUserId: userId,
+      resolvedOrgId: orgId,
+      count: rows.length,
+    });
+
+    res.json(
+      rows.map((r: any) => {
+        const base = { ...r, tags: parseTagsArray(r?.tags) };
+        base.assignee =
+          r.assigneeId && (r.assigneeFirstName || r.assigneeLastName)
+            ? {
+                id: r.assigneeId,
+                firstName: r.assigneeFirstName || '',
+                lastName: r.assigneeLastName || '',
+                avatarUrl: r.assigneeAvatarUrl || null,
+              }
+            : undefined;
+        delete base.assigneeFirstName;
+        delete base.assigneeLastName;
+        delete base.assigneeAvatarUrl;
+        return base;
+      })
+    );
   })
 );
 
 router.post(
   '/personal-tasks',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const identity = requireUser(req, res);
-    if (!identity) return;
+    const baseIdentity = requireUser(req, res);
+    if (!baseIdentity) return;
+    const identity = await resolveCanonicalPersonalTaskIdentity(req, baseIdentity);
     const { userId, orgId } = identity;
 
     const title = String(req.body?.title || '').trim();
@@ -939,9 +1091,14 @@ router.post(
 router.get(
   '/personal-tasks/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const identity = requireUser(req, res);
-    if (!identity) return;
+    const baseIdentity = requireUser(req, res);
+    if (!baseIdentity) return;
+    const identity = await resolveCanonicalPersonalTaskIdentity(req, baseIdentity);
     const { userId, orgId } = identity;
+    const ownerScope = buildPersonalTaskOwnerScope(req, 't', {
+      userId,
+      email: req.user?.email?.trim().toLowerCase(),
+    });
 
     const id = String(req.params.id || '').trim();
     const row = await queryHelpers.queryOne<any>(
@@ -958,11 +1115,11 @@ router.get(
         t.updated_at as "updatedAt",
         t.completed_at as "completedAt"
       FROM tasks t
-      WHERE t.id = ? AND t.organization_id = ? AND t.assignee_id = ?
+      WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
         AND lower(coalesce(t.task_type,'')) = 'personal'
       LIMIT 1
     `,
-      [id, orgId, userId]
+      [id, orgId, ...ownerScope.params]
     );
 
     if (!row) {
@@ -977,14 +1134,23 @@ router.get(
 router.put(
   '/personal-tasks/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const identity = requireUser(req, res);
-    if (!identity) return;
+    const baseIdentity = requireUser(req, res);
+    if (!baseIdentity) return;
+    const identity = await resolveCanonicalPersonalTaskIdentity(req, baseIdentity);
     const { userId, orgId } = identity;
+    const ownerScope = buildPersonalTaskOwnerScope(req, 't', {
+      userId,
+      email: req.user?.email?.trim().toLowerCase(),
+    });
+    const ownerScopeNoAlias = buildPersonalTaskOwnerScope(req, '', {
+      userId,
+      email: req.user?.email?.trim().toLowerCase(),
+    });
 
     const id = String(req.params.id || '').trim();
     const existing = await queryHelpers.queryOne<any>(
-      `SELECT id, status FROM tasks WHERE id = ? AND organization_id = ? AND assignee_id = ? AND lower(coalesce(task_type,''))='personal' LIMIT 1`,
-      [id, orgId, userId]
+      `SELECT id, status FROM tasks t WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql} AND lower(coalesce(task_type,''))='personal' LIMIT 1`,
+      [id, orgId, ...ownerScope.params]
     );
     if (!existing) {
       res.status(404).json({ error: 'Not found' });
@@ -1046,19 +1212,19 @@ router.put(
           t.updated_at as "updatedAt",
           t.completed_at as "completedAt"
         FROM tasks t
-        WHERE t.id = ? AND t.organization_id = ? AND t.assignee_id = ?
+      WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
           AND lower(coalesce(t.task_type,'')) = 'personal'
         LIMIT 1
       `,
-        [id, orgId, userId]
+        [id, orgId, ...ownerScope.params]
       );
       res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
       return;
     }
 
-    params.push(id, orgId, userId);
+    params.push(id, orgId, ...ownerScopeNoAlias.params);
     await queryHelpers.queryRun(
-      `UPDATE tasks SET ${setParts.join(', ')} WHERE id = ? AND organization_id = ? AND assignee_id = ? AND lower(coalesce(task_type,''))='personal'`,
+      `UPDATE tasks SET ${setParts.join(', ')} WHERE id = ? AND organization_id = ? AND ${ownerScopeNoAlias.whereSql} AND lower(coalesce(task_type,''))='personal'`,
       params
     );
 
@@ -1076,11 +1242,11 @@ router.put(
         t.updated_at as "updatedAt",
         t.completed_at as "completedAt"
       FROM tasks t
-      WHERE t.id = ? AND t.organization_id = ? AND t.assignee_id = ?
+      WHERE t.id = ? AND t.organization_id = ? AND ${ownerScope.whereSql}
         AND lower(coalesce(t.task_type,'')) = 'personal'
       LIMIT 1
     `,
-      [id, orgId, userId]
+      [id, orgId, ...ownerScope.params]
     );
 
     res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
@@ -1090,14 +1256,19 @@ router.put(
 router.delete(
   '/personal-tasks/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const identity = requireUser(req, res);
-    if (!identity) return;
+    const baseIdentity = requireUser(req, res);
+    if (!baseIdentity) return;
+    const identity = await resolveCanonicalPersonalTaskIdentity(req, baseIdentity);
     const { userId, orgId } = identity;
+    const ownerScope = buildPersonalTaskOwnerScope(req, '', {
+      userId,
+      email: req.user?.email?.trim().toLowerCase(),
+    });
 
     const id = String(req.params.id || '').trim();
     await queryHelpers.queryRun(
-      `DELETE FROM tasks WHERE id = ? AND organization_id = ? AND assignee_id = ? AND lower(coalesce(task_type,''))='personal'`,
-      [id, orgId, userId]
+      `DELETE FROM tasks WHERE id = ? AND organization_id = ? AND ${ownerScope.whereSql} AND lower(coalesce(task_type,''))='personal'`,
+      [id, orgId, ...ownerScope.params]
     );
     res.status(204).send();
   })
@@ -1374,7 +1545,7 @@ router.get(
           owner.first_name || ' ' || owner.last_name as ownerName,
           requester.first_name || ' ' || requester.last_name as requestedByName,
           p.name as projectName,
-          (SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = 1) as blockedItemsCount,
+          (SELECT COUNT(*) FROM decision_impacts di WHERE di.decision_id = d.id AND di.is_blocker = TRUE) as blockedItemsCount,
           s.snoozed_until as snoozedUntil
         FROM decisions d
         ${snoozeJoin}
@@ -2957,7 +3128,14 @@ router.get(
       if (await requireTables(res, ['my_work_inbox_triage'])) {
         const notifCols = await getTableColumns('notifications');
         if (notifCols.size > 0) {
-          const readExpr = notifCols.has('read') ? 'COALESCE(read, 0)' : '0';
+          const readExpr = notifCols.has('read')
+            ? 'COALESCE(read, 0)'
+            : notifCols.has('is_read')
+              ? `CASE
+                   WHEN COALESCE(is_read::text, '0') IN ('1','true','t','TRUE','T') THEN 1
+                   ELSE 0
+                 END`
+              : '0';
           const unprocessed = await queryHelpers.queryOne<{ cnt: number }>(
             `SELECT COUNT(*) as cnt FROM notifications 
              WHERE user_id = ? AND organization_id = ? AND ${readExpr} = 0`,
@@ -3914,6 +4092,27 @@ function mergeIdeaMapExtensions(
   return next;
 }
 
+function isSuspiciousEmptyTableReset(params: {
+  preferredTool?: string | null;
+  normalizedNodes: any[];
+  mergedExtensions: Record<string, unknown> | null | undefined;
+  existingNodes: any[];
+  existingExtensions: Record<string, unknown> | null | undefined;
+}): boolean {
+  const preferredTool = String(params.preferredTool || '').toLowerCase();
+  if (!preferredTool.includes('table')) return false;
+
+  const nextHasContent =
+    (Array.isArray(params.normalizedNodes) && params.normalizedNodes.length > 0) ||
+    Object.keys(params.mergedExtensions || {}).length > 0;
+  if (nextHasContent) return false;
+
+  const existingHasContent =
+    (Array.isArray(params.existingNodes) && params.existingNodes.length > 0) ||
+    Object.keys(params.existingExtensions || {}).length > 0;
+  return existingHasContent;
+}
+
 /**
  * GET /api/my-work/my-ideas/:id/map
  * Returns per-idea working map (nodes + edges). If missing, returns a default skeleton.
@@ -4241,6 +4440,35 @@ router.put(
         mergedExtensions = null;
       }
     }
+    const existingNodes = parseIdeaMapArray(existing?.nodes_json);
+    const existingExtensions = parseIdeaMapObject(existing?.extensions_json);
+    if (
+      existing &&
+      isSuspiciousEmptyTableReset({
+        preferredTool,
+        normalizedNodes,
+        mergedExtensions,
+        existingNodes,
+        existingExtensions,
+      })
+    ) {
+      const currentGraph = ensureLatestSchema({
+        nodes: existingNodes,
+        edges: parseIdeaMapArray(existing.edges_json),
+        extensions: existingExtensions,
+        preferredTool,
+        schemaVersion: 3,
+      } as any);
+      return res.status(409).json({
+        error: 'Idea map conflict',
+        code: 'IDEA_MAP_EMPTY_RESET_BLOCKED',
+        currentVersion: Number(existing.version || 1),
+        map: {
+          ...currentGraph,
+          version: Number(existing.version || 1),
+        },
+      });
+    }
     const now = new Date().toISOString();
     const nextVersion = existing ? Number(existing.version || 1) + 1 : 1;
 
@@ -4434,6 +4662,37 @@ router.post(
       mergedExtensions = mergeIdeaMapExtensions(parseIdeaMapObject(existing.extensionsJson), extensions);
     } else if (existing?.extensionsJson) {
       mergedExtensions = parseIdeaMapObject(existing.extensionsJson);
+    }
+
+    const existingNodes = parseIdeaMapArray(existing?.nodesJson);
+    const existingEdges = parseIdeaMapArray(existing?.edgesJson);
+    const existingExtensions = parseIdeaMapObject(existing?.extensionsJson);
+    if (
+      existing &&
+      isSuspiciousEmptyTableReset({
+        preferredTool,
+        normalizedNodes: validation.normalized.nodes,
+        mergedExtensions,
+        existingNodes,
+        existingExtensions,
+      })
+    ) {
+      const currentGraph = ensureLatestSchema({
+        nodes: existingNodes,
+        edges: existingEdges,
+        extensions: existingExtensions,
+        preferredTool: existing?.preferredTool ? String(existing.preferredTool) : preferredTool,
+        schemaVersion: Number(existing?.schemaVersion || 1),
+      } as any);
+      return res.status(409).json({
+        error: 'Idea map conflict',
+        code: 'IDEA_MAP_EMPTY_RESET_BLOCKED',
+        currentVersion,
+        map: {
+          ...currentGraph,
+          version: currentVersion,
+        },
+      });
     }
 
     const normalizedNodes = validation.normalized.nodes;
@@ -10734,14 +10993,44 @@ router.get(
 router.get(
   '/calendar/unified',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const db = req.db!;
-    const userId = req.userId!;
-    const orgId = req.organizationId!;
+    const identity = requireUser(req, res);
+    if (!identity) return;
+    const { userId, orgId } = identity;
 
-    const start = req.query.start ? String(req.query.start) : null;
-    const end = req.query.end ? String(req.query.end) : null;
+    const startRaw = req.query.start ? String(req.query.start).trim() : '';
+    const endRaw = req.query.end ? String(req.query.end).trim() : '';
+    const start = startRaw || null;
+    const end = endRaw || null; // FullCalendar endStr is typically exclusive
+    const hasRange = Boolean(start && end);
+
     const sourcesParam = req.query.sources ? String(req.query.sources) : null;
-    const requestedSources = sourcesParam ? sourcesParam.split(',') : ['task', 'initiative', 'decision'];
+    const requestedSources = sourcesParam
+      ? sourcesParam
+          .split(',')
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean)
+      : ['task', 'initiative', 'decision', 'outlook', 'google', 'consultify'];
+
+    const projectId = req.query.projectId ? String(req.query.projectId).trim() : '';
+
+    const toDateOnly = (val: unknown): string | null => {
+      if (!val) return null;
+      if (val instanceof Date) {
+        if (Number.isNaN(val.getTime())) return null;
+        return val.toISOString().slice(0, 10);
+      }
+      const raw = String(val).trim();
+      if (!raw) return null;
+      const d = raw.slice(0, 10);
+      return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
+    };
+
+    const addDaysDateOnly = (dateOnly: string, days: number): string => {
+      const d = new Date(`${dateOnly}T00:00:00Z`);
+      if (Number.isNaN(d.getTime())) return dateOnly;
+      d.setUTCDate(d.getUTCDate() + days);
+      return d.toISOString().slice(0, 10);
+    };
 
     try {
       const events: Array<{
@@ -10758,34 +11047,99 @@ router.get(
         description?: string;
       }> = [];
 
-      // Tasks with due dates
+      // ── TASKS (due/start/end) ───────────────────────────────────────────────
       if (requestedSources.includes('task')) {
-        const dateFilter = start && end
-          ? `AND t.due_date >= ? AND t.due_date <= ?`
-          : '';
-        const dateParams = start && end ? [start, end] : [];
+        const taskCols = await getTableColumns('tasks');
+        const hasDue = taskCols.has('due_date');
+        const hasStart = taskCols.has('start_date');
+        const hasEnd = taskCols.has('end_date');
+        const hasPlannedStart = taskCols.has('planned_start_date');
+        const hasPlannedEnd = taskCols.has('planned_end_date');
+        const hasProjectId = taskCols.has('project_id');
+        const hasAssigneeId = taskCols.has('assignee_id');
+        const hasAssignedTo = taskCols.has('assigned_to');
+        const hasOwnerId = taskCols.has('owner_id');
+        const hasCreatedBy = taskCols.has('created_by');
 
-        const tasks = await db.query(
-          `SELECT t.id, t.title, t.due_date, t.status, t.priority, t.description
-           FROM tasks t
-           WHERE t.organization_id = ? AND t.assignee_id = ?
-             AND t.due_date IS NOT NULL
-             AND LOWER(COALESCE(t.status,'')) NOT IN ('done','completed','cancelled')
-             ${dateFilter}
-           ORDER BY t.due_date ASC
-           LIMIT 500`,
-          [orgId, userId, ...dateParams]
-        );
+        const dateExprParts: string[] = [];
+        if (hasDue) dateExprParts.push('t.due_date');
+        if (hasStart) dateExprParts.push('t.start_date');
+        if (hasPlannedStart) dateExprParts.push('t.planned_start_date');
+        const primaryDateExpr = dateExprParts.length > 0 ? `COALESCE(${dateExprParts.join(', ')})` : null;
 
-        for (const t of tasks) {
+        const assignmentParts: string[] = [];
+        if (hasAssigneeId) assignmentParts.push('t.assignee_id = ?');
+        if (hasAssignedTo) assignmentParts.push('t.assigned_to = ?');
+        if (hasOwnerId) assignmentParts.push('t.owner_id = ?');
+        if (assignmentParts.length === 0 && hasCreatedBy) assignmentParts.push('t.created_by = ?');
+
+        const where: string[] = ['t.organization_id = ?'];
+        const params: any[] = [orgId];
+        if (assignmentParts.length > 0) {
+          where.push(`(${assignmentParts.join(' OR ')})`);
+          for (let i = 0; i < assignmentParts.length; i++) params.push(userId);
+        } else {
+          where.push('1=0');
+        }
+
+        where.push("LOWER(COALESCE(t.status,'')) NOT IN ('done','completed','cancelled')");
+
+        const hasAnyDateParts: string[] = [];
+        if (hasDue) hasAnyDateParts.push('t.due_date IS NOT NULL');
+        if (hasStart) hasAnyDateParts.push('t.start_date IS NOT NULL');
+        if (hasPlannedStart) hasAnyDateParts.push('t.planned_start_date IS NOT NULL');
+        if (hasAnyDateParts.length > 0) {
+          where.push(`(${hasAnyDateParts.join(' OR ')})`);
+        }
+
+        if (projectId && hasProjectId) {
+          where.push('t.project_id = ?');
+          params.push(projectId);
+        }
+
+        if (hasRange && primaryDateExpr) {
+          where.push(`${primaryDateExpr} >= ? AND ${primaryDateExpr} < ?`);
+          params.push(start, end);
+        }
+
+        const select: string[] = ['t.id', 't.title', 't.status', 't.priority', 't.description'];
+        if (hasDue) select.push('t.due_date as due_date');
+        if (hasStart) select.push('t.start_date as start_date');
+        if (hasEnd) select.push('t.end_date as end_date');
+        if (hasPlannedStart) select.push('t.planned_start_date as planned_start_date');
+        if (hasPlannedEnd) select.push('t.planned_end_date as planned_end_date');
+
+        const rows =
+          (await queryHelpers.queryAll<any>(
+            `
+            SELECT ${select.join(', ')}
+            FROM tasks t
+            WHERE ${where.join(' AND ')}
+            ORDER BY ${primaryDateExpr ? `${primaryDateExpr} ASC` : 't.updated_at DESC'}
+            LIMIT 800
+          `,
+            params
+          )) || [];
+
+        for (const t of rows) {
+          const due = toDateOnly(t?.due_date);
+          const s = toDateOnly(t?.start_date) || toDateOnly(t?.planned_start_date);
+          const e = toDateOnly(t?.end_date) || toDateOnly(t?.planned_end_date);
+          const startDate = due || s;
+          if (!startDate) continue;
+
+          const endExclusive =
+            e && /^\d{4}-\d{2}-\d{2}$/.test(e) ? addDaysDateOnly(e, 1) : undefined;
+
           events.push({
             id: `task-${t.id}`,
-            title: t.title,
-            start: t.due_date,
+            title: String(t.title || '').trim() || 'Task',
+            start: startDate,
+            end: due ? undefined : endExclusive,
             allDay: true,
             source: 'task',
-            sourceId: t.id,
-            color: '#3b82f6',
+            sourceId: String(t.id),
+            color: '#2563eb',
             status: t.status,
             priority: t.priority,
             description: t.description,
@@ -10793,80 +11147,392 @@ router.get(
         }
       }
 
-      // Initiative milestones
+      // ── INITIATIVES (planned ranges) + MILESTONES (target dates) ───────────
       if (requestedSources.includes('initiative')) {
-        const dateFilter = start && end
-          ? `AND i.target_date >= ? AND i.target_date <= ?`
-          : '';
-        const dateParams = start && end ? [start, end] : [];
+        const initCols = await getTableColumns('initiatives');
+        const hasInitPlannedStart = initCols.has('planned_start_date');
+        const hasInitPlannedEnd = initCols.has('planned_end_date');
+        const hasInitStart = initCols.has('start_date');
+        const hasInitEnd = initCols.has('end_date');
+        const hasInitTarget = initCols.has('target_date');
+        const hasInitProjectId = initCols.has('project_id');
+        const hasInitOwnerBusiness = initCols.has('owner_business_id');
+        const hasInitOwnerExecution = initCols.has('owner_execution_id');
+        const hasInitOwnerLegacy = initCols.has('owner_id');
+        const hasInitSponsor = initCols.has('sponsor_id');
+        const hasInitCreatedBy = initCols.has('created_by');
+        const stakeholderCols = await getTableColumns('initiative_stakeholders');
+        const hasStakeholders =
+          stakeholderCols.has('initiative_id') && stakeholderCols.has('user_id');
 
-        const initiatives = await db.query(
-          `SELECT i.id, i.name as title, i.target_date, i.status
-           FROM initiatives i
-           WHERE i.organization_id = ?
-             AND i.target_date IS NOT NULL
-             AND LOWER(COALESCE(i.status,'')) NOT IN ('completed','cancelled')
-             ${dateFilter}
-           ORDER BY i.target_date ASC
-           LIMIT 200`,
-          [orgId, ...dateParams]
-        );
+        const startExpr =
+          (hasInitPlannedStart && 'i.planned_start_date') ||
+          (hasInitStart && 'i.start_date') ||
+          (hasInitTarget && 'i.target_date') ||
+          null;
+        const endExpr =
+          (hasInitPlannedEnd && 'i.planned_end_date') ||
+          (hasInitEnd && 'i.end_date') ||
+          (hasInitTarget && 'i.target_date') ||
+          null;
 
-        for (const i of initiatives) {
-          events.push({
-            id: `initiative-${i.id}`,
-            title: `🎯 ${i.title}`,
-            start: i.target_date,
-            allDay: true,
-            source: 'initiative',
-            sourceId: i.id,
-            color: '#8b5cf6',
-            status: i.status,
-          });
+        if (startExpr) {
+          const relationParts: string[] = [];
+          if (hasInitOwnerExecution) relationParts.push('i.owner_execution_id = ?');
+          if (hasInitOwnerBusiness) relationParts.push('i.owner_business_id = ?');
+          if (hasInitOwnerLegacy) relationParts.push('i.owner_id = ?');
+          if (hasInitSponsor) relationParts.push('i.sponsor_id = ?');
+          if (hasStakeholders) {
+            relationParts.push(
+              'EXISTS (SELECT 1 FROM initiative_stakeholders s WHERE s.initiative_id = i.id AND s.user_id = ?)'
+            );
+          }
+          if (relationParts.length === 0 && hasInitCreatedBy) relationParts.push('i.created_by = ?');
+
+          const where: string[] = ['i.organization_id = ?'];
+          const params: any[] = [orgId];
+
+          if (relationParts.length > 0) {
+            where.push(`(${relationParts.join(' OR ')})`);
+            for (let i = 0; i < relationParts.length; i++) params.push(userId);
+          } else {
+            where.push('1=0');
+          }
+
+          where.push(`${startExpr} IS NOT NULL`);
+          where.push("LOWER(COALESCE(i.status,'')) NOT IN ('completed','done','cancelled')");
+
+          if (projectId && hasInitProjectId) {
+            where.push('i.project_id = ?');
+            params.push(projectId);
+          }
+
+          // If we have a range, include overlaps: start <= end AND (endOrStart) >= start
+          if (hasRange) {
+            const endOrStart = endExpr ? `COALESCE(${endExpr}, ${startExpr})` : startExpr;
+            where.push(`${startExpr} < ? AND ${endOrStart} >= ?`);
+            params.push(end, start);
+          }
+
+          const rows =
+            (await queryHelpers.queryAll<any>(
+              `
+              SELECT i.id, i.name, i.status,
+                     ${startExpr} as start_date
+                     ${endExpr ? `, ${endExpr} as end_date` : ''}
+              FROM initiatives i
+              WHERE ${where.join(' AND ')}
+              ORDER BY ${startExpr} ASC
+              LIMIT 400
+            `,
+              params
+            )) || [];
+
+          for (const i of rows) {
+            const s = toDateOnly(i?.start_date);
+            const e = toDateOnly(i?.end_date);
+            if (!s) continue;
+            const endExclusive =
+              e && /^\d{4}-\d{2}-\d{2}$/.test(e) ? addDaysDateOnly(e, 1) : undefined;
+            events.push({
+              id: `initiative-${i.id}`,
+              title: String(i.name || '').trim() || 'Initiative',
+              start: s,
+              end: endExclusive,
+              allDay: true,
+              source: 'initiative',
+              sourceId: String(i.id),
+              color: '#7c3aed',
+              status: i.status,
+            });
+          }
+        }
+
+        // Optional milestones table (common in PMO schema)
+        const msCols = await getTableColumns('initiative_milestones');
+        const hasMilestones = msCols.has('target_date');
+        const hasMsProjectId = msCols.has('project_id');
+        if (hasMilestones) {
+          const milestoneRelationParts: string[] = [];
+          if (hasInitOwnerExecution) milestoneRelationParts.push('i.owner_execution_id = ?');
+          if (hasInitOwnerBusiness) milestoneRelationParts.push('i.owner_business_id = ?');
+          if (hasInitOwnerLegacy) milestoneRelationParts.push('i.owner_id = ?');
+          if (hasInitSponsor) milestoneRelationParts.push('i.sponsor_id = ?');
+          if (hasStakeholders) {
+            milestoneRelationParts.push(
+              'EXISTS (SELECT 1 FROM initiative_stakeholders s WHERE s.initiative_id = i.id AND s.user_id = ?)'
+            );
+          }
+          if (milestoneRelationParts.length === 0 && hasInitCreatedBy) {
+            milestoneRelationParts.push('i.created_by = ?');
+          }
+
+          const where: string[] = ['m.organization_id = ?', 'm.target_date IS NOT NULL'];
+          const params: any[] = [orgId];
+
+          if (milestoneRelationParts.length > 0) {
+            where.push(`(${milestoneRelationParts.join(' OR ')})`);
+            for (let i = 0; i < milestoneRelationParts.length; i++) params.push(userId);
+          } else {
+            where.push('1=0');
+          }
+
+          if (projectId && hasMsProjectId) {
+            where.push('m.project_id = ?');
+            params.push(projectId);
+          }
+
+          if (hasRange) {
+            where.push('m.target_date >= ? AND m.target_date < ?');
+            params.push(start, end);
+          }
+
+          const rows =
+            (await queryHelpers.queryAll<any>(
+              `
+              SELECT
+                m.id,
+                m.initiative_id,
+                m.name,
+                m.status,
+                m.target_date,
+                i.name as initiative_name
+              FROM initiative_milestones m
+              LEFT JOIN initiatives i ON i.id = m.initiative_id
+              WHERE ${where.join(' AND ')}
+              ORDER BY m.target_date ASC
+              LIMIT 600
+            `,
+              params
+            )) || [];
+
+          for (const m of rows) {
+            const d = toDateOnly(m?.target_date);
+            if (!d) continue;
+            const initName = String(m?.initiative_name || '').trim();
+            const msName = String(m?.name || '').trim();
+            events.push({
+              id: `initiative-ms-${m.id}`,
+              title: initName ? `${initName}: ${msName || 'Milestone'}` : msName || 'Milestone',
+              start: d,
+              allDay: true,
+              source: 'initiative',
+              sourceId: String(m.initiative_id || m.id),
+              color: '#7c3aed',
+              status: m.status,
+            });
+          }
         }
       }
 
-      // Decision deadlines
+      // ── DECISIONS (deadlines) ──────────────────────────────────────────────
       if (requestedSources.includes('decision')) {
-        const dateFilter = start && end
-          ? `AND d.deadline >= ? AND d.deadline <= ?`
-          : '';
-        const dateParams = start && end ? [start, end] : [];
+        const decisionCols = await getTableColumns('decisions');
+        const hasDecisionMaker = decisionCols.has('decision_maker_id');
+        const hasCreatedBy = decisionCols.has('created_by');
+        const hasAssignedTo = decisionCols.has('assigned_to');
+        const hasDecisionOwner = decisionCols.has('decision_owner_id');
+        const hasProjectId = decisionCols.has('project_id');
 
-        const decisions = await db.query(
-          `SELECT d.id, d.title, d.deadline, d.status, d.priority
-           FROM decisions d
-           WHERE d.organization_id = ?
-             AND (d.created_by = ? OR d.assigned_to = ?)
-             AND d.deadline IS NOT NULL
-             AND LOWER(COALESCE(d.status,'')) NOT IN ('resolved','cancelled')
-             ${dateFilter}
-           ORDER BY d.deadline ASC
-           LIMIT 200`,
-          [orgId, userId, userId, ...dateParams]
-        );
+        const ownerParts: string[] = [];
+        if (hasDecisionOwner) ownerParts.push('d.decision_owner_id = ?');
+        if (hasDecisionMaker) ownerParts.push('d.decision_maker_id = ?');
+        if (hasAssignedTo) ownerParts.push('d.assigned_to = ?');
+        if (ownerParts.length === 0 && hasCreatedBy) ownerParts.push('d.created_by = ?');
+        if (ownerParts.length === 0) ownerParts.push('1=0');
 
-        for (const d of decisions) {
+        const where: string[] = [
+          'd.organization_id = ?',
+          'd.deadline IS NOT NULL',
+          `(${ownerParts.join(' OR ')})`,
+          "LOWER(COALESCE(d.status,'')) NOT IN ('resolved','done','completed','cancelled')",
+        ];
+        const params: any[] = [orgId];
+        // add userId for each ownerPart placeholder we included
+        const ownerParamCount =
+          (hasDecisionOwner ? 1 : 0) +
+          (hasDecisionMaker ? 1 : 0) +
+          (hasAssignedTo ? 1 : 0) +
+          (ownerParts.includes('d.created_by = ?') ? 1 : 0);
+        for (let i = 0; i < ownerParamCount; i++) params.push(userId);
+
+        if (projectId && hasProjectId) {
+          where.push('d.project_id = ?');
+          params.push(projectId);
+        }
+
+        if (hasRange) {
+          where.push('d.deadline >= ? AND d.deadline < ?');
+          params.push(start, end);
+        }
+
+        const rows =
+          (await queryHelpers.queryAll<any>(
+            `
+            SELECT d.id, d.title, d.deadline, d.status,
+                   ${decisionCols.has('priority') ? 'd.priority' : `'MEDIUM' as priority`}
+            FROM decisions d
+            WHERE ${where.join(' AND ')}
+            ORDER BY d.deadline ASC
+            LIMIT 400
+          `,
+            params
+          )) || [];
+
+        for (const d of rows) {
+          const due = toDateOnly(d?.deadline);
+          if (!due) continue;
           events.push({
             id: `decision-${d.id}`,
-            title: `⚖️ ${d.title}`,
-            start: d.deadline,
+            title: String(d.title || '').trim() || 'Decision',
+            start: due,
             allDay: true,
             source: 'decision',
-            sourceId: d.id,
-            color: '#f59e0b',
+            sourceId: String(d.id),
+            color: '#d97706',
             status: d.status,
             priority: d.priority,
           });
         }
       }
 
-      events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+      // ── MEETINGS (Outlook / Google / Consultify) ──────────────────────
+      const wantOutlook = requestedSources.includes('outlook');
+      const wantGoogle = requestedSources.includes('google');
+      const wantConsultify = requestedSources.includes('consultify');
+      if (wantOutlook || wantGoogle || wantConsultify) {
+        const meetingCols = await getTableColumns('meetings');
+        if (meetingCols.has('start_at') && meetingCols.has('end_at')) {
+          const where: string[] = ['m.organization_id = ?'];
+          const params: any[] = [orgId];
 
+          if (meetingCols.has('created_by')) {
+            where.push('m.created_by = ?');
+            params.push(userId);
+          }
+
+          if (hasRange) {
+            where.push('m.start_at >= ? AND m.start_at < ?');
+            params.push(start, end);
+          }
+
+          const rows =
+            (await queryHelpers.queryAll<any>(
+              `SELECT m.id, m.title, m.start_at, m.end_at, m.location, m.status, m.agenda_json
+               FROM meetings m
+               WHERE ${where.join(' AND ')}
+               ORDER BY m.start_at ASC
+               LIMIT 200`,
+              params
+            )) || [];
+
+          const sourceColorMap: Record<string, string> = {
+            google: '#059669',
+            outlook: '#4f46e5',
+            consultify: '#6d28d9',
+          };
+
+          for (const m of rows) {
+            let agenda: any = {};
+            try { agenda = JSON.parse(m.agenda_json || '{}'); } catch { /* ignore */ }
+            const calSource = agenda.calendarSource || 'outlook';
+            if (calSource === 'outlook' && !wantOutlook) continue;
+            if (calSource === 'google' && !wantGoogle) continue;
+            if (calSource === 'consultify' && !wantConsultify) continue;
+
+            const meetingType = agenda.meetingType || 'team';
+            const prefix = meetingType === 'personal' ? '👤 ' : '👥 ';
+
+            const startIso = m.start_at ? new Date(m.start_at).toISOString() : null;
+            const endIso = m.end_at ? new Date(m.end_at).toISOString() : null;
+            if (!startIso) continue;
+
+            events.push({
+              id: `${calSource}-${m.id}`,
+              title: `${prefix}${String(m.title || '').trim() || 'Meeting'}`,
+              start: startIso,
+              end: endIso || undefined,
+              allDay: false,
+              source: calSource as any,
+              sourceId: String(m.id),
+              color: sourceColorMap[calSource] || '#4f46e5',
+              status: m.status || 'confirmed',
+              description: m.location ? `📍 ${m.location}` : undefined,
+            });
+          }
+        }
+      }
+
+      // ── AI FOCUS TIME SUGGESTIONS ─────────────────────────────────────────
+      // Generate ghost blocks for "own work" time in gaps between meetings
+      if (hasRange && start && end) {
+        const meetingStarts = events
+          .filter((e) => !e.allDay && (e.source === 'outlook' || e.source === 'google' || e.source === 'consultify'))
+          .map((e) => ({ start: new Date(e.start), end: e.end ? new Date(e.end) : new Date(new Date(e.start).getTime() + 3600000) }));
+
+        const rangeStart = new Date(start);
+        const rangeEnd = new Date(end);
+        const dayMs = 86400000;
+
+        for (let d = new Date(rangeStart); d < rangeEnd; d = new Date(d.getTime() + dayMs)) {
+          const dow = d.getUTCDay();
+          if (dow === 0 || dow === 6) continue; // skip weekends
+
+          const dayStr = d.toISOString().slice(0, 10);
+          const dayMeetings = meetingStarts
+            .filter((m) => m.start.toISOString().slice(0, 10) === dayStr)
+            .sort((a, b) => a.start.getTime() - b.start.getTime());
+
+          // Find largest gap between 8:00-17:00 that's >= 90 min
+          const workStart = new Date(`${dayStr}T08:00:00Z`);
+          const workEnd = new Date(`${dayStr}T17:00:00Z`);
+
+          // Build free slots: gaps between meetings within work hours
+          const slots: Array<{ start: Date; end: Date }> = [];
+          let cursor = workStart;
+          for (const m of dayMeetings) {
+            const mStart = m.start < workStart ? workStart : m.start;
+            if (mStart > cursor) {
+              slots.push({ start: cursor, end: mStart });
+            }
+            if (m.end > cursor) cursor = m.end;
+          }
+          if (cursor < workEnd) {
+            slots.push({ start: cursor, end: workEnd });
+          }
+
+          let bestGap = { start: workStart, end: workStart, duration: 0 };
+          for (const s of slots) {
+            const dur = s.end.getTime() - s.start.getTime();
+            if (dur > bestGap.duration) bestGap = { ...s, duration: dur };
+          }
+
+          if (dayMeetings.length > 0 && bestGap.duration >= 5400000) { // >= 90 min, only on days with meetings
+            const focusStart = bestGap.start;
+            const focusDur = Math.min(bestGap.duration, 7200000); // max 2h
+            const focusEnd = new Date(focusStart.getTime() + focusDur);
+
+            events.push({
+              id: `ai-focus-${dayStr}`,
+              title: '🧠 Focus time (AI suggestion)',
+              start: focusStart.toISOString(),
+              end: focusEnd.toISOString(),
+              allDay: false,
+              source: 'task' as any,
+              sourceId: `ai-focus-${dayStr}`,
+              color: 'rgba(124, 58, 237, 0.15)',
+              status: 'ai_suggestion',
+              description: 'AI-suggested deep work block based on your calendar gaps',
+            });
+          }
+        }
+      }
+
+      events.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
       res.json({ events });
     } catch (err: any) {
       logger.error('[calendar-unified]', err);
-      res.status(500).json({ error: 'Failed to load unified calendar' });
+      res.status(500).json({ error: err?.message || 'Failed to load unified calendar' });
     }
   })
 );
@@ -10927,7 +11593,7 @@ router.get(
     const date = req.query.date ? String(req.query.date) : new Date().toISOString().split('T')[0];
 
     try {
-      const tasksOnDate = await db.query(
+      const tasksOnDateResult = await db.query(
         `SELECT id, title, due_date FROM tasks
          WHERE assignee_id = ? AND organization_id = ?
            AND date(due_date) = date(?)
@@ -10936,7 +11602,7 @@ router.get(
         [userId, orgId, date]
       );
 
-      const decisionsOnDate = await db.query(
+      const decisionsOnDateResult = await db.query(
         `SELECT id, title, deadline FROM decisions
          WHERE organization_id = ?
            AND (created_by = ? OR assigned_to = ?)
@@ -10945,6 +11611,9 @@ router.get(
          ORDER BY deadline ASC`,
         [orgId, userId, userId, date]
       );
+
+      const tasksOnDate = tasksOnDateResult.rows;
+      const decisionsOnDate = decisionsOnDateResult.rows;
 
       const hasConflicts = tasksOnDate.length + decisionsOnDate.length > 3;
 
@@ -11077,17 +11746,17 @@ function inferHomeV2TimeMode(date: Date): 'morning' | 'liveDay' | 'eveningWrap' 
   return 'eveningWrap';
 }
 
-function inferRoleLens(role: unknown): string {
+function inferRoleLens(role: unknown, isPolish: boolean): string {
   const normalized = String(role || '')
     .trim()
     .toLowerCase();
   if (['owner', 'admin', 'administrator', 'superadmin', 'super_admin'].includes(normalized)) {
-    return 'Executive sponsor';
+    return isPolish ? 'Sponsor wykonawczy' : 'Executive sponsor';
   }
   if (['manager'].includes(normalized)) {
-    return 'Transformation lead';
+    return isPolish ? 'Lider transformacji' : 'Transformation lead';
   }
-  return 'Program contributor';
+  return isPolish ? 'Współtwórca programu' : 'Program contributor';
 }
 
 function selectHomeV2Preset(industry: string | null | undefined): HomeV2IndustryPreset {
@@ -11122,6 +11791,115 @@ function computeRecommendedSize(
 }
 
 router.get(
+  '/radar',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+
+    const orgContext = await organizationContextService.buildResolvedContext(identity.orgId);
+    const appLanguage = req.headers['x-app-language'] ?? req.headers['accept-language'];
+    const langRaw = Array.isArray(appLanguage) ? appLanguage.join(',') : String(appLanguage || '');
+    const isPolish = langRaw.trim().toLowerCase().startsWith('pl');
+
+    const payload = await radarService.buildView({
+      userId: identity.userId,
+      orgId: identity.orgId,
+      role: req.user?.role,
+      industry: orgContext.profile.industry || null,
+      isPolish,
+    });
+
+    return res.json(payload);
+  })
+);
+
+router.get(
+  '/radar/sources',
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    const sources = await radarService.listSources();
+    return res.json({ sources });
+  })
+);
+
+router.get(
+  '/radar/profile',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+
+    const orgContext = await organizationContextService.buildResolvedContext(identity.orgId);
+    const profile = await radarRankingService.getOrCreateProfile({
+      userId: identity.userId,
+      orgId: identity.orgId,
+      role: req.user?.role,
+      industry: orgContext.profile.industry || null,
+    });
+
+    return res.json(profile);
+  })
+);
+
+router.patch(
+  '/radar/profile',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+
+    const parsed = radarProfilePatchSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid profile payload', details: parsed.error.flatten() });
+    }
+
+    const updated = await radarRankingService.updateProfile(identity.userId, {
+      ...parsed.data,
+      organizationId: identity.orgId,
+    });
+
+    return res.json({ success: true, profile: updated });
+  })
+);
+
+router.post(
+  '/radar/actions',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+
+    const parsed = radarActionSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid radar action payload', details: parsed.error.flatten() });
+    }
+
+    const orgContext = await organizationContextService.buildResolvedContext(identity.orgId);
+    const result = await radarActionService.record({
+      userId: identity.userId,
+      orgId: identity.orgId,
+      role: req.user?.role,
+      industry: orgContext.profile.industry || null,
+      signalId: parsed.data.signalId || null,
+      actionType: parsed.data.actionType,
+      sourceContext: parsed.data.sourceContext,
+      createdObjectType: parsed.data.createdObjectType,
+      createdObjectId: parsed.data.createdObjectId,
+      payload: parsed.data.payload,
+    });
+
+    return res.json(result);
+  })
+);
+
+router.get(
+  '/radar/metrics',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const identity = requireUser(req, res);
+    if (!identity) return;
+
+    const metrics = await radarService.getMetrics(identity.userId);
+    return res.json({ metrics });
+  })
+);
+
+router.get(
   '/home/v2',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const db = req.db;
@@ -11135,7 +11913,12 @@ router.get(
     try {
       const now = new Date();
       const timeMode = inferHomeV2TimeMode(now);
-      const roleLens = inferRoleLens(req.user?.role);
+      const appLanguage = req.headers['x-app-language'] ?? req.headers['accept-language'];
+      const langRaw = Array.isArray(appLanguage) ? appLanguage.join(',') : String(appLanguage || '');
+      const isPolish = langRaw.trim().toLowerCase().startsWith('pl');
+      const L = (en: string, pl: string) => (isPolish ? pl : en);
+
+      const roleLens = inferRoleLens(req.user?.role, isPolish);
       const orgContext = await organizationContextService.buildResolvedContext(orgId);
       const preset = selectHomeV2Preset(orgContext.profile.industry);
 
@@ -11156,7 +11939,8 @@ router.get(
         return [];
       };
 
-      const [tasks, decisions, ideas, notes] = await Promise.all([
+      const [tasks, decisions, ideas, notes, orgIdeas, peerTipEvents, initiatives, aiNews] =
+        await Promise.all([
         safeHomeV2Query('tasks', [
           {
             sql: `SELECT id, title, description, status, priority, due_date, updated_at
@@ -11183,7 +11967,7 @@ router.get(
           {
             sql: `SELECT id, title, status, priority, deadline, created_at
                   FROM decisions
-                  WHERE organization_id = ? AND (created_by = ? OR assigned_to = ?)
+                  WHERE organization_id = ? AND (created_by = ? OR decision_maker_id = ?)
                     AND LOWER(COALESCE(status,'')) NOT IN ('resolved','cancelled')
                   ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline ASC, created_at DESC
                   LIMIT 6`,
@@ -11192,7 +11976,7 @@ router.get(
           {
             sql: `SELECT id, title, status, NULL::int as priority, deadline, created_at
                   FROM decisions
-                  WHERE organization_id = ? AND (created_by = ? OR assigned_to = ?)
+                  WHERE organization_id = ? AND (created_by = ? OR decision_maker_id = ?)
                     AND LOWER(COALESCE(status,'')) NOT IN ('resolved','cancelled')
                   ORDER BY CASE WHEN deadline IS NULL THEN 1 ELSE 0 END, deadline ASC, created_at DESC
                   LIMIT 6`,
@@ -11221,9 +12005,9 @@ router.get(
         ]),
         safeHomeV2Query('notes', [
           {
-            sql: `SELECT id, title, content, updated_at
+            sql: `SELECT id, title, content_text as content, updated_at
                   FROM notebook_pages
-                  WHERE organization_id = ? AND user_id = ?
+                  WHERE organization_id = ? AND owner_user_id = ?
                   ORDER BY updated_at DESC
                   LIMIT 3`,
             params: [orgId, userId],
@@ -11231,13 +12015,151 @@ router.get(
           {
             sql: `SELECT id, title, NULL::text as content, updated_at
                   FROM notebook_pages
-                  WHERE organization_id = ? AND user_id = ?
+                  WHERE organization_id = ? AND owner_user_id = ?
                   ORDER BY updated_at DESC
                   LIMIT 3`,
             params: [orgId, userId],
           },
         ]),
+        safeHomeV2Query('org_ideas', [
+          {
+            sql: `SELECT i.id, i.title, i.description, i.stage, i.updated_at, COUNT(t.id) as task_count
+                  FROM ideas i
+                  LEFT JOIN tasks t ON t.idea_id = i.id
+                  WHERE i.organization_id = ? AND i.created_by <> ?
+                  GROUP BY i.id, i.title, i.description, i.stage, i.updated_at
+                  ORDER BY i.updated_at DESC
+                  LIMIT 3`,
+            params: [orgId, userId],
+          },
+          {
+            sql: `SELECT i.id, i.title, NULL::text as description, i.stage, i.updated_at, 0::int as task_count
+                  FROM ideas i
+                  WHERE i.organization_id = ? AND i.created_by <> ?
+                  ORDER BY i.updated_at DESC
+                  LIMIT 3`,
+            params: [orgId, userId],
+          },
+        ]),
+        safeHomeV2Query('peer_tips', [
+          {
+            sql: `SELECT id, event_data, created_at
+                  FROM organization_events
+                  WHERE organization_id = ? AND event_type = 'peer_tip'
+                  ORDER BY created_at DESC
+                  LIMIT 6`,
+            params: [orgId],
+          },
+          {
+            sql: `SELECT id, event_data, created_at
+                  FROM organization_events
+                  WHERE organization_id = ?
+                  ORDER BY created_at DESC
+                  LIMIT 6`,
+            params: [orgId],
+          },
+        ]),
+        safeHomeV2Query('initiatives_upcoming', [
+          {
+            sql: `SELECT id, name as title, target_date, status
+                  FROM initiatives
+                  WHERE organization_id = ?
+                    AND target_date IS NOT NULL
+                    AND LOWER(COALESCE(status,'')) NOT IN ('completed','cancelled')
+                  ORDER BY target_date ASC
+                  LIMIT 12`,
+            params: [orgId],
+          },
+          {
+            sql: `SELECT id, name as title, target_date, status
+                  FROM initiatives
+                  WHERE organization_id = ?
+                    AND target_date IS NOT NULL
+                  ORDER BY target_date ASC
+                  LIMIT 12`,
+            params: [orgId],
+          },
+        ]),
+        getAiNews(now, 6).catch(() => []),
       ]);
+
+      const { appTip, aiPlaybookTip } = pickTipOfDay(now);
+
+      const peerTips = (Array.isArray(peerTipEvents) ? peerTipEvents : [])
+        .map((e: any) => {
+          const raw = e?.event_data ?? e?.eventData ?? e?.event_json ?? e?.metadata ?? '{}';
+          let data: any = {};
+          try {
+            data = typeof raw === 'string' ? JSON.parse(raw) : raw || {};
+          } catch {
+            data = {};
+          }
+          const text = String(data?.text || data?.tip || '').trim();
+          if (!text) return null;
+          return {
+            id: String(e?.id || uuidv4()),
+            text,
+            authorName: data?.authorName ? String(data.authorName) : undefined,
+            createdAt: e?.created_at ? String(e.created_at) : now.toISOString(),
+          };
+        })
+        .filter(Boolean)
+        .slice(0, 4);
+
+      const orgIdeasPayload = (Array.isArray(orgIdeas) ? orgIdeas : []).map((i: any) => ({
+        id: String(i.id),
+        type: 'idea' as const,
+        title: String(i.title || ''),
+        snippet: String(i.description || '').substring(0, 220),
+        stage: i.stage || 'spark',
+        updatedAt: String(i.updated_at || now.toISOString()),
+        nodeCount: 0,
+        taskCount: typeof i.task_count === 'number' ? i.task_count : 0,
+      }));
+
+      const nextUpCutoff = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const todayKey = now.toISOString().slice(0, 10);
+      const nextUp = [
+        ...tasks
+          .filter((t: any) => t?.due_date)
+          .map((t: any) => ({
+            source: 'task' as const,
+            id: String(t.id),
+            title: String(t.title || ''),
+            date: String(t.due_date),
+          })),
+        ...decisions
+          .filter((d: any) => d?.deadline)
+          .map((d: any) => ({
+            source: 'decision' as const,
+            id: String(d.id),
+            title: String(d.title || ''),
+            date: String(d.deadline),
+          })),
+        ...(Array.isArray(initiatives) ? initiatives : [])
+          .filter((i: any) => i?.target_date)
+          .map((i: any) => ({
+            source: 'initiative' as const,
+            id: String(i.id),
+            title: String(i.title || ''),
+            date: String(i.target_date),
+          })),
+      ]
+        .map((e) => {
+          const dt = new Date(e.date);
+          const key = Number.isFinite(dt.getTime()) ? dt.toISOString().slice(0, 10) : '';
+          const urgency =
+            Number.isFinite(dt.getTime()) && dt.getTime() < now.getTime()
+              ? 'overdue'
+              : key === todayKey
+                ? 'today'
+                : 'soon';
+          return { ...e, urgency, _ts: dt.getTime() };
+        })
+        .filter((e) => Number.isFinite(e._ts) && e._ts <= nextUpCutoff.getTime())
+        .sort((a, b) => a._ts - b._ts)
+        .slice(0, 6)
+        .map(({ _ts, ...e }) => e);
 
       const overdueTasks = tasks.filter((task: any) => task.due_date && new Date(task.due_date) < now);
       const tasksDueSoon = tasks.slice(0, 3);
@@ -11251,7 +12173,7 @@ router.get(
               id: String(tasksDueSoon[0].id),
               type: 'task',
               title: String(tasksDueSoon[0].title),
-              meta: overdueTasks.length > 0 ? 'Execution needs a clean next move' : 'Closest execution commitment',
+              meta: overdueTasks.length > 0 ? L('Execution needs a clean next move', 'Wykonanie potrzebuje czystego „next move”') : L('Closest execution commitment', 'Najbliższe zobowiązanie wykonawcze'),
               priority: overdueTasks.length > 0 ? 'high' : 'medium',
             }
           : null,
@@ -11260,7 +12182,9 @@ router.get(
               id: String(pendingDecisions[0].id),
               type: 'decision',
               title: String(pendingDecisions[0].title),
-              meta: `${pendingDecisions.length} active decision${pendingDecisions.length === 1 ? '' : 's'}`,
+              meta: isPolish
+                ? `${pendingDecisions.length} aktywne decyzje`
+                : `${pendingDecisions.length} active decision${pendingDecisions.length === 1 ? '' : 's'}`,
               priority: 'high',
             }
           : null,
@@ -11269,7 +12193,7 @@ router.get(
               id: String(ideas[0].id),
               type: 'idea',
               title: String(ideas[0].title),
-              meta: 'Strongest current transformation concept',
+              meta: L('Strongest current transformation concept', 'Najsilniejszy obecny koncept transformacyjny'),
               priority: 'medium',
             }
           : null,
@@ -11289,17 +12213,74 @@ router.get(
 
       const pulseHeadline =
         timeMode === 'morning'
-          ? 'Start the day with one move that sharpens narrative and execution.'
+          ? L(
+              'Start the day with one move that sharpens narrative and execution.',
+              'Zacznij dzień od jednego ruchu, który ostrzy narrację i wykonanie.'
+            )
           : timeMode === 'liveDay'
-            ? 'Protect momentum while clearing the single blocker shaping the week.'
-            : 'Close the loop on what moved and carry one strong storyline into tomorrow.';
+            ? L(
+                'Protect momentum while clearing the single blocker shaping the week.',
+                'Chroń momentum i zdejmij jeden blocker, który kształtuje tydzień.'
+              )
+            : L(
+                'Close the loop on what moved and carry one strong storyline into tomorrow.',
+                'Domknij pętlę tego, co ruszyło, i przenieś jedną silną narrację na jutro.'
+              );
 
       const pulseSummary =
         pendingDecisions.length > 0
-          ? `The program has movement, but decision flow is still shaping pace. ${pendingDecisions.length} active decisions and ${tasksDueSoon.length} near-term actions are competing for attention.`
-          : `Execution is moving without major friction. This is the right moment to convert the strongest idea into a more formal transformation lane.`;
+          ? L(
+              `The program has movement, but decision flow is still shaping pace. ${pendingDecisions.length} active decisions and ${tasksDueSoon.length} near-term actions are competing for attention.`,
+              `Program ma ruch, ale tempo nadal kształtuje przepływ decyzji. ${pendingDecisions.length} aktywnych decyzji i ${tasksDueSoon.length} działań na teraz konkuruje o uwagę.`
+            )
+          : L(
+              `Execution is moving without major friction. This is the right moment to convert the strongest idea into a more formal transformation lane.`,
+              `Wykonanie idzie bez większego tarcia. To dobry moment, żeby zamienić najsilniejszy pomysł w bardziej formalny „pas transformacji”.`
+            );
 
-      const industry = orgContext.profile.industry || preset.industryLabel;
+      const isManufacturingPreset = preset.industryLabel === 'Manufacturing';
+      const presetPl: HomeV2IndustryPreset = isManufacturingPreset
+        ? {
+            industryLabel: 'Produkcja',
+            marketSignalTitle: 'Presja kosztów energii zmienia priorytety transformacji w produkcji',
+            marketSignalSummary:
+              'Programy dostają finansowanie najszybciej, gdy łączą planowanie, jakość i efektywność zamiast izolowanych pomysłów automatyzacji.',
+            technologySignalTitle: 'Wizja komputerowa i copiloci planistyczni przechodzą z pilota do “pasa operacyjnego”',
+            technologySignalSummary:
+              'Zakłady przeprojektowują triage jakości, decyzje utrzymania i planowanie produkcji pod AI‑asystowane workflowy.',
+            benchmarkLabel: 'Benchmark transformacji (produkcja)',
+            benchmarkValue: '14-18%',
+            benchmarkDelta: 'wzrost wartości w 12 miesięcy',
+            benchmarkImplication:
+              'Programy, które łączą jakość, planowanie i governance, wypadają lepiej niż pilotaże pojedynczych narzędzi.',
+            peerCaseTitle: 'Dostawca Tier‑1 przeszedł od PoC AI do pasa transformacji',
+            peerCaseSummary:
+              'Zespół przestał traktować AI jak jednorazowy eksperyment i zbudował jeden cross‑functional lane z ownerami, KPI i tygodniowym steeringiem.',
+            peerCaseImplication:
+              'Twoja najsilniejsza szansa prawdopodobnie potrzebuje tego samego reframingu: inicjatywa, owner i “executive storyline”.',
+          }
+        : {
+            industryLabel: 'Transformacja',
+            marketSignalTitle: 'Finansowanie transformacji przesuwa się w stronę cross‑functional “value pools”',
+            marketSignalSummary:
+              'Liderzy wspierają programy, które łączą strategię, wykonanie i budowanie kompetencji, zamiast izolowanych pilotów.',
+            technologySignalTitle: 'Copiloci AI są wbudowywani w model operacyjny, a nie uruchamiani jako narzędzia “obok”',
+            technologySignalSummary:
+              'Najmocniejsze programy przeprojektowują rytuały, decyzje i przepływy wokół AI‑asysty, zamiast dokładać kolejny odłączony interfejs.',
+            benchmarkLabel: 'Benchmark transformacji',
+            benchmarkValue: '10-15%',
+            benchmarkDelta: 'pozyskanie wartości w 12 miesięcy',
+            benchmarkImplication:
+              'Programy, które spinają governance, redesign workflow i adopcję AI, szybciej materializują wartość.',
+            peerCaseTitle: 'Biuro transformacji przeformułowało AI jako “pas portfelowy”',
+            peerCaseSummary:
+              'Zamiast rozproszonych pilotów organizacja pogrupowała inicjatywy w jedną narrację przywódczą z tygodniowym rytmem decyzji.',
+            peerCaseImplication:
+              'Użyj Home do ostrzenia jednej narracji, a nie do pokazywania odłączonych update’ów.',
+          };
+
+      const p = isPolish ? presetPl : preset;
+      const industry = orgContext.profile.industry || p.industryLabel;
       const priorities = (orgContext.strategic.priorities || []).slice(0, 2).join(', ');
       const constraints = (orgContext.operations.constraints || []).slice(0, 2).join(', ');
 
@@ -11319,8 +12300,8 @@ router.get(
       const blocks = [
         {
           id: 'aiPulseCore',
-          title: 'AI Pulse Core',
-          subtitle: 'Your highest-signal transformation readout',
+          title: L('AI Pulse Core', 'AI Pulse Core'),
+          subtitle: L('Your highest-signal transformation readout', 'Najbardziej “wysokosygnałowy” odczyt transformacji'),
           accent: 'ai',
           size: 'hero',
           priorityWeight: aiPulsePriority,
@@ -11328,21 +12309,31 @@ router.get(
           freshnessScore: 84,
           ctaIntents: ['prioritize_transformation', 'challenge_storyline', 'summarize_for_leadership'],
           payload: {
-            greeting: `Good ${timeMode === 'morning' ? 'morning' : timeMode === 'liveDay' ? 'day' : 'evening'}${req.user?.firstName ? `, ${req.user.firstName}` : ''}`,
+            greeting: isPolish
+              ? `Dzień dobry${req.user?.firstName ? `, ${req.user.firstName}` : ''}`
+              : `Good ${timeMode === 'morning' ? 'morning' : timeMode === 'liveDay' ? 'day' : 'evening'}${req.user?.firstName ? `, ${req.user.firstName}` : ''}`,
             headline: pulseHeadline,
             summary: pulseSummary,
             insight: priorities
-              ? `The strongest storyline today sits at the intersection of ${priorities}. Use Home to keep the narrative transformational, not operational.`
-              : `The strongest storyline today is to connect ideas, decisions, and execution into one transformation lane with clear ownership.`,
+              ? L(
+                  `The strongest storyline today sits at the intersection of ${priorities}. Use Home to keep the narrative transformational, not operational.`,
+                  `Najsilniejsza narracja na dziś leży na styku: ${priorities}. Użyj Home, żeby trzymać narrację transformacyjną (nie operacyjną).`
+                )
+              : L(
+                  `The strongest storyline today is to connect ideas, decisions, and execution into one transformation lane with clear ownership.`,
+                  `Najsilniejsza narracja na dziś: połącz pomysły, decyzje i wykonanie w jeden „pas transformacji” z jasnym ownerem.`
+                ),
             weekProgress,
             pulseScore,
             focusItems,
+            appTipOfDay: appTip,
+            aiPlaybookTip,
           },
         },
         {
           id: 'momentum',
-          title: 'Momentum',
-          subtitle: 'Where the program is gaining or losing speed',
+          title: L('Momentum', 'Momentum'),
+          subtitle: L('Where the program is gaining or losing speed', 'Gdzie program przyspiesza, a gdzie traci prędkość'),
           accent: 'success',
           size: computeRecommendedSize(momentumPriority, 'md'),
           priorityWeight: momentumPriority,
@@ -11350,44 +12341,83 @@ router.get(
           freshnessScore: momentumFreshness,
           ctaIntents: ['summarize_momentum', 'prioritize'],
           payload: {
-            headline: ideas.length > 0 ? 'Ideas are moving faster than decisions.' : 'Execution is moving, but ideation needs fresh energy.',
+            headline:
+              ideas.length > 0
+                ? L('Ideas are moving faster than decisions.', 'Pomysły idą szybciej niż decyzje.')
+                : L('Execution is moving, but ideation needs fresh energy.', 'Wykonanie idzie, ale ideacja potrzebuje świeżej energii.'),
             summary:
               pendingDecisions.length > 0
-                ? 'The program is alive, but one or two decisions are shaping the rate of progress more than task volume.'
-                : 'There is enough movement in the system to convert energy into one stronger transformation storyline.',
+                ? L(
+                    'The program is alive, but one or two decisions are shaping the rate of progress more than task volume.',
+                    'Program żyje, ale tempo bardziej kształtuje 1–2 decyzje niż wolumen zadań.'
+                  )
+                : L(
+                    'There is enough movement in the system to convert energy into one stronger transformation storyline.',
+                    'W systemie jest dość ruchu, żeby zamienić energię w jedną silniejszą narrację transformacji.'
+                  ),
             stats: [
-              { label: 'Ideas shaped', value: String(ideas.length), trend: ideas.length > 1 ? 'rising' : 'steady' },
-              { label: 'Tasks near term', value: String(tasksDueSoon.length), trend: overdueTasks.length > 0 ? 'attention needed' : 'under control' },
-              { label: 'Decisions active', value: String(pendingDecisions.length), trend: pendingDecisions.length > 1 ? 'leadership pull' : 'contained' },
+              {
+                label: L('Ideas shaped', 'Uformowane pomysły'),
+                value: String(ideas.length),
+                trend: ideas.length > 1 ? L('rising', 'rośnie') : L('steady', 'stabilnie'),
+              },
+              {
+                label: L('Tasks near term', 'Zadania “na teraz”'),
+                value: String(tasksDueSoon.length),
+                trend: overdueTasks.length > 0 ? L('attention needed', 'wymaga uwagi') : L('under control', 'pod kontrolą'),
+              },
+              {
+                label: L('Decisions active', 'Aktywne decyzje'),
+                value: String(pendingDecisions.length),
+                trend: pendingDecisions.length > 1 ? L('leadership pull', 'ciąg liderów') : L('contained', 'okiełznane'),
+              },
             ],
             signals: [
               {
                 id: 'momentum-1',
-                title: ideas.length > 0 ? 'Concept shaping is ahead of governance' : 'Narrative energy is low',
+                title: ideas.length > 0 ? L('Concept shaping is ahead of governance', 'Kształt konceptu wyprzedza governance') : L('Narrative energy is low', 'Energia narracji jest niska'),
                 summary:
                   ideas.length > 0
-                    ? 'Your strongest ideas are clearer than the approvals around them. That is a signal to tighten decision framing.'
-                    : 'There is space to generate a stronger future-state storyline before the next steering conversation.',
+                    ? L(
+                        'Your strongest ideas are clearer than the approvals around them. That is a signal to tighten decision framing.',
+                        'Najsilniejsze pomysły są już jaśniejsze niż approvals wokół nich. To sygnał, żeby dociąć ramę decyzyjną.'
+                      )
+                    : L(
+                        'There is space to generate a stronger future-state storyline before the next steering conversation.',
+                        'Jest przestrzeń, żeby wzmocnić „future-state storyline” przed kolejnym steeringiem.'
+                      ),
                 tag: 'Program pulse',
                 tone: ideas.length > 0 ? 'positive' : 'warning',
               },
               {
                 id: 'momentum-2',
-                title: tasksDueSoon.length > 0 ? 'Execution has a concrete next move' : 'Execution bandwidth is available',
+                title: tasksDueSoon.length > 0 ? L('Execution has a concrete next move', 'Wykonanie ma konkretny next move') : L('Execution bandwidth is available', 'Jest bandwidth na wykonanie'),
                 summary:
                   tasksDueSoon.length > 0
-                    ? 'Near-term work is visible, which makes this a good moment to connect it to the broader transformation narrative.'
-                    : 'You can safely use some bandwidth to clarify the strongest lane rather than react to noise.',
+                    ? L(
+                        'Near-term work is visible, which makes this a good moment to connect it to the broader transformation narrative.',
+                        'Praca “na teraz” jest widoczna — to dobry moment, żeby podpiąć ją pod szerszą narrację transformacji.'
+                      )
+                    : L(
+                        'You can safely use some bandwidth to clarify the strongest lane rather than react to noise.',
+                        'Możesz bezpiecznie użyć części bandwidthu na doprecyzowanie najmocniejszego “lane”, zamiast reagować na szum.'
+                      ),
                 tag: 'Execution',
                 tone: 'positive',
               },
               {
                 id: 'momentum-3',
-                title: pendingDecisions.length > 0 ? 'Decision pacing is the main constraint' : 'Decision flow is currently clean',
+                title: pendingDecisions.length > 0 ? L('Decision pacing is the main constraint', 'Tempo decyzji jest głównym ograniczeniem') : L('Decision flow is currently clean', 'Przepływ decyzji jest teraz czysty'),
                 summary:
                   pendingDecisions.length > 0
-                    ? 'The system does not need more updates. It needs one cleaner decision sequence.'
-                    : 'This is a rare moment to push the strongest opportunity forward without governance drag.',
+                    ? L(
+                        'The system does not need more updates. It needs one cleaner decision sequence.',
+                        'System nie potrzebuje kolejnych update’ów. Potrzebuje czystszej sekwencji decyzji.'
+                      )
+                    : L(
+                        'This is a rare moment to push the strongest opportunity forward without governance drag.',
+                        'To rzadki moment, żeby pchnąć najmocniejszą szansę do przodu bez tarcia governance.'
+                      ),
                 tag: 'Decision flow',
                 tone: pendingDecisions.length > 0 ? 'warning' : 'neutral',
               },
@@ -11396,8 +12426,8 @@ router.get(
         },
         {
           id: 'sparkField',
-          title: 'Spark Field',
-          subtitle: 'Ideas and notes with transformation gravity',
+          title: L('Spark Field', 'Spark Field'),
+          subtitle: L('Ideas and notes with transformation gravity', 'Pomysły i notatki z “grawitacją transformacji”'),
           accent: 'warm',
           size: computeRecommendedSize(sparkPriority, 'lg'),
           priorityWeight: sparkPriority,
@@ -11424,10 +12454,14 @@ router.get(
                 .slice(0, 220),
               updatedAt: String(note.updated_at || ''),
             })),
+            orgIdeas: orgIdeasPayload,
             nudge:
               ideas[0] && Number(ideas[0].task_count || 0) === 0
                 ? {
-                    text: `The idea "${ideas[0].title}" still has no formal execution lane. This is the cleanest available unlock.`,
+                    text: L(
+                      `The idea "${ideas[0].title}" still has no formal execution lane. This is the cleanest available unlock.`,
+                      `Pomysł "${ideas[0].title}" nadal nie ma formalnego pasa wykonania. To najczystszy możliwy unlock.`
+                    ),
                     ideaId: String(ideas[0].id),
                   }
                 : null,
@@ -11435,8 +12469,8 @@ router.get(
         },
         {
           id: 'decisionTemperature',
-          title: 'Decision Temperature',
-          subtitle: 'Where approvals and blockers are heating up',
+          title: L('Decision Temperature', 'Decision Temperature'),
+          subtitle: L('Where approvals and blockers are heating up', 'Gdzie approvals i blockery się podgrzewają'),
           accent: 'alert',
           size: computeRecommendedSize(decisionPriority, 'md'),
           priorityWeight: decisionPriority,
@@ -11453,8 +12487,10 @@ router.get(
                   ownerLabel: roleLens,
                   priority: String(pendingDecisions[0].priority || 'high'),
                   deadlineLabel: pendingDecisions[0].deadline
-                    ? `Target close: ${String(pendingDecisions[0].deadline)}`
-                    : 'Needs closure this week',
+                    ? isPolish
+                      ? `Docelowe domknięcie: ${String(pendingDecisions[0].deadline)}`
+                      : `Target close: ${String(pendingDecisions[0].deadline)}`
+                    : L('Needs closure this week', 'Wymaga domknięcia w tym tygodniu'),
                 }
               : null,
             signals: [
@@ -11462,22 +12498,34 @@ router.get(
                 id: 'decision-heat-1',
                 title:
                   pendingDecisions.length > 0
-                    ? 'Decision drag is now visible at Home level'
-                    : 'No high-temperature decision detected',
+                    ? L('Decision drag is now visible at Home level', 'Drag decyzyjny jest już widoczny na poziomie Home')
+                    : L('No high-temperature decision detected', 'Brak decyzji “wysokotemperaturowej”'),
                 summary:
                   pendingDecisions.length > 0
-                    ? 'The right move is not another update. It is a tighter decision frame and a clearer owner path.'
-                    : 'Decision flow is currently calm, which creates space for stronger shaping work.',
+                    ? L(
+                        'The right move is not another update. It is a tighter decision frame and a clearer owner path.',
+                        'Właściwym ruchem nie jest kolejny update. To ciaśniejsza rama decyzji i jaśniejsza ścieżka ownera.'
+                      )
+                    : L(
+                        'Decision flow is currently calm, which creates space for stronger shaping work.',
+                        'Przepływ decyzji jest teraz spokojny, co tworzy przestrzeń na mocniejszy shaping.'
+                      ),
                 tag: 'Governance',
                 tone: pendingDecisions.length > 0 ? 'warning' : 'neutral',
               },
               {
                 id: 'decision-heat-2',
-                title: blockedCount > 1 ? 'Execution and approvals are colliding' : 'Governance is manageable',
+                title: blockedCount > 1 ? L('Execution and approvals are colliding', 'Wykonanie i approvals się zderzają') : L('Governance is manageable', 'Governance jest do udźwignięcia'),
                 summary:
                   blockedCount > 1
-                    ? 'A blocked work item is now amplifying decision pressure. This is a sequencing problem, not just a backlog problem.'
-                    : 'The current level of governance pressure should be absorbable if one decision is framed clearly.',
+                    ? L(
+                        'A blocked work item is now amplifying decision pressure. This is a sequencing problem, not just a backlog problem.',
+                        'Zablokowany element pracy wzmacnia presję decyzyjną. To problem sekwencjonowania, nie tylko backlogu.'
+                      )
+                    : L(
+                        'The current level of governance pressure should be absorbable if one decision is framed clearly.',
+                        'Aktualny poziom presji governance powinien być do wchłonięcia, jeśli jedna decyzja będzie jasno zramowana.'
+                      ),
                 tag: 'Sequencing',
                 tone: blockedCount > 1 ? 'warning' : 'neutral',
               },
@@ -11486,8 +12534,8 @@ router.get(
         },
         {
           id: 'industryLens',
-          title: 'Industry Lens',
-          subtitle: 'External signals translated into transformation relevance',
+          title: L('Industry Lens', 'Industry Lens'),
+          subtitle: L('External signals translated into transformation relevance', 'Sygnały z zewnątrz przetłumaczone na znaczenie dla transformacji'),
           accent: 'cool',
           size: computeRecommendedSize(industryPriority, 'lg'),
           priorityWeight: industryPriority,
@@ -11495,41 +12543,45 @@ router.get(
           freshnessScore: industryFreshness,
           ctaIntents: ['translate_signal', 'compare_peer_case', 'turn_signal_into_action'],
           payload: {
-            industryLabel: industry || preset.industryLabel,
+            industryLabel: industry || p.industryLabel,
             roleLens,
             marketSignal: {
               id: 'industry-market',
-              title: preset.marketSignalTitle,
-              summary: preset.marketSignalSummary,
-              tag: 'Market signal',
+              title: p.marketSignalTitle,
+              summary: p.marketSignalSummary,
+              tag: L('Market signal', 'Sygnał rynkowy'),
               tone: 'warning',
             },
             technologySignal: {
               id: 'industry-tech',
-              title: preset.technologySignalTitle,
-              summary: preset.technologySignalSummary,
-              tag: 'Technology signal',
+              title: p.technologySignalTitle,
+              summary: p.technologySignalSummary,
+              tag: L('Technology signal', 'Sygnał technologiczny'),
               tone: 'positive',
             },
+            aiNews: Array.isArray(aiNews) ? aiNews : [],
             benchmark: {
-              label: preset.benchmarkLabel,
-              value: preset.benchmarkValue,
-              delta: preset.benchmarkDelta,
+              label: p.benchmarkLabel,
+              value: p.benchmarkValue,
+              delta: p.benchmarkDelta,
               implication: constraints
-                ? `${preset.benchmarkImplication} Current constraints in context: ${constraints}.`
-                : preset.benchmarkImplication,
+                ? `${p.benchmarkImplication} ${L('Current constraints in context', 'Bieżące ograniczenia w kontekście')}: ${constraints}.`
+                : p.benchmarkImplication,
             },
             peerCase: {
-              title: preset.peerCaseTitle,
-              summary: preset.peerCaseSummary,
-              implication: preset.peerCaseImplication,
+              title: p.peerCaseTitle,
+              summary: p.peerCaseSummary,
+              implication: p.peerCaseImplication,
             },
           },
         },
         {
           id: 'executionCurrent',
-          title: 'Execution Current',
-          subtitle: 'Transformation execution without drifting into operations control',
+          title: L('Execution Current', 'Execution Current'),
+          subtitle: L(
+            'Transformation execution without drifting into operations control',
+            'Wykonanie transformacji bez dryfu w “operational control”'
+          ),
           accent: 'cool',
           size: computeRecommendedSize(executionPriority, 'md'),
           priorityWeight: executionPriority,
@@ -11539,14 +12591,20 @@ router.get(
           payload: {
             headline:
               tasksDueSoon.length > 0
-                ? 'Execution is visible. Use it to support narrative and decision clarity.'
-                : 'Execution is relatively light. This is a shaping window.',
+                ? L(
+                    'Execution is visible. Use it to support narrative and decision clarity.',
+                    'Wykonanie jest widoczne. Użyj go, żeby wspierać narrację i klarowność decyzji.'
+                  )
+                : L(
+                    'Execution is relatively light. This is a shaping window.',
+                    'Wykonanie jest relatywnie lekkie. To okno na shaping.'
+                  ),
             streams: [
               tasksDueSoon[0]
                 ? {
                     id: `task-${tasksDueSoon[0].id}`,
                     label: String(tasksDueSoon[0].title),
-                    progressLabel: overdueTasks.length > 0 ? 'Needs immediate attention' : 'Closest active move',
+                    progressLabel: overdueTasks.length > 0 ? L('Needs immediate attention', 'Wymaga natychmiastowej uwagi') : L('Closest active move', 'Najbliższy aktywny ruch'),
                     status: overdueTasks.length > 0 ? 'blocked' : 'accelerating',
                     entityType: 'task',
                     entityId: String(tasksDueSoon[0].id),
@@ -11556,7 +12614,7 @@ router.get(
                 ? {
                     id: `task-${tasksDueSoon[1].id}`,
                     label: String(tasksDueSoon[1].title),
-                    progressLabel: 'Execution lane in motion',
+                    progressLabel: L('Execution lane in motion', 'Pas wykonania w ruchu'),
                     status: 'steady',
                     entityType: 'task',
                     entityId: String(tasksDueSoon[1].id),
@@ -11566,19 +12624,20 @@ router.get(
                 ? {
                     id: `decision-${pendingDecisions[0].id}`,
                     label: String(pendingDecisions[0].title),
-                    progressLabel: 'Waiting on decision closure',
+                    progressLabel: L('Waiting on decision closure', 'Czeka na domknięcie decyzji'),
                     status: 'blocked',
                     entityType: 'decision',
                     entityId: String(pendingDecisions[0].id),
                   }
                 : null,
             ].filter(Boolean),
+            nextUp,
           },
         },
         {
           id: 'teamSignal',
-          title: 'Team Signal',
-          subtitle: 'Organizational alignment around the transformation storyline',
+          title: L('Team Signal', 'Team Signal'),
+          subtitle: L('Organizational alignment around the transformation storyline', 'Wyrównanie organizacji wokół narracji transformacji'),
           accent: 'neutral',
           size: computeRecommendedSize(teamPriority, 'md'),
           priorityWeight: teamPriority,
@@ -11588,42 +12647,67 @@ router.get(
           payload: {
             headline:
               pendingDecisions.length > 1
-                ? 'The team has energy, but alignment still needs a cleaner narrative.'
-                : 'The system looks collaborative enough to push one strong storyline forward.',
+                ? L(
+                    'The team has energy, but alignment still needs a cleaner narrative.',
+                    'Zespół ma energię, ale alignment nadal potrzebuje czystszej narracji.'
+                  )
+                : L(
+                    'The system looks collaborative enough to push one strong storyline forward.',
+                    'System wygląda wystarczająco współpracująco, żeby pchać jedną silną narrację do przodu.'
+                  ),
             summary:
               priorities
-                ? `Current priorities in context: ${priorities}. Home should keep these visible without turning into an operational cockpit.`
-                : 'Home should help the team align around transformation direction, not just task status.',
+                ? L(
+                    `Current priorities in context: ${priorities}. Home should keep these visible without turning into an operational cockpit.`,
+                    `Aktualne priorytety w kontekście: ${priorities}. Home ma je trzymać widoczne, ale bez zamiany w “operational cockpit”.`
+                  )
+                : L(
+                    'Home should help the team align around transformation direction, not just task status.',
+                    'Home ma pomagać zespołowi alignować się na kierunku transformacji, nie tylko na statusie zadań.'
+                  ),
             signals: [
               {
                 id: 'team-signal-1',
-                title: 'There is enough movement in the system',
-                detail: 'The risk is fragmentation, not inactivity. Use one storyline to align effort.',
+                title: L('There is enough movement in the system', 'W systemie jest dość ruchu'),
+                detail: L(
+                  'The risk is fragmentation, not inactivity. Use one storyline to align effort.',
+                  'Ryzykiem jest fragmentacja, nie bezczynność. Użyj jednej narracji, żeby alignować wysiłek.'
+                ),
                 tone: 'positive',
               },
               {
                 id: 'team-signal-2',
-                title: pendingDecisions.length > 0 ? 'Leadership attention is the lever' : 'Leadership attention is available',
+                title: pendingDecisions.length > 0 ? L('Leadership attention is the lever', 'Uwaga liderów jest dźwignią') : L('Leadership attention is available', 'Uwaga liderów jest dostępna'),
                 detail:
                   pendingDecisions.length > 0
-                    ? 'One cleaner approval path will likely unlock more than another status review.'
-                    : 'This is a good moment to package the strongest idea for leadership conversation.',
+                    ? L(
+                        'One cleaner approval path will likely unlock more than another status review.',
+                        'Jedna czystsza ścieżka approval prawdopodobnie odblokuje więcej niż kolejny status review.'
+                      )
+                    : L(
+                        'This is a good moment to package the strongest idea for leadership conversation.',
+                        'To dobry moment, żeby spakować najsilniejszy pomysł do rozmowy z leadershipem.'
+                      ),
                 tone: pendingDecisions.length > 0 ? 'warning' : 'positive',
               },
               {
                 id: 'team-signal-3',
-                title: 'Narrative discipline matters more than more updates',
+                title: L('Narrative discipline matters more than more updates', 'Dyscyplina narracji jest ważniejsza niż kolejne update’y'),
                 detail:
-                  'If Home keeps showing isolated signals, the team will see a dashboard. If it tells one story, they will see direction.',
+                  L(
+                    'If Home keeps showing isolated signals, the team will see a dashboard. If it tells one story, they will see direction.',
+                    'Jeśli Home pokazuje izolowane sygnały, zespół zobaczy dashboard. Jeśli opowiada jedną historię, zobaczy kierunek.'
+                  ),
                 tone: 'neutral',
               },
             ],
+            peerTips,
           },
         },
         {
           id: 'commandDock',
-          title: 'Command Dock',
-          subtitle: 'Immediate moves',
+          title: L('Command Dock', 'Command Dock'),
+          subtitle: L('Immediate moves', 'Natychmiastowe ruchy'),
           accent: 'neutral',
           size: 'hero',
           priorityWeight: 100,
@@ -11632,17 +12716,20 @@ router.get(
           ctaIntents: ['create', 'navigate', 'chat'],
           payload: {
             actions: [
-              { id: 'new-idea', label: '+ Idea', kind: 'create', target: 'idea' },
-              { id: 'new-note', label: '+ Note', kind: 'create', target: 'note' },
-              { id: 'new-task', label: '+ Task', kind: 'create', target: 'task' },
-              { id: 'new-decision', label: '+ Decision', kind: 'create', target: 'decision' },
-              { id: 'open-calendar', label: 'Calendar', kind: 'navigate', target: 'calendar' },
+              { id: 'new-idea', label: L('+ Idea', '+ Pomysł'), kind: 'create', target: 'idea' },
+              { id: 'new-note', label: L('+ Note', '+ Notatka'), kind: 'create', target: 'note' },
+              { id: 'new-task', label: L('+ Task', '+ Zadanie'), kind: 'create', target: 'task' },
+              { id: 'new-decision', label: L('+ Decision', '+ Decyzja'), kind: 'create', target: 'decision' },
+              { id: 'open-calendar', label: L('Calendar', 'Kalendarz'), kind: 'navigate', target: 'calendar' },
               {
                 id: 'ask-ai',
-                label: 'Ask AI',
+                label: L('Ask AI', 'Zapytaj AI'),
                 kind: 'chat',
                 starterPrompt:
-                  'Turn the current Home signals into one clear transformation narrative, three priorities, and one next decision.',
+                  L(
+                    'Turn the current Home signals into one clear transformation narrative, three priorities, and one next decision.',
+                    'Zamień sygnały z Home w jedną klarowną narrację transformacji, trzy priorytety i jedną następną decyzję.'
+                  ),
               },
             ],
           },
@@ -11654,8 +12741,11 @@ router.get(
         updatedAt: now.toISOString(),
         pulseLabel:
           pendingDecisions.length > 0
-            ? 'Transformation pressure is rising in the right places'
-            : 'Transformation momentum is building',
+            ? L(
+                'Transformation pressure is rising in the right places',
+                'Presja transformacji rośnie we właściwych miejscach'
+              )
+            : L('Transformation momentum is building', 'Momentum transformacji się buduje'),
         blocks,
       });
     } catch (err: any) {
@@ -11678,20 +12768,24 @@ router.get(
       const dayOfWeek = now.getDay();
       const weekProgress = Math.round((dayOfWeek / 5) * 100);
 
-      const overdueTasks = await db.query(
+      const overdueTasksResult = await db.query<{ id: string; title: string }>(
         `SELECT id, title FROM tasks WHERE assigned_to = ? AND organization_id = ? AND status NOT IN ('done','cancelled') AND due_date < ${nowSql()} ORDER BY due_date ASC LIMIT 3`,
         [userId, orgId]
       );
 
-      const pendingDecisions = await db.query(
+      const pendingDecisionsResult = await db.query<{ id: string; title: string }>(
         `SELECT id, title FROM decisions WHERE organization_id = ? AND status = 'pending' AND (created_by = ? OR assigned_to = ?) ORDER BY created_at DESC LIMIT 3`,
         [orgId, userId, userId]
       );
 
-      const recentIdeas = await db.query(
+      const recentIdeasResult = await db.query<{ id: string; title: string }>(
         `SELECT id, title FROM ideas WHERE created_by = ? AND organization_id = ? ORDER BY updated_at DESC LIMIT 1`,
         [userId, orgId]
       );
+
+      const overdueTasks = overdueTasksResult.rows;
+      const pendingDecisions = pendingDecisionsResult.rows;
+      const recentIdeas = recentIdeasResult.rows;
 
       const focusItems: Array<{ id: string; type: string; title: string; meta: string; priority: string }> = [];
 
@@ -11746,20 +12840,35 @@ router.get(
     const orgId = req.organizationId!;
 
     try {
-      const ideas = await db.query(
+      const ideasResult = await db.query<{
+        id: string;
+        title: string;
+        description: string | null;
+        stage: string | null;
+        updated_at: string;
+      }>(
         `SELECT id, title, description, stage, updated_at FROM ideas WHERE created_by = ? AND organization_id = ? ORDER BY updated_at DESC LIMIT 4`,
         [userId, orgId]
       );
 
-      const notes = await db.query(
+      const notesResult = await db.query<{
+        id: string;
+        title: string;
+        content: string | null;
+        updated_at: string;
+      }>(
         `SELECT id, title, content, updated_at FROM notebook_pages WHERE user_id = ? AND organization_id = ? ORDER BY updated_at DESC LIMIT 2`,
         [userId, orgId]
       );
 
-      const ideasWithoutTasks = await db.query(
+      const ideasWithoutTasksResult = await db.query<{ id: string; title: string }>(
         `SELECT i.id, i.title FROM ideas i LEFT JOIN tasks t ON t.idea_id = i.id WHERE i.created_by = ? AND i.organization_id = ? AND t.id IS NULL ORDER BY i.updated_at DESC LIMIT 1`,
         [userId, orgId]
       );
+
+      const ideas = ideasResult.rows;
+      const notes = notesResult.rows;
+      const ideasWithoutTasks = ideasWithoutTasksResult.rows;
 
       const aiNudge = ideasWithoutTasks.length > 0
         ? {
@@ -11828,8 +12937,8 @@ router.get(
         [userId, orgId]
       );
 
-      const pendingDecisions = Number(pendingDecisionsResult[0]?.cnt || 0);
-      const overdueTasks = Number(overdueTasksResult[0]?.cnt || 0);
+      const pendingDecisions = Number((pendingDecisionsResult.rows[0] as any)?.cnt || 0);
+      const overdueTasks = Number((overdueTasksResult.rows[0] as any)?.cnt || 0);
 
       res.json({
         pendingDecisions,

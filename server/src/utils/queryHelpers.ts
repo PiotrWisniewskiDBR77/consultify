@@ -27,7 +27,7 @@ interface Database {
   serialize: (callback: () => void) => void;
 }
 
-interface QueryResult {
+interface RunQueryResult {
   lastID?: number;
   changes: number;
 }
@@ -80,7 +80,7 @@ export function queryFirst<T = any>(sql: string, params: unknown[] = []): Promis
 /**
  * Promise-based wrapper for db.run
  */
-export function queryRun(sql: string, params: unknown[] = []): Promise<QueryResult> {
+export function queryRun(sql: string, params: unknown[] = []): Promise<RunQueryResult> {
   return new Promise((resolve, reject) => {
     getDatabase().run(
       sql,
@@ -116,6 +116,12 @@ export async function queryParallel(queries: Query[]): Promise<unknown[]> {
 
   return Promise.all(promises);
 }
+
+/**
+ * Legacy aliases kept for older route/service call sites.
+ */
+export const query = queryAll;
+export const run = queryRun;
 
 /**
  * Build IN clause placeholders for array of values

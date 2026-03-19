@@ -12,7 +12,6 @@ import {
   ArrowRight,
   ArrowUp,
   ArrowUpDown,
-  BarChart3,
   Brain,
   Calendar,
   Camera,
@@ -43,8 +42,6 @@ import {
   Network,
   Paintbrush,
   Palette,
-  PanelRightClose,
-  PanelRightOpen,
   Plus,
   Presentation,
   Redo2,
@@ -98,11 +95,7 @@ import {
   exportToCSV,
   parseCSV,
 } from './table/csvUtils';
-import {
-  AnalyticsSummaryStrip,
-  computeHeatmapStyles,
-  HeatmapControls,
-} from './table/EmbeddedAnalytics';
+import { computeHeatmapStyles, HeatmapControls } from './table/EmbeddedAnalytics';
 import { ExportToPresentation } from './table/ExportToPresentation';
 import { FilterBuilder } from './table/FilterBuilder';
 import { FilterPanel } from './table/FilterPanel';
@@ -122,9 +115,7 @@ import { MatrixView } from './table/MatrixView';
 import { RecordExpandModal } from './table/RecordExpandModal';
 import { RowDetailPanel } from './table/RowDetailPanel';
 import { type RowTemplate, RowTemplatePicker } from './table/RowTemplatePicker';
-import { type SmartSuggestion, SmartSuggestionsBar } from './table/SmartSuggestionsBar';
 import { StickyNoteView } from './table/StickyNoteView';
-import { TableSummaryDashboard } from './table/TableSummaryDashboard';
 import type {
   ColumnDef,
   FilterGroup,
@@ -140,7 +131,6 @@ import { useTablePlatformIntegration } from './table/useTablePlatformIntegration
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { ActivityFeed } from './table/ActivityFeed';
 import { AuditTrailPanel } from './table/AuditTrailPanel';
-import { ChatToSchemaPanel } from './table/ChatToSchemaPanel';
 import { ViewRouter } from './table/views/ViewRouter';
 import type { ViewConfigState } from './table/views/ViewConfigPanel';
 // Domain hooks extracted from this file (Stage 1 refactor)
@@ -219,12 +209,13 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     onSelectionChange: onSelectionChange as (sel: unknown) => void | undefined,
   });
 
-  // When the new platform is active, override legacy hook outputs
-  const usePlatform = platformIntegration.active;
+  // Platform may be active via feature flags, but we can still fall back to
+  // legacy graph persistence if the new backend is effectively empty.
+  const platformActive = platformIntegration.active;
 
   // ── Table Platform real-time collaboration ─────────────────────────────────
   const realtime = useTableRealtime({
-    tableId: usePlatform ? ideaId : null,
+    tableId: platformActive ? ideaId : null,
     userId: 'current-user',
     userName: 'Me',
   });
@@ -250,8 +241,8 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   } = schema;
 
   // Platform override: columns
-  const effectiveColumns = usePlatform ? platformIntegration.columns : columns;
-  const effectiveVisibleColumns = usePlatform
+  const effectiveColumns = platformActive ? platformIntegration.columns : columns;
+  const effectiveVisibleColumns = platformActive
     ? platformIntegration.visibleColumns
     : visibleColumns;
 
@@ -296,27 +287,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   } = views;
 
   // Platform override: views
-  const effectiveViewLayout = usePlatform ? platformIntegration.viewLayout : viewLayout;
-  const effectiveSetViewLayout = usePlatform ? platformIntegration.setViewLayout : setViewLayout;
-  const effectiveSavedViews = usePlatform ? platformIntegration.savedViews : savedViews;
-  const effectiveActiveViewId = usePlatform ? platformIntegration.activeViewId : activeViewId;
-  const effectiveSort = usePlatform ? platformIntegration.sort : sort;
-  const effectiveSetSort = usePlatform ? platformIntegration.setSort : setSort;
-  const effectiveFilters = usePlatform ? platformIntegration.filters : filters;
-  const effectiveSetFilters = usePlatform ? platformIntegration.setFilters : setFilters;
-  const effectiveGroupBy = usePlatform ? platformIntegration.groupBy : groupBy;
-  const effectiveSetGroupBy = usePlatform ? platformIntegration.setGroupBy : setGroupBy;
-
-  const effectiveCycleSort = useCallback(
-    (key: string) => {
-      const setter = usePlatform ? effectiveSetSort : setSort;
-      const current = usePlatform ? effectiveSort : sort;
-      if (!current || current.key !== key) setter({ key, direction: 'asc' });
-      else if (current.direction === 'asc') setter({ key, direction: 'desc' });
-      else setter(null);
-    },
-    [usePlatform, effectiveSetSort, setSort, effectiveSort, sort]
-  );
+  const effectiveViewLayout = platformActive ? platformIntegration.viewLayout : viewLayout;
+  const effectiveSetViewLayout = platformActive ? platformIntegration.setViewLayout : setViewLayout;
+  const effectiveSavedViews = platformActive ? platformIntegration.savedViews : savedViews;
+  const effectiveActiveViewId = platformActive ? platformIntegration.activeViewId : activeViewId;
+  const effectiveSort = platformActive ? platformIntegration.sort : sort;
+  const effectiveSetSort = platformActive ? platformIntegration.setSort : setSort;
+  const effectiveFilters = platformActive ? platformIntegration.filters : filters;
+  const effectiveSetFilters = platformActive ? platformIntegration.setFilters : setFilters;
+  const effectiveGroupBy = platformActive ? platformIntegration.groupBy : groupBy;
+  const effectiveSetGroupBy = platformActive ? platformIntegration.setGroupBy : setGroupBy;
 
   // ── Core data state ──────────────────────────────────────────────────────────
   const [edges, setEdges] = useState<TableEdge[]>([]);
@@ -361,6 +341,16 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     setAddRowBtnRect,
   } = rowOps;
 
+  // Fall back to legacy graph data when the metadata-first table is effectively
+  // empty but the legacy workspace graph already contains richer seeded content.
+  const platformLooksEmpty =
+    platformActive &&
+    !platformIntegration.loading &&
+    platformIntegration.nodes.length === 0 &&
+    platformIntegration.columns.length <= 1;
+  const legacyLooksPopulated = nodes.length > 0 || columns.length > 1;
+  const usePlatform = platformActive && !(platformLooksEmpty && legacyLooksPopulated);
+
   // Platform override: rows
   const effectiveNodes = (usePlatform ? platformIntegration.nodes : nodes) ?? [];
   const effectiveProcessedRows = (usePlatform ? platformIntegration.processedRows : processedRows) ?? [];
@@ -370,6 +360,17 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const effectiveHandleFieldChange = usePlatform ? platformIntegration.handleFieldChange : handleFieldChange;
   const effectiveHandleAddRow = usePlatform ? platformIntegration.handleAddRow : handleAddRow;
   const effectiveHandleBulkDelete = usePlatform ? platformIntegration.handleBulkDelete : handleBulkDelete;
+
+  const effectiveCycleSort = useCallback(
+    (key: string) => {
+      const setter = usePlatform ? effectiveSetSort : setSort;
+      const current = usePlatform ? effectiveSort : sort;
+      if (!current || current.key !== key) setter({ key, direction: 'asc' });
+      else if (current.direction === 'asc') setter({ key, direction: 'desc' });
+      else setter(null);
+    },
+    [usePlatform, effectiveSetSort, setSort, effectiveSort, sort]
+  );
 
   useEffect(() => {
     onGraphChange?.({
@@ -455,8 +456,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const [aiProposal, setAiProposal] = useState<TableProposal | null>(null);
   const [showColorPalette, setShowColorPalette] = useState(false);
   const [activePalette, setActivePalette] = useState('vibrant');
-  const [showSmartSuggestions, setShowSmartSuggestions] = useState(true);
-  const [showSummaryDashboard, setShowSummaryDashboard] = useState(false);
+  const [, setShowSummaryDashboard] = useState(false);
   const [cellExpandState, setCellExpandState] = useState<{
     nodeId: string;
     colKey: string;
@@ -485,7 +485,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   } | null>(null);
   const [renamingViewId, setRenamingViewId] = useState<string | null>(null);
   const [renamingViewName, setRenamingViewName] = useState('');
-  const [showChatToSchema, setShowChatToSchema] = useState(false);
   const [showAuditTrail, setShowAuditTrail] = useState(false);
   const [showActivityFeed, setShowActivityFeed] = useState(false);
   const [showSnapshotManager, setShowSnapshotManager] = useState(false);
@@ -520,6 +519,42 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
   const csvInputRef = useRef<HTMLInputElement>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
+  const [tableViewportWidth, setTableViewportWidth] = useState(0);
+
+  useEffect(() => {
+    if (_loading || _vl !== 'table') return;
+    const el = tableContainerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+
+    const updateWidth = () => setTableViewportWidth(el.clientWidth);
+    updateWidth();
+
+    const observer = new ResizeObserver(() => updateWidth());
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [_loading, _vl]);
+  const stretchedVisibleCols = useMemo(() => {
+    if (_visCols.length === 0) return _visCols;
+
+    const fixedChromeWidth = 72;
+    const preferredWidth = _visCols.reduce((sum, col) => sum + col.width, 0);
+    const availableWidth = Math.max(0, tableViewportWidth - fixedChromeWidth);
+    if (availableWidth <= preferredWidth) return _visCols;
+
+    const extraWidth = availableWidth - preferredWidth;
+    const extraPerColumn = Math.floor(extraWidth / _visCols.length);
+    let remainder = extraWidth % _visCols.length;
+
+    return _visCols.map((col) => {
+      const width = col.width + extraPerColumn + (remainder > 0 ? 1 : 0);
+      if (remainder > 0) remainder -= 1;
+      return { ...col, width };
+    });
+  }, [_visCols, tableViewportWidth]);
+  const tableWidth = Math.max(
+    tableViewportWidth,
+    stretchedVisibleCols.reduce((sum, col) => sum + col.width, 72)
+  );
 
   // ── Multi-table tab strip: load tables list ─────────────────────────────────
   const platformTableId = usePlatform
@@ -655,28 +690,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     }));
     nodesUndo.push(next);
   }, [activePalette, groupBy, nodes, nodesUndo]);
-
-  // ── Smart suggestion apply ────────────────────────────────────────────────
-  const handleApplySuggestion = useCallback(
-    (suggestion: SmartSuggestion) => {
-      const payload = suggestion.action?.payload;
-      if (!payload) return;
-      if (payload.type === 'switch_view') setViewLayout(payload.view);
-      if (payload.type === 'add_column' && payload.columnType) {
-        const col: ColumnDef = {
-          key: `col_${Date.now()}`,
-          header:
-            payload.columnType === 'rating' ? (isPl ? 'Ocena' : 'Rating') : payload.columnType,
-          type: payload.columnType,
-          visible: true,
-          width: 120,
-        };
-        setColumns((prev) => [...prev, col]);
-      }
-      trackFunnelEvent('ideas_table_suggestion_applied', { type: suggestion.type, ideaId });
-    },
-    [ideaId, isPl]
-  );
 
   // ── AI Categorize handlers ─────────────────────────────────────────────────
   const handleApplyTags = useCallback(
@@ -895,7 +908,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     [columns, ideaId, locked, nodes, nodesUndo]
   );
 
-  // ── "/" key for AI assistant, Ctrl+Shift+S for AI Schema ────────────────
+  // ── "/" key for AI assistant ─────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (
@@ -907,14 +920,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         e.preventDefault();
         setShowAIAssistant(true);
       }
-      if (e.ctrlKey && e.shiftKey && e.key === 'S' && usePlatform) {
-        e.preventDefault();
-        setShowChatToSchema(true);
-      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [showAIAssistant, usePlatform]);
+  }, [showAIAssistant]);
 
   // Save, toggleColumn, cycleSort, applyView now handled by hooks
 
@@ -1006,7 +1015,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         <td className="w-10 px-1 py-1.5 text-[10px] text-slate-400 dark:text-slate-500 text-right select-none tabular-nums">
           {rowIdx + 1}
         </td>
-        {_visCols.map((col, colIdx) => {
+        {stretchedVisibleCols.map((col, colIdx) => {
           const condStyle =
             formatRules.length > 0
               ? getConditionalStyle(formatRules, col.key, row?.data?.[col.key])
@@ -1541,15 +1550,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               />
             </div>
 
-            {/* Summary dashboard */}
-            <button
-              onClick={() => setShowSummaryDashboard(!showSummaryDashboard)}
-              className={`p-1.5 rounded-lg transition-colors ${showSummaryDashboard ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title={isPl ? 'Podsumowanie' : 'Summary'}
-            >
-              <BarChart3 size={12} />
-            </button>
-
             {/* Platform tab switcher: Data / Forms / Interfaces */}
             {usePlatform && (
               <div className="flex items-center rounded-lg bg-slate-100 dark:bg-navy-800 p-0.5">
@@ -1699,13 +1699,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                       {isPl ? 'Interfejsy' : 'Interfaces'}
                     </button>
                     <button
-                      onClick={() => { setShowChatToSchema(true); setShowToolsMenu(false); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                    >
-                      <Sparkles size={14} className="text-amber-500" />
-                      {isPl ? 'AI Schema Builder' : 'AI Schema Builder'}
-                    </button>
-                    <button
                       onClick={() => { setShowTemplateGallery(true); setShowToolsMenu(false); }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                     >
@@ -1732,21 +1725,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
               </div>
             )}
 
-            {/* AI Builder (split-screen) */}
-            {!locked && usePlatform && (
-              <button
-                onClick={() => setShowChatToSchema((p) => !p)}
-                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                  showChatToSchema
-                    ? 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
-                }`}
-                title={isPl ? 'AI Kreator (Ctrl+Shift+S)' : 'AI Builder (Ctrl+Shift+S)'}
-              >
-                {showChatToSchema ? <PanelRightClose size={12} /> : <PanelRightOpen size={12} />}
-                <span className="hidden lg:inline">{isPl ? 'AI Kreator' : 'AI Builder'}</span>
-              </button>
-            )}
           </div>
 
           {/* Mobile overflow menu for secondary actions */}
@@ -1788,9 +1766,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             </button>
             <button onClick={() => setShowConditionalFmt(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
               <Paintbrush size={14} /> {isPl ? 'Formatowanie' : 'Formatting'}
-            </button>
-            <button onClick={() => setShowSummaryDashboard(!showSummaryDashboard)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
-              <BarChart3 size={14} /> {isPl ? 'Podsumowanie' : 'Summary'}
             </button>
             {!locked && (
               <button onClick={() => setShowFrameworkGen(true)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]">
@@ -2285,7 +2260,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
             />
             <table
               className="w-full text-left"
-              style={{ minWidth: _visCols.reduce((s, c) => s + c.width, 80) }}
+              style={{ width: tableWidth, minWidth: tableWidth, tableLayout: 'fixed' }}
             >
               <thead className="sticky top-0 bg-slate-50/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/60 z-10">
                 <tr>
@@ -2314,7 +2289,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     />
                   </th>
                   <th className="w-10 px-1 py-2 text-[10px] font-normal text-slate-400 dark:text-slate-500 text-right select-none">#</th>
-                  {_visCols.map((col) => (
+                  {stretchedVisibleCols.map((col) => (
                     <th
                       key={col.key}
                       style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
@@ -2446,7 +2421,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                     <tr className="bg-slate-50/50 dark:bg-navy-900/50">
                       <td className="px-2 py-1.5" />
                       <td className="w-10 px-1 py-1.5" />
-                      {_visCols.map((col) => {
+                      {stretchedVisibleCols.map((col) => {
                         const agg = col.aggregation;
                         if (!agg || agg === 'none')
                           return <td key={col.key} className="px-2 py-1.5" />;
@@ -2542,32 +2517,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           />
         )}
       </div>
-
-      {/* Analytics Summary Strip */}
-      <AnalyticsSummaryStrip
-        nodes={processedRowsWithRollups}
-        columns={_cols}
-        visible={processedRowsWithRollups.length > 0}
-      />
-
-      {/* Smart Suggestions Bar */}
-      <SmartSuggestionsBar
-        nodes={processedRowsWithRollups}
-        columns={_cols}
-        visible={showSmartSuggestions && processedRowsWithRollups.length > 0}
-        onDismiss={() => setShowSmartSuggestions(false)}
-        onApplySuggestion={handleApplySuggestion}
-        ideaId={ideaId}
-      />
-
-      {/* Table Summary Dashboard */}
-      <TableSummaryDashboard
-        open={showSummaryDashboard}
-        onClose={() => setShowSummaryDashboard(false)}
-        nodes={processedRowsWithRollups}
-        columns={_cols}
-        ideaId={ideaId}
-      />
+      </div>
 
       {/* Column context menu */}
       {colContextMenu && (
@@ -2602,25 +2552,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         </div>
       )}
 
-          </div>
-          {showChatToSchema && usePlatform && (
-            <div className="w-[400px] border-l border-gray-200 dark:border-navy-700 flex-shrink-0 flex flex-col overflow-hidden">
-              <ChatToSchemaPanel
-                mode="splitScreen"
-                workspaceId={ideaId}
-                existingSchema={effectiveColumns.map(c => ({
-                  key: c.key,
-                  header: c.header,
-                  type: c.type,
-                }))}
-                onExecuted={() => {
-                  setShowChatToSchema(false);
-                  platformIntegration.refresh();
-                }}
-                onClose={() => setShowChatToSchema(false)}
-              />
-            </div>
-          )}
         </div>
 
       {/* Row Detail Panel */}

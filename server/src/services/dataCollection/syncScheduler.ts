@@ -76,7 +76,11 @@ export class SyncScheduler {
 
     try {
       const db = getDatabase();
-      const result = await db.query(
+      const result = await db.query<{
+        id: string;
+        schedule: { enabled: boolean; intervalMinutes?: number } | null;
+        config: Record<string, unknown> | null;
+      }>(
         `SELECT id, schedule, config FROM tp_connectors
          WHERE schedule IS NOT NULL
            AND (schedule->>'enabled')::text = 'true'`

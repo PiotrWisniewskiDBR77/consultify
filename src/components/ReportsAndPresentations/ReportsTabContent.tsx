@@ -30,6 +30,7 @@ interface ReportsTabContentProps {
   onFilterChange: (filters: FilterChip[]) => void;
   reports: ReportItem[];
   loading: boolean;
+  error?: string | null;
   onRefresh: () => void;
   actions: ReturnType<typeof useRapActions>;
 }
@@ -41,6 +42,7 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
   onFilterChange,
   reports,
   loading,
+  error,
   onRefresh,
   actions,
 }) => {
@@ -248,6 +250,25 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 size={24} className="animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (error && reports.length === 0 && !searchQuery && activeFilters.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full p-6">
+        <div className="w-full max-w-3xl rounded-2xl border border-amber-200/70 dark:border-amber-400/20 bg-amber-50/80 dark:bg-amber-500/10 p-6">
+          <div className="text-lg font-semibold text-slate-900 dark:text-white">
+            {t('rap.errors.realReportsTitle', 'Real reports source needs attention')}
+          </div>
+          <div className="mt-2 text-sm text-slate-700 dark:text-slate-200">{error}</div>
+          <div className="mt-4 text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t(
+              'rap.errors.realSourceHint',
+              'No synthetic demo fallback was injected. Verify active DB, organization scope, and data-context before retrying.'
+            )}
+          </div>
+        </div>
       </div>
     );
   }

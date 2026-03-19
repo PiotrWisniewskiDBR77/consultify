@@ -1,4 +1,4 @@
-export type CalendarEventSource = 'task' | 'initiative' | 'decision' | 'google' | 'outlook';
+export type CalendarEventSource = 'task' | 'initiative' | 'decision' | 'google' | 'outlook' | 'consultify';
 
 export type CalendarViewMode = 'month' | 'week' | 'day' | 'list';
 
@@ -22,11 +22,12 @@ export interface CalendarFilter {
 }
 
 export const SOURCE_COLORS: Record<CalendarEventSource, string> = {
-  task: '#3b82f6',
-  initiative: '#8b5cf6',
-  decision: '#f59e0b',
-  google: '#10b981',
-  outlook: '#6366f1',
+  task: '#2563eb',
+  initiative: '#7c3aed',
+  decision: '#d97706',
+  google: '#059669',
+  outlook: '#4f46e5',
+  consultify: '#6d28d9',
 };
 
 export const SOURCE_LABELS: Record<CalendarEventSource, { en: string; pl: string }> = {
@@ -35,4 +36,5 @@ export const SOURCE_LABELS: Record<CalendarEventSource, { en: string; pl: string
   decision: { en: 'Decisions', pl: 'Decyzje' },
   google: { en: 'Google Calendar', pl: 'Google Calendar' },
   outlook: { en: 'Outlook', pl: 'Outlook' },
+  consultify: { en: 'Consultify', pl: 'Consultify' },
 };

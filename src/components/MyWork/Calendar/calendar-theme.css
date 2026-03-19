@@ -123,3 +123,81 @@
 :root:not(.dark) .fc-consultify .fc-list-day-side-text {
   color: #1e293b;
 }
+
+/* Light mode: stronger event text for readability */
+:root:not(.dark) .fc-consultify .fc-event {
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+:root:not(.dark) .fc-consultify .fc-event-title,
+:root:not(.dark) .fc-consultify .fc-event-time {
+  font-weight: 600;
+}
+
+:root:not(.dark) .fc-consultify .fc-timegrid-slot-label {
+  color: #475569;
+}
+
+:root:not(.dark) .fc-consultify .fc-timegrid-axis-cushion {
+  color: #475569;
+}
+
+/* ── Liquid layout: FC with height=100% keeps header + allDay fixed, only time grid scrolls ── */
+.fc-consultify,
+.fc-consultify .fc {
+  height: 100% !important;
+}
+
+/* Ensure sticky section backgrounds are opaque */
+.fc-consultify .fc-scrollgrid-section-sticky > * {
+  z-index: 4;
+}
+
+:root:not(.dark) .fc-consultify .fc-scrollgrid-section-sticky > * {
+  background: #fff !important;
+}
+
+.dark .fc-consultify .fc-scrollgrid-section-sticky > * {
+  background: #0f172a !important;
+}
+
+/* ── Source badge (Google / Outlook / Consultify icon) ── */
+.fc-consultify .fc-source-badge {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.fc-consultify .fc-source-badge img {
+  background: white;
+  padding: 1px;
+}
+
+/* ── AI focus time ghost blocks ── */
+.fc-consultify .fc-event[data-status="ai_suggestion"],
+.fc-consultify .fc-event.fc-ai-focus {
+  opacity: 0.5;
+  border: 1.5px dashed #7c3aed !important;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(124, 58, 237, 0.06),
+    rgba(124, 58, 237, 0.06) 4px,
+    rgba(124, 58, 237, 0.12) 4px,
+    rgba(124, 58, 237, 0.12) 8px
+  ) !important;
+  color: #7c3aed !important;
+  font-style: italic;
+}
+
+.fc-consultify .fc-event[data-status="ai_suggestion"]:hover {
+  opacity: 0.75;
+}
+
+.fc-consultify .fc-event[data-status="ai_suggestion"] .fc-event-title {
+  color: #7c3aed;
+  font-weight: 500;
+}
+
+.fc-consultify .fc-event[data-status="ai_suggestion"] .fc-event-time {
+  color: #7c3aed;
+  opacity: 0.7;
+}

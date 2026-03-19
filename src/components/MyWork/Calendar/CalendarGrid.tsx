@@ -8,8 +8,20 @@ import { useTranslation } from 'react-i18next';
 
 import './calendar-theme.css';
 
-import type { CalendarEvent, CalendarViewMode } from './calendarTypes';
+import type { CalendarEvent, CalendarEventSource, CalendarViewMode } from './calendarTypes';
 import { SOURCE_COLORS } from './calendarTypes';
+
+const SOURCE_ICONS: Partial<Record<CalendarEventSource, string>> = {
+  google: 'https://www.gstatic.com/images/branding/product/1x/calendar_2020q4_48dp.png',
+  outlook: 'https://img.icons8.com/fluency/48/microsoft-outlook-2019.png',
+};
+
+const CONSULTIFY_BADGE = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="24" height="24" rx="6" fill="#6d28d9" />
+    <text x="12" y="17" textAnchor="middle" fontSize="14" fontWeight="700" fill="white">C</text>
+  </svg>
+);
 
 interface CalendarGridProps {
   events: CalendarEvent[];
@@ -50,7 +62,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
         end: e.end || undefined,
         allDay: e.allDay ?? false,
         backgroundColor: e.color || SOURCE_COLORS[e.source] || '#64748b',
-        borderColor: 'transparent',
+        borderColor: e.status === 'ai_suggestion' ? '#7c3aed' : 'transparent',
+        classNames: e.status === 'ai_suggestion' ? ['fc-ai-focus'] : [],
         extendedProps: {
           source: e.source,
           sourceId: e.sourceId,
@@ -76,6 +89,46 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     },
     [onDateRangeChange]
   );
+
+  const renderEventContent = useCallback((arg: any) => {
+    const source: CalendarEventSource | undefined = arg.event.extendedProps?.source;
+    const iconUrl = source ? SOURCE_ICONS[source] : undefined;
+    const isConsultify = source === 'consultify';
+    const hasBadge = iconUrl || isConsultify;
+
+    return (
+      <div className="fc-event-main-frame" style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}>
+        {arg.timeText && <div className="fc-event-time">{arg.timeText}</div>}
+        <div className="fc-event-title-container">
+          <div className="fc-event-title fc-sticky">{arg.event.title || '\u00A0'}</div>
+        </div>
+        {hasBadge && (
+          <span
+            className="fc-source-badge"
+            style={{
+              position: 'absolute',
+              bottom: 2,
+              right: 3,
+              width: 14,
+              height: 14,
+              borderRadius: 3,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: 0.85,
+              pointerEvents: 'none',
+            }}
+          >
+            {iconUrl ? (
+              <img src={iconUrl} alt="" width={14} height={14} style={{ borderRadius: 3 }} />
+            ) : (
+              CONSULTIFY_BADGE
+            )}
+          </span>
+        )}
+      </div>
+    );
+  }, []);
 
   const viewButtons: { id: CalendarViewMode; label: string; labelPl: string }[] = [
     { id: 'month', label: 'Month', labelPl: 'Miesiąc' },
@@ -103,9 +156,9 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
+    <div className="flex-1 flex flex-col min-w-0 min-h-0">
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-navy-700">
         <div className="flex items-center gap-2">
           <button
             onClick={goToday}
@@ -133,29 +186,31 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           </h3>
         </div>
 
-        <div className="inline-flex items-center gap-0.5 p-0.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-900">
-          {viewButtons.map(({ id, label, labelPl }) => (
-            <button
-              key={id}
-              onClick={() => {
-                onViewModeChange(id);
-                const api = calendarRef.current?.getApi();
-                api?.changeView(VIEW_MAP[id]);
-              }}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                viewMode === id
-                  ? 'bg-white dark:bg-navy-800 text-primary-600 dark:text-primary-400 shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-              }`}
-            >
-              {isPolish ? labelPl : label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center gap-0.5 rounded-lg border border-slate-200 bg-slate-50 p-0.5 dark:border-navy-700 dark:bg-navy-900">
+            {viewButtons.map(({ id, label, labelPl }) => (
+              <button
+                key={id}
+                onClick={() => {
+                  onViewModeChange(id);
+                  const api = calendarRef.current?.getApi();
+                  api?.changeView(VIEW_MAP[id]);
+                }}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  viewMode === id
+                    ? 'bg-white text-primary-600 shadow-sm dark:bg-navy-800 dark:text-primary-400'
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                }`}
+              >
+                {isPolish ? labelPl : label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* FullCalendar */}
-      <div className="flex-1 p-4 fc-consultify">
+      {/* FullCalendar — height=100% enables liquid mode: header+allDay stay fixed, only time grid scrolls */}
+      <div className="flex-1 min-h-0 p-4 fc-consultify">
         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
@@ -163,16 +218,20 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
           initialDate={currentDate}
           events={fcEvents}
           eventClick={handleEventClick}
+          eventContent={renderEventContent}
           datesSet={handleDatesSet}
           headerToolbar={false}
           locale={isPolish ? 'pl' : 'en'}
           firstDay={1}
-          height="auto"
+          height="100%"
+          stickyHeaderDates
           nowIndicator
-          dayMaxEvents={3}
+          dayMaxEvents={5}
           eventDisplay="block"
           slotMinTime="06:00:00"
           slotMaxTime="22:00:00"
+          allDaySlot
+          allDayText={isPolish ? 'cały dzień' : 'all-day'}
         />
       </div>
     </div>

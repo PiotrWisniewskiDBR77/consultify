@@ -419,3 +419,4 @@ class RealtimePlatformService {
 }
 
 export const realtimePlatformService = new RealtimePlatformService();
+export default realtimePlatformService;

@@ -96,8 +96,44 @@ const DashboardSection: React.FC = () => {
       setLoading(true);
       setError(null);
       const response = await Api.get('/api/partners/dashboard');
-      if (response?.success && response?.data) {
-        setDashboardData(response.data);
+      const payload = response?.data;
+      const data = payload?.data;
+      if (response?.success && data) {
+        const DEFAULT_DASHBOARD: DashboardData = {
+          stats: {
+            activeClients: 0,
+            activeProjects: 0,
+            certificationLevel: 'Registered',
+            monthlyRevenue: 0,
+            revenueChange: 0,
+            totalLicenses: 0,
+            activeLicenses: 0,
+            availableLicenses: 0,
+          },
+          recentActivity: [],
+          certificationProgress: { completed: 0, total: 0, courses: [] },
+        };
+
+        const merged: DashboardData = {
+          ...DEFAULT_DASHBOARD,
+          ...(data as any),
+          stats: {
+            ...DEFAULT_DASHBOARD.stats,
+            ...((data as any)?.stats || {}),
+          },
+          recentActivity: Array.isArray((data as any)?.recentActivity)
+            ? (data as any).recentActivity
+            : DEFAULT_DASHBOARD.recentActivity,
+          certificationProgress: {
+            ...DEFAULT_DASHBOARD.certificationProgress,
+            ...((data as any)?.certificationProgress || {}),
+            courses: Array.isArray((data as any)?.certificationProgress?.courses)
+              ? (data as any).certificationProgress.courses
+              : DEFAULT_DASHBOARD.certificationProgress.courses,
+          },
+        };
+
+        setDashboardData(merged);
       } else {
         throw new Error('Invalid response');
       }
@@ -157,35 +193,36 @@ const DashboardSection: React.FC = () => {
     );
   }
 
-  const stats = dashboardData
+  const s = dashboardData?.stats;
+  const stats = s
     ? [
         {
           label: t('partner.dashboard.activeClients', 'Active Clients'),
-          value: String(dashboardData.stats.activeClients),
-          change: `${dashboardData.stats.activeClients > 0 ? '+' : ''}${dashboardData.stats.activeClients}`,
+          value: String(s.activeClients ?? 0),
+          change: `${(s.activeClients ?? 0) > 0 ? '+' : ''}${s.activeClients ?? 0}`,
           changeType: 'positive' as const,
           icon: Building2,
         },
         {
           label: t('partner.dashboard.activeProjects', 'Active Projects'),
-          value: String(dashboardData.stats.activeProjects),
-          change: `${dashboardData.stats.activeProjects > 0 ? '+' : ''}${dashboardData.stats.activeProjects}`,
+          value: String(s.activeProjects ?? 0),
+          change: `${(s.activeProjects ?? 0) > 0 ? '+' : ''}${s.activeProjects ?? 0}`,
           changeType: 'positive' as const,
           icon: FolderKanban,
         },
         {
           label: t('partner.dashboard.certificationLevel', 'Certification Level'),
-          value: dashboardData.stats.certificationLevel || 'Registered',
-          change: `${dashboardData.certificationProgress.completed}/${dashboardData.certificationProgress.total} completed`,
+          value: s.certificationLevel || 'Registered',
+          change: `${dashboardData?.certificationProgress?.completed ?? 0}/${dashboardData?.certificationProgress?.total ?? 0} completed`,
           changeType: 'neutral' as const,
           icon: GraduationCap,
         },
         {
           label: t('partner.dashboard.monthlyRevenue', 'Monthly Revenue'),
-          value: `€${(dashboardData.stats.monthlyRevenue || 0).toLocaleString()}`,
-          change: `${dashboardData.stats.revenueChange > 0 ? '+' : ''}${dashboardData.stats.revenueChange}%`,
+          value: `€${(s.monthlyRevenue || 0).toLocaleString()}`,
+          change: `${(s.revenueChange ?? 0) > 0 ? '+' : ''}${s.revenueChange ?? 0}%`,
           changeType:
-            dashboardData.stats.revenueChange >= 0 ? ('positive' as const) : ('negative' as const),
+            (s.revenueChange ?? 0) >= 0 ? ('positive' as const) : ('negative' as const),
           icon: TrendingUp,
         },
       ]
@@ -398,8 +435,9 @@ const MetricsSection: React.FC = () => {
       setLoading(true);
       setError(null);
       const response = await Api.get('/api/partners/metrics');
-      if (response?.success && response?.data) {
-        setMetricsData(response.data);
+      const payload = response?.data;
+      if (response?.success && payload?.data) {
+        setMetricsData(payload.data);
       } else {
         throw new Error('Invalid response');
       }
@@ -782,15 +820,17 @@ const ClientsSection: React.FC<{ subsection: 'organizations' | 'projects' | 'use
 
       if (subsection === 'organizations' || subsection === 'users') {
         const response = await Api.get('/api/partners/clients');
-        if (response?.success && response?.data) {
-          setOrganizations(response.data);
+        const payload = response?.data;
+        if (response?.success && payload?.data) {
+          setOrganizations(payload.data);
         }
       }
 
       if (subsection === 'projects') {
         const response = await Api.get('/api/partners/projects');
-        if (response?.success && response?.data) {
-          setProjects(response.data);
+        const payload = response?.data;
+        if (response?.success && payload?.data) {
+          setProjects(payload.data);
         }
       }
     } catch (err: any) {
@@ -1114,8 +1154,9 @@ const CertificationSection: React.FC<{
       setLoading(true);
       setError(null);
       const response = await Api.get('/api/partners/certifications');
-      if (response?.success && response?.data) {
-        setCertifications(response.data);
+      const payload = response?.data;
+      if (response?.success && payload?.data) {
+        setCertifications(payload.data);
       } else {
         throw new Error('Invalid response');
       }
@@ -1157,9 +1198,11 @@ const CertificationSection: React.FC<{
       });
       if (!resp?.success) throw new Error(resp?.error || 'Failed to start exam');
 
-      setExamAttemptId(resp.data?.attemptId || null);
-      setExamDeadlineAt(resp.data?.deadlineAt || null);
-      setExamQuestions(resp.data?.questions || []);
+      const payload = resp?.data;
+      const data = payload?.data;
+      setExamAttemptId(data?.attemptId || null);
+      setExamDeadlineAt(data?.deadlineAt || null);
+      setExamQuestions(data?.questions || []);
     } catch (e: any) {
       console.error('Error starting exam:', e);
       toast.error(e?.message || 'Failed to start exam');
@@ -1179,7 +1222,8 @@ const CertificationSection: React.FC<{
         answers: examAnswers,
       });
       if (!resp?.success) throw new Error(resp?.error || 'Submit failed');
-      const data = resp.data;
+      const payload = resp?.data;
+      const data = payload?.data;
       setExamResult({ passed: Boolean(data?.passed), scorePercent: data?.scorePercent || 0 });
       if (data?.passed) {
         toast.success('Exam passed');
@@ -1648,8 +1692,9 @@ const ResourcesSection: React.FC<{
       setLoading(true);
       setError(null);
       const response = await Api.get('/api/partners/resources');
-      if (response?.success && response?.data) {
-        setResources(response.data);
+      const payload = response?.data;
+      if (response?.success && payload?.data) {
+        setResources(payload.data);
       } else {
         throw new Error('Invalid response');
       }
@@ -2134,8 +2179,9 @@ const ProfileSection: React.FC<{
       setLoading(true);
       setError(null);
       const response = await Api.get('/api/partners/organization');
-      if (response?.success && response?.data) {
-        const org = response.data;
+      const payload = response?.data;
+      if (response?.success && payload?.data) {
+        const org = payload.data;
         setOrganization(org);
         setFormData({
           name: org.name || '',
@@ -2593,20 +2639,99 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [connectionLoading, setConnectionLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [connectName, setConnectName] = useState<string>('');
+  const [connecting, setConnecting] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
+
+  const fetchConnection = useCallback(async () => {
+    try {
+      setConnectionLoading(true);
+      setConnectError(null);
+      const response = await Api.get('/api/partners/connection');
+      const payload = response?.data;
+      const data = payload?.data;
+      if (response?.success && data && typeof data.connected === 'boolean') {
+        setIsConnected(Boolean(data.connected));
+        if (!connectName) {
+          const seeded =
+            String(data.organization?.name || '').trim() ||
+            String(currentUser?.organizationName || '').trim() ||
+            String(currentUser?.name || '').trim();
+          if (seeded) setConnectName(seeded);
+        }
+        return;
+      }
+      setIsConnected(false);
+      setConnectError(
+        t(
+          'partner.connect.unavailable',
+          'Partner Portal is not configured yet. Please run partner portal migrations in the database.'
+        )
+      );
+    } catch (err: any) {
+      setIsConnected(false);
+      setConnectError(
+        String(
+          err?.message ||
+            t(
+              'partner.connect.unavailable',
+              'Partner Portal is not configured yet. Please run partner portal migrations in the database.'
+            )
+        )
+      );
+    } finally {
+      setConnectionLoading(false);
+    }
+  }, [connectName, currentUser?.name, currentUser?.organizationName]);
+
+  useEffect(() => {
+    fetchConnection();
+  }, [fetchConnection]);
+
   const activeSection = useMemo(() => {
     const params = new URLSearchParams(location.search);
-    const section = params.get('tab');
+    const section = params.get('tab') as PartnerSection | null;
+
+    // When partner profile is not connected, lock navigation to the onboarding screen.
+    if (!isConnected) return 'partner-home';
+
     return (section ? section : 'dashboard') as PartnerSection;
-  }, [location.search]);
+  }, [location.search, isConnected]);
 
   const handleSectionChange = useCallback(
     (section: PartnerSection) => {
+      if (!isConnected && section !== 'partner-home') {
+        toast(
+          t(
+            'partner.connect.requiredToNavigate',
+            'Najpierw podłącz profil partnera, aby przejść do innych sekcji.'
+          )
+        );
+
+        const params = new URLSearchParams(location.search);
+        params.set('tab', 'partner-home');
+        navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() }, { replace: true });
+        return;
+      }
+
       const params = new URLSearchParams(location.search);
       params.set('tab', section);
       navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() });
     },
-    [location.search, navigate]
+    [isConnected, location.search, navigate, t]
   );
+
+  // Ensure URL stays consistent with locked navigation.
+  useEffect(() => {
+    if (connectionLoading) return;
+    if (isConnected) return;
+    const params = new URLSearchParams(location.search);
+    if (params.get('tab') === 'partner-home') return;
+    params.set('tab', 'partner-home');
+    navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() }, { replace: true });
+  }, [connectionLoading, isConnected, location.search, navigate]);
 
   // Get breadcrumbs based on active section
   const breadcrumbs = useMemo((): Breadcrumb[] => {
@@ -2745,6 +2870,41 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
     }
   }, [activeSection]);
 
+  const handleConnectPartnerProfile = useCallback(async () => {
+    try {
+      setConnecting(true);
+      setConnectError(null);
+
+      const name = String(connectName || '').trim();
+      const payload = await Api.post('/api/partners/connect', { name: name || undefined });
+      const respPayload = payload?.data;
+      const data = respPayload?.data;
+
+      if (!payload?.success || !data?.connected) {
+        throw new Error(respPayload?.error || 'Failed to connect partner profile');
+      }
+
+      toast.success(
+        t(
+          'partner.connect.success',
+          'Partner profile connected. You can now complete your company profile.'
+        )
+      );
+      setIsConnected(true);
+      await fetchConnection();
+
+      const params = new URLSearchParams(location.search);
+      params.set('tab', 'company-info');
+      navigate({ pathname: ROUTES.PARTNER.LANDING, search: params.toString() });
+    } catch (err: any) {
+      const msg = String(err?.message || 'Failed to connect partner profile');
+      setConnectError(msg);
+      toast.error(msg);
+    } finally {
+      setConnecting(false);
+    }
+  }, [connectName, fetchConnection, location.search, navigate, t]);
+
   return (
     <PartnerLayout
       activeSection={activeSection}
@@ -2753,15 +2913,69 @@ export const PartnerPortalViewNew: React.FC<PartnerPortalViewNewProps> = ({
       activeClients={12}
       pendingCertifications={2}
     >
-      <Suspense
-        fallback={
-          <div className="flex items-center justify-center h-64">
-            <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+      {connectionLoading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : !isConnected ? (
+        <div className="space-y-6">
+          <div className="rounded-xl border border-violet-200 bg-violet-50 p-6 dark:border-violet-700/50 dark:bg-violet-900/20">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+              {t('partner.connect.title', 'Podłącz profil partnera')}
+            </h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+              {t(
+                'partner.connect.desc',
+                'Aby korzystać z katalogu i ustawień profilu, podłącz swój profil partnerski do konta.'
+              )}
+            </p>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <label className="block">
+                <span className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {t('partner.connect.companyName', 'Nazwa firmy')}
+                </span>
+                <input
+                  type="text"
+                  value={connectName}
+                  onChange={(e) => setConnectName(e.target.value)}
+                  placeholder={t('partner.connect.companyNamePlaceholder', 'np. DBR77 Consulting')}
+                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 outline-none transition-all dark:border-navy-700 dark:bg-navy-900 dark:text-white"
+                />
+              </label>
+
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={handleConnectPartnerProfile}
+                  disabled={connecting}
+                  className="w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60"
+                >
+                  {connecting
+                    ? t('partner.connect.connecting', 'Łączenie…')
+                    : t('partner.connect.cta', 'Utwórz i podłącz profil')}
+                </button>
+              </div>
+            </div>
+
+            {connectError && (
+              <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/10 dark:text-rose-300">
+                {connectError}
+              </div>
+            )}
           </div>
-        }
-      >
-        {renderContent()}
-      </Suspense>
+        </div>
+      ) : (
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center h-64">
+              <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+          }
+        >
+          {renderContent()}
+        </Suspense>
+      )}
     </PartnerLayout>
   );
 };

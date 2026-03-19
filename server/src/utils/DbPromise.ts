@@ -73,7 +73,7 @@ interface DbLogger {
 // CONSTANTS
 // ==========================================
 
-const DEFAULT_TIMEOUT = 5000; // 5 seconds
+const DEFAULT_TIMEOUT = Number(process.env.DB_QUERY_TIMEOUT) || 15000;
 
 // ==========================================
 // LOGGER

@@ -3,9 +3,9 @@
  * Bases, tables, fields, views, and records CRUD
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request as ExpressRequest, Response } from 'express';
 import multer from 'multer';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { verifyToken, type AuthRequest } from '../middleware/auth.middleware.js';
 import { featureFlags } from '../config/FeatureFlags.js';
 import MetadataService from '../services/tablePlatform/MetadataService.js';
@@ -32,6 +32,7 @@ const upload = multer({
 const { requireBaseAccess, requireTableAccess } = PermissionsService;
 
 const router = Router();
+type Request = ExpressRequest<Record<string, string>>;
 
 // Cache schema readiness to avoid per-request DB check
 let _schemaReady: boolean | null = null;
@@ -76,9 +77,10 @@ const tablePlatformLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests', retryAfterMs: 1000 },
-  keyGenerator: (req: Request) => {
+  keyGenerator: (req) => {
     const authReq = req as any;
-    return `${authReq.userId || req.ip}`;
+    if (authReq.userId) return `u:${authReq.userId}`;
+    return `ip:${ipKeyGenerator(String(req.ip || ''))}`;
   },
 });
 
@@ -550,6 +552,9 @@ router.get('/resolve/:ideaId', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(403).json({ error: 'Organization context required' });
     }
+    if (!userId) {
+      return res.status(401).json({ error: 'User context required' });
+    }
     const resolved = await ProjectionService.resolveBaseId(ideaId, organizationId, userId);
     if (!resolved) {
       return res.status(404).json({ error: 'No table platform base found for this idea' });
@@ -607,14 +612,7 @@ router.get('/tables/:tableId/records', requireTableAccess, async (req: Request, 
       return res.status(200).json(result);
     }
 
-    const options: {
-      viewId?: string;
-      pageSize?: number;
-      cursor?: string;
-      filters?: Array<{ field: string; op: string; value?: unknown }>;
-      sorts?: Array<{ field: string; dir: 'asc' | 'desc' }>;
-      fields?: string[];
-    } = {};
+    const options: NonNullable<Parameters<typeof RecordsService.listRecords>[1]> = {};
     if (typeof viewId === 'string') options.viewId = viewId;
     if (pageSize !== undefined) options.pageSize = parseInt(String(pageSize), 10);
     if (typeof cursor === 'string') options.cursor = cursor;
@@ -1023,7 +1021,15 @@ router.post('/bases/:baseId/import/google-sheets', requireBaseAccess, async (req
     if (!baseId) return res.status(400).json({ error: 'baseId is required' });
     if (!url || typeof url !== 'string') return res.status(400).json({ error: 'url is required' });
     const CsvImportService = (await import('../services/tablePlatform/CsvImportService.js')).default;
-    const result = await CsvImportService.importFromGoogleSheet(url, baseId, authReq.userId, tableName);
+    if (!authReq.userId) {
+      return res.status(401).json({ error: 'User context required' });
+    }
+    const result = await CsvImportService.importFromGoogleSheet(
+      url,
+      baseId,
+      authReq.userId,
+      tableName
+    );
     return res.status(201).json(result);
   } catch (e) {
     logger.error('[TablePlatform] import Google Sheet failed', { error: (e as Error).message });
@@ -2274,7 +2280,7 @@ router.post('/governed-models/:modelId/kpis', async (req: Request, res: Response
     const GovernedModelService = (await import('../services/tablePlatform/GovernedModelService.js')).default;
     const kpi = await GovernedModelService.addKpi(modelId, {
       code, labelEn, labelPl, formulaType, formulaConfig, sourceTableId, sourceFieldId, unit, format,
-    });
+    } as Parameters<typeof GovernedModelService.addKpi>[1]);
     return res.status(201).json(kpi);
   } catch (e) {
     handleRouteError(e, res, 'addKpi');

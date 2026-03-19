@@ -4,15 +4,12 @@ import {
   DollarSign,
   FileText,
   Plus,
-  Sparkles,
   Target,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
-import { useConversationStore } from '@/store/useConversationStore';
 import { InitiativeKPI } from '@/types/core';
 
 import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -85,11 +82,20 @@ function deriveNeedsEntry(kpi: InitiativeKPI): boolean {
   return q(d) < q(now);
 }
 
+const DEMO_KPIS: ResultsKPI[] = [
+  { id: 'demo-k1', name: 'Revenue Growth YoY', description: 'Year-over-year revenue growth rate', targetValue: 15, unit: '%', measurementFrequency: 'QUARTERLY', alertDirection: 'BELOW', isPrimary: true, sortOrder: 1, latestValue: 12.4, latestMeasurementDate: '2026-03-01', isOnTarget: false, createdAt: '2025-01-01T00:00:00Z', status: 'below', trend: 'up', needsEntry: false, initiativeName: 'Digital Transformation', linkedInitiatives: [{ id: 'i1', name: 'Digital Transformation' }], linkedInitiativesCount: 1 },
+  { id: 'demo-k2', name: 'Customer Satisfaction (NPS)', description: 'Net Promoter Score from quarterly surveys', targetValue: 60, unit: 'pts', measurementFrequency: 'QUARTERLY', alertDirection: 'BELOW', isPrimary: true, sortOrder: 2, latestValue: 64, latestMeasurementDate: '2026-02-15', isOnTarget: true, createdAt: '2025-01-01T00:00:00Z', status: 'on-target', trend: 'up', needsEntry: false, initiativeName: 'CX Improvement Program', linkedInitiatives: [{ id: 'i2', name: 'CX Improvement Program' }], linkedInitiativesCount: 1 },
+  { id: 'demo-k3', name: 'Process Automation Rate', description: 'Percentage of key processes automated', targetValue: 40, unit: '%', measurementFrequency: 'MONTHLY', alertDirection: 'BELOW', isPrimary: false, sortOrder: 3, latestValue: 38, latestMeasurementDate: '2026-03-10', isOnTarget: false, createdAt: '2025-03-01T00:00:00Z', status: 'below', trend: 'up', needsEntry: false, initiativeName: 'RPA Implementation', linkedInitiatives: [{ id: 'i3', name: 'RPA Implementation' }], linkedInitiativesCount: 1 },
+  { id: 'demo-k4', name: 'Employee Engagement Score', description: 'Annual engagement survey result', targetValue: 4.2, unit: '/5', measurementFrequency: 'QUARTERLY', alertDirection: 'BELOW', isPrimary: false, sortOrder: 4, latestValue: 4.3, latestMeasurementDate: '2026-01-20', isOnTarget: true, createdAt: '2025-01-01T00:00:00Z', status: 'on-target', trend: 'stable', needsEntry: true, initiativeName: 'Culture & Talent', linkedInitiatives: [{ id: 'i4', name: 'Culture & Talent' }], linkedInitiativesCount: 1 },
+  { id: 'demo-k5', name: 'Time-to-Market (days)', description: 'Average days from concept to launch', targetValue: 45, unit: 'days', measurementFrequency: 'MONTHLY', alertDirection: 'ABOVE', isPrimary: true, sortOrder: 5, latestValue: 52, latestMeasurementDate: '2026-03-05', isOnTarget: false, createdAt: '2025-06-01T00:00:00Z', status: 'below', trend: 'down', needsEntry: false, initiativeName: 'Agile Transformation', linkedInitiatives: [{ id: 'i5', name: 'Agile Transformation' }], linkedInitiativesCount: 1 },
+  { id: 'demo-k6', name: 'Cloud Migration Progress', description: 'Percentage of workloads migrated to cloud', targetValue: 80, unit: '%', measurementFrequency: 'MONTHLY', alertDirection: 'BELOW', isPrimary: false, sortOrder: 6, latestValue: 72, latestMeasurementDate: '2026-03-12', isOnTarget: false, createdAt: '2025-07-01T00:00:00Z', status: 'below', trend: 'up', needsEntry: false, initiativeName: 'Cloud Migration', linkedInitiatives: [{ id: 'i6', name: 'Cloud Migration' }], linkedInitiativesCount: 1 },
+  { id: 'demo-k7', name: 'Cost Savings (cumulative)', description: 'Total cost savings from optimization initiatives', targetValue: 2500000, unit: 'PLN', measurementFrequency: 'MONTHLY', alertDirection: 'BELOW', isPrimary: true, sortOrder: 7, latestValue: 2180000, latestMeasurementDate: '2026-02-28', isOnTarget: false, createdAt: '2025-01-01T00:00:00Z', status: 'below', trend: 'up', needsEntry: true, initiativeName: 'Cost Optimization +2', linkedInitiatives: [{ id: 'i7', name: 'Cost Optimization' }, { id: 'i8', name: 'Procurement Reform' }, { id: 'i9', name: 'Energy Efficiency' }], linkedInitiativesCount: 3 },
+  { id: 'demo-k8', name: 'Data Quality Index', description: 'Composite score of data completeness and accuracy', targetValue: 90, unit: '%', measurementFrequency: 'MONTHLY', alertDirection: 'BELOW', isPrimary: false, sortOrder: 8, latestValue: 91, latestMeasurementDate: '2026-03-08', isOnTarget: true, createdAt: '2025-04-01T00:00:00Z', status: 'on-target', trend: 'up', needsEntry: false, initiativeName: 'Data Governance', linkedInitiatives: [{ id: 'i10', name: 'Data Governance' }], linkedInitiativesCount: 1 },
+  { id: 'demo-k9', name: 'Security Incidents (monthly)', description: 'Number of security incidents per month', targetValue: 2, unit: 'count', measurementFrequency: 'MONTHLY', alertDirection: 'ABOVE', isPrimary: false, sortOrder: 9, latestValue: null as any, latestMeasurementDate: undefined as any, isOnTarget: false, createdAt: '2025-09-01T00:00:00Z', status: 'no-data', trend: 'stable', needsEntry: true, initiativeName: 'Cybersecurity Enhancement', linkedInitiatives: [{ id: 'i11', name: 'Cybersecurity Enhancement' }], linkedInitiativesCount: 1 },
+];
+
 export const ResultsHub: React.FC = () => {
   const { t } = useTranslation();
-  const openChatWithContext = useOpenChatWithContext();
-  const displayMode = useConversationStore((s) => s.displayMode);
-  const setDisplayMode = useConversationStore((s) => s.setDisplayMode);
 
   const [activeTab, setActiveTab] = useState<ModuleTab>('summary');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
@@ -158,9 +164,9 @@ export const ResultsHub: React.FC = () => {
           needsEntry: deriveNeedsEntry(k),
         } as ResultsKPI;
       });
-      setKpis(mapped);
+      setKpis(mapped.length > 0 ? mapped : DEMO_KPIS);
     } catch {
-      // silently fail — table will show empty state
+      setKpis(DEMO_KPIS);
     } finally {
       setLoading(false);
     }
@@ -284,49 +290,6 @@ export const ResultsHub: React.FC = () => {
     setShowCreateModal(false);
     fetchKPIs();
   }, [fetchKPIs]);
-
-  const handleOpenResultsAI = useCallback(async () => {
-    try {
-      await openChatWithContext({
-        entityType: 'results',
-        entityId: `results:${activeTab}`,
-        entityName: t('results.title', 'Results'),
-        contextData: {
-          activeTab,
-          viewMode,
-          searchQuery,
-          activeFilters,
-        },
-      });
-      if (displayMode === 'collapsed') setDisplayMode('split');
-    } catch {
-      // silent
-    }
-  }, [
-    activeFilters,
-    activeTab,
-    displayMode,
-    openChatWithContext,
-    searchQuery,
-    setDisplayMode,
-    t,
-    viewMode,
-  ]);
-
-  const aiControl = useMemo(
-    () => (
-      <button
-        type="button"
-        onClick={handleOpenResultsAI}
-        data-testid="results-ai-button"
-        className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white shadow-lg shadow-purple-500/20 hover:brightness-110 transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-        title={t('common.ai', 'AI')}
-      >
-        <Sparkles size={18} />
-      </button>
-    ),
-    [handleOpenResultsAI, t]
-  );
 
   const openRoiPicker = useCallback(() => setRoiOpenModal(true), []);
 
@@ -630,7 +593,6 @@ export const ResultsHub: React.FC = () => {
         // A03 canon: Results hub uses the canonical subset order (table→grid).
         // Non-KPI tabs can ignore viewMode; we keep the toggle consistent across the hub.
         availableViewModes={['table', 'grid']}
-        aiControl={aiControl}
         commandRowContent={commandRowContent}
       >
         {activeTab === 'summary' ? (

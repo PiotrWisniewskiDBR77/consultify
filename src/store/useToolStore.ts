@@ -11,6 +11,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+import type {
+  ConsultingMissionContext,
+  ConsultingOutputCandidateBase,
+  ConsultingSummarySnapshot,
+} from '@/config/consultingToolsStandard';
+import { createConsultingMissionContext } from '@/config/consultingToolsStandard';
+
 // ==================== TYPES ====================
 
 export type ToolType =
@@ -48,6 +55,29 @@ export type ToolType =
 
 export type StepStatus = 'pending' | 'in_progress' | 'completed' | 'skipped';
 
+export type DynamicSwotPhaseId = 'mission' | 'input' | 'swot' | 'insights' | 'outputs';
+export type SWOTEvidenceType = 'fact' | 'observation' | 'hypothesis';
+export type SWOTSignalState = 'accepted' | 'proposed' | 'needs-evidence';
+export type SWOTCardStatus = 'accepted' | 'proposed';
+export type SWOTOutputReadiness =
+  | 'ready-for-initiative'
+  | 'ready-for-presentation'
+  | 'ready-for-report'
+  | 'keep-as-idea'
+  | 'blocked';
+
+export interface SWOTSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+}
+
 export interface StepDefinition {
   id: string;
   name: string;
@@ -73,6 +103,9 @@ export interface SWOTItem {
   impact: 'high' | 'medium' | 'low';
   quadrant: 'strengths' | 'weaknesses' | 'opportunities' | 'threats';
   source?: 'user' | 'ai';
+  confidence?: number;
+  status?: SWOTCardStatus;
+  linkedSignalIds?: string[];
 }
 
 export interface SWOTCorrelation {
@@ -83,16 +116,46 @@ export interface SWOTCorrelation {
   initiativeProposal?: string;
 }
 
+export interface SWOTTension {
+  id: string;
+  title: string;
+  type: 'attack' | 'repair' | 'defend' | 'protect';
+  linkedCorrelationIds: string[];
+  linkedItemIds: string[];
+  insight: string;
+  whyNow?: string;
+  confidence?: number;
+}
+
+export interface SWOTMove {
+  id: string;
+  title: string;
+  category: 'quick-win' | 'big-bet' | 'defensive-move' | 'capability-build';
+  rationale: string;
+  linkedTensionIds: string[];
+  linkedItemIds: string[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel?: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+}
+
+export interface SWOTOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedMoveIds: string[];
+  linkedItemIds: string[];
+  readiness?: SWOTOutputReadiness;
+}
+
 export interface SWOTData {
-  context: {
-    goal: string;
-    scope: string;
-    timeframe: 'short' | 'medium' | 'long';
-  };
+  context: ConsultingMissionContext;
+  signals: SWOTSignal[];
   items: SWOTItem[];
   correlations: SWOTCorrelation[];
-  summary?: {
-    keyInsights: string[];
+  tensions: SWOTTension[];
+  recommendedMoves: SWOTMove[];
+  outputCandidates: SWOTOutputCandidate[];
+  summary?: ConsultingSummarySnapshot & {
     recommendedInitiatives: InitiativeDraft[];
   };
 }
@@ -137,19 +200,14 @@ export interface GrowthPathItem {
 }
 
 export interface GrowthPathsData {
-  context: {
-    goal: string;
-    scope: string;
-    timeframe: 'short' | 'medium' | 'long';
-  };
+  context: ConsultingMissionContext;
   quadrants: {
     marketPenetration: GrowthPathItem[];
     marketDevelopment: GrowthPathItem[];
     productDevelopment: GrowthPathItem[];
     diversification: GrowthPathItem[];
   };
-  summary?: {
-    keyInsights: string[];
+  summary?: ConsultingSummarySnapshot & {
     recommendedInitiatives: InitiativeDraft[];
   };
 }
@@ -166,14 +224,9 @@ export interface PortfolioItem {
 }
 
 export interface PortfolioPriorityData {
-  context: {
-    goal: string;
-    scope: string;
-    timeframe: 'short' | 'medium' | 'long';
-  };
+  context: ConsultingMissionContext;
   initiatives: PortfolioItem[];
-  summary?: {
-    keyInsights: string[];
+  summary?: ConsultingSummarySnapshot & {
     recommendedInitiatives: InitiativeDraft[];
   };
 }
@@ -201,16 +254,11 @@ export interface ScenarioItem {
 }
 
 export interface RiskUncertaintyData {
-  context: {
-    goal: string;
-    scope: string;
-    timeframe: 'short' | 'medium' | 'long';
-  };
+  context: ConsultingMissionContext;
   assumptions: RiskAssumption[];
   risks: RiskItem[];
   scenarios: ScenarioItem[];
-  summary?: {
-    keyInsights: string[];
+  summary?: ConsultingSummarySnapshot & {
     recommendedInitiatives: InitiativeDraft[];
   };
 }
@@ -231,14 +279,9 @@ export interface OperationalItem {
 }
 
 export interface OperationalToolData {
-  context: {
-    goal: string;
-    scope: string;
-    timeframe: 'short' | 'medium' | 'long';
-  };
+  context: ConsultingMissionContext;
   sections: Record<string, OperationalItem[]>;
-  summary?: {
-    keyInsights: string[];
+  summary?: ConsultingSummarySnapshot & {
     recommendedInitiatives: InitiativeDraft[];
   };
 }
@@ -336,6 +379,7 @@ export interface ToolSession {
   createdAt: string;
   updatedAt: string;
   currentStep: number;
+  currentPhaseId?: string;
   steps: ToolStep[];
   inputData:
     | SWOTData
@@ -355,65 +399,49 @@ export interface ToolSession {
 
 export const SWOT_STEPS: StepDefinition[] = [
   {
-    id: 'context',
-    name: 'Strategic Context',
-    namePl: 'Kontekst Strategiczny',
-    description: 'Define the strategic goal, scope, and time horizon',
-    descriptionPl: 'Zdefiniuj cel strategiczny, zakres i horyzont czasowy',
+    id: 'mission',
+    name: 'Mission & Context',
+    namePl: 'Mission & Context',
+    description: 'Define the strategic question, scope, success criteria, and decision frame',
+    descriptionPl: 'Zdefiniuj pytanie strategiczne, zakres, kryteria sukcesu i ramę decyzji',
     required: true,
     aiAssisted: false,
   },
   {
-    id: 'strengths',
-    name: 'Strengths',
-    namePl: 'Mocne Strony',
-    description: 'Identify internal strengths and competitive advantages',
-    descriptionPl: 'Zidentyfikuj wewnętrzne mocne strony i przewagi konkurencyjne',
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Input & Exploration',
+    description: 'Capture interview notes, materials, and external context as shared signals',
+    descriptionPl: 'Zbierz wywiad, materiały i kontekst zewnętrzny jako wspólne sygnały',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'weaknesses',
-    name: 'Weaknesses',
-    namePl: 'Słabe Strony',
-    description: 'Identify internal weaknesses and areas for improvement',
-    descriptionPl: 'Zidentyfikuj wewnętrzne słabości i obszary do poprawy',
+    id: 'swot',
+    name: 'SWOT Build',
+    namePl: 'SWOT Build',
+    description:
+      'Turn signals into a concrete matrix of strengths, weaknesses, opportunities, and threats',
+    descriptionPl:
+      'Zamień sygnały w konkretną macierz mocnych stron, słabych stron, szans i zagrożeń',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'opportunities',
-    name: 'Opportunities',
-    namePl: 'Szanse',
-    description: 'Identify external opportunities in the market',
-    descriptionPl: 'Zidentyfikuj zewnętrzne szanse rynkowe',
+    id: 'insights',
+    name: 'Synthesis & Insights',
+    namePl: 'Synthesis & Insights',
+    description: 'Convert the matrix into tensions, applied conclusions, and strategic moves',
+    descriptionPl: 'Przekształć macierz w napięcia, wnioski aplikowalne i ruchy strategiczne',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'threats',
-    name: 'Threats',
-    namePl: 'Zagrożenia',
-    description: 'Identify external threats and risks',
-    descriptionPl: 'Zidentyfikuj zewnętrzne zagrożenia i ryzyka',
-    required: true,
-    aiAssisted: true,
-  },
-  {
-    id: 'correlations',
-    name: 'Strategic Correlations',
-    namePl: 'Korelacje Strategiczne',
-    description: 'AI analyzes connections between SWOT elements',
-    descriptionPl: 'AI analizuje powiązania między elementami SWOT',
-    required: true,
-    aiAssisted: true,
-  },
-  {
-    id: 'summary',
-    name: 'Summary & Initiatives',
-    namePl: 'Podsumowanie i Inicjatywy',
-    description: 'Review analysis and generate strategic initiatives',
-    descriptionPl: 'Przegląd analizy i generowanie inicjatyw strategicznych',
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Outputs & Actions',
+    description: 'Prepare the final source summary and generate downstream outputs and initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz wygeneruj outputy i inicjatywy',
     required: true,
     aiAssisted: true,
   },
@@ -1051,14 +1079,22 @@ interface ToolStoreState {
       | ToolsetFlowData
     >
   ) => void;
+  addSWOTSignal: (signal: Omit<SWOTSignal, 'id'>) => void;
+  updateSWOTSignal: (signalId: string, updates: Partial<SWOTSignal>) => void;
+  removeSWOTSignal: (signalId: string) => void;
   addSWOTItem: (item: Omit<SWOTItem, 'id'>) => void;
   removeSWOTItem: (itemId: string) => void;
   updateSWOTItem: (itemId: string, updates: Partial<SWOTItem>) => void;
+  setSWOTTensions: (tensions: Omit<SWOTTension, 'id'>[]) => void;
+  setSWOTMoves: (moves: Omit<SWOTMove, 'id'>[]) => void;
+  setSWOTOutputCandidates: (candidates: Omit<SWOTOutputCandidate, 'id'>[]) => void;
+  setSWOTSummary: (summary: SWOTData['summary']) => void;
 
   // AI suggestions
   addAISuggestion: (stepId: string, suggestion: string) => void;
   addCorrelation: (correlation: Omit<SWOTCorrelation, 'id'>) => void;
   addInitiative: (initiative: Omit<InitiativeDraft, 'id'>) => void;
+  setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;
 
   // Chat
   addChatMessage: (message: Omit<ToolChatMessage, 'id' | 'timestamp'>) => void;
@@ -1071,13 +1107,13 @@ interface ToolStoreState {
 // ==================== INITIAL DATA ====================
 
 const createInitialSWOTData = (): SWOTData => ({
-  context: {
-    goal: '',
-    scope: '',
-    timeframe: 'medium',
-  },
+  context: createConsultingMissionContext(),
+  signals: [],
   items: [],
   correlations: [],
+  tensions: [],
+  recommendedMoves: [],
+  outputCandidates: [],
 });
 
 const createInitialPorterData = (): PorterData => ({
@@ -1108,11 +1144,7 @@ const createInitialPorterData = (): PorterData => ({
 });
 
 const createInitialGrowthPathsData = (): GrowthPathsData => ({
-  context: {
-    goal: '',
-    scope: '',
-    timeframe: 'medium',
-  },
+  context: createConsultingMissionContext(),
   quadrants: {
     marketPenetration: [],
     marketDevelopment: [],
@@ -1122,20 +1154,12 @@ const createInitialGrowthPathsData = (): GrowthPathsData => ({
 });
 
 const createInitialPortfolioPriorityData = (): PortfolioPriorityData => ({
-  context: {
-    goal: '',
-    scope: '',
-    timeframe: 'medium',
-  },
+  context: createConsultingMissionContext(),
   initiatives: [],
 });
 
 const createInitialRiskUncertaintyData = (): RiskUncertaintyData => ({
-  context: {
-    goal: '',
-    scope: '',
-    timeframe: 'medium',
-  },
+  context: createConsultingMissionContext(),
   assumptions: [],
   risks: [],
   scenarios: [],
@@ -1150,11 +1174,7 @@ const createInitialOperationalData = (steps: StepDefinition[]): OperationalToolD
     }, {});
 
   return {
-    context: {
-      goal: '',
-      scope: '',
-      timeframe: 'medium',
-    },
+    context: createConsultingMissionContext(),
     sections,
   };
 };
@@ -1166,11 +1186,7 @@ const createInitialToolsetFlowData = (inputSectionIds: string[]): ToolsetFlowDat
   }, {});
 
   return {
-    context: {
-      goal: '',
-      scope: '',
-      timeframe: 'medium',
-    },
+    context: createConsultingMissionContext(),
     sections,
     flow: {
       impactHypothesis: {
@@ -1300,6 +1316,159 @@ const TOOL_INITIAL_DATA: Record<
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+const DYNAMIC_SWOT_PHASE_SEQUENCE: DynamicSwotPhaseId[] = [
+  'mission',
+  'input',
+  'swot',
+  'insights',
+  'outputs',
+];
+
+const LEGACY_SWOT_STEP_TO_PHASE: Record<string, DynamicSwotPhaseId> = {
+  context: 'mission',
+  mission: 'mission',
+  input: 'input',
+  strengths: 'swot',
+  weaknesses: 'swot',
+  opportunities: 'swot',
+  threats: 'swot',
+  swot: 'swot',
+  correlations: 'insights',
+  insights: 'insights',
+  summary: 'outputs',
+  outputs: 'outputs',
+};
+
+const getDynamicSwotPhaseIdFromStep = (stepId?: string | null): DynamicSwotPhaseId => {
+  if (!stepId) return 'mission';
+  return LEGACY_SWOT_STEP_TO_PHASE[stepId] || 'mission';
+};
+
+const getDynamicSwotPhaseIndexFromLegacyStep = (step: number): number => {
+  if (step <= 1) return 1;
+  if (step <= 5) return 3;
+  if (step === 6) return 4;
+  return 5;
+};
+
+const deriveSwotSignals = (input: SWOTData): SWOTSignal[] => {
+  if (Array.isArray(input.signals) && input.signals.length > 0) {
+    return input.signals.map((signal) => ({
+      ...signal,
+      evidenceType: signal.evidenceType || (signal.type === 'benchmark' ? 'fact' : 'observation'),
+      state: signal.state || (signal.type === 'ai' ? 'proposed' : 'accepted'),
+      provenance: signal.provenance || signal.sourceLabel,
+    }));
+  }
+
+  const derived = (input.items || []).map((item) => ({
+    id: `derived-${item.id}`,
+    type:
+      item.source === 'ai'
+        ? ('ai' as const)
+        : item.source === 'user'
+          ? ('interview' as const)
+          : ('benchmark' as const),
+    content: item.text,
+    sourceLabel:
+      item.source === 'ai'
+        ? 'AI suggestion'
+        : item.source === 'user'
+          ? 'User input'
+          : 'Imported evidence',
+    confidence: item.confidence,
+    tags: [item.quadrant],
+    evidenceType: 'observation' as const,
+    state: item.source === 'ai' ? ('proposed' as const) : ('accepted' as const),
+    provenance: item.source === 'ai' ? 'AI suggestion' : 'Derived from accepted card',
+  }));
+
+  return derived;
+};
+
+const normalizeDynamicSwotData = (input: SWOTData): SWOTData => ({
+  ...input,
+  signals: deriveSwotSignals(input),
+  items: (input.items || []).map((item) => ({
+    ...item,
+    status: item.status || (item.source === 'ai' ? 'proposed' : 'accepted'),
+    linkedSignalIds: item.linkedSignalIds || [],
+  })),
+  outputCandidates: (input.outputCandidates || []).map((candidate) => ({
+    ...candidate,
+    readiness: candidate.readiness || 'keep-as-idea',
+  })),
+});
+
+const mergeToolAnswersWithInitialData = (
+  toolType: ToolType,
+  answers: Record<string, unknown>
+):
+  | SWOTData
+  | PorterData
+  | GrowthPathsData
+  | PortfolioPriorityData
+  | RiskUncertaintyData
+  | OperationalToolData
+  | ToolsetFlowData
+  | Record<string, unknown> => {
+  const base = structuredClone(TOOL_INITIAL_DATA[toolType] || {});
+  const safeAnswers = answers || {};
+
+  const merged = {
+    ...(base as Record<string, unknown>),
+    ...(safeAnswers as Record<string, unknown>),
+    context: {
+      ...((base as any)?.context || {}),
+      ...((safeAnswers as any)?.context || {}),
+    },
+    summary:
+      (base as any)?.summary || (safeAnswers as any)?.summary
+        ? {
+            ...((base as any)?.summary || {}),
+            ...((safeAnswers as any)?.summary || {}),
+          }
+        : undefined,
+    flow:
+      (base as any)?.flow || (safeAnswers as any)?.flow
+        ? {
+            ...((base as any)?.flow || {}),
+            ...((safeAnswers as any)?.flow || {}),
+            impactHypothesis: {
+              ...((base as any)?.flow?.impactHypothesis || {}),
+              ...((safeAnswers as any)?.flow?.impactHypothesis || {}),
+            },
+            results: {
+              ...((base as any)?.flow?.results || {}),
+              ...((safeAnswers as any)?.flow?.results || {}),
+            },
+            reasoning: {
+              ...((base as any)?.flow?.reasoning || {}),
+              ...((safeAnswers as any)?.flow?.reasoning || {}),
+            },
+            prepare: {
+              ...((base as any)?.flow?.prepare || {}),
+              ...((safeAnswers as any)?.flow?.prepare || {}),
+            },
+            economics: {
+              ...((base as any)?.flow?.economics || {}),
+              ...((safeAnswers as any)?.flow?.economics || {}),
+            },
+            processAutomation: {
+              ...((base as any)?.flow?.processAutomation || {}),
+              ...((safeAnswers as any)?.flow?.processAutomation || {}),
+            },
+          }
+        : undefined,
+  } as any;
+
+  if (toolType === 'dynamic-swot') {
+    return normalizeDynamicSwotData(merged as SWOTData);
+  }
+
+  return merged as any;
+};
+
 const computeStepStatusFromAnswers = (
   toolType: ToolType,
   stepId: string,
@@ -1307,6 +1476,50 @@ const computeStepStatusFromAnswers = (
 ): StepStatus => {
   try {
     if (!answers) return 'pending';
+
+    if (toolType === 'dynamic-swot') {
+      const swotAnswers = normalizeDynamicSwotData(answers as SWOTData);
+
+      if (stepId === 'mission') {
+        return swotAnswers.context?.goal &&
+          swotAnswers.context?.scope &&
+          swotAnswers.context?.successSignal
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'input') {
+        return (swotAnswers.signals?.length || 0) > 0 || (swotAnswers.items?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'swot') {
+        return ['strengths', 'weaknesses', 'opportunities', 'threats'].every((quadrant) =>
+          swotAnswers.items?.some((item) => item.quadrant === quadrant)
+        )
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'insights') {
+        return (swotAnswers.tensions?.length || 0) > 0 ||
+          (swotAnswers.correlations?.length || 0) > 0 ||
+          (swotAnswers.recommendedMoves?.length || 0) > 0 ||
+          (swotAnswers.summary?.appliedConclusions?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'outputs') {
+        return swotAnswers.summary?.executiveSummary ||
+          (swotAnswers.summary?.keyInsights?.length || 0) > 0 ||
+          (swotAnswers.outputCandidates?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+    }
+
     // Context step (all tools)
     if (stepId === 'context') {
       if (toolType === 'market-forces') {
@@ -1415,6 +1628,59 @@ const computeStepStatusFromAnswers = (
   return 'pending';
 };
 
+const buildToolSteps = (toolType: ToolType, inputData: any): ToolStep[] => {
+  const defs = TOOL_STEP_DEFINITIONS[toolType] || PORTER_STEPS;
+  return defs.map((step) => ({
+    stepId: step.id,
+    status: computeStepStatusFromAnswers(toolType, step.id, inputData),
+    data: {},
+  }));
+};
+
+const normalizeDynamicSwotSession = (session: ToolSession): ToolSession => {
+  const normalizedInputData = mergeToolAnswersWithInitialData(
+    'dynamic-swot',
+    (session.inputData || {}) as Record<string, unknown>
+  ) as SWOTData;
+
+  const currentPhaseId = session.currentPhaseId
+    ? getDynamicSwotPhaseIdFromStep(session.currentPhaseId)
+    : getDynamicSwotPhaseIdFromStep(
+        session.steps?.[Math.max(0, (session.currentStep || 1) - 1)]?.stepId
+      );
+
+  const currentStep =
+    typeof session.currentStep === 'number' &&
+    session.currentStep <= DYNAMIC_SWOT_PHASE_SEQUENCE.length
+      ? Math.max(1, session.currentStep)
+      : getDynamicSwotPhaseIndexFromLegacyStep(session.currentStep || 1);
+
+  return {
+    ...session,
+    currentStep,
+    currentPhaseId,
+    inputData: normalizedInputData,
+    steps: buildToolSteps('dynamic-swot', normalizedInputData),
+  };
+};
+
+const normalizeSessionForRuntime = (session: ToolSession): ToolSession => {
+  if (session.toolType === 'dynamic-swot') {
+    return normalizeDynamicSwotSession(session);
+  }
+
+  return session;
+};
+
+const withRecomputedSteps = (
+  session: ToolSession,
+  inputData: ToolSession['inputData'] = session.inputData
+): ToolSession => ({
+  ...session,
+  inputData,
+  steps: buildToolSteps(session.toolType, inputData),
+});
+
 // ==================== STORE ====================
 
 export const useToolStore = create<ToolStoreState>()(
@@ -1427,6 +1693,8 @@ export const useToolStore = create<ToolStoreState>()(
       createSession: (toolType: ToolType) => {
         const steps = TOOL_STEP_DEFINITIONS[toolType] || PORTER_STEPS;
         const initialData = TOOL_INITIAL_DATA[toolType] || createInitialPorterData();
+        const isDynamicSwot = toolType === 'dynamic-swot';
+        const initialPhaseId = isDynamicSwot ? 'mission' : steps[0]?.id;
 
         const session: ToolSession = {
           id: generateId(),
@@ -1435,11 +1703,8 @@ export const useToolStore = create<ToolStoreState>()(
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           currentStep: 1,
-          steps: steps.map((step) => ({
-            stepId: step.id,
-            status: 'pending' as StepStatus,
-            data: {},
-          })),
+          currentPhaseId: initialPhaseId,
+          steps: buildToolSteps(toolType, initialData),
           inputData: initialData,
           chatHistory: [],
           generatedInitiatives: [],
@@ -1453,7 +1718,8 @@ export const useToolStore = create<ToolStoreState>()(
         const { savedSessions } = get();
         const session = savedSessions.find((s) => s.id === sessionId);
         if (session) {
-          set({ currentSession: session, currentStep: session.currentStep });
+          const normalizedSession = normalizeSessionForRuntime(session);
+          set({ currentSession: normalizedSession, currentStep: normalizedSession.currentStep });
         }
       },
 
@@ -1489,9 +1755,17 @@ export const useToolStore = create<ToolStoreState>()(
 
         const steps = TOOL_STEP_DEFINITIONS[currentSession.toolType] || PORTER_STEPS;
         if (step >= 1 && step <= steps.length) {
+          const stepId = steps[step - 1]?.id;
           set({
             currentStep: step,
-            currentSession: { ...currentSession, currentStep: step },
+            currentSession: {
+              ...currentSession,
+              currentStep: step,
+              currentPhaseId:
+                currentSession.toolType === 'dynamic-swot'
+                  ? getDynamicSwotPhaseIdFromStep(stepId)
+                  : currentSession.currentPhaseId,
+            },
           });
         }
       },
@@ -1514,6 +1788,10 @@ export const useToolStore = create<ToolStoreState>()(
             currentSession: {
               ...currentSession,
               currentStep: currentStep + 1,
+              currentPhaseId:
+                currentSession.toolType === 'dynamic-swot'
+                  ? getDynamicSwotPhaseIdFromStep(steps[currentStep]?.id)
+                  : currentSession.currentPhaseId,
               steps: updatedSteps,
             },
           });
@@ -1523,9 +1801,17 @@ export const useToolStore = create<ToolStoreState>()(
       prevStep: () => {
         const { currentStep, currentSession } = get();
         if (currentStep > 1 && currentSession) {
+          const steps = TOOL_STEP_DEFINITIONS[currentSession.toolType] || PORTER_STEPS;
           set({
             currentStep: currentStep - 1,
-            currentSession: { ...currentSession, currentStep: currentStep - 1 },
+            currentSession: {
+              ...currentSession,
+              currentStep: currentStep - 1,
+              currentPhaseId:
+                currentSession.toolType === 'dynamic-swot'
+                  ? getDynamicSwotPhaseIdFromStep(steps[currentStep - 2]?.id)
+                  : currentSession.currentPhaseId,
+            },
           });
         }
       },
@@ -1536,6 +1822,43 @@ export const useToolStore = create<ToolStoreState>()(
 
         const steps = TOOL_STEP_DEFINITIONS[currentSession.toolType] || PORTER_STEPS;
         const stepDef = steps[currentStep - 1];
+
+        if (currentSession.toolType === 'dynamic-swot') {
+          const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+
+          if (stepDef.id === 'mission') {
+            return Boolean(
+              swotData.context?.goal && swotData.context?.scope && swotData.context?.successSignal
+            );
+          }
+
+          if (stepDef.id === 'input') {
+            return (swotData.signals?.length || 0) > 0 || (swotData.items?.length || 0) > 0;
+          }
+
+          if (stepDef.id === 'swot') {
+            return ['strengths', 'weaknesses', 'opportunities', 'threats'].every((quadrant) =>
+              swotData.items.some((item) => item.quadrant === quadrant)
+            );
+          }
+
+          if (stepDef.id === 'insights') {
+            return (
+              (swotData.tensions?.length || 0) > 0 ||
+              (swotData.correlations?.length || 0) > 0 ||
+              (swotData.recommendedMoves?.length || 0) > 0 ||
+              (swotData.summary?.appliedConclusions?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'outputs') {
+            return Boolean(
+              swotData.summary?.executiveSummary ||
+              (swotData.summary?.keyInsights?.length || 0) > 0 ||
+              (swotData.outputCandidates?.length || 0) > 0
+            );
+          }
+        }
 
         // Context step: check if required fields are filled
         if (stepDef.id === 'context') {
@@ -1555,7 +1878,8 @@ export const useToolStore = create<ToolStoreState>()(
           if ('goal' in ctx) {
             const goal = typeof ctx.goal === 'string' ? ctx.goal : '';
             const scope = typeof ctx.scope === 'string' ? ctx.scope : '';
-            return goal.length > 0 && scope.length > 0;
+            const successSignal = typeof ctx.successSignal === 'string' ? ctx.successSignal : '';
+            return goal.length > 0 && scope.length > 0 && successSignal.length > 0;
           }
           if ('industry' in ctx) {
             const industry = typeof ctx.industry === 'string' ? ctx.industry : '';
@@ -1569,6 +1893,19 @@ export const useToolStore = create<ToolStoreState>()(
         if (['strengths', 'weaknesses', 'opportunities', 'threats'].includes(stepDef.id)) {
           const swotData = currentSession.inputData as SWOTData;
           return swotData.items.some((item) => item.quadrant === stepDef.id);
+        }
+
+        if (stepDef.id === 'correlations') {
+          const swotData = currentSession.inputData as SWOTData;
+          return (swotData.tensions?.length || 0) > 0 || (swotData.correlations?.length || 0) > 0;
+        }
+
+        if (stepDef.id === 'summary') {
+          const swotData = currentSession.inputData as SWOTData;
+          return (
+            Boolean(swotData.summary?.executiveSummary || swotData.summary?.keyInsights?.length) &&
+            (swotData.recommendedMoves?.length || 0) > 0
+          );
         }
 
         // Growth Paths quadrants: require at least one item
@@ -1668,36 +2005,90 @@ export const useToolStore = create<ToolStoreState>()(
         const currentStepFromApi =
           typeof (payload as any).currentStep === 'number' ? (payload as any).currentStep : 1;
 
+        const normalizedAnswers = mergeToolAnswersWithInitialData(payload.toolType, answers);
+        const isDynamicSwot = payload.toolType === 'dynamic-swot';
+        const normalizedCurrentStep = isDynamicSwot
+          ? currentStepFromApi <= DYNAMIC_SWOT_PHASE_SEQUENCE.length
+            ? currentStepFromApi
+            : getDynamicSwotPhaseIndexFromLegacyStep(currentStepFromApi)
+          : currentStepFromApi;
+
         const session: ToolSession = {
           id: payload.id,
           toolType: payload.toolType,
           name: payload.name || `${payload.toolType} - ${new Date().toLocaleDateString()}`,
           createdAt: payload.createdAt || new Date().toISOString(),
           updatedAt: payload.updatedAt || new Date().toISOString(),
-          currentStep: currentStepFromApi,
-          steps: steps.map((step) => ({
-            stepId: step.id,
-            status: computeStepStatusFromAnswers(payload.toolType, step.id, answers),
-            data: {},
-          })),
-          inputData: answers as any,
+          currentStep: normalizedCurrentStep,
+          currentPhaseId: isDynamicSwot
+            ? DYNAMIC_SWOT_PHASE_SEQUENCE[normalizedCurrentStep - 1]
+            : steps[normalizedCurrentStep - 1]?.id,
+          steps: buildToolSteps(payload.toolType, normalizedAnswers),
+          inputData: normalizedAnswers as any,
           chatHistory: [],
           generatedInitiatives: [],
           status: (payload.status || 'draft') as any,
         };
 
-        set({ currentSession: session, currentStep: session.currentStep });
+        const normalizedSession = normalizeSessionForRuntime(session);
+        set({ currentSession: normalizedSession, currentStep: normalizedSession.currentStep });
       },
 
       updateInputData: (data) => {
         const { currentSession } = get();
         if (!currentSession) return;
 
+        const mergedInputData = { ...currentSession.inputData, ...data } as any;
+        const nextInputData =
+          currentSession.toolType === 'dynamic-swot'
+            ? normalizeDynamicSwotData(mergedInputData as SWOTData)
+            : mergedInputData;
+
         set({
-          currentSession: {
-            ...currentSession,
-            inputData: { ...currentSession.inputData, ...data },
-          },
+          currentSession: withRecomputedSteps(currentSession, nextInputData),
+        });
+      },
+
+      addSWOTSignal: (signal) => {
+        const { currentSession } = get();
+        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+        const newSignal: SWOTSignal = { ...signal, id: generateId() };
+
+        set({
+          currentSession: withRecomputedSteps(currentSession, {
+            ...swotData,
+            signals: [...swotData.signals, newSignal],
+          }),
+        });
+      },
+
+      updateSWOTSignal: (signalId, updates) => {
+        const { currentSession } = get();
+        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+        set({
+          currentSession: withRecomputedSteps(currentSession, {
+            ...swotData,
+            signals: swotData.signals.map((signal) =>
+              signal.id === signalId ? { ...signal, ...updates } : signal
+            ),
+          }),
+        });
+      },
+
+      removeSWOTSignal: (signalId) => {
+        const { currentSession } = get();
+        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+        set({
+          currentSession: withRecomputedSteps(currentSession, {
+            ...swotData,
+            signals: swotData.signals.filter((signal) => signal.id !== signalId),
+          }),
         });
       },
 
@@ -1705,17 +2096,14 @@ export const useToolStore = create<ToolStoreState>()(
         const { currentSession } = get();
         if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
 
-        const swotData = currentSession.inputData as SWOTData;
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const newItem: SWOTItem = { ...item, id: generateId() };
 
         set({
-          currentSession: {
-            ...currentSession,
-            inputData: {
-              ...swotData,
-              items: [...swotData.items, newItem],
-            },
-          },
+          currentSession: withRecomputedSteps(currentSession, {
+            ...swotData,
+            items: [...swotData.items, newItem],
+          }),
         });
       },
 
@@ -1723,15 +2111,12 @@ export const useToolStore = create<ToolStoreState>()(
         const { currentSession } = get();
         if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
 
-        const swotData = currentSession.inputData as SWOTData;
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         set({
-          currentSession: {
-            ...currentSession,
-            inputData: {
-              ...swotData,
-              items: swotData.items.filter((item) => item.id !== itemId),
-            },
-          },
+          currentSession: withRecomputedSteps(currentSession, {
+            ...swotData,
+            items: swotData.items.filter((item) => item.id !== itemId),
+          }),
         });
       },
 
@@ -1739,17 +2124,66 @@ export const useToolStore = create<ToolStoreState>()(
         const { currentSession } = get();
         if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
 
-        const swotData = currentSession.inputData as SWOTData;
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         set({
-          currentSession: {
-            ...currentSession,
-            inputData: {
-              ...swotData,
-              items: swotData.items.map((item) =>
-                item.id === itemId ? { ...item, ...updates } : item
-              ),
-            },
-          },
+          currentSession: withRecomputedSteps(currentSession, {
+            ...swotData,
+            items: swotData.items.map((item) =>
+              item.id === itemId ? { ...item, ...updates } : item
+            ),
+          }),
+        });
+      },
+
+      setSWOTTensions: (tensions) => {
+        const { currentSession } = get();
+        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+        set({
+          currentSession: withRecomputedSteps(currentSession, {
+            ...swotData,
+            tensions: tensions.map((tension) => ({ ...tension, id: generateId() })),
+          }),
+        });
+      },
+
+      setSWOTMoves: (moves) => {
+        const { currentSession } = get();
+        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+        set({
+          currentSession: withRecomputedSteps(currentSession, {
+            ...swotData,
+            recommendedMoves: moves.map((move) => ({ ...move, id: generateId() })),
+          }),
+        });
+      },
+
+      setSWOTOutputCandidates: (candidates) => {
+        const { currentSession } = get();
+        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+        set({
+          currentSession: withRecomputedSteps(currentSession, {
+            ...swotData,
+            outputCandidates: candidates.map((candidate) => ({ ...candidate, id: generateId() })),
+          }),
+        });
+      },
+
+      setSWOTSummary: (summary) => {
+        const { currentSession } = get();
+        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+        set({
+          currentSession: withRecomputedSteps(currentSession, {
+            ...swotData,
+            summary,
+          }),
         });
       },
 
@@ -1772,17 +2206,14 @@ export const useToolStore = create<ToolStoreState>()(
         const { currentSession } = get();
         if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
 
-        const swotData = currentSession.inputData as SWOTData;
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const newCorrelation: SWOTCorrelation = { ...correlation, id: generateId() };
 
         set({
-          currentSession: {
-            ...currentSession,
-            inputData: {
-              ...swotData,
-              correlations: [...swotData.correlations, newCorrelation],
-            },
-          },
+          currentSession: withRecomputedSteps(currentSession, {
+            ...swotData,
+            correlations: [...swotData.correlations, newCorrelation],
+          }),
         });
       },
 
@@ -1795,6 +2226,21 @@ export const useToolStore = create<ToolStoreState>()(
           currentSession: {
             ...currentSession,
             generatedInitiatives: [...currentSession.generatedInitiatives, newInitiative],
+          },
+        });
+      },
+
+      setInitiatives: (initiatives) => {
+        const { currentSession } = get();
+        if (!currentSession) return;
+
+        set({
+          currentSession: {
+            ...currentSession,
+            generatedInitiatives: initiatives.map((initiative) => ({
+              ...initiative,
+              id: generateId(),
+            })),
           },
         });
       },

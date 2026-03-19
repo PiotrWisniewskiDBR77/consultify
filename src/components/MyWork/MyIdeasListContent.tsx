@@ -43,7 +43,10 @@ export type IdeaStage = 'spark' | 'incubating' | 'shaping' | 'ready' | 'promoted
 export type MyIdea = {
   id: string;
   title: string;
+  name?: string | null;
   body?: string | null;
+  seedText?: string | null;
+  seed_text?: string | null;
   tags?: string[];
   createdAt?: string;
   updatedAt?: string;
@@ -643,6 +646,27 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     }
   }, [selectedIds, showConfirm, fetchIdeas, clearSelection, isPolish]);
 
+  const handleDeleteSingleIdea = useCallback(async (idea: MyIdea) => {
+    const ok = await showConfirm({
+      title: isPolish ? 'Usunąć pomysł?' : 'Delete idea?',
+      description: isPolish
+        ? `„${idea.title || 'Bez tytułu'}" zostanie trwale usunięty.`
+        : `"${idea.title || 'Untitled'}" will be permanently deleted.`,
+      confirmLabel: isPolish ? 'Usuń' : 'Delete',
+      cancelLabel: isPolish ? 'Anuluj' : 'Cancel',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    try {
+      await Api.deleteMyIdea(idea.id);
+      trackFunnelEvent('idea_triaged', { action: 'delete', count: 1 });
+      toast.success(isPolish ? 'Usunięto' : 'Deleted');
+      await fetchIdeas();
+    } catch (err: any) {
+      toast.error(err?.message || (isPolish ? 'Nie udało się usunąć' : 'Failed to delete'));
+    }
+  }, [showConfirm, fetchIdeas, isPolish]);
+
   useEffect(() => {
     if (!onBulkBarChange) return;
     if (selectedIds.size === 0) {
@@ -1110,6 +1134,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           onOpenIdea={(idea) => onIdeaClick(idea.id, idea)}
           onOpenIdeaInProcessFlow={openIdeaInProcessFlow}
           onStartConvert={setConvertIdea}
+          onDeleteIdea={handleDeleteSingleIdea}
           onRefresh={fetchIdeas}
         />
 

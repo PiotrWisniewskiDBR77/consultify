@@ -3,7 +3,7 @@
  * Follows app-table-standard h-9 controls, module-hub-standard topbar layout.
  */
 
-import { ArrowLeft, Lock, Save, Sparkles } from 'lucide-react';
+import { ArrowLeft, Lock, Save } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -89,14 +89,6 @@ export const ToolWizardHeader: React.FC<ToolWizardHeaderProps> = ({
             />
           </div>
         </div>
-
-        {/* AI context button (icon-only, per UI standard) */}
-        <button
-          className="h-9 w-9 flex items-center justify-center rounded-lg text-primary-500 hover:bg-primary-500/10 transition-colors"
-          title={t('tools.wizard.aiContext', 'AI Context')}
-        >
-          <Sparkles size={18} />
-        </button>
 
         {/* Save button */}
         {onSave && !locked && (

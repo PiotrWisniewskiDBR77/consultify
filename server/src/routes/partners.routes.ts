@@ -45,12 +45,12 @@ function isSchemaMissingError(err: unknown): boolean {
   );
 }
 
-const featureUnavailable = (res: Response, _message: string) =>
+const featureUnavailable = (res: Response, message: string) =>
   res.status(503).json({
     statusCode: 503,
     status: false,
     type: 'not_configured',
-    message: 'Service temporarily unavailable due to missing configuration',
+    message: message || 'Service temporarily unavailable due to missing configuration',
   });
 
 type CanonicalTier = 'REGISTERED' | 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
@@ -123,6 +123,226 @@ async function requirePartnerOrgId(req: Request, res: Response): Promise<string 
 
 // Apply authentication to all routes
 router.use(verifyToken);
+
+// =============================================================================
+// PARTNER CONNECTION (ONBOARDING)
+// =============================================================================
+
+/**
+ * GET /api/partners/connection
+ * Returns partner connection status without 403 gating.
+ */
+router.get('/connection', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user?.id || (req as any).userId;
+    if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (!partnerOrgId) {
+      return res.json({ success: true, data: { connected: false } });
+    }
+
+    const db = getDatabase();
+    const org = await DbPromise.get<any>(
+      db,
+      `SELECT po.*
+       FROM partner_organizations po
+       WHERE po.id = ?
+       LIMIT 1`,
+      [partnerOrgId]
+    );
+
+    if (!org) {
+      return res.json({ success: true, data: { connected: false } });
+    }
+
+    const [specializations, regions] = await Promise.all([
+      DbPromise.all<{ framework: string }>(
+        db,
+        `SELECT framework FROM partner_specializations WHERE partner_org_id = ? ORDER BY framework ASC`,
+        [org.id]
+      ),
+      DbPromise.all<{ region: string }>(
+        db,
+        `SELECT region FROM partner_regions WHERE partner_org_id = ? ORDER BY region ASC`,
+        [org.id]
+      ),
+    ]);
+
+    return res.json({
+      success: true,
+      data: {
+        connected: true,
+        organization: {
+          id: org.id,
+          name: org.name,
+          legalName: org.legal_name || undefined,
+          taxId: org.tax_id || undefined,
+          contactEmail: org.contact_email,
+          contactPhone: org.contact_phone || undefined,
+          website: org.website || undefined,
+          tier: org.tier,
+          status: org.status,
+          partnerSince: org.partner_since || undefined,
+          licenseDiscountPercent: org.license_discount_percent ?? undefined,
+          commissionRatePercent: org.commission_rate_percent ?? undefined,
+          performanceScore: org.performance_score ?? undefined,
+          publicListingEnabled: Boolean(org.public_listing_enabled),
+          specializations: specializations.map((s) => s.framework),
+          regions: regions.map((r) => r.region),
+        },
+      },
+    });
+  } catch (error: any) {
+    logger.error('Error fetching partner connection:', error);
+    if (isSchemaMissingError(error)) {
+      return featureUnavailable(res, 'Partner connection unavailable (database schema missing)');
+    }
+    next(error);
+  }
+});
+
+/**
+ * POST /api/partners/connect
+ * Creates a partner organization and connects the current user (owner).
+ * Idempotent: if already connected, returns existing connection.
+ */
+router.post('/connect', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user?.id || (req as any).userId;
+    const userEmail = String((req as any).user?.email || '').trim();
+    const userName = String((req as any).user?.name || '').trim();
+    if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+    const existingPartnerOrgId = await getActivePartnerOrgIdForUser(userId);
+    if (existingPartnerOrgId) {
+      const db = getDatabase();
+      const org = await DbPromise.get<any>(
+        db,
+        `SELECT po.*
+         FROM partner_organizations po
+         WHERE po.id = ?
+         LIMIT 1`,
+        [existingPartnerOrgId]
+      );
+      if (!org) {
+        return res.json({ success: true, data: { connected: false } });
+      }
+
+      const [specializations, regions] = await Promise.all([
+        DbPromise.all<{ framework: string }>(
+          db,
+          `SELECT framework FROM partner_specializations WHERE partner_org_id = ? ORDER BY framework ASC`,
+          [org.id]
+        ),
+        DbPromise.all<{ region: string }>(
+          db,
+          `SELECT region FROM partner_regions WHERE partner_org_id = ? ORDER BY region ASC`,
+          [org.id]
+        ),
+      ]);
+
+      return res.json({
+        success: true,
+        data: {
+          connected: true,
+          organization: {
+            id: org.id,
+            name: org.name,
+            legalName: org.legal_name || undefined,
+            taxId: org.tax_id || undefined,
+            contactEmail: org.contact_email,
+            contactPhone: org.contact_phone || undefined,
+            website: org.website || undefined,
+            tier: org.tier,
+            status: org.status,
+            partnerSince: org.partner_since || undefined,
+            licenseDiscountPercent: org.license_discount_percent ?? undefined,
+            commissionRatePercent: org.commission_rate_percent ?? undefined,
+            performanceScore: org.performance_score ?? undefined,
+            publicListingEnabled: Boolean(org.public_listing_enabled),
+            specializations: specializations.map((s) => s.framework),
+            regions: regions.map((r) => r.region),
+          },
+        },
+      });
+    }
+
+    const requestedName = String(req.body?.name || '').trim();
+    const name = requestedName || (userName ? `${userName} — Partner` : 'Partner Organization');
+    const contactEmail = String(req.body?.contactEmail || userEmail || '').trim();
+    if (!contactEmail) {
+      return res.status(400).json({ success: false, error: 'contactEmail is required' });
+    }
+
+    const partnerOrgId = crypto.randomUUID();
+    const partnerUserId = crypto.randomUUID();
+    const db = getDatabase();
+
+    const result = await DbPromise.transaction([
+      {
+        sql: `INSERT INTO partner_organizations
+              (id, name, contact_email, tier, status, partner_since, public_listing_enabled, created_at, updated_at, created_by, updated_by)
+              VALUES (?, ?, ?, 'registered', 'active', NOW(), FALSE, NOW(), NOW(), ?, ?)`,
+        params: [partnerOrgId, name, contactEmail, userId, userId],
+      },
+      {
+        sql: `INSERT INTO partner_users
+              (id, partner_org_id, user_id, role, status, joined_at, created_at, updated_at)
+              VALUES (?, ?, ?, 'owner', 'active', NOW(), NOW(), NOW())`,
+        params: [partnerUserId, partnerOrgId, userId],
+      },
+    ]);
+
+    if (!result.success) {
+      if (isSchemaMissingError(new Error(String(result.error || '')))) {
+        return featureUnavailable(res, 'Partner connect unavailable (database schema missing)');
+      }
+      return res.status(500).json({ success: false, error: result.error || 'Failed to connect' });
+    }
+
+    // Return connection info (connected: true)
+    const org = await DbPromise.get<any>(
+      db,
+      `SELECT po.*
+       FROM partner_organizations po
+       WHERE po.id = ?
+       LIMIT 1`,
+      [partnerOrgId]
+    );
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        connected: true,
+        organization: {
+          id: org?.id || partnerOrgId,
+          name: org?.name || name,
+          legalName: org?.legal_name || undefined,
+          taxId: org?.tax_id || undefined,
+          contactEmail: org?.contact_email || contactEmail,
+          contactPhone: org?.contact_phone || undefined,
+          website: org?.website || undefined,
+          tier: org?.tier || 'registered',
+          status: org?.status || 'active',
+          partnerSince: org?.partner_since || undefined,
+          licenseDiscountPercent: org?.license_discount_percent ?? undefined,
+          commissionRatePercent: org?.commission_rate_percent ?? undefined,
+          performanceScore: org?.performance_score ?? undefined,
+          publicListingEnabled: Boolean(org?.public_listing_enabled),
+          specializations: [],
+          regions: [],
+        },
+      },
+    });
+  } catch (error: any) {
+    logger.error('Error connecting partner profile:', error);
+    if (isSchemaMissingError(error)) {
+      return featureUnavailable(res, 'Partner connect unavailable (database schema missing)');
+    }
+    next(error);
+  }
+});
 
 // =============================================================================
 // PARTNER ORGANIZATION ROUTES

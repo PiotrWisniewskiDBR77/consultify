@@ -51,10 +51,11 @@ export function loadFeatureFlags(): FeatureFlags {
     ENABLE_HELP_SYSTEM: process.env.ENABLE_HELP_SYSTEM !== 'false', // Default true
 
     // Table Platform: metadata-first backend
-    ENABLE_TABLE_PLATFORM_METADATA_FIRST: process.env.ENABLE_TABLE_PLATFORM_METADATA_FIRST !== 'false',
+    // Opt-in only. Default must stay off until parity with legacy table graph is complete.
+    ENABLE_TABLE_PLATFORM_METADATA_FIRST: process.env.ENABLE_TABLE_PLATFORM_METADATA_FIRST === 'true',
 
     // Table Platform: Records API
-    ENABLE_TABLE_PLATFORM_RECORDS_API: process.env.ENABLE_TABLE_PLATFORM_RECORDS_API !== 'false',
+    ENABLE_TABLE_PLATFORM_RECORDS_API: process.env.ENABLE_TABLE_PLATFORM_RECORDS_API === 'true',
   };
 
   // Validate configuration

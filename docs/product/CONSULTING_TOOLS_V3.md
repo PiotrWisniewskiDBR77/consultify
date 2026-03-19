@@ -9,6 +9,7 @@
 ## 0) Related SSOT (mandatory references)
 
 - Tools catalog: `docs/product/TOOLS_CATALOG_V3.md`
+- Master consulting tools standard: `docs/product/CONSULTING_TOOLS_STANDARD_V1.md`
 - One task per consulting tool (tool specs SSOT): `docs/product/CONSULTING_TOOLS_TOOL_SPECS_V3.md`
 - Consulting Templates library (60 classic frameworks; implementation contract): `docs/product/CONSULTING_TEMPLATES_LIBRARY_V3.md`
 - Known Tools content completeness audit (v3): `docs/product/KNOWN_TOOLS_CONTENT_COMPLETENESS_AUDIT_V3.md`
@@ -69,12 +70,19 @@ Category pills (examples, can be adjusted but must stay consistent across surfac
 
 The Consulting Tools module is one user journey:
 
-**Library → Sessions → Outputs → Initiatives**
+**Library → Sessions → Reports & Presentations → Initiatives**
 
 - **Library**: tool catalog & selection
 - **Sessions**: work in progress (executions/runs)
-- **Outputs**: produced deliverables (reports, presentations, initiatives)
+- **Reports & Presentations**: reports and presentations created from sessions
 - **Initiatives**: initiatives created from tool/assessment sources (traceability control)
+
+User-facing interpretation:
+
+- first function = `Library`
+- second function = `Sessions`
+- third function = `Reports & Presentations`
+- fourth function = `Initiatives`
 
 This matches `docs/product/TOOLS_CATALOG_V3.md` and `V3-E01` in the program ledger.
 
@@ -190,6 +198,7 @@ Selecting a tool in Library shows an Outlook-style preview pane (SSOT: table pre
 Clicking “Start” (or primary CTA) does:
 
 - creates a new **session** (ToolSession or Assessment execution run),
+- creates the corresponding row in the `Sessions` function immediately,
 - opens it in **dynamic tabs**,
 - routes user to the correct runtime surface (wizard/workspace/questionnaire).
 
@@ -203,6 +212,16 @@ Each session follows the same consulting skeleton:
 4) **Conclusions & summaries** (insights + comments + what’s missing)  
 5) **Finalize** (freeze the session version)  
 6) **Next step outputs** (initiative/report/presentation)
+
+For `Dynamic SWOT` MVP, the reference runtime is more explicit and phase-based:
+
+1. `Mission & Context`
+2. `Input & Exploration`
+3. `SWOT Build`
+4. `Synthesis & Insights`
+5. `Outputs & Actions`
+
+This five-phase session model is the reference for the first MVP. Older wizard-like runtime interpretations are not the reference path for `Dynamic SWOT`.
 
 #### 4.2.0 Iteration loop (MUST): “missing → add → re-process”
 

@@ -171,7 +171,7 @@ export async function getNotifications(
           read_at as readAt,
           dismissed_at as dismissedAt
         FROM notifications
-        WHERE user_id = ? AND (? IS NULL OR organization_id = ?)
+        WHERE user_id = ? AND (?::text IS NULL OR organization_id = ?)
           ${normalized.unreadOnly ? `AND COALESCE(is_read::text, '0') NOT IN ${readTruthy}` : ''}
         ORDER BY created_at DESC
         LIMIT ? OFFSET ?
@@ -227,13 +227,13 @@ export async function markAsRead(
     try {
       // Preferred: boolean schema
       await DbPromise.run(
-        `UPDATE notifications SET is_read = true, read_at = ? WHERE id = ? AND user_id = ? AND (? IS NULL OR organization_id = ?)`,
+        `UPDATE notifications SET is_read = true, read_at = ? WHERE id = ? AND user_id = ? AND (?::text IS NULL OR organization_id = ?)`,
         [now, normalized.id, normalized.userId, normalized.organizationId || null, normalized.organizationId || null]
       );
     } catch {
       // Back-compat: integer schema (0/1)
       await DbPromise.run(
-        `UPDATE notifications SET is_read = 1, read_at = ? WHERE id = ? AND user_id = ? AND (? IS NULL OR organization_id = ?)`,
+        `UPDATE notifications SET is_read = 1, read_at = ? WHERE id = ? AND user_id = ? AND (?::text IS NULL OR organization_id = ?)`,
         [now, normalized.id, normalized.userId, normalized.organizationId || null, normalized.organizationId || null]
       );
     }
@@ -261,12 +261,12 @@ export async function markAllAsRead(
     const now = new Date().toISOString();
     try {
       await DbPromise.run(
-        `UPDATE notifications SET is_read = true, read_at = ? WHERE user_id = ? AND (? IS NULL OR organization_id = ?)`,
+        `UPDATE notifications SET is_read = true, read_at = ? WHERE user_id = ? AND (?::text IS NULL OR organization_id = ?)`,
         [now, normalized.userId, normalized.organizationId || null, normalized.organizationId || null]
       );
     } catch {
       await DbPromise.run(
-        `UPDATE notifications SET is_read = 1, read_at = ? WHERE user_id = ? AND (? IS NULL OR organization_id = ?)`,
+        `UPDATE notifications SET is_read = 1, read_at = ? WHERE user_id = ? AND (?::text IS NULL OR organization_id = ?)`,
         [now, normalized.userId, normalized.organizationId || null, normalized.organizationId || null]
       );
     }
@@ -294,7 +294,7 @@ export async function dismiss(
       : params;
   try {
     await DbPromise.run(
-      `UPDATE notifications SET dismissed_at = ? WHERE id = ? AND user_id = ? AND (? IS NULL OR organization_id = ?)`,
+      `UPDATE notifications SET dismissed_at = ? WHERE id = ? AND user_id = ? AND (?::text IS NULL OR organization_id = ?)`,
       [
         new Date().toISOString(),
         normalized.id,
@@ -342,7 +342,7 @@ export async function getCounts(
       : params;
   try {
     const totalRow = await DbPromise.get<{ count: number }>(
-      `SELECT COUNT(*)::int as count FROM notifications WHERE user_id = ? AND (? IS NULL OR organization_id = ?)`,
+      `SELECT COUNT(*)::int as count FROM notifications WHERE user_id = ? AND (?::text IS NULL OR organization_id = ?)`,
       [normalized.userId, normalized.organizationId || null, normalized.organizationId || null]
     );
     const unread = normalized.organizationId

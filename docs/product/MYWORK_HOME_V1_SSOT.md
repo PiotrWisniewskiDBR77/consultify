@@ -101,12 +101,20 @@ Supported metadata:
 - optional `sizeOverride`
 - `ambientMotion` intensity
 
-We are not introducing a new profile system yet. Relevance comes from data already available in the product:
+Home V2 originally assumed no dedicated profile model. The current Radar-based Home implementation adds a focused preference layer for external signals while still reusing the broader My Work context.
+
+Baseline relevance still comes from data already available in the product:
 
 - `currentUser`
 - organization context
 - existing My Work activity
 - existing preferences
+
+Radar-specific preference profiling additionally uses:
+
+- `user_radar_profiles`
+- `watchlist_items`
+- `radar_actions`
 
 ---
 
@@ -117,6 +125,7 @@ We are not introducing a new profile system yet. Relevance comes from data alrea
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | GET | `/api/my-work/home/v2` | Aggregated Home V2 screen with time mode, pulse label, and 8 block contracts |
+| GET | `/api/my-work/radar` | Current Radar-based Home surface with briefing, ranked signals, recommendations, watchlist, metrics, and localization state |
 
 ### 6.2 Legacy Compatibility
 
@@ -136,7 +145,14 @@ Home V2 relevance scoring should be based on:
 - ideas, notebook activity, tasks, decisions
 - lightweight freshness and urgency logic
 
-No new profile model is required in this phase.
+Current Radar implementation also uses:
+
+- tracked topics and tracked companies
+- muted topics and muted sources
+- watchlist entities
+- recent Radar actions (`ask_ai`, `save`, `more_like_this`, `less_like_this`, `dismiss`)
+
+This means Home now has a lightweight dedicated profile model for external signal relevance.
 
 ---
 
@@ -190,6 +206,15 @@ These packets are used to:
 - prefill the first message
 - preserve the origin block for follow-up reasoning
 
+For Radar signals, chat must open with the selected signal as explicit context, not as a generic Home conversation. The active signal payload must include at minimum:
+
+- signal title
+- summary / insight summary
+- why it matters
+- why the user sees it
+- suggested next step
+- source and tags
+
 ### 8.2 Module Bridge
 
 Home must bridge directly to:
@@ -238,3 +263,125 @@ Home V2 uses Canvas Mode, but as a more mature “living transformation screen�
 
 - **Home:** visible to all users
 - **Manager tab:** restricted to `admin`, `manager`, and `superadmin`
+
+---
+
+## 12. Radar 2.0 — Current Home SSOT
+
+### 12.1 Product Positioning
+
+`My Work > Home` currently operates as **Radar 2.0** for the default landing experience.
+
+Radar is:
+
+- an interpretation and action layer, not a raw news feed
+- a personalized signal ranking surface for transformation work
+- a bridge between external signals, internal work context, and AI follow-up
+- a decision-support layer, not an operational telemetry cockpit
+
+### 12.2 Core Flow
+
+Radar must work in this sequence:
+
+1. ingest signals from registered sources
+2. normalize them into processed signals
+3. rank them against user role, industry, and live My Work context
+4. apply preference signals from prior user actions
+5. localize content into the active app language
+6. present a daily briefing plus ranked downstream sections
+
+### 12.3 Personalization Model
+
+Radar personalization is stored in:
+
+- `user_radar_profiles`
+- `watchlist_items`
+- `radar_actions`
+
+The system must learn from user behavior:
+
+- `add_to_watchlist` adds a company or topic to the watchlist and profile
+- `more_like_this` strengthens similar topics and sources
+- `less_like_this` suppresses similar topics and sources
+- `ask_ai`, `save`, `dismiss` affect behavioral ranking signals
+
+Profile fields currently used by ranking:
+
+- `trackedTopics`
+- `trackedCompanies`
+- `mutedTopics`
+- `mutedSources`
+- `personalizationWeights`
+
+### 12.4 Language Contract
+
+Radar must always respect the active application language.
+
+Rules:
+
+- if the source content already matches the app language, show it immediately
+- if it does not match, localization runs in the background
+- mixed-language UI is not allowed
+- while localization is pending, the UI must show a temporary state and silently refresh
+
+Localization state is part of the contract and includes:
+
+- `requestedLanguage`
+- `pendingCount`
+- per-signal language metadata
+
+### 12.5 Hero Contract
+
+The Radar hero is the “front page” of the experience and must:
+
+- surface the dominant daily briefing
+- provide enough narrative depth to feel like a mini article, not a one-line summary
+- anchor actions directly from the active signal
+- allow optional reveal of supporting daily signals without permanently inflating the layout
+
+The hero must support:
+
+- one active brief at a time
+- navigation between daily signals / briefs
+- `Pogadaj z AI`, `Do notatki`, `Utwórz zadanie`
+- optional info reveal
+- optional signal tray reveal
+
+### 12.6 Screen Structure
+
+The Radar Home payload must expose:
+
+- `dailyBriefing`
+- `whatChanged`
+- `whyItMattersToMe`
+- `whatToDoNext`
+- `learnImprove`
+- `watchlist`
+- `metrics`
+- `localization`
+
+### 12.7 AI Chat Contract
+
+When the user opens AI from Radar, the AI must know the exact signal being discussed.
+
+The chat-open packet must contain:
+
+- explicit signal identity
+- full signal context payload
+- origin block / intent
+- starter prompt aligned to the active signal
+
+Radar-to-chat context must never degrade into a generic “home” conversation without signal details.
+
+### 12.8 Canonical Files
+
+Current implementation source of truth for Radar behavior:
+
+- `server/src/routes/my-work.routes.ts`
+- `server/src/services/radar/radarService.ts`
+- `server/src/services/radar/radarRankingService.ts`
+- `server/src/services/radar/radarActionService.ts`
+- `server/src/services/radar/radarLocalizationService.ts`
+- `server/src/services/radar/radarTypes.ts`
+- `src/components/MyWork/Home/HomeView.tsx`
+- `src/components/MyWork/Home/useRadarData.ts`

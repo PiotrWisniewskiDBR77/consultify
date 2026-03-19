@@ -9,10 +9,13 @@
  * Usage:
  *   DOTENV_CONFIG_PATH=.env.staging.local npx tsx server/scripts/reimport-with-llm-pipeline.ts
  */
-import 'dotenv/config';
+import '../src/config/loadEnv.js';
+
 import pg from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import PDFParserService from '../src/services/pdfParserService.js';
+import { requireConfirmation } from './lib/scriptDatabaseTarget.js';
+import { resolveFinanceImportDatabaseUrl, resolveFinanceImportOrgId } from './lib/financeImportTarget.js';
 import {
   classifyStatementDocument,
   detectStatementType,
@@ -28,20 +31,19 @@ import {
 // Config
 // ---------------------------------------------------------------------------
 
-const DB_URL = process.env.DATABASE_URL || process.env.FINANCE_IMPORT_DATABASE_URL;
-if (!DB_URL) {
-  console.error('Set DATABASE_URL or FINANCE_IMPORT_DATABASE_URL');
-  process.exit(1);
-}
+const DB_URL = resolveFinanceImportDatabaseUrl();
 
 if (!process.env.OPENAI_API_KEY) {
   console.error('⚠ OPENAI_API_KEY not set — LLM phases will be skipped');
 }
 
-const ORG_ID =
-  process.env.FINANCE_IMPORT_ORG_ID ||
-  process.env.TARGET_ORG_ID ||
-  'a3e05d4a-5397-419d-b486-8e44366c0063';
+const ORG_ID = resolveFinanceImportOrgId();
+
+requireConfirmation(
+  'FINANCE_REIMPORT_LLM_CONFIRM',
+  'YES_REIMPORT_WITH_LLM',
+  'reimport-with-llm-pipeline'
+);
 
 const DOCUMENTS = [
   { label: 'Apator SA Raport R 2024', file: 'knowledge/Finanse/Apator SA Raport R 2024.pdf' },

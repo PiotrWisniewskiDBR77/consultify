@@ -5,10 +5,221 @@ import type {
   PortfolioPriorityData,
   RiskUncertaintyData,
   SWOTData,
+  SWOTOutputReadiness,
   ToolType,
 } from '@/store/useToolStore';
 
 export type ToolCompletionItem = { label: string; done: boolean; anchorId?: string };
+export type DynamicSwotPhaseSummary = {
+  id: 'mission' | 'input' | 'swot' | 'insights' | 'outputs';
+  label: string;
+  done: boolean;
+  gapCount: number;
+  readiness: 'blocked' | 'needs-work' | 'ready';
+  primaryGap?: string;
+};
+
+const readinessRank = {
+  blocked: 0,
+  'needs-work': 1,
+  ready: 2,
+} as const;
+
+export function computeDynamicSwotSessionSignals(data: SWOTData | undefined, isPolish: boolean) {
+  const swot = data;
+  const signals = swot?.signals || [];
+  const items = swot?.items || [];
+  const tensions = swot?.tensions || [];
+  const moves = swot?.recommendedMoves || [];
+  const outputs = swot?.outputCandidates || [];
+  const proposedSignals = signals.filter((signal) => signal.state === 'proposed').length;
+  const needsEvidenceSignals = signals.filter((signal) => signal.state === 'needs-evidence').length;
+  const proposedItems = items.filter((item) => item.status === 'proposed').length;
+  const acceptedItems = items.filter((item) => item.status !== 'proposed').length;
+  const readyOutputs = outputs.filter((output) =>
+    ['ready-for-initiative', 'ready-for-presentation', 'ready-for-report'].includes(
+      output.readiness || 'keep-as-idea'
+    )
+  ).length;
+
+  const missingEvidence = [];
+  if (!swot?.context?.goal)
+    missingEvidence.push(isPolish ? 'Brak pytania strategicznego' : 'Missing decision question');
+  if (!signals.length)
+    missingEvidence.push(isPolish ? 'Brak sygnałów wejściowych' : 'Missing input signals');
+  if (!items.length) missingEvidence.push(isPolish ? 'Brak kart SWOT' : 'Missing SWOT cards');
+  if (!tensions.length && !swot?.correlations?.length)
+    missingEvidence.push(
+      isPolish ? 'Brak napięć lub korelacji' : 'Missing tensions or correlations'
+    );
+  if (!moves.length)
+    missingEvidence.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
+
+  return {
+    proposedSignals,
+    needsEvidenceSignals,
+    proposedItems,
+    acceptedItems,
+    tensions: tensions.length,
+    moves: moves.length,
+    readyOutputs,
+    missingEvidence,
+  };
+}
+
+export function computeDynamicSwotPhaseSummaries(
+  data: SWOTData | undefined,
+  isPolish: boolean
+): DynamicSwotPhaseSummary[] {
+  const swot = data;
+  const quadrants = {
+    strengths: swot?.items?.filter((item) => item.quadrant === 'strengths').length || 0,
+    weaknesses: swot?.items?.filter((item) => item.quadrant === 'weaknesses').length || 0,
+    opportunities: swot?.items?.filter((item) => item.quadrant === 'opportunities').length || 0,
+    threats: swot?.items?.filter((item) => item.quadrant === 'threats').length || 0,
+  };
+
+  const summaries: Array<Omit<DynamicSwotPhaseSummary, 'readiness'>> = [
+    {
+      id: 'mission',
+      label: isPolish ? 'Mission & Context' : 'Mission & Context',
+      done: !!swot?.context?.goal && !!swot?.context?.scope && !!swot?.context?.successSignal,
+      gapCount: [!swot?.context?.goal, !swot?.context?.scope, !swot?.context?.successSignal].filter(
+        Boolean
+      ).length,
+      primaryGap: !swot?.context?.goal
+        ? isPolish
+          ? 'Doprecyzuj pytanie decyzyjne'
+          : 'Sharpen the decision question'
+        : !swot?.context?.scope
+          ? isPolish
+            ? 'Ustal zakres analizy'
+            : 'Define the scope'
+          : !swot?.context?.successSignal
+            ? isPolish
+              ? 'Zapisz sygnał sukcesu'
+              : 'Define the success signal'
+            : undefined,
+    },
+    {
+      id: 'input',
+      label: isPolish ? 'Input & Exploration' : 'Input & Exploration',
+      done: (swot?.signals?.length || 0) >= 3,
+      gapCount: (swot?.signals?.length || 0) >= 3 ? 0 : 3 - (swot?.signals?.length || 0),
+      primaryGap:
+        (swot?.signals?.length || 0) >= 3
+          ? undefined
+          : isPolish
+            ? 'Dodaj więcej dowodów wejściowych'
+            : 'Add more input evidence',
+    },
+    {
+      id: 'swot',
+      label: isPolish ? 'SWOT Build' : 'SWOT Build',
+      done: Object.values(quadrants).every((count) => count > 0),
+      gapCount: Object.values(quadrants).filter((count) => count === 0).length,
+      primaryGap: Object.values(quadrants).every((count) => count > 0)
+        ? undefined
+        : isPolish
+          ? 'Uzupełnij brakujące ćwiartki macierzy'
+          : 'Fill the missing matrix quadrants',
+    },
+    {
+      id: 'insights',
+      label: isPolish ? 'Synthesis & Insights' : 'Synthesis & Insights',
+      done:
+        ((swot?.tensions?.length || 0) > 0 || (swot?.correlations?.length || 0) > 0) &&
+        ((swot?.recommendedMoves?.length || 0) > 0 ||
+          (swot?.summary?.appliedConclusions?.length || 0) > 0),
+      gapCount: [
+        !((swot?.tensions?.length || 0) > 0 || (swot?.correlations?.length || 0) > 0),
+        !(
+          (swot?.recommendedMoves?.length || 0) > 0 ||
+          (swot?.summary?.appliedConclusions?.length || 0) > 0
+        ),
+      ].filter(Boolean).length,
+      primaryGap:
+        (swot?.tensions?.length || 0) === 0 && (swot?.correlations?.length || 0) === 0
+          ? isPolish
+            ? 'Wygeneruj napięcia strategiczne'
+            : 'Generate strategic tensions'
+          : (swot?.recommendedMoves?.length || 0) === 0
+            ? isPolish
+              ? 'Przełóż analizę na ruchy'
+              : 'Translate analysis into moves'
+            : undefined,
+    },
+    {
+      id: 'outputs',
+      label: isPolish ? 'Outputs & Actions' : 'Outputs & Actions',
+      done: !!swot?.summary?.executiveSummary && (swot?.outputCandidates?.length || 0) > 0,
+      gapCount: [
+        !swot?.summary?.executiveSummary,
+        !((swot?.outputCandidates?.length || 0) > 0),
+      ].filter(Boolean).length,
+      primaryGap: !swot?.summary?.executiveSummary
+        ? isPolish
+          ? 'Przygotuj final source summary'
+          : 'Prepare the final source summary'
+        : (swot?.outputCandidates?.length || 0) === 0
+          ? isPolish
+            ? 'Określ ścieżki outputów'
+            : 'Define the output routes'
+          : undefined,
+    },
+  ];
+
+  return summaries.map((summary) => ({
+    ...summary,
+    readiness: summary.done ? 'ready' : summary.gapCount > 1 ? 'blocked' : 'needs-work',
+  }));
+}
+
+export function computeDynamicSwotOverallReadiness(
+  data: SWOTData | undefined,
+  isPolish: boolean
+): {
+  label: string;
+  readiness: 'blocked' | 'needs-work' | 'ready';
+  readyRoutes: SWOTOutputReadiness[];
+} {
+  const summaries = computeDynamicSwotPhaseSummaries(data, isPolish);
+  const outputs = data?.outputCandidates || [];
+  const readiness = summaries.reduce<'blocked' | 'needs-work' | 'ready'>((current, summary) => {
+    if (readinessRank[summary.readiness] < readinessRank[current]) {
+      return summary.readiness;
+    }
+    return current;
+  }, 'ready');
+
+  const readyRoutes = outputs
+    .map((output) => output.readiness || 'keep-as-idea')
+    .filter(
+      (readinessValue): readinessValue is SWOTOutputReadiness =>
+        readinessValue === 'ready-for-initiative' ||
+        readinessValue === 'ready-for-presentation' ||
+        readinessValue === 'ready-for-report' ||
+        readinessValue === 'keep-as-idea' ||
+        readinessValue === 'blocked'
+    );
+
+  return {
+    label:
+      readiness === 'ready'
+        ? isPolish
+          ? 'Gotowe do decyzji'
+          : 'Decision-ready'
+        : readiness === 'needs-work'
+          ? isPolish
+            ? 'Wymaga dopracowania'
+            : 'Needs refinement'
+          : isPolish
+            ? 'Zablokowane brakami'
+            : 'Blocked by gaps',
+    readiness,
+    readyRoutes,
+  };
+}
 
 export function computeToolReviewGaps(
   toolType: ToolType,
@@ -20,8 +231,10 @@ export function computeToolReviewGaps(
   const data = inputData as any;
 
   if (toolType === 'dynamic-swot') {
-    if (!data.context?.goal || !data.context?.scope)
-      gaps.push(isPolish ? 'Brak kontekstu strategicznego' : 'Missing strategic context');
+    if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal)
+      gaps.push(isPolish ? 'Brak mission brief' : 'Missing mission');
+    if (!(data.signals?.length || 0) && !(data.items?.length || 0))
+      gaps.push(isPolish ? 'Brak sygnałów wejściowych' : 'Missing input signals');
     ['strengths', 'weaknesses', 'opportunities', 'threats'].forEach((q) => {
       if (!data.items?.some((i: any) => i.quadrant === q)) {
         const labels: Record<string, string> = {
@@ -33,7 +246,12 @@ export function computeToolReviewGaps(
         gaps.push(`${isPolish ? 'Brak' : 'Missing'}: ${labels[q]}`);
       }
     });
-    if (!data.correlations?.length) gaps.push(isPolish ? 'Brak korelacji' : 'Missing correlations');
+    if (!data.tensions?.length && !data.correlations?.length)
+      gaps.push(isPolish ? 'Brak napięć strategicznych' : 'Missing strategic tensions');
+    if (!data.recommendedMoves?.length)
+      gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
+    if (!data.summary?.executiveSummary)
+      gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
     return gaps;
   }
 
@@ -122,8 +340,13 @@ export function computeToolCompletionItems(
   if (toolType === 'dynamic-swot') {
     const swot = data as SWOTData;
     items.push({
-      label: isPolish ? 'Cel strategiczny zdefiniowany' : 'Strategic goal defined',
-      done: !!swot?.context?.goal && !!swot?.context?.scope,
+      label: isPolish ? 'Mission zdefiniowana' : 'Mission defined',
+      done: !!swot?.context?.goal && !!swot?.context?.scope && !!swot?.context?.successSignal,
+      anchorId: 'tool-content',
+    });
+    items.push({
+      label: isPolish ? 'Sygnały wejściowe zebrane' : 'Input signals collected',
+      done: (swot?.signals?.length || 0) > 0 || (swot?.items?.length || 0) > 0,
       anchorId: 'tool-content',
     });
     const quadrantLabels: Record<string, string> = {
@@ -140,8 +363,18 @@ export function computeToolCompletionItems(
       });
     });
     items.push({
-      label: isPolish ? 'Korelacje wygenerowane' : 'Correlations generated',
-      done: (swot?.correlations?.length || 0) > 0,
+      label: isPolish ? 'Napięcia strategiczne wygenerowane' : 'Strategic tensions generated',
+      done: (swot?.tensions?.length || 0) > 0 || (swot?.correlations?.length || 0) > 0,
+      anchorId: 'analysis',
+    });
+    items.push({
+      label: isPolish ? 'Rekomendowane ruchy wygenerowane' : 'Recommended moves generated',
+      done: (swot?.recommendedMoves?.length || 0) > 0,
+      anchorId: 'analysis',
+    });
+    items.push({
+      label: isPolish ? 'Final source summary gotowe' : 'Final source summary ready',
+      done: !!swot?.summary?.executiveSummary,
       anchorId: 'analysis',
     });
     return items;

@@ -625,7 +625,7 @@ COMMUNICATION RULES:
 - Speak at executive level - concise, impactful, no fluff
 - Use McKinsey SCQA structure for complex answers: Situation → Complication → Question → Answer
 - Always provide: (1) Your perspective, (2) Supporting data, (3) Clear next action
-- Conversation language: ${chatLanguage}. Respond in this language unless the user explicitly asks otherwise.
+- Respond in the same language the user writes to you. If they write in English, respond in English. If in Polish, respond in Polish. Always match the user's language naturally.
 
 CONTEXT:
 - User: ${currentUser?.firstName || 'User'} (${currentUser?.role || 'Stakeholder'})

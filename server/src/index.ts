@@ -238,32 +238,38 @@ const databaseInitPromise: Promise<void> =
             dbInitError = null;
           }
 
-          // Run Table Platform migrations
-          try {
-            const { runMigrations } = await import('./services/tablePlatform/migrationRunner.js');
-            const migResult = await runMigrations();
-            if (migResult.failed) {
-              logger.error(`[Server] Table Platform migration FAILED on: ${migResult.failed}`);
-            } else {
-              logger.info(`[Server] Table Platform migrations: ${migResult.applied} applied, ${migResult.skipped} already up to date`);
-            }
-            // Seed default templates after migrations
-            try {
-              const { default: templateService } = await import('./services/tablePlatform/TemplateService.js');
-              if (templateService?.seedDefaultTemplates) {
-                await templateService.seedDefaultTemplates();
+          // Table Platform migrations deferred to background (non-blocking)
+          if (process.env.DISABLE_TP_MIGRATIONS !== 'true') {
+            setTimeout(async () => {
+              try {
+                const { runMigrations } = await import('./services/tablePlatform/migrationRunner.js');
+                const migResult = await runMigrations();
+                if (migResult.failed) {
+                  logger.error(`[Server] Table Platform migration FAILED on: ${migResult.failed}`);
+                } else {
+                  logger.info(`[Server] Table Platform migrations: ${migResult.applied} applied, ${migResult.skipped} already up to date`);
+                }
+                try {
+                  const { default: templateService } = await import('./services/tablePlatform/TemplateService.js');
+                  if (templateService?.seedDefaultTemplates) {
+                    await templateService.seedDefaultTemplates();
+                  }
+                } catch (seedErr) {
+                  logger.warn('[Server] Template seeding skipped:', seedErr);
+                }
+              } catch (migErr) {
+                logger.warn('[Server] Table Platform migrations skipped:', migErr);
               }
-            } catch (seedErr) {
-              logger.warn('[Server] Template seeding skipped:', seedErr);
-            }
-          } catch (migErr) {
-            logger.warn('[Server] Table Platform migrations skipped:', migErr);
+            }, 5000);
           }
 
           // Initialize connection pool
           if (process.env.DISABLE_CONNECTION_POOL !== 'true') {
             try {
-              await initializeConnectionPool();
+              const poolTimeout = new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('Connection pool init timeout (15s)')), 15000)
+              );
+              await Promise.race([initializeConnectionPool(), poolTimeout]);
               logger.info('[Server] ✅ Connection pool initialized');
             } catch (poolError) {
               logger.error('[Server] Connection pool initialization failed:', poolError);

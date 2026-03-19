@@ -27,7 +27,7 @@ interface DemoBannerProps {
 
 const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
   const { t } = useTranslation();
-  const { currentUser } = useAppStore();
+  const { currentOrganization, demoOrganization, isDemoMode } = useAppStore();
   const [showLimitations, setShowLimitations] = useState(false);
 
   const DEMO_LIMITATIONS = [
@@ -52,7 +52,9 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
     );
   };
 
-  const DEMO_ORG_NAME = 'Atelier ToolToys';
+  const activeOrgName =
+    demoOrganization?.name || currentOrganization?.name || t('common.organization', 'Organization');
+  const activeOrgId = demoOrganization?.id || currentOrganization?.id || null;
 
   return (
     <div
@@ -69,9 +71,16 @@ const DemoBanner: React.FC<DemoBannerProps> = ({ onStartTrialClick }) => {
             </span>
           </div>
           <span className="text-slate-300">
-            <span className="font-medium text-slate-200">{DEMO_ORG_NAME}</span>
+            <span className="font-medium text-slate-200">{activeOrgName}</span>
+            {activeOrgId ? (
+              <span className="ml-2 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-mono text-slate-300">
+                {activeOrgId}
+              </span>
+            ) : null}
             <span className="ml-2 hidden sm:inline">
-              {t('demo.banner.description', 'Exploring sample data')}
+              {isDemoMode
+                ? t('demo.banner.descriptionActive', 'Demo mode is overriding the active organization context')
+                : t('demo.banner.description', 'Exploring sample data')}
             </span>
           </span>
         </div>

@@ -1,14 +1,15 @@
 /**
  * AIPreferencesModule - AI Preferences & Personalization
  *
- * Tabs: Instructions | Memory | Response Style | Chat History | Voice
+ * Tabs: Instructions | Memory | Response Style | Automation | Chat History | Voice
  */
 
-import { Brain, FileText, MessageSquare, Sliders, Volume2 } from 'lucide-react';
+import { Brain, Bot, FileText, MessageSquare, Sliders, Volume2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { AISettings } from '../../components/settings/AISettings';
+import { AIInboxAutomationSettings } from '../../components/settings/ai/AIInboxAutomationSettings';
 import { VoiceSettingsPanel } from '../../components/settings/VoiceSettingsPanel';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
 import { User } from '../../types';
@@ -287,6 +288,11 @@ export const AIPreferencesModule: React.FC<AIPreferencesModuleProps> = ({
       icon: <Sliders size={16} />,
     },
     {
+      id: 'automation',
+      label: t('settings.tabs.automation', 'Automation'),
+      icon: <Bot size={16} />,
+    },
+    {
       id: 'history',
       label: t('settings.tabs.history', 'Chat History'),
       icon: <MessageSquare size={16} />,
@@ -314,6 +320,8 @@ export const AIPreferencesModule: React.FC<AIPreferencesModuleProps> = ({
             <ResponseStyleSettings currentUser={currentUser} onUpdateUser={onUpdateUser} />
           </div>
         );
+      case 'automation':
+        return <AIInboxAutomationSettings />;
       case 'history':
         return (
           <div className="p-6 overflow-y-auto h-full">
@@ -339,7 +347,7 @@ export const AIPreferencesModule: React.FC<AIPreferencesModuleProps> = ({
       title={t('settings.modules.aiPreferences', 'AI Preferences')}
       subtitle={t(
         'settings.modules.aiPreferencesDesc',
-        'Customize AI behavior, memory, and response style'
+        'Customize AI behavior, memory, automation, and response style'
       )}
     >
       {renderContent()}

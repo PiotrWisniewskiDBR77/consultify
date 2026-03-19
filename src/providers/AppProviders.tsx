@@ -1,4 +1,5 @@
 import React, { useLayoutEffect } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { BrowserRouter } from 'react-router-dom';
 
@@ -11,6 +12,12 @@ import { FeatureFlagsProvider } from '../contexts/FeatureFlagsContext';
 import { HelpProvider } from '../contexts/HelpContext';
 import { TrialProvider } from '../contexts/TrialContext';
 import { useAppStore } from '../store/useAppStore';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: 1, staleTime: 30_000 },
+  },
+});
 
 /**
  * ThemeSync - Keeps the DOM `dark` class in sync with the Zustand theme state.
@@ -67,24 +74,26 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
   return (
     <ErrorBoundary>
       <ThemeSync />
-      <BrowserRouter>
-        <FeatureFlagsProvider>
-          <AutoSaveProvider>
-            <TrialProvider>
-              <AccessPolicyProvider>
-                <AIProvider>
-                  <HelpProvider>
-                    <TourProvider>
-                      {children}
-                      <Toaster position="bottom-right" />
-                    </TourProvider>
-                  </HelpProvider>
-                </AIProvider>
-              </AccessPolicyProvider>
-            </TrialProvider>
-          </AutoSaveProvider>
-        </FeatureFlagsProvider>
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <FeatureFlagsProvider>
+            <AutoSaveProvider>
+              <TrialProvider>
+                <AccessPolicyProvider>
+                  <AIProvider>
+                    <HelpProvider>
+                      <TourProvider>
+                        {children}
+                        <Toaster position="bottom-right" />
+                      </TourProvider>
+                    </HelpProvider>
+                  </AIProvider>
+                </AccessPolicyProvider>
+              </TrialProvider>
+            </AutoSaveProvider>
+          </FeatureFlagsProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
     </ErrorBoundary>
   );
 };

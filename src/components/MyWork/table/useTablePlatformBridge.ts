@@ -20,6 +20,7 @@ import type { ColumnDef, TableNode } from './tableTypes';
 import { fieldToColumn, recordToNode } from './tablePlatformMappers';
 
 const PAGE_SIZE = 50;
+const HARD_DISABLE_METADATA_FIRST = true;
 
 /** Normalize API response: backend may return snake_case */
 function normalizeField(raw: Record<string, unknown>): TablePlatformField {
@@ -94,7 +95,8 @@ export interface UseTablePlatformBridgeReturn {
 export function useTablePlatformBridge(opts: UseTablePlatformBridgeOpts): UseTablePlatformBridgeReturn {
   const { ideaId, enabled } = opts;
   const { isEnabled } = useFeatureFlags();
-  const isNewPlatform = enabled && isEnabled('tablePlatformMetadataFirst');
+  const isNewPlatform =
+    enabled && isEnabled('tablePlatformMetadataFirst') && !HARD_DISABLE_METADATA_FIRST;
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

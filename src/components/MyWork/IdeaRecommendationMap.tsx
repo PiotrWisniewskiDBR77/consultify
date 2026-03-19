@@ -35,12 +35,11 @@ import ReactFlow, {
   Panel,
   Position,
   ReactFlowProvider,
-  useEdges,
   useEdgesState,
-  useNodes,
   useNodesState,
   useReactFlow,
 } from 'reactflow';
+import useStore from 'reactflow';
 
 import { Callout, EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { resolveTagColor } from './mindmap/tagColorMapping';
@@ -758,8 +757,8 @@ const BranchNodeComponent: React.FC<NodeProps> = React.memo(({ data, selected, i
   const colors = useMemo(() => branchColor(data.branchKey, data._depth), [data.branchKey, data._depth]);
   const collapsed = data._collapsed;
   const childCount = data.count || 0;
-  const rfNodes = useNodes();
-  const rfEdges = useEdges();
+  const rfNodes = useStore((state: any) => state.nodes);
+  const rfEdges = useStore((state: any) => state.edges);
   const nodeCount = rfNodes.length;
   const edgeCount = rfEdges.length;
   const health = useMemo(
@@ -952,14 +951,16 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
       if (cancelled) return;
 
       const allEdges = getEdges();
-      const parentEdge = allEdges.find((e) => e.target === id);
-      const parentNode = parentEdge ? getNodes().find((n) => n.id === parentEdge.source) : undefined;
+      const parentEdge = allEdges.find((e: Edge) => e.target === id);
+      const parentNode = parentEdge
+        ? getNodes().find((n: Node) => n.id === parentEdge.source)
+        : undefined;
 
       try {
         const res = await Api.getMyIdeaAISuggestions(ideaId, {
           seedText: parentNode?.data?.label || '',
-          mapNodes: getNodes().map((n) => ({ id: n.id, label: n.data?.label, type: n.type })),
-          mapEdges: allEdges.map((e) => ({ source: e.source, target: e.target })),
+          mapNodes: getNodes().map((n: Node) => ({ id: n.id, label: n.data?.label, type: n.type })),
+          mapEdges: allEdges.map((e: Edge) => ({ source: e.source, target: e.target })),
           activeTool: 'mindmap',
           language: i18n.language,
           ...(branchKey ? { branchKey } : {}),

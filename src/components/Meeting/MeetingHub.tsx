@@ -500,16 +500,6 @@ export const MeetingHub: React.FC = () => {
             )}
           </div>
         }
-        aiControl={
-          <button
-            type="button"
-            onClick={() => navigate('/chat?context=meeting')}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full text-sm font-medium bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 hover:bg-purple-500/15 transition-colors"
-          >
-            <Sparkles size={14} />
-            <span>AI</span>
-          </button>
-        }
         commandRowContent={commandRowContent}
         availableViewModes={['table', 'calendar']}
         showTabCounts

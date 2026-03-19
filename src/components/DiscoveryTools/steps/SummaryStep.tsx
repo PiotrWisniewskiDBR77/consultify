@@ -1,14 +1,16 @@
 /**
  * SummaryStep - Final step for all tools
  *
- * Displays executive summary, insights, and recommended initiatives.
+ * Displays final source summary, insights, and recommended initiatives.
  */
 
 import { FileText, Lightbulb, Target, TrendingUp } from 'lucide-react';
 import React from 'react';
 
+import { computeDynamicSwotOverallReadiness } from '@/components/DiscoveryTools/toolCompletion';
 import {
   GrowthPathsData,
+  InitiativeDraft,
   PorterData,
   PortfolioPriorityData,
   RiskUncertaintyData,
@@ -18,7 +20,6 @@ import {
 } from '@/store/useToolStore';
 
 import { PorterRadar } from '../visualizations/PorterRadar';
-import { SWOTMatrix } from '../visualizations/SWOTMatrix';
 
 // ==================== TYPES ====================
 
@@ -38,21 +39,29 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
   type SummaryData = {
     summary: string;
     insights: string[];
+    appliedConclusions: string[];
+    initiatives: InitiativeDraft[];
     metrics: Record<string, number>;
   };
 
   const getSummaryData = (): SummaryData => {
     if (toolType === 'dynamic-swot') {
       const swotData = inputData as SWOTData;
+      const swotSummary = swotData.summary;
+      const recommendedInitiatives = swotSummary?.recommendedInitiatives || [];
       return {
-        summary: swotData.summary?.keyInsights?.join(' ') || '',
-        insights: swotData.summary?.keyInsights || [],
+        summary: swotSummary?.executiveSummary || swotSummary?.keyInsights?.join(' ') || '',
+        insights: swotSummary?.keyInsights || [],
+        appliedConclusions: swotSummary?.appliedConclusions || [],
+        initiatives: recommendedInitiatives.length > 0 ? recommendedInitiatives : initiatives,
         metrics: {
           strengths: swotData.items.filter((i) => i.quadrant === 'strengths').length,
           weaknesses: swotData.items.filter((i) => i.quadrant === 'weaknesses').length,
           opportunities: swotData.items.filter((i) => i.quadrant === 'opportunities').length,
           threats: swotData.items.filter((i) => i.quadrant === 'threats').length,
-          correlations: swotData.correlations.length,
+          tensions: swotData.tensions?.length || swotData.correlations.length,
+          moves: swotData.recommendedMoves?.length || 0,
+          outputs: swotData.outputCandidates?.length || 0,
         },
       };
     } else if (toolType === 'market-forces') {
@@ -60,6 +69,10 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
       return {
         summary: porterData.summary?.keyInsights?.join(' ') || '',
         insights: porterData.summary?.keyInsights || [],
+        appliedConclusions:
+          (porterData.summary as { appliedConclusions?: string[] } | undefined)
+            ?.appliedConclusions || [],
+        initiatives: porterData.summary?.recommendedInitiatives || initiatives,
         metrics: {
           attractiveness: porterData.overallAttractiveness || 0,
           avgForceScore: Object.values(porterData.forces).reduce((sum, f) => sum + f.score, 0) / 5,
@@ -70,6 +83,10 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
       return {
         summary: growthData.summary?.keyInsights?.join(' ') || '',
         insights: growthData.summary?.keyInsights || [],
+        appliedConclusions:
+          (growthData.summary as { appliedConclusions?: string[] } | undefined)
+            ?.appliedConclusions || [],
+        initiatives: growthData.summary?.recommendedInitiatives || initiatives,
         metrics: {
           marketPenetration: growthData.quadrants.marketPenetration.length,
           marketDevelopment: growthData.quadrants.marketDevelopment.length,
@@ -82,6 +99,10 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
       return {
         summary: portfolioData.summary?.keyInsights?.join(' ') || '',
         insights: portfolioData.summary?.keyInsights || [],
+        appliedConclusions:
+          (portfolioData.summary as { appliedConclusions?: string[] } | undefined)
+            ?.appliedConclusions || [],
+        initiatives: portfolioData.summary?.recommendedInitiatives || initiatives,
         metrics: {
           total: portfolioData.initiatives.length,
           stars: portfolioData.initiatives.filter((i) => i.category === 'star').length,
@@ -96,6 +117,10 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
       return {
         summary: riskData.summary?.keyInsights?.join(' ') || '',
         insights: riskData.summary?.keyInsights || [],
+        appliedConclusions:
+          (riskData.summary as { appliedConclusions?: string[] } | undefined)?.appliedConclusions ||
+          [],
+        initiatives: riskData.summary?.recommendedInitiatives || initiatives,
         metrics: {
           assumptions: riskData.assumptions.length,
           risks: riskData.risks.length,
@@ -124,16 +149,234 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
       return {
         summary: operational.summary?.keyInsights?.join(' ') || '',
         insights: operational.summary?.keyInsights || [],
+        appliedConclusions: operational.summary?.appliedConclusions || [],
+        initiatives: operational.summary?.recommendedInitiatives || initiatives,
         metrics: {
           totalItems,
           sectionsWithItems,
         },
       };
     }
-    return { summary: '', insights: [], metrics: {} };
+    return { summary: '', insights: [], appliedConclusions: [], initiatives, metrics: {} };
   };
 
   const summaryData = getSummaryData();
+
+  if (toolType === 'dynamic-swot') {
+    const swotData = inputData as SWOTData;
+    const readiness = computeDynamicSwotOverallReadiness(swotData, isPolish);
+    const readinessBuckets = {
+      initiative: swotData.outputCandidates.filter(
+        (candidate) => candidate.readiness === 'ready-for-initiative'
+      ),
+      presentation: swotData.outputCandidates.filter(
+        (candidate) => candidate.readiness === 'ready-for-presentation'
+      ),
+      report: swotData.outputCandidates.filter(
+        (candidate) => candidate.readiness === 'ready-for-report'
+      ),
+      idea: swotData.outputCandidates.filter((candidate) => candidate.readiness === 'keep-as-idea'),
+      blocked: swotData.outputCandidates.filter((candidate) => candidate.readiness === 'blocked'),
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-emerald-100 p-2 dark:bg-emerald-900/30">
+            <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+              {isPolish ? 'Outputs & Actions' : 'Outputs & Actions'}
+            </h2>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              {isPolish
+                ? 'Ta faza zamienia materiał źródłowy w gotowe ścieżki decyzyjne i outputy.'
+                : 'This phase turns the source material into decision routes and downstream outputs.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-4">
+          <MetricCard
+            label={isPolish ? 'Readiness' : 'Readiness'}
+            value={readiness.label}
+            color={
+              readiness.readiness === 'ready'
+                ? 'emerald'
+                : readiness.readiness === 'needs-work'
+                  ? 'amber'
+                  : 'red'
+            }
+          />
+          <MetricCard
+            label={isPolish ? 'Output candidates' : 'Output candidates'}
+            value={swotData.outputCandidates.length}
+            color="blue"
+          />
+          <MetricCard
+            label={isPolish ? 'Moves' : 'Moves'}
+            value={swotData.recommendedMoves.length}
+            color="purple"
+          />
+          <MetricCard
+            label={isPolish ? 'Initiatives drafts' : 'Initiative drafts'}
+            value={summaryData.initiatives.length}
+            color="emerald"
+          />
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-800">
+          <h3 className="mb-2 font-medium text-slate-900 dark:text-white">
+            {isPolish ? 'Final source summary' : 'Final source summary'}
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            {summaryData.summary ||
+              (isPolish
+                ? 'Kliknij "Generuj analizę", aby otrzymać podsumowanie i routing outputów.'
+                : 'Click "Generate Analysis" to create the summary and output routing.')}
+          </p>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-800">
+              <div className="mb-3 flex items-center gap-2">
+                <Target className="h-4 w-4 text-emerald-500" />
+                <h3 className="font-medium text-slate-900 dark:text-white">
+                  {isPolish ? 'Readiness checklist' : 'Readiness checklist'}
+                </h3>
+              </div>
+              <div className="space-y-2">
+                {[
+                  {
+                    label: isPolish ? 'Mission brief jest jasny' : 'Mission brief is clear',
+                    done:
+                      !!swotData.context.goal &&
+                      !!swotData.context.scope &&
+                      !!swotData.context.successSignal,
+                  },
+                  {
+                    label: isPolish
+                      ? 'Istnieją napięcia lub korelacje'
+                      : 'Tensions or correlations exist',
+                    done: swotData.tensions.length > 0 || swotData.correlations.length > 0,
+                  },
+                  {
+                    label: isPolish ? 'Istnieją rekomendowane ruchy' : 'Recommended moves exist',
+                    done: swotData.recommendedMoves.length > 0,
+                  },
+                  {
+                    label: isPolish ? 'Summary gotowe' : 'Summary ready',
+                    done: !!swotData.summary?.executiveSummary,
+                  },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-3 text-sm">
+                    <span
+                      className={`h-2 w-2 rounded-full ${item.done ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'}`}
+                    />
+                    <span
+                      className={
+                        item.done
+                          ? 'text-slate-700 dark:text-slate-300'
+                          : 'text-slate-500 dark:text-slate-400'
+                      }
+                    >
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-800">
+              <div className="mb-3 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-violet-500" />
+                <h3 className="font-medium text-slate-900 dark:text-white">
+                  {isPolish ? 'Move-to-output bridge' : 'Move-to-output bridge'}
+                </h3>
+              </div>
+              {swotData.recommendedMoves.length > 0 ? (
+                <div className="space-y-3">
+                  {swotData.recommendedMoves.slice(0, 4).map((move) => (
+                    <div
+                      key={move.id}
+                      className="rounded-xl border border-slate-200/70 bg-slate-50/80 p-3 dark:border-navy-700/70 dark:bg-navy-950/40"
+                    >
+                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {move.title}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {move.category}
+                      </div>
+                      <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                        {move.rationale}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                  {isPolish
+                    ? 'Brak ruchów do zmapowania na outputy.'
+                    : 'No moves to bridge into outputs yet.'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                label: isPolish ? 'Ready for initiative' : 'Ready for initiative',
+                items: readinessBuckets.initiative,
+              },
+              {
+                label: isPolish ? 'Ready for presentation' : 'Ready for presentation',
+                items: readinessBuckets.presentation,
+              },
+              {
+                label: isPolish ? 'Ready for report' : 'Ready for report',
+                items: readinessBuckets.report,
+              },
+              { label: isPolish ? 'Keep as idea' : 'Keep as idea', items: readinessBuckets.idea },
+              { label: isPolish ? 'Blocked' : 'Blocked', items: readinessBuckets.blocked },
+            ].map((bucket) => (
+              <div
+                key={bucket.label}
+                className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-800"
+              >
+                <div className="mb-2 text-sm font-medium text-slate-900 dark:text-white">
+                  {bucket.label}
+                </div>
+                {bucket.items.length > 0 ? (
+                  <div className="space-y-2">
+                    {bucket.items.map((candidate) => (
+                      <div
+                        key={candidate.id}
+                        className="rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-2 text-sm text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/40 dark:text-slate-300"
+                      >
+                        <div className="font-medium text-slate-900 dark:text-slate-100">
+                          {candidate.title}
+                        </div>
+                        <div className="mt-1 text-xs uppercase tracking-wide text-slate-400">
+                          {candidate.outputType}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Brak kandydatów w tej ścieżce.' : 'No candidates in this route.'}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -143,14 +386,14 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
           <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
         </div>
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-          {isPolish ? 'Podsumowanie i Inicjatywy' : 'Summary & Initiatives'}
+          {isPolish ? 'Final Summary i inicjatywy' : 'Final Summary & Initiatives'}
         </h2>
       </div>
 
       {/* Executive Summary */}
       <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
         <h3 className="font-medium text-slate-900 dark:text-white mb-2">
-          {isPolish ? 'Podsumowanie wykonawcze' : 'Executive Summary'}
+          {isPolish ? 'Final source summary' : 'Final source summary'}
         </h3>
         <p className="text-sm text-slate-600 dark:text-slate-400">
           {summaryData.summary ||
@@ -162,30 +405,6 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
 
       {/* Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {toolType === 'dynamic-swot' && (
-          <>
-            <MetricCard
-              label={isPolish ? 'Mocne strony' : 'Strengths'}
-              value={(summaryData.metrics as any).strengths || 0}
-              color="emerald"
-            />
-            <MetricCard
-              label={isPolish ? 'Słabe strony' : 'Weaknesses'}
-              value={(summaryData.metrics as any).weaknesses || 0}
-              color="red"
-            />
-            <MetricCard
-              label={isPolish ? 'Szanse' : 'Opportunities'}
-              value={(summaryData.metrics as any).opportunities || 0}
-              color="blue"
-            />
-            <MetricCard
-              label={isPolish ? 'Zagrożenia' : 'Threats'}
-              value={(summaryData.metrics as any).threats || 0}
-              color="amber"
-            />
-          </>
-        )}
         {toolType === 'market-forces' && (
           <>
             <MetricCard
@@ -294,9 +513,6 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
         <h3 className="font-medium text-slate-900 dark:text-white mb-4">
           {isPolish ? 'Wizualizacja' : 'Visualization'}
         </h3>
-        {toolType === 'dynamic-swot' && (
-          <SWOTMatrix data={inputData as SWOTData} isPolish={isPolish} />
-        )}
         {toolType === 'market-forces' && (
           <PorterRadar data={inputData as PorterData} isPolish={isPolish} />
         )}
@@ -357,15 +573,40 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
         </div>
       )}
 
+      {summaryData.appliedConclusions.length > 0 && (
+        <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
+          <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+            <Target className="w-4 h-4 text-emerald-500" />
+            {isPolish ? 'Wnioski aplikowane' : 'Applied Conclusions'}
+          </h3>
+          <ul className="space-y-2">
+            {summaryData.appliedConclusions.map((conclusion: string, index: number) => (
+              <li
+                key={index}
+                className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+              >
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span>{conclusion}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+            {isPolish
+              ? 'Jeśli coś tu jest nieprecyzyjne, wróć do rozmowy z AI i doprecyzuj wnioski przed generowaniem outputów.'
+              : 'If anything here feels too vague, go back to the AI conversation and refine the conclusions before generating outputs.'}
+          </div>
+        </div>
+      )}
+
       {/* Recommended Initiatives */}
       <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
         <h3 className="font-medium text-slate-900 dark:text-white mb-3 flex items-center gap-2">
           <Lightbulb className="w-4 h-4 text-amber-500" />
           {isPolish ? 'Rekomendowane inicjatywy' : 'Recommended Initiatives'}
         </h3>
-        {initiatives.length > 0 ? (
+        {summaryData.initiatives.length > 0 ? (
           <div className="space-y-3">
-            {initiatives.map((initiative) => (
+            {summaryData.initiatives.map((initiative) => (
               <div
                 key={initiative.id}
                 className="p-3 rounded-lg bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700"

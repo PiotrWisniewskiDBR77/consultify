@@ -67,6 +67,7 @@ import {
   normalizeInterviewTemplateAreaTags,
   type TemplateScope,
 } from './templateLibraryMeta';
+import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoData';
 
 // Types
 interface TemplateQuestion {
@@ -222,6 +223,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
+  const interviewDemoData = useMemo(() => createInterviewDemoDataset(), []);
 
   // Template metadata state
   const [template, setTemplate] = useState<Partial<Template>>({
@@ -305,10 +307,55 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({
   const loadTemplate = async (id: string) => {
     setIsLoading(true);
     try {
+      if (isInterviewDemoId(id)) {
+        const demoTemplate = interviewDemoData.templates.find((item) => item.id === id);
+        const demoQuestions = interviewDemoData.templateQuestionsById[id] || [];
+        if (demoTemplate) {
+          const demoTemplateRecord: Template = {
+            ...(demoTemplate as unknown as Template),
+            visibility: 'org',
+            version: 1,
+            status: 'approved',
+          };
+          setTemplate({
+            ...demoTemplateRecord,
+            scope: (demoTemplateRecord.scope || 'private') as TemplateScope,
+            areaTags: normalizeInterviewTemplateAreaTags(demoTemplateRecord.areaTags),
+          });
+          setDeletedQuestionIds([]);
+          setTargetQuestionCount(Math.max(demoQuestions.length || 0, 1));
+          setQuestions(demoQuestions as TemplateQuestion[]);
+          return;
+        }
+      }
+
       const [templateRes, questionsRes] = await Promise.all([
-        Api.get(`/interview/templates/${id}`),
-        Api.get(`/interview/templates/${id}/questions`),
+        Api.get(`/interview/templates/${id}`).catch(() => null),
+        Api.get(`/interview/templates/${id}/questions`).catch(() => []),
       ]);
+
+      if (!templateRes) {
+        const demoTemplate = interviewDemoData.templates.find((item) => item.id === id);
+        const demoQuestions = interviewDemoData.templateQuestionsById[id] || [];
+        if (demoTemplate) {
+          const demoTemplateRecord: Template = {
+            ...(demoTemplate as unknown as Template),
+            visibility: 'org',
+            version: 1,
+            status: 'approved',
+          };
+          setTemplate({
+            ...demoTemplateRecord,
+            scope: (demoTemplateRecord.scope || 'private') as TemplateScope,
+            areaTags: normalizeInterviewTemplateAreaTags(demoTemplateRecord.areaTags),
+          });
+          setDeletedQuestionIds([]);
+          setTargetQuestionCount(Math.max(demoQuestions.length || 0, 1));
+          setQuestions(demoQuestions as TemplateQuestion[]);
+          return;
+        }
+        throw new Error('Template not found');
+      }
 
       setTemplate({
         ...(templateRes as Template),
@@ -1435,11 +1482,11 @@ ${sourceText || '(none)'}`;
         }
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 h-10 border-b border-slate-200/60 dark:border-navy-700 shrink-0 bg-[#1b2440] text-white">
+        <div className="flex items-center justify-between px-4 h-10 border-b border-slate-200/60 dark:border-navy-700 shrink-0 bg-slate-100 dark:bg-[#1b2440] text-slate-800 dark:text-white">
           <div className="flex items-center gap-2 min-w-0">
-            <FileText size={12} className="text-amber-300 shrink-0" />
+            <FileText size={12} className="text-amber-600 dark:text-amber-300 shrink-0" />
             <div className="min-w-0">
-              <div className="text-[11px] font-medium text-slate-200">
+              <div className="text-[11px] font-medium text-slate-600 dark:text-slate-200">
                 {template.status === 'draft'
                   ? isPolish
                     ? 'Draft'
@@ -1452,7 +1499,7 @@ ${sourceText || '(none)'}`;
           </div>
           <button
             onClick={onClose}
-            className="inline-flex items-center justify-center h-6 w-6 rounded-sm text-slate-300 hover:bg-white/10 transition-colors"
+            className="inline-flex items-center justify-center h-6 w-6 rounded-sm text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
           >
             <X size={12} />
           </button>
@@ -1479,10 +1526,10 @@ ${sourceText || '(none)'}`;
                   placeholder={
                     isPolish ? 'np. Digital maturity w produkcji' : 'e.g. Digital maturity in manufacturing'
                   }
-                  className={`w-full h-9 px-3 rounded-md bg-[#08122b] dark:bg-navy-950 border text-white placeholder-slate-400 focus:ring-1 transition-all ${
+                  className={`w-full h-9 px-3 rounded-md bg-white dark:bg-navy-950 border text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 transition-all ${
                     errors.name
                       ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50'
-                      : 'border-navy-700 focus:border-primary-500 focus:ring-primary-500/50'
+                      : 'border-slate-300 dark:border-navy-700 focus:border-primary-500 focus:ring-primary-500/50'
                   }`}
                 />
                 {errors.name && <p className="text-xs text-red-400 mt-1">{errors.name}</p>}
@@ -1511,7 +1558,7 @@ ${sourceText || '(none)'}`;
 
               {isApplicationTemplate ? (
                 <div className="mb-3 rounded-lg border border-violet-500/20 bg-violet-500/8 px-3 py-2.5">
-                  <p className="text-[11px] leading-relaxed text-violet-200 mb-2">
+                  <p className="text-[11px] leading-relaxed text-violet-700 dark:text-violet-200 mb-2">
                     {isPolish
                       ? 'To jest szablon systemowy (tylko do odczytu). Sklonuj go, aby edytować własną kopię.'
                       : 'This is a system template (read-only). Clone it to edit your own copy.'}
@@ -2168,7 +2215,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   const [newOption, setNewOption] = useState('');
   const questionTextRef = useRef<HTMLTextAreaElement | null>(null);
   const fieldClassName =
-    'w-full h-10 px-3 rounded-lg bg-white dark:bg-navy-900 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all';
+    'w-full h-10 px-3 rounded-lg bg-white dark:bg-navy-900 border border-slate-300 dark:border-navy-600 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all';
 
   const handleAddOption = () => {
     if (!newOption.trim()) return;
@@ -2203,10 +2250,10 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     >
       {/* Header */}
       <div
-        className="flex items-center gap-2.5 px-3 h-8 cursor-pointer bg-[#0b1530] dark:bg-[#0b1324] hover:bg-[#122041] dark:hover:bg-[#111b31] border border-slate-800/70 rounded-md transition-colors"
+        className="flex items-center gap-2.5 px-3 h-8 cursor-pointer bg-slate-100 dark:bg-[#0b1324] hover:bg-slate-200 dark:hover:bg-[#111b31] border border-slate-200 dark:border-slate-800/70 rounded-md transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex items-center gap-1.5 text-slate-400 shrink-0">
+        <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 shrink-0">
           {dragHandle}
           <ChevronRight
             size={12}
@@ -2216,33 +2263,33 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] text-slate-100 truncate">
+          <p className="text-[12px] text-slate-800 dark:text-slate-100 truncate">
             {question.questionText || (isPolish ? '(Nowe pytanie)' : '(New question)')}
           </p>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
           {question.isRequired && (
-            <span className="px-1.5 py-0.5 bg-red-500/15 text-red-300 text-[10px] rounded border border-red-500/20 leading-none">
+            <span className="px-1.5 py-0.5 bg-red-500/15 text-red-500 dark:text-red-300 text-[10px] rounded border border-red-500/20 leading-none">
               {isPolish ? 'Wymagane' : 'Required'}
             </span>
           )}
-          <span className="px-1.5 py-0.5 bg-slate-700/70 text-slate-200 text-[10px] rounded border border-slate-600/60 leading-none">
+          <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700/70 text-slate-600 dark:text-slate-200 text-[10px] rounded border border-slate-300 dark:border-slate-600/60 leading-none">
             {
               ANSWER_TYPES.find((t) => t.id === question.answerType)?.[
                 isPolish ? 'labelPl' : 'labelEn'
               ]
             }
           </span>
-          {question.allowVoice && <Mic size={12} className="text-slate-400" />}
-          {question.allowFileUpload && <Paperclip size={12} className="text-slate-400" />}
-          {question.allowUrl && <Link2 size={12} className="text-slate-400" />}
+          {question.allowVoice && <Mic size={12} className="text-slate-500 dark:text-slate-400" />}
+          {question.allowFileUpload && <Paperclip size={12} className="text-slate-500 dark:text-slate-400" />}
+          {question.allowUrl && <Link2 size={12} className="text-slate-500 dark:text-slate-400" />}
           <button
             onClick={(e) => {
               e.stopPropagation();
               openEditor();
             }}
-            className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-colors"
+            className="p-1 rounded hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
             title={isPolish ? 'Edytuj pytanie' : 'Edit question'}
           >
             <Pencil size={12} />
@@ -2254,7 +2301,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               onDelete();
             }}
             disabled={readOnly}
-            className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            className="p-1 rounded hover:bg-slate-300/50 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors disabled:opacity-40 disabled:pointer-events-none"
           >
             <Trash2 size={12} />
           </button>
@@ -2298,7 +2345,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
               className={`w-full px-3 py-2 rounded-lg bg-white dark:bg-navy-900 border text-slate-900 dark:text-white placeholder-slate-500 focus:ring-1 transition-all resize-none ${
                 error
                   ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50'
-                  : 'border-navy-600 focus:border-primary-500 focus:ring-primary-500/50'
+                  : 'border-slate-300 dark:border-navy-600 focus:border-primary-500 focus:ring-primary-500/50'
               }`}
             />
           </div>
@@ -2333,8 +2380,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
                 disabled={readOnly}
                 className={`w-full h-10 px-3 rounded-lg border text-sm font-medium transition-all ${
                   question.isRequired
-                    ? 'bg-red-500/20 border-red-500 text-red-400'
-                    : 'bg-white dark:bg-navy-900 border-navy-600 text-slate-400 hover:border-slate-500'
+                    ? 'bg-red-500/20 border-red-500 text-red-500 dark:text-red-400'
+                    : 'bg-white dark:bg-navy-900 border-slate-300 dark:border-navy-600 text-slate-500 dark:text-slate-400 hover:border-slate-400 dark:hover:border-slate-500'
                 } disabled:opacity-50 disabled:pointer-events-none`}
               >
                 {question.isRequired

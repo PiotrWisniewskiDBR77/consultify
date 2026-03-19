@@ -1660,7 +1660,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
               {filteredPages.map((p) => {
                 const isActive = p.id === activeId;
                 const mat = (p.maturity as NotebookMaturity) || computeMaturity(p);
-                const matCfg = MATURITY_CONFIG[mat];
+                const matCfg = MATURITY_CONFIG[mat] || MATURITY_CONFIG.seed;
                 const timeAgo = relativeTime(p.updatedAt);
                 const statusDot =
                   p.status === 'inbox'
@@ -1969,7 +1969,7 @@ export const NotebookContent: React.FC<NotebookContentProps> = ({
                         title={isPolish ? 'Ikona strony' : 'Page icon'}
                       >
                         {activePage.icon ||
-                          MATURITY_CONFIG[(activePage.maturity as NotebookMaturity) || 'seed'].icon}
+                          (MATURITY_CONFIG[(activePage.maturity as NotebookMaturity) || 'seed'] || MATURITY_CONFIG.seed).icon}
                       </span>
                       <div className="flex-1 min-w-0">
                         <input

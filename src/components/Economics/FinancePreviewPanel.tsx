@@ -1,5 +1,5 @@
 import { BarChart3, Calculator, Clock, FileText, MoreVertical, Target, TrendingUp } from 'lucide-react';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -39,6 +39,7 @@ const KIND_ICON_MAP: Record<FinanceKind, typeof Calculator> = {
 interface FinancePreviewPanelProps {
   statementPreviewDetail: PreviewDataState['statementPreviewDetail'];
   statementPreviewRatios: PreviewDataState['statementPreviewRatios'];
+  modelPreviewDetail: PreviewDataState['modelPreviewDetail'];
   predictionValidations: PreviewDataState['predictionValidations'];
   analysisPreviewRatios: PreviewDataState['analysisPreviewRatios'];
   budgetPreviewScenarios: PreviewDataState['budgetPreviewScenarios'];
@@ -63,6 +64,7 @@ interface FinancePreviewPanelProps {
 export function useFinancePreview({
   statementPreviewDetail,
   statementPreviewRatios,
+  modelPreviewDetail,
   predictionValidations,
   analysisPreviewRatios,
   budgetPreviewScenarios,
@@ -86,6 +88,143 @@ export function useFinancePreview({
   const { t, i18n } = useTranslation();
   const isPl = i18n.language?.startsWith('pl');
 
+  const ModelStatementPreview: React.FC<{
+    detail: NonNullable<PreviewDataState['modelPreviewDetail']>;
+  }> = ({ detail }) => {
+    const [selectedVariant, setSelectedVariant] = useState<'base' | 'optimistic' | 'conservative'>(
+      detail.variants.includes(detail.selectedScenario as 'base' | 'optimistic' | 'conservative')
+        ? (detail.selectedScenario as 'base' | 'optimistic' | 'conservative')
+        : 'base'
+    );
+    const [selectedStatement, setSelectedStatement] = useState<'P&L' | 'BS' | 'CF'>('P&L');
+
+    const rows = detail.scenarioTables[selectedVariant]?.[selectedStatement] || [];
+    const variantLabels = {
+      base: isPl ? 'Base' : 'Base',
+      optimistic: isPl ? 'Optymistyczny' : 'Optimistic',
+      conservative: isPl ? 'Konserwatywny' : 'Conservative',
+    };
+    const statementLabels = {
+      'P&L': 'P&L',
+      BS: isPl ? 'Bilans' : 'Balance Sheet',
+      CF: isPl ? 'Cash Flow' : 'Cash Flow',
+    };
+
+    return (
+      <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400">
+              {isPl ? 'Dokument bazowy' : 'Source document'}
+            </div>
+            <div className="text-sm font-medium text-slate-900 dark:text-white">
+              {detail.sourceDocumentTitle}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {detail.sourcePeriodLabel} • {detail.sourceStatementCount}{' '}
+              {isPl ? 'dokumenty składowe' : 'source statements'}
+            </div>
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            {isPl ? 'Poziomy analityczne' : 'Analytical levels'}: {detail.analyticalDepthLabel}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {detail.variants.map((variant) => (
+            <button
+              key={variant}
+              onClick={() => setSelectedVariant(variant)}
+              className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                selectedVariant === variant
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white/80 text-slate-600 dark:bg-white/[0.04] dark:text-slate-300'
+              }`}
+            >
+              {variantLabels[variant]}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {(['P&L', 'BS', 'CF'] as const).map((statement) => (
+            <button
+              key={statement}
+              onClick={() => setSelectedStatement(statement)}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                selectedStatement === statement
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                  : 'bg-white/80 text-slate-600 dark:bg-white/[0.04] dark:text-slate-300'
+              }`}
+            >
+              {statementLabels[statement]}
+            </button>
+          ))}
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[620px] text-xs border-collapse">
+            <thead>
+              <tr className="bg-slate-100/80 dark:bg-white/[0.04]">
+                <th className="min-w-[220px] px-3 py-2 text-left font-semibold text-slate-500 dark:text-slate-400">
+                  {isPl ? 'Linia' : 'Line'}
+                </th>
+                {detail.forecastYears.map((year) => (
+                  <th
+                    key={year}
+                    className="px-3 py-2 text-right font-semibold text-slate-500 dark:text-slate-400"
+                  >
+                    {year}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.06]">
+              {rows.map((line) => (
+                <tr
+                  key={`${selectedVariant}-${selectedStatement}-${line.lineCode}`}
+                  className={
+                    line.isTotal
+                      ? 'bg-slate-100/60 dark:bg-white/[0.06]'
+                      : line.isSubtotal
+                        ? 'bg-slate-50/80 dark:bg-white/[0.03]'
+                        : ''
+                  }
+                >
+                  <td
+                    className="px-3 py-2 text-slate-800 dark:text-slate-200"
+                    style={{ paddingLeft: `${12 + line.level * 16}px` }}
+                  >
+                    <span className={line.isTotal || line.isSubtotal ? 'font-semibold' : ''}>
+                      {line.lineName}
+                    </span>
+                  </td>
+                  {detail.forecastYears.map((year) => {
+                    const value = line.values[year] ?? 0;
+                    return (
+                      <td
+                        key={`${line.lineCode}-${year}`}
+                        className={`px-3 py-2 text-right font-mono ${
+                          value < 0
+                            ? 'text-rose-600 dark:text-rose-300'
+                            : 'text-slate-900 dark:text-white'
+                        }`}
+                      >
+                        {new Intl.NumberFormat(isPl ? 'pl-PL' : 'en-US', {
+                          maximumFractionDigits: 0,
+                        }).format(value)}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   const renderPreviewBody = useCallback(
     (row: FinanceRow) => {
       const metaPills: { label: string; value: string }[] = [];
@@ -100,18 +239,19 @@ export function useFinancePreview({
         );
       } else if (row.kind === 'models') {
         metaPills.push(
-          { label: t('finance.columns.scenario', 'Scenario'), value: row.scenario },
+          {
+            label: t('finance.columns.variants', 'Variants'),
+            value: row.variantLabel || 'base / optimistic / conservative',
+          },
           { label: t('common.currency', 'Currency'), value: row.currency },
           {
-            label: t('finance.columns.horizon', 'Horizon'),
-            value: `${row.horizonMonths} ${t('finance.units.mo', 'mo')}`,
+            label: t('finance.columns.forecastWindow', 'Forecast'),
+            value: row.forecastWindowLabel || `${row.horizonMonths} ${t('finance.units.mo', 'mo')}`,
           }
         );
         metaPills.push({
-          label: t('finance.columns.source', 'Source'),
-          value: row.sourceStatementId
-            ? t('finance.model.seededFromStatementShort', 'Statement')
-            : t('finance.model.seededManuallyShort', 'Manual'),
+          label: t('finance.columns.document', 'Document'),
+          value: modelPreviewDetail?.sourceDocumentTitle || row.sourceDocumentTitle || '—',
         });
         if (row.startDate)
           metaPills.push({
@@ -202,8 +342,8 @@ export function useFinancePreview({
         }
       } else if (row.kind === 'models') {
         detailsText = isPl
-          ? `Model finansowy P&L / Bilans / CF.\nScenariusz: ${row.scenario}\nWaluta: ${row.currency}\nHoryzont: ${row.horizonMonths} miesięcy\nStart: ${row.startDate || '—'}\nŹródło: ${row.sourceStatementId ? 'seeded from statement' : 'manual / zero'}`
-          : `Financial model P&L / BS / CF.\nScenario: ${row.scenario}\nCurrency: ${row.currency}\nHorizon: ${row.horizonMonths} months\nStart: ${row.startDate || '—'}\nSource: ${row.sourceStatementId ? 'seeded from statement' : 'manual / zero'}`;
+          ? `Model prognostyczny w układzie P&L / Bilans / CF.\nDokument bazowy: ${modelPreviewDetail?.sourceDocumentTitle || row.sourceDocumentTitle || '—'}\nOkno prognozy: ${row.forecastWindowLabel || '3Y'}\nWarianty: ${row.variantLabel || 'base / optimistic / conservative'}\nPoziomy analityczne: ${modelPreviewDetail?.analyticalDepthLabel || row.analyticalDepthLabel || 'L1-L3'}`
+          : `Forecast model in P&L / BS / CF format.\nSource document: ${modelPreviewDetail?.sourceDocumentTitle || row.sourceDocumentTitle || '—'}\nForecast window: ${row.forecastWindowLabel || '3Y'}\nVariants: ${row.variantLabel || 'base / optimistic / conservative'}\nAnalytical depth: ${modelPreviewDetail?.analyticalDepthLabel || row.analyticalDepthLabel || 'L1-L3'}`;
       } else if (row.kind === 'analysis' || row.kind === 'investment') {
         detailsText = isPl
           ? `${row.kind === 'investment' ? 'Case inwestycyjny' : 'Analiza finansowa'}: ${row.analysisType}\nWaluta: ${row.currency}\nLiczba okresów: ${row.periodCount}`
@@ -338,6 +478,17 @@ export function useFinancePreview({
               )}
             </div>
           )}
+
+          {row.kind === 'models' &&
+            (modelPreviewDetail ? (
+              <ModelStatementPreview detail={modelPreviewDetail} />
+            ) : (
+              <div className="rounded-lg border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.02] p-3 text-xs text-slate-500 dark:text-slate-400">
+                {isPl
+                  ? 'Ładowanie prognozowanego układu sprawozdania…'
+                  : 'Loading forecast statement layout…'}
+              </div>
+            ))}
 
           {/* Prediction: validation summary */}
           {row.kind === 'prediction' &&
@@ -660,6 +811,7 @@ export function useFinancePreview({
       isPl,
       statementPreviewDetail,
       statementPreviewRatios,
+      modelPreviewDetail,
       predictionValidations,
       analysisPreviewRatios,
       budgetPreviewScenarios,

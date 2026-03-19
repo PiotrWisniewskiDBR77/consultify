@@ -124,12 +124,177 @@ const REMINDER_WINDOWS = {
 
 class InterviewAssignmentService {
   private db: IDatabase | null = null;
+  private schemaCompatibilityPromise: Promise<void> | null = null;
 
   private async getDb(): Promise<IDatabase> {
     if (!this.db) {
       this.db = await getDatabase();
     }
+    if (!this.schemaCompatibilityPromise) {
+      this.schemaCompatibilityPromise = this.ensureSchemaCompatibility(this.db).catch((error) => {
+        this.schemaCompatibilityPromise = null;
+        throw error;
+      });
+    }
+    await this.schemaCompatibilityPromise;
     return this.db;
+  }
+
+  private async ensureSchemaCompatibility(db: IDatabase): Promise<void> {
+    const querySafe = async (sql: string, params: unknown[] = []) => {
+      try {
+        await db.query(sql, params);
+      } catch (error) {
+        const message = String((error as Error)?.message || error || '');
+        if (
+          message.includes('already exists') ||
+          message.includes('duplicate column') ||
+          message.includes('multiple primary keys')
+        ) {
+          return;
+        }
+        throw error;
+      }
+    };
+
+    const tableExists = async (tableName: string): Promise<boolean> => {
+      const result = await db.query(
+        `SELECT 1
+         FROM information_schema.tables
+         WHERE table_schema = 'public' AND table_name = $1
+         LIMIT 1`,
+        [tableName]
+      );
+      return result.rows.length > 0;
+    };
+
+    const columnExists = async (tableName: string, columnName: string): Promise<boolean> => {
+      const result = await db.query(
+        `SELECT 1
+         FROM information_schema.columns
+         WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2
+         LIMIT 1`,
+        [tableName, columnName]
+      );
+      return result.rows.length > 0;
+    };
+
+    await querySafe(`
+      CREATE TABLE IF NOT EXISTS interview_assignments (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        project_id TEXT,
+        assignee_user_id TEXT NOT NULL,
+        template_id TEXT NOT NULL,
+        template_version INTEGER NOT NULL DEFAULT 1,
+        process_ref TEXT,
+        status TEXT NOT NULL DEFAULT 'assigned',
+        session_id TEXT,
+        task_id TEXT,
+        due_at TIMESTAMP,
+        started_at TIMESTAMP,
+        submitted_at TIMESTAMP,
+        sent_back_at TIMESTAMP,
+        sent_back_reason TEXT,
+        priority TEXT DEFAULT 'medium',
+        reminder_sent_at TIMESTAMP,
+        reminder_count INTEGER DEFAULT 0,
+        last_reminder_type TEXT,
+        escalated_at TIMESTAMP,
+        escalation_count INTEGER DEFAULT 0,
+        is_team_assignment INTEGER DEFAULT 0,
+        notes TEXT,
+        escalate_to TEXT,
+        created_by TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    const ensureAssignmentColumn = async (columnName: string, ddl: string) => {
+      if (!(await columnExists('interview_assignments', columnName))) {
+        await querySafe(`ALTER TABLE interview_assignments ADD COLUMN ${ddl}`);
+      }
+    };
+
+    await ensureAssignmentColumn('project_id', 'project_id TEXT');
+    await ensureAssignmentColumn('priority', `priority TEXT DEFAULT 'medium'`);
+    await ensureAssignmentColumn('reminder_sent_at', 'reminder_sent_at TIMESTAMP');
+    await ensureAssignmentColumn('reminder_count', 'reminder_count INTEGER DEFAULT 0');
+    await ensureAssignmentColumn('last_reminder_type', 'last_reminder_type TEXT');
+    await ensureAssignmentColumn('escalated_at', 'escalated_at TIMESTAMP');
+    await ensureAssignmentColumn('escalation_count', 'escalation_count INTEGER DEFAULT 0');
+    await ensureAssignmentColumn('is_team_assignment', 'is_team_assignment INTEGER DEFAULT 0');
+    await ensureAssignmentColumn('notes', 'notes TEXT');
+    await ensureAssignmentColumn('escalate_to', 'escalate_to TEXT');
+
+    await querySafe(`
+      CREATE TABLE IF NOT EXISTS interview_assignment_members (
+        id TEXT PRIMARY KEY,
+        assignment_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT DEFAULT 'member',
+        progress_percent INTEGER DEFAULT 0,
+        joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        completed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(assignment_id, user_id)
+      )
+    `);
+
+    await querySafe(`
+      CREATE TABLE IF NOT EXISTS interview_notifications (
+        id TEXT PRIMARY KEY,
+        assignment_id TEXT,
+        user_id TEXT NOT NULL,
+        type TEXT NOT NULL,
+        channel TEXT NOT NULL,
+        title TEXT,
+        body TEXT,
+        sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        read_at TIMESTAMP,
+        metadata TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    if (await tableExists('interview_assignments')) {
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_interview_assignments_org_assignee_status
+         ON interview_assignments(organization_id, assignee_user_id, status)`
+      );
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_interview_assignments_due_status
+         ON interview_assignments(due_at, status)`
+      );
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_interview_assignments_project
+         ON interview_assignments(project_id)`
+      );
+    }
+
+    if (await tableExists('interview_assignment_members')) {
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_interview_assignment_members_assignment
+         ON interview_assignment_members(assignment_id)`
+      );
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_interview_assignment_members_user
+         ON interview_assignment_members(user_id)`
+      );
+    }
+
+    if (await tableExists('interview_notifications')) {
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_interview_notifications_assignment
+         ON interview_notifications(assignment_id)`
+      );
+      await querySafe(
+        `CREATE INDEX IF NOT EXISTS idx_interview_notifications_user
+         ON interview_notifications(user_id)`
+      );
+    }
   }
 
   // ==========================================

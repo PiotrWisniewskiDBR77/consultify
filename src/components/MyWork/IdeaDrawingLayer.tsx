@@ -223,20 +223,36 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
       >
         <g transform={vpTransformStr}>
           {/* Existing paths */}
-          {paths.map((p) => (
-            <path
-              key={p.id}
-              data-path-id={p.id}
-              d={p.d}
-              fill="none"
-              stroke={p.stroke}
-              strokeWidth={tool === 'eraser' ? p.strokeWidth + 4 : p.strokeWidth}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              opacity={p.opacity}
-              className={tool === 'eraser' ? 'cursor-pointer hover:opacity-30' : ''}
-            />
-          ))}
+          {paths.map((p) => {
+            const hitWidth = Math.max(p.strokeWidth + 20, 24);
+            return (
+              <g key={p.id}>
+                {tool === 'eraser' && (
+                  <path
+                    data-path-id={p.id}
+                    d={p.d}
+                    fill="none"
+                    stroke="transparent"
+                    strokeWidth={hitWidth}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="cursor-pointer"
+                  />
+                )}
+                <path
+                  data-path-id={p.id}
+                  d={p.d}
+                  fill="none"
+                  stroke={p.stroke}
+                  strokeWidth={tool === 'eraser' ? p.strokeWidth + 4 : p.strokeWidth}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity={p.opacity}
+                  className={tool === 'eraser' ? 'pointer-events-none' : ''}
+                />
+              </g>
+            );
+          })}
           {/* Current drawing path */}
           {currentPath && (
             <path
@@ -254,7 +270,7 @@ export const IdeaDrawingLayer: React.FC<IdeaDrawingLayerProps> = ({
 
       {/* Toolbar */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[75]">
-        <div className="flex items-center gap-1 bg-white/95 dark:bg-navy-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-navy-700/60 shadow-xl px-3 py-2">
+        <div className="flex items-center gap-1 bg-white/95 dark:bg-navy-900/95 backdrop-blur-md rounded-2xl border border-slate-200/70 dark:border-navy-600/60 shadow-xl shadow-slate-300/20 dark:shadow-navy-950/50 px-3 py-2">
           {/* Tool selection */}
           <ToolBtn
             active={tool === 'pen'}

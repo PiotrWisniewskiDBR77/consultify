@@ -81,6 +81,39 @@ export interface SparkItem {
   taskCount?: number;
 }
 
+export interface HomeTip {
+  id: string;
+  titleEn: string;
+  titlePl: string;
+  bodyEn: string;
+  bodyPl: string;
+  tags?: string[];
+}
+
+export interface HomeNewsItem {
+  id: string;
+  title: string;
+  source: string;
+  url: string;
+  publishedAt?: string;
+  summary?: string;
+}
+
+export interface PeerTipItem {
+  id: string;
+  text: string;
+  authorName?: string;
+  createdAt: string;
+}
+
+export interface UpcomingEventItem {
+  id: string;
+  source: 'task' | 'decision' | 'initiative';
+  title: string;
+  date: string;
+  urgency: 'overdue' | 'today' | 'soon';
+}
+
 export interface AIPulseCorePayload {
   greeting: string;
   headline: string;
@@ -89,6 +122,8 @@ export interface AIPulseCorePayload {
   weekProgress: number;
   pulseScore: number;
   focusItems: HomeFocusItem[];
+  appTipOfDay?: HomeTip | null;
+  aiPlaybookTip?: HomeTip | null;
 }
 
 export interface MomentumPayload {
@@ -102,6 +137,7 @@ export interface SparkFieldPayload {
   ideas: SparkItem[];
   notes: SparkItem[];
   nudge: { text: string; ideaId: string } | null;
+  orgIdeas?: SparkItem[];
 }
 
 export interface DecisionTemperaturePayload {
@@ -122,6 +158,7 @@ export interface IndustryLensPayload {
   roleLens: string;
   marketSignal: HomeSignalCard;
   technologySignal: HomeSignalCard;
+  aiNews?: HomeNewsItem[];
   benchmark: {
     label: string;
     value: string;
@@ -145,6 +182,7 @@ export interface ExecutionCurrentPayload {
     entityType?: HomeEntityType;
     entityId?: string;
   }>;
+  nextUp?: UpcomingEventItem[];
 }
 
 export interface TeamSignalPayload {
@@ -156,6 +194,7 @@ export interface TeamSignalPayload {
     detail: string;
     tone: 'positive' | 'warning' | 'neutral';
   }>;
+  peerTips?: PeerTipItem[];
 }
 
 export interface CommandDockPayload {
@@ -199,4 +238,110 @@ export interface HomeScreenData {
   updatedAt: string;
   pulseLabel: string;
   blocks: HomeBlock[];
+}
+
+export type RadarContentType =
+  | 'news'
+  | 'article'
+  | 'guide'
+  | 'how_to'
+  | 'case_study'
+  | 'regulation'
+  | 'competitor_move'
+  | 'tool_tip'
+  | 'opinion'
+  | 'weak_signal';
+
+export type RadarRelevanceScope =
+  | 'general'
+  | 'role_specific'
+  | 'industry_specific'
+  | 'company_specific'
+  | 'project_specific';
+
+export type RadarImpactLevel = 'low' | 'medium' | 'high';
+export type RadarDurability = 'hot' | 'current' | 'evergreen';
+export type RadarImpactType =
+  | 'strategic'
+  | 'operational'
+  | 'commercial'
+  | 'product'
+  | 'risk'
+  | 'compliance'
+  | 'learning';
+
+export interface RadarSignalCard {
+  id: string;
+  signalId: string;
+  title: string;
+  summary: string;
+  insightSummary: string;
+  whyItMatters: string;
+  whyYouSeeThis: string;
+  suggestedNextStep: string;
+  source: {
+    id: string;
+    name: string;
+    category: string;
+    trustScore: number;
+    url?: string;
+  };
+  tags: {
+    domains: string[];
+    topics: string[];
+    entities: string[];
+  };
+  contentType: RadarContentType;
+  relevanceScope: RadarRelevanceScope;
+  businessImpact: RadarImpactLevel;
+  actionability: RadarImpactLevel;
+  durability: RadarDurability;
+  impactType: RadarImpactType;
+  confidenceScore: number;
+  freshnessScore: number;
+  finalScore: number;
+  publishedAt?: string | null;
+  relatedContext: string[];
+  contentLanguage?: string;
+  requestedLanguage?: string;
+  isLocalized?: boolean;
+  localizationPending?: boolean;
+}
+
+export interface RadarRecommendation {
+  id: string;
+  kind: 'action' | 'question' | 'risk' | 'opportunity';
+  title: string;
+  body: string;
+  signalId?: string;
+}
+
+export interface RadarViewPayload {
+  generatedAt: string;
+  profile: {
+    trackedTopics: string[];
+    trackedCompanies: string[];
+    mutedTopics: string[];
+    mutedSources: string[];
+  };
+  dailyBriefing: {
+    mainInsight: string;
+    keySignals: RadarSignalCard[];
+    recommendedMove: RadarRecommendation | null;
+  };
+  whatChanged: RadarSignalCard[];
+  whyItMattersToMe: RadarSignalCard[];
+  whatToDoNext: RadarRecommendation[];
+  learnImprove: RadarSignalCard[];
+  watchlist: RadarSignalCard[];
+  metrics: {
+    totalSignalsConsidered: number;
+    duplicateRate: number;
+    actionedSignalsLast30d: number;
+    savedSignalsLast30d: number;
+  };
+  localization: {
+    requestedLanguage: string;
+    pendingCount: number;
+  };
 }

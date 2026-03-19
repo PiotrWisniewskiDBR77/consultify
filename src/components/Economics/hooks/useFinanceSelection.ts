@@ -3,11 +3,344 @@ import { useCallback, useEffect, useState } from 'react';
 import { Api } from '@/services/api';
 
 import { type ModuleTab } from '../../shared/ModuleHub';
-import {
-  type FinanceModelRow,
-  type FinanceRow,
-  type PreviewDataState,
-} from '../financeTypes';
+import { type FinanceModelPreviewDetail, type FinanceModelRow, type FinanceRow, type PreviewDataState } from '../financeTypes';
+
+type ScenarioVariant = 'base' | 'optimistic' | 'conservative';
+
+type StatementValueRow = {
+  line_code?: string | null;
+  line_name?: string | null;
+  aggregation_level?: number | null;
+  is_total?: boolean;
+  is_subtotal?: boolean;
+  value?: number | string | null;
+};
+
+type StatementDetail = {
+  id: string;
+  statement_type: string;
+  period_label?: string | null;
+  values?: StatementValueRow[];
+};
+
+const SCENARIO_VARIANTS: ScenarioVariant[] = ['base', 'optimistic', 'conservative'];
+
+const SCENARIO_PROFILES: Record<
+  ScenarioVariant,
+  {
+    revenueGrowth: number;
+    cogsRatio: number;
+    opexRatio: number;
+    depreciationRatio: number;
+    taxRate: number;
+    interestRate: number;
+    arRatio: number;
+    inventoryRatio: number;
+    apRatio: number;
+    capexRatio: number;
+    debtDecay: number;
+    dividendRatio: number;
+  }
+> = {
+  base: {
+    revenueGrowth: 0.055,
+    cogsRatio: 0.605,
+    opexRatio: 0.21,
+    depreciationRatio: 0.038,
+    taxRate: 0.19,
+    interestRate: 0.052,
+    arRatio: 0.145,
+    inventoryRatio: 0.085,
+    apRatio: 0.11,
+    capexRatio: 0.05,
+    debtDecay: 0.95,
+    dividendRatio: 0.02,
+  },
+  optimistic: {
+    revenueGrowth: 0.082,
+    cogsRatio: 0.575,
+    opexRatio: 0.198,
+    depreciationRatio: 0.036,
+    taxRate: 0.19,
+    interestRate: 0.047,
+    arRatio: 0.138,
+    inventoryRatio: 0.078,
+    apRatio: 0.105,
+    capexRatio: 0.056,
+    debtDecay: 0.92,
+    dividendRatio: 0.026,
+  },
+  conservative: {
+    revenueGrowth: 0.028,
+    cogsRatio: 0.632,
+    opexRatio: 0.225,
+    depreciationRatio: 0.04,
+    taxRate: 0.19,
+    interestRate: 0.058,
+    arRatio: 0.152,
+    inventoryRatio: 0.094,
+    apRatio: 0.114,
+    capexRatio: 0.043,
+    debtDecay: 0.975,
+    dividendRatio: 0.015,
+  },
+};
+
+function toNumber(value: unknown): number {
+  const numeric = Number(value ?? 0);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function normalizeStatementType(value: unknown): 'P&L' | 'BS' | 'CF' | null {
+  const normalized = String(value || '')
+    .trim()
+    .toUpperCase();
+  if (normalized === 'P&L' || normalized === 'PL') return 'P&L';
+  if (normalized === 'BS' || normalized === 'BALANCE_SHEET') return 'BS';
+  if (normalized === 'CF' || normalized === 'CASH_FLOW') return 'CF';
+  return null;
+}
+
+function buildForecastYears(startDate: string): string[] {
+  const startYear = Number.parseInt(String(startDate || '').slice(0, 4), 10);
+  const baseYear = Number.isFinite(startYear) ? startYear : new Date().getFullYear();
+  return Array.from({ length: 3 }, (_, index) => String(baseYear + index));
+}
+
+function getLineValue(rows: StatementValueRow[], codes: string[], fallback: number = 0): number {
+  for (const code of codes) {
+    const match = rows.find(
+      (row) =>
+        String(row.line_code || '')
+          .trim()
+          .toUpperCase() === code
+    );
+    const value = Math.abs(toNumber(match?.value));
+    if (value > 0) return value;
+  }
+  return fallback;
+}
+
+function buildModelPreviewDetail(
+  row: FinanceModelRow,
+  modelDetail: any,
+  packDetail: any,
+  statementDetails: StatementDetail[]
+): FinanceModelPreviewDetail {
+  const sourceStatements = Array.isArray(packDetail?.statements) ? packDetail.statements : [];
+  const valuesByType: Record<'P&L' | 'BS' | 'CF', StatementValueRow[]> = { 'P&L': [], BS: [], CF: [] };
+
+  for (const statement of statementDetails) {
+    const type = normalizeStatementType(statement?.statement_type);
+    if (!type) continue;
+    valuesByType[type] = Array.isArray(statement?.values) ? statement.values : [];
+  }
+
+  const baseline = modelDetail?.assumptions_json?.baseline || {};
+  const years = buildForecastYears(String(row.startDate || modelDetail?.start_date || ''));
+
+  const baseRevenue = getLineValue(valuesByType['P&L'], ['REVENUE'], toNumber(baseline.revenue) || 1000);
+  const baseCogs = getLineValue(valuesByType['P&L'], ['COGS'], toNumber(baseline.cogs) || baseRevenue * 0.6);
+  const baseOpex = getLineValue(valuesByType['P&L'], ['OPEX'], toNumber(baseline.opex) || baseRevenue * 0.2);
+  const baseDepreciation = getLineValue(
+    valuesByType['P&L'],
+    ['DEPRECIATION'],
+    toNumber(baseline.depreciation) || baseRevenue * 0.035
+  );
+  const baseCash = getLineValue(
+    valuesByType['BS'],
+    ['CASH'],
+    toNumber(modelDetail?.assumptions_json?.initialCash) || baseRevenue * 0.08
+  );
+  const baseAr = getLineValue(
+    valuesByType['BS'],
+    ['AR'],
+    toNumber(modelDetail?.assumptions_json?.initialAR) || baseRevenue * 0.14
+  );
+  const baseInventory = getLineValue(
+    valuesByType['BS'],
+    ['INVENTORY'],
+    toNumber(modelDetail?.assumptions_json?.initialInventory) || baseRevenue * 0.09
+  );
+  const baseAp = getLineValue(
+    valuesByType['BS'],
+    ['AP'],
+    toNumber(modelDetail?.assumptions_json?.initialAP) || baseCogs * 0.11
+  );
+  const basePpe = getLineValue(
+    valuesByType['BS'],
+    ['PPE_NET'],
+    toNumber(modelDetail?.assumptions_json?.initialPPE) || baseRevenue * 0.24
+  );
+  const baseDebt = getLineValue(
+    valuesByType['BS'],
+    ['LONG_TERM_DEBT', 'TOTAL_LIABILITIES'],
+    toNumber(modelDetail?.assumptions_json?.initialDebt) || baseRevenue * 0.22
+  );
+  const baseEquity = getLineValue(
+    valuesByType['BS'],
+    ['EQUITY', 'TOTAL_EQUITY'],
+    toNumber(modelDetail?.assumptions_json?.initialEquity) || baseRevenue * 0.3
+  );
+
+  const scenarioTables = Object.fromEntries(
+    SCENARIO_VARIANTS.map((variant) => {
+      const profile = SCENARIO_PROFILES[variant];
+      let revenue = baseRevenue;
+      let ppe = basePpe;
+      let cash = baseCash;
+      let ar = baseAr;
+      let inventory = baseInventory;
+      let ap = baseAp;
+      let debt = baseDebt;
+
+      const plLines = [
+        { lineCode: 'REVENUE', lineName: 'Revenue', level: 0, values: {} as Record<string, number> },
+        { lineCode: 'COGS', lineName: 'Cost of goods sold', level: 1, values: {} as Record<string, number> },
+        { lineCode: 'GROSS_PROFIT', lineName: 'Gross profit', level: 0, isSubtotal: true, values: {} as Record<string, number> },
+        { lineCode: 'OPEX', lineName: 'Operating expenses', level: 1, values: {} as Record<string, number> },
+        { lineCode: 'EBITDA', lineName: 'EBITDA', level: 0, isSubtotal: true, values: {} as Record<string, number> },
+        { lineCode: 'DEPRECIATION', lineName: 'Depreciation', level: 1, values: {} as Record<string, number> },
+        { lineCode: 'EBIT', lineName: 'EBIT', level: 0, isSubtotal: true, values: {} as Record<string, number> },
+        { lineCode: 'INTEREST_EXPENSE', lineName: 'Interest expense', level: 1, values: {} as Record<string, number> },
+        { lineCode: 'EBT', lineName: 'Earnings before tax', level: 0, isSubtotal: true, values: {} as Record<string, number> },
+        { lineCode: 'TAX', lineName: 'Income tax', level: 1, values: {} as Record<string, number> },
+        { lineCode: 'NET_INCOME', lineName: 'Net income', level: 0, isTotal: true, values: {} as Record<string, number> },
+      ];
+
+      const bsLines = [
+        { lineCode: 'CASH', lineName: 'Cash', level: 1, values: {} as Record<string, number> },
+        { lineCode: 'AR', lineName: 'Accounts receivable', level: 2, values: {} as Record<string, number> },
+        { lineCode: 'INVENTORY', lineName: 'Inventory', level: 2, values: {} as Record<string, number> },
+        { lineCode: 'CURRENT_ASSETS', lineName: 'Current assets', level: 0, isSubtotal: true, values: {} as Record<string, number> },
+        { lineCode: 'PPE_NET', lineName: 'Property, plant and equipment', level: 1, values: {} as Record<string, number> },
+        { lineCode: 'TOTAL_ASSETS', lineName: 'Total assets', level: 0, isTotal: true, values: {} as Record<string, number> },
+        { lineCode: 'AP', lineName: 'Accounts payable', level: 2, values: {} as Record<string, number> },
+        { lineCode: 'CURRENT_LIABILITIES', lineName: 'Current liabilities', level: 0, isSubtotal: true, values: {} as Record<string, number> },
+        { lineCode: 'LONG_TERM_DEBT', lineName: 'Long-term debt', level: 1, values: {} as Record<string, number> },
+        { lineCode: 'TOTAL_LIABILITIES', lineName: 'Total liabilities', level: 0, isSubtotal: true, values: {} as Record<string, number> },
+        { lineCode: 'EQUITY', lineName: 'Equity', level: 1, values: {} as Record<string, number> },
+        { lineCode: 'TOTAL_LIABILITIES_EQUITY', lineName: 'Total liabilities + equity', level: 0, isTotal: true, values: {} as Record<string, number> },
+      ];
+
+      const cfLines = [
+        { lineCode: 'NET_INCOME_CF', lineName: 'Net income', level: 1, values: {} as Record<string, number> },
+        { lineCode: 'DEPRECIATION_ADDBACK', lineName: 'Depreciation add-back', level: 1, values: {} as Record<string, number> },
+        { lineCode: 'WC_CHANGE', lineName: 'Working capital change', level: 1, values: {} as Record<string, number> },
+        { lineCode: 'OPERATING_CF', lineName: 'Operating cash flow', level: 0, isSubtotal: true, values: {} as Record<string, number> },
+        { lineCode: 'CAPEX_CF', lineName: 'Capital expenditure', level: 1, values: {} as Record<string, number> },
+        { lineCode: 'INVESTING_CF', lineName: 'Investing cash flow', level: 0, isSubtotal: true, values: {} as Record<string, number> },
+        { lineCode: 'FINANCING_CF', lineName: 'Financing cash flow', level: 0, isSubtotal: true, values: {} as Record<string, number> },
+        { lineCode: 'NET_CHANGE_CASH', lineName: 'Net change in cash', level: 0, isSubtotal: true, values: {} as Record<string, number> },
+        { lineCode: 'CLOSING_CASH', lineName: 'Closing cash', level: 0, isTotal: true, values: {} as Record<string, number> },
+      ];
+
+      for (const year of years) {
+        const previousWorkingCapital = ar + inventory - ap;
+        revenue = revenue * (1 + profile.revenueGrowth);
+        const cogs = revenue * profile.cogsRatio;
+        const grossProfit = revenue - cogs;
+        const opex = Math.max(
+          baseOpex * Math.pow(1 + profile.revenueGrowth * 0.75, Number(year) - Number(years[0]) + 1),
+          revenue * profile.opexRatio
+        );
+        const ebitda = grossProfit - opex;
+        const depreciation = Math.max(baseDepreciation, ppe * profile.depreciationRatio);
+        const ebit = ebitda - depreciation;
+        const interest = Math.max(debt * profile.interestRate, 0);
+        const ebt = ebit - interest;
+        const tax = Math.max(ebt, 0) * profile.taxRate;
+        const netIncome = ebt - tax;
+
+        ar = revenue * profile.arRatio;
+        inventory = revenue * profile.inventoryRatio;
+        ap = cogs * profile.apRatio;
+        const workingCapital = ar + inventory - ap;
+        const wcChange = workingCapital - previousWorkingCapital;
+        const operatingCf = netIncome + depreciation - wcChange;
+        const capex = -(revenue * profile.capexRatio);
+        const investingCf = capex;
+        const nextDebt = debt * profile.debtDecay;
+        const financingCf = -(debt - nextDebt) - revenue * profile.dividendRatio;
+        const netChangeCash = operatingCf + investingCf + financingCf;
+        cash = cash + netChangeCash;
+        ppe = Math.max(ppe + Math.abs(capex) - depreciation, revenue * 0.16);
+        debt = nextDebt;
+
+        const currentAssets = cash + ar + inventory;
+        const totalAssets = currentAssets + ppe;
+        const currentLiabilities = ap;
+        const totalLiabilities = currentLiabilities + debt;
+        const equity = Math.max(totalAssets - totalLiabilities, baseEquity * 0.7);
+
+        const assign = (
+          lines: Array<{ lineCode: string; values: Record<string, number> }>,
+          lineCode: string,
+          value: number
+        ) => {
+          const line = lines.find((entry) => entry.lineCode === lineCode);
+          if (line) line.values[year] = Math.round(value);
+        };
+
+        assign(plLines, 'REVENUE', revenue);
+        assign(plLines, 'COGS', -cogs);
+        assign(plLines, 'GROSS_PROFIT', grossProfit);
+        assign(plLines, 'OPEX', -opex);
+        assign(plLines, 'EBITDA', ebitda);
+        assign(plLines, 'DEPRECIATION', -depreciation);
+        assign(plLines, 'EBIT', ebit);
+        assign(plLines, 'INTEREST_EXPENSE', -interest);
+        assign(plLines, 'EBT', ebt);
+        assign(plLines, 'TAX', -tax);
+        assign(plLines, 'NET_INCOME', netIncome);
+
+        assign(bsLines, 'CASH', cash);
+        assign(bsLines, 'AR', ar);
+        assign(bsLines, 'INVENTORY', inventory);
+        assign(bsLines, 'CURRENT_ASSETS', currentAssets);
+        assign(bsLines, 'PPE_NET', ppe);
+        assign(bsLines, 'TOTAL_ASSETS', totalAssets);
+        assign(bsLines, 'AP', ap);
+        assign(bsLines, 'CURRENT_LIABILITIES', currentLiabilities);
+        assign(bsLines, 'LONG_TERM_DEBT', debt);
+        assign(bsLines, 'TOTAL_LIABILITIES', totalLiabilities);
+        assign(bsLines, 'EQUITY', equity);
+        assign(bsLines, 'TOTAL_LIABILITIES_EQUITY', totalLiabilities + equity);
+
+        assign(cfLines, 'NET_INCOME_CF', netIncome);
+        assign(cfLines, 'DEPRECIATION_ADDBACK', depreciation);
+        assign(cfLines, 'WC_CHANGE', -wcChange);
+        assign(cfLines, 'OPERATING_CF', operatingCf);
+        assign(cfLines, 'CAPEX_CF', capex);
+        assign(cfLines, 'INVESTING_CF', investingCf);
+        assign(cfLines, 'FINANCING_CF', financingCf);
+        assign(cfLines, 'NET_CHANGE_CASH', netChangeCash);
+        assign(cfLines, 'CLOSING_CASH', cash);
+      }
+
+      return [variant, { 'P&L': plLines, BS: bsLines, CF: cfLines }];
+    })
+  ) as FinanceModelPreviewDetail['scenarioTables'];
+
+  return {
+    sourceDocumentTitle: String(
+      packDetail?.entity_name ||
+        modelDetail?.source_statement_pack?.entity_name ||
+        row.sourceDocumentTitle ||
+        'Seeded statement pack'
+    ),
+    sourcePeriodLabel: String(
+      packDetail?.period_label || modelDetail?.source_statement_pack?.period_label || 'Base year'
+    ),
+    currency: String(modelDetail?.currency || row.currency || packDetail?.currency || 'PLN'),
+    forecastYears: years,
+    selectedScenario: String(row.scenario || 'base'),
+    variants: SCENARIO_VARIANTS,
+    analyticalDepthLabel: row.analyticalDepthLabel || 'L1-L3',
+    sourceStatementCount: sourceStatements.length || 0,
+    scenarioTables,
+  };
+}
 
 export function useFinanceSelection(activeTab: ModuleTab) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -19,6 +352,8 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     useState<PreviewDataState['statementPreviewDetail']>(null);
   const [statementPreviewRatios, setStatementPreviewRatios] =
     useState<PreviewDataState['statementPreviewRatios']>(null);
+  const [modelPreviewDetail, setModelPreviewDetail] =
+    useState<PreviewDataState['modelPreviewDetail']>(null);
   const [analysisPreviewRatios, setAnalysisPreviewRatios] =
     useState<PreviewDataState['analysisPreviewRatios']>(null);
   const [budgetPreviewScenarios, setBudgetPreviewScenarios] =
@@ -33,6 +368,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     setSelectedItem(null);
     setStatementPreviewDetail(null);
     setStatementPreviewRatios(null);
+    setModelPreviewDetail(null);
     setPredictionValidations(null);
     setAnalysisPreviewRatios(null);
     setBudgetPreviewScenarios(null);
@@ -50,6 +386,32 @@ export function useFinanceSelection(activeTab: ModuleTab) {
       setPredictionValidations((val as any)?.summary || null);
     } catch {
       setPredictionValidations(null);
+    }
+  }, []);
+
+  const loadModelPreview = useCallback(async (row: FinanceModelRow) => {
+    try {
+      const model = (await Api.get(`/api/financial-modeling/models/${row.id}`)) as any;
+      const packId =
+        model?.source_statement_pack_id || model?.source_statement_pack?.id || row.sourceStatementPackId || null;
+      const packDetail = packId
+        ? await Api.get(`/api/finance-statements/packs/${packId}`).catch(() => null)
+        : null;
+      const packStatements = Array.isArray((packDetail as any)?.statements)
+        ? ((packDetail as any).statements as Array<{ id: string }>)
+        : [];
+
+      const statementDetails = (
+        await Promise.all(
+          packStatements
+            .slice(0, 3)
+            .map(async (statement) => Api.get(`/api/finance-statements/${statement.id}`).catch(() => null))
+        )
+      ).filter(Boolean) as StatementDetail[];
+
+      setModelPreviewDetail(buildModelPreviewDetail(row, model, packDetail, statementDetails));
+    } catch {
+      setModelPreviewDetail(null);
     }
   }, []);
 
@@ -218,6 +580,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
   const clearAllPreview = useCallback(() => {
     setStatementPreviewDetail(null);
     setStatementPreviewRatios(null);
+    setModelPreviewDetail(null);
     setPredictionValidations(null);
     setAnalysisPreviewRatios(null);
     setBudgetPreviewScenarios(null);
@@ -231,16 +594,27 @@ export function useFinanceSelection(activeTab: ModuleTab) {
       setSelectedItem(row);
       if (row.kind === 'statements') {
         loadStatementPreview(row.id);
+        setModelPreviewDetail(null);
         setPredictionValidations(null);
         setAnalysisPreviewRatios(null);
         setBudgetPreviewScenarios(null);
         setValuationPreviewResults(null);
         setValuationPreviewDetail(null);
+      } else if (row.kind === 'models') {
+        setStatementPreviewDetail(null);
+        setStatementPreviewRatios(null);
+        setAnalysisPreviewRatios(null);
+        setBudgetPreviewScenarios(null);
+        setValuationPreviewResults(null);
+        setValuationPreviewDetail(null);
+        loadModelPreview(row as FinanceModelRow);
+        loadPredictionPreview(row.id);
       } else if (row.kind === 'prediction') {
         const modelRow = row as FinanceModelRow;
         if (modelRow.predictionType === 'budget') {
           setStatementPreviewDetail(null);
           setStatementPreviewRatios(null);
+          setModelPreviewDetail(null);
           setPredictionValidations(null);
           setAnalysisPreviewRatios(null);
           setValuationPreviewResults(null);
@@ -249,6 +623,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
         } else {
           setStatementPreviewDetail(null);
           setStatementPreviewRatios(null);
+          setModelPreviewDetail(null);
           loadPredictionPreview(row.id);
           setAnalysisPreviewRatios(null);
           setBudgetPreviewScenarios(null);
@@ -258,6 +633,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
       } else if (row.kind === 'analysis' || row.kind === 'investment') {
         setStatementPreviewDetail(null);
         setStatementPreviewRatios(null);
+        setModelPreviewDetail(null);
         setPredictionValidations(null);
         setBudgetPreviewScenarios(null);
         setValuationPreviewResults(null);
@@ -266,6 +642,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
       } else if (row.kind === 'valuation') {
         setStatementPreviewDetail(null);
         setStatementPreviewRatios(null);
+        setModelPreviewDetail(null);
         setPredictionValidations(null);
         setAnalysisPreviewRatios(null);
         setBudgetPreviewScenarios(null);
@@ -282,6 +659,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
       getBudgetRawId,
       loadValuationPreviewResults,
       clearAllPreview,
+      loadModelPreview,
     ]
   );
 
@@ -298,6 +676,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     setSelectedItem,
     statementPreviewDetail,
     statementPreviewRatios,
+    modelPreviewDetail,
     predictionValidations,
     analysisPreviewRatios,
     budgetPreviewScenarios,
@@ -305,6 +684,7 @@ export function useFinanceSelection(activeTab: ModuleTab) {
     valuationPreviewDetail,
     getBudgetRawId,
     loadStatementPreview,
+    loadModelPreview,
     loadPredictionPreview,
     loadBudgetPreviewScenarios,
     loadAnalysisPreviewRatios,

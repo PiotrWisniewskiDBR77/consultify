@@ -1,36 +1,29 @@
 import {
-  ArrowRight,
   ArrowUpRight,
-  Bot,
-  CalendarDays,
+  Brain,
+  ChevronLeft,
+  ChevronRight,
   CheckSquare,
-  FileText,
-  Globe2,
-  Lightbulb,
-  Rocket,
-  Scale,
+  Info,
+  Loader2,
+  NotebookPen,
   Sparkles,
   TrendingUp,
-  Users,
-  WandSparkles,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
+import Api from '@/services/api';
 
 import type {
-  AIPulseCorePayload,
-  CommandDockPayload,
-  HomeBlock,
   HomeScreenAction,
-  HomeTimeMode,
-  IndustryLensPayload,
-  SparkFieldPayload,
-  TeamSignalPayload,
+  RadarRecommendation,
+  RadarSignalCard,
+  RadarViewPayload,
 } from './homeV2Types';
-import { useHomeData } from './useHomeData';
+import { useRadarData } from './useRadarData';
 
 interface HomeViewProps {
   userName?: string;
@@ -38,304 +31,906 @@ interface HomeViewProps {
   onAction: (action: HomeScreenAction) => void;
 }
 
+type RadarActionType =
+  | 'view_briefing'
+  | 'open_signal'
+  | 'ask_ai'
+  | 'add_to_note'
+  | 'create_task'
+  | 'add_to_watchlist'
+  | 'more_like_this'
+  | 'less_like_this';
+
 export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, onAction }) => {
-  const { screen, blocks, layout, loading, error } = useHomeData(refreshTrigger);
   const { i18n } = useTranslation();
-  const pl = i18n.language === 'pl';
+  const lang = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase();
+  const pl = lang.startsWith('pl');
+  const { data, loading, error, refresh } = useRadarData(refreshTrigger);
+  const [selectedSignalId, setSelectedSignalId] = useState<string | null>(null);
+  const [busyAction, setBusyAction] = useState<string | null>(null);
 
-  const bm = useMemo(() => {
-    const m = new Map<string, HomeBlock>();
-    for (const b of blocks) m.set(b.id, b);
-    return m;
-  }, [blocks]);
+  const allSignals = useMemo(() => {
+    if (!data) return [];
+    const map = new Map<string, RadarSignalCard>();
+    for (const signal of [
+      ...data.dailyBriefing.keySignals,
+      ...data.whatChanged,
+      ...data.whyItMattersToMe,
+      ...data.learnImprove,
+      ...data.watchlist,
+    ]) {
+      map.set(signal.signalId, signal);
+    }
+    return Array.from(map.values());
+  }, [data]);
 
-  const pulse = bm.get('aiPulseCore') as Extract<HomeBlock, { id: 'aiPulseCore' }> | undefined;
-  const spark = bm.get('sparkField') as Extract<HomeBlock, { id: 'sparkField' }> | undefined;
-  const industry = bm.get('industryLens') as Extract<HomeBlock, { id: 'industryLens' }> | undefined;
-  const team = bm.get('teamSignal') as Extract<HomeBlock, { id: 'teamSignal' }> | undefined;
-  const dock = bm.get('commandDock') as Extract<HomeBlock, { id: 'commandDock' }> | undefined;
+  useEffect(() => {
+    if (!allSignals.length) {
+      setSelectedSignalId(null);
+      return;
+    }
+    if (!allSignals.some((signal) => signal.signalId === selectedSignalId)) {
+      setSelectedSignalId(allSignals[0].signalId);
+    }
+  }, [allSignals, selectedSignalId]);
+
+  useEffect(() => {
+    if (!data?.generatedAt) return;
+    void logRadarAction('view_briefing');
+  }, [data?.generatedAt]);
+
+  const selectedSignal =
+    allSignals.find((signal) => signal.signalId === selectedSignalId) ||
+    data?.dailyBriefing.keySignals[0] ||
+    null;
+
+  async function logRadarAction(
+    actionType: RadarActionType,
+    signal?: RadarSignalCard,
+    extras?: {
+      createdObjectType?: string;
+      createdObjectId?: string;
+      payload?: Record<string, unknown>;
+    }
+  ) {
+    try {
+      await Api.post('/my-work/radar/actions', {
+        signalId: signal?.signalId,
+        actionType,
+        sourceContext: 'home',
+        createdObjectType: extras?.createdObjectType,
+        createdObjectId: extras?.createdObjectId,
+        payload: extras?.payload,
+      });
+    } catch {
+      // Radar logging must not block the UI.
+    }
+  }
+
+  const openSignal = async (signal: RadarSignalCard) => {
+    setSelectedSignalId(signal.signalId);
+    await logRadarAction('open_signal', signal);
+  };
+
+  const askAi = async (signal: RadarSignalCard) => {
+    setBusyAction('ask_ai');
+    try {
+      const localizedTitle = getSignalTitle(signal, pl);
+      const localizedSummary = getSignalSummary(signal, pl);
+      await logRadarAction('ask_ai', signal);
+      onAction({
+        type: 'chat',
+        packet: {
+          sourceBlock: 'aiPulseCore',
+          intent: 'radar_signal_interpretation',
+          title: localizedTitle,
+          entityName: localizedTitle,
+          starterPrompt: pl
+            ? `Przeanalizuj ten sygnał Radaru. Traktuj go jako aktywny kontekst rozmowy. Odpowiedz: co się zmieniło, dlaczego to ważne dla mnie, jakie ryzyko lub szansę widzisz i jaki ruch wykonać teraz.\n\nTytuł: ${localizedTitle}\nPodsumowanie: ${localizedSummary}\nSzerszy kontekst: ${signal.insightSummary || localizedSummary}\nDlaczego to ważne: ${signal.whyItMatters}\nDlaczego to widzę: ${signal.whyYouSeeThis}\nSugerowany next step: ${signal.suggestedNextStep}`
+            : `Analyze this Radar signal and treat it as the active conversation context. Answer: what changed, why it matters to me, what risk or opportunity you see, and what move I should make now.\n\nTitle: ${localizedTitle}\nSummary: ${localizedSummary}\nBroader context: ${signal.insightSummary || localizedSummary}\nWhy it matters: ${signal.whyItMatters}\nWhy I see this: ${signal.whyYouSeeThis}\nSuggested next step: ${signal.suggestedNextStep}`,
+          entityType: 'note',
+          entityId: signal.signalId,
+          contextData: {
+            kind: 'radar_signal',
+            sourceBlock: 'radar_briefing_hero',
+            signal,
+            radarSignal: {
+              signalId: signal.signalId,
+              title: localizedTitle,
+              summary: localizedSummary,
+              insightSummary: signal.insightSummary || localizedSummary,
+              whyItMatters: signal.whyItMatters,
+              whyYouSeeThis: signal.whyYouSeeThis,
+              suggestedNextStep: signal.suggestedNextStep,
+              impactType: signal.impactType,
+              businessImpact: signal.businessImpact,
+              relevanceScope: signal.relevanceScope,
+              sourceName: signal.source.name,
+              sourceUrl: signal.source.url || null,
+              tags: signal.tags,
+            },
+          },
+        },
+      });
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const addToNote = async (signal: RadarSignalCard) => {
+    setBusyAction('add_to_note');
+    try {
+      const created = await Api.post('/my-work/notebook/pages', {
+        title: getSignalTitle(signal, pl),
+        contentText: buildNoteBody(signal, pl),
+        tags: signal.tags.topics.slice(0, 4),
+        visibility: 'private',
+      });
+      const noteId = created?.data?.id ? String(created.data.id) : undefined;
+      await logRadarAction('add_to_note', signal, {
+        createdObjectType: 'note',
+        createdObjectId: noteId,
+      });
+      if (noteId) onAction({ type: 'open', target: 'note', id: noteId });
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const createTask = async (signal: RadarSignalCard) => {
+    setBusyAction('create_task');
+    try {
+      await logRadarAction('create_task', signal);
+      onAction({ type: 'create', target: 'task' });
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const addToWatchlist = async (signal: RadarSignalCard) => {
+    setBusyAction('add_to_watchlist');
+    try {
+      await logRadarAction('add_to_watchlist', signal, {
+        payload: {
+          itemType: signal.source.name ? 'company' : 'topic',
+          value: signal.source.name || signal.tags.topics[0] || signal.title,
+        },
+      });
+      await refresh();
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const trainPreference = async (
+    signal: RadarSignalCard,
+    actionType: 'more_like_this' | 'less_like_this'
+  ) => {
+    setBusyAction(actionType);
+    try {
+      await logRadarAction(actionType, signal);
+      await refresh();
+    } finally {
+      setBusyAction(null);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#060B18]">
-        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }} className="h-8 w-8 rounded-full border-2 border-violet-400 border-t-transparent" />
+      <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-[#060B18]">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+          className="h-8 w-8 rounded-full border-2 border-violet-500 border-t-transparent dark:border-violet-400"
+        />
       </div>
     );
   }
 
-  if (error && blocks.length === 0) {
+  if (error || !data) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#060B18]">
-        <p className="text-base text-red-400">{error}</p>
+      <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-[#060B18]">
+        <p className="text-base text-red-600 dark:text-red-400">
+          {error || (pl ? 'Radar niedostępny' : 'Radar unavailable')}
+        </p>
       </div>
     );
   }
-
-  const ideas = spark?.payload.ideas ?? [];
-  const notes = spark?.payload.notes ?? [];
-  const nudge = spark?.payload.nudge ?? null;
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-[#060B18]">
-      <BgCanvas timeMode={screen.timeMode} motion={layout.ambientMotion} />
+    <div className="relative flex h-full flex-col overflow-hidden bg-slate-50 dark:bg-[#060B18]">
+      <BgCanvas />
 
-      {/* ── Quiet greeting ── */}
       <div className="relative z-10 flex items-center justify-between px-7 pt-4 pb-2">
-        <span className="text-[13px] font-medium text-white/35">
-          {pl ? `Twoja przestrzeń wiedzy` : `Your knowledge space`}
+        <span className="text-[13px] font-medium text-slate-500 dark:text-slate-500">
+          {pl ? 'Radar 2.0 · warstwa intelligence' : 'Radar 2.0 · intelligence layer'}
           {userName ? ` · ${userName}` : ''}
         </span>
-        <span className="text-[12px] text-white/20">{screen.timeMode === 'morning' ? '☀' : screen.timeMode === 'liveDay' ? '◉' : '☾'}</span>
+        <span className="text-[12px] text-slate-400 dark:text-slate-500">
+          {new Date(data.generatedAt).toLocaleTimeString(pl ? 'pl-PL' : 'en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </span>
       </div>
 
-      {/* ── BENTO KNOWLEDGE GRID ── */}
-      <div
-        className="relative z-10 flex-1 gap-3.5 px-7 pb-3"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1.1fr 1fr 1fr',
-          gridTemplateRows: '1.15fr 1fr 0.85fr',
-        }}
-      >
-        {/* YOUR MAIN IDEA — tall left */}
-        {ideas[0] ? (
-          <motion.button
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            onClick={() => onAction({ type: 'open', target: 'idea', id: ideas[0].id })}
-            style={{ gridRow: '1 / 3', gridColumn: '1 / 2' }}
-            className="group flex flex-col rounded-2xl border-l-[3px] border-l-amber-400 border border-white/[0.08] bg-white/[0.05] p-5 text-left transition hover:bg-white/[0.09]"
-          >
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-300/70">
-              <Lightbulb size={13} /> {pl ? 'Twój pomysł' : 'Your idea'}
-            </div>
-            {ideas[0].stage && (
-              <span className="mt-2 self-start rounded-full border border-amber-400/25 bg-amber-400/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-200">{ideas[0].stage}</span>
-            )}
-            <h3 className="mt-3 text-xl font-bold leading-snug text-white/90 group-hover:text-white">{ideas[0].title}</h3>
-            <p className="mt-2 text-[14px] leading-relaxed text-white/50">{ideas[0].snippet}</p>
+      <div className="relative z-10 flex-1 overflow-auto px-7 pb-6">
+        <BriefingPanel
+          pl={pl}
+          briefing={data.dailyBriefing}
+          onOpenSignal={openSignal}
+          onAskAi={askAi}
+          onAddToNote={addToNote}
+          onCreateTask={createTask}
+        />
 
-            {nudge && (
-              <div className="mt-auto flex items-start gap-2 rounded-xl border border-violet-400/15 bg-violet-500/[0.06] p-3">
-                <WandSparkles size={14} className="mt-0.5 flex-shrink-0 text-violet-300" />
-                <div>
-                  <div className="text-[11px] font-semibold text-violet-300/80">AI</div>
-                  <div className="text-[13px] leading-snug text-white/60">{nudge.text}</div>
-                </div>
-              </div>
-            )}
-          </motion.button>
-        ) : (
-          <EmptyCard style={{ gridRow: '1 / 3', gridColumn: '1 / 2' }} icon={<Lightbulb size={20} />} label={pl ? 'Tu pojawią się Twoje pomysły' : 'Your ideas will appear here'} accent="amber" onAction={() => onAction({ type: 'create', target: 'idea' })} />
-        )}
+        <div className="mt-4 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-4">
+            <SignalListSection
+              pl={pl}
+              title={pl ? 'Co się zmieniło' : 'What changed'}
+              subtitle={
+                pl
+                  ? 'Najmocniejsze sygnały z rynku, technologii i wykonania.'
+                  : 'Strongest signals across market, technology, and execution.'
+              }
+              signals={data.whatChanged}
+              selectedSignalId={selectedSignalId}
+              onOpenSignal={openSignal}
+              onAddToNote={addToNote}
+              onMoreLikeThis={(signal) => trainPreference(signal, 'more_like_this')}
+              onLessLikeThis={(signal) => trainPreference(signal, 'less_like_this')}
+              busyAction={busyAction}
+            />
+            <SignalListSection
+              pl={pl}
+              title={pl ? 'Co ma znaczenie dla mnie' : 'Why it matters to me'}
+              subtitle={
+                pl
+                  ? 'Sygnały dopasowane do roli, projektów i bieżącej pracy.'
+                  : 'Signals tailored to role, projects, and live work context.'
+              }
+              signals={data.whyItMattersToMe}
+              selectedSignalId={selectedSignalId}
+              onOpenSignal={openSignal}
+              onAddToNote={addToNote}
+              onMoreLikeThis={(signal) => trainPreference(signal, 'more_like_this')}
+              onLessLikeThis={(signal) => trainPreference(signal, 'less_like_this')}
+              busyAction={busyAction}
+            />
+          </div>
 
-        {/* AI CONNECTION — wide hero top-right */}
-        {pulse && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            style={{ gridRow: '1 / 2', gridColumn: '2 / 4' }}
-            className="relative flex flex-col overflow-hidden rounded-2xl border border-violet-400/20 bg-violet-500/[0.07] p-5"
-          >
-            <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-violet-500/20 blur-[60px]" />
-            <div className="relative z-10 flex flex-col h-full">
-              <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-violet-300/80">
-                <Sparkles size={13} /> {pl ? 'AI · Twoje połączenie' : 'AI · Your connection'}
-              </div>
-              <h3 className="mt-3 max-w-[50ch] text-lg font-bold leading-snug text-white/90">{pulse.payload.insight}</h3>
-              <p className="mt-2 max-w-[55ch] text-[14px] leading-relaxed text-white/50">{pulse.payload.summary}</p>
-              <button
-                onClick={() =>
-                  onAction({
-                    type: 'chat',
-                    packet: {
-                      sourceBlock: 'aiPulseCore', intent: 'explore_connection', title: pulse.title,
-                      starterPrompt: pl ? 'Opowiedz mi więcej o tym połączeniu.' : 'Tell me more about this connection.',
-                      entityType: 'home', entityId: 'ai-connection',
-                      contextData: { insight: pulse.payload.insight, headline: pulse.payload.headline },
-                    },
-                  })
-                }
-                className="mt-auto inline-flex w-fit items-center gap-2 rounded-full bg-violet-500/20 px-4 py-2 text-[13px] font-semibold text-violet-200 transition hover:bg-violet-500/30"
-              >
-                {pl ? 'Porozmawiaj o tym z AI' : 'Talk to AI about this'} <ArrowRight size={14} />
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {/* YOUR NOTE — center */}
-        {notes[0] ? (
-          <motion.button
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-            onClick={() => onAction({ type: 'open', target: 'note', id: notes[0].id })}
-            style={{ gridRow: '2 / 3', gridColumn: '2 / 3' }}
-            className="group flex flex-col rounded-2xl border-l-[3px] border-l-blue-400 border border-white/[0.08] bg-white/[0.05] p-5 text-left transition hover:bg-white/[0.09]"
-          >
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-300/70">
-              <FileText size={13} /> {pl ? 'Twoja notatka' : 'Your note'}
-            </div>
-            <h3 className="mt-3 text-[16px] font-bold leading-snug text-white/90 group-hover:text-white">{notes[0].title}</h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-white/50">{notes[0].snippet}</p>
-          </motion.button>
-        ) : (
-          <EmptyCard style={{ gridRow: '2 / 3', gridColumn: '2 / 3' }} icon={<FileText size={18} />} label={pl ? 'Tu pojawią się notatki' : 'Your notes will appear here'} accent="blue" onAction={() => onAction({ type: 'create', target: 'note' })} />
-        )}
-
-        {/* WORLD SIGNAL — right middle */}
-        {industry && (
-          <motion.button
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            onClick={() => onAction({ type: 'chat', packet: { sourceBlock: 'industryLens', intent: 'translate_signal', title: industry.payload.marketSignal.title, starterPrompt: pl ? `Co to oznacza dla mojego projektu: ${industry.payload.marketSignal.title}` : `What does this mean for my project: ${industry.payload.marketSignal.title}`, entityType: 'industry_signal', entityId: industry.payload.marketSignal.id, contextData: { id: industry.payload.marketSignal.id, title: industry.payload.marketSignal.title, summary: industry.payload.marketSignal.summary, tag: industry.payload.marketSignal.tag, tone: industry.payload.marketSignal.tone || 'neutral' } } })}
-            style={{ gridRow: '2 / 3', gridColumn: '3 / 4' }}
-            className="group flex flex-col rounded-2xl border-l-[3px] border-l-cyan-400 border border-white/[0.08] bg-white/[0.05] p-5 text-left transition hover:bg-white/[0.09]"
-          >
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-300/70">
-              <Globe2 size={13} /> {industry.payload.industryLabel}
-            </div>
-            <h3 className="mt-3 text-[16px] font-bold leading-snug text-white/90 group-hover:text-white">{industry.payload.marketSignal.title}</h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-white/50">{industry.payload.marketSignal.summary}</p>
-          </motion.button>
-        )}
-
-        {/* SECOND IDEA or TEAM — bottom left */}
-        {ideas[1] ? (
-          <motion.button
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
-            onClick={() => onAction({ type: 'open', target: 'idea', id: ideas[1].id })}
-            style={{ gridRow: '3 / 4', gridColumn: '1 / 2' }}
-            className="group flex flex-col rounded-2xl border-l-[3px] border-l-amber-400/60 border border-white/[0.08] bg-white/[0.05] p-4 text-left transition hover:bg-white/[0.09]"
-          >
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-amber-300/50">
-              <Lightbulb size={12} /> {pl ? 'Pomysł' : 'Idea'}
-            </div>
-            <h3 className="mt-2 text-[15px] font-bold leading-snug text-white/85 group-hover:text-white">{ideas[1].title}</h3>
-            <p className="mt-1 text-[12px] text-white/40">{ideas[1].snippet}</p>
-          </motion.button>
-        ) : (
-          <EmptyCard style={{ gridRow: '3 / 4', gridColumn: '1 / 2' }} icon={<Lightbulb size={16} />} label={pl ? 'Więcej pomysłów' : 'More ideas'} accent="amber" onAction={() => onAction({ type: 'create', target: 'idea' })} />
-        )}
-
-        {/* TEAM SIGNAL — bottom center */}
-        {team && (
-          <motion.button
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-            onClick={() => onAction({ type: 'chat', packet: { sourceBlock: 'teamSignal', intent: 'prepare_alignment_message', title: team.payload.headline, starterPrompt: pl ? `Przygotuj update: ${team.payload.headline}` : `Prepare update: ${team.payload.headline}`, entityType: 'transformation_signal', entityId: 'team-headline', contextData: { headline: team.payload.headline, summary: team.payload.summary } } })}
-            style={{ gridRow: '3 / 4', gridColumn: '2 / 3' }}
-            className="group flex flex-col rounded-2xl border-l-[3px] border-l-emerald-400 border border-white/[0.08] bg-white/[0.05] p-4 text-left transition hover:bg-white/[0.09]"
-          >
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-300/70">
-              <Users size={13} /> {pl ? 'Zespół' : 'Team'}
-            </div>
-            <h3 className="mt-2 text-[15px] font-bold leading-snug text-white/85 group-hover:text-white">{team.payload.headline}</h3>
-            {team.payload.signals[0] && (
-              <div className="mt-1.5 flex items-center gap-2 text-[12px] text-emerald-200/50">
-                <span className={cn('h-1.5 w-1.5 rounded-full', team.payload.signals[0].tone === 'positive' ? 'bg-emerald-400' : 'bg-amber-400')} />
-                {team.payload.signals[0].title}
-              </div>
-            )}
-          </motion.button>
-        )}
-
-        {/* BENCHMARK — bottom right */}
-        {industry && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-            style={{ gridRow: '3 / 4', gridColumn: '3 / 4' }}
-            className="flex flex-col justify-center rounded-2xl border-l-[3px] border-l-teal-400 border border-white/[0.08] bg-white/[0.05] p-4"
-          >
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300/70">
-              <TrendingUp size={13} /> Benchmark
-            </div>
-            <div className="mt-2 text-3xl font-black text-white">{industry.payload.benchmark.value}</div>
-            <div className="mt-1 text-[13px] font-semibold text-emerald-300/60">{industry.payload.benchmark.delta}</div>
-            <div className="mt-0.5 text-[12px] text-white/40">{industry.payload.benchmark.label}</div>
-          </motion.div>
-        )}
+          <div className="space-y-4">
+            <SelectedSignalPanel
+              pl={pl}
+              signal={selectedSignal}
+              busyAction={busyAction}
+              onAskAi={askAi}
+              onAddToNote={addToNote}
+              onCreateTask={createTask}
+              onAddToWatchlist={addToWatchlist}
+              onMoreLikeThis={(signal) => trainPreference(signal, 'more_like_this')}
+              onLessLikeThis={(signal) => trainPreference(signal, 'less_like_this')}
+            />
+            <RecommendationsPanel
+              pl={pl}
+              recommendations={data.whatToDoNext}
+              onSelectSignal={(signalId) => {
+                const signal = allSignals.find((item) => item.signalId === signalId);
+                if (signal) void openSignal(signal);
+              }}
+            />
+            <SignalListSection
+              pl={pl}
+              title={pl ? 'Edukacja i porady' : 'Learn / improve'}
+              subtitle={
+                pl
+                  ? 'Playbooki, how-to i guidance do podniesienia jakości pracy.'
+                  : 'Playbooks, how-to, and guidance to improve work quality.'
+              }
+              signals={data.learnImprove}
+              selectedSignalId={selectedSignalId}
+              onOpenSignal={openSignal}
+              onAddToNote={addToNote}
+              onMoreLikeThis={(signal) => trainPreference(signal, 'more_like_this')}
+              onLessLikeThis={(signal) => trainPreference(signal, 'less_like_this')}
+              busyAction={busyAction}
+              compact
+            />
+            <SignalListSection
+              pl={pl}
+              title={pl ? 'Watchlist' : 'Watchlist'}
+              subtitle={
+                pl
+                  ? 'Słabsze sygnały i rzeczy warte dalszego śledzenia.'
+                  : 'Weaker signals and items worth tracking further.'
+              }
+              signals={data.watchlist}
+              selectedSignalId={selectedSignalId}
+              onOpenSignal={openSignal}
+              onAddToNote={addToNote}
+              onMoreLikeThis={(signal) => trainPreference(signal, 'more_like_this')}
+              onLessLikeThis={(signal) => trainPreference(signal, 'less_like_this')}
+              busyAction={busyAction}
+              compact
+            />
+            <MetricsPanel pl={pl} data={data} />
+          </div>
+        </div>
       </div>
-
-      {/* ── DOCK ── */}
-      {dock && <Dock payload={dock.payload} onAction={onAction} pl={pl} />}
     </div>
   );
 };
 
-/* ── Empty card placeholder ── */
+const BriefingPanel: React.FC<{
+  pl: boolean;
+  briefing: RadarViewPayload['dailyBriefing'];
+  onOpenSignal: (signal: RadarSignalCard) => void | Promise<void>;
+  onAskAi: (signal: RadarSignalCard) => void | Promise<void>;
+  onAddToNote: (signal: RadarSignalCard) => void | Promise<void>;
+  onCreateTask: (signal: RadarSignalCard) => void | Promise<void>;
+}> = ({ pl, briefing, onOpenSignal, onAskAi, onAddToNote, onCreateTask }) => {
+  const [activeBriefIndex, setActiveBriefIndex] = useState(0);
+  const [showSignalsPanel, setShowSignalsPanel] = useState(false);
+  const [showInfoPanel, setShowInfoPanel] = useState(false);
+  const activeSignal = briefing.keySignals[activeBriefIndex] || briefing.keySignals[0] || null;
 
-const ACCENT_EMPTY: Record<string, string> = {
-  amber: 'border-l-amber-400/30 text-amber-300/30',
-  blue: 'border-l-blue-400/30 text-blue-300/30',
-};
+  useEffect(() => {
+    setActiveBriefIndex(0);
+  }, [briefing.mainInsight, briefing.keySignals]);
 
-const EmptyCard: React.FC<{
-  style: React.CSSProperties;
-  icon: React.ReactNode;
-  label: string;
-  accent: string;
-  onAction: () => void;
-}> = ({ style, icon, label, accent, onAction }) => (
-  <button
-    onClick={onAction}
-    style={style}
-    className={cn('flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] p-4 text-center transition hover:bg-white/[0.05] border-l-[3px]', ACCENT_EMPTY[accent])}
-  >
-    {icon}
-    <span className="text-[13px]">{label}</span>
-    <Plus size={16} className="mt-1 opacity-50" />
-  </button>
-);
+  const changeBrief = (direction: -1 | 1) => {
+    if (briefing.keySignals.length <= 1) return;
+    setActiveBriefIndex((current) => {
+      const total = briefing.keySignals.length;
+      return (current + direction + total) % total;
+    });
+  };
 
-/* ── Canvas background ── */
-
-const PAL: Record<HomeTimeMode, [string, string, string]> = {
-  morning: ['from-violet-600/25 to-cyan-500/20', 'from-amber-500/20 to-rose-400/15', 'from-emerald-500/14 to-teal-400/10'],
-  liveDay: ['from-violet-500/25 to-primary-500/20', 'from-cyan-500/18 to-blue-500/14', 'from-rose-500/12 to-amber-400/10'],
-  eveningWrap: ['from-indigo-600/25 to-violet-500/20', 'from-rose-500/18 to-amber-500/12', 'from-cyan-500/12 to-emerald-400/10'],
-};
-
-const BgCanvas: React.FC<{ timeMode: HomeTimeMode; motion: 'soft' | 'full' }> = ({ timeMode, motion: m }) => {
-  const p = PAL[timeMode];
-  const d = m === 'soft' ? 28 : 20;
   return (
-    <>
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-8%,rgba(120,119,198,0.12),transparent)]" />
-      <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)] [background-size:44px_44px]" />
-      <motion.div className={cn('pointer-events-none absolute -left-44 -top-44 h-[38rem] w-[38rem] rounded-full bg-gradient-to-br blur-[170px]', p[0])} animate={{ x: [0, 30, -18, 0], y: [0, 22, -28, 0], scale: [1, 1.08, 0.94, 1] }} transition={{ duration: d, repeat: Infinity, ease: 'easeInOut' }} />
-      <motion.div className={cn('pointer-events-none absolute -right-36 top-[20%] h-[32rem] w-[32rem] rounded-full bg-gradient-to-br blur-[170px]', p[1])} animate={{ x: [0, -26, 18, 0], y: [0, -20, 22, 0], scale: [1, 0.95, 1.07, 1] }} transition={{ duration: d + 8, repeat: Infinity, ease: 'easeInOut' }} />
-      <motion.div className={cn('pointer-events-none absolute -bottom-28 left-[28%] h-[26rem] w-[26rem] rounded-full bg-gradient-to-br blur-[170px]', p[2])} animate={{ x: [0, 18, -22, 0], y: [0, -14, 18, 0], scale: [1, 1.05, 0.93, 1] }} transition={{ duration: d + 14, repeat: Infinity, ease: 'easeInOut' }} />
-    </>
+    <section className="overflow-hidden rounded-3xl border border-violet-200 bg-gradient-to-br from-violet-50 to-fuchsia-50 p-5 dark:border-violet-400/20 dark:bg-violet-500/[0.08] dark:bg-none">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-violet-700/80 dark:text-violet-300/75">
+          <Sparkles size={13} />
+          {pl ? 'Briefing dnia' : 'Daily briefing'}
+        </div>
+        <div className="flex items-center gap-2">
+          {briefing.keySignals.length > 1 && (
+            <div className="flex items-center gap-1 rounded-full border border-violet-200 bg-white/70 px-1 py-1 dark:border-white/10 dark:bg-white/[0.04]">
+              <button
+                type="button"
+                onClick={() => changeBrief(-1)}
+                className="rounded-full p-1 text-slate-500 transition hover:bg-white dark:text-slate-400 dark:hover:bg-white/[0.08]"
+                aria-label={pl ? 'Poprzedni brief' : 'Previous brief'}
+              >
+                <ChevronLeft size={12} />
+              </button>
+              <span className="px-1 text-[11px] text-slate-500 dark:text-slate-400">
+                {activeBriefIndex + 1}/{briefing.keySignals.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => changeBrief(1)}
+                className="rounded-full p-1 text-slate-500 transition hover:bg-white dark:text-slate-400 dark:hover:bg-white/[0.08]"
+                aria-label={pl ? 'Następny brief' : 'Next brief'}
+              >
+                <ChevronRight size={12} />
+              </button>
+            </div>
+          )}
+          <div className="rounded-full border border-violet-200 bg-white/70 px-3 py-1 text-[11px] text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400">
+            {pl ? 'Najważniejsze na teraz' : 'What matters now'}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 flex-1">
+          <h2 className="max-w-[68ch] text-[18px] font-semibold leading-7 text-slate-900 dark:text-slate-100">
+            {briefing.mainInsight}
+          </h2>
+
+          {activeSignal && (
+            <>
+              <div className="mt-3 text-[13px] font-medium text-slate-800 dark:text-slate-200">
+                {getSignalTitle(activeSignal, pl)}
+              </div>
+              <p className="mt-2 max-w-[72ch] text-[13px] leading-6 text-slate-600 dark:text-slate-400">
+                {activeSignal.insightSummary || getSignalSummary(activeSignal, pl)}
+              </p>
+              <p className="mt-2 max-w-[72ch] text-[13px] leading-6 text-slate-700 dark:text-slate-300">
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  {pl ? 'Co z tego wynika: ' : 'What it means: '}
+                </span>
+                {activeSignal.whyItMatters}
+              </p>
+            </>
+          )}
+        </div>
+
+        {showSignalsPanel && (
+          <div className="w-full lg:w-[280px] lg:shrink-0">
+            <div className="grid gap-2">
+              {briefing.keySignals.map((signal, index) => (
+                <button
+                  key={signal.signalId}
+                  type="button"
+                  onClick={() => setActiveBriefIndex(index)}
+                  className={cn(
+                    'rounded-2xl border px-3 py-2.5 text-left transition',
+                    index === activeBriefIndex
+                      ? 'border-violet-300 bg-white dark:border-violet-300/30 dark:bg-white/[0.08]'
+                      : 'border-slate-200 bg-white/80 hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]'
+                  )}
+                >
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500">
+                    {pl ? `Sygnał ${index + 1}` : `Signal ${index + 1}`}
+                  </div>
+                  <div className="mt-1 line-clamp-2 text-[12px] leading-5 text-slate-800 dark:text-slate-200">
+                    {getSignalTitle(signal, pl)}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          <GhostButton
+            label={pl ? 'Pogadaj z AI' : 'Ask AI'}
+            onClick={() => (activeSignal ? void onAskAi(activeSignal) : undefined)}
+            icon={<Brain size={14} />}
+            tone="violet"
+          />
+          <GhostButton
+            label={pl ? 'Do notatki' : 'To notes'}
+            onClick={() => (activeSignal ? void onAddToNote(activeSignal) : undefined)}
+            icon={<NotebookPen size={14} />}
+            tone="cyan"
+          />
+          <GhostButton
+            label={pl ? 'Utwórz zadanie' : 'Create task'}
+            onClick={() => (activeSignal ? void onCreateTask(activeSignal) : undefined)}
+            icon={<CheckSquare size={14} />}
+            tone="amber"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowInfoPanel((value) => !value)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/80 text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/[0.08]"
+            aria-label={pl ? 'Pokaż informacje' : 'Show info'}
+          >
+            <Info size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSignalsPanel((value) => !value)}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-2 text-[12px] font-medium text-slate-600 transition hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/[0.08]"
+          >
+            {showSignalsPanel ? (pl ? 'Ukryj sygnały' : 'Hide signals') : (pl ? 'Pokaż sygnały' : 'Show signals')}
+            {showSignalsPanel ? <ChevronRight size={13} className="rotate-90" /> : <ChevronLeft size={13} className="rotate-180" />}
+          </button>
+        </div>
+      </div>
+
+      {showInfoPanel && activeSignal && (
+        <div className="mt-3 rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-[13px] leading-6 text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400">
+          <p>
+            <span className="font-medium text-slate-900 dark:text-slate-100">
+              {pl ? 'Dlaczego to widzisz: ' : 'Why you see this: '}
+            </span>
+            {activeSignal.whyYouSeeThis}
+          </p>
+          <p className="mt-2">
+            <span className="font-medium text-slate-900 dark:text-slate-100">
+              {pl ? 'Najbliższy ruch: ' : 'Next move: '}
+            </span>
+            {activeSignal.suggestedNextStep}
+          </p>
+        </div>
+      )}
+    </section>
   );
 };
 
-/* ── Command dock ── */
-
-const Plus: React.FC<{ size: number; className?: string }> = ({ size, className }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" className={className}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+const SignalListSection: React.FC<{
+  pl: boolean;
+  title: string;
+  subtitle: string;
+  signals: RadarSignalCard[];
+  selectedSignalId: string | null;
+  onOpenSignal: (signal: RadarSignalCard) => void | Promise<void>;
+  onAddToNote: (signal: RadarSignalCard) => void | Promise<void>;
+  onMoreLikeThis: (signal: RadarSignalCard) => void | Promise<void>;
+  onLessLikeThis: (signal: RadarSignalCard) => void | Promise<void>;
+  busyAction: string | null;
+  compact?: boolean;
+}> = ({
+  pl,
+  title,
+  subtitle,
+  signals,
+  selectedSignalId,
+  onOpenSignal,
+  onAddToNote,
+  onMoreLikeThis,
+  onLessLikeThis,
+  busyAction,
+  compact = false,
+}) => (
+  <SectionShell title={title} subtitle={subtitle}>
+    <div className={cn('space-y-2', compact && 'space-y-1.5')}>
+      {signals.map((signal) => (
+        <div
+          key={signal.signalId}
+          className={cn(
+            'rounded-2xl border p-3 transition',
+            signal.signalId === selectedSignalId
+              ? 'border-violet-300 bg-violet-50 dark:border-violet-300/25 dark:bg-violet-400/[0.08]'
+              : 'border-slate-200 bg-white/80 hover:bg-white dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:bg-white/[0.06]'
+          )}
+        >
+          <button className="w-full text-left" onClick={() => void onOpenSignal(signal)}>
+            <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500">
+              <SignalBadge label={signal.source.name} />
+              <SignalBadge label={signal.impactType} />
+              <SignalBadge label={signal.businessImpact} />
+              {isSignalLocalizationPending(signal) && (
+                <SignalBadge label={pl ? 'lokalizacja' : 'localizing'} />
+              )}
+            </div>
+            <div className="mt-2 text-[14px] font-semibold leading-6 text-slate-900 dark:text-slate-100">
+              {getSignalTitle(signal, pl)}
+            </div>
+            <div className="mt-1 text-[12px] leading-5 text-slate-600 dark:text-slate-400">
+              {compact ? signal.whyItMatters : getSignalSummary(signal, pl)}
+            </div>
+          </button>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <TinyButton
+              label={pl ? 'Na później' : 'Later'}
+              onClick={() => void onAddToNote(signal)}
+              busy={busyAction === 'add_to_note'}
+              icon={<NotebookPen size={11} />}
+              tone="cyan"
+            />
+            <TinyButton
+              label={pl ? 'Interesuje' : 'Relevant'}
+              onClick={() => void onMoreLikeThis(signal)}
+              busy={busyAction === 'more_like_this'}
+              tone="emerald"
+            />
+            <TinyButton
+              label={pl ? 'Mniej trafne' : 'Less relevant'}
+              onClick={() => void onLessLikeThis(signal)}
+              busy={busyAction === 'less_like_this'}
+              tone="rose"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  </SectionShell>
 );
 
-const DIC: Record<string, React.ReactNode> = {
-  'new-idea': <Lightbulb size={13} />,
-  'new-note': <FileText size={13} />,
-  'new-task': <CheckSquare size={13} />,
-  'new-decision': <Scale size={13} />,
-  'open-calendar': <CalendarDays size={13} />,
-  'ask-ai': <Sparkles size={13} />,
-};
+const SelectedSignalPanel: React.FC<{
+  pl: boolean;
+  signal: RadarSignalCard | null;
+  busyAction: string | null;
+  onAskAi: (signal: RadarSignalCard) => void | Promise<void>;
+  onAddToNote: (signal: RadarSignalCard) => void | Promise<void>;
+  onCreateTask: (signal: RadarSignalCard) => void | Promise<void>;
+  onAddToWatchlist: (signal: RadarSignalCard) => void | Promise<void>;
+  onMoreLikeThis: (signal: RadarSignalCard) => void | Promise<void>;
+  onLessLikeThis: (signal: RadarSignalCard) => void | Promise<void>;
+}> = ({
+  pl,
+  signal,
+  busyAction,
+  onAskAi,
+  onAddToNote,
+  onCreateTask,
+  onAddToWatchlist,
+  onMoreLikeThis,
+  onLessLikeThis,
+}) => (
+  <SectionShell
+    title={pl ? 'Wybrany sygnał' : 'Selected signal'}
+    subtitle={pl ? 'Znaczenie, uzasadnienie i akcje.' : 'Meaning, rationale, and actions.'}
+  >
+    {signal ? (
+      <>
+        <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500">
+          <SignalBadge label={signal.source.name} />
+          <SignalBadge label={signal.relevanceScope} />
+          <SignalBadge label={signal.impactType} />
+          <SignalBadge label={`${Math.round(signal.confidenceScore * 100)}%`} />
+          {isSignalLocalizationPending(signal) && (
+            <SignalBadge label={pl ? 'lokalizacja' : 'localizing'} />
+          )}
+        </div>
+        <h3 className="mt-3 text-[20px] font-semibold leading-tight text-slate-900 dark:text-slate-100">
+          {getSignalTitle(signal, pl)}
+        </h3>
+        <p className="mt-2 text-[14px] leading-6 text-slate-600 dark:text-slate-400">
+          {getSignalSummary(signal, pl)}
+        </p>
 
-const Dock: React.FC<{ payload: CommandDockPayload; onAction: (a: HomeScreenAction) => void; pl: boolean }> = ({ payload, onAction, pl }) => (
-  <div className="relative z-20 flex h-12 items-center gap-2 border-t border-white/[0.06] bg-[#060B18]/80 px-7 backdrop-blur-md">
-    {payload.actions.map((a) => (
-      <button
-        key={a.id}
-        onClick={() => {
-          if (a.kind === 'create' && a.target) onAction({ type: 'create', target: a.target as 'idea' });
-          else if (a.kind === 'navigate' && a.target) onAction({ type: 'navigate', target: a.target as 'calendar' });
-          else if (a.kind === 'chat' && a.starterPrompt) onAction({ type: 'chat', packet: { sourceBlock: 'commandDock', intent: 'general_transform_assist', title: 'Dock', starterPrompt: a.starterPrompt, entityType: 'home', entityId: 'dock' } });
-        }}
-        className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-white/[0.04] px-3.5 py-1.5 text-[12px] font-semibold text-white/55 transition hover:bg-white/[0.10] hover:text-white/85"
-      >
-        {DIC[a.id] || <ArrowUpRight size={13} />}
-        {a.label}
-      </button>
-    ))}
-    <span className="ml-auto text-[10px] font-medium tracking-wider text-white/15">Transformation OS</span>
+        <Callout title={pl ? 'Dlaczego to ważne' : 'Why it matters'} body={signal.whyItMatters} />
+        <Callout title={pl ? 'Dlaczego to widzisz' : 'Why you see this'} body={signal.whyYouSeeThis} />
+        <Callout title={pl ? 'Co zrobić dalej' : 'What to do next'} body={signal.suggestedNextStep} />
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <GhostButton
+            label={pl ? 'Pogadaj z AI' : 'Ask AI'}
+            icon={<Brain size={14} />}
+            onClick={() => void onAskAi(signal)}
+            busy={busyAction === 'ask_ai'}
+            tone="violet"
+          />
+          <GhostButton
+            label={pl ? 'Do notatki' : 'To notes'}
+            icon={<NotebookPen size={14} />}
+            onClick={() => void onAddToNote(signal)}
+            busy={busyAction === 'add_to_note'}
+            tone="cyan"
+          />
+          <GhostButton
+            label={pl ? 'Utwórz zadanie' : 'Create task'}
+            icon={<CheckSquare size={14} />}
+            onClick={() => void onCreateTask(signal)}
+            busy={busyAction === 'create_task'}
+            tone="amber"
+          />
+          <GhostButton
+            label={pl ? 'Watchlist' : 'Watchlist'}
+            icon={<TrendingUp size={14} />}
+            onClick={() => void onAddToWatchlist(signal)}
+            busy={busyAction === 'add_to_watchlist'}
+            tone="emerald"
+          />
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <TinyButton
+            label={pl ? 'Interesuje mnie to' : 'This is relevant'}
+            onClick={() => void onMoreLikeThis(signal)}
+            busy={busyAction === 'more_like_this'}
+            tone="emerald"
+          />
+          <TinyButton
+            label={pl ? 'Pokazuj mniej takich' : 'Show fewer like this'}
+            onClick={() => void onLessLikeThis(signal)}
+            busy={busyAction === 'less_like_this'}
+            tone="rose"
+          />
+          {signal.source.url && (
+            <TinyButton
+              label={pl ? 'Źródło' : 'Source'}
+              onClick={() => window.open(signal.source.url, '_blank', 'noopener,noreferrer')}
+              icon={<ArrowUpRight size={12} />}
+              tone="slate"
+            />
+          )}
+        </div>
+      </>
+    ) : (
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-100/80 px-4 py-5 text-[13px] text-slate-500 dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-slate-500">
+        {pl
+          ? 'Wybierz sygnał z listy, aby zobaczyć interpretację i akcje.'
+          : 'Select a signal to see interpretation and actions.'}
+      </div>
+    )}
+  </SectionShell>
+);
+
+const RecommendationsPanel: React.FC<{
+  pl: boolean;
+  recommendations: RadarRecommendation[];
+  onSelectSignal: (signalId?: string) => void;
+}> = ({ pl, recommendations, onSelectSignal }) => (
+  <SectionShell
+    title={pl ? 'Co warto zrobić' : 'What to do next'}
+    subtitle={pl ? 'Ruchy, pytania, ryzyka i szanse.' : 'Moves, questions, risks, and opportunities.'}
+  >
+    <div className="space-y-2">
+      {recommendations.map((item) => (
+        <button
+          key={item.id}
+          onClick={() => onSelectSignal(item.signalId)}
+          className="w-full rounded-2xl border border-slate-200 bg-white/80 px-3 py-3 text-left transition hover:bg-white dark:border-white/[0.06] dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
+        >
+          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500">
+            {item.kind}
+          </div>
+          <div className="mt-1 text-[13px] font-semibold text-slate-900 dark:text-slate-200">{item.title}</div>
+          <div className="mt-1 text-[12px] leading-5 text-slate-600 dark:text-slate-400">{item.body}</div>
+        </button>
+      ))}
+    </div>
+  </SectionShell>
+);
+
+const MetricsPanel: React.FC<{ pl: boolean; data: RadarViewPayload }> = ({ pl, data }) => (
+  <SectionShell
+    title={pl ? 'Sygnał jakości' : 'Quality signal'}
+    subtitle={pl ? 'Podstawowe metryki pracy Radaru.' : 'Baseline Radar operating metrics.'}
+  >
+    <div className="grid grid-cols-2 gap-2">
+      <MetricPill
+        label={pl ? 'Sygnały' : 'Signals'}
+        value={String(data.metrics.totalSignalsConsidered)}
+      />
+      <MetricPill
+        label={pl ? 'Duplicate' : 'Duplicate'}
+        value={`${data.metrics.duplicateRate}%`}
+      />
+      <MetricPill
+        label={pl ? 'Akcje 30d' : 'Actions 30d'}
+        value={String(data.metrics.actionedSignalsLast30d)}
+      />
+      <MetricPill
+        label={pl ? 'Save 30d' : 'Save 30d'}
+        value={String(data.metrics.savedSignalsLast30d)}
+      />
+    </div>
+  </SectionShell>
+);
+
+const SectionShell: React.FC<{
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}> = ({ title, subtitle, children }) => (
+  <section className="rounded-3xl border border-slate-200 bg-white/80 p-4 shadow-[0_8px_30px_rgba(15,23,42,0.04)] dark:border-white/[0.08] dark:bg-white/[0.04] dark:shadow-none">
+    <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+      {title}
+    </div>
+    <div className="mt-1 text-[13px] text-slate-600 dark:text-slate-500">{subtitle}</div>
+    <div className="mt-4">{children}</div>
+  </section>
+);
+
+const Callout: React.FC<{ title: string; body: string }> = ({ title, body }) => (
+  <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50/90 p-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
+    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500">
+      {title}
+    </div>
+    <div className="mt-1 text-[13px] leading-6 text-slate-700 dark:text-slate-400">{body}</div>
   </div>
 );
+
+const SignalBadge: React.FC<{ label: string }> = ({ label }) => (
+  <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400">
+    {label.replace(/_/g, ' ')}
+  </span>
+);
+
+const MetricPill: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 dark:border-white/[0.06] dark:bg-white/[0.03]">
+    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-500">
+      {label}
+    </div>
+    <div className="mt-1 text-[16px] font-semibold text-slate-900 dark:text-slate-100">{value}</div>
+  </div>
+);
+
+const GhostButton: React.FC<{
+  label: string;
+  onClick: () => void;
+  busy?: boolean;
+  icon?: React.ReactNode;
+  tone?: 'violet' | 'cyan' | 'amber' | 'emerald' | 'rose' | 'slate';
+}> = ({ label, onClick, busy = false, icon, tone = 'slate' }) => (
+  <button
+    onClick={onClick}
+    disabled={busy}
+    className={cn(
+      'inline-flex items-center gap-2 rounded-full border bg-white px-3.5 py-2 text-[12px] font-medium transition hover:bg-slate-50 disabled:opacity-60 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]',
+      tone === 'violet' && 'border-violet-200 text-violet-700 dark:border-violet-300/20 dark:text-violet-100/88',
+      tone === 'cyan' && 'border-cyan-200 text-cyan-700 dark:border-cyan-300/20 dark:text-cyan-100/84',
+      tone === 'amber' && 'border-amber-200 text-amber-700 dark:border-amber-300/20 dark:text-amber-100/84',
+      tone === 'emerald' && 'border-emerald-200 text-emerald-700 dark:border-emerald-300/20 dark:text-emerald-100/84',
+      tone === 'rose' && 'border-rose-200 text-rose-700 dark:border-rose-300/20 dark:text-rose-100/84',
+      tone === 'slate' && 'border-slate-200 text-slate-700 dark:border-white/10 dark:text-slate-300'
+    )}
+  >
+    {busy ? <Loader2 size={14} className="animate-spin" /> : icon}
+    {label}
+  </button>
+);
+
+const TinyButton: React.FC<{
+  label: string;
+  onClick: () => void;
+  busy?: boolean;
+  icon?: React.ReactNode;
+  tone?: 'emerald' | 'rose' | 'cyan' | 'slate';
+}> = ({ label, onClick, busy = false, icon, tone = 'slate' }) => (
+  <button
+    onClick={onClick}
+    disabled={busy}
+    className={cn(
+      'inline-flex items-center gap-1 rounded-full border bg-transparent px-2.5 py-1.5 text-[10px] font-medium transition hover:bg-slate-100 disabled:opacity-60 dark:hover:bg-white/[0.04]',
+      tone === 'emerald' && 'border-emerald-200 text-emerald-700 dark:border-emerald-300/18 dark:text-emerald-300',
+      tone === 'rose' && 'border-rose-200 text-rose-700 dark:border-rose-300/18 dark:text-rose-300',
+      tone === 'cyan' && 'border-cyan-200 text-cyan-700 dark:border-cyan-300/18 dark:text-cyan-300',
+      tone === 'slate' && 'border-slate-200 text-slate-600 dark:border-white/10 dark:text-slate-400'
+    )}
+  >
+    {busy ? <Loader2 size={12} className="animate-spin" /> : icon}
+    {label}
+  </button>
+);
+
+const BgCanvas: React.FC = () => (
+  <>
+    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-8%,rgba(139,92,246,0.10),transparent)] dark:bg-[radial-gradient(ellipse_80%_50%_at_50%_-8%,rgba(120,119,198,0.12),transparent)]" />
+    <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(15,23,42,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,0.035)_1px,transparent_1px)] [background-size:44px_44px] dark:opacity-20 dark:[background-image:linear-gradient(rgba(255,255,255,0.018)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.018)_1px,transparent_1px)]" />
+    <motion.div
+      className="pointer-events-none absolute -left-44 -top-44 h-[38rem] w-[38rem] rounded-full bg-gradient-to-br from-violet-400/25 to-cyan-300/20 blur-[170px] dark:from-violet-600/25 dark:to-cyan-500/20"
+      animate={{ x: [0, 30, -18, 0], y: [0, 22, -28, 0], scale: [1, 1.08, 0.94, 1] }}
+      transition={{ duration: 28, repeat: Infinity, ease: 'easeInOut' }}
+    />
+    <motion.div
+      className="pointer-events-none absolute -right-36 top-[20%] h-[32rem] w-[32rem] rounded-full bg-gradient-to-br from-amber-300/20 to-rose-300/15 blur-[170px] dark:from-amber-500/20 dark:to-rose-400/15"
+      animate={{ x: [0, -26, 18, 0], y: [0, -20, 22, 0], scale: [1, 0.95, 1.07, 1] }}
+      transition={{ duration: 36, repeat: Infinity, ease: 'easeInOut' }}
+    />
+  </>
+);
+
+function isSignalLocalizationPending(signal: RadarSignalCard | null | undefined): boolean {
+  if (!signal) return false;
+  if (signal.isLocalized) return false;
+  if (!signal.localizationPending) return false;
+  if (!signal.requestedLanguage || !signal.contentLanguage) return false;
+  return signal.requestedLanguage !== signal.contentLanguage;
+}
+
+function getSignalTitle(signal: RadarSignalCard, pl: boolean): string {
+  if (!isSignalLocalizationPending(signal)) return signal.title;
+  return pl ? 'Trwa przygotowanie polskiej wersji sygnału...' : 'Preparing English version...';
+}
+
+function getSignalSummary(signal: RadarSignalCard, pl: boolean): string {
+  if (!isSignalLocalizationPending(signal)) return signal.summary;
+  return pl
+    ? 'Radar przygotowuje lokalizację tej treści. Widok odświeży się automatycznie.'
+    : 'Radar is preparing the localized version of this content. The view will refresh automatically.';
+}
+
+function buildNoteBody(signal: RadarSignalCard, pl: boolean): string {
+  const localizedTitle = getSignalTitle(signal, pl);
+  const localizedSummary = getSignalSummary(signal, pl);
+  return pl
+    ? [
+        `Sygnał Radaru: ${localizedTitle}`,
+        '',
+        `Podsumowanie: ${localizedSummary}`,
+        '',
+        `Dlaczego to ważne: ${signal.whyItMatters}`,
+        `Dlaczego to widzę: ${signal.whyYouSeeThis}`,
+        `Sugerowany następny krok: ${signal.suggestedNextStep}`,
+        '',
+        `Źródło: ${signal.source.name}`,
+        `Tagi: ${signal.tags.topics.join(', ') || 'brak'}`,
+      ].join('\n')
+    : [
+        `Radar signal: ${localizedTitle}`,
+        '',
+        `Summary: ${localizedSummary}`,
+        '',
+        `Why it matters: ${signal.whyItMatters}`,
+        `Why I see this: ${signal.whyYouSeeThis}`,
+        `Suggested next step: ${signal.suggestedNextStep}`,
+        '',
+        `Source: ${signal.source.name}`,
+        `Tags: ${signal.tags.topics.join(', ') || 'n/a'}`,
+      ].join('\n');
+}

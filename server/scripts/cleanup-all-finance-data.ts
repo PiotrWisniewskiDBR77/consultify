@@ -1,9 +1,17 @@
 #!/usr/bin/env tsx
 /**
- * Clean up ALL financial statement data from the target database.
- * Pass database URLs as arguments or use env vars.
+ * Clean up ALL financial statement data from the explicitly selected database target.
+ *
+ * Usage:
+ *   DATABASE_PUBLIC_URL="<public-postgres-url>" FINANCE_CLEANUP_CONFIRM=DELETE_ALL_FINANCE_DATA npx tsx server/scripts/cleanup-all-finance-data.ts
  */
 import pg from 'pg';
+
+import {
+  logSelectedDatabaseTarget,
+  requireConfirmation,
+  resolveScriptDatabaseTarget,
+} from './lib/scriptDatabaseTarget.js';
 
 const TABLES_TO_CLEAN = [
   'financial_statement_values',
@@ -47,12 +55,21 @@ async function cleanDatabase(dbUrl: string, label: string): Promise<void> {
 }
 
 async function main() {
-  const trolley = 'postgresql://postgres:2evh7mlls1n00vmwhzm180ner3xndjo3@trolley.proxy.rlwy.net:28146/railway';
-  const caboose = 'postgresql://postgres:l5jjc8wrhxmkuxlsuvc7ic1j998gbp5l@caboose.proxy.rlwy.net:15646/railway';
-
-  await cleanDatabase(trolley, 'trolley (staging)');
-  await cleanDatabase(caboose, 'caboose (.env.local)');
-  console.log('\n✓ Both databases cleaned.');
+  requireConfirmation(
+    'FINANCE_CLEANUP_CONFIRM',
+    'DELETE_ALL_FINANCE_DATA',
+    'cleanup-all-finance-data'
+  );
+  const target = resolveScriptDatabaseTarget({
+    label: 'cleanup-all-finance-data',
+    databaseUrl: process.env.FINANCE_IMPORT_DATABASE_URL || process.env.DATABASE_URL,
+    publicDatabaseUrl:
+      process.env.FINANCE_IMPORT_DATABASE_PUBLIC_URL || process.env.DATABASE_PUBLIC_URL,
+    requireExplicitTarget: true,
+  });
+  logSelectedDatabaseTarget('cleanup-all-finance-data', target);
+  await cleanDatabase(target.connectionString, `${target.host}/${target.database}`);
+  console.log('\n✓ Finance tables cleaned in selected database.');
 }
 
 main().catch((e) => console.error('Fatal:', e.message));

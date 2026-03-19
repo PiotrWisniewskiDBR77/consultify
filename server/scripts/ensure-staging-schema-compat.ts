@@ -1,4 +1,6 @@
 #!/usr/bin/env tsx
+import '../src/config/loadEnv.js';
+
 /**
  * Ensure STAGING DB schema is compatible with current backend expectations.
  *
@@ -11,17 +13,12 @@
  *   ENV_FILE=.env.staging.local npx tsx server/scripts/ensure-staging-schema-compat.ts
  */
 
-import dotenv from 'dotenv';
 import { Pool } from 'pg';
 
 import {
   assertNoPrivateRailwayDbHostOutsideRailway,
   resolveReachableDatabaseUrl,
 } from '../src/config/databaseTargetResolver.js';
-
-dotenv.config({ path: process.env.ENV_FILE || '.env.staging.local' });
-dotenv.config({ path: '.env.local' });
-dotenv.config({ path: '.env' });
 
 assertNoPrivateRailwayDbHostOutsideRailway(process.env);
 const resolvedDb = resolveReachableDatabaseUrl({

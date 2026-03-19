@@ -30,10 +30,10 @@ Always pass explicit targets:
 - `FINANCE_IMPORT_ORG_ID`
 
 5. Organization consistency:
-Railway `staging` and `production` must keep:
-- `DEMO_ORG_ID=atelier`
-- `DEMO_ORG_NAME=Atelier`
-- `FINANCE_IMPORT_ORG_ID=atelier`
+`dbr77` and `atelier` are equal real tenants.
+- Do not assume a single primary build org.
+- Always pass explicit org targets for imports, seeds, and repair scripts (`ORG_ID`, `SEED_ORG_ID`, `FINANCE_IMPORT_ORG_ID`, `TARGET_ORG_ID`).
+- Reserve `DEMO_ORG_ID` only for a truly separate demo tenant.
 
 ## Enforced In Code
 

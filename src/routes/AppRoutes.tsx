@@ -25,6 +25,7 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
+import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { AuthView } from '@/views/AuthView';
 import { ProductEntryPage } from '@/views/ProductEntryPage';
 
@@ -36,7 +37,7 @@ import { ROUTES } from './routeConfig';
 const StudioView = React.lazy(() =>
   import('@/views/StudioView').then((m) => ({ default: m.StudioView }))
 );
-const MyWorkView = React.lazy(() =>
+const MyWorkView = lazyWithRetry(() =>
   import('@/views/MyWorkView').then((m) => ({ default: m.MyWorkView }))
 );
 const ContextBuilderView = React.lazy(() =>
@@ -1238,11 +1239,9 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.ECONOMICS}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Finance']}>
+            <MainLayout breadcrumbs={breadcrumbs || ['Finance']} noPadding>
               <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
-                </AnimationWrapper>
+                <EconomicsView />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1250,11 +1249,9 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.FINANCE}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || ['Finance']}>
+            <MainLayout breadcrumbs={breadcrumbs || ['Finance']} noPadding>
               <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
-                </AnimationWrapper>
+                <EconomicsView />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1265,7 +1262,9 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Execution']}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
+                  <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                    <FullExecutionView />
+                  </Suspense>
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1277,7 +1276,9 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Implementation']}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
+                  <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                    <ExecutionHub />
+                  </Suspense>
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1289,7 +1290,9 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Rollout']}>
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
+                  <Suspense fallback={<LoadingScreen message="Loading..." />}>
+                    <FullRolloutView />
+                  </Suspense>
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1361,11 +1364,9 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.KPI_OKR}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
               <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
-                </AnimationWrapper>
+                <ResultsHub />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1375,11 +1376,10 @@ export const AppRoutes: React.FC = () => {
           element={
             <MainLayout
               breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}
+              noPadding
             >
               <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
-                </AnimationWrapper>
+                <ReportsAndPresentationsHub />
               </RouteErrorBoundary>
             </MainLayout>
           }
@@ -1404,7 +1404,7 @@ export const AppRoutes: React.FC = () => {
             >
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
+                  <PresentationWizard />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1418,7 +1418,7 @@ export const AppRoutes: React.FC = () => {
             >
               <RouteErrorBoundary>
                 <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
+                  <DeckBuilder />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1443,11 +1443,9 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.BENEFITS}
           element={
-            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]}>
+            <MainLayout breadcrumbs={breadcrumbs || [t('sidebar.results', 'Results')]} noPadding>
               <RouteErrorBoundary>
-                <AnimationWrapper variant="slideUp">
-                  <V4ComingSoonView />
-                </AnimationWrapper>
+                <ResultsHub />
               </RouteErrorBoundary>
             </MainLayout>
           }

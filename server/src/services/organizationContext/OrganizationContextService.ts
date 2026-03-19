@@ -1036,7 +1036,7 @@ export class OrganizationContextService {
       notes: {
         manualContext: mergeUniqueObjects(
           noteValues,
-          manualContexts.filter((row): row is Record<string, unknown> => !!row.content)
+          manualContexts.filter((row) => !!row.content) as Array<Record<string, unknown>>
         ),
       },
       metadata: {

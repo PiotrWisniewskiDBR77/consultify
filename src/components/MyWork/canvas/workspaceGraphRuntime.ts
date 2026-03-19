@@ -200,14 +200,23 @@ export function useWorkspaceGraphRuntime({
 
   const replaceGraph = useCallback(
     (next: Partial<WorkspaceGraphState>) => {
-      setGraph((prev) => ({
-        nodes: Array.isArray(next.nodes) ? (next.nodes as Node[]) : prev.nodes,
-        edges: Array.isArray(next.edges) ? (next.edges as Edge[]) : prev.edges,
-        extensions: isPlainObject(next.extensions)
+      setGraph((prev) => {
+        const nextNodes = Array.isArray(next.nodes) ? (next.nodes as Node[]) : prev.nodes;
+        const nextEdges = Array.isArray(next.edges) ? (next.edges as Edge[]) : prev.edges;
+        const nextExtensions = isPlainObject(next.extensions)
           ? mergeWorkspaceExtensions(prev.extensions || {}, next.extensions)
-          : prev.extensions,
-        version: typeof next.version === 'number' ? next.version : prev.version,
-      }));
+          : prev.extensions;
+        const nextVersion = typeof next.version === 'number' ? next.version : prev.version;
+        if (
+          nextNodes === prev.nodes &&
+          nextEdges === prev.edges &&
+          nextExtensions === prev.extensions &&
+          nextVersion === prev.version
+        ) {
+          return prev;
+        }
+        return { nodes: nextNodes, edges: nextEdges, extensions: nextExtensions, version: nextVersion };
+      });
     },
     []
   );

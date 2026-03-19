@@ -169,7 +169,7 @@ export class ExecutionController {
           AND d.status IN ('pending', 'escalated')
           AND EXISTS (
             SELECT 1 FROM decision_impacts di 
-            WHERE di.decision_id = d.id AND di.is_blocker = 1
+            WHERE di.decision_id = d.id AND di.is_blocker = TRUE
           )
         ORDER BY d.deadline ASC
       `;
@@ -232,7 +232,7 @@ export class ExecutionController {
           JOIN decision_impacts di ON d.id = di.decision_id
           WHERE (d.initiative_id = ? OR d.project_id = ?)
             AND d.status IN ('pending', 'escalated')
-            AND di.is_blocker = 1
+            AND di.is_blocker = TRUE
         `;
         const pendingResult = await queryHelpers.queryOne<{ count: number }>(pendingDecisionsSql, [
           initiativeId,

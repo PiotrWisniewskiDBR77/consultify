@@ -23,6 +23,9 @@ export interface GeneratorContext {
     ids?: string[];
     primaryId?: string;
   };
+  targetNodeLabel?: string;
+  targetNodeTags?: string[];
+  targetNodeSemanticType?: string;
 }
 
 export type GeneratorType =

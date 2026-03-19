@@ -7,6 +7,11 @@
  * to a generic scaffold derived from their outputMapping.
  */
 
+import {
+  CONSULTING_TOOL_STANDARD_OUTPUTS,
+  type ConsultingToolOutputType,
+} from '@/config/consultingToolsStandard';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -34,10 +39,18 @@ export interface InitiativeHint {
 export interface OutputScaffold {
   sourceType: 'tool' | 'template' | 'assessment';
   sourceSlug: string;
+  sourceArtifact: 'final-source-summary';
+  primarySourceField: string;
+  supportedOutputs: readonly ConsultingToolOutputType[];
   reportOutline: ReportSection[];
   deckOutline: DeckSlide[];
   initiativeHints: InitiativeHint[];
 }
+
+type OutputScaffoldDefinition = Omit<
+  OutputScaffold,
+  'supportedOutputs' | 'sourceArtifact' | 'primarySourceField'
+>;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -67,11 +80,20 @@ function hint(category: string, en: string, pl: string, sourceField: string): In
   return { category, titlePattern: { en, pl }, sourceField };
 }
 
+function withStandardOutputs(scaffold: OutputScaffoldDefinition): OutputScaffold {
+  return {
+    ...scaffold,
+    sourceArtifact: 'final-source-summary',
+    primarySourceField: 'tool.finalSourceSummary',
+    supportedOutputs: CONSULTING_TOOL_STANDARD_OUTPUTS,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Tool scaffolds (31)
 // ---------------------------------------------------------------------------
 
-const TOOL_SCAFFOLDS: Record<string, OutputScaffold> = {
+const TOOL_SCAFFOLDS: Record<string, OutputScaffoldDefinition> = {
   'dynamic-swot': {
     sourceType: 'tool',
     sourceSlug: 'dynamic-swot',
@@ -1787,7 +1809,7 @@ const TOOL_SCAFFOLDS: Record<string, OutputScaffold> = {
 // Assessment scaffolds (3)
 // ---------------------------------------------------------------------------
 
-const ASSESSMENT_SCAFFOLDS: Record<string, OutputScaffold> = {
+const ASSESSMENT_SCAFFOLDS: Record<string, OutputScaffoldDefinition> = {
   DRD: {
     sourceType: 'assessment',
     sourceSlug: 'DRD',
@@ -2085,7 +2107,7 @@ const ASSESSMENT_SCAFFOLDS: Record<string, OutputScaffold> = {
 // ---------------------------------------------------------------------------
 
 function buildGenericTemplateScaffold(slug: string): OutputScaffold {
-  return {
+  return withStandardOutputs({
     sourceType: 'template',
     sourceSlug: slug,
     reportOutline: [
@@ -2118,7 +2140,7 @@ function buildGenericTemplateScaffold(slug: string): OutputScaffold {
         'template.recommendations'
       ),
     ],
-  };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -2128,9 +2150,11 @@ function buildGenericTemplateScaffold(slug: string): OutputScaffold {
 export function getOutputScaffold(sourceType: string, sourceSlug: string): OutputScaffold | null {
   switch (sourceType) {
     case 'tool':
-      return TOOL_SCAFFOLDS[sourceSlug] ?? null;
+      return TOOL_SCAFFOLDS[sourceSlug] ? withStandardOutputs(TOOL_SCAFFOLDS[sourceSlug]) : null;
     case 'assessment':
-      return ASSESSMENT_SCAFFOLDS[sourceSlug] ?? null;
+      return ASSESSMENT_SCAFFOLDS[sourceSlug]
+        ? withStandardOutputs(ASSESSMENT_SCAFFOLDS[sourceSlug])
+        : null;
     case 'template':
       return buildGenericTemplateScaffold(sourceSlug);
     default:
@@ -2147,11 +2171,18 @@ export function getDeckOutlineForTool(toolType: string): DeckSlide[] {
 }
 
 export function getAllToolScaffolds(): Record<string, OutputScaffold> {
-  return { ...TOOL_SCAFFOLDS };
+  return Object.fromEntries(
+    Object.entries(TOOL_SCAFFOLDS).map(([slug, scaffold]) => [slug, withStandardOutputs(scaffold)])
+  );
 }
 
 export function getAllAssessmentScaffolds(): Record<string, OutputScaffold> {
-  return { ...ASSESSMENT_SCAFFOLDS };
+  return Object.fromEntries(
+    Object.entries(ASSESSMENT_SCAFFOLDS).map(([slug, scaffold]) => [
+      slug,
+      withStandardOutputs(scaffold),
+    ])
+  );
 }
 
 export { ASSESSMENT_SCAFFOLDS, TOOL_SCAFFOLDS };

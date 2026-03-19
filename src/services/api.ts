@@ -2,6 +2,7 @@
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
 import { trackFunnelEvent } from './funnelAnalytics';
 import { tokenService } from './tokenService';
+import i18n from '@/i18n';
 
 // Use relative path to allow Vite proxy to handle the request (avoiding CORS)
 // or use env var if provided.
@@ -75,12 +76,36 @@ async function waitForApiReady(timeoutMs = 15000): Promise<boolean> {
 // localStorage access + JSON.parse are synchronous and can cause noticeable UI jank
 // when the app polls multiple endpoints (notifications, onboarding, etc.).
 // ---------------------------------------------------------------------------
-type DemoFlags = { isDemoMode: boolean; isDemoSession: boolean };
+export type DemoFlags = { isDemoMode: boolean; isDemoSession: boolean };
+
+export type DataContextSummary = {
+  status: string;
+  generatedAt: string;
+  database: {
+    source: string;
+    host: string | null;
+    name: string | null;
+    readonly: boolean;
+  };
+  organization: {
+    activeOrganizationId: string | null;
+    userOrganizationId: string | null;
+  };
+  user: {
+    id: string | null;
+    email: string | null;
+  };
+  demo: {
+    enabled: boolean;
+    organizationId: string | null;
+    headerActive: boolean;
+  };
+};
 
 let _cachedStorageRaw: string | null | undefined = undefined;
 let _cachedDemoFlags: DemoFlags = { isDemoMode: false, isDemoSession: false };
 
-function getDemoFlags(): DemoFlags {
+export function getDemoFlags(): DemoFlags {
   const DEMO_EMAIL = 'piotr.wisniewski@demo.com';
   let raw: string | null = null;
   try {
@@ -113,7 +138,11 @@ function getDemoFlags(): DemoFlags {
   return _cachedDemoFlags;
 }
 
-let _cachedNavigatorRaw: string | null | undefined = undefined;
+export function shouldAllowDemoData(): boolean {
+  const { isDemoMode, isDemoSession } = getDemoFlags();
+  return isDemoMode || isDemoSession;
+}
+
 let _cachedLang = 'en';
 
 function getBrowserLanguage(): string {
@@ -128,14 +157,21 @@ function getBrowserLanguage(): string {
   }
 }
 
+function getAppLanguage(): string {
+  try {
+    const lng = (i18n?.resolvedLanguage || i18n?.language || '').toString();
+    const base = lng.split('-')[0].toLowerCase();
+    return base || getBrowserLanguage();
+  } catch {
+    return getBrowserLanguage();
+  }
+}
+
 function getCachedUserLanguage(): string {
-  const raw =
-    (typeof navigator !== 'undefined' && (navigator.languages?.[0] || navigator.language)) || null;
-
-  if (raw === _cachedNavigatorRaw) return _cachedLang;
-  _cachedNavigatorRaw = raw;
-
-  _cachedLang = getBrowserLanguage();
+  // Prefer app-selected language (i18next) over browser locale.
+  // NOTE: app language can change at runtime, so we can't key this cache only on navigator.language.
+  const lang = getAppLanguage();
+  _cachedLang = lang || _cachedLang;
   return _cachedLang;
 }
 
@@ -149,7 +185,10 @@ export const getHeaders = () => {
     'Content-Type': 'application/json',
     Authorization: token ? `Bearer ${token}` : '',
     'X-Correlation-ID': correlationId as string,
-    'Accept-Language': userLanguage, // Send user's language preference
+    // NOTE: Browsers treat `Accept-Language` as a forbidden header, so setting it here is best-effort.
+    // Use `X-App-Language` as the reliable signal for backend localization.
+    'Accept-Language': userLanguage,
+    'X-App-Language': userLanguage,
   };
 
   // Add demo mode header whenever user has demo mode enabled (viewing demo org).
@@ -4689,6 +4728,7 @@ export const Api = {
       tags: string[];
       icon: string | null;
       isLicensed: boolean;
+      isActive: boolean;
       isComingSoon: boolean;
       sortOrder: number;
       createdAt: string | null;
@@ -4723,6 +4763,7 @@ export const Api = {
       tags: string[];
       icon: string | null;
       isLicensed: boolean;
+      isActive: boolean;
       isComingSoon: boolean;
       sortOrder: number;
       createdAt: string | null;
@@ -5481,6 +5522,31 @@ export const Api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error((data as any)?.error || 'Failed to ingest attachment');
+    return data;
+  },
+
+  ingestChatUrlAttachment: async (
+    url: string,
+    options?: { title?: string }
+  ): Promise<{
+    success: boolean;
+    docId: string;
+    filename: string;
+    mimeType?: string;
+    sourceUrl?: string;
+    totalChunks?: number;
+    embeddedChunks?: number;
+  }> => {
+    const res = await fetch(`${API_URL}/ai/attachments/ingest-url`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        url,
+        title: options?.title,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to ingest URL');
     return data;
   },
 
@@ -10442,6 +10508,13 @@ export const Api = {
       return { success: false, isDemoMode: false };
     }
     return res.json();
+  },
+
+  getDataContext: async (): Promise<DataContextSummary> => {
+    const res = await fetchWithRetry(`${API_URL}/health/data-context`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch active data context');
   },
 
   /**

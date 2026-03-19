@@ -39,10 +39,11 @@ const extractKeyValueScores = (text: string): Record<string, number> => {
 const PDFParserService = {
   async extractTextFromBuffer(buffer: Buffer): Promise<string> {
     try {
-      const { PDFParse } = await import('pdf-parse');
-      const parser = new PDFParse({ data: buffer });
-      const pdfData = await parser.getText();
-      await parser.destroy();
+      const mod = await import('pdf-parse');
+      const pdfParse = (mod.default ?? mod) as (
+        dataBuffer: Buffer
+      ) => Promise<{ text?: string | null }>;
+      const pdfData = await pdfParse(buffer);
       const raw = String(pdfData?.text || '');
       // Postgres TEXT columns reject null bytes (0x00) — strip them
       return raw.replace(/\0/g, '');

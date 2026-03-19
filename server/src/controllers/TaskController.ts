@@ -17,6 +17,7 @@ import {
   TASK_STATUSES,
   validateTaskStatusTransition,
 } from '../services/taskWorkflowService.js';
+import { getTableColumns as getSchemaColumns } from '../utils/dbSchema.js';
 import NotificationService from '../services/notificationService.js';
 import { PMO_DOMAIN_IDS } from '../services/pmoDomainRegistry.js';
 import TaskAssignmentService from '../services/taskAssignmentService.js';
@@ -535,6 +536,18 @@ export class TaskController {
         return;
       }
 
+      const taskColumns = await getSchemaColumns('tasks');
+      const listIdExpr = taskColumns.has('list_id')
+        ? taskColumns.has('workstream_id')
+          ? 'COALESCE(t.list_id, t.workstream_id)'
+          : 't.list_id'
+        : taskColumns.has('workstream_id')
+          ? 't.workstream_id'
+          : 'NULL';
+      const listNameExpr = listIdExpr === 'NULL' ? 'NULL' : listIdExpr;
+      const workstreamsJoin =
+        listIdExpr === 'NULL' ? '' : `LEFT JOIN workstreams w ON w.id = ${listNameExpr}`;
+
       const sql = `
             SELECT 
                 t.*,
@@ -547,14 +560,14 @@ export class TaskController {
                 p.name as project_name,
                 i.name as initiative_name,
                 i.program_id as program_id,
-                COALESCE(t.list_id, t.workstream_id) as list_id,
-                w.name as list_name
+                ${listIdExpr} as list_id,
+                ${listIdExpr === 'NULL' ? 'NULL' : 'w.name'} as list_name
             FROM tasks t
             LEFT JOIN users a ON t.assignee_id = a.id
             LEFT JOIN users r ON t.reporter_id = r.id
             LEFT JOIN projects p ON t.project_id = p.id
             LEFT JOIN initiatives i ON t.initiative_id = i.id
-            LEFT JOIN workstreams w ON w.id = COALESCE(t.list_id, t.workstream_id)
+            ${workstreamsJoin}
             WHERE t.organization_id = ?
         `;
       const countSql = `SELECT COUNT(*) as total FROM tasks t
@@ -591,8 +604,12 @@ export class TaskController {
           p.push(programId);
         }
         if (listId) {
-          s += ` AND COALESCE(t.list_id, t.workstream_id) = ?`;
-          p.push(listId);
+          if (listIdExpr !== 'NULL') {
+            s += ` AND ${listIdExpr} = ?`;
+            p.push(listId);
+          } else {
+            s += ` AND 1 = 0`;
+          }
         }
         if (scope === 'personal') {
           s += ` AND (t.assignee_id = ? OR t.reporter_id = ?)`;
@@ -939,7 +956,7 @@ export class TaskController {
               WHERE d.organization_id = ?
                 AND di.impacted_type = 'task'
                 AND di.impacted_id = ?
-                AND di.is_blocker = 1
+                AND di.is_blocker = TRUE
                 AND d.status IN ('pending', 'escalated')
               ORDER BY 
                 CASE WHEN d.deadline IS NULL THEN 1 ELSE 0 END,
@@ -1464,7 +1481,7 @@ export class TaskController {
             WHERE d.organization_id = ?
               AND di.impacted_type = 'task'
               AND di.impacted_id = ?
-              AND di.is_blocker = 1
+              AND di.is_blocker = TRUE
               AND d.status IN ('pending', 'escalated')
             ORDER BY 
               CASE WHEN d.deadline IS NULL THEN 1 ELSE 0 END,
