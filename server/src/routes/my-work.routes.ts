@@ -437,12 +437,6 @@ const resolveCanonicalPersonalTaskIdentity = async (
   req: AuthRequest,
   identity: { userId: string; orgId: string }
 ): Promise<{ userId: string; orgId: string }> => {
-  const allowLegacyCanonicalRemap =
-    String(process.env.ENABLE_PERSONAL_TASK_CANONICAL_REMAP || '').trim() === '1';
-  if (!allowLegacyCanonicalRemap) {
-    return identity;
-  }
-
   const email =
     typeof req.user?.email === 'string' ? req.user.email.trim().toLowerCase() : '';
   if (!email) return identity;
