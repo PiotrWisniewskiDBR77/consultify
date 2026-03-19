@@ -1,5 +1,5 @@
 const DEFAULT_DEMO_ORG_ID = 'demo-org';
-const DEFAULT_DEMO_ORG_NAME = 'Atelier';
+const DEFAULT_DEMO_ORG_NAME = 'Demo Organization';
 
 function env(name: string): string | undefined {
   const value = String(process.env[name] || '').trim();

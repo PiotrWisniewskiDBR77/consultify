@@ -40,6 +40,8 @@ interface UseToolAIReturn {
   requestSuggestions: () => Promise<void>;
   generateCorrelations: () => Promise<void>;
   generateSummary: () => Promise<void>;
+  generateFullSession: () => Promise<void>;
+  rethinkCard: (phaseId: string, cardType: string, cardId: string, userComment?: string) => Promise<void>;
   abortStream: () => void;
 
   // Utilities
@@ -200,12 +202,20 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     setSWOTOutputCandidates,
     setSWOTSummary,
     setInitiatives,
+    setSessionGenerationStatus,
+    markRethinking,
+    updateCardAfterRethink,
   } = useToolStore();
 
   const [error, setError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<
-    'suggestions' | 'correlations' | 'summary' | null
+    'suggestions' | 'correlations' | 'summary' | 'full-session' | 'rethink' | null
   >(null);
+  const [rethinkTarget, setRethinkTarget] = useState<{
+    phaseId: string;
+    cardType: string;
+    cardId: string;
+  } | null>(null);
 
   const { startStream, isStreaming, streamedContent, abortStream } = useAIStream();
 
@@ -637,6 +647,129 @@ Return JSON:
     }
   }, [toolType, currentSession, sendMessage]);
 
+  const generateFullSession = useCallback(async () => {
+    if (toolType !== 'dynamic-swot' || !currentSession) return;
+
+    setError(null);
+    setSessionGenerationStatus('generating');
+
+    const swotData = currentSession.inputData as SWOTData | undefined;
+    const orgContext = formatForPrompt();
+
+    const prompt = `You are a senior strategy consultant presenting initial findings to a CEO.
+The client has framed their strategic question. Now produce a COMPLETE first-draft Dynamic SWOT session.
+
+=== MISSION BRIEF ===
+- Strategic question: ${swotData?.context?.goal || 'not yet defined'}
+- Scope: ${swotData?.context?.scope || 'not yet defined'}
+- Success signal: ${swotData?.context?.successSignal || 'not yet defined'}
+- Time horizon: ${swotData?.context?.timeframe || 'medium'}
+- Constraints: ${swotData?.context?.constraints || 'none specified'}
+- Assumptions: ${swotData?.context?.assumptions || 'none specified'}
+- KPI target: ${swotData?.context?.kpiTarget || 'none specified'}
+
+=== ORGANIZATION CONTEXT ===
+${orgContext}
+=== END CONTEXT ===
+
+Generate a complete consulting-grade session covering ALL phases. Be specific, grounded, and actionable.
+Every item you produce is a PROPOSAL for the client to review -- mark everything as proposed.
+
+Return a single JSON object with this exact structure:
+{
+  "signals": [
+    {"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["..."], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}
+  ],
+  "items": [
+    {"text": "...", "impact": "high|medium|low", "quadrant": "strengths|weaknesses|opportunities|threats", "confidence": 1-5, "status": "proposed"}
+  ],
+  "correlations": [
+    {"type": "SO|WO|ST|WT", "insight": "...", "initiativeProposal": "..."}
+  ],
+  "tensions": [
+    {"title": "...", "type": "attack|repair|defend|protect", "insight": "...", "whyNow": "...", "confidence": 1-5}
+  ],
+  "moves": [
+    {"title": "...", "category": "quick-win|big-bet|defensive-move|capability-build", "rationale": "...", "expectedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "riskLevel": "high|medium|low", "confidence": 1-5, "firstStep": "..."}
+  ],
+  "outputCandidates": [
+    {"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}
+  ],
+  "summary": {
+    "executiveSummary": "...",
+    "keyInsights": ["..."],
+    "appliedConclusions": ["..."]
+  },
+  "initiatives": [
+    {"title": "...", "description": "...", "type": "strategic|operational|defensive|growth", "rationale": "...", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low"}
+  ]
+}
+
+Guidelines:
+- Generate 4-8 signals from diverse sources (interviews, benchmarks, AI context)
+- Generate 8-12 SWOT items across all 4 quadrants (at least 2 per quadrant)
+- Generate 3-5 correlations covering different tension types
+- Generate 3-5 tensions with clear "why now" rationale
+- Generate 3-5 strategic moves across different categories
+- Generate 2-4 output candidates
+- Write a concise executive summary (3-5 sentences)
+- List 3-5 key insights and 3-5 applied conclusions
+- Propose 2-4 initiative drafts`;
+
+    setPendingAction('full-session');
+    await sendMessage(prompt);
+  }, [toolType, currentSession, formatForPrompt, sendMessage, setSessionGenerationStatus]);
+
+  const rethinkCard = useCallback(async (
+    phaseId: string,
+    cardType: string,
+    cardId: string,
+    userComment?: string,
+  ) => {
+    if (toolType !== 'dynamic-swot' || !currentSession) return;
+
+    setError(null);
+    markRethinking(cardType as any, cardId);
+    setRethinkTarget({ phaseId, cardType, cardId });
+
+    const swotData = currentSession.inputData as SWOTData;
+    let cardContent = '';
+    if (cardType === 'signal') {
+      const signal = swotData.signals.find(s => s.id === cardId);
+      cardContent = signal ? `[${signal.type}] ${signal.content} (source: ${signal.sourceLabel})` : '';
+    } else if (cardType === 'item') {
+      const item = swotData.items.find(i => i.id === cardId);
+      cardContent = item ? `[${item.quadrant}] ${item.text} (impact: ${item.impact})` : '';
+    } else if (cardType === 'tension') {
+      const tension = swotData.tensions.find(t => t.id === cardId);
+      cardContent = tension ? `[${tension.type}] ${tension.title}: ${tension.insight}` : '';
+    } else if (cardType === 'move') {
+      const move = swotData.recommendedMoves.find(m => m.id === cardId);
+      cardContent = move ? `[${move.category}] ${move.title}: ${move.rationale}` : '';
+    } else if (cardType === 'output-candidate') {
+      const oc = swotData.outputCandidates.find(o => o.id === cardId);
+      cardContent = oc ? `[${oc.outputType}] ${oc.title}: ${oc.description}` : '';
+    }
+
+    const prompt = `The user wants you to RETHINK this specific ${cardType} card.
+
+Current card content:
+${cardContent}
+
+User feedback: ${userComment || 'Please provide a better version.'}
+
+Session context:
+- Strategic question: ${swotData.context?.goal || 'N/A'}
+- Scope: ${swotData.context?.scope || 'N/A'}
+
+Provide an improved version of this card. Keep the same type/structure but make it sharper, more grounded, and responsive to the user's feedback.
+
+Return JSON with the updated fields for this ${cardType}. Use the same field names as the original.`;
+
+    setPendingAction('rethink');
+    await sendMessage(prompt);
+  }, [toolType, currentSession, markRethinking, sendMessage]);
+
   useEffect(() => {
     if (isStreaming || !pendingAction || !streamedContent || toolType !== 'dynamic-swot') return;
 
@@ -853,6 +986,135 @@ Return JSON:
       );
     }
 
+    if (pendingAction === 'full-session') {
+      const signals = Array.isArray(parsed.signals) ? parsed.signals : [];
+      signals.forEach((signal) => {
+        if (!signal?.content || !signal?.type) return;
+        addSWOTSignal({
+          type: signal.type,
+          content: String(signal.content),
+          sourceLabel: String(signal.sourceLabel || 'AI consultant'),
+          confidence: typeof signal.confidence === 'number' ? signal.confidence : 3,
+          tags: Array.isArray(signal.tags) ? signal.tags.filter(Boolean) : [],
+          evidenceType: signal.evidenceType === 'fact' || signal.evidenceType === 'observation' || signal.evidenceType === 'hypothesis' ? signal.evidenceType : 'observation',
+          state: 'proposed',
+          provenance: String(signal.provenance || signal.sourceLabel || 'AI consultant'),
+          proposalStatus: 'ai-proposed',
+        });
+      });
+
+      const items = Array.isArray(parsed.items) ? parsed.items : [];
+      items.forEach((item) => {
+        if (!item?.text || !item?.quadrant) return;
+        addSWOTItem({
+          text: String(item.text),
+          quadrant: item.quadrant,
+          impact: item.impact || 'medium',
+          source: 'ai',
+          confidence: typeof item.confidence === 'number' ? item.confidence : 3,
+          status: 'proposed',
+          proposalStatus: 'ai-proposed',
+        });
+      });
+
+      const correlations = Array.isArray(parsed.correlations) ? parsed.correlations : [];
+      correlations.forEach((corr) => {
+        if (!corr?.type || !corr?.insight) return;
+        addCorrelation({
+          items: corr.items || [],
+          type: corr.type,
+          insight: corr.insight,
+          initiativeProposal: corr.initiativeProposal,
+          proposalStatus: 'ai-proposed',
+        });
+      });
+
+      const tensions = Array.isArray(parsed.tensions) ? parsed.tensions : [];
+      setSWOTTensions(
+        tensions.filter((t) => t?.title && t?.type).map((t) => ({
+          title: t.title,
+          type: t.type,
+          linkedCorrelationIds: [],
+          linkedItemIds: [],
+          insight: t.insight || '',
+          whyNow: t.whyNow || '',
+          confidence: typeof t.confidence === 'number' ? t.confidence : 3,
+          proposalStatus: 'ai-proposed' as const,
+        }))
+      );
+
+      const moves = Array.isArray(parsed.moves) ? parsed.moves : [];
+      setSWOTMoves(
+        moves.filter((m) => m?.title).map((m) => ({
+          title: m.title,
+          category: m.category || 'quick-win',
+          rationale: m.rationale || '',
+          linkedTensionIds: [],
+          linkedItemIds: [],
+          expectedImpact: m.expectedImpact || 'medium',
+          estimatedEffort: m.estimatedEffort || 'medium',
+          riskLevel: m.riskLevel || 'medium',
+          confidence: typeof m.confidence === 'number' ? m.confidence : 3,
+          firstStep: m.firstStep || '',
+          proposalStatus: 'ai-proposed' as const,
+        }))
+      );
+
+      const outputCandidates = Array.isArray(parsed.outputCandidates) ? parsed.outputCandidates : [];
+      setSWOTOutputCandidates(
+        outputCandidates.filter((oc) => oc?.title).map((oc) => ({
+          outputType: oc.outputType || 'initiative',
+          title: oc.title,
+          description: oc.description || '',
+          linkedMoveIds: [],
+          linkedItemIds: [],
+          rationale: oc.rationale || '',
+          readiness: oc.readiness || 'keep-as-idea',
+          proposalStatus: 'ai-proposed' as const,
+        }))
+      );
+
+      const summaryObj = parsed.summary && typeof parsed.summary === 'object' ? parsed.summary : null;
+      const initiatives = Array.isArray(parsed.initiatives) ? parsed.initiatives : [];
+      setSWOTSummary({
+        executiveSummary: typeof summaryObj?.executiveSummary === 'string' ? summaryObj.executiveSummary : (typeof parsed.summary === 'string' ? parsed.summary : ''),
+        keyInsights: Array.isArray(summaryObj?.keyInsights) ? summaryObj.keyInsights.filter(Boolean) : (Array.isArray(parsed.insights) ? parsed.insights.filter(Boolean) : []),
+        appliedConclusions: Array.isArray(summaryObj?.appliedConclusions) ? summaryObj.appliedConclusions.filter(Boolean) : (Array.isArray(parsed.appliedConclusions) ? parsed.appliedConclusions.filter(Boolean) : []),
+        recommendedInitiatives: initiatives.map((init) => ({
+          id: '',
+          title: init.title || '',
+          description: init.description || '',
+          type: init.type || 'strategic',
+          source: toolType,
+          linkedItems: init.linkedItems || [],
+          estimatedImpact: init.estimatedImpact || 'medium',
+          estimatedEffort: init.estimatedEffort || 'medium',
+          rationale: init.rationale || '',
+        })),
+      });
+
+      setInitiatives(
+        initiatives.map((init) => ({
+          title: init.title || '',
+          description: init.description || '',
+          type: init.type || 'strategic',
+          source: toolType,
+          linkedItems: init.linkedItems || [],
+          estimatedImpact: init.estimatedImpact || 'medium',
+          estimatedEffort: init.estimatedEffort || 'medium',
+          rationale: init.rationale || '',
+        }))
+      );
+
+      setSessionGenerationStatus('ready');
+    }
+
+    if (pendingAction === 'rethink' && rethinkTarget) {
+      const { cardType, cardId } = rethinkTarget;
+      updateCardAfterRethink(cardType as any, cardId, parsed);
+      setRethinkTarget(null);
+    }
+
     setPendingAction(null);
   }, [
     addSWOTSignal,
@@ -863,12 +1125,15 @@ Return JSON:
     extractObject,
     isStreaming,
     pendingAction,
+    rethinkTarget,
     updateInputData,
     setInitiatives,
     setSWOTMoves,
     setSWOTOutputCandidates,
     setSWOTSummary,
     setSWOTTensions,
+    setSessionGenerationStatus,
+    updateCardAfterRethink,
     streamedContent,
     toolType,
   ]);
@@ -965,6 +1230,8 @@ Return JSON:
     requestSuggestions,
     generateCorrelations,
     generateSummary,
+    generateFullSession,
+    rethinkCard,
     abortStream,
     getStepOpeningQuestion,
   };

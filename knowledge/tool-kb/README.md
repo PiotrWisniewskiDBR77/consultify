@@ -448,6 +448,24 @@ Avoid:
 - gradients/noise/glow that reduce legibility,
 - “presentation slide” clutter pretending to be a product diagram.
 
+### Tool detail UI/UX standard
+
+The full UI/UX standard for all 4 tabs (Cel, Proces, Rezultat, Przykład) is documented in:
+
+- `docs/ui-standards/03-modules/tools-library-detail-standard.md`
+
+Key rules:
+
+- 4 frozen sections: Cel → Proces → Rezultat → Przykład.
+- **Cel:** 6 content blocks (3×2 grid) with semantic colors + explainer graphic.
+- **Proces:** interactive stepper accordion (1 open at a time) + decision situations (2×2 mini-cards) + working notes.
+- **Rezultat:** 5 stacked outcome cards, each with 3-column inner grid (contains / why / enables next).
+- **Przykład:** 2×2 content blocks + case summary + graphic with `variant="example"`.
+- Color semantics: emerald = positive, rose = negative, violet = USP/insight, amber = caution/tips, sky = evidence, white = neutral.
+- Badge taxonomy: TOOL, PROCESS, MATRIX, INSIGHT, DECISION, OUTPUT, TIPS — always top-right corner of the block.
+- Typography, spacing, and radius fully specified in the standard.
+- This layout applies to ALL tools, not just Dynamic SWOT.
+
 ### Quality bar for all 4 blocks
 
 The 4-block description should be:

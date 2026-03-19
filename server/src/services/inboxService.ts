@@ -108,128 +108,105 @@ export async function materializeInboxItems(
   const today = now.slice(0, 10);
   let upserted = 0;
 
-  const tasks = await queryHelpers.queryAll<any>(
-    `SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date,
-            t.initiative_id, t.blocked_reason, t.blocked_by_decision_id
-     FROM tasks t
-     WHERE t.organization_id = ?
-       AND t.assignee_id = ?
-       AND lower(coalesce(t.status,'')) NOT IN ('done','completed','validated')
-     LIMIT 500`,
-    [orgId, userId]
-  );
+  const UPSERT_SQL = `INSERT INTO canonical_inbox_items
+    (id, user_id, organization_id, item_type, source_entity_type, source_entity_id,
+     title, description, priority, section, status, sla_deadline, created_at, updated_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+  ON CONFLICT (user_id, source_entity_type, source_entity_id) DO UPDATE SET
+    title = excluded.title,
+    description = excluded.description,
+    priority = excluded.priority,
+    section = excluded.section,
+    sla_deadline = excluded.sla_deadline,
+    updated_at = excluded.updated_at`;
 
-  for (const t of tasks) {
-    const isBlocked = !!(t.blocked_reason || t.blocked_by_decision_id);
-    const section = sectionForTask(t.status, t.due_date, today, isBlocked);
-    const priority = priorityForItem(t.priority);
-    try {
-      await queryHelpers.queryRun(
-        `INSERT INTO canonical_inbox_items
-           (id, user_id, organization_id, item_type, source_entity_type, source_entity_id,
-            title, description, priority, section, status, sla_deadline, created_at, updated_at)
-         VALUES (?, ?, ?, 'task', 'task', ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
-         ON CONFLICT (user_id, source_entity_type, source_entity_id) DO UPDATE SET
-           title = excluded.title,
-           description = excluded.description,
-           priority = excluded.priority,
-           section = excluded.section,
-           sla_deadline = excluded.sla_deadline,
-           updated_at = excluded.updated_at`,
-        [
-          uuidv4(), userId, orgId, t.id,
-          t.title, t.description || null, priority, section,
-          t.due_date || null, now, now,
-        ]
+  const BATCH_SIZE = 40;
+
+  async function upsertBatch(rows: unknown[][]): Promise<number> {
+    let count = 0;
+    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      const batch = rows.slice(i, i + BATCH_SIZE);
+      const results = await Promise.all(
+        batch.map((params) => queryHelpers.queryRun(UPSERT_SQL, params).catch((err: any) => {
+          logger.warn(`[InboxService] Upsert failed: ${err.message}`);
+          return null;
+        }))
       );
-      upserted++;
-    } catch (err: any) {
-      logger.warn(`[InboxService] Failed to upsert task ${t.id}: ${err.message}`);
+      count += results.filter(Boolean).length;
     }
+    return count;
   }
 
-  const decisions = await queryHelpers.queryAll<any>(
-    `SELECT d.id, d.title, d.description, d.type, d.priority, d.deadline, d.status
-     FROM decisions d
-     WHERE d.organization_id = ?
-       AND d.decision_maker_id = ?
-       AND lower(coalesce(d.status,'')) IN ('pending','escalated')
-     LIMIT 200`,
-    [orgId, userId]
-  );
-
-  for (const d of decisions) {
-    const itemType = (d.type || '').toUpperCase().includes('APPROVAL') ? 'approval' : 'decision';
-    const section = itemType === 'approval' ? 'approvals_gates' : 'decisions_required';
-    const priority = priorityForItem(d.priority);
-    try {
-      await queryHelpers.queryRun(
-        `INSERT INTO canonical_inbox_items
-           (id, user_id, organization_id, item_type, source_entity_type, source_entity_id,
-            title, description, priority, section, status, sla_deadline, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 'decision', ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
-         ON CONFLICT (user_id, source_entity_type, source_entity_id) DO UPDATE SET
-           title = excluded.title,
-           description = excluded.description,
-           priority = excluded.priority,
-           section = excluded.section,
-           sla_deadline = excluded.sla_deadline,
-           updated_at = excluded.updated_at`,
-        [
-          uuidv4(), userId, orgId, itemType, d.id,
-          d.title, d.description || null, priority, section,
-          d.deadline || null, now, now,
-        ]
-      );
-      upserted++;
-    } catch (err: any) {
-      logger.warn(`[InboxService] Failed to upsert decision ${d.id}: ${err.message}`);
-    }
-  }
-
-  try {
-    const notifications = await queryHelpers.queryAll<any>(
+  const [tasks, decisions, notifications] = await Promise.all([
+    queryHelpers.queryAll<any>(
+      `SELECT t.id, t.title, t.description, t.status, t.priority, t.due_date,
+              t.initiative_id, t.blocked_reason, t.blocked_by_decision_id
+       FROM tasks t
+       WHERE t.organization_id = ?
+         AND t.assignee_id = ?
+         AND lower(coalesce(t.status,'')) NOT IN ('done','completed','validated')
+       LIMIT 500`,
+      [orgId, userId]
+    ),
+    queryHelpers.queryAll<any>(
+      `SELECT d.id, d.title, d.description, d.type, d.priority, d.deadline, d.status
+       FROM decisions d
+       WHERE d.organization_id = ?
+         AND d.decision_maker_id = ?
+         AND lower(coalesce(d.status,'')) IN ('pending','escalated')
+       LIMIT 200`,
+      [orgId, userId]
+    ),
+    queryHelpers.queryAll<any>(
       `SELECT id, type, title, COALESCE(message, body, '') as body, priority, created_at
        FROM notifications
        WHERE user_id = ? AND COALESCE(read, 0) = 0
        LIMIT 200`,
       [userId]
-    );
+    ).catch(() => [] as any[]),
+  ]);
 
-    for (const n of notifications) {
-      const nType = (n.type || '').toUpperCase();
-      let itemType: CanonicalInboxItem['itemType'] = 'signal';
-      let section = 'fyi_system';
-      if (nType.includes('MENTION')) { itemType = 'mention'; section = 'fyi_mentions'; }
-      else if (nType.includes('ESCALATION')) { itemType = 'escalation'; section = 'blocked_escalations'; }
-      else if (nType.includes('REVIEW') || nType.includes('APPROVAL')) { itemType = 'approval'; section = 'approvals_gates'; }
-      else if (nType.includes('AI') || nType.includes('INSIGHT')) { itemType = 'signal'; section = 'ai_insights'; }
+  const taskRows = tasks.map((t) => {
+    const isBlocked = !!(t.blocked_reason || t.blocked_by_decision_id);
+    const section = sectionForTask(t.status, t.due_date, today, isBlocked);
+    return [
+      uuidv4(), userId, orgId, 'task', 'task', t.id,
+      t.title, t.description || null, priorityForItem(t.priority), section,
+      t.due_date || null, now, now,
+    ];
+  });
 
-      try {
-        await queryHelpers.queryRun(
-          `INSERT INTO canonical_inbox_items
-             (id, user_id, organization_id, item_type, source_entity_type, source_entity_id,
-              title, description, priority, section, status, created_at, updated_at)
-           VALUES (?, ?, ?, ?, 'notification', ?, ?, ?, ?, ?, 'pending', ?, ?)
-           ON CONFLICT (user_id, source_entity_type, source_entity_id) DO UPDATE SET
-             title = excluded.title,
-             description = excluded.description,
-             section = excluded.section,
-             updated_at = excluded.updated_at`,
-          [
-            uuidv4(), userId, orgId, itemType, n.id,
-            n.title || 'Notification', n.body || null,
-            priorityForItem(n.priority), section, now, now,
-          ]
-        );
-        upserted++;
-      } catch (err: any) {
-        logger.warn(`[InboxService] Failed to upsert notification ${n.id}: ${err.message}`);
-      }
-    }
-  } catch {
-    // notifications table may have different schema
-  }
+  const decisionRows = decisions.map((d) => {
+    const itemType = (d.type || '').toUpperCase().includes('APPROVAL') ? 'approval' : 'decision';
+    const section = itemType === 'approval' ? 'approvals_gates' : 'decisions_required';
+    return [
+      uuidv4(), userId, orgId, itemType, 'decision', d.id,
+      d.title, d.description || null, priorityForItem(d.priority), section,
+      d.deadline || null, now, now,
+    ];
+  });
+
+  const notifRows = notifications.map((n) => {
+    const nType = (n.type || '').toUpperCase();
+    let itemType: CanonicalInboxItem['itemType'] = 'signal';
+    let section = 'fyi_system';
+    if (nType.includes('MENTION')) { itemType = 'mention'; section = 'fyi_mentions'; }
+    else if (nType.includes('ESCALATION')) { itemType = 'escalation'; section = 'blocked_escalations'; }
+    else if (nType.includes('REVIEW') || nType.includes('APPROVAL')) { itemType = 'approval'; section = 'approvals_gates'; }
+    else if (nType.includes('AI') || nType.includes('INSIGHT')) { itemType = 'signal'; section = 'ai_insights'; }
+    return [
+      uuidv4(), userId, orgId, itemType, 'notification', n.id,
+      n.title || 'Notification', n.body || null, priorityForItem(n.priority), section,
+      null, now, now,
+    ];
+  });
+
+  const [taskCount, decisionCount, notifCount] = await Promise.all([
+    upsertBatch(taskRows),
+    upsertBatch(decisionRows),
+    upsertBatch(notifRows),
+  ]);
+  upserted = taskCount + decisionCount + notifCount;
 
   return { upserted };
 }

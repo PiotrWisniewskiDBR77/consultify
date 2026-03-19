@@ -35,6 +35,10 @@ export const getRequestContext = (req: Request): RequestContext => {
     userAgent: req.get('User-Agent') || 'unknown',
     method: req.method,
     path: req.path,
-    requestId: (req.get('X-Request-Id') as string) || 'none',
+    requestId:
+      anyReq.correlationId ||
+      (req.get('X-Correlation-ID') as string) ||
+      (req.get('X-Request-Id') as string) ||
+      'none',
   };
 };

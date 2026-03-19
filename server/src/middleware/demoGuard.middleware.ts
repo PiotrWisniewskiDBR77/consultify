@@ -15,7 +15,7 @@ import type { AuthRequest } from './auth.middleware.js';
 // ==========================================
 
 export const DEMO_ORG_ID = process.env.DEMO_ORG_ID || 'demo-org';
-export const DEMO_ORG_NAME = process.env.DEMO_ORG_NAME || 'Atelier ToolToys';
+export const DEMO_ORG_NAME = process.env.DEMO_ORG_NAME || 'Demo Organization';
 const DEMO_PREF_KEY = 'demo:enabled';
 const DEMO_STARTED_AT_KEY = 'demo:started_at';
 

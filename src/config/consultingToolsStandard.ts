@@ -44,6 +44,26 @@ export interface ConsultingMissionContext {
   assumptions?: string;
   constraints?: string;
   kpiTarget?: string;
+  understanding?: string;
+  directionChoice?: string;
+  scopeChoice?: string;
+  successChoice?: string;
+  directionChoices?: string[];
+  scopeChoices?: string[];
+  successChoices?: string[];
+  question4Choices?: string[];
+  question5Choices?: string[];
+  question1Confirmed?: boolean;
+  question2Confirmed?: boolean;
+  question3Confirmed?: boolean;
+  question4Confirmed?: boolean;
+  question5Confirmed?: boolean;
+  understandingComment?: string;
+  directionComment?: string;
+  scopeComment?: string;
+  horizonComment?: string;
+  successComment?: string;
+  constraintsComment?: string;
 }
 
 export function createConsultingMissionContext(
@@ -57,6 +77,26 @@ export function createConsultingMissionContext(
     assumptions: '',
     constraints: '',
     kpiTarget: '',
+    understanding: '',
+    directionChoice: '',
+    scopeChoice: '',
+    successChoice: '',
+    directionChoices: [],
+    scopeChoices: [],
+    successChoices: [],
+    question4Choices: [],
+    question5Choices: [],
+    question1Confirmed: false,
+    question2Confirmed: false,
+    question3Confirmed: false,
+    question4Confirmed: false,
+    question5Confirmed: false,
+    understandingComment: '',
+    directionComment: '',
+    scopeComment: '',
+    horizonComment: '',
+    successComment: '',
+    constraintsComment: '',
     ...overrides,
   };
 }

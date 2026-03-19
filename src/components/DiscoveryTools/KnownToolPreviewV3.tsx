@@ -163,87 +163,51 @@ export const KnownToolPreviewV3Body: React.FC<{
   const [detailsText, setDetailsText] = useState<string>('');
   const [detailsLoading, setDetailsLoading] = useState(false);
 
-  const initialDetailsText = useMemo(() => {
-    const desc = String(full?.description || tool.description || '').trim();
-    if (!tool.isActive) {
-      return desc || (isPolish ? 'Narzędzie w przygotowaniu.' : 'Tool in preparation.');
-    }
+  type PreviewSnippet = { goal: string; outcome: string; team: string; aiRole: string; duration: string };
 
+  const previewSnippet = useMemo((): PreviewSnippet => {
     if (tool.toolType === 'dynamic-swot') {
       return isPolish
-        ? [
-            'CEL',
-            'Dynamic SWOT zamienia rozproszoną rozmowę strategiczną w decision-grade diagnozę. Porządkuje evidence z wnętrza firmy i z rynku, buduje napięcia strategiczne oraz prowadzi do ruchów, które realnie zawężają pole decyzji.',
-            '',
-            'KIEDY UŻYĆ',
-            '- gdy zarząd lub zespół ma dużo sygnałów, ale nie ma jednej logiki decyzji',
-            '- gdy trzeba połączyć realia wewnętrzne z rynkiem i dojść do wniosku, a nie tylko opisu sytuacji',
-            '- gdy wynik ma od razu zasilić raport, deck, brief inicjatywy albo dalszą eksplorację',
-            '',
-            'JAK PRACUJE',
-            '- zaczyna od mission briefu: pytania, zakresu, horyzontu, success signal i constraints',
-            '- zbiera sygnały z rozmów, materiałów i benchmarków, a następnie porządkuje je w trybie evidence-first',
-            '- buduje selektywną macierz SWOT i przechodzi do logiki napięć typu attack / repair / defend / protect',
-            '- kończy sesję rekomendowanymi ruchami i materiałem źródłowym do dalszego użycia',
-            '',
-            'CO POWSTAJE',
-            '- rama decyzji i executive diagnoza sytuacji',
-            '- obraz czynników wraz z jakością evidence',
-            '- napięcia strategiczne, rekomendowane ruchy i ich kolejność',
-            '- materiał źródłowy do raportu, prezentacji i inicjatyw',
-            '',
-            'PRZYKŁAD',
-            'Firma myśli o kosztownej automatyzacji, ale Dynamic SWOT pokazuje, że prawdziwym problemem nie jest jeszcze brak technologii. Najpierw trzeba zdiagnozować straty, bottlenecks i brak wspólnej prawdy o sytuacji, a dopiero potem wybierać ruch transformacyjny.',
-          ].join('\n')
-        : [
-            'GOAL',
-            'Dynamic SWOT turns a fragmented strategic conversation into a decision-grade diagnosis. It structures evidence from inside the company and the market, builds strategic tensions, and leads to moves that genuinely narrow the choice.',
-            '',
-            'WHEN TO USE',
-            '- when leadership has many signals but no single decision logic',
-            '- when internal reality must be confronted with market evidence and turned into a conclusion, not just an analysis',
-            '- when the output should immediately feed a report, deck, initiative brief, or follow-on exploration',
-            '',
-            'HOW IT WORKS',
-            '- starts with a mission brief: question, scope, time horizon, success signal, and constraints',
-            '- gathers signals from interviews, materials, and benchmarks, then cleans them in an evidence-first way',
-            '- builds a selective SWOT matrix and moves into attack / repair / defend / protect tension logic',
-            '- closes with recommended moves and a source package for downstream use',
-            '',
-            'WHAT YOU GET',
-            '- a decision frame and an executive diagnosis of the situation',
-            '- a factor picture with visible evidence quality',
-            '- strategic tensions, recommended moves, and move sequence',
-            '- a source package for reports, decks, and initiatives',
-            '',
-            'EXAMPLE',
-            'A company is considering expensive automation, but Dynamic SWOT shows that the real issue is not missing technology yet. The first step is diagnosing losses, bottlenecks, and the missing shared picture of reality, and only then does the transformation move make sense.',
-          ].join('\n');
+        ? {
+            goal: 'Zamienia rozproszoną rozmowę strategiczną w decision-grade diagnozę opartą na evidence.',
+            outcome: 'Rama decyzji, napięcia strategiczne, rekomendowane ruchy i materiał źródłowy.',
+            team: 'C-level / właściciele, lider strategii lub dyrektor operacyjny',
+            aiRole: 'Moderator sesji, analityk evidence, generator napięć i rekomendacji',
+            duration: '60-90 min',
+          }
+        : {
+            goal: 'Turns a fragmented strategic conversation into a decision-grade diagnosis backed by evidence.',
+            outcome: 'Decision frame, strategic tensions, recommended moves, and source material.',
+            team: 'C-level / owners, strategy lead or COO',
+            aiRole: 'Session moderator, evidence analyst, tension & recommendation generator',
+            duration: '60-90 min',
+          };
     }
 
-    const lines: string[] = [];
-    if (desc) lines.push(desc);
-    if (full?.whenToUse) {
-      lines.push('');
-      lines.push(isPolish ? 'Kiedy użyć:' : 'When to use:');
-      lines.push(String(full.whenToUse).trim());
-    }
-    if ((full?.whatYouGet || tool.whatYouGet || []).length) {
-      lines.push('');
-      lines.push(isPolish ? 'Co dostajesz:' : 'What you get:');
-      for (const item of (full?.whatYouGet || tool.whatYouGet || []).slice(0, 8)) {
-        lines.push(`- ${String(item).trim()}`);
-      }
-    }
-    if ((full?.steps || []).length) {
-      lines.push('');
-      lines.push(isPolish ? 'Kroki:' : 'Steps:');
-      for (const s of (full?.steps || []).slice(0, 6)) {
-        lines.push(`- ${String(s).trim()}`);
-      }
-    }
-    return lines.join('\n').trim();
-  }, [full, isPolish, tool.description, tool.isActive, tool.toolType, tool.whatYouGet]);
+    const desc = String(full?.description || tool.description || '').trim();
+    const fallbackGoal = desc || (isPolish ? 'Narzędzie w przygotowaniu.' : 'Tool in preparation.');
+    const fallbackOutcome =
+      (full?.whatYouGet || tool.whatYouGet || []).slice(0, 2).join(', ') ||
+      (isPolish ? '—' : '—');
+
+    return {
+      goal: fallbackGoal,
+      outcome: fallbackOutcome,
+      team: isPolish ? 'Zależy od narzędzia' : 'Depends on the tool',
+      aiRole: isPolish ? 'Asystent i moderator sesji' : 'Session assistant and moderator',
+      duration: isPolish ? 'Zależy od zakresu' : 'Depends on scope',
+    };
+  }, [full, isPolish, tool.description, tool.toolType, tool.whatYouGet]);
+
+  const initialDetailsText = useMemo(() => {
+    const s = previewSnippet;
+    const goalL = isPolish ? 'Cel' : 'Goal';
+    const outcomeL = isPolish ? 'Rezultat' : 'Outcome';
+    const teamL = 'Team';
+    const aiL = isPolish ? 'Rola AI' : 'AI Role';
+    const durL = isPolish ? 'Czas' : 'Duration';
+    return `${goalL}: ${s.goal}\n${outcomeL}: ${s.outcome}\n${teamL}: ${s.team}\n${aiL}: ${s.aiRole}\n${durL}: ${s.duration}`;
+  }, [previewSnippet, isPolish]);
 
   useEffect(() => {
     setDetailsText(initialDetailsText);
@@ -338,20 +302,29 @@ export const KnownToolPreviewV3Body: React.FC<{
       : []),
   ];
 
+  const snippetRows: { label: string; value: string; minH: string }[] = [
+    { label: isPolish ? 'Cel' : 'Goal', value: previewSnippet.goal, minH: 'min-h-[40px]' },
+    { label: isPolish ? 'Rezultat' : 'Outcome', value: previewSnippet.outcome, minH: 'min-h-[40px]' },
+    { label: 'Team', value: previewSnippet.team, minH: 'min-h-[28px]' },
+    { label: isPolish ? 'Rola AI' : 'AI Role', value: previewSnippet.aiRole, minH: 'min-h-[28px]' },
+    { label: isPolish ? 'Czas' : 'Duration', value: previewSnippet.duration, minH: 'min-h-[20px]' },
+  ];
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <PreviewMetaCard
         pills={metaPills}
         trailing={
-          <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+          <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
             {formatDate(tool.createdAt)}
           </span>
         }
       />
 
       <PreviewDetailsSection
-        text={detailsText || (isPolish ? 'Brak szczegółów.' : 'No details.')}
+        text=""
         loading={fullLoading || detailsLoading}
+        compact
         onExpand={() => void handleRefineDetails('expand')}
         onSummarize={() => void handleRefineDetails('shorten')}
         onCopy={() => void handleCopyDetails()}
@@ -373,7 +346,20 @@ export const KnownToolPreviewV3Body: React.FC<{
               ),
           },
         ]}
-      />
+      >
+        <div className="space-y-3">
+          {snippetRows.map((row) => (
+            <div key={row.label} className={`flex items-start gap-2 ${row.minH}`}>
+              <span className="shrink-0 w-[56px] text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 pt-0.5">
+                {row.label}
+              </span>
+              <span className="text-xs leading-snug text-slate-700 dark:text-slate-200">
+                {row.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      </PreviewDetailsSection>
     </div>
   );
 };
@@ -498,17 +484,17 @@ export const KnownToolPreviewV3Footer: React.FC<{
 
   if (!tool.isActive) {
     return (
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-3 text-sm text-slate-600 dark:text-slate-300">
+      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5 text-xs text-slate-600 dark:text-slate-300">
         {isPolish
-          ? 'To narzędzie jest jeszcze nieaktywne. W preview możesz zobaczyć tylko opis, ale nie otworzysz jeszcze pełnego widoku ani sesji.'
-          : 'This tool is not active yet. In preview you can only see the description, but you cannot open the full view or start a session yet.'}
+          ? 'To narzędzie jest jeszcze nieaktywne. Możesz zobaczyć opis, ale nie otworzysz pełnego widoku ani sesji.'
+          : 'This tool is not active yet. You can see the description, but cannot open the full view or start a session.'}
       </div>
     );
   }
 
   return (
     <div className="space-y-0">
-      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2.5">
+      <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-slate-50/60 dark:bg-white/[0.03] p-2">
         <PreviewAIHintStrip
           hints={aiHints}
           loading={aiLoading || fullLoading}
@@ -521,14 +507,14 @@ export const KnownToolPreviewV3Footer: React.FC<{
         />
       </div>
 
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-2" />
 
       <PreviewRelations
         items={relationItems}
         emptyLabel={fullLoading ? (isPolish ? 'Ładowanie…' : 'Loading…') : (isPolish ? 'Brak powiązań' : 'No relations')}
       />
 
-      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-3" />
+      <div className="border-t border-slate-200/50 dark:border-white/[0.06] my-2" />
 
       <PreviewActionBar rows={actionRows} />
     </div>

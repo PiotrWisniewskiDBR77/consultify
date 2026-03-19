@@ -11795,6 +11795,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
+    if (!(await requireTables(res, ['radar_sources', 'radar_raw_items', 'radar_processed_signals', 'user_radar_profiles', 'radar_ranked_signals', 'radar_actions', 'watchlist_items']))) return;
 
     const orgContext = await organizationContextService.buildResolvedContext(identity.orgId);
     const appLanguage = req.headers['x-app-language'] ?? req.headers['accept-language'];
@@ -11816,6 +11817,7 @@ router.get(
 router.get(
   '/radar/sources',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
+    if (!(await requireTables(res, ['radar_sources']))) return;
     const sources = await radarService.listSources();
     return res.json({ sources });
   })
@@ -11826,6 +11828,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
+    if (!(await requireTables(res, ['user_radar_profiles']))) return;
 
     const orgContext = await organizationContextService.buildResolvedContext(identity.orgId);
     const profile = await radarRankingService.getOrCreateProfile({
@@ -11844,6 +11847,7 @@ router.patch(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
+    if (!(await requireTables(res, ['user_radar_profiles']))) return;
 
     const parsed = radarProfilePatchSchema.safeParse(req.body || {});
     if (!parsed.success) {
@@ -11864,6 +11868,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
+    if (!(await requireTables(res, ['radar_actions']))) return;
 
     const parsed = radarActionSchema.safeParse(req.body || {});
     if (!parsed.success) {
@@ -11893,6 +11898,7 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const identity = requireUser(req, res);
     if (!identity) return;
+    if (!(await requireTables(res, ['radar_actions', 'radar_processed_signals']))) return;
 
     const metrics = await radarService.getMetrics(identity.userId);
     return res.json({ metrics });

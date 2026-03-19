@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Play, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle2, MessageCircle, Play, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -120,6 +120,11 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
+
+  const openAnna = useCallback(() => {
+    window.dispatchEvent(new Event('anna:open'));
+    trackFunnelEvent('landing_anna_opened', { source: 'hero_cta', variant });
+  }, [variant]);
 
   return (
     <section className="relative z-10 px-6 min-h-screen flex flex-col">
@@ -254,7 +259,7 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.22 }}
-              className="flex flex-col sm:flex-row gap-3 sm:gap-3"
+              className="flex flex-col sm:flex-row sm:flex-wrap gap-3 sm:gap-3"
             >
               {/* Primary CTA — filled pill */}
               <button
@@ -314,6 +319,30 @@ export const EpicHeroSection: React.FC<EpicHeroSectionProps> = ({
               >
                 <Play size={14} className="text-white/70" fill="currentColor" />
                 <span>{t('landing.profitHero.ctaSecondary', 'Open Demo Now')}</span>
+              </button>
+
+              <button
+                onClick={openAnna}
+                className="group relative inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full font-semibold text-sm text-white transition-all duration-300 active:scale-[0.98]"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.18)',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background =
+                    'rgba(255,255,255,0.09)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor =
+                    'rgba(168,85,247,0.45)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background =
+                    'rgba(255,255,255,0.05)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor =
+                    'rgba(255,255,255,0.18)';
+                }}
+              >
+                <MessageCircle size={14} className="text-violet-300" />
+                <span>{t('landing.profitHero.ctaAnna', 'Ask Anna')}</span>
               </button>
             </motion.div>
 

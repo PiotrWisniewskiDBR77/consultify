@@ -10,6 +10,11 @@ import {
   resolveScriptDatabaseTarget,
   type ScriptDatabaseTarget,
 } from './lib/scriptDatabaseTarget.js';
+import {
+  describeOrganizationTargetPolicy,
+  resolveDemoOrgId,
+  resolveDemoOrgName,
+} from './lib/organizationTargetPolicy.js';
 
 type QueryRow = Record<string, unknown>;
 
@@ -70,6 +75,8 @@ async function safeQuery(client: pg.Pool, sql: string, params: unknown[] = []): 
 async function buildAudit(target: ScriptDatabaseTarget, label: string) {
   const pool = new pg.Pool({ connectionString: target.connectionString });
   try {
+    const demoOrgId = resolveDemoOrgId();
+    const demoOrgName = resolveDemoOrgName();
     const tasksPresent = await tableExists(pool, 'tasks');
     const initiativesPresent = await tableExists(pool, 'initiatives');
     const usersPresent = await tableExists(pool, 'users');
@@ -89,7 +96,18 @@ async function buildAudit(target: ScriptDatabaseTarget, label: string) {
     );
     const financeExistingTables = financePresence.filter((item) => item.exists).map((item) => item.table);
 
-    const [taskByOrg, taskByType, taskByStatus, initiativesByOrg, financeByOrg, duplicateEmails, demoOrgs] =
+    const [
+      taskByOrg,
+      taskByType,
+      taskByStatus,
+      initiativesByOrg,
+      financeByOrg,
+      duplicateEmails,
+      demoOrgs,
+      demoTaskCount,
+      demoInitiativeCount,
+      demoFinanceCount,
+    ] =
       await Promise.all([
         tasksPresent
           ? safeQuery(
@@ -160,6 +178,33 @@ async function buildAudit(target: ScriptDatabaseTarget, label: string) {
                ORDER BY id ASC`
             )
           : Promise.resolve([]),
+        tasksPresent
+          ? safeQuery(
+              pool,
+              `SELECT COUNT(*)::int AS count
+               FROM tasks
+               WHERE organization_id = $1`,
+              [demoOrgId]
+            )
+          : Promise.resolve([]),
+        initiativesPresent
+          ? safeQuery(
+              pool,
+              `SELECT COUNT(*)::int AS count
+               FROM initiatives
+               WHERE organization_id = $1`,
+              [demoOrgId]
+            )
+          : Promise.resolve([]),
+        financeExistingTables.length > 0
+          ? safeQuery(
+              pool,
+              `SELECT COUNT(*)::int AS count
+               FROM financial_statements
+               WHERE organization_id = $1`,
+              [demoOrgId]
+            )
+          : Promise.resolve([]),
       ]);
 
     return {
@@ -176,6 +221,12 @@ async function buildAudit(target: ScriptDatabaseTarget, label: string) {
         usersPresent,
         organizationsPresent: orgsPresent,
         financeTables: financePresence,
+        demoPolicy: {
+          policy: describeOrganizationTargetPolicy(),
+          demoOrgId,
+          demoOrgName,
+          nonDefaultDemoOrgId: demoOrgId !== 'demo-org',
+        },
       },
       slices: {
         taskByOrg,
@@ -185,6 +236,12 @@ async function buildAudit(target: ScriptDatabaseTarget, label: string) {
         financeByOrg,
         duplicateEmails,
         demoOrgs,
+        demoOrgSurface: {
+          organizationId: demoOrgId,
+          taskCount: Number(demoTaskCount[0]?.count || 0),
+          initiativeCount: Number(demoInitiativeCount[0]?.count || 0),
+          financeStatementCount: Number(demoFinanceCount[0]?.count || 0),
+        },
       },
     };
   } finally {
@@ -213,6 +270,13 @@ function toMarkdown(report: Awaited<ReturnType<typeof buildAudit>>) {
       .map((item) => `\`${item.table}:${item.exists ? 'present' : 'missing'}\``)
       .join(', ')}`
   );
+  lines.push(`- demo policy: \`${report.checks.demoPolicy.policy}\``);
+  lines.push(`- non-default demo org id: \`${report.checks.demoPolicy.nonDefaultDemoOrgId}\``);
+  lines.push('');
+
+  lines.push('## Demo Org Surface');
+  lines.push('');
+  lines.push(`- \`${JSON.stringify(report.slices.demoOrgSurface)}\``);
   lines.push('');
 
   const sections: Array<[string, QueryRow[]]> = [

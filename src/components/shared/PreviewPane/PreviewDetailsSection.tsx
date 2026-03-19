@@ -43,6 +43,10 @@ export interface PreviewDetailsSectionProps {
   onToggleExpanded?: () => void;
   /** Override the section label (defaults to "Details" / "Szczegóły") */
   label?: string;
+  /** Compact mode: smaller font (text-xs instead of text-sm) for space-constrained previews */
+  compact?: boolean;
+  /** Optional structured content rendered below the text block */
+  children?: React.ReactNode;
 }
 
 export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
@@ -56,6 +60,8 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
   expanded,
   onToggleExpanded,
   label,
+  compact,
+  children,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
@@ -173,15 +179,26 @@ export const PreviewDetailsSection: React.FC<PreviewDetailsSectionProps> = ({
           <div className={SKELETON_LINE_4} />
         </div>
       ) : (
-        <div
-          className={[
-            'text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap',
-            expanded === false ? 'line-clamp-6' : '',
-          ].join(' ')}
-          onClick={onToggleExpanded}
-        >
-          {text || (isPolish ? 'Brak opisu.' : 'No description.')}
-        </div>
+        <>
+          {text ? (
+            <div
+              className={[
+                compact
+                  ? 'text-xs text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap'
+                  : 'text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-wrap',
+                expanded === false ? 'line-clamp-6' : '',
+              ].join(' ')}
+              onClick={onToggleExpanded}
+            >
+              {text}
+            </div>
+          ) : !children ? (
+            <div className={compact ? 'text-xs text-slate-400 italic' : 'text-sm text-slate-400 italic'}>
+              {isPolish ? 'Brak opisu.' : 'No description.'}
+            </div>
+          ) : null}
+          {children}
+        </>
       )}
     </div>
   );

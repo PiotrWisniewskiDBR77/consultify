@@ -32,7 +32,32 @@
   <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+  <script>
+    (function () {
+      var isProductionHost =
+        location.hostname === 'consultify.ai' ||
+        location.hostname === 'www.consultify.ai';
+      if (!isProductionHost) return;
 
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+          registrations.forEach(function (registration) {
+            registration.unregister().catch(function () {});
+          });
+        });
+      }
+
+      if ('caches' in window) {
+        caches.keys().then(function (keys) {
+          keys.forEach(function (key) {
+            if (key.indexOf('consultify-') === 0) {
+              caches.delete(key).catch(function () {});
+            }
+          });
+        });
+      }
+    })();
+  </script>
 
 </head>
 

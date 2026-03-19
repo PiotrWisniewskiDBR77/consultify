@@ -59,6 +59,10 @@ export type DynamicSwotPhaseId = 'mission' | 'input' | 'swot' | 'insights' | 'ou
 export type SWOTEvidenceType = 'fact' | 'observation' | 'hypothesis';
 export type SWOTSignalState = 'accepted' | 'proposed' | 'needs-evidence';
 export type SWOTCardStatus = 'accepted' | 'proposed';
+export type ProposalStatus = 'ai-proposed' | 'accepted' | 'rejected' | 'rethinking';
+export type SessionGenerationStatus = 'idle' | 'generating' | 'ready' | 'error';
+
+export type ProposalCardType = 'signal' | 'item' | 'tension' | 'move' | 'correlation' | 'output-candidate' | 'conclusion';
 export type SWOTOutputReadiness =
   | 'ready-for-initiative'
   | 'ready-for-presentation'
@@ -76,6 +80,8 @@ export interface SWOTSignal {
   evidenceType?: SWOTEvidenceType;
   state?: SWOTSignalState;
   provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface StepDefinition {
@@ -106,6 +112,8 @@ export interface SWOTItem {
   confidence?: number;
   status?: SWOTCardStatus;
   linkedSignalIds?: string[];
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface SWOTCorrelation {
@@ -114,6 +122,8 @@ export interface SWOTCorrelation {
   type: 'SO' | 'WO' | 'ST' | 'WT'; // Strength-Opportunity, etc.
   insight: string;
   initiativeProposal?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface SWOTTension {
@@ -125,6 +135,8 @@ export interface SWOTTension {
   insight: string;
   whyNow?: string;
   confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface SWOTMove {
@@ -139,12 +151,16 @@ export interface SWOTMove {
   riskLevel?: 'high' | 'medium' | 'low';
   confidence?: number;
   firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface SWOTOutputCandidate extends ConsultingOutputCandidateBase {
   linkedMoveIds: string[];
   linkedItemIds: string[];
   readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface SWOTData {
@@ -393,6 +409,7 @@ export interface ToolSession {
   chatHistory: ToolChatMessage[];
   generatedInitiatives: InitiativeDraft[];
   status: 'draft' | 'in_progress' | 'completed';
+  sessionGenerationStatus?: SessionGenerationStatus;
 }
 
 // ==================== STEP DEFINITIONS ====================
@@ -1095,6 +1112,15 @@ interface ToolStoreState {
   addCorrelation: (correlation: Omit<SWOTCorrelation, 'id'>) => void;
   addInitiative: (initiative: Omit<InitiativeDraft, 'id'>) => void;
   setInitiatives: (initiatives: Omit<InitiativeDraft, 'id'>[]) => void;
+
+  // Proposal card actions (AI-first session flow)
+  setSessionGenerationStatus: (status: SessionGenerationStatus) => void;
+  acceptCard: (cardType: ProposalCardType, cardId: string) => void;
+  rejectCard: (cardType: ProposalCardType, cardId: string) => void;
+  commentOnCard: (cardType: ProposalCardType, cardId: string, comment: string) => void;
+  markRethinking: (cardType: ProposalCardType, cardId: string) => void;
+  updateCardAfterRethink: (cardType: ProposalCardType, cardId: string, updates: Record<string, unknown>) => void;
+  acceptAllInPhase: (phaseId: DynamicSwotPhaseId) => void;
 
   // Chat
   addChatMessage: (message: Omit<ToolChatMessage, 'id' | 'timestamp'>) => void;
@@ -2243,6 +2269,117 @@ export const useToolStore = create<ToolStoreState>()(
             })),
           },
         });
+      },
+
+      setSessionGenerationStatus: (status) => {
+        const { currentSession } = get();
+        if (!currentSession) return;
+        set({ currentSession: { ...currentSession, sessionGenerationStatus: status } });
+      },
+
+      acceptCard: (cardType, cardId) => {
+        const { currentSession } = get();
+        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+        const update = (arr: any[]) => arr.map((item: any) =>
+          item.id === cardId ? { ...item, proposalStatus: 'accepted' as ProposalStatus } : item
+        );
+        const updated: Partial<SWOTData> = {};
+        if (cardType === 'signal') updated.signals = update(swotData.signals);
+        else if (cardType === 'item') updated.items = update(swotData.items);
+        else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
+        else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
+        else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
+        else if (cardType === 'output-candidate') updated.outputCandidates = update(swotData.outputCandidates);
+        set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
+      },
+
+      rejectCard: (cardType, cardId) => {
+        const { currentSession } = get();
+        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+        const update = (arr: any[]) => arr.map((item: any) =>
+          item.id === cardId ? { ...item, proposalStatus: 'rejected' as ProposalStatus } : item
+        );
+        const updated: Partial<SWOTData> = {};
+        if (cardType === 'signal') updated.signals = update(swotData.signals);
+        else if (cardType === 'item') updated.items = update(swotData.items);
+        else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
+        else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
+        else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
+        else if (cardType === 'output-candidate') updated.outputCandidates = update(swotData.outputCandidates);
+        set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
+      },
+
+      commentOnCard: (cardType, cardId, comment) => {
+        const { currentSession } = get();
+        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+        const update = (arr: any[]) => arr.map((item: any) =>
+          item.id === cardId ? { ...item, userComment: comment } : item
+        );
+        const updated: Partial<SWOTData> = {};
+        if (cardType === 'signal') updated.signals = update(swotData.signals);
+        else if (cardType === 'item') updated.items = update(swotData.items);
+        else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
+        else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
+        else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
+        else if (cardType === 'output-candidate') updated.outputCandidates = update(swotData.outputCandidates);
+        set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
+      },
+
+      markRethinking: (cardType, cardId) => {
+        const { currentSession } = get();
+        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+        const update = (arr: any[]) => arr.map((item: any) =>
+          item.id === cardId ? { ...item, proposalStatus: 'rethinking' as ProposalStatus } : item
+        );
+        const updated: Partial<SWOTData> = {};
+        if (cardType === 'signal') updated.signals = update(swotData.signals);
+        else if (cardType === 'item') updated.items = update(swotData.items);
+        else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
+        else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
+        else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
+        else if (cardType === 'output-candidate') updated.outputCandidates = update(swotData.outputCandidates);
+        set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
+      },
+
+      updateCardAfterRethink: (cardType, cardId, updates) => {
+        const { currentSession } = get();
+        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+        const update = (arr: any[]) => arr.map((item: any) =>
+          item.id === cardId ? { ...item, ...updates, proposalStatus: 'ai-proposed' as ProposalStatus } : item
+        );
+        const updated: Partial<SWOTData> = {};
+        if (cardType === 'signal') updated.signals = update(swotData.signals);
+        else if (cardType === 'item') updated.items = update(swotData.items);
+        else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
+        else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
+        else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
+        else if (cardType === 'output-candidate') updated.outputCandidates = update(swotData.outputCandidates);
+        set({ currentSession: withRecomputedSteps(currentSession, { ...swotData, ...updated }) });
+      },
+
+      acceptAllInPhase: (phaseId) => {
+        const { currentSession } = get();
+        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
+        const acceptAll = (arr: any[]) => arr.map((item: any) =>
+          item.proposalStatus === 'ai-proposed' ? { ...item, proposalStatus: 'accepted' as ProposalStatus } : item
+        );
+        const updated = { ...swotData };
+        if (phaseId === 'input') updated.signals = acceptAll(swotData.signals);
+        else if (phaseId === 'swot') updated.items = acceptAll(swotData.items);
+        else if (phaseId === 'insights') {
+          updated.tensions = acceptAll(swotData.tensions);
+          updated.correlations = acceptAll(swotData.correlations);
+          updated.recommendedMoves = acceptAll(swotData.recommendedMoves);
+        } else if (phaseId === 'outputs') {
+          updated.outputCandidates = acceptAll(swotData.outputCandidates);
+        }
+        set({ currentSession: withRecomputedSteps(currentSession, updated) });
       },
 
       addChatMessage: (message) => {

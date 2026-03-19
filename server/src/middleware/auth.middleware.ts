@@ -259,7 +259,8 @@ const trackSessionActivity = (req: AuthRequest, res: Response): void => {
     try {
       const session = await dbGet<{ id: string; is_active: boolean | number | null }>(
         `SELECT id, is_active FROM user_sessions
-         WHERE user_id = ? AND COALESCE(is_active, FALSE) IS TRUE
+         WHERE user_id = ?
+           AND COALESCE(CAST(is_active AS TEXT), '0') IN ('1', 'true', 'TRUE', 't', 'T')
          ORDER BY last_activity_at DESC LIMIT 1`,
         [userId],
       );

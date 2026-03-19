@@ -755,6 +755,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       createdAt: string | null;
     }>
   >([]);
+  const [isKnownToolsLoading, setIsKnownToolsLoading] = useState(true);
+  const [knownToolsError, setKnownToolsError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -1066,12 +1068,21 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   }, [fetchData]);
 
   const fetchKnownTools = useCallback(async () => {
+    setIsKnownToolsLoading(true);
+    setKnownToolsError(null);
     try {
       const res = await Api.getKnownTools({ lang, limit: 50, offset: 0 });
       setKnownTools(res.items || []);
     } catch (error: any) {
       console.warn('[DiscoveryToolsHub] Failed to fetch known tools:', error);
-      setKnownTools([]);
+      setKnownToolsError(
+        error?.message ||
+          (lang === 'pl'
+            ? 'Nie udało się załadować katalogu narzędzi.'
+            : 'Failed to load the tools catalog.')
+      );
+    } finally {
+      setIsKnownToolsLoading(false);
     }
   }, [lang]);
 
@@ -1361,6 +1372,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       (k) => String(k?.toolType || '').trim() === 'process-automation'
     );
     const libraryCount =
+      isKnownToolsLoading && knownTools.length === 0
+        ? 0
+        :
       (knownTools || []).length +
       Object.keys(ASSESSMENT_FRAMEWORK_META).length +
       (hasAutomationInKnownTools ? 0 : 1);
@@ -1399,40 +1413,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     knownTools,
     outputs.length,
     t,
+    isKnownToolsLoading,
   ]);
-
-  const activeTabGuide = useMemo(() => {
-    if (activeTab === 'library') {
-      return {
-        title: isPolish ? 'Biblioteka metod' : 'Method library',
-        description: isPolish
-          ? 'Tutaj poznajesz narzędzia, wybierasz właściwe podejście i startujesz pracę.'
-          : 'Discover tools, choose the right method, and start working from here.',
-      };
-    }
-    if (activeTab === 'sessions' || activeTab === 'list') {
-      return {
-        title: isPolish ? 'Aktywne sesje' : 'Active sessions',
-        description: isPolish
-          ? 'Tutaj pracujesz na uruchomionych narzędziach. Nowa sesja pojawia się tu automatycznie po starcie z biblioteki.'
-          : 'Work with active tools here. A new session appears here automatically when started from the library.',
-      };
-    }
-    if (activeTab === 'outputs' || activeTab === 'reports') {
-      return {
-        title: isPolish ? 'Raporty i prezentacje' : 'Reports & presentations',
-        description: isPolish
-          ? 'Tutaj otwierasz raporty i decki wygenerowane z zakończonych sesji.'
-          : 'Open reports and decks generated from completed sessions here.',
-      };
-    }
-    return {
-      title: isPolish ? 'Inicjatywy' : 'Initiatives',
-      description: isPolish
-        ? 'Tutaj przechodzisz z wniosków do działań wdrożeniowych.'
-        : 'Turn validated conclusions into implementation actions here.',
-    };
-  }, [activeTab, isPolish]);
 
   // Table columns
   const discoveryColumns: TableColumn[] = useMemo(
@@ -1632,6 +1614,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       {
         id: 'name',
         label: t('tools.hub.table.tool', 'Tool'),
+        width: '200px',
         render: (row) => (
           <div className="min-w-0">
             <div className="flex items-center gap-2 min-w-0">
@@ -1646,8 +1629,8 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 {row.name}
               </div>
               {row.isComingSoon ? (
-                <span className="shrink-0 inline-flex items-center h-6 px-2 rounded-full text-[11px] border border-slate-200/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] text-slate-600 dark:text-slate-300">
-                  {t('common.comingSoon', 'Coming soon')}
+                <span className="shrink-0 inline-flex items-center h-5 px-1.5 rounded-full text-[10px] border border-slate-200/70 dark:border-white/[0.08] bg-white/60 dark:bg-white/[0.04] text-slate-500 dark:text-slate-400">
+                  {t('common.comingSoon', 'Soon')}
                 </span>
               ) : null}
             </div>
@@ -1657,7 +1640,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       {
         id: 'libraryCategory',
         label: t('tools.hub.table.category', 'Category'),
-        width: '140px',
+        width: '110px',
         filterable: true,
         filterOptions: Object.entries(CATEGORY_META).map(([key, meta]) => ({
           value: key,
@@ -1676,18 +1659,20 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       {
         id: 'tags',
         label: t('tools.hub.table.tags', 'Tags'),
+        width: '200px',
         render: (row) => (
-          <div className="flex flex-wrap gap-1">
-            {(row.tags || []).slice(0, 4).map((tag: string) => (
+          <div className="flex items-center gap-1 overflow-hidden">
+            {(row.tags || []).slice(0, 3).map((tag: string) => (
               <span
                 key={tag}
-                className="px-2 py-0.5 rounded-full text-[11px] bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-navy-700"
+                className="shrink-0 px-1.5 py-px rounded text-[10px] bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-navy-700 truncate max-w-[80px]"
+                title={tag}
               >
                 {tag}
               </span>
             ))}
-            {(row.tags || []).length > 4 ? (
-              <span className="text-[11px] text-slate-500">+{(row.tags || []).length - 4}</span>
+            {(row.tags || []).length > 3 ? (
+              <span className="shrink-0 text-[10px] text-slate-400">+{(row.tags || []).length - 3}</span>
             ) : null}
           </div>
         ),
@@ -1695,7 +1680,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
       {
         id: 'license',
         label: t('tools.hub.table.license', 'License'),
-        width: '110px',
+        width: '100px',
         filterable: true,
         filterOptions: [
           { value: 'licensed', label: t('tools.hub.license.licensed', 'Licensed') },
@@ -2491,6 +2476,10 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   );
 
   const libraryCatalogItems: UnifiedLibraryItem[] = useMemo(() => {
+    if (isKnownToolsLoading && knownTools.length === 0) {
+      return [];
+    }
+
     const toolItems: UnifiedLibraryItem[] = (knownTools || []).map((t) => {
       const catRaw = String(t.libraryCategory || '').trim();
       const cat: ToolCategory =
@@ -2527,7 +2516,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
     if (!byToolType.has(automationTemplateItem.toolType)) extras.unshift(automationTemplateItem);
 
     return [...toolItems, ...extras].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-  }, [assessmentTemplateItems, automationTemplateItem, knownTools]);
+  }, [assessmentTemplateItems, automationTemplateItem, isKnownToolsLoading, knownTools]);
 
   const filteredLibraryItems = useMemo(() => {
     let data = libraryCatalogItems.slice();
@@ -3183,6 +3172,42 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
     // Known Tools Library tab
     if (activeTab === 'library') {
+      if (isKnownToolsLoading && knownTools.length === 0) {
+        return (
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-3 text-slate-500 dark:text-slate-400">
+              <Loader2 className="w-8 h-8 animate-spin" />
+              <span>{isPolish ? 'Ładowanie biblioteki narzędzi...' : 'Loading tools library...'}</span>
+            </div>
+          </div>
+        );
+      }
+
+      if (knownToolsError && knownTools.length === 0) {
+        return (
+          <div className="flex items-center justify-center h-full px-6">
+            <div className="max-w-lg w-full rounded-2xl border border-amber-200/70 bg-amber-50/80 dark:border-amber-900/40 dark:bg-amber-950/20 p-6 text-center">
+              <AlertTriangle className="w-10 h-10 mx-auto mb-3 text-amber-500" />
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                {isPolish ? 'Biblioteka nie została załadowana' : 'Library failed to load'}
+              </h3>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                {knownToolsError}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  void fetchKnownTools();
+                }}
+                className="mt-4 inline-flex items-center justify-center h-9 px-4 rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.06] text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.1]"
+              >
+                {isPolish ? 'Spróbuj ponownie' : 'Try again'}
+              </button>
+            </div>
+          </div>
+        );
+      }
+
       type LibraryPreviewItem = (typeof filteredLibraryItems)[number] & { title: string };
       const selectedRow = previewItemId
         ? (filteredLibraryItems.find((d) => d.id === previewItemId) as any)
@@ -4334,17 +4359,6 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
 
   const CommandRowContent = (
     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-      <div className="mr-2 hidden min-w-0 max-w-[360px] md:flex items-center gap-2 rounded-full border border-slate-200/70 bg-white/80 px-3 py-1.5 dark:border-white/[0.06] dark:bg-white/[0.04]">
-        <span className="h-2 w-2 shrink-0 rounded-full bg-primary-500" />
-        <div className="min-w-0">
-          <div className="truncate text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-            {activeTabGuide.title}
-          </div>
-          <div className="truncate text-[10px] text-slate-500 dark:text-slate-400">
-            {activeTabGuide.description}
-          </div>
-        </div>
-      </div>
       {activeTab === 'library' ? (
         <>
           {(

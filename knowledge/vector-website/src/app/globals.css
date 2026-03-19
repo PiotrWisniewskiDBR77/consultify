@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline {
+  /* ── Background tones (neutral dark) ── */
+  --color-navy-950: #0A0A0A;
+  --color-navy-900: #111111;
+  --color-navy-800: #1A1A1A;
+  --color-navy-700: #222222;
+  --color-navy-600: #2A2A2A;
+  --color-navy-500: #333333;
+
+  /* ── Accent: DBR77 Vector orange (środkowe tony) ── */
+  --color-iris-purple: #E07B3A;
+  --color-iris-violet: #E07B3A;
+  --color-iris-magenta: #E8975F;
+  --color-iris-pink: #F0B088;
+  --color-iris-cyan: #C96A28;
+  --color-iris-green: #B85D20;
+
+  /* ── Neutral (clean, muted) ── */
+  --color-slate-50: #F5F5F5;
+  --color-slate-100: #E8E8E8;
+  --color-slate-200: #D1D1D1;
+  --color-slate-300: #B0B0B0;
+  --color-slate-400: #8B8B8B;
+  --color-slate-500: #6B6B6B;
+  --color-slate-600: #4A4A4A;
+  --color-slate-700: #333333;
+  --color-slate-800: #1E1E1E;
+  --color-slate-900: #0F0F0F;
+
+  /* ── Theme-aware semantic tokens ── */
+  --color-surface-primary: var(--bg-primary);
+  --color-surface-secondary: var(--bg-secondary);
+  --color-surface-card: var(--bg-card);
+  --color-text-heading: var(--text-primary);
+  --color-text-body: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-line: var(--border-color);
+
+  /* ── Font ── */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html[lang="ja"] {
+  --font-sans: var(--font-noto-sans-jp);
+}
+
+html[lang="ar"] {
+  --font-sans: var(--font-noto-naskh-arabic);
+}
+
+/* ── Dark mode (default) ── */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-primary: #0A0A0A;
+  --bg-secondary: #111111;
+  --bg-card: #1A1A1A;
+  --text-primary: #F5F5F5;
+  --text-secondary: #8B8B8B;
+  --text-muted: #6B6B6B;
+  --border-color: rgba(139, 139, 139, 0.10);
+}
+
+/* ── Light mode ── */
+[data-theme="light"] {
+  color-scheme: light;
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #FAFAFA;
+  --bg-card: #FFFFFF;
+  --text-primary: #0F0F0F;
+  --text-secondary: #3D3D3D;
+  --text-muted: #6B6B6B;
+  --border-color: rgba(15, 15, 15, 0.08);
+}
+
+body {
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+::selection {
+  background: rgba(255, 117, 31, 0.30);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(139, 139, 139, 0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(139, 139, 139, 0.3); }
+
+/* ── Glow (dark only) ── */
+.glow-purple {
+  box-shadow: 0 0 60px rgba(255, 117, 31, 0.08), 0 0 120px rgba(229, 98, 26, 0.03);
+}
+[data-theme="light"] .glow-purple {
+  box-shadow: none;
+}
+
+.glow-border {
+  border: 1px solid rgba(255, 117, 31, 0.16);
+}
+.glow-border:hover {
+  border-color: rgba(255, 117, 31, 0.34);
+}
+[data-theme="light"] .glow-border {
+  border-color: rgba(255, 117, 31, 0.12);
+}
+
+/* ── Gradient backgrounds ── */
+.bg-gradient-radial {
+  background: radial-gradient(ellipse at center, var(--tw-gradient-stops));
+}
+
+.bg-gradient-hero {
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 117, 31, 0.07) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 50%, rgba(229, 98, 26, 0.04) 0%, transparent 50%);
+}
+[data-theme="light"] .bg-gradient-hero {
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 117, 31, 0.06) 0%, transparent 50%);
+}
+
+.bg-gradient-section {
+  background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%);
+}
+
+/* ── Text gradient (works in both modes) ── */
+.text-gradient {
+  background: linear-gradient(135deg, #FF751F 0%, #FF8F4C 50%, #E5621A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Noise overlay ── */
+.noise-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+[data-theme="light"] .noise-overlay::before {
+  opacity: 0.3;
+}
+
+/* ── Grid pattern ── */
+.grid-pattern {
+  background-image: linear-gradient(rgba(139, 139, 139, 0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(139, 139, 139, 0.02) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+[data-theme="light"] .grid-pattern {
+  background-image: linear-gradient(rgba(15, 15, 15, 0.02) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(15, 15, 15, 0.02) 1px, transparent 1px);
+}
+
+/* ══════════════════════════════════════════
+   THEME-AWARE UTILITY CLASSES
+   ══════════════════════════════════════════ */
+
+.th-bg-primary   { background: var(--bg-primary); }
+.th-bg-secondary { background: var(--bg-secondary); }
+.th-bg-card      { background: var(--bg-card); }
+
+.th-text-heading { color: var(--text-primary); }
+.th-text-body    { color: var(--text-secondary); }
+.th-text-muted   { color: var(--text-muted); }
+
+.th-border { border-color: var(--border-color); }
+
+.card-dark-always {
+  background: #1A1A1A;
+  color: #F5F5F5;
+  border-color: rgba(139, 139, 139, 0.10);
+}
+
+[data-theme="light"] .card-light {
+  background: #FFFFFF;
+  border: 1px solid rgba(15, 15, 15, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .section-light-alt {
+  background: #FAFAFA;
+}
+
+[data-theme="light"] .badge-light {
+  background: #FFFFFF;
+  border: 1px solid rgba(15, 15, 15, 0.10);
+}
+
+[data-theme="light"] .navbar-light {
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid rgba(15, 15, 15, 0.06);
+}
+
+[data-theme="light"] .footer-light {
+  background: #FAFAFA;
+  border-top: 1px solid rgba(15, 15, 15, 0.06);
+}

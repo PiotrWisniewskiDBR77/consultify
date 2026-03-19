@@ -264,7 +264,7 @@ class SecurityService {
       `SELECT *
        FROM user_sessions
        WHERE user_id = ?
-         AND COALESCE(is_active, FALSE) IS TRUE
+         AND COALESCE(CAST(is_active AS TEXT), '0') IN ('1', 'true', 'TRUE', 't', 'T')
        ORDER BY last_activity_at DESC`,
       [userId]
     );

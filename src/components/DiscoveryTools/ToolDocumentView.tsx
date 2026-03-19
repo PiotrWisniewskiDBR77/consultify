@@ -264,6 +264,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     requestSuggestions,
     generateCorrelations,
     generateSummary,
+    generateFullSession,
   } = useToolAI({ toolType });
 
   const isDynamicSwot = toolType === 'dynamic-swot';
@@ -1499,34 +1500,39 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     if (isDynamicSwot) {
       const renderPhaseCanvas = (phaseStep: StepDefinition, extras?: React.ReactNode) => {
         const phaseIndex = stepDefs.findIndex((step) => step.id === phaseStep.id) + 1;
+        const isDynamicSwotSessionPhase = ['mission', 'input', 'swot', 'insights', 'outputs'].includes(
+          phaseStep.id
+        );
 
         return (
           <div className="space-y-6">
-            <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="space-y-2">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-                    {isPolish ? 'AI consultant flow' : 'AI consultant flow'}
+            {!isDynamicSwotSessionPhase && (
+              <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="space-y-2">
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'AI consultant flow' : 'AI consultant flow'}
+                    </div>
+                    <div className="text-sm text-slate-700 dark:text-slate-300">
+                      {isPolish ? phaseStep.descriptionPl : phaseStep.description}
+                    </div>
                   </div>
-                  <div className="text-sm text-slate-700 dark:text-slate-300">
-                    {isPolish ? phaseStep.descriptionPl : phaseStep.description}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleGenerateAI()}
+                    disabled={isGeneratingAI}
+                    className="inline-flex items-center gap-2 rounded-lg bg-primary-500/10 px-3 py-2 text-xs font-medium text-primary-600 hover:bg-primary-500/15 disabled:opacity-60 dark:text-primary-300"
+                  >
+                    {isGeneratingAI ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={14} />
+                    )}
+                    {isPolish ? 'AI mentor' : 'AI mentor'}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => void handleGenerateAI()}
-                  disabled={isGeneratingAI}
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary-500/10 px-3 py-2 text-xs font-medium text-primary-600 hover:bg-primary-500/15 disabled:opacity-60 dark:text-primary-300"
-                >
-                  {isGeneratingAI ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Sparkles size={14} />
-                  )}
-                  {isPolish ? 'AI mentor' : 'AI mentor'}
-                </button>
               </div>
-            </div>
+            )}
 
             <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-slate-50/70 dark:border-navy-700/70 dark:bg-navy-900/40">
               {currentSession ? (
@@ -1548,6 +1554,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                     content: message.content,
                   }))}
                   showContextPanel
+                  onGenerateFullSession={generateFullSession}
+                  sessionGenerationStatus={currentSession.sessionGenerationStatus}
                 />
               ) : (
                 <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">

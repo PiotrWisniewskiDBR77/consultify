@@ -6,7 +6,7 @@
 
 import React from 'react';
 
-import { StepDefinition, ToolSession, ToolType } from '@/store/useToolStore';
+import { ProposalCardType, SessionGenerationStatus, StepDefinition, ToolSession, ToolType } from '@/store/useToolStore';
 
 import { ContextStep } from './steps/ContextStep';
 import { ImpactHypothesisStep } from './steps/ImpactHypothesisStep';
@@ -60,11 +60,12 @@ interface ToolCanvasProps {
   generatedInitiatives?: { id: string; title: string; status?: string }[];
   recentInitiatives?: { id: string; title: string; status?: string }[];
   chatSnippets?: { role: string; content: string }[];
-  /**
-   * When false, ToolCanvas renders ONLY the step content (no context side panel).
-   * Useful for embedding inside canonical two-column document views.
-   */
   showContextPanel?: boolean;
+  onGenerateFullSession?: () => void;
+  sessionGenerationStatus?: SessionGenerationStatus;
+  onAcceptCard?: (cardType: ProposalCardType, cardId: string) => void;
+  onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
+  onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 }
 
 // ==================== COMPONENT ====================
@@ -84,7 +85,17 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   recentInitiatives,
   chatSnippets,
   showContextPanel = true,
+  onGenerateFullSession,
+  sessionGenerationStatus,
+  onAcceptCard,
+  onRejectCard,
+  onRethinkCard,
 }) => {
+  const isDynamicSwotSessionPhase =
+    toolType === 'dynamic-swot' &&
+    ['mission', 'input', 'swot', 'insights', 'outputs'].includes(stepDefinition?.id || '');
+  const shouldShowContextPanel = showContextPanel && !isDynamicSwotSessionPhase;
+
   // Render step-specific content
   const renderStepContent = () => {
     if (!stepDefinition) {
@@ -97,25 +108,64 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
 
     if (toolType === 'dynamic-swot') {
       if (stepDefinition.id === 'mission') {
-        return <ContextStep toolType={toolType} session={session} isPolish={isPolish} />;
+        return (
+          <ContextStep
+            toolType={toolType}
+            session={session}
+            isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
+          />
+        );
       }
 
       if (stepDefinition.id === 'input') {
-        return <SWOTInputExplorationPhase session={session} isPolish={isPolish} />;
+        return (
+          <SWOTInputExplorationPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
       }
 
       if (stepDefinition.id === 'swot') {
-        return <SWOTBuildPhase session={session} isPolish={isPolish} />;
+        return (
+          <SWOTBuildPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
       }
 
       if (stepDefinition.id === 'insights') {
-        return <SWOTInsightsPhase session={session} isPolish={isPolish} />;
+        return (
+          <SWOTInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
       }
 
       if (stepDefinition.id === 'outputs') {
         return (
           <div className="space-y-6">
-            <SummaryStep toolType={toolType} session={session} isPolish={isPolish} />
+            <SummaryStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
             <InitiativesStep
               toolType={toolType}
               session={session}
@@ -391,7 +441,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
       {/* Main content area */}
       <div className="flex-1 overflow-y-auto p-6">{renderStepContent()}</div>
 
-      {showContextPanel && (
+      {shouldShowContextPanel && (
         <ToolContextPanel
           toolType={toolType}
           session={session}
@@ -400,6 +450,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
           orgName={orgName}
           aiContent={isStreaming ? streamedContent : undefined}
           onOpenChat={onOpenChat}
+          onGenerateFullSession={onGenerateFullSession}
           onOpenInitiatives={onOpenInitiatives}
           generatedInitiatives={generatedInitiatives}
           recentInitiatives={recentInitiatives}

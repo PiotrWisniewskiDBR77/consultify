@@ -13,7 +13,7 @@ import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
-import { ToolType, useToolStore } from '@/store/useToolStore';
+import { ProposalCardType, ToolType, useToolStore } from '@/store/useToolStore';
 import { AppView } from '@/types';
 
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
@@ -214,6 +214,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     canAdvanceStep,
     getStepDefinitions,
     calculateProgress,
+    acceptCard,
+    rejectCard,
   } = useToolStore();
 
   // AI integration
@@ -223,6 +225,8 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     requestSuggestions,
     generateCorrelations,
     generateSummary,
+    generateFullSession,
+    rethinkCard,
     abortStream,
   } = useToolAI({ toolType });
 
@@ -578,6 +582,14 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
               role: m.role,
               content: m.content,
             }))}
+            onGenerateFullSession={generateFullSession}
+            sessionGenerationStatus={currentSession.sessionGenerationStatus}
+            onAcceptCard={(cardType: ProposalCardType, cardId: string) => acceptCard(cardType, cardId)}
+            onRejectCard={(cardType: ProposalCardType, cardId: string) => rejectCard(cardType, cardId)}
+            onRethinkCard={(cardType: ProposalCardType, cardId: string, comment?: string) => {
+              const phaseId = stepDefs[currentStep - 1]?.id || 'mission';
+              rethinkCard(phaseId, cardType, cardId, comment);
+            }}
           />
         )}
       </div>

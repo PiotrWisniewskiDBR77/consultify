@@ -30,6 +30,7 @@ interface ToolContextPanelProps {
   orgName?: string | null;
   aiContent?: string;
   onOpenChat: () => void;
+  onGenerateFullSession?: () => void;
   onOpenInitiatives?: () => void;
   generatedInitiatives?: { id: string; title: string; status?: string }[];
   recentInitiatives?: { id: string; title: string; status?: string }[];
@@ -107,13 +108,40 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
   orgName,
   aiContent,
   onOpenChat,
+  onGenerateFullSession,
   onOpenInitiatives,
   generatedInitiatives = [],
   recentInitiatives = [],
   chatSnippets = [],
 }) => {
+  const [missionComment, setMissionComment] = React.useState('');
+  const generationStatus = session.sessionGenerationStatus || 'idle';
   const swotData = toolType === 'dynamic-swot' ? (session.inputData as SWOTData) : null;
   const readiness = swotData ? computeDynamicSwotOverallReadiness(swotData, isPolish) : null;
+
+  const proposalCounts = swotData ? {
+    signals: swotData.signals.filter(s => s.proposalStatus === 'ai-proposed').length,
+    items: swotData.items.filter(i => i.proposalStatus === 'ai-proposed').length,
+    tensions: swotData.tensions.filter(t => t.proposalStatus === 'ai-proposed').length,
+    moves: swotData.recommendedMoves.filter(m => m.proposalStatus === 'ai-proposed').length,
+    outputs: swotData.outputCandidates.filter(o => o.proposalStatus === 'ai-proposed').length,
+    total: 0,
+  } : null;
+  if (proposalCounts) {
+    proposalCounts.total = proposalCounts.signals + proposalCounts.items + proposalCounts.tensions + proposalCounts.moves + proposalCounts.outputs;
+  }
+
+  const acceptedCounts = swotData ? {
+    signals: swotData.signals.filter(s => s.proposalStatus === 'accepted').length,
+    items: swotData.items.filter(i => i.proposalStatus === 'accepted').length,
+    tensions: swotData.tensions.filter(t => t.proposalStatus === 'accepted').length,
+    moves: swotData.recommendedMoves.filter(m => m.proposalStatus === 'accepted').length,
+    outputs: swotData.outputCandidates.filter(o => o.proposalStatus === 'accepted').length,
+    total: 0,
+  } : null;
+  if (acceptedCounts) {
+    acceptedCounts.total = acceptedCounts.signals + acceptedCounts.items + acceptedCounts.tensions + acceptedCounts.moves + acceptedCounts.outputs;
+  }
   const phaseSummaries = swotData ? computeDynamicSwotPhaseSummaries(swotData, isPolish) : [];
   const swotSignals = swotData ? computeDynamicSwotSessionSignals(swotData, isPolish) : null;
   const coach = toolType === 'dynamic-swot' ? getDynamicSwotCoach(currentStepId, isPolish) : null;
@@ -130,6 +158,127 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
       ].slice(0, 5)
     : [];
   const porterData = toolType === 'market-forces' ? (session.inputData as PorterData) : null;
+  const isDynamicSwotMission = toolType === 'dynamic-swot' && currentStepId === 'mission';
+
+  if (isDynamicSwotMission) {
+    return (
+      <div className="flex w-[34%] min-w-[360px] max-w-[460px] flex-col border-l border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900">
+        <div className="border-b border-slate-200 px-5 py-4 dark:border-navy-700">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-medium text-slate-900 dark:text-white">
+              {isPolish ? 'Praca z AI' : 'Work with AI'}
+            </h3>
+            <span className="inline-flex rounded-full border border-violet-300/40 bg-violet-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:border-violet-800/50 dark:text-violet-300">
+              AI
+            </span>
+          </div>
+        </div>
+
+        <div className="flex-1 space-y-4 overflow-y-auto p-5">
+          <div className="rounded-[26px] border border-violet-200/70 bg-violet-500/5 p-4 dark:border-violet-900/40">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
+              {isPolish ? 'Tryb pracy' : 'Working mode'}
+            </div>
+            <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+              {isPolish
+                ? 'Po lewej stronie widzisz pierwszą wersję framingu przygotowaną przez konsultanta. Tutaj możesz skorygować kierunek, doprecyzować akcent albo przejść dalej do wygenerowania całej sesji.'
+                : 'On the left you see the first framing draft prepared by the consultant. Here you can redirect the angle, sharpen the emphasis, or move forward to generate the full session.'}
+            </div>
+          </div>
+
+          <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              {isPolish ? 'Komentarz roboczy dla AI' : 'Working note for AI'}
+            </div>
+            <textarea
+              value={missionComment}
+              onChange={(e) => setMissionComment(e.target.value)}
+              rows={6}
+              placeholder={
+                isPolish
+                  ? 'Np. za mocno akcentujemy marżę; dodaj perspektywę rynku niemieckiego i pokaż to bardziej jak decyzję zarządczą.'
+                  : 'E.g. we are over-weighting margin; add the German market perspective and frame this more like a leadership decision.'
+              }
+              className="mt-3 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-900 placeholder-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 dark:border-navy-700 dark:bg-navy-800 dark:text-white"
+            />
+            <button
+              onClick={onOpenChat}
+              className="mt-3 inline-flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-navy-700 dark:bg-navy-800 dark:text-slate-200"
+            >
+              <MessageSquareText className="h-4 w-4 text-violet-500" />
+              {isPolish ? 'Przenieś to do czatu AI' : 'Take this to AI chat'}
+            </button>
+          </div>
+
+          <div className="rounded-[26px] border border-sky-200/70 bg-sky-500/5 p-4 dark:border-sky-900/40">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
+              {isPolish ? 'Szybkie kierunki korekty' : 'Quick refinement angles'}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {[
+                isPolish ? 'Zaostrz tezę strategiczną' : 'Sharpen the strategic thesis',
+                isPolish ? 'Dodaj kontekst rynku' : 'Add market context',
+                isPolish ? 'Pokaż większe ryzyka' : 'Show bigger risks',
+                isPolish ? 'Napisz to bardziej zarządczo' : 'Make it more board-ready',
+              ].map((label) => (
+                <button
+                  key={label}
+                  onClick={onOpenChat}
+                  className="inline-flex rounded-full border border-sky-200/70 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700 shadow-sm transition-colors hover:bg-sky-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[26px] border border-emerald-200/70 bg-emerald-500/5 p-4 dark:border-emerald-900/40">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
+                {isPolish ? 'Przejście do pełnej sesji' : 'Move to full session'}
+              </div>
+              <span className="inline-flex rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
+                Output
+              </span>
+            </div>
+            <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+              {isPolish
+                ? 'Jeśli framing po lewej stronie jest wystarczająco dobry, AI przygotuje dalsze części sesji: input map, macierz SWOT, napięcia, ruchy i outputy.'
+                : 'If the framing on the left is strong enough, AI will prepare the remaining parts of the session: input map, SWOT matrix, tensions, moves, and outputs.'}
+            </div>
+            <button
+              onClick={onGenerateFullSession}
+              disabled={!onGenerateFullSession || generationStatus === 'generating'}
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-violet-700 dark:hover:bg-violet-600"
+            >
+              {generationStatus === 'generating' ? (
+                <>
+                  <Sparkles className="h-4 w-4 animate-pulse" />
+                  {isPolish ? 'AI buduje pełną sesję...' : 'AI is building the full session...'}
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  {isPolish ? 'Akceptuj ten framing i generuj dalej' : 'Accept this framing and generate next'}
+                </>
+              )}
+            </button>
+          </div>
+
+          {orgName && (
+            <div className="rounded-[26px] border border-slate-200/70 bg-white/85 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                {isPolish ? 'Kontekst organizacji' : 'Organization context'}
+              </div>
+              <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                {orgName}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-96 flex-col border-l border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900">
@@ -140,6 +289,70 @@ export const ToolContextPanel: React.FC<ToolContextPanelProps> = ({
       </div>
 
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        {generationStatus === 'generating' && (
+          <div className="rounded-2xl border border-violet-200 bg-violet-50/50 p-4 dark:border-violet-800/40 dark:bg-violet-950/20">
+            <div className="flex items-center gap-2 text-sm font-semibold text-violet-700 dark:text-violet-300">
+              <Sparkles className="h-4 w-4 animate-pulse" />
+              <span>{isPolish ? 'AI przygotowuje sesję...' : 'AI is preparing your session...'}</span>
+            </div>
+            <p className="mt-2 text-xs text-violet-600 dark:text-violet-400">
+              {isPolish
+                ? 'Konsultant AI generuje pełną propozycję: sygnały, macierz SWOT, napięcia, ruchy strategiczne i propozycje outputów.'
+                : 'AI consultant is generating a full proposal: signals, SWOT matrix, tensions, strategic moves, and output proposals.'}
+            </p>
+          </div>
+        )}
+
+        {generationStatus === 'ready' && proposalCounts && proposalCounts.total > 0 && (
+          <div className="rounded-2xl border border-violet-200 bg-white p-4 dark:border-violet-800/40 dark:bg-navy-900/40">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+              <Sparkles className="h-4 w-4 text-violet-500" />
+              <span>{isPolish ? 'Propozycje AI' : 'AI Proposals'}</span>
+              <span className="ml-auto rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                {proposalCounts.total} {isPolish ? 'do przeglądu' : 'to review'}
+              </span>
+            </div>
+            <div className="mt-3 space-y-1.5 text-xs">
+              {proposalCounts.signals > 0 && (
+                <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                  <span>{isPolish ? 'Sygnały' : 'Signals'}</span>
+                  <span className="font-medium">{proposalCounts.signals}</span>
+                </div>
+              )}
+              {proposalCounts.items > 0 && (
+                <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                  <span>{isPolish ? 'Karty SWOT' : 'SWOT cards'}</span>
+                  <span className="font-medium">{proposalCounts.items}</span>
+                </div>
+              )}
+              {proposalCounts.tensions > 0 && (
+                <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                  <span>{isPolish ? 'Napięcia' : 'Tensions'}</span>
+                  <span className="font-medium">{proposalCounts.tensions}</span>
+                </div>
+              )}
+              {proposalCounts.moves > 0 && (
+                <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                  <span>{isPolish ? 'Ruchy' : 'Moves'}</span>
+                  <span className="font-medium">{proposalCounts.moves}</span>
+                </div>
+              )}
+              {proposalCounts.outputs > 0 && (
+                <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                  <span>{isPolish ? 'Outputy' : 'Outputs'}</span>
+                  <span className="font-medium">{proposalCounts.outputs}</span>
+                </div>
+              )}
+            </div>
+            {acceptedCounts && acceptedCounts.total > 0 && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                {acceptedCounts.total} {isPolish ? 'zaakceptowanych' : 'accepted'}
+              </div>
+            )}
+          </div>
+        )}
+
         {swotData && readiness && (
           <div className={`rounded-2xl border p-4 ${getReadinessTone(readiness.readiness)}`}>
             <div className="flex items-center gap-2 text-sm font-semibold">

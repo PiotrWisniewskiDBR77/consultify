@@ -1407,7 +1407,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const fetchInbox = useCallback(async () => {
     try {
       setLoading(true);
-      await Api.materializeInbox().catch(() => null);
       const status =
         statusTab === 'all'
           ? 'all'
@@ -1416,9 +1415,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             : statusTab === 'saved'
               ? 'saved'
               : 'open';
-      const res = (await Api.inboxGetTable({ status, limit: 200 }).catch(
-        () => Api.get(`/my-work/inbox?limit=200&status=${status}`)
-      )) as InboxResponse;
+      const [res] = await Promise.all([
+        Api.inboxGetTable({ status, limit: 200 }).catch(
+          () => Api.get(`/my-work/inbox?limit=200&status=${status}`)
+        ) as Promise<InboxResponse>,
+        Api.materializeInbox().catch(() => null),
+      ]);
       setData(res);
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());

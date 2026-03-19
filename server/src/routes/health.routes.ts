@@ -6,6 +6,7 @@
 import { Request, Response, Router } from 'express';
 
 import { resolveReachableDatabaseUrl } from '../config/databaseTargetResolver.js';
+import { resolveDemoPolicy } from '../config/demoPolicy.js';
 import { getConnectionPool, getHealthMonitor } from '../database/index.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import logger from '../utils/Logger.js';
@@ -116,12 +117,18 @@ router.get('/data-context', verifyToken, async (req: Request, res: Response) => 
 
     const user = (req as any).user || {};
     const demo = (req as any).demo || null;
+    const demoPolicy = resolveDemoPolicy(process.env);
+    const correlationId =
+      (req as Request & { correlationId?: string }).correlationId ||
+      req.get('X-Correlation-ID') ||
+      null;
 
     res.json({
       status: 'ok',
       generatedAt: new Date().toISOString(),
       database: {
         source: resolved.source,
+        reason: resolved.reason || null,
         host: resolved.databaseUrl ? (() => {
           try {
             return new URL(resolved.databaseUrl).hostname;
@@ -145,6 +152,25 @@ router.get('/data-context', verifyToken, async (req: Request, res: Response) => 
         enabled: Boolean(demo?.enabled),
         organizationId: demo?.organizationId || null,
         headerActive: String(req.get('X-Demo-Mode') || '').toLowerCase() === 'true',
+      },
+      policy: {
+        demoOrgId: demoPolicy.demoOrgId,
+        demoOrgName: demoPolicy.demoOrgName,
+        defaultDemoOrgId: demoPolicy.defaultDemoOrgId,
+        usesNonDefaultDemoOrgId: demoPolicy.usesNonDefaultDemoOrgId,
+        explicitApprovalEnabled: demoPolicy.explicitApprovalEnabled,
+        approvedBy: demoPolicy.approvedBy,
+      },
+      request: {
+        correlationId,
+        path: req.originalUrl || req.url || null,
+        method: req.method,
+      },
+      runtime: {
+        nodeEnv: process.env.NODE_ENV || null,
+        appEnv: process.env.APP_ENV || null,
+        railwayEnvironmentName: process.env.RAILWAY_ENVIRONMENT_NAME || null,
+        railwayServiceName: process.env.RAILWAY_SERVICE_NAME || null,
       },
     });
   } catch (error) {

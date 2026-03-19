@@ -1,0 +1,1822 @@
+{
+  "metadata": {
+    "resources": {
+      "title": "Recursos — DBR77 IIoT",
+      "description": "Masterclass, Factory on Air y base de conocimiento de implementación para DBR77 IIoT. Materiales que acortan el tiempo de decisión y preparan un piloto."
+    },
+    "pilot": {
+      "title": "Piloto — DBR77 IIoT",
+      "description": "Piloto de DBR77 IIoT en su planta: despliegue en 1–3 estaciones de trabajo o una línea + informe y recomendación de escalado."
+    },
+    "demo": {
+      "title": "Demo en línea — DBR77 IIoT",
+      "description": "Vea DBR77 IIoT en acción: estados, alertas y vistas de operador. Sin instalación y sin hardware."
+    },
+    "trial": {
+      "title": "Prueba — DBR77 IIoT",
+      "description": "Inicie una prueba de 14 días de la plataforma DBR77 IIoT. Acceso completo a todos los módulos y funcionalidades."
+    },
+    "pricing": {
+      "title": "Precios — DBR77 IIoT",
+      "description": "Precios personalizados para DBR77 IIoT. Cada planta es diferente — la oferta se prepara tras un piloto con datos reales."
+    }
+  },
+  "common": {
+    "language": "Idioma",
+    "themeToggleAria": "Cambiar tema",
+    "themeToggleLabel": "Tema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "menuToggleAria": "Alternar menú",
+    "signIn": "Iniciar sesión",
+    "startDemo": "Iniciar demo",
+    "bookDemo": "Solicitar una demo",
+    "requestDemo": "Solicitar una demo",
+    "exploreAllModules": "Explorar todos los módulos",
+    "allModules": "Todos los módulos",
+    "contactUs": "Contáctenos"
+  },
+  "languages": {
+    "en": "English",
+    "pl": "Polski",
+    "de": "Deutsch",
+    "ja": "日本語",
+    "ar": "العربية",
+    "es": "Español"
+  },
+  "nav": {
+    "product": "Producto",
+    "components": "Componentes",
+    "architecture": "Arquitectura",
+    "resources": "Recursos",
+    "contact": "Contacto",
+    "demo": "Demo",
+    "pilot": "Piloto",
+    "platform": "Plataforma",
+    "iiot": "IIoT",
+    "modules": "Módulos",
+    "useCases": "Casos de uso",
+    "ai": "IA",
+    "integrations": "Integraciones",
+    "security": "Seguridad",
+    "pricing": "Precios",
+    "modulesChildren": {
+      "iot": "IoT y conectividad",
+      "mes": "MES",
+      "wms": "WMS",
+      "qms": "QMS",
+      "cmms": "CMMS",
+      "aps": "APS",
+      "dt": "Digital Twin",
+      "kpi": "KPI y analítica",
+      "gemba": "Gemba",
+      "tasking": "Tareas",
+      "communications": "Comunicador",
+      "dataAi": "Motor de IA",
+      "viewAll": "Ver todos →"
+    }
+  },
+  "footer": {
+    "tagline": "DBR77 IIoT es una pila completa de monitorización en tiempo real — desde la señal hasta la decisión y la acción en planta.",
+    "copyright": "DBR77 IIoT. Desarrollado por",
+    "sections": {
+      "product": {
+        "title": "PRODUCTO"
+      },
+      "resources": {
+        "title": "RECURSOS"
+      },
+      "company": {
+        "title": "EMPRESA"
+      },
+      "legal": {
+        "title": "LEGAL"
+      }
+    },
+    "links": {
+      "product": "Producto",
+      "platform": "Plataforma",
+      "modules": "Módulos",
+      "ai": "IA",
+      "security": "Seguridad",
+      "integrations": "Integraciones",
+      "pricing": "Precios",
+      "useCases": "Casos de uso",
+      "resources": "Recursos",
+      "masterclass": "Masterclass",
+      "blog": "Blog",
+      "factoryOnAir": "Factory on Air",
+      "ourStory": "Nuestra historia",
+      "contact": "Contacto",
+      "demo": "Demo",
+      "pilot": "Piloto",
+      "dbr77": "DBR77.com",
+      "terms": "Términos",
+      "privacy": "Privacidad",
+      "cookies": "Cookies",
+      "securityPolicy": "Seguridad",
+      "allDocuments": "Todos los documentos"
+    }
+  },
+  "iiot": {
+    "hero": {
+      "badge": "DBR77 IIoT",
+      "titleLine1": "Su fábrica en tiempo real.",
+      "titleLine2": "Hardware + software en un solo ecosistema.",
+      "subtitle": "Recopile datos de máquinas y sensores, automatice las declaraciones de paradas, ejecute IA en el borde y convierta señales en acciones concretas en planta.",
+      "note": "Sin hardware en la demo. El piloto se ejecuta en 1–3 estaciones de trabajo o una sola línea.",
+      "montage": {
+        "statusDeckAlt": "DBR77 Status Deck en una estación de trabajo",
+        "dataHubAlt": "DBR77 Master / Data Hub en un armario de control",
+        "mobileAlt": "Aplicación móvil: tareas y alertas"
+      }
+    },
+    "cta": {
+      "demo": "Ver la demo en línea",
+      "pilot": "Planificar un piloto"
+    },
+    "trust": {
+      "items": {
+        "mqtt": "MQTT / Modbus / RS485",
+        "security": "Seguridad compatible con TI",
+        "edge": "Edge‑first",
+        "retrofit": "Retrofit de bajo coste",
+        "alerts": "Alertas y escalado",
+        "deviceMgmt": "Gestión de dispositivos"
+      }
+    },
+    "outcomes": {
+      "label": "RESULTADOS",
+      "title": "Información y ventas en uno: primero el resultado, luego la arquitectura.",
+      "description": "DBR77 IIoT recopila datos de planta y los convierte en decisiones rápidas: estados, alertas e información.",
+      "items": {
+        "downtime": {
+          "title": "Se acabó el \"tiempo de inactividad desconocido\"",
+          "description": "Capture las causas reales de pérdida (declaraciones de operador + señales) y reaccione más rápido con alertas."
+        },
+        "oee": {
+          "title": "OEE fiable",
+          "description": "Vea estados, ciclos y pérdidas en tiempo real — en lugar de informes a posteriori."
+        },
+        "safety": {
+          "title": "Calidad y seguridad en tiempo real (Edge)",
+          "description": "La IA de visión puede ejecutarse en el borde: menor latencia y menor exposición de datos."
+        },
+        "retrofit": {
+          "title": "Retrofit para equipos heredados",
+          "description": "Status Deck + Data Hub le permiten empezar incluso sin PLCs modernos u OPC‑UA."
+        },
+        "bus": {
+          "title": "Una única columna vertebral de datos",
+          "description": "MQTT/Modbus/RS485/LoRaWAN/Wi‑Fi/LTE — un flujo consistente sin reemplazar la infraestructura."
+        },
+        "action": {
+          "title": "Datos → decisión → acción",
+          "description": "Alertas, escalado y respuestas rápidas en planta — sin informes manuales."
+        }
+      }
+    },
+    "architecture": {
+      "label": "ARQUITECTURA",
+      "title": "El bucle: de la señal a la acción.",
+      "description": "Fuentes de datos → edge y conectividad → panel IIoT → acción en planta (móvil/tablet) → mejora continua.",
+      "diagramAlt": "Diagrama de arquitectura DBR77 IIoT: fuentes de datos, edge/hub, panel y aplicaciones"
+    },
+    "components": {
+      "label": "COMPONENTES",
+      "title": "Hardware + software. Un proveedor. Una responsabilidad.",
+      "description": "Comience con la fuente de datos más simple, luego escale — sin dependencia del proveedor y sin desmontar su infraestructura.",
+      "badges": {
+        "hardware": "Hardware",
+        "software": "Software",
+        "edgeAi": "Edge AI"
+      },
+      "aiIllustrationNote": "Gráfico ilustrativo — generado con IA.",
+      "items": {
+        "statusDeck": {
+          "title": "DBR77 Status Deck",
+          "description": "Un dispositivo de bajo coste para declarar el estado de la máquina: Marcha / Pausa / Cambio / Avería.",
+          "bullets": {
+            "b1": "2 segundos para conocer la verdad sobre las paradas",
+            "b2": "Perfecto para máquinas heredadas",
+            "b3": "Instalación rápida en una estación de trabajo"
+          },
+          "imageAlt": "DBR77 Status Deck instalado en una estación de trabajo"
+        },
+        "dataHub": {
+          "title": "DBR77 Master / Data Hub",
+          "description": "Gateway en carril DIN: recopila señales, garantiza la calidad de transmisión y entrega datos al panel IIoT.",
+          "bullets": {
+            "b1": "Instalación en armario de grado OT",
+            "b2": "Multiprotocolo (MQTT/Modbus/RS485)",
+            "b3": "Alcance y estabilidad (LoRaWAN/Wi‑Fi/LTE)"
+          },
+          "imageAlt": "DBR77 Master / Data Hub en un armario de control"
+        },
+        "mobile": {
+          "title": "Aplicaciones móviles y para tablet",
+          "description": "Tareas, listas de verificación y alertas al alcance de su mano — en teléfono y tablet.",
+          "bullets": {
+            "b1": "Tareas y plan de turno",
+            "b2": "Notificaciones y confirmaciones de alertas",
+            "b3": "Decisiones más rápidas en planta"
+          },
+          "imageAlt": "Aplicación móvil DBR77 mostrando tareas y alertas",
+          "tabletImageAlt": "Vista en tablet DBR77: módulos y navegación"
+        },
+        "vision": {
+          "title": "DBR77 Vision AI (Edge)",
+          "description": "Seguridad (EPP), defectos de calidad, presencia y anomalías de proceso — con procesamiento local donde los milisegundos importan.",
+          "bullets": {
+            "b1": "Decisiones con latencia cero",
+            "b2": "Menos datos salen de la planta",
+            "b3": "Integración opcional con Digital Twin"
+          },
+          "imageAlt": "Sistema de visión Edge AI en un entorno industrial"
+        }
+      }
+    },
+    "start": {
+      "label": "COMENZAR",
+      "title": "Véalo vs. pruébelo en su línea.",
+      "description": "Dos vías de entrada: demo (sin instalación) y piloto (datos reales + informe).",
+      "demoCard": {
+        "title": "Demo en línea",
+        "description": "Acceda a una fábrica de ejemplo: dashboards, alertas, tareas y vistas de operador — sin hardware y sin instalación.",
+        "button": "Iniciar demo"
+      },
+      "pilotCard": {
+        "title": "Piloto en planta",
+        "description": "Realizamos una configuración en 1–3 estaciones de trabajo o una sola línea. Obtiene datos, información y una recomendación de escalado.",
+        "button": "Planificar un piloto"
+      }
+    },
+    "resources": {
+      "label": "BASE DE CONOCIMIENTO",
+      "title": "Masterclass, Factory on Air y know-how de implementación.",
+      "description": "Materiales que acortan el ciclo de decisión y le ayudan a preparar un piloto sin caos.",
+      "items": {
+        "masterclass": {
+          "title": "DBR77 Masterclass",
+          "description": "Implementación IIoT paso a paso: KPIs, datos, integraciones, piloto y escalado."
+        },
+        "factoryOnAir": {
+          "title": "Factory on Air",
+          "description": "Conversaciones reales y casos de estudio de planta: qué funciona, qué no y cómo medir el impacto."
+        },
+        "knowledgeBase": {
+          "title": "Base de conocimiento",
+          "description": "Listas de verificación para pilotos, integraciones OT/TI, seguridad y mejores prácticas."
+        }
+      },
+      "link": "Ver recursos →"
+    },
+    "finalCta": {
+      "title": "No compre a ciegas.",
+      "description": "Vea la demo sin instalar nada — o permítanos demostrar el valor con un piloto en su línea."
+    }
+  },
+  "iiotDemo": {
+    "hero": {
+      "title": "Vea DBR77 IIoT en acción",
+      "subtitle": "La demo muestra la capa de datos, los estados y las alertas — y cómo las señales se traducen en acciones concretas. Sin instalación. Sin hardware.",
+      "cta": {
+        "pilot": "Prefiero un piloto en planta",
+        "back": "Volver a la página del producto"
+      }
+    },
+    "options": {
+      "video": {
+        "title": "Tour en vídeo rápido (2 min)",
+        "description": "La forma más rápida de entender qué recopilamos, cómo entregamos los datos y cómo es la \"acción en planta\".",
+        "placeholder": "Vídeo próximamente"
+      },
+      "interactive": {
+        "title": "Demo interactiva",
+        "description": "Acceda a un entorno de demostración con datos de ejemplo — dashboards, alertas, tareas y vistas de operador.",
+        "success": {
+          "title": "¡Todo listo!",
+          "description": "Le enviaremos las instrucciones de acceso por correo electrónico. Si lo desea, puede pasar directamente a un piloto.",
+          "cta": "Planificar un piloto"
+        }
+      }
+    },
+    "form": {
+      "labels": {
+        "fullName": "Nombre completo",
+        "company": "Empresa",
+        "email": "Correo electrónico corporativo"
+      },
+      "placeholders": {
+        "fullName": "María García",
+        "company": "Su empresa",
+        "email": "maria@empresa.com"
+      },
+      "errors": {
+        "fullNameRequired": "El nombre completo es obligatorio",
+        "companyRequired": "La empresa es obligatoria",
+        "emailRequired": "El correo electrónico es obligatorio",
+        "emailInvalid": "Introduzca una dirección de correo electrónico válida"
+      },
+      "submit": "Iniciar demo",
+      "note": {
+        "prefix": "Respetamos sus datos. También puede comenzar con un",
+        "link": "piloto",
+        "suffix": "."
+      }
+    },
+    "see": {
+      "label": "Qué verá",
+      "title": "Acción en planta, no solo gráficos",
+      "description": "La demo muestra cómo los datos IIoT se convierten en alertas, tareas y decisiones operativas.",
+      "cards": {
+        "mobile": {
+          "title": "Móvil: tareas y alertas",
+          "description": "Los operadores ven tareas, listas de verificación y notificaciones en tiempo real."
+        },
+        "tablet": {
+          "title": "Tablet: módulos y navegación",
+          "description": "Una plataforma, diferentes módulos — adaptados al rol y al proceso."
+        }
+      }
+    }
+  },
+  "iiotPilot": {
+    "hero": {
+      "title": "Piloto de DBR77 IIoT en su planta",
+      "subtitle": "Desplegamos una configuración en 1–3 estaciones de trabajo o una sola línea. Usted recopila datos reales — y recibe un informe con información y una recomendación de escalado.",
+      "cta": {
+        "primary": "Planificar un piloto",
+        "secondary": "Prefiero la demo en línea"
+      }
+    },
+    "whatYouGet": {
+      "label": "Qué obtiene",
+      "title": "Un piloto que entrega conclusiones sólidas",
+      "items": {
+        "i1": "Kit de piloto: Status Deck y/o Data Hub (opcionalmente Vision).",
+        "i2": "Configuración del panel IIoT: dashboards, alertas, estados y motivos de parada.",
+        "i3": "Soporte de implementación y ajuste durante el piloto (para que los datos sean fiables).",
+        "i4": "Informe final: pérdidas, causas raíz, recomendaciones y plan de escalado."
+      },
+      "badges": {
+        "checklist": "Lista de verificación de inicio",
+        "scope": "1 línea / 1–3 estaciones de trabajo",
+        "connectivity": "Wi‑Fi / LoRaWAN / LTE",
+        "report": "Informe y escalado"
+      }
+    },
+    "timeline": {
+      "label": "Cómo funciona",
+      "title": "Proceso del piloto (paso a paso)",
+      "steps": {
+        "s1": {
+          "title": "Descubrimiento (30–60 min)",
+          "description": "Objetivos, KPIs, selección de línea/estación de trabajo y fuentes de datos disponibles."
+        },
+        "s2": {
+          "title": "Selección del kit",
+          "description": "Deck / Hub / integración de señales + Vision opcional."
+        },
+        "s3": {
+          "title": "Instalación y configuración",
+          "description": "Montaje, mapeo de datos, alertas y roles de usuario."
+        },
+        "s4": {
+          "title": "Período de medición",
+          "description": "Recopilación de datos de trabajo real + ajustes (para evitar lagunas)."
+        },
+        "s5": {
+          "title": "Informe final",
+          "description": "Información, pérdidas, causas raíz y recomendación de escalado."
+        }
+      },
+      "note": {
+        "prefix": "Si prefiere comenzar sin una llamada, inicie la",
+        "link": "demo en línea",
+        "suffix": "."
+      }
+    },
+    "checklist": {
+      "label": "Lista de verificación",
+      "title": "Qué necesitamos de usted",
+      "items": {
+        "i1": "Seleccione una línea o 1–3 estaciones de trabajo para el piloto.",
+        "i2": "Defina qué medimos: paradas/ciclos/piezas/energía/calidad/seguridad.",
+        "i3": "Fuentes de datos disponibles: PLC/Modbus, IO, declaraciones, visión.",
+        "i4": "Condiciones de conectividad: Wi‑Fi / LoRaWAN / LTE (o inestable/desconocido).",
+        "i5": "Un responsable de Producción/Mantenimiento/TI durante la duración del piloto."
+      },
+      "badges": {
+        "location": "Ubicación de la planta",
+        "scope": "Alcance de máquinas",
+        "connectivity": "Conectividad"
+      }
+    },
+    "form": {
+      "title": "Formulario del piloto",
+      "success": {
+        "title": "Solicitud enviada",
+        "description": "Le responderemos con un alcance y calendario propuestos. Si lo desea, también puede iniciar la demo.",
+        "ctaDemo": "Demo en línea",
+        "ctaProduct": "Página del producto"
+      },
+      "labels": {
+        "fullName": "Nombre completo",
+        "company": "Empresa",
+        "workEmail": "Correo electrónico corporativo",
+        "phone": "Teléfono (opcional)",
+        "plantLocation": "Ubicación de la planta (opcional)",
+        "scale": "Escala (obligatorio)",
+        "connectivity": "Conectividad (opcional)",
+        "goal": "Objetivo principal del piloto (obligatorio)"
+      },
+      "placeholders": {
+        "fullName": "María García",
+        "company": "Su empresa",
+        "workEmail": "maria@empresa.com",
+        "phone": "+34 …",
+        "plantLocation": "Ciudad",
+        "goal": "p. ej., identificar causas de parada, calcular OEE, habilitar alertas de QA/seguridad…"
+      },
+      "scaleOptions": {
+        "placeholder": "Seleccione…",
+        "o1": "1–10 máquinas/estaciones de trabajo",
+        "o2": "11–50",
+        "o3": "51–200",
+        "o4": "200+"
+      },
+      "connectivityOptions": {
+        "placeholder": "Seleccione…",
+        "wifi": "Wi‑Fi",
+        "ethernet": "Ethernet",
+        "sim": "LTE / SIM",
+        "lorawan": "LoRaWAN",
+        "unknown": "No estoy seguro / necesita evaluación"
+      },
+      "errors": {
+        "fullNameRequired": "El nombre completo es obligatorio",
+        "companyRequired": "La empresa es obligatoria",
+        "emailRequired": "El correo electrónico es obligatorio",
+        "emailInvalid": "Introduzca una dirección de correo electrónico válida",
+        "scaleRequired": "Seleccione una escala",
+        "goalRequired": "Describa el objetivo principal del piloto"
+      },
+      "submit": "Enviar solicitud",
+      "privacy": {
+        "prefix": "Al enviar el formulario acepta la",
+        "link": "política de privacidad",
+        "suffix": "."
+      }
+    }
+  },
+  "resourcesPage": {
+    "hero": {
+      "title": "Recursos y base de conocimiento",
+      "subtitle": "Masterclass, materiales de implementación y mejores prácticas para ayudarle a comenzar más rápido con DBR77 IIoT."
+    },
+    "grid": {
+      "title": "Elija un recurso",
+      "description": "Desde una visión general rápida hasta detalles técnicos — todo lo que acelera las decisiones y prepara un piloto.",
+      "visit": "Abrir",
+      "download": "Descargar PDF"
+    },
+    "items": {
+      "walkthrough": {
+        "title": "Visión general de DBR77 IIoT en 2 minutos",
+        "description": "El camino más corto para entender: de dónde vienen los datos, cómo se entregan y cómo es la acción en planta."
+      },
+      "architecture": {
+        "title": "Arquitectura y flujo de datos",
+        "description": "Visión técnica: fuentes de datos, edge/hub, seguridad de transmisión y modelo de despliegue."
+      },
+      "security": {
+        "title": "Seguridad OT/TI (whitepaper)",
+        "description": "Cómo abordamos la seguridad en entornos industriales: acceso, segmentación, actualizaciones y mejores prácticas."
+      },
+      "masterclass": {
+        "title": "DBR77 Masterclass",
+        "description": "Implementación IIoT paso a paso: KPIs, datos, integraciones, piloto y escalado."
+      },
+      "blog": {
+        "title": "Blog de DBR77",
+        "description": "Perspectivas de implementación, Industria 4.0 práctica y ejemplos concretos de planta."
+      },
+      "factoryOnAir": {
+        "title": "Factory on Air",
+        "description": "Conversaciones reales y casos de estudio de planta: qué funciona, qué no y cómo medir el impacto."
+      }
+    }
+  },
+  "pricing": {
+    "badge": "Precios de DBR77 IIoT",
+    "heroTitle": "Precios personalizados.",
+    "heroTitleAccent": "Porque cada planta es diferente.",
+    "heroDescription": "No hay planes de precios rígidos — porque su fábrica tiene máquinas diferentes, infraestructura diferente y prioridades diferentes a la de al lado. La oferta se prepara tras un piloto, cuando disponemos de datos reales.",
+    "ctaPilot": "Planificar un piloto",
+    "ctaDemo": "Ver la demo primero",
+    "heroNote": "Piloto = datos reales de su línea + informe + oferta de precios.",
+    "whyLabel": "POR QUÉ FIJAMOS PRECIOS ASÍ",
+    "whyTitle": "La transparencia en precios comienza por entender su planta.",
+    "whyDescription": "Los precios SaaS del mercado asumen un entorno unificado. La manufactura no funciona así.",
+    "whyItems": {
+      "everyPlant": {
+        "title": "Cada planta es diferente",
+        "desc": "Número de máquinas, protocolos de comunicación, necesidades de integración ERP/MES — todo esto afecta el alcance del despliegue."
+      },
+      "modular": {
+        "title": "Modular desde la base",
+        "desc": "Puede empezar solo con IoT y Status Deck, luego añadir MES, APS, Digital Twin — solo paga por lo que despliega."
+      },
+      "roi": {
+        "title": "ROI antes de firmar el contrato",
+        "desc": "Un piloto en 1–3 estaciones de trabajo nos permite calcular el retorno juntos antes de un despliegue completo."
+      },
+      "saas": {
+        "title": "SaaS sin costes ocultos",
+        "desc": "Una cuota de suscripción mensual. Sin costes de licencia por usuario, sin tarifas de módulos ocultas en la letra pequeña."
+      }
+    },
+    "processLabel": "PROCESO",
+    "processTitle": "Del descubrimiento a la oferta — en 4 pasos.",
+    "processDescription": "No enviamos una lista de precios en PDF. Juntos calculamos el ROI con sus datos.",
+    "steps": {
+      "s1": {
+        "title": "Descubrimiento (30–60 min)",
+        "desc": "Hablamos de sus objetivos, máquinas, KPIs y disponibilidad de datos. Sin discurso de ventas — solo datos concretos."
+      },
+      "s2": {
+        "title": "Piloto en 1–3 estaciones de trabajo",
+        "desc": "Instalamos el hardware y configuramos la plataforma. Tras 2–4 semanas tiene datos sólidos e información."
+      },
+      "s3": {
+        "title": "Informe y presupuesto de escalado",
+        "desc": "Basándonos en el piloto, preparamos una oferta de despliegue completo con ROI preciso y cronograma."
+      },
+      "s4": {
+        "title": "Despliegue y escalado",
+        "desc": "Escalamos por etapas en toda la planta o plantas adicionales. Usted paga por módulos y estaciones de trabajo activos."
+      }
+    },
+    "subscriptionBadge": "Suscripción mensual",
+    "subscriptionTitle": "Una tarifa.",
+    "subscriptionTitleLine2": "Todo incluido.",
+    "subscriptionDescription": "La suscripción SaaS cubre la plataforma, soporte, actualizaciones y asistencia en el despliegue. Escala = número de estaciones de trabajo y módulos activos.",
+    "includedTitle": "Qué está incluido",
+    "includedItems": {
+      "i1": "Gestor de despliegue dedicado",
+      "i2": "Configuración de dashboards y alertas",
+      "i3": "Integración con su ERP/MES (si es necesario)",
+      "i4": "Soporte durante y después del piloto",
+      "i5": "Informe final del piloto con recomendación de escalado",
+      "i6": "Formación del equipo operativo y de TI",
+      "i7": "SLA y monitorización 24/7",
+      "i8": "Actualizaciones de la plataforma incluidas en la suscripción"
+    },
+    "finalCtaTitle": "Comencemos con una conversación.",
+    "finalCtaDescription": "30 minutos de descubrimiento → piloto → oferta con ROI concreto. Sin listas de precios rígidas, sin sorpresas.",
+    "finalCtaPilot": "Planificar un piloto",
+    "finalCtaDemo": "Demo primero",
+    "finalCtaContact": "Escríbanos"
+  },
+  "iiotExtra": {
+    "painPoints": {
+      "label": "¿LE SUENA FAMILIAR?",
+      "title": "Su fábrica produce — pero ¿cuánto pierde?",
+      "description": "Las plantas que no miden en tiempo real pierden un 20–30% de OEE por causas que nadie puede explicar dentro del mismo turno.",
+      "items": {
+        "downtime": {
+          "title": "Paradas — y nadie sabe por qué",
+          "description": "La máquina está parada. El operador declara \"otro\". Solo después del turno alguien revisa en Excel. Pérdida: cientos a miles por hora."
+        },
+        "delayedData": {
+          "title": "Datos con una semana de retraso",
+          "description": "El informe de la semana pasada no ayuda esta mañana. SCADA recopila datos pero no escala ni asigna tareas. La decisión llega a posteriori de todas formas."
+        },
+        "retrofit": {
+          "title": "Retrofit imposible sin CAPEX",
+          "description": "Las plataformas IIoT empresariales requieren reemplazo de infraestructura o meses de trabajo de proyecto. ¿Máquinas antiguas? Proyecto separado, presupuesto separado, integrador separado."
+        }
+      }
+    },
+    "roiMetrics": {
+      "items": {
+        "opCosts": {
+          "value": "−25%",
+          "label": "costes operativos"
+        },
+        "oee": {
+          "value": "+15 pp",
+          "label": "aumento de OEE"
+        },
+        "roiPeriod": {
+          "value": "2–12 meses",
+          "label": "período de recuperación (ROI)"
+        },
+        "pilotInstall": {
+          "value": "<48h",
+          "label": "instalación del piloto"
+        }
+      },
+      "disclaimer": "Datos estimados basados en referencias del sector y resultados de despliegues piloto."
+    },
+    "comparison": {
+      "label": "COMPARACIÓN",
+      "title": "DBR77 IIoT vs. plataformas empresariales.",
+      "description": "¿Por qué los fabricantes están abandonando las plataformas IIoT empresariales y SCADA a favor de una solución dedicada para plantas medianas?",
+      "headers": {
+        "feature": "Característica",
+        "dbr77": "DBR77 IIoT",
+        "enterprise": "Plataforma IIoT empresarial",
+        "scada": "SCADA empresarial"
+      },
+      "rows": {
+        "deployTime": {
+          "feature": "Tiempo de despliegue",
+          "dbr77": "<48h piloto, semanas completo",
+          "enterprise": "Meses–años, requiere integrador",
+          "scada": "Semanas + integrador externo"
+        },
+        "startCost": {
+          "feature": "Coste de inicio",
+          "dbr77": "Bajo — empiece con 1 estación de trabajo",
+          "enterprise": "Alto CAPEX, licencia empresarial",
+          "scada": "Servidor bajo, alto coste de integración"
+        },
+        "retrofit": {
+          "feature": "Retrofit de máquinas heredadas",
+          "dbr77": "Sí — Status Deck sin PLC",
+          "enterprise": "Requiere reemplazo de hardware o proyecto de integración",
+          "scada": "Posible, pero requiere configuración e integrador"
+        },
+        "realtime": {
+          "feature": "Datos en tiempo real",
+          "dbr77": "Sí — MQTT/Modbus/LoRaWAN/ETH",
+          "enterprise": "Sí, pero requiere hardware edge adicional",
+          "scada": "Sí, pero sin escalados nativos"
+        },
+        "ai": {
+          "feature": "IA y escalados",
+          "dbr77": "Integrado — alertas, tareas, edge",
+          "enterprise": "Sin IA nativa, integración externa",
+          "scada": "Sin IA nativa, scripting manual"
+        },
+        "mobile": {
+          "feature": "Planta móvil",
+          "dbr77": "Sí — iOS/Android, nativo",
+          "enterprise": "Limitado, requiere licencia",
+          "scada": "Limitado, orientado a escritorio"
+        },
+        "lockin": {
+          "feature": "Dependencia del proveedor",
+          "dbr77": "Ninguna — API abierta",
+          "enterprise": "Sí (hardware + ecosistema cerrado)",
+          "scada": "Sí (integrador + scripting propietario)"
+        },
+        "support": {
+          "feature": "Soporte local",
+          "dbr77": "Sí — equipo local",
+          "enterprise": "A través de distribuidor",
+          "scada": "Sin soporte directo"
+        }
+      },
+      "disclaimer": "Comparación basada en datos públicos, reseñas de usuarios (G2, Gartner) y experiencia de despliegue."
+    },
+    "deployments": {
+      "label": "DESPLIEGUES",
+      "title": "Plantas que ya miden.",
+      "description": "Resultados anónimos de pilotos y despliegues de DBR77 IIoT en fábricas europeas.",
+      "cases": {
+        "furniture": {
+          "industry": "Fabricación de muebles",
+          "size": "~120 máquinas, 2 plantas",
+          "result": "Identificó las causas del 80% de las paradas no planificadas en 3 semanas de piloto. OEE subió del 61% al 74% en 4 meses.",
+          "roi": "ROI: ~7 meses"
+        },
+        "food": {
+          "industry": "Alimentación y bebidas",
+          "size": "1 línea de envasado",
+          "result": "Status Deck en 8 estaciones de trabajo — eliminó los informes manuales. El tiempo de respuesta a averías se redujo de 23 a 6 minutos.",
+          "roi": "ROI: ~5 meses"
+        },
+        "automotive": {
+          "industry": "Automoción (Tier 2)",
+          "size": "35 máquinas CNC",
+          "result": "Despliegue de Data Hub + integración con ERP existente. Reducción del 34% en microparadas. Alertas en tiempo real a operadores.",
+          "roi": "ROI: ~9 meses"
+        }
+      },
+      "disclaimer": "Nombres de clientes anonimizados. Los resultados corresponden a pilotos y despliegues específicos — pueden variar según la planta."
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "El primer sistema operativo de planta <aiNative>nativo de IA</aiNative>.",
+      "subtitle": "De los datos de producción a decisiones inteligentes — en un sistema unificado.",
+      "cta": {
+        "demo": "Iniciar demo interactiva",
+        "trial": "Iniciar prueba de 14 días"
+      },
+      "note": "No se requiere hardware. Fábrica de demostración incluida.",
+      "screenshotAlt": "IRIS MES Analytics — tendencias de OEE, analítica de producción y análisis de Pareto"
+    },
+    "faq": {
+      "label": "FAQ",
+      "title": "¿Preguntas? Respuestas.",
+      "moreQuestions": "¿Tiene más preguntas? Contáctenos",
+      "items": {
+        "replaceErp": {
+          "q": "¿IRIS reemplaza mi ERP?",
+          "a": "No. IRIS trabaja junto a su ERP. Cubre la brecha de ejecución operativa que los sistemas ERP nunca fueron diseñados para abordar — control de producción en tiempo real, mantenimiento impulsado por IA, ciclos de calidad y comunicación en planta."
+        },
+        "anotherMes": {
+          "q": "¿Es otro MES más?",
+          "a": "IRIS incluye capacidades MES, pero va mucho más allá. Es un sistema operativo de planta completo que integra IoT, WMS, QMS, CMMS, APS, Digital Twin e IA de razonamiento en una sola plataforma. MES es un módulo entre más de 20."
+        },
+        "needAllModules": {
+          "q": "¿Necesito todos los módulos?",
+          "a": "En absoluto. IRIS es modular por diseño. Comience con uno o dos módulos que resuelvan su mayor problema. Añada más cuando esté listo. Cada módulo tiene niveles configurables, desde básico hasta avanzado con IA."
+        },
+        "dataSecureSaas": {
+          "q": "¿Están seguros mis datos en SaaS?",
+          "a": "Sí. IRIS cuenta con certificación ISO 27001, cumplimiento SOC2, preparación para GDPR y cifrado AES-256. La arquitectura multitenant incluye aislamiento de datos a nivel de fila. Para cargas de trabajo de IA, LLMind puede ejecutarse en sus instalaciones para que los datos sensibles nunca abandonen su red."
+        },
+        "howQuickResults": {
+          "q": "¿Qué tan rápido veré resultados?",
+          "a": "La mayoría de los clientes ven valor en las primeras 2–4 semanas. El modelo SaaS significa que no hay configuración de infraestructura. Proporcionamos una fábrica de demostración con datos realistas para que su equipo aprenda antes de entrar en producción."
+        },
+        "whoDesignedFor": {
+          "q": "¿Para quién está diseñado IRIS?",
+          "a": "Empresas manufactureras con 100–5.000+ empleados. Ya sea que opere una línea de producción o veinte plantas a nivel global, IRIS escala con módulos configurables y precios escalonados."
+        },
+        "tryBeforeBuy": {
+          "q": "¿Puedo probar antes de comprar?",
+          "a": "Sí. Ofrecemos una demo interactiva con una simulación completa de fábrica y una prueba de 14 días de la plataforma completa. Un registro ligero (Google o LinkedIn) le da acceso inmediato a la demo."
+        }
+      }
+    },
+    "trustBar": {
+      "message": "Seguridad de nivel empresarial. Sus datos, sus reglas."
+    },
+    "uniqueStrengths": {
+      "label": "POR QUÉ IRIS",
+      "title": "Qué hace diferente a IRIS",
+      "link": "Explorar todas las fortalezas únicas →",
+      "items": {
+        "aiNative": {
+          "title": "Núcleo nativo de IA",
+          "description": "La IA no es un complemento. Impulsa cada módulo, cada decisión, cada recomendación."
+        },
+        "closedLoop": {
+          "title": "Ejecución en bucle cerrado",
+          "description": "De la información a la tarea y a la acción. La IA recomienda, los humanos aprueban, el sistema ejecuta."
+        },
+        "digitalTwin": {
+          "title": "Simulación con Digital Twin",
+          "description": "Pruebe cambios en una fábrica virtual antes de gastar un solo dólar en la real."
+        },
+        "modular": {
+          "title": "Modular por diseño",
+          "description": "Comience con un módulo. Añada más cuando esté listo. Sin dependencia. Sin todo o nada."
+        },
+        "plugAndPlayIot": {
+          "title": "IoT industrial plug-and-play",
+          "description": "IoT integrado que se instala rápidamente en cualquier entorno. Conecte máquinas, sensores y PLCs en horas — y comience a recopilar datos reales de inmediato."
+        },
+        "operators": {
+          "title": "Creado por operadores de fábrica",
+          "description": "Diseñado por líderes de manufactura que gestionaron plantas reales — no una empresa de software adivinando sus problemas."
+        }
+      }
+    },
+    "modules": {
+      "label": "MÓDULOS",
+      "title": "Un sistema. Todas las operaciones.",
+      "description": "Elija lo que necesita. Cada módulo comparte la misma capa de datos, la misma IA, el mismo bus de comunicación.",
+      "link": "Explorar todos los módulos →",
+      "badges": {
+        "core": "Principal",
+        "addon": "Complemento"
+      },
+      "items": {
+        "iot": {
+          "name": "IoT",
+          "description": "Datos de sensores en tiempo real y conectividad de máquinas."
+        },
+        "mes": {
+          "name": "MES",
+          "description": "Monitorización de producción, OEE, órdenes de trabajo."
+        },
+        "wms": {
+          "name": "WMS",
+          "description": "Gestión de almacén y flujo de materiales."
+        },
+        "qms": {
+          "name": "QMS",
+          "description": "Control de calidad y gestión de inspecciones."
+        },
+        "cmms": {
+          "name": "CMMS",
+          "description": "Gestión de mantenimiento y ciclo de vida de activos."
+        },
+        "aps": {
+          "name": "APS",
+          "description": "Planificación y programación avanzada."
+        },
+        "mrp": {
+          "name": "MRP",
+          "description": "Planificación de necesidades de materiales."
+        },
+        "hrm": {
+          "name": "HRM",
+          "description": "Gestión de personal y turnos."
+        },
+        "hse": {
+          "name": "HSE",
+          "description": "Salud, seguridad y medio ambiente."
+        },
+        "esg": {
+          "name": "ESG",
+          "description": "Sostenibilidad y seguimiento de carbono."
+        },
+        "dt": {
+          "name": "Digital Twin",
+          "description": "Simulación 3D y escenarios hipotéticos."
+        },
+        "kpi": {
+          "name": "KPI",
+          "description": "Dashboards en tiempo real y analítica con IA."
+        },
+        "gemba": {
+          "name": "Gemba",
+          "description": "Centro de control operativo y reuniones escalonadas."
+        },
+        "tasking": {
+          "name": "Tareas",
+          "description": "Gestión de tareas impulsada por IA con responsabilidad y ciclos de ejecución."
+        },
+        "communications": {
+          "name": "Comunicador",
+          "description": "Mensajería contextual, alertas y difusiones a toda la organización."
+        },
+        "data-ai": {
+          "name": "DATA_AI",
+          "description": "Modelos ML, LLMind y motor de recomendaciones."
+        }
+      }
+    },
+    "finalCta": {
+      "title": "Convierta los datos de producción en acción — en tiempo real.",
+      "subtitle": "Explore una fábrica de demostración en vivo, vea la gestión de tareas y comunicación impulsadas por IA en contexto, y valide el ROI antes de invertir.",
+      "walkthrough": "¿No está listo? Vea el recorrido de 2 minutos →"
+    },
+    "socialProof": {
+      "stats": {
+        "continents": "continentes desplegados",
+        "modules": "módulos operativos",
+        "years": "años de liderazgo en manufactura"
+      },
+      "badges": {
+        "saudiPartner": "Socio estratégico del Ministerio de Industria de Arabia Saudita",
+        "teamBackground": "Creado por ex-CEOs de automoción, ingenieros de Nvidia y alumni de Harvard."
+      }
+    },
+    "philosophy": {
+      "label": "LA FILOSOFÍA",
+      "title": "Medir. Optimizar. Automatizar.",
+      "note": "Cada módulo de IRIS se construye sobre este principio. No automatizamos el caos.",
+      "columns": {
+        "measure": {
+          "title": "MEDIR",
+          "subtitle": "Establecer la línea base",
+          "description": "Conecte sensores IoT, PLCs y sistemas de ejecución para capturar telemetría en tiempo real. Sin lagunas de datos. Sin hojas de cálculo manuales."
+        },
+        "optimize": {
+          "title": "OPTIMIZAR",
+          "subtitle": "Descubrimiento impulsado por IA",
+          "description": "El motor de razonamiento analiza correlaciones entre procesos, predice cuellos de botella y simula mejoras en el Digital Twin."
+        },
+        "automate": {
+          "title": "AUTOMATIZAR",
+          "subtitle": "Ejecución de precisión",
+          "description": "Implemente robots, AGVs o automatización de software exclusivamente donde la IA ha demostrado matemáticamente un retorno financiero."
+        }
+      }
+    },
+    "aiInAction": {
+      "label": "INTELIGENCIA ARTIFICIAL",
+      "title": "Hable con su fábrica.",
+      "subtitle": "Haga preguntas. Obtenga respuestas basadas en sus datos operativos reales.",
+      "prompts": {
+        "oeeLine3": "¿Cómo puedo aumentar el OEE en la Línea 3?",
+        "roiPackaging": "¿Cuál es el ROI si automatizamos el envasado?",
+        "biggestBottleneck": "¿Dónde está mi mayor cuello de botella esta semana?"
+      },
+      "poweredBy": "Impulsado por LLMind — nuestro LLM de manufactura propietario. Disponible en sus instalaciones. Sus datos nunca abandonan su red.",
+      "link": "Vea cómo funciona la IA →",
+      "chat": {
+        "headerTitle": "Asistente de IA IRIS",
+        "headerSubtitle": "Conectado a su fábrica",
+        "user1": "¿Cómo puedo aumentar el OEE en la Línea 3?",
+        "assistant1": "Basándome en sus datos de los últimos 7 días, la Línea 3 muestra picos de inactividad durante el cambio de turno. Recomiendo...",
+        "user2": "Muéstrame el desglose"
+      }
+    },
+    "operatorsSee": {
+      "label": "CONTROL OPERATIVO",
+      "title": "Gestión de tareas impulsada por IA, no solo gráficos.",
+      "description": "IRIS no solo genera gráficos. Crea acción. Cuando ocurre una anomalía, la IA asigna tareas específicas a las personas adecuadas según competencia y prioridades.",
+      "bullets": {
+        "internalLoop": "Bucle de comunicación interna: las alarmas del sistema activan mensajería directa entre miembros del equipo.",
+        "humanApproval": "Guiado por aprobación humana: la IA analiza causas raíz y recomienda soluciones, pero los líderes de planta toman las decisiones finales."
+      },
+      "link": "Vea el comunicador de equipo en acción →",
+      "screenshotAlt": "IRIS Gemba — vista general de planta con OEE en tiempo real y gestión de tareas"
+    },
+    "builtByOperators": {
+      "label": "NUESTRO ADN",
+      "title": "Creado por personas que gestionaron fábricas.",
+      "description": "IRIS no fue creado por una empresa de software que entra en manufactura. Fue diseñado por líderes de manufactura que experimentaron la complejidad operativa de primera mano.",
+      "link": "Lea nuestra historia →",
+      "screenshotAlt": "IRIS MES Supervisor Hub — desglose de OEE, alertas activas y gestión de equipo"
+    },
+    "byRole": {
+      "label": "PARA SU EQUIPO",
+      "title": "Diseñado para cada nivel de su organización.",
+      "cardAria": "{role} — vea cómo IRIS ayuda",
+      "roles": {
+        "ceoOwner": {
+          "role": "CEO / Propietario",
+          "description": "Visibilidad total en todas las operaciones. ROI validado antes de cada inversión."
+        },
+        "plantManager": {
+          "role": "Director de planta",
+          "description": "OEE en tiempo real, gestión de tareas, control de producción. Menos sorpresas."
+        },
+        "cfo": {
+          "role": "CFO",
+          "description": "Costes transparentes. Simule antes de gastar CAPEX. Sin conjeturas."
+        },
+        "qualityManager": {
+          "role": "Director de calidad",
+          "description": "Análisis de causa raíz impulsado por IA. Ciclos de inspección automatizados. Trazabilidad completa."
+        },
+        "ctoIt": {
+          "role": "CTO / TI",
+          "description": "SaaS seguro. API-first. Sin reemplazo de ERP. Cumplimiento ISO 27001."
+        }
+      }
+    },
+    "demoSchedule": {
+      "title": "Programe una demo en su región",
+      "description": "Elija su zona horaria para la mejor experiencia.",
+      "cta": "Programar →",
+      "regions": {
+        "europe": "Europa",
+        "us": "Estados Unidos",
+        "saudi": "Arabia Saudita",
+        "japan": "Japón"
+      }
+    },
+    "industries": {
+      "title": "Diseñado para la manufactura. En todas las industrias.",
+      "subtitle": "IRIS es agnóstico de industria. La plataforma se adapta a sus procesos, no al revés.",
+      "cardAlt": "Manufactura de {industry} con IRIS",
+      "items": {
+        "automotive": "Automoción",
+        "foodBeverage": "Alimentación y bebidas",
+        "pharma": "Farmacéutica",
+        "electronics": "Electrónica",
+        "heavyIndustry": "Industria pesada",
+        "generalManufacturing": "Manufactura general"
+      }
+    },
+    "roi": {
+      "blocks": {
+        "cfoValidation": {
+          "title": "Validación de ROI para el CFO",
+          "description": "Pruebe inversiones en automatización y robotización dentro de su Digital Twin. Calcule el ROI preciso basado en datos históricos y sintéticos antes de realizar cambios físicos."
+        },
+        "hiddenCosts": {
+          "title": "Elimine costes ocultos",
+          "description": "Mediante mantenimiento predictivo (CMMS) y planificación con IA (APS), IRIS reduce drásticamente el impacto financiero de cambios no planificados y tiempos de inactividad ocultos."
+        }
+      },
+      "link": "Calcule su ROI potencial →"
+    }
+  },
+  "vector": {
+    "announcementBar": {
+      "text": "Presentamos DBR77 Vector — un modelo de IA industrial de 20B parámetros entrenado con datos reales de fábrica, no de internet.",
+      "linkText": "Explorar"
+    },
+    "home": {
+      "hero": {
+        "badges": {
+          "0": "LLM de 20B parámetros",
+          "1": "1 400+ casos reales de fábrica",
+          "2": "Listo para instalación local"
+        },
+        "title": "La <gradient>IA operativa</gradient> más experimentada del mundo.",
+        "subtitle": "DBR77 Vector es el corazón de inteligencia del ecosistema DBR77 — una IA industrial entrenada con más de 1 400 casos reales de transformación de fábricas. Funciona como el especialista Lean más experimentado que haya conocido, disponible 24/7, en todas las instalaciones, con 100% de seguridad en el despliegue.",
+        "techLine": "20B parámetros · 1.400+ casos reales · 60 MB de inteligencia operativa pura",
+        "buttons": {
+          "products": "Vea Vector en nuestros productos",
+          "training": "Cómo lo entrenamos"
+        },
+        "cards": {
+          "model": {
+            "label": "MODELO",
+            "title": "DBR77 Vector LLM (20B)",
+            "description": "Un LLM industrial propietario de 20B parámetros. Ajustado con QLoRA en más de 1.400 casos reales de fábrica — muchos más datos de dominio que cualquier modelo de propósito general. Esto no es un wrapper. Es nuestro modelo."
+          },
+          "inference": {
+            "label": "INFERENCIA",
+            "title": "GPU serverless (H100)",
+            "description": "RunPod Serverless en GPUs A100/H100 de 80GB. Escala a cero cuando está inactivo. Pague solo por los segundos de inferencia — sin cómputo desperdiciado, sin servidores inactivos."
+          },
+          "security": {
+            "label": "SEGURIDAD",
+            "title": "Sus datos nunca entrenan el modelo",
+            "description": "En sus instalaciones, API privada o acceso compartido aislado. Los datos del cliente nunca se usan para entrenamiento. Pipeline CI/CD completamente auditable vía GitHub Actions."
+          }
+        }
+      },
+      "intro": {
+        "label": "QUÉ ES DBR77 VECTOR",
+        "title": "Un modelo de lenguaje construido <gradient>exclusivamente para la industria.</gradient>",
+        "subtitle": "DBR77 Vector no es un chatbot de propósito general ajustado con algunos prompts industriales. Es un modelo de lenguaje propietario — entrenado desde cero con más de 1 400 casos reales de transformación de fábricas que cubren optimización de plantas, diseño de layouts greenfield, análisis de flujos de producción, mejora de procesos y automatización en planta. El resultado es una IA que no solo entiende el lenguaje — entiende cómo funcionan realmente las fábricas y cómo se transforman.",
+        "pillars": {
+          "0": {
+            "title": "LLM propietario de 20B parámetros",
+            "text": "DBR77 Vector es un modelo de lenguaje propietario de 20B parámetros, construido específicamente para operaciones industriales. Lo entrenamos con significativamente más datos reales de fábrica de los que contiene cualquier modelo base. No usamos GPT, Claude ni ninguna API de terceros. Vector ejecuta sus propios pesos, en su propia infraestructura."
+          },
+          "1": {
+            "title": "Entrenado con QLoRA en datos reales de fábrica",
+            "text": "Más de 1.400 casos reales de transformación — 66 columnas de datos de producción por caso — estructurados en formato ChatML y utilizados para ajustar un adaptador de 60 MB mediante Quantized Low-Rank Adaptation. Sin scraping de internet."
+          },
+          "2": {
+            "title": "Razonamiento nativo de dominio",
+            "text": "Vector no solo genera texto. Razona sobre cuellos de botella, layouts, flujos de producción, secuenciación de automatización y ROI — como piensa un especialista Lean experimentado."
+          },
+          "3": {
+            "title": "Inferencia serverless en GPU (A100/H100)",
+            "text": "Desplegado en RunPod Serverless con GPUs de 80GB. Escala a cero cuando está inactivo — usted paga solo por los segundos de inferencia. Arranque en frío en menos de 60 segundos. CI/CD vía GitHub Actions y Docker Hub."
+          }
+        }
+      },
+      "trustBar": {
+        "items": {
+          "0": "LLM de 20B parámetros",
+          "1": "Ajustado con QLoRA",
+          "2": "1 400+ casos reales",
+          "3": "GPU serverless",
+          "4": "Adaptador de 60 MB",
+          "5": "Listo para instalación local"
+        }
+      },
+      "howBuilt": {
+        "label": "CÓMO SE CONSTRUYÓ VECTOR",
+        "title": "De datos de fábrica a inteligencia operativa.",
+        "description": "Cuatro etapas. Un resultado: una IA que razona como un consultor sénior con más de 15 años de experiencia.",
+        "steps": {
+          "0": {
+            "title": "Preparación de datos",
+            "description": "Más de 1.400 casos reales de transformación de despliegues en fábricas. Datos brutos de optimización con 66 columnas — que cubren flujos de producción, análisis de cuellos de botella, optimización de layout y secuenciación de automatización. Convertidos a formato ChatML estructurado como corpus de entrenamiento."
+          },
+          "1": {
+            "title": "Ajuste fino (QLoRA)",
+            "description": "Congelamos los 20 mil millones de parámetros del modelo base y añadimos pequeñas neuronas adaptadoras entrenables junto a ellos. Durante horas de entrenamiento intensivo en GPU A100, el adaptador aprendió a mapear patrones de optimización de fábricas — sin tocar los pesos del modelo original."
+          },
+          "2": {
+            "title": "El resultado: 60 MB de experiencia",
+            "description": "El modelo base (39 GB) permanece intacto. El adaptador (60 MB) contiene inteligencia operativa concentrada. Al fusionarse, el modelo se transforma — comienza a razonar como un consultor sénior con más de 15 años de experiencia."
+          },
+          "3": {
+            "title": "Despliegue serverless",
+            "description": "Empaquetado vía pipeline CI/CD (GitHub Actions a Docker Hub a RunPod Serverless). Se ejecuta en GPUs H100 de 80GB. Escala a cero cuando está inactivo. Usted paga solo por el tiempo de inferencia — sin servidores inactivos, sin cómputo desperdiciado."
+          }
+        }
+      },
+      "aiPreview": {
+        "label": "IA EN ACCIÓN",
+        "title": "Pregúntele cualquier cosa sobre su fábrica.",
+        "subtitle": "Vector no genera consejos genéricos. Razona a partir de más de 1.400 casos reales de transformación para darle respuestas específicas y accionables.",
+        "poweredBy": "Impulsado por un modelo de 20B parámetros. No es GPT. Construido con propósito.",
+        "chatHeader": "DBR77 Vector",
+        "chatSubheader": "Conectado a la inteligencia de fábrica",
+        "examples": {
+          "0": {
+            "user": "Diagnostique el mayor cuello de botella en mi línea de envasado",
+            "assistant": "Basándome en el análisis de 47 casos comparables en envasado FMCG: los principales factores de pérdida son típicamente (1) tiempos de ciclo de termosellado no optimizados — con un promedio de 23% de exceso de energía, (2) microparadas durante cambios de etiquetado, y (3) desajustes de velocidad del transportador entre estaciones de llenado y tapado. Recomiendo comenzar con un Pareto de pérdida de tiempo en sus últimos 30 turnos."
+          },
+          "1": {
+            "user": "¿Cuál es el ROI si automatizo el paletizado en la Línea 3?",
+            "assistant": "Basándome en los parámetros de su línea y 12 casos de automatización comparables: período de recuperación estimado de 14–18 meses. Variables clave: rendimiento manual actual, patrón de turnos y tasa de rechazo. Primer paso recomendado: solución cobot para menor entrada de CAPEX antes de la automatización completa con pórtico."
+          },
+          "2": {
+            "user": "Genere una hoja de ruta de transformación de 6 meses para la Planta B",
+            "assistant": "Secuenciación basada en análisis impacto-esfuerzo de plantas medianas similares: Mes 1–2: línea base de OEE + categorización de pérdidas. Mes 3: SMED dirigido en las 3 líneas con más cambios. Mes 4–5: piloto de mantenimiento predictivo en activos críticos. Mes 6: viabilidad de automatización para las estaciones de trabajo con mayor ROI."
+          }
+        }
+      },
+      "architecture": {
+        "label": "ARQUITECTURA",
+        "title": "De su pregunta a una respuesta experta.",
+        "description": "Cada consulta sigue el mismo camino seguro y serverless. Sin datos almacenados. La GPU se suspende tras la respuesta.",
+        "steps": {
+          "0": {
+            "label": "Su aplicación",
+            "sublabel": "Frontend / cliente API"
+          },
+          "1": {
+            "label": "HTTPS POST",
+            "sublabel": "Cifrado + clave API"
+          },
+          "2": {
+            "label": "RunPod Serverless",
+            "sublabel": "Orquestación de GPU"
+          },
+          "3": {
+            "label": "GPU H100 80GB",
+            "sublabel": "Se activa bajo demanda"
+          },
+          "4": {
+            "label": "Docker Runtime",
+            "sublabel": "PyTorch + handler.py"
+          },
+          "5": {
+            "label": "DBR77 Vector 20B",
+            "sublabel": "Inferencia del modelo completo"
+          },
+          "6": {
+            "label": "Respuesta JSON",
+            "sublabel": "La GPU se suspende después"
+          }
+        }
+      },
+      "stats": {
+        "items": {
+          "0": {
+            "label": "Parámetros del modelo"
+          },
+          "1": {
+            "label": "Casos reales de fábrica"
+          },
+          "2": {
+            "label": "Tamaño del adaptador PEFT"
+          },
+          "3": {
+            "label": "Arranque en frío (máx.)"
+          }
+        }
+      },
+      "securityHighlights": {
+        "label": "SEGURIDAD",
+        "title": "Diseñado para entornos donde la seguridad no es negociable.",
+        "cards": {
+          "0": {
+            "title": "Sus datos nunca entrenan el modelo",
+            "description": "El adaptador fue entrenado una vez con casos históricos anonimizados. Las consultas del cliente se procesan en memoria y se descartan. Sin registros. Sin bucle de retroalimentación."
+          },
+          "1": {
+            "title": "En sus instalaciones, API privada o serverless",
+            "description": "Elija el modelo de despliegue que se ajuste a su postura de seguridad. En sus instalaciones significa que ningún dato abandona su red."
+          },
+          "2": {
+            "title": "Pipeline CI/CD, completamente auditable",
+            "description": "GitHub Actions a Docker Hub a RunPod. Cada despliegue está versionado, es reproducible y trazable a través de todo el pipeline."
+          }
+        },
+        "linkText": "Visión completa de seguridad"
+      },
+      "comparison": {
+        "label": "COMPARACIÓN",
+        "title": "Un experto Lean que nunca duerme — comparado con las alternativas.",
+        "description": "DBR77 Vector no es IA genérica, y no es un reemplazo del juicio humano. Es la forma más escalable de llevar experiencia industrial de nivel sénior a cada decisión.",
+        "columns": {
+          "0": {
+            "name": "DBR77 Vector",
+            "tagline": "IA industrial entrenada en transformaciones reales"
+          },
+          "1": {
+            "name": "LLM genérico",
+            "tagline": "Modelo de lenguaje de propósito general"
+          },
+          "2": {
+            "name": "Consultoría tradicional",
+            "tagline": "Experiencia humana, escala limitada"
+          }
+        },
+        "vectorPros": {
+          "0": "1 400+ casos reales de producción",
+          "1": "Disponible 24/7, escalable infinitamente",
+          "2": "Despliegue en sus instalaciones o privado",
+          "3": "Refinado continuamente en producción",
+          "4": "Fracción del coste de consultoría"
+        },
+        "genericCons": {
+          "0": "Sin experiencia en fábricas ni Lean",
+          "1": "Datos enviados a nube de terceros",
+          "2": "Entrenado en internet, no en industria",
+          "3": "Sin profundidad de razonamiento operativo",
+          "4": "A menudo bloqueado por seguridad empresarial"
+        },
+        "consultingCons": {
+          "0": "Limitado por personal y desplazamientos",
+          "1": "Alto coste por proyecto",
+          "2": "El conocimiento se va con el consultor",
+          "3": "Semanas a meses para entregables",
+          "4": "Difícil de sostener a largo plazo"
+        },
+        "tableHeader": "Dimensión",
+        "rows": {
+          "0": {
+            "feature": "Arquitectura del modelo",
+            "vector": "LLM propietario de 20B parámetros, ajustado en más de 1.400 casos reales de fábrica",
+            "generic": "175B+ de propósito general, sin entrenamiento industrial",
+            "consulting": "N/A — experiencia humana"
+          },
+          "1": {
+            "feature": "Profundidad en transformación industrial",
+            "vector": "Entrenado en más de 1 400 casos reales de producción y transformación",
+            "generic": "Conocimiento lingüístico de propósito general, sin experiencia en fábricas",
+            "consulting": "Experiencia profunda, pero limitada a consultores individuales"
+          },
+          "2": {
+            "feature": "Disponibilidad y escalabilidad",
+            "vector": "Disponible 24/7 en todas las instalaciones, al instante",
+            "generic": "Disponible 24/7 pero carece de razonamiento de dominio",
+            "consulting": "Limitado por personal, desplazamientos y ciclos de proyecto"
+          },
+          "3": {
+            "feature": "Postura de seguridad",
+            "vector": "En sus instalaciones, API privada o acceso compartido aislado",
+            "generic": "Datos enviados a infraestructura cloud de terceros",
+            "consulting": "Basado en humanos, pero los documentos salen de la organización"
+          },
+          "4": {
+            "feature": "Mejora continua",
+            "vector": "Refinado mediante aprendizajes de producción anonimizados de entornos reales",
+            "generic": "Actualizado periódicamente con datos generales de internet",
+            "consulting": "Depende de la experiencia del consultor individual"
+          },
+          "5": {
+            "feature": "Eficiencia de costes",
+            "vector": "Fracción del coste de un equipo de consultoría sénior",
+            "generic": "Bajo coste, pero bajo valor industrial",
+            "consulting": "Alto coste por proyecto, difícil de sostener a largo plazo"
+          }
+        },
+        "toggleButton": "Ver comparación completa",
+        "toggleButtonHide": "Ocultar comparación completa"
+      },
+      "byRole": {
+        "label": "PARA QUIÉN ES",
+        "title": "Un motor de IA. Cada decisor.",
+        "roles": {
+          "0": {
+            "role": "CEO / Propietario",
+            "description": "Valide inversiones de transformación con razonamiento de nivel IA antes de comprometer CAPEX."
+          },
+          "1": {
+            "role": "VP de Operaciones",
+            "description": "Obtenga diagnóstico de cuellos de botella y secuenciación de mejoras sin esperar semanas por consultores."
+          },
+          "2": {
+            "role": "CTO / TI",
+            "description": "Despliegue un modelo de 20B parámetros dentro de su perímetro de seguridad. API-first. Docker-native. Completamente auditable."
+          },
+          "3": {
+            "role": "Gerente Lean / Mejora Continua",
+            "description": "Potencie su experiencia con más de 1.400 casos reales de transformación disponibles bajo demanda."
+          }
+        }
+      },
+      "faq": {
+        "label": "FAQ",
+        "title": "Preguntas técnicas, respuestas directas.",
+        "items": {
+          "0": {
+            "q": "¿Es solo un wrapper de ChatGPT?",
+            "a": "No. DBR77 Vector es un modelo propietario de 20B parámetros ajustado con QLoRA en más de 1.400 casos reales de transformación de fábricas. Tiene sus propios pesos, su propia arquitectura y su propio pipeline de inferencia. Lo entrenamos con muchos más datos industriales de los que contiene cualquier modelo base. Sin OpenAI, sin llamadas a API de terceros."
+          },
+          "1": {
+            "q": "¿Qué es QLoRA y por qué importa?",
+            "a": "QLoRA (Quantized Low-Rank Adaptation) nos permite inyectar experiencia de dominio en un modelo grande sin reentrenar los 20 mil millones de parámetros. El resultado: un adaptador de 60 MB que transforma un modelo de propósito general en un especialista en optimización de fábricas — de forma eficiente y reproducible."
+          },
+          "2": {
+            "q": "¿Puedo ejecutarlo en mis propios servidores?",
+            "a": "Sí. El modelo se ejecuta en cualquier GPU con 80GB+ de VRAM (A100, H100). Proporcionamos la imagen Docker y el adaptador. Sus datos nunca abandonan su red."
+          },
+          "3": {
+            "q": "¿Cuánto cuesta la inferencia?",
+            "a": "La arquitectura serverless significa que usted paga solo por los segundos de GPU utilizados durante la inferencia. Sin costes inactivos. Una consulta típica cuesta fracciones de céntimo. Órdenes de magnitud más barato que un proyecto de consultoría."
+          },
+          "4": {
+            "q": "¿Se usarán mis datos para entrenar el modelo?",
+            "a": "Nunca. El adaptador fue entrenado una vez con casos históricos anonimizados. Las consultas del cliente se procesan en memoria y se descartan tras la sesión. Sin registros. Sin bucle de retroalimentación de entrenamiento con datos del cliente."
+          },
+          "5": {
+            "q": "¿En qué se diferencia de contratar un consultor?",
+            "a": "Un consultor Lean sénior cuesta miles por día y atiende una planta a la vez. Vector ofrece una profundidad de razonamiento comparable — disponible 24/7, en todas las instalaciones, a una fracción del coste. Potencia a los consultores en lugar de reemplazarlos."
+          },
+          "6": {
+            "q": "¿Qué sucede durante un arranque en frío?",
+            "a": "Cuando la GPU se activa desde inactividad, el modelo (39 GB) y el adaptador (60 MB) se cargan en VRAM. Esto tarda menos de 60 segundos. Las consultas posteriores dentro de la sesión son casi instantáneas."
+          }
+        }
+      },
+      "finalCta": {
+        "label": "¿LISTO PARA VERLO EN ACCIÓN?",
+        "title": "Vea lo que una IA industrial de 20B parámetros puede hacer por su fábrica.",
+        "subtitle": "LLM industrial propietario de 20B parámetros. Ajustado en más de 1.400 casos reales. Inferencia serverless en H100. Listo para instalación local. Pruébelo en Consultify, Digital Twin, IoT o Marketplace.",
+        "buttons": {
+          "demo": "Solicitar una demo",
+          "products": "Explorar productos",
+          "security": "Revisar seguridad"
+        }
+      },
+      "bento": {
+        "label": "POR QUÉ VECTOR",
+        "title": "La IA genérica conoce el lenguaje. Vector conoce las fábricas.",
+        "description": "Entrenado en más de 1 400 casos reales que abarcan optimización de plantas, diseño de layouts greenfield, análisis de flujos de producción, mejora de procesos y automatización en planta — Vector cierra la brecha entre un chatbot de propósito general y un consultor Lean sénior con 20 años de experiencia práctica.",
+        "painPoints": {
+          "0": {
+            "title": "Las fábricas necesitan experiencia, no otro chatbot",
+            "description": "La IA genérica puede resumir texto, pero no puede diagnosticar un cuello de botella, secuenciar un despliegue de transformación ni razonar sobre compensaciones de layout. Las fábricas necesitan profundidad de dominio que solo proviene de experiencia operativa real."
+          },
+          "1": {
+            "title": "Los mejores consultores son caros, lentos y difíciles de escalar",
+            "description": "Un especialista Lean sénior cuesta miles por día, está disponible durante semanas y solo puede atender una planta. ¿Y si el mismo calibre de experiencia estuviera disponible 24/7, al instante, en todas las instalaciones?"
+          },
+          "2": {
+            "title": "La IA pública es un riesgo de seguridad para operaciones industriales",
+            "description": "Enviar datos de producción, layouts y planes de transformación a LLMs públicos es inaceptable para la mayoría de los fabricantes. Necesitan IA que se ejecute dentro de su perímetro de seguridad — no fuera de él."
+          }
+        },
+        "pageTabs": {
+          "0": {
+            "title": "Entrenamiento",
+            "description": "Cómo construimos la IA operativa más experimentada del mundo — y cómo sigue aprendiendo."
+          },
+          "1": {
+            "title": "Despliegue",
+            "description": "Adaptado a su infraestructura. 100% seguro. En sus instalaciones, API privada o acceso compartido."
+          },
+          "2": {
+            "title": "Productos",
+            "description": "Experimente Vector a través de Consultify, Digital Twin, IoT y Marketplace."
+          },
+          "3": {
+            "title": "Seguridad",
+            "description": "Por qué DBR77 Vector es la forma más segura de llevar IA a las operaciones industriales."
+          }
+        },
+        "featureStats": {
+          "casesValue": "1 400+",
+          "casesLabel": "Casos industriales reales",
+          "securityValue": "100%",
+          "securityLabel": "Seguridad en el despliegue"
+        },
+        "learnMore": "Más información"
+      }
+    },
+    "training": {
+      "hero": {
+        "badge": "ENTRENAMIENTO",
+        "title": "Cómo construimos la IA operativa más experimentada <gradient>del mundo.</gradient>",
+        "subtitle": "DBR77 Vector es un LLM propietario de 20B parámetros, ajustado con QLoRA en más de 1.400 casos reales de transformación de fábricas. No texto de internet. No datos sintéticos. Diagnósticos reales, layouts reales, despliegues de automatización reales — estructurados en ChatML y destilados en un modelo específico de dominio que sabe más sobre fábricas que cualquier IA de propósito general.",
+        "techLine": "DBR77 Vector 20B · QLoRA · dataset de 66 columnas · ChatML · 1.400+ casos reales · A100/H100"
+      },
+      "specs": {
+        "items": {
+          "0": {
+            "value": "20B",
+            "label": "Parámetros del modelo base"
+          },
+          "1": {
+            "value": "1,400+",
+            "label": "Casos reales de fábrica"
+          },
+          "2": {
+            "value": "60 MB",
+            "label": "Tamaño del adaptador PEFT"
+          },
+          "3": {
+            "value": "66",
+            "label": "Columnas de datos por caso"
+          }
+        }
+      },
+      "pipeline": {
+        "label": "PIPELINE DE ENTRENAMIENTO",
+        "title": "De datos brutos de fábrica a inteligencia operativa.",
+        "description": "Cuatro etapas. Cada una fundamentada en decisiones reales de ingeniería, no en abstracciones de marketing.",
+        "steps": {
+          "0": {
+            "title": "1.400+ casos reales, 66 columnas cada uno",
+            "body": "El corpus de entrenamiento no fue extraído de internet. Consiste en más de 1.400 casos reales de transformación de fábricas — cada uno con 66 columnas de datos estructurados que cubren flujos de producción, análisis de cuellos de botella, optimización de layout y secuenciación de automatización. Datos CSV brutos, no benchmarks sintéticos."
+          },
+          "1": {
+            "title": "Estructurado en formato ChatML",
+            "body": "Cada caso se transforma en una conversación estructurada [System] → [User] → [Assistant] usando el protocolo ChatML. El prompt de sistema define el rol de Vector como consultor industrial sénior. El usuario proporciona el contexto de la fábrica. El asistente entrega el análisis experto. Esta estructura enseña al modelo cómo razonar, no solo qué decir."
+          },
+          "2": {
+            "title": "Ajustado para crear DBR77 Vector (20B)",
+            "body": "Partiendo de una arquitectura base de 20 mil millones de parámetros, aplicamos QLoRA (Quantized Low-Rank Adaptation) para inyectar cantidades masivas de conocimiento real de fábricas. El resultado no es un adaptador delgado sobre el modelo de otro — es DBR77 Vector, un LLM propietario que contiene más datos de transformación industrial que cualquier modelo del mercado. El entrenamiento se ejecuta en GPUs A100. La experiencia de dominio está integrada en los pesos."
+          },
+          "3": {
+            "title": "Desplegado vía CI/CD a GPUs serverless",
+            "body": "El modelo entrenado se empaqueta en un contenedor Docker (PyTorch + handler.py personalizado), se sube a Docker Hub vía GitHub Actions y se despliega en RunPod Serverless en GPUs H100 de 80GB. Todo el pipeline está automatizado, versionado y es reproducible. Arranque en frío en menos de 60 segundos. Pague solo por el tiempo de inferencia."
+          }
+        }
+      },
+      "competencies": {
+        "label": "COMPETENCIAS",
+        "title": "Lo que Vector sabe — y por qué importa.",
+        "description": "Piense en Vector como el especialista Lean más experimentado que haya conocido. Estas son las competencias que aporta a cada conversación, cada análisis, cada recomendación.",
+        "items": {
+          "0": {
+            "title": "Diagnóstico de fábrica",
+            "description": "Identifique cuellos de botella, desperdicios ocultos y las áreas de intervención de mayor valor.",
+            "bullets": {
+              "0": "Análisis de flujo de producción e identificación de restricciones",
+              "1": "Categorización de pérdidas de OEE y marco de causa raíz",
+              "2": "Priorización de oportunidades de mejora por impacto"
+            }
+          },
+          "1": {
+            "title": "Hoja de ruta de transformación",
+            "description": "Convierta hallazgos fragmentados en un camino secuenciado y listo para la junta, del diagnóstico a la ejecución.",
+            "bullets": {
+              "0": "Secuenciación de iniciativas con lógica de dependencias",
+              "1": "Estimación de CAPEX y cronograma",
+              "2": "Planificación de despliegue basada en hitos"
+            }
+          },
+          "2": {
+            "title": "Soporte a decisiones de producción",
+            "description": "Conecte datos, simulación y contexto operativo antes de invertir en cambios físicos.",
+            "bullets": {
+              "0": "Interpretación de resultados de simulación y comparación de escenarios",
+              "1": "Razonamiento de layout y flujo de materiales",
+              "2": "Análisis de escenarios hipotéticos para compensaciones operativas"
+            }
+          },
+          "3": {
+            "title": "Razonamiento de ROI",
+            "description": "Enmarque iniciativas con casos de negocio, compensaciones y lógica de resultados medibles.",
+            "bullets": {
+              "0": "Marco de NPV, IRR y período de recuperación",
+              "1": "Análisis de sensibilidad para supuestos clave",
+              "2": "Priorización de inversiones entre iniciativas competidoras"
+            }
+          },
+          "4": {
+            "title": "Estrategia de automatización",
+            "description": "Recomiende dónde automatizar, qué automatizar primero y cómo reducir el riesgo de despliegue.",
+            "bullets": {
+              "0": "Evaluación del potencial de automatización a nivel de proceso",
+              "1": "Coincidencia de tecnología y razonamiento de integrador",
+              "2": "Planificación de despliegue por fases con mitigación de riesgos"
+            }
+          },
+          "5": {
+            "title": "Lean y excelencia operativa",
+            "description": "Aplique pensamiento Lean de clase mundial fundamentado en experiencia real de fábrica, no en teoría de libro de texto.",
+            "bullets": {
+              "0": "Mapeo de flujo de valor e identificación de desperdicios",
+              "1": "Razonamiento de Kaizen, 5S, SMED y TPM",
+              "2": "Diseño de programas de mejora continua"
+            }
+          }
+        }
+      },
+      "cta": {
+        "label": "¿LISTO PARA VERLO?",
+        "title": "20B parámetros. Adaptador de 60 MB. Disponible en su infraestructura.",
+        "subtitle": "Despliegue en sus instalaciones, a través de una API privada, o pruébelo al instante en nuestros productos. El mismo modelo, la misma profundidad de razonamiento — donde lo necesite.",
+        "buttons": {
+          "demo": "Solicitar una demo",
+          "deployment": "Opciones de despliegue",
+          "products": "Probar en nuestros productos"
+        }
+      }
+    },
+    "deployment": {
+      "hero": {
+        "badge": "DESPLIEGUE",
+        "title": "Adaptado a sus necesidades. <gradient>100% seguro.</gradient>",
+        "subtitle": "Un modelo base de 39 GB + adaptador de 60 MB, empaquetado en Docker, desplegado vía CI/CD a GPUs serverless H100 — o instalado directamente en su infraestructura. Elija el modelo de despliegue que se ajuste a su postura de seguridad. Actualice cuando esté listo.",
+        "techLine": "Docker · RunPod Serverless · H100 80GB · GitHub Actions CI/CD · <60s arranque en frío"
+      },
+      "models": {
+        "label": "MODELOS DE DESPLIEGUE",
+        "title": "¿Qué modelo se adapta a su situación?",
+        "description": "No hay elección incorrecta. Cada modelo ofrece la misma inteligencia Vector con la misma profundidad de dominio. La diferencia es dónde se ejecuta y quién gestiona la infraestructura.",
+        "bestForLabel": "Ideal para",
+        "items": {
+          "0": {
+            "title": "En sus instalaciones",
+            "tagline": "Su infraestructura. Sus reglas. Ningún dato sale.",
+            "description": "Ejecute DBR77 Vector completamente en los servidores propios del cliente. Los datos de producción, planes de transformación y razonamiento de IA nunca abandonan el perímetro de seguridad del cliente.",
+            "bestFor": "Industrias reguladas, propiedad intelectual sensible, políticas de seguridad internas estrictas y entornos gobernados por OT.",
+            "highlights": {
+              "0": "Control total sobre el runtime del modelo, datos y acceso",
+              "1": "Sin dependencia de red externa para la inferencia",
+              "2": "Mayor alineación con requisitos legales, de OT y de compras",
+              "3": "Ideal para plantas con redes aisladas o restringidas"
+            }
+          },
+          "1": {
+            "title": "API dedicada privada",
+            "tagline": "Entorno aislado. Nivel empresarial. Más rápido que en sus instalaciones.",
+            "description": "Un entorno alojado dedicado exclusivamente para un cliente, con aislamiento total, rendimiento predecible y sin infraestructura compartida.",
+            "bestFor": "Empresas que desean aislamiento y seguridad sin gestionar la infraestructura subyacente ellas mismas.",
+            "highlights": {
+              "0": "Cómputo y almacenamiento dedicados — sin multitenencia",
+              "1": "Controles de acceso y cifrado específicos del cliente",
+              "2": "Despliegue más rápido que en instalaciones propias con seguridad comparable",
+              "3": "Actualizaciones y escalado gestionados sin carga interna de DevOps"
+            }
+          },
+          "2": {
+            "title": "API compartida",
+            "tagline": "Inicio rápido. Baja fricción. Perfecto para pilotos.",
+            "description": "Una vía de entrada de menor fricción para programas piloto, talleres y experimentación rápida — aún gobernada por políticas de seguridad de nivel empresarial.",
+            "bestFor": "Evaluación rápida, pilotos guiados, talleres de formación y casos de uso exploratorios de menor sensibilidad.",
+            "highlights": {
+              "0": "Tiempo más rápido hasta el primer valor",
+              "1": "Menor coste de entrada y onboarding más simple",
+              "2": "Las políticas de seguridad empresarial siguen aplicándose",
+              "3": "Ruta de actualización fácil a privado o en sus instalaciones cuando esté listo"
+            }
+          }
+        }
+      },
+      "infrastructure": {
+        "label": "INFRAESTRUCTURA",
+        "title": "Qué se ejecuta bajo el capó.",
+        "items": {
+          "0": {
+            "title": "Docker Runtime",
+            "description": "DBR77 Vector se ejecuta dentro de un contenedor Docker con PyTorch y un endpoint de inferencia handler.py personalizado. El modelo completo de 20B parámetros se carga en la memoria de la GPU. Totalmente portable a cualquier infraestructura de GPU."
+          },
+          "1": {
+            "title": "RunPod Serverless",
+            "description": "El despliegue cloud por defecto usa RunPod Serverless en GPUs A100/H100 de 80GB. Escala a cero cuando está inactivo — usted paga solo por los segundos de GPU durante la inferencia. Sin servidores inactivos, sin cómputo desperdiciado."
+          },
+          "2": {
+            "title": "Pipeline CI/CD",
+            "description": "Automatizado vía GitHub Actions. Un push de código activa la construcción Docker, sube a Docker Hub y despliega en RunPod. Cada despliegue está versionado, es reproducible y auditable."
+          },
+          "3": {
+            "title": "Arranque en frío y rendimiento",
+            "description": "Cuando la GPU se activa desde inactividad, el modelo completo (39 GB) y el adaptador (60 MB) se cargan en VRAM en menos de 60 segundos. Las consultas posteriores dentro de la sesión son casi instantáneas."
+          }
+        }
+      },
+      "cta": {
+        "title": "¿No está seguro de qué modelo le conviene? Le ayudamos.",
+        "subtitle": "Solicite una demo para ver Vector funcionando en vivo, o comience probándolo en nuestros productos — sin necesidad de decisiones de infraestructura.",
+        "buttons": {
+          "demo": "Solicitar una demo",
+          "products": "Explorar productos",
+          "security": "Revisar seguridad"
+        }
+      }
+    },
+    "products": {
+      "hero": {
+        "badge": "PRODUCTOS",
+        "title": "Experimente Vector a través de <gradient>nuestros productos.</gradient>",
+        "subtitle": "Cada producto a continuación está impulsado por DBR77 Vector — un modelo de 20B parámetros ajustado en más de 1.400 casos reales de fábrica. El mismo motor de IA, la misma profundidad de razonamiento, en cada producto del ecosistema DBR77."
+      },
+      "techBar": {
+        "items": {
+          "0": "LLM de 20B parámetros",
+          "1": "Ajustado con QLoRA",
+          "2": "1.400+ casos reales",
+          "3": "GPU serverless",
+          "4": "Listo para instalación local"
+        }
+      },
+      "ecosystem": {
+        "label": "ECOSISTEMA DBR77",
+        "title": "Cuatro productos. Un motor de inteligencia.",
+        "description": "DBR77 Vector es el corazón de inteligencia de cada producto en el ecosistema DBR77. Esto es lo que habilita en cada uno.",
+        "benefitsLabel": "Lo que Vector habilita",
+        "visitPrefix": "Visitar",
+        "items": {
+          "0": {
+            "title": "Consultify",
+            "tagline": "Consultor de transformación con IA",
+            "description": "Consultify es donde DBR77 Vector actúa como un consultor sénior de transformación — diagnosticando organizaciones, generando hojas de ruta, modelando ROI y guiando la ejecución.",
+            "benefits": {
+              "0": "Diagnóstico de transformación en minutos en lugar de semanas",
+              "1": "Hojas de ruta listas para la junta con secuenciación de iniciativas y lógica de CAPEX",
+              "2": "Modelado de ROI con NPV, IRR y análisis de sensibilidad",
+              "3": "Seguimiento de ejecución con señalización de riesgos impulsada por IA",
+              "4": "La profundidad de un equipo de consultoría de primer nivel a una fracción del coste"
+            }
+          },
+          "1": {
+            "title": "Digital Twin",
+            "tagline": "Asesor de producción con IA",
+            "description": "Dentro del Digital Twin, Vector interpreta los resultados de simulación y ayuda a los equipos a entender qué decisiones de producción generan la mayor mejora operativa — antes de cambiar la fábrica real.",
+            "benefits": {
+              "0": "Interpretación de simulación: qué significan realmente los números para las operaciones",
+              "1": "Razonamiento de optimización de layout y flujo",
+              "2": "Comparación de escenarios con análisis de compensaciones",
+              "3": "Identificación de cuellos de botella y recomendaciones de resolución",
+              "4": "Soporte a decisiones fundamentado en experiencia real de transformación"
+            }
+          },
+          "2": {
+            "title": "IoT",
+            "tagline": "Analista operativo con IA",
+            "description": "Vector convierte las señales de planta en tiempo real en contexto operativo, ayudando a los equipos a razonar sobre anomalías, prioridades y próximas acciones más rápido de lo que permite el análisis manual.",
+            "benefits": {
+              "0": "Interpretación de señales y enmarcado de anomalías en tiempo real",
+              "1": "Análisis de causa raíz más rápido en planta",
+              "2": "Contexto listo para escalado para equipos de operaciones",
+              "3": "Reconocimiento de patrones entre turnos y líneas de producción",
+              "4": "Inteligencia operativa que mejora con cada ciclo de datos"
+            }
+          },
+          "3": {
+            "title": "Marketplace",
+            "tagline": "Asesor de automatización con IA",
+            "description": "Vector apoya la selección de automatización combinando contexto de proceso, ajuste tecnológico y prioridades de transformación — para que los clientes elijan la tecnología correcta, no solo la más barata.",
+            "benefits": {
+              "0": "Coincidencia tecnológica basada en requisitos y restricciones del proceso",
+              "1": "Evaluación del potencial de automatización por estación de trabajo o línea",
+              "2": "Razonamiento de integrador y proveedor alineado con objetivos de transformación",
+              "3": "Marco de ROI para inversiones en automatización",
+              "4": "Mejor alineación entre la necesidad de la fábrica y la respuesta del proveedor"
+            }
+          }
+        }
+      },
+      "cta": {
+        "title": "¿Desea desplegar Vector en su propia infraestructura?",
+        "subtitle": "Ejecute el mismo modelo de 20B parámetros en sus instalaciones, a través de una API privada o en cloud dedicado — con el mismo adaptador de 60 MB y pipeline CI/CD completo.",
+        "buttons": {
+          "demo": "Solicitar una demo",
+          "deployment": "Opciones de despliegue",
+          "security": "Revisar seguridad"
+        }
+      }
+    },
+    "security": {
+      "hero": {
+        "badge": "SEGURIDAD",
+        "title": "La forma más segura de llevar <gradient>IA a las operaciones industriales.</gradient>",
+        "subtitle": "La IA industrial debe cumplir un estándar de seguridad más alto que la IA de consumo. DBR77 Vector fue diseñado desde cero para entornos donde la soberanía de datos, la auditabilidad y la seguridad operativa no son negociables. Ningún dato del cliente entrena el modelo. Cada despliegue está versionado y es auditable a través de todo el pipeline CI/CD.",
+        "techLine": "Sin entrenamiento con datos del cliente · Listo para instalación local · GitHub Actions CI/CD · Aislamiento Docker · Alineado con SOC2/GDPR"
+      },
+      "pillars": {
+        "label": "ARQUITECTURA DE SEGURIDAD",
+        "title": "Seis pilares de seguridad de IA industrial.",
+        "description": "Cada aspecto de DBR77 Vector — desde los datos de entrenamiento hasta el despliegue y la inferencia — está diseñado para satisfacer los requisitos de seguridad empresarial, legales y de OT.",
+        "items": {
+          "0": {
+            "title": "Sus datos nunca entrenan el modelo",
+            "description": "DBR77 Vector no utiliza datos de producción, documentos ni consultas del cliente para el entrenamiento del modelo. La base de entrenamiento consiste exclusivamente en casos históricos anonimizados.",
+            "bullets": {
+              "0": "Ningún dato del cliente se usa para entrenamiento o ajuste fino",
+              "1": "Las consultas y resultados no se almacenan más allá de la sesión",
+              "2": "Separación completa entre pipelines de inferencia y entrenamiento"
+            }
+          },
+          "1": {
+            "title": "Aislamiento de despliegue por diseño",
+            "description": "Cada modelo de despliegue — en sus instalaciones, API privada o compartida — está diseñado con el aislamiento como valor por defecto, no como una mejora.",
+            "bullets": {
+              "0": "En sus instalaciones: ningún dato abandona la red del cliente",
+              "1": "API privada: cómputo dedicado, sin multitenencia",
+              "2": "API compartida: políticas de seguridad empresarial, aislamiento de sesión"
+            }
+          },
+          "2": {
+            "title": "La aprobación humana permanece en el bucle",
+            "description": "Vector es una capa de inteligencia para decisiones, no una autoridad autónoma. Cada recomendación se sitúa dentro de un bucle de decisión humana.",
+            "bullets": {
+              "0": "La IA aconseja, los humanos deciden y aprueban",
+              "1": "Lógica de recomendación trazable para fines de auditoría",
+              "2": "Sin ejecución autónoma sin autorización humana explícita"
+            }
+          },
+          "3": {
+            "title": "Alineación con gobernanza empresarial",
+            "description": "Vector está construido para superar las revisiones de compras, legales y seguridad de TI empresariales — no para eludirlas.",
+            "bullets": {
+              "0": "Alineación con SOC2, GDPR y residencia de datos",
+              "1": "Resultados aptos para auditoría con trazabilidad de origen",
+              "2": "Control de acceso basado en roles y cifrado en reposo y en tránsito"
+            }
+          },
+          "4": {
+            "title": "Aprendizaje anonimizado, no recopilación de datos",
+            "description": "La mejora continua del modelo se basa en patrones industriales anonimizados, no en copiar o memorizar información específica del cliente.",
+            "bullets": {
+              "0": "Aprendizaje de patrones a partir de resultados de transformación, no de datos brutos",
+              "1": "Sin identificadores de cliente, planos ni cifras propietarias en la base de entrenamiento",
+              "2": "Metodología transparente disponible para revisión de seguridad"
+            }
+          },
+          "5": {
+            "title": "Diseñado para la convergencia OT y TI",
+            "description": "Vector entiende que la IA industrial debe satisfacer simultáneamente los requisitos de seguridad de OT y los marcos de gobernanza de TI.",
+            "bullets": {
+              "0": "Compatible con entornos de red aislados y restringidos",
+              "1": "Sin llamadas obligatorias a API externas durante la inferencia",
+              "2": "Diseñado para entornos donde el tiempo de actividad y la seguridad no son negociables"
+            }
+          }
+        }
+      },
+      "comparison": {
+        "label": "COMPARACIÓN",
+        "title": "DBR77 Vector vs. LLMs públicos — seguridad lado a lado.",
+        "description": "La mayoría de los LLMs públicos no fueron diseñados para entornos industriales. Así es como Vector se compara en las dimensiones que más importan a los equipos de seguridad empresarial.",
+        "headers": {
+          "dimension": "Dimensión",
+          "vector": "DBR77 Vector",
+          "publicLlm": "LLM público"
+        },
+        "rows": {
+          "0": {
+            "dimension": "Datos usados para entrenamiento",
+            "vector": "Solo casos históricos anonimizados. Ningún dato del cliente se usa para entrenamiento.",
+            "publicLlm": "Entrenado con datos de internet. Puede usar entradas de usuario para mejoras a menos que se opte por no hacerlo."
+          },
+          "1": {
+            "dimension": "Residencia de datos",
+            "vector": "En sus instalaciones, cloud privado o alojamiento específico por región. El cliente elige.",
+            "publicLlm": "Datos procesados en la infraestructura cloud del proveedor. Control limitado de residencia."
+          },
+          "2": {
+            "dimension": "Almacenamiento de consultas y resultados",
+            "vector": "Sin almacenamiento persistente más allá de la sesión. El cliente controla la retención.",
+            "publicLlm": "Las consultas pueden ser registradas, almacenadas y revisadas por el proveedor."
+          },
+          "3": {
+            "dimension": "Dependencia de red",
+            "vector": "En sus instalaciones funciona completamente sin conexión. La API privada requiere solo red interna.",
+            "publicLlm": "Requiere conexión a internet a los servidores del proveedor para cada consulta."
+          },
+          "4": {
+            "dimension": "Multitenencia",
+            "vector": "En sus instalaciones y API privada son de un solo tenant. La API compartida usa aislamiento de sesión.",
+            "publicLlm": "Infraestructura multitenant compartida entre todos los usuarios."
+          },
+          "5": {
+            "dimension": "Compras y cumplimiento",
+            "vector": "Diseñado para superar revisiones de seguridad empresarial, legales y de OT.",
+            "publicLlm": "A menudo bloqueado o restringido por políticas de seguridad empresarial."
+          }
+        }
+      },
+      "pipeline": {
+        "label": "SEGURIDAD DEL PIPELINE",
+        "title": "Auditable desde el código hasta la inferencia.",
+        "description": "Cada paso en el pipeline de despliegue está versionado, automatizado y es trazable.",
+        "items": {
+          "0": {
+            "title": "Control de código fuente",
+            "description": "Todo el código del modelo, los pesos del adaptador y las configuraciones de despliegue residen en repositorios con control de versiones. Cada cambio se rastrea, revisa y es atribuible."
+          },
+          "1": {
+            "title": "CI/CD vía GitHub Actions",
+            "description": "Pipeline automatizado: un push de código activa la construcción Docker, sube a Docker Hub y despliega en RunPod. Sin pasos manuales. Sin cambios sin rastrear. Registro de auditoría completo."
+          },
+          "2": {
+            "title": "Aislamiento Docker",
+            "description": "El modelo se ejecuta dentro de un contenedor Docker aislado. Sin estado compartido entre sesiones. Sin almacenamiento persistente de consultas o resultados más allá de la llamada de inferencia."
+          }
+        }
+      },
+      "cta": {
+        "title": "¿Listo para ver Vector en un entorno seguro?",
+        "subtitle": "Solicite una demo para ver la arquitectura de seguridad completa, o elija el modelo de despliegue que se ajuste a sus requisitos.",
+        "buttons": {
+          "demo": "Solicitar una demo",
+          "deployment": "Opciones de despliegue",
+          "products": "Probar en nuestros productos"
+        }
+      }
+    },
+    "nav": {
+      "vector": "Vector",
+      "training": "Entrenamiento",
+      "deployment": "Despliegue",
+      "products": "Productos",
+      "security": "Seguridad",
+      "bookDemo": "Reservar demo",
+      "exploreProducts": "Explorar productos",
+      "theme": "Tema"
+    }
+  }
+}

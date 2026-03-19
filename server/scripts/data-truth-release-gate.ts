@@ -59,7 +59,13 @@ function buildChecks(): GateCheck[] {
   const tasksView = read('src/components/MyWork/MyTasksListContent.tsx');
   const healthRoutes = read('server/src/routes/health.routes.ts');
   const dbTargetResolver = read('server/src/config/databaseTargetResolver.ts');
+  const demoPolicy = read('server/src/config/demoPolicy.ts');
+  const organizationTargetPolicy = read('server/scripts/lib/organizationTargetPolicy.ts');
   const deployGate = read('scripts/deploy-gate.sh');
+  const backupScript = read('server/scripts/backup-database.sh');
+  const backupScriptTs = read('server/scripts/backup-database.ts');
+  const restoreScript = read('server/scripts/restore-database.sh');
+  const restoreScriptTs = read('server/scripts/restore-database.ts');
   const dataContextTest = read('tests/integration/routes/health-data-context.test.ts');
   const riskyScriptAllowlist = new Set([
     'server/scripts/create-demo-tables.ts',
@@ -71,6 +77,7 @@ function buildChecks(): GateCheck[] {
     'server/scripts/db-inventory.ts',
     'server/scripts/db-truth-audit.ts',
     'server/scripts/reassign-finance-org-to-primary.ts',
+    'server/scripts/reassign-org-surface.ts',
   ]);
   const scriptFiles = readAll(
     collectFiles(path.resolve(process.cwd(), 'server/scripts'), (absolutePath) =>
@@ -139,6 +146,24 @@ function buildChecks(): GateCheck[] {
         'Database target resolver must validate the final selected URL, including DATABASE_PUBLIC_URL and finance-import fallbacks.',
     },
     {
+      id: 'demo-policy-defaults-not-real-tenant-branded',
+      ok:
+        organizationTargetPolicy.includes("const DEFAULT_DEMO_ORG_ID = 'demo-org';") &&
+        organizationTargetPolicy.includes("const DEFAULT_DEMO_ORG_NAME = 'Demo Organization';") &&
+        !organizationTargetPolicy.includes("const DEFAULT_DEMO_ORG_NAME = 'Atelier';"),
+      details:
+        'Shared demo policy defaults must point to a neutral demo tenant identity, not a real customer-branded org.',
+    },
+    {
+      id: 'nondefault-demo-org-requires-explicit-approval',
+      ok:
+        demoPolicy.includes('ALLOW_NONDEFAULT_DEMO_ORG') &&
+        demoPolicy.includes('ALLOW_BRANDED_DEMO_ORG') &&
+        demoPolicy.includes('ALLOW_ATELIER_AS_DEMO_ORG'),
+      details:
+        'Branded/non-default demo org IDs must require an explicit approval flag in runtime policy.',
+    },
+    {
       id: 'dangerous-finance-reimport-scripts-hardened',
       ok:
         reimportAllStatements.includes('resolveFinanceImportDatabaseUrl()') &&
@@ -187,9 +212,22 @@ function buildChecks(): GateCheck[] {
       ok:
         dataContextTest.includes('/api/health/data-context') &&
         dataContextTest.includes('DATABASE_PUBLIC_URL') &&
-        dataContextTest.includes('X-Demo-Mode'),
+        dataContextTest.includes('X-Demo-Mode') &&
+        dataContextTest.includes('correlationId') &&
+        dataContextTest.includes('usesNonDefaultDemoOrgId'),
       details:
         'The authenticated data-context endpoint must have runtime integration coverage for DB resolution and demo/header state.',
+    },
+    {
+      id: 'backup-restore-scripts-are-postgres-safe',
+      ok:
+        backupScript.includes('server/scripts/backup-database.ts') &&
+        backupScriptTs.includes('pg_dump') &&
+        restoreScript.includes('server/scripts/restore-database.ts') &&
+        restoreScriptTs.includes('DB_RESTORE_CONFIRM') &&
+        restoreScriptTs.includes('psql'),
+      details:
+        'Operational backup/restore scripts must target PostgreSQL safely and require explicit confirmation for restore.',
     },
   ];
 }

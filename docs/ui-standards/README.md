@@ -66,6 +66,7 @@ docs/ui-standards/
 | **Table + Preview**      | [03-modules/table-preview-pane-standard.md](03-modules/table-preview-pane-standard.md) | Kanon “tabela + preview pane” (Outlook style)                       |
 | **Golden Standard v3**   | [03-modules/golden-standard-table-cards-preview-v3.md](03-modules/golden-standard-table-cards-preview-v3.md) | SSOT: Table + Cards + Preview (Sprint 1) |
 | **Interactive boards (v3)** | [03-modules/interactive-board-standard.md](03-modules/interactive-board-standard.md) | Kanon tablic KPI/finanse: definicja kolumn + view modes             |
+| **Tools library & detail** | [03-modules/tools-library-detail-standard.md](03-modules/tools-library-detail-standard.md) | Kanon modułu Tools: Goal tab layout, kolory, badge taxonomy, grafiki |
 
 ---
 

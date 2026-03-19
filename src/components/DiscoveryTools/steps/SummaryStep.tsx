@@ -4,7 +4,7 @@
  * Displays final source summary, insights, and recommended initiatives.
  */
 
-import { FileText, Lightbulb, Target, TrendingUp } from 'lucide-react';
+import { Check, FileText, Lightbulb, Target, TrendingUp } from 'lucide-react';
 import React from 'react';
 
 import { computeDynamicSwotOverallReadiness } from '@/components/DiscoveryTools/toolCompletion';
@@ -13,12 +13,15 @@ import {
   InitiativeDraft,
   PorterData,
   PortfolioPriorityData,
+  ProposalCardType,
   RiskUncertaintyData,
   SWOTData,
   ToolSession,
   ToolType,
+  useToolStore,
 } from '@/store/useToolStore';
 
+import { ProposalCard } from '../shared/ProposalCard';
 import { PorterRadar } from '../visualizations/PorterRadar';
 
 // ==================== TYPES ====================
@@ -27,11 +30,15 @@ interface SummaryStepProps {
   toolType: ToolType;
   session: ToolSession;
   isPolish: boolean;
+  onAcceptCard?: (cardType: ProposalCardType, cardId: string) => void;
+  onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
+  onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
 }
 
 // ==================== COMPONENT ====================
 
-export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isPolish }) => {
+export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isPolish, onAcceptCard, onRejectCard, onRethinkCard }) => {
+  const { acceptCard, rejectCard, acceptAllInPhase } = useToolStore();
   const inputData = session.inputData;
   const initiatives = session.generatedInitiatives;
 
@@ -351,19 +358,50 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({ toolType, session, isP
                 </div>
                 {bucket.items.length > 0 ? (
                   <div className="space-y-2">
-                    {bucket.items.map((candidate) => (
-                      <div
-                        key={candidate.id}
-                        className="rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-2 text-sm text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/40 dark:text-slate-300"
-                      >
-                        <div className="font-medium text-slate-900 dark:text-slate-100">
-                          {candidate.title}
+                    {bucket.items.map((candidate) => {
+                      const isProposal = candidate.proposalStatus === 'ai-proposed' || candidate.proposalStatus === 'rethinking';
+                      const candidateContent = (
+                        <div>
+                          <div className="font-medium text-sm text-slate-900 dark:text-slate-100">
+                            {candidate.title}
+                          </div>
+                          <div className="mt-1 text-xs uppercase tracking-wide text-slate-400">
+                            {candidate.outputType}
+                          </div>
+                          {candidate.description && (
+                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {candidate.description}
+                            </div>
+                          )}
                         </div>
-                        <div className="mt-1 text-xs uppercase tracking-wide text-slate-400">
-                          {candidate.outputType}
+                      );
+
+                      if (isProposal) {
+                        return (
+                          <ProposalCard
+                            key={candidate.id}
+                            cardId={candidate.id}
+                            cardType="output-candidate"
+                            proposalStatus={candidate.proposalStatus}
+                            onAccept={onAcceptCard || acceptCard}
+                            onReject={onRejectCard || rejectCard}
+                            onRethink={onRethinkCard || (() => {})}
+                            compact
+                          >
+                            {candidateContent}
+                          </ProposalCard>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={candidate.id}
+                          className="rounded-xl border border-slate-200/70 bg-slate-50/80 px-3 py-2 text-sm text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/40 dark:text-slate-300"
+                        >
+                          {candidateContent}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-sm text-slate-500 dark:text-slate-400">

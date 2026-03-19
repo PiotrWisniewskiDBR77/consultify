@@ -8,7 +8,7 @@ import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
-import { Callout, InlineTable, type InlineTableColumn } from '@/components/shared/NModeBlocks';
+
 
 import { DynamicSwotLibraryGraphic } from './DynamicSwotLibraryGraphic';
 import {
@@ -210,8 +210,8 @@ export function KnownToolDetailView(props: {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <div className="rounded-2xl border border-emerald-200/70 bg-emerald-500/5 p-4 dark:border-emerald-900/40">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
               {isPolish ? 'Co to narzędzie naprawdę robi' : 'What the tool actually does'}
             </div>
             {bullets(
@@ -230,8 +230,8 @@ export function KnownToolDetailView(props: {
                   ]
             )}
           </div>
-          <div className="rounded-2xl border border-amber-200/70 bg-amber-500/5 p-4 dark:border-amber-900/40">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+          <div className="rounded-2xl border border-rose-200/70 bg-rose-500/5 p-4 dark:border-rose-900/40">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
               {isPolish ? 'Czym to narzędzie nie jest' : 'What this tool is not'}
             </div>
             {bullets(
@@ -253,8 +253,8 @@ export function KnownToolDetailView(props: {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <div className="rounded-2xl border border-emerald-200/70 bg-emerald-500/5 p-4 dark:border-emerald-900/40">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
               {isPolish ? 'Kiedy użyć' : 'When to use'}
             </div>
             {bullets(
@@ -273,8 +273,8 @@ export function KnownToolDetailView(props: {
                   ]
             )}
           </div>
-          <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <div className="rounded-2xl border border-rose-200/70 bg-rose-500/5 p-4 dark:border-rose-900/40">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
               {isPolish ? 'Kiedy nie zaczynać od SWOT' : 'When not to start with SWOT'}
             </div>
             {bullets(
@@ -296,8 +296,8 @@ export function KnownToolDetailView(props: {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {isPolish ? 'Co przygotować przed startem' : 'What to prepare before starting'}
             </div>
             {bullets(
@@ -337,12 +337,194 @@ export function KnownToolDetailView(props: {
       </div>
     );
 
+    const processSteps = [
+      {
+        id: 1,
+        title: isPolish ? 'Mission Brief' : 'Mission Brief',
+        oneLiner: isPolish
+          ? 'Ustaw pytanie decyzyjne, zakres i success signal'
+          : 'Frame the decision question, scope, and success signal',
+        items: isPolish
+          ? [
+              'nazwij decyzję, która naprawdę ma zostać podjęta',
+              'ustal zakres, horyzont czasu, success signal i constraints',
+              'odróżnij temat sesji od wszystkiego, co jest dziś poza zakresem',
+            ]
+          : [
+              'name the decision that truly needs to be made',
+              'set the scope, time horizon, success signal, and constraints',
+              'separate the session topic from everything that is out of scope today',
+            ],
+        note: isPolish
+          ? 'Jakość całej sesji zależy od jakości pytania otwierającego. Jeśli punkt wyjścia jest mglisty, macierz będzie tylko ładnie uporządkowanym chaosem.'
+          : 'The quality of the full session depends on the opening question. If the brief is vague, the matrix becomes only well-organized chaos.',
+        accent: 'bg-violet-500',
+        tone: 'from-violet-500/12 to-fuchsia-500/5',
+      },
+      {
+        id: 2,
+        title: isPolish ? 'Sygnały i evidence' : 'Signals & evidence',
+        oneLiner: isPolish
+          ? 'Zbierz fakty, obserwacje i hipotezy z wnętrza firmy i rynku'
+          : 'Collect facts, observations, and hypotheses from inside and outside',
+        items: isPolish
+          ? [
+              'zbierz sygnały z rozmów, materiałów, plików, linków i benchmarków',
+              'oznacz, czy wpis jest faktem, obserwacją czy hipotezą',
+              'rozdziel sygnały wewnętrzne od zewnętrznych i skróć je do jednej tezy',
+            ]
+          : [
+              'collect signals from interviews, materials, files, links, and benchmarks',
+              'mark whether an entry is a fact, observation, or hypothesis',
+              'separate internal from external signals and reduce each to one clear thesis',
+            ],
+        note: isPolish
+          ? 'Na tym etapie nie wyciąga się jeszcze decyzji. Powstaje warstwa źródłowa, z której później da się obronić wnioski.'
+          : 'This is not the stage for conclusions yet. It builds the source layer from which the later conclusions can be defended.',
+        accent: 'bg-sky-500',
+        tone: 'from-sky-500/12 to-cyan-500/5',
+      },
+      {
+        id: 3,
+        title: isPolish ? 'Budowa macierzy' : 'Matrix build',
+        oneLiner: isPolish
+          ? 'Przypisz sygnały do S/W/O/T, usuń szum, zostaw to co zmienia decyzję'
+          : 'Assign signals to S/W/O/T, remove noise, keep what moves the decision',
+        items: isPolish
+          ? [
+              'przypisz sygnały do Strengths, Weaknesses, Opportunities i Threats',
+              'usuń duplikaty, rozdziel objawy od przyczyn i podważaj ogólniki',
+              'zostaw tylko karty, które rzeczywiście zmieniają pole decyzji',
+            ]
+          : [
+              'assign the signals to Strengths, Weaknesses, Opportunities, and Threats',
+              'remove duplicates, separate symptoms from causes, and challenge generic wording',
+              'keep only the cards that truly change the decision space',
+            ],
+        note: isPolish
+          ? 'Mocna macierz nie jest długa. Jest selektywna, konkretna i oparta na źródłach.'
+          : 'A strong matrix is not long. It is selective, concrete, and backed by sources.',
+        accent: 'bg-emerald-500',
+        tone: 'from-emerald-500/12 to-teal-500/5',
+      },
+      {
+        id: 4,
+        title: isPolish ? 'Napięcia strategiczne' : 'Strategic tensions',
+        oneLiner: isPolish
+          ? 'Pokaż, gdzie przewaga zderza się z ograniczeniem lub ryzykiem'
+          : 'Show where advantage collides with constraint or risk',
+        items: isPolish
+          ? [
+              'połącz karty w sytuacje decyzyjne: ofensywa, naprawa, obrona, ograniczanie',
+              'pokaż, gdzie przewaga zderza się z ograniczeniem albo ryzykiem',
+              'nazwij, dlaczego właśnie to napięcie ma znaczenie teraz, a nie później',
+            ]
+          : [
+              'connect cards into decision situations: attack, repair, defend, reduce',
+              'show where advantage meets constraint or risk',
+              'name why this tension matters now rather than later',
+            ],
+        note: isPolish
+          ? 'To tutaj pojawia się wartość konsultingowa. Sama lista kart przestaje być tabelą i zaczyna tworzyć logikę decyzji.'
+          : 'This is where consulting value appears. The card list stops being a table and starts becoming decision logic.',
+        accent: 'bg-amber-500',
+        tone: 'from-amber-500/15 to-orange-500/5',
+      },
+      {
+        id: 5,
+        title: isPolish ? 'Ruchy i outputy' : 'Moves & outputs',
+        oneLiner: isPolish
+          ? 'Przełóż napięcia na rekomendowane ruchy i materiał do dalszego użycia'
+          : 'Translate tensions into recommended moves and downstream material',
+        items: isPolish
+          ? [
+              'przełóż napięcia na 2-4 rekomendowane ruchy z jasną sekwencją',
+              'odróżnij quick win od ruchu strategicznego i od elementu, który wymaga jeszcze walidacji',
+              'zamknij sesję source summary gotowym do raportu, decka, inicjatywy lub dalszej eksploracji',
+            ]
+          : [
+              'translate the tensions into 2-4 recommended moves with a clear sequence',
+              'separate a quick win from a strategic move and from an item that still needs validation',
+              'close the session with a source summary ready for a report, deck, initiative, or further exploration',
+            ],
+        note: isPolish
+          ? 'Dynamic SWOT jest dobry dopiero wtedy, gdy kończy się decyzją, ruchem albo sensownym mostem do działania.'
+          : 'Dynamic SWOT is only strong when it ends in a decision, a move, or a credible bridge to action.',
+        accent: 'bg-violet-600',
+        tone: 'from-violet-500/15 to-indigo-500/5',
+      },
+    ];
+
+    const ProcessStepper = () => {
+      const [openStep, setOpenStep] = React.useState<number | null>(null);
+      return (
+        <div className="space-y-2">
+          {processSteps.map((step) => {
+            const isOpen = openStep === step.id;
+            return (
+              <div
+                key={step.id}
+                className={`rounded-2xl border transition-all duration-200 ${
+                  isOpen
+                    ? `border-slate-300/70 bg-gradient-to-br ${step.tone} shadow-sm dark:border-white/15`
+                    : 'border-slate-200/50 bg-slate-50/50 hover:border-slate-300/70 hover:bg-slate-50/80 dark:border-white/5 dark:bg-white/[0.02] dark:hover:border-white/10'
+                }`}
+              >
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-3 p-3 text-left"
+                  onClick={() => setOpenStep(isOpen ? null : step.id)}
+                >
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-bold text-white dark:bg-white dark:text-slate-950">
+                    {step.id}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">{step.title}</div>
+                    {!isOpen && (
+                      <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{step.oneLiner}</div>
+                    )}
+                  </div>
+                  <span className={`mr-1 h-2 w-2 shrink-0 rounded-full ${step.accent}`} />
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    className={`shrink-0 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                  >
+                    <path d="M3 5.5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                {isOpen && (
+                  <div className="border-t border-slate-200/50 px-3 pb-4 pt-3 dark:border-white/5">
+                    <div className="pl-10">
+                      {bullets(step.items)}
+                      {step.note ? (
+                        <div className="mt-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 text-sm text-slate-600 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+                          {step.note}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    };
+
     const processSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            {isPolish ? 'Logika pracy' : 'Work logic'}
-          </h2>
+        <div>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+              {isPolish ? 'Logika pracy' : 'Work logic'}
+            </h2>
+            <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+              Process
+            </span>
+          </div>
           <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
             {isPolish
               ? 'Dobry Dynamic SWOT prowadzi przez pięć kroków biznesowych. Flow jest prosty dla użytkownika, ale rygorystyczny merytorycznie: najpierw ustawienie decyzji, potem higiena sygnałów, potem porządna macierz, a dopiero na końcu napięcia, ruchy i outputy.'
@@ -350,152 +532,96 @@ export function KnownToolDetailView(props: {
           </div>
         </div>
 
-        {[
-          {
-            title: isPolish ? 'KROK 1 — Mission Brief' : 'STEP 1 — Mission Brief',
-            items: isPolish
-              ? [
-                  'nazwij decyzję, która naprawdę ma zostać podjęta',
-                  'ustal zakres, horyzont czasu, success signal i constraints',
-                  'odróżnij temat sesji od wszystkiego, co jest dziś poza zakresem',
-                ]
-              : [
-                  'name the decision that truly needs to be made',
-                  'set the scope, time horizon, success signal, and constraints',
-                  'separate the session topic from everything that is out of scope today',
-                ],
-            note: isPolish
-              ? 'Jakość całej sesji zależy od jakości pytania otwierającego. Jeśli punkt wyjścia jest mglisty, macierz będzie tylko ładnie uporządkowanym chaosem.'
-              : 'The quality of the full session depends on the opening question. If the brief is vague, the matrix becomes only well-organized chaos.',
-          },
-          {
-            title: isPolish ? 'KROK 2 — Sygnały i evidence' : 'STEP 2 — Signals and evidence',
-            items: isPolish
-              ? [
-                  'zbierz sygnały z rozmów, materiałów, plików, linków i benchmarków',
-                  'oznacz, czy wpis jest faktem, obserwacją czy hipotezą',
-                  'rozdziel sygnały wewnętrzne od zewnętrznych i skróć je do jednej tezy',
-                ]
-              : [
-                  'collect signals from interviews, materials, files, links, and benchmarks',
-                  'mark whether an entry is a fact, observation, or hypothesis',
-                  'separate internal from external signals and reduce each to one clear thesis',
-                ],
-            note: isPolish
-              ? 'Na tym etapie nie wyciąga się jeszcze decyzji. Powstaje warstwa źródłowa, z której później da się obronić wnioski.'
-              : 'This is not the stage for conclusions yet. It builds the source layer from which the later conclusions can be defended.',
-          },
-          {
-            title: isPolish ? 'KROK 3 — Budowa macierzy SWOT' : 'STEP 3 — Build the SWOT matrix',
-            items: isPolish
-              ? [
-                  'przypisz sygnały do Strengths, Weaknesses, Opportunities i Threats',
-                  'usuń duplikaty, rozdziel objawy od przyczyn i podważaj ogólniki',
-                  'zostaw tylko karty, które rzeczywiście zmieniają pole decyzji',
-                ]
-              : [
-                  'assign the signals to Strengths, Weaknesses, Opportunities, and Threats',
-                  'remove duplicates, separate symptoms from causes, and challenge generic wording',
-                  'keep only the cards that truly change the decision space',
-                ],
-            note: isPolish
-              ? 'Mocna macierz nie jest długa. Jest selektywna, konkretna i oparta na źródłach.'
-              : 'A strong matrix is not long. It is selective, concrete, and backed by sources.',
-          },
-          {
-            title: isPolish ? 'KROK 4 — Napięcia strategiczne i logika TOWS' : 'STEP 4 — Strategic tensions and TOWS logic',
-            items: isPolish
-              ? [
-                  'połącz karty w układy attack, repair, defend i protect',
-                  'pokaż, gdzie przewaga zderza się z ograniczeniem albo ryzykiem',
-                  'nazwij, dlaczego właśnie to napięcie ma znaczenie teraz, a nie później',
-                ]
-              : [
-                  'connect the cards into attack, repair, defend, and protect patterns',
-                  'show where advantage meets constraint or risk',
-                  'name why this tension matters now rather than later',
-                ],
-            note: isPolish
-              ? 'To tutaj pojawia się wartość konsultingowa. Sama lista kart przestaje być tabelą i zaczyna tworzyć logikę decyzji.'
-              : 'This is where consulting value appears. The card list stops being a table and starts becoming decision logic.',
-          },
-          {
-            title: isPolish ? 'KROK 5 — Ruchy i outputy' : 'STEP 5 — Moves and outputs',
-            items: isPolish
-              ? [
-                  'przełóż napięcia na 2-4 rekomendowane ruchy z jasną sekwencją',
-                  'odróżnij quick win od ruchu strategicznego i od elementu, który wymaga jeszcze walidacji',
-                  'zamknij sesję source summary gotowym do raportu, decka, inicjatywy lub dalszej eksploracji',
-                ]
-              : [
-                  'translate the tensions into 2-4 recommended moves with a clear sequence',
-                  'separate a quick win from a strategic move and from an item that still needs validation',
-                  'close the session with a source summary ready for a report, deck, initiative, or further exploration',
-                ],
-            note: isPolish
-              ? 'Dynamic SWOT jest dobry dopiero wtedy, gdy kończy się decyzją, ruchem albo sensownym mostem do działania.'
-              : 'Dynamic SWOT is only strong when it ends in a decision, a move, or a credible bridge to action.',
-          },
-        ].map((step) => (
-          <div
-            key={step.title}
-            className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40"
-          >
-            <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{step.title}</div>
-            <div className="mt-3">{bullets(step.items)}</div>
-            {'note' in step && step.note ? (
-              <div className="mt-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2 text-sm text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300">
-                {step.note}
-              </div>
-            ) : null}
-          </div>
-        ))}
+        <ProcessStepper />
 
-        <Callout
-          variant="info"
-          title={isPolish ? 'Jak wygląda dobra sesja końcowa' : 'What a strong finished session looks like'}
-          className="border border-sky-200/40 dark:border-sky-900/30"
-        >
-          {bullets(
-            isPolish
+        <div className="rounded-2xl border border-emerald-200/70 bg-emerald-500/5 p-4 dark:border-emerald-900/40">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
+              {isPolish ? 'Jak wygląda dobra sesja końcowa' : 'What a strong finished session looks like'}
+            </div>
+            <span className="inline-flex shrink-0 rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
+              Quality
+            </span>
+          </div>
+          <ul className="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-300">
+            {(isPolish
               ? [
-                  '6-12 zaakceptowanych kart SWOT zamiast długiej listy wszystkiego',
+                  'macierz z 6-12 wyselekcjonowanymi czynnikami rozłożonymi w 4 ćwiartkach (S/W/O/T) — każdy z oznaczonym źródłem i typem evidence, zamiast długiej listy wszystkiego',
                   '3-6 napięć strategicznych, które naprawdę tłumaczą pole decyzji',
                   '2-4 rekomendowane ruchy z jasną sekwencją i pierwszym krokiem',
                   'co najmniej 1 output candidate gotowy do dalszej decyzji lub akceptacji sponsora',
                   'final source summary, z którego da się bezpośrednio zbudować raport lub deck',
                 ]
               : [
-                  '6-12 accepted SWOT cards instead of a long list of everything',
+                  'a matrix with 6-12 selected factors across the 4 quadrants (S/W/O/T) — each with a marked source and evidence type, instead of a long list of everything',
                   '3-6 strategic tensions that genuinely explain the decision space',
                   '2-4 recommended moves with a clear sequence and first step',
                   'at least 1 output candidate ready for further decision or sponsor approval',
                   'a final source summary that can directly feed a report or deck',
                 ]
-          )}
-        </Callout>
+            ).map((item) => (
+              <li key={item} className="flex items-start gap-2">
+                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
         <div className="rounded-2xl border border-violet-200/70 bg-violet-500/5 p-4 dark:border-violet-900/40">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
-            {isPolish ? 'Typy napięć w interpretacji' : 'Tension types in interpretation'}
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
+              {isPolish ? '4 typowe sytuacje decyzyjne' : '4 common decision situations'}
+            </div>
+            <span className="inline-flex shrink-0 rounded-full border border-violet-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-800 dark:border-violet-800/50 dark:bg-white/[0.05] dark:text-violet-200">
+              Insight
+            </span>
           </div>
-          <div className="mt-3">
-            {chipRow(
-              isPolish
-                ? ['Attack: Strength + Opportunity', 'Repair: Weakness + Opportunity', 'Defend: Strength + Threat', 'Protect: Weakness + Threat']
-                : ['Attack: Strength + Opportunity', 'Repair: Weakness + Opportunity', 'Defend: Strength + Threat', 'Protect: Weakness + Threat']
-            )}
-          </div>
-          <div className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
             {isPolish
-              ? 'To nie są etykiety ozdobne. Pomagają odróżnić, czy organizacja powinna dziś wykorzystać przewagę, naprawić lukę, obronić pozycję czy ograniczyć ekspozycję na ryzyko.'
-              : 'These are not decorative labels. They help distinguish whether the organization should use an advantage, repair a gap, defend a position, or reduce exposure to risk.'}
+              ? 'W kroku 4 łączysz czynniki wewnętrzne z zewnętrznymi. Każde takie połączenie tworzy jedną z czterech sytuacji decyzyjnych. Rozpoznanie typu sytuacji pomaga szybko zdecydować, jaki ruch jest logiczny.'
+              : 'In step 4 you connect internal factors with external ones. Each connection creates one of four decision situations. Recognizing the type helps quickly decide what move makes sense.'}
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            {(isPolish
+              ? [
+                  { label: 'Siła + Szansa', desc: 'Masz przewagę i rynek daje okazję. Graj ofensywnie — wykorzystaj to, co masz, żeby wejść w szansę.', accent: 'emerald' },
+                  { label: 'Słabość + Szansa', desc: 'Szansa jest, ale wewnętrzna luka ją blokuje. Najpierw napraw lukę, potem wejdź w szansę.', accent: 'sky' },
+                  { label: 'Siła + Zagrożenie', desc: 'Zewnętrzne ryzyko rośnie, ale masz przewagę. Użyj jej, żeby obronić pozycję.', accent: 'amber' },
+                  { label: 'Słabość + Zagrożenie', desc: 'Słabość zwiększa ekspozycję na ryzyko. Najpierw ogranicz słabość, żeby zmniejszyć zagrożenie.', accent: 'rose' },
+                ]
+              : [
+                  { label: 'Strength + Opportunity', desc: 'You have advantage and the market offers an opening. Play offensively — use what you have to capture the opportunity.', accent: 'emerald' },
+                  { label: 'Weakness + Opportunity', desc: 'The opportunity exists, but an internal gap blocks it. Fix the gap first, then move in.', accent: 'sky' },
+                  { label: 'Strength + Threat', desc: 'External risk is rising, but you have advantage. Use it to defend your position.', accent: 'amber' },
+                  { label: 'Weakness + Threat', desc: 'A weakness increases exposure to risk. Reduce the weakness first to lower the threat.', accent: 'rose' },
+                ]
+            ).map((item) => {
+              const accentMap: Record<string, { border: string; bg: string; title: string; dot: string }> = {
+                emerald: { border: 'border-emerald-200/70', bg: 'bg-emerald-500/5', title: 'text-emerald-700 dark:text-emerald-300', dot: 'bg-emerald-500' },
+                sky: { border: 'border-sky-200/70', bg: 'bg-sky-500/5', title: 'text-sky-700 dark:text-sky-300', dot: 'bg-sky-500' },
+                amber: { border: 'border-amber-200/70', bg: 'bg-amber-500/5', title: 'text-amber-700 dark:text-amber-300', dot: 'bg-amber-500' },
+                rose: { border: 'border-rose-200/70', bg: 'bg-rose-500/5', title: 'text-rose-700 dark:text-rose-300', dot: 'bg-rose-500' },
+              };
+              const a = accentMap[item.accent] || accentMap.emerald;
+              return (
+                <div key={item.label} className={`rounded-xl border ${a.border} ${a.bg} p-3`}>
+                  <div className={`text-xs font-semibold ${a.title}`}>{item.label}</div>
+                  <div className="mt-1.5 text-[13px] leading-relaxed text-slate-700 dark:text-slate-200">{item.desc}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
         <div className="rounded-2xl border border-amber-200/70 bg-amber-500/5 p-4 dark:border-amber-900/40">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
-            {isPolish ? 'Uwagi do pracy' : 'Working notes'}
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-300">
+              {isPolish ? 'Uwagi do pracy' : 'Working notes'}
+            </div>
+            <span className="inline-flex shrink-0 rounded-full border border-amber-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-amber-800 dark:border-amber-800/50 dark:bg-white/[0.05] dark:text-amber-200">
+              Tips
+            </span>
           </div>
           <ul className="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-300">
             {(isPolish
@@ -526,221 +652,207 @@ export function KnownToolDetailView(props: {
       </div>
     );
 
+    const outcomeBlocks = isPolish
+      ? [
+          {
+            id: 'decision-frame',
+            title: 'Rama decyzji',
+            badge: 'Decision',
+            color: 'violet' as const,
+            what: 'Pytanie strategiczne, zakres, horyzont czasu i success signal. Jasne przypomnienie, czego analiza dotyczy, a czego nie.',
+            why: 'Bez ramy nawet dobra macierz zamienia się w ogólny opis firmy oderwany od decyzji.',
+            next: 'Executive summary z logiką decyzji dla sponsora lub zarządu.',
+          },
+          {
+            id: 'evidence-picture',
+            title: 'Obraz czynników i evidence',
+            badge: 'Evidence',
+            color: 'sky' as const,
+            what: 'Najmocniejsze karty S/W/O/T ze źródłami. Rozdzielenie faktów, obserwacji i hipotez.',
+            why: 'Decydent widzi nie tylko wniosek, ale też jakość materiału, na którym ten wniosek stoi.',
+            next: 'Uzasadniona macierz i defensible story do rozmowy decyzyjnej.',
+          },
+          {
+            id: 'tensions',
+            title: 'Napięcia strategiczne',
+            badge: 'Tensions',
+            color: 'amber' as const,
+            what: 'Najważniejsze połączenia między kartami wewnętrznymi i zewnętrznymi. Sytuacje decyzyjne, które zmieniają logikę ruchu.',
+            why: 'Obserwacje przestają być listą i zaczynają tłumaczyć, gdzie leży prawdziwy trade-off.',
+            next: 'Warstwa interpretacji do dyskusji z managementem i wyboru priorytetów.',
+          },
+          {
+            id: 'moves',
+            title: 'Rekomendowane ruchy',
+            badge: 'Moves',
+            color: 'emerald' as const,
+            what: '2-4 ruchy wynikające z napięć z jasną sekwencją. Rozróżnienie: quick win, big bet, ruch obronny, capability build.',
+            why: 'Przejście od diagnozy do ruchu, który ma sens biznesowy, ma pierwszy krok i da się obronić logicznie.',
+            next: 'Shortlista ruchów do decka, sponsor decision lub rozwinięcia w inicjatywę.',
+          },
+          {
+            id: 'execution-bridge',
+            title: 'Most do działania',
+            badge: 'Execution',
+            color: 'rose' as const,
+            what: 'Source summary gotowy do raportu lub prezentacji. Wybór: co na inicjatywę, co na deck, co zostaje ideą.',
+            why: 'SWOT bez tego etapu zostawia zespół z ciekawą analizą, ale bez ruchu.',
+            next: 'Raport, prezentacja, inicjatywa albo dalsza eksploracja z tego samego materiału.',
+          },
+        ]
+      : [
+          {
+            id: 'decision-frame',
+            title: 'Decision frame',
+            badge: 'Decision',
+            color: 'violet' as const,
+            what: 'The strategic question, scope, time horizon, and success signal. An explicit statement of what the analysis covers and what it does not.',
+            why: 'Without this frame even a strong matrix drifts away from the real decision.',
+            next: 'An executive summary with a clear decision frame for the sponsor or board.',
+          },
+          {
+            id: 'evidence-picture',
+            title: 'Factor picture & evidence',
+            badge: 'Evidence',
+            color: 'sky' as const,
+            what: 'The strongest S/W/O/T cards with their sources. A clear separation of facts, observations, and hypotheses.',
+            why: 'Decision-makers see not only the conclusion, but the quality of the material underneath it.',
+            next: 'A defensible matrix and narrative for the next decision discussion.',
+          },
+          {
+            id: 'tensions',
+            title: 'Strategic tensions',
+            badge: 'Tensions',
+            color: 'amber' as const,
+            what: 'The most important connections between internal and external cards. Decision situations that change the move logic.',
+            why: 'Observations stop being a list and start explaining where the real trade-off sits.',
+            next: 'An interpretation layer for leadership discussion and priority choices.',
+          },
+          {
+            id: 'moves',
+            title: 'Recommended moves',
+            badge: 'Moves',
+            color: 'emerald' as const,
+            what: '2-4 moves emerging from tensions with a clear sequence. Quick win vs big bet vs defensive move vs capability build.',
+            why: 'The handoff from diagnosis to a move that makes business sense and can be defended logically.',
+            next: 'A shortlist of moves for the deck, sponsor decision, or initiative design.',
+          },
+          {
+            id: 'execution-bridge',
+            title: 'Bridge to execution',
+            badge: 'Execution',
+            color: 'rose' as const,
+            what: 'A source summary ready for the report or presentation. What goes to an initiative, what needs a deck, what stays an idea.',
+            why: 'SWOT without this step leaves the team with an interesting analysis but no move.',
+            next: 'A report, presentation, initiative push, or further exploration from the same source package.',
+          },
+        ];
+
+    const colorMap = {
+      violet: {
+        card: 'border-violet-200/70 bg-violet-500/5 dark:border-violet-900/40',
+        badge: 'border-violet-300/50 bg-white/70 text-violet-800 dark:border-violet-800/50 dark:bg-white/[0.05] dark:text-violet-200',
+        title: 'text-violet-700 dark:text-violet-300',
+        dot: 'bg-violet-500',
+      },
+      sky: {
+        card: 'border-sky-200/70 bg-sky-500/5 dark:border-sky-900/40',
+        badge: 'border-sky-300/50 bg-white/70 text-sky-800 dark:border-sky-800/50 dark:bg-white/[0.05] dark:text-sky-200',
+        title: 'text-sky-700 dark:text-sky-300',
+        dot: 'bg-sky-500',
+      },
+      amber: {
+        card: 'border-amber-200/70 bg-amber-500/5 dark:border-amber-900/40',
+        badge: 'border-amber-300/50 bg-white/70 text-amber-800 dark:border-amber-800/50 dark:bg-white/[0.05] dark:text-amber-200',
+        title: 'text-amber-700 dark:text-amber-300',
+        dot: 'bg-amber-500',
+      },
+      emerald: {
+        card: 'border-emerald-200/70 bg-emerald-500/5 dark:border-emerald-900/40',
+        badge: 'border-emerald-300/50 bg-white/70 text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200',
+        title: 'text-emerald-700 dark:text-emerald-300',
+        dot: 'bg-emerald-500',
+      },
+      rose: {
+        card: 'border-rose-200/70 bg-rose-500/5 dark:border-rose-900/40',
+        badge: 'border-rose-300/50 bg-white/70 text-rose-800 dark:border-rose-800/50 dark:bg-white/[0.05] dark:text-rose-200',
+        title: 'text-rose-700 dark:text-rose-300',
+        dot: 'bg-rose-500',
+      },
+    };
+
     const outcomesSection = (
       <div className="space-y-6">
-        <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            {isPolish ? 'Struktura outputu' : 'Output structure'}
-          </h2>
+        <div>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+              {isPolish ? 'Co wychodzi z sesji' : 'What the session produces'}
+            </h2>
+            <span className="inline-flex shrink-0 rounded-full border border-slate-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-slate-600 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+              Output
+            </span>
+          </div>
           <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
             {isPolish
-              ? 'Dobrze wykonany Dynamic SWOT kończy się decision-grade outputem: materiałem, który przypomina pytanie decyzyjne, pokazuje jakość evidence, tłumaczy najważniejsze napięcia i prowadzi do sekwencji ruchów.'
-              : 'A strong Dynamic SWOT ends with a decision-grade output: material that restates the decision question, shows the quality of the evidence, explains the key tensions, and leads into a clear move sequence.'}
+              ? 'Dobrze wykonany Dynamic SWOT kończy się materiałem gotowym do użycia: pytanie decyzyjne, jakość evidence, kluczowe napięcia i sekwencja ruchów.'
+              : 'A strong Dynamic SWOT ends with usable material: the decision question, evidence quality, key tensions, and a move sequence.'}
           </div>
         </div>
 
-        {(() => {
-          type OutcomeBoardRow = {
-            id: string;
-            block: string;
-            badge: string;
-            summary: string[];
-            why: string;
-            next: string;
-          };
-
-          const rows: OutcomeBoardRow[] = isPolish
-            ? [
-                {
-                  id: 'decision-frame',
-                  block: '1. Rama decyzji',
-                  badge: 'Decision',
-                  summary: [
-                    'pytanie strategiczne, zakres, horyzont czasu i success signal',
-                    'jawne przypomnienie, czego analiza dotyczy, a czego nie dotyczy',
-                  ],
-                  why: 'Bez tej ramy nawet dobra macierz pozostaje oderwana od realnej decyzji i łatwo zamienia się w ogólny opis firmy.',
-                  next: 'Executive summary z jasno ustawioną logiką decyzji dla sponsora lub zarządu.',
-                },
-                {
-                  id: 'evidence-picture',
-                  block: '2. Obraz czynników i evidence',
-                  badge: 'Evidence',
-                  summary: [
-                    'najmocniejsze karty Strengths, Weaknesses, Opportunities i Threats wraz z ich źródłami',
-                    'krótkie rozdzielenie tego, co jest faktem, obserwacją lub hipotezą',
-                  ],
-                  why: 'To zabezpiecza jakość rozumowania. Decydent widzi nie tylko wniosek, ale też jakość materiału, na którym ten wniosek stoi.',
-                  next: 'Uzasadniona macierz i defensible story do dalszej rozmowy decyzyjnej.',
-                },
-                {
-                  id: 'tensions',
-                  block: '3. Napięcia strategiczne',
-                  badge: 'Tensions',
-                  summary: [
-                    'najważniejsze połączenia między kartami wewnętrznymi i zewnętrznymi',
-                    'układy typu attack, repair, defend lub protect, które naprawdę zmieniają logikę ruchu',
-                  ],
-                  why: 'Tu pojawia się konsultingowa wartość narzędzia: obserwacje przestają być listą, a zaczynają tłumaczyć, gdzie leży prawdziwy trade-off.',
-                  next: 'Warstwa interpretacji do dyskusji z managementem oraz do wyboru priorytetów.',
-                },
-                {
-                  id: 'moves',
-                  block: '4. Rekomendowane ruchy i sekwencja',
-                  badge: 'Moves',
-                  summary: [
-                    '2-4 ruchy wynikające z napięć, a nie z intuicji autora',
-                    'jasne odróżnienie: quick win, big bet, ruch obronny albo capability build',
-                  ],
-                  why: 'To moment przejścia od diagnozy do wyboru ruchu, który ma sens biznesowy teraz, ma pierwszy krok i którego da się bronić logicznie.',
-                  next: 'Shortlista ruchów do decka, sponsor decision albo rozwinięcia w inicjatywę wraz z first step.',
-                },
-                {
-                  id: 'execution-bridge',
-                  block: '5. Most do działania',
-                  badge: 'Execution',
-                  summary: [
-                    'final source summary gotowy do raportu, prezentacji lub artefaktu dla zarządu',
-                    'wybór, co jest gotowe na inicjatywę, co wymaga decka, a co powinno pozostać jeszcze ideą',
-                  ],
-                  why: 'Domyka narzędzie wejściem do działania. SWOT bez tego etapu zostawia zespół z ciekawą analizą, ale bez ruchu.',
-                  next: 'Raport, prezentacja, przekazanie do inicjatyw albo dalsza eksploracja z tego samego materiału źródłowego.',
-                },
-              ]
-            : [
-                {
-                  id: 'decision-frame',
-                  block: '1. Decision frame',
-                  badge: 'Decision',
-                  summary: [
-                    'the strategic question, scope, time horizon, and success signal',
-                    'an explicit reminder of what the analysis covers and what it does not cover',
-                  ],
-                  why: 'Without this frame even a strong matrix drifts away from the real decision and becomes a generic company description.',
-                  next: 'An executive summary with a clear decision frame for the sponsor or board.',
-                },
-                {
-                  id: 'evidence-picture',
-                  block: '2. Factor picture and evidence',
-                  badge: 'Evidence',
-                  summary: [
-                    'the strongest Strengths, Weaknesses, Opportunities, and Threats with their sources',
-                    'a short distinction between facts, observations, and hypotheses',
-                  ],
-                  why: 'This protects the reasoning quality. Decision-makers see not only the conclusion, but the quality of the material underneath it.',
-                  next: 'A defensible matrix and narrative for the next decision discussion.',
-                },
-                {
-                  id: 'tensions',
-                  block: '3. Strategic tensions',
-                  badge: 'Tensions',
-                  summary: [
-                    'the most important connections between internal and external cards',
-                    'attack, repair, defend, or protect patterns that actually change the move logic',
-                  ],
-                  why: 'This is where consulting value appears: observations stop being a list and start explaining where the real trade-off sits.',
-                  next: 'An interpretation layer for leadership discussion and priority choices.',
-                },
-                {
-                  id: 'moves',
-                  block: '4. Recommended moves and sequence',
-                  badge: 'Moves',
-                  summary: [
-                    '2-4 moves emerging from the tensions rather than from analyst intuition',
-                    'a clear distinction between a quick win, a big bet, a defensive move, or a capability build',
-                  ],
-                  why: 'This is the handoff from diagnosis to a move that makes business sense now, has a first step, and can be defended logically.',
-                  next: 'A shortlist of moves for the deck, sponsor decision, or initiative design with a visible first step.',
-                },
-                {
-                  id: 'execution-bridge',
-                  block: '5. Bridge to execution',
-                  badge: 'Execution',
-                  summary: [
-                    'a final source summary ready for the report, presentation, or leadership artifact',
-                    'a choice of what is ready for an initiative, what needs a deck first, and what should remain an idea',
-                  ],
-                  why: 'It closes the tool with a bridge to action. SWOT without this step leaves the team with an interesting analysis but no move.',
-                  next: 'A report, presentation, initiative push, or further exploration from the same source package.',
-                },
-              ];
-
-          const columns: InlineTableColumn<OutcomeBoardRow>[] = [
-            {
-              key: 'block',
-              header: isPolish ? 'Blok wyniku' : 'Outcome block',
-              width: 'w-[22%] align-top',
-              render: (row) => (
-                <div className="min-w-0">
-                  <div className="inline-flex items-center rounded-full border border-purple-500/15 bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-purple-700 dark:text-purple-300">
-                    {row.badge}
+        <div className="space-y-3">
+          {outcomeBlocks.map((block) => {
+            const c = colorMap[block.color];
+            return (
+              <div key={block.id} className={`rounded-2xl border p-4 ${c.card}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${c.title}`}>
+                    {block.title}
                   </div>
-                  <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    {row.block}
+                  <span className={`inline-flex shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] ${c.badge}`}>
+                    {block.badge}
+                  </span>
+                </div>
+
+                <div className="mt-3 grid gap-3 md:grid-cols-3">
+                  <div>
+                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Co zawiera' : 'Contains'}
+                    </div>
+                    <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">{block.what}</div>
+                  </div>
+                  <div>
+                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Dlaczego ważne' : 'Why it matters'}
+                    </div>
+                    <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-200">{block.why}</div>
+                  </div>
+                  <div>
+                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Co uruchamia dalej' : 'Enables next'}
+                    </div>
+                    <div className="text-sm leading-relaxed text-slate-900 dark:text-white">{block.next}</div>
                   </div>
                 </div>
-              ),
-            },
-            {
-              key: 'summary',
-              header: isPolish ? 'Co pokazuje' : 'What it shows',
-              width: 'w-[28%] align-top',
-              render: (row) => (
-                <ul className="space-y-1.5">
-                  {row.summary.map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400/80" />
-                      <span className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-                        {item}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ),
-            },
-            {
-              key: 'why',
-              header: isPolish ? 'Dlaczego ważne' : 'Why it matters',
-              width: 'w-[25%] align-top',
-              render: (row) => (
-                <div className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">{row.why}</div>
-              ),
-            },
-            {
-              key: 'next',
-              header: isPolish ? 'Co uruchamia dalej' : 'What it enables next',
-              width: 'w-[25%] align-top',
-              render: (row) => (
-                <div className="text-sm leading-relaxed text-slate-900 dark:text-slate-100">
-                  {row.next}
-                </div>
-              ),
-            },
-          ];
+              </div>
+            );
+          })}
+        </div>
 
-          return (
-            <InlineTable
-              columns={columns}
-              data={rows}
-              rowKey={(row) => row.id}
-              caption={isPolish ? 'Decision board' : 'Decision board'}
-              compact={false}
-              striped
-              emptyMessage={isPolish ? 'Brak outcomeów.' : 'No outcomes.'}
-              className="bg-white/70 dark:bg-navy-950/20"
-            />
-          );
-        })()}
-
-        <Callout
-          variant="success"
-          title={isPolish ? 'Jak wygląda dobry wynik' : 'What a strong outcome looks like'}
-          className="border border-emerald-200/40 dark:border-emerald-900/30"
-        >
-          {isPolish
-            ? 'Dobry wynik jest selektywny, evidence-backed i decyzyjny. Nie pokazuje wszystkiego, co udało się zebrać, tylko to, co naprawdę zmienia logikę wyboru i pozwala przejść do kolejnego kroku.'
-            : 'A strong result is selective, evidence-backed, and decision-oriented. It does not show everything that was collected, only what truly changes the choice logic and enables the next step.'}
-        </Callout>
+        <div className="rounded-2xl border border-emerald-200/70 bg-emerald-500/5 p-4 dark:border-emerald-900/40">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300">
+              {isPolish ? 'Jak wygląda dobry wynik' : 'What a strong outcome looks like'}
+            </div>
+            <span className="inline-flex shrink-0 rounded-full border border-emerald-300/50 bg-white/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-emerald-800 dark:border-emerald-800/50 dark:bg-white/[0.05] dark:text-emerald-200">
+              Quality
+            </span>
+          </div>
+          <p className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+            {isPolish
+              ? 'Dobry wynik jest selektywny, evidence-backed i decyzyjny. Nie pokazuje wszystkiego, co udało się zebrać, tylko to, co naprawdę zmienia logikę wyboru i pozwala przejść do kolejnego kroku.'
+              : 'A strong result is selective, evidence-backed, and decision-oriented. It does not show everything that was collected, only what truly changes the choice logic and enables the next step.'}
+          </p>
+        </div>
       </div>
     );
 
@@ -935,8 +1047,14 @@ export function KnownToolDetailView(props: {
       {
         id: 'outcomes',
         icon: Lightbulb,
-        label: { en: 'Outcomes', pl: 'Outcomes' },
+        label: { en: 'Outcomes', pl: 'Rezultat' },
         component: outcomesSection,
+      },
+      {
+        id: 'example',
+        icon: FileText,
+        label: { en: 'Example', pl: 'Przykład' },
+        component: exampleSection,
       },
     ];
   }, [tool, isPolish]);
