@@ -2,7 +2,7 @@
 // - We only cache the app shell and ALWAYS try network-first for navigations.
 // - This prevents "zero changes" after deploy (stale cached index.html).
 // - Bump CACHE_VERSION when changing caching strategy.
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v5';
 const CACHE_NAME = `consultify-${CACHE_VERSION}`;
 const APP_SHELL_URLS = [
   '/',

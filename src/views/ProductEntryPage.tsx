@@ -4,6 +4,7 @@ import { Api } from '@/services/api';
 
 import { DemoModeModal } from '../components/Landing/DemoModeModal';
 import { DocumentationSection } from '../components/Landing/DocumentationSection';
+import { AnnaAssistantWidget } from '../components/Landing/AnnaAssistantWidget';
 import { EpicHeroSection } from '../components/Landing/EpicHeroSection';
 import { EntryFooter } from '../components/Landing/EntryFooter';
 import { ForWhomSection } from '../components/Landing/ForWhomSection';
@@ -124,6 +125,8 @@ export const ProductEntryPage: React.FC<ProductEntryPageProps> = ({
       </main>
 
       <EntryFooter />
+
+      <AnnaAssistantWidget />
 
       {/* Demo Mode Modal (for Trial flow) */}
       <DemoModeModal

@@ -118,6 +118,7 @@ import metricsRoutes from './routes/metrics.routes.js';
 import mfaRoutes from './routes/mfa.routes.js';
 import modelRegistryRoutes from './routes/modelRegistry.routes.js';
 import multiFrameworkAssessmentRoutes from './routes/multi-framework-assessment.routes.js';
+import publicAnnaRoutes from './routes/public-anna.routes.js';
 import multiFrameworkWorkflowRoutes from './routes/multi-framework-workflow.routes.js';
 import myWorkRoutes from './routes/my-work.routes.js';
 import notificationRulesRoutes from './routes/notifications/notification-rules.routes.js';
@@ -311,6 +312,15 @@ export class ApiGateway {
       app.use('/api/user/notification-rules', notificationRulesRoutes);
       app.use('/api/user/notification-channels', notificationRulesRoutes);
       app.use('/api/profile', userProfileExtendedRoutes);
+
+      // Public routes MUST be mounted before any legacy `/api` root routers
+      // that apply auth with `router.use(verifyToken)`, otherwise they get
+      // intercepted before reaching these public handlers.
+      app.use('/api/public/partner', publicPartnerRouter); // Public partner code validation
+      app.use('/api/public/outreach', publicOutreachRoutes); // Public one-click unsubscribe + tracking
+      app.use('/api/public/report', reportBuilderPublicRoutes); // Public shared reports
+      app.use('/api/public/mini-assessment', publicMiniAssessmentRoutes); // Public mini assessment links
+      app.use('/api/public/anna', publicAnnaRoutes); // Public landing assistant
 
       // Core routes
       app.use('/api/sessions', sessionsRoutes);
@@ -554,10 +564,6 @@ export class ApiGateway {
       app.use('/api/demo', demoRoutes);
       mountStub('/api/promo', promoRoutes, 'promoRoutes');
       app.use('/api/partners', partnerRoutes);
-      app.use('/api/public/partner', publicPartnerRouter); // Public partner code validation
-      app.use('/api/public/outreach', publicOutreachRoutes); // Public one-click unsubscribe + tracking
-      app.use('/api/public/report', reportBuilderPublicRoutes); // Public shared reports
-      app.use('/api/public/mini-assessment', publicMiniAssessmentRoutes); // Public mini assessment links
       app.use('/api/superadmin/partner-settlements', superAdminPartnerRouter); // SuperAdmin partner settlements
       app.use('/api/superadmin/partner-config', partnerConfigRouter); // SuperAdmin partner configuration
       app.use('/api/superadmin/partner-outreach', partnerOutreachRoutes); // SuperAdmin partner outreach campaigns
