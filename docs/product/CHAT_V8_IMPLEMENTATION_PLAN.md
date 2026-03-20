@@ -38,7 +38,8 @@ Program `v8` dzielimy na 6 strumieni:
 - `V8-CHAT-03 RetrievalModesAndSources`
 - `V8-CHAT-04 ActionsGovernanceAndArtifacts`
 - `V8-CHAT-05 VoiceAndMultimodal`
-- `V8-CHAT-06 RolloutTruthAndAdoption`
+- `V8-CHAT-06 MemorySharingAndEnterpriseTrust`
+- `V8-CHAT-07 RolloutTruthAndAdoption`
 
 Kazdy strumien ma scope frontend, backend, data/contracts, UX, governance i testy.
 
@@ -77,7 +78,9 @@ Deliverables:
 - attachments/retrieval spec,
 - modes/scope model,
 - actions/approvals spec,
-- response model.
+- response model,
+- message/thread operations spec,
+- rich output/rendering spec.
 
 Definition of done:
 - istnieje jedna formula pracy zamiast zbioru niespojnych surfaces.
@@ -91,7 +94,10 @@ Cel:
 Deliverables:
 - voice/multimodal spec,
 - acceptance criteria for source transparency,
-- action governance clarifications.
+- action governance clarifications,
+- memory/personalization spec,
+- sharing/permissions spec,
+- enterprise/compliance boundaries.
 
 Definition of done:
 - user widzi jeden coherent trust model dla sources, actions i voice.
@@ -306,7 +312,44 @@ Test scope:
 Priority:
 - P1
 
-### V8-CHAT-06 RolloutTruthAndAdoption
+### V8-CHAT-06 MemorySharingAndEnterpriseTrust
+
+Zakres:
+- user and org memory,
+- private mode semantics,
+- sharing and permissions,
+- retention and admin/compliance boundaries.
+
+Frontend:
+- memory-related user controls,
+- sharing visibility semantics,
+- private/team distinctions where surfaced.
+
+Backend:
+- memory read/write rules,
+- permission and retention policy boundaries,
+- admin/audit visibility semantics.
+
+Data/contracts:
+- memory scopes,
+- personalization scopes,
+- sharing permission domains,
+- retention owner and baseline promises.
+
+Migration/rollout:
+- nie overpromise'owac enterprise i privacy beyond runtime,
+- wskazac baseline vs future extension.
+
+Test scope:
+- memory semantics are coherent,
+- private mode semantics are explicit,
+- sharing and folder visibility do not contradict,
+- enterprise promises are bounded and support-ready.
+
+Priority:
+- P1
+
+### V8-CHAT-07 RolloutTruthAndAdoption
 
 Zakres:
 - rollout notes,
@@ -353,6 +396,11 @@ Detailed spec map used by this plan:
 - `CHAT_V8_ACTIONS_AND_APPROVALS.md`
 - `CHAT_V8_VOICE_AND_MULTIMODAL.md`
 - `CHAT_V8_RESPONSE_MODEL.md`
+- `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
+- `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
+- `CHAT_V8_SHARING_AND_PERMISSIONS.md`
+- `CHAT_V8_RICH_OUTPUT_AND_RENDERING.md`
+- `CHAT_V8_ENTERPRISE_AND_COMPLIANCE.md`
 
 Legacy/background references only:
 - `docs/UNIFIED_AI_CHAT_SYSTEM.md`
@@ -410,4 +458,43 @@ Legacy/background references only:
 | RetrievalModesAndSources | Attachment, research and source transparency contracts are explicit |
 | ActionsGovernanceAndArtifacts | Proposal, approval, execution and artifact handoff are explicit |
 | VoiceAndMultimodal | One coherent voice contract exists |
+| MemorySharingAndEnterpriseTrust | Memory, privacy, sharing and enterprise boundaries are explicit and non-contradictory |
 | RolloutTruthAndAdoption | New package can serve as the only required SSOT for future work |
+
+### 8.1 Testable acceptance checklist
+
+ShellAndRouting:
+- one canonical full-chat shell is identified,
+- split/full relationship is explicit,
+- legacy shell status is documented.
+
+HistoryAndLibrary:
+- create, rename, pin, archive, delete and move semantics are explicit,
+- `chat folder` vs `PMO project` is explicitly separated,
+- revisit and search semantics are explicit.
+
+RetrievalModesAndSources:
+- file, URL and cloud semantics are classified as canonical or partial,
+- source classes are named consistently,
+- citations and research expectations are explicit.
+
+ActionsGovernanceAndArtifacts:
+- proposal, approval, rejection and execution semantics are distinct,
+- artifact handoff semantics are explicit,
+- canonical feedback path is identified.
+
+VoiceAndMultimodal:
+- dictation, voice conversation and TTS are differentiated,
+- stop/fallback/privacy rules are explicit,
+- vision/broad multimodal parity is classified honestly.
+
+MemorySharingAndEnterpriseTrust:
+- conversation vs user vs org memory are explicit,
+- private mode semantics are explicit,
+- sharing/visibility layers are explicit,
+- retention owner and compliance boundaries are explicit.
+
+RolloutTruthAndAdoption:
+- package is registered as canonical,
+- old chat docs are explicitly demoted to background/legacy,
+- cross-links point readers to the right document owner.

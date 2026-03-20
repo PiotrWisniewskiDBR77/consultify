@@ -20,12 +20,17 @@ To wymaga twardego kontraktu:
 ## 2. Nadrzedna zasada
 
 Kazda istotna akcja AI nalezy do jednej klasy:
-- `suggestion`
-- `proposal`
+- `ephemeral suggestion`
+- `durable proposal`
 - `approved action`
 - `executed action`
 
 System nie moze mylic tych stanow.
+
+Mapping to broader governance vocabulary:
+- `ephemeral suggestion` nalezy do klasy `AI answer` z CTA semantics,
+- `durable proposal` nalezy do klasy `AI proposal`,
+- `approved action` i `executed action` naleza do klasy `AI action after approval`.
 
 ---
 
@@ -33,7 +38,7 @@ System nie moze mylic tych stanow.
 
 Kanoniczny lifecycle:
 
-`suggested -> pending_review -> approved or rejected -> executed or closed -> audited`
+`proposed -> pending_review -> approved or rejected -> executed or closed -> audited`
 
 Rules:
 - `approved` nie moze domyslnie znaczyc czegos innego w zaleznosci od shellu,
@@ -55,6 +60,9 @@ To lekkie action chips lub next-step shortcuts, np.:
 Rules:
 - jesli sa rendered, musza miec jednoznaczny handler,
 - jesli sa tylko w legacy shellu, nie wolno ich traktowac jako canonical parity.
+
+Te akcje nie sa durable state machine.
+Sa lekkim rozszerzeniem odpowiedzi, nie rownowaznikiem approval workflow.
 
 ### 4.2 Durable AI actions
 
@@ -185,3 +193,8 @@ Actions and approvals sa domkniete, gdy:
 - proposal state jest widoczny,
 - action and artifact handoff sa zrozumiale,
 - docs wyraznie oddzielaja response actions, durable actions i execution semantics.
+
+Related specs:
+- `CHAT_V8_AI_GOVERNANCE.md`
+- `CHAT_V8_RESPONSE_MODEL.md`
+- `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`

@@ -148,6 +148,108 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: ISO/PMBOK/PRINCE2 traceability, role hierarchy, auditability
   - **Authority**: Highest for standards alignment and audit language
 
+### Chat v8 (canonical chat product suite)
+
+- `docs/product/CHAT_V8_SSOT.md`
+  - **Owner**: Product
+  - **Scope**: canonical chat product purpose, principles, taxonomy index, package map and completeness criteria
+  - **Authority**: Highest for `Chat v8` target state and document ownership map
+
+- `docs/product/CHAT_V8_BENCHMARK.md`
+  - **Owner**: Product
+  - **Scope**: benchmark and parity/non-goal matrix vs ChatGPT, Claude and Perplexity
+  - **Authority**: Highest for leader-grade comparison targets
+
+- `docs/product/CHAT_V8_WORKFLOW_MODEL.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical end-to-end user workflow, variants and trust flow
+  - **Authority**: High for user journey and workflow semantics
+
+- `docs/product/CHAT_V8_AS_IS.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: current-state audit of chat product/runtime
+  - **Authority**: Highest for as-is interpretation during `v8` work
+
+- `docs/product/CHAT_V8_GAP_MATRIX.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: explicit gaps between current chat and target `v8`
+  - **Authority**: High for prioritization and sequencing
+
+- `docs/product/CHAT_V8_RUNTIME_TRUTH_MAP.md`
+  - **Owner**: Engineering
+  - **Scope**: canonical runtime owners, live vs legacy surfaces, support-ready interpretation
+  - **Authority**: Highest for execution-time truth and capability classification
+
+- `docs/product/CHAT_V8_AI_GOVERNANCE.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: answer/proposal/action rules, source honesty, privacy and governance principles
+  - **Authority**: Highest for AI behavior and governance semantics in chat
+
+- `docs/product/CHAT_V8_IMPLEMENTATION_PLAN.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: epics, waves, execution order, acceptance matrix and rollout strategy for `Chat v8`
+  - **Authority**: Highest for `Chat v8` delivery sequencing
+
+- `docs/product/CHAT_V8_CONTROL_SURFACE_SPEC.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: chat controls, visibility rules, canonical/partial/legacy classification
+  - **Authority**: Highest for chat button and control semantics
+
+- `docs/product/CHAT_V8_HISTORY_AND_LIBRARY_MODEL.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: conversation lifecycle, folders, revisit and history/library model
+  - **Authority**: Highest for chat history semantics
+
+- `docs/product/CHAT_V8_ATTACHMENTS_AND_RETRIEVAL.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: file/URL/cloud semantics, retrieval scope and source transparency
+  - **Authority**: Highest for chat retrieval/source rules
+
+- `docs/product/CHAT_V8_MODES_AND_SCOPE_MODEL.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: modes, source scope, model selection, privacy and personalization toggles
+  - **Authority**: Highest for chat mode/scope semantics
+
+- `docs/product/CHAT_V8_ACTIONS_AND_APPROVALS.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: proposals, approvals, execution semantics and artifact handoff actions
+  - **Authority**: Highest for chat action lifecycle semantics
+
+- `docs/product/CHAT_V8_VOICE_AND_MULTIMODAL.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: dictation, voice conversation, TTS and multimodal boundaries
+  - **Authority**: Highest for chat voice contract
+
+- `docs/product/CHAT_V8_RESPONSE_MODEL.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: response classes, metadata and trust expectations
+  - **Authority**: Highest for response semantics in chat
+
+- `docs/product/CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: conversation/user/org memory, personalization, private mode and trust boundaries
+  - **Authority**: Highest for memory semantics in chat
+
+- `docs/product/CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: edit, regenerate, fork/branch, variant and thread continuity semantics
+  - **Authority**: Highest for message and thread operation semantics
+
+- `docs/product/CHAT_V8_SHARING_AND_PERMISSIONS.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: sharing, visibility layers, folder scope and permission boundaries
+  - **Authority**: Highest for chat visibility and sharing semantics
+
+- `docs/product/CHAT_V8_RICH_OUTPUT_AND_RENDERING.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: rich response rendering, in-thread vs artifact boundary, copy/export semantics
+  - **Authority**: Highest for chat rich output behavior
+
+- `docs/product/CHAT_V8_ENTERPRISE_AND_COMPLIANCE.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: retention, audit, export, admin visibility, tenant isolation and compliance boundaries
+  - **Authority**: Highest for chat enterprise/compliance promises
+
 ### Supporting (canonical, but secondary)
 
 - `docs/architecture/WORK_DIMENSIONS`

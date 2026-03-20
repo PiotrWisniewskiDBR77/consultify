@@ -53,6 +53,10 @@ To tryby zmieniajace zakres zrodel:
 - `privateMode`
 - `custom instructions`
 
+These connect directly to:
+- `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
+- `CHAT_V8_AI_GOVERNANCE.md`
+
 ### 3.4 Output behavior modes
 
 - `textToSpeech`
@@ -183,3 +187,8 @@ Modes and scope model jest domkniety, gdy:
 - privacy and personalization rules sa czytelne,
 - model/tier selection ma uczciwy contract,
 - docs odrozniaja `real`, `partial` i `target` semantics.
+
+Related specs:
+- `CHAT_V8_ATTACHMENTS_AND_RETRIEVAL.md`
+- `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
+- `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`

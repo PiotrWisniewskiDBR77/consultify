@@ -60,14 +60,19 @@ Docelowy user feeling ma byc bliski liderom:
 - conversation history i library,
 - folders personal/team,
 - conversation lifecycle: create, title, rename, pin, archive, delete, move, revisit,
+- message and thread operations: edit, regenerate, fork/branch, compare variants,
 - local files i URL attachments,
 - cloud file usage tylko tam, gdzie runtime jest realny,
 - scope/modes/tools/custom instructions,
+- memory and personalization semantics,
 - model/tier selection,
 - response streaming, stop, retry, error states,
 - AI actions i approvals,
 - feedback i learning loops,
 - voice and multimodal contract dla obecnego runtime,
+- sharing and permissions contract dla rozmow i folderow,
+- rich output and rendering contract inside chat,
+- enterprise, retention and compliance boundaries dla chat content,
 - source transparency i citation expectations,
 - handoff do notes/tasks/decisions/ideas i innych artifact flows.
 
@@ -75,6 +80,7 @@ Docelowy user feeling ma byc bliski liderom:
 
 - budowa osobnego komunikatora team-chat klasy Slack,
 - vendor-style app marketplace,
+- udawanie pelnej multimodal parity dla vision/images, jesli runtime tego nie wspiera,
 - ukrywanie roznicy miedzy best-effort a guaranteed citations,
 - pokazywanie w UI funkcji, ktore nie maja realnego runtime support,
 - greenfield rewrite calego chat stacku bez reuse istniejacych komponentow.
@@ -136,7 +142,13 @@ To tryb pracy z workspace context i jedna z glownych przewag `consultify`.
 
 Nadrzedna sciezka produktu ma byc:
 
-`entry -> new/existing conversation -> ask -> stream -> inspect -> refine -> act/save -> revisit`
+`entry -> select or create conversation -> understand scope/modes -> ask -> stream -> inspect -> refine -> act/save -> revisit`
+
+`understand scope/modes` nie znaczy, ze user zawsze musi wejsc w osobny setup step.
+Znaczy, ze przed wyslaniem pytania produkt musi dawac userowi zrozumienie:
+- jaki jest context,
+- jakie source classes sa aktywne,
+- jaki tryb pracy AI jest wlaczony.
 
 Rozszerzenia tej sciezki:
 - `entry -> attach -> ask grounded question -> inspect sources -> continue`,
@@ -258,12 +270,33 @@ Build-ready supporting specs:
 - `CHAT_V8_ACTIONS_AND_APPROVALS.md`
 - `CHAT_V8_VOICE_AND_MULTIMODAL.md`
 - `CHAT_V8_RESPONSE_MODEL.md`
+- `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
+- `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
+- `CHAT_V8_SHARING_AND_PERMISSIONS.md`
+- `CHAT_V8_RICH_OUTPUT_AND_RENDERING.md`
+- `CHAT_V8_ENTERPRISE_AND_COMPLIANCE.md`
 
 Reading order:
 - start with `SSOT`,
 - then `BENCHMARK`, `WORKFLOW_MODEL`, `AS_IS`, `GAP_MATRIX`, `RUNTIME_TRUTH_MAP`,
 - then `AI_GOVERNANCE` and `IMPLEMENTATION_PLAN`,
 - then detailed specs.
+
+Normative ownership by topic:
+- product spine and package map: `CHAT_V8_SSOT.md`
+- parity and deliberate non-goals: `CHAT_V8_BENCHMARK.md`
+- runtime classification: `CHAT_V8_RUNTIME_TRUTH_MAP.md`
+- controls and shell behavior: `CHAT_V8_CONTROL_SURFACE_SPEC.md`
+- history and folders: `CHAT_V8_HISTORY_AND_LIBRARY_MODEL.md`
+- retrieval and source classes: `CHAT_V8_ATTACHMENTS_AND_RETRIEVAL.md`
+- modes, scope and personalization toggles: `CHAT_V8_MODES_AND_SCOPE_MODEL.md`
+- action lifecycle and approvals: `CHAT_V8_ACTIONS_AND_APPROVALS.md`
+- response classes and rich in-thread rendering: `CHAT_V8_RESPONSE_MODEL.md`, `CHAT_V8_RICH_OUTPUT_AND_RENDERING.md`
+- memory and personalization: `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
+- message/thread edits and branching: `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
+- sharing, roles and visibility: `CHAT_V8_SHARING_AND_PERMISSIONS.md`
+- enterprise retention and compliance: `CHAT_V8_ENTERPRISE_AND_COMPLIANCE.md`
+- voice and multimodal boundaries: `CHAT_V8_VOICE_AND_MULTIMODAL.md`
 
 Background-only references after `v8`:
 - `docs/UNIFIED_AI_CHAT_SYSTEM.md`
@@ -296,7 +329,51 @@ AI operations, retrieval i approvals sa jawne, reviewable i audytowalne.
 
 ---
 
-## 10. Non-negotiable rules for v8
+## 10. Taxonomy index
+
+### 10.1 Source classes
+
+Normative source classes for `Chat v8`:
+- `general model knowledge`
+- `conversation history`
+- `workspace context`
+- `attachments`
+- `web/research`
+- `organizational memory`
+
+Source-class details live in:
+- `CHAT_V8_ATTACHMENTS_AND_RETRIEVAL.md`
+- `CHAT_V8_MODES_AND_SCOPE_MODEL.md`
+- `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
+
+### 10.2 Response classes
+
+Normative response classes for `Chat v8`:
+- `general answer`
+- `workspace-grounded answer`
+- `attachment-grounded answer`
+- `research answer`
+- `proposal response`
+- `action-carrying response`
+- `artifact-oriented response`
+
+Response-class details live in:
+- `CHAT_V8_RESPONSE_MODEL.md`
+- `CHAT_V8_RICH_OUTPUT_AND_RENDERING.md`
+
+### 10.3 Action lifecycle vocabulary
+
+Normative lifecycle vocabulary for durable AI actions:
+
+`proposed -> pending_review -> approved or rejected -> executed or closed -> audited`
+
+Action lifecycle details live in:
+- `CHAT_V8_ACTIONS_AND_APPROVALS.md`
+- `CHAT_V8_AI_GOVERNANCE.md`
+
+---
+
+## 11. Non-negotiable rules for v8
 
 - nie utrzymujemy dwoch rownoleglych definicji glownego chat produktu,
 - nie dokumentujemy fikcyjnych lub placeholder flows jako "done",
@@ -308,13 +385,17 @@ AI operations, retrieval i approvals sa jawne, reviewable i audytowalne.
 
 ---
 
-## 11. Completeness criteria
+## 12. Completeness criteria
 
 `Chat v8` jest kompletne dopiero wtedy, gdy:
 - istnieje jeden canonical shell i jeden canonical route model,
 - historia jest pelnym systemem library, a nie tylko lista rozmow,
 - wszystkie glowne control groups maja explicit contract,
 - scope/modes i retrieval sa opisane bez luk i bez niespojnych obietnic,
+- memory/personalization ma jawny trust contract,
+- message and thread operations sa okreslone jak u liderow lub maja jawny non-goal,
+- sharing/permissions i enterprise boundaries sa opisane bez zgadywania,
+- rich output inside chat ma jasny rendering contract,
 - AI actions maja twardy review and approval contract,
 - voice ma jeden czytelny user-facing model,
 - starsze dokumenty nie sa juz wymagane jako rownorzedne SSOT,

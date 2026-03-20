@@ -28,14 +28,20 @@ Punkt odniesienia:
 | Simplicity of main shell | bardzo mocna | mocna | mocna | ma byc prosta mimo bogatszego systemu |
 | Conversation history | dobre | bardzo mocne | dobre | ma byc blizej Claude niz ChatGPT |
 | Folder/project semantics | ograniczone | bardzo mocne | ograniczone | musi byc leader-grade |
+| Message edit / regenerate / branch | mocne | mocne | umiarkowane | musi byc jawnie opisane i konkurencyjne lub oznaczone jako baseline non-goal |
+| Cross-thread memory and personalization | mocne | mocne | ograniczone | musi miec jawny trust contract |
 | File work | mocne | bardzo mocne | srednie | ma byc co najmniej Claude-lite |
 | Web/research grounding | ograniczone / mode-based | ograniczone | bardzo mocne | ma byc blizej Perplexity |
 | Source transparency | umiarkowana | umiarkowana | bardzo mocna | musi byc jawna i uczciwa |
+| Sharing and permissions | umiarkowane | mocne | ograniczone | musi miec explicit B2B contract |
+| Rich in-thread outputs | mocne | bardzo mocne | umiarkowane | musi miec rendering and artifact boundary contract |
 | Voice | mocne | ograniczone | ograniczone | ma byc spojne i prawdziwe |
+| Vision / broader multimodal | mocne | mocne | umiarkowane | jawny non-goal baseline lub osobny future contract |
 | Workspace co-working | ograniczone | umiarkowane | ograniczone | ma byc przewaga Consultify |
 | Action execution | ograniczone | ograniczone | ograniczone | ma byc wyrazna przewaga Consultify |
 | Artifact handoff | umiarkowane | umiarkowane | ograniczone | ma byc przewaga Consultify |
 | Governance / HITL | umiarkowane | umiarkowane | ograniczone | ma byc przewaga Consultify |
+| Enterprise retention/compliance | mocne | mocne | umiarkowane | musi miec explicit baseline/extension boundary |
 
 ---
 
@@ -113,7 +119,29 @@ Historia `Chat v8` ma byc projektowana blizej `Claude` niz obecny standard zwykl
 
 ---
 
-## 6. Direct comparison matrix
+## 6A. Explicit parity or non-goal decisions
+
+For `Chat v8` each competitor-shaped area must be classified as one of:
+- `parity`
+- `consultify-plus`
+- `explicit non-goal for baseline`
+
+Current intended classification:
+- core chat flow: `parity`
+- history and folders: `parity`
+- retrieval transparency: `parity`
+- workspace co-working: `consultify-plus`
+- governed actions: `consultify-plus`
+- cross-thread memory: `parity target`
+- message/thread operations: `parity target`
+- sharing/permissions: `parity target`
+- rich in-thread rendering: `parity target`
+- broad vision multimodality: `explicit non-goal for baseline unless separately promoted`
+- full enterprise compliance suite: `baseline + future extension split`
+
+---
+
+## 7. Direct comparison matrix
 
 | Product concern | Best benchmark | Why | Chat v8 target |
 |---|---|---|---|
@@ -127,7 +155,7 @@ Historia `Chat v8` ma byc projektowana blizej `Claude` niz obecny standard zwykl
 
 ---
 
-## 7. Gdzie obecny produkt odstaje od liderow
+## 8. Gdzie obecny produkt odstaje od liderow
 
 - dwa rownolegle shelle czatu zamiast jednej glownej surface,
 - niespojny full vs split chat story,
@@ -136,10 +164,12 @@ Historia `Chat v8` ma byc projektowana blizej `Claude` niz obecny standard zwykl
 - cloud UX overpromise'uje wzgledem runtime,
 - voice ma czesciowy runtime, ale nie ma jednego user-facing contract,
 - AI actions sa obiecujace, ale execution i governance wymagaja mocniejszego domkniecia.
+- memory/personalization, message/thread operations i sharing nie byly jeszcze dospecyfikowane na poziomie leader-grade,
+- rich output i enterprise/compliance potrzebuja explicit contracts, zeby nie zostaly domyslone przez zespoly.
 
 ---
 
-## 8. Benchmark conclusions for v8
+## 9. Benchmark conclusions for v8
 
 ### 8.1 Must-have
 

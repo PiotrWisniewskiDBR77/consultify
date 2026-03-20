@@ -14,6 +14,11 @@ Kanoniczny workflow `Chat v8` jest jeden:
 To jest glowny mental model usera.
 Wszystkie dodatkowe capabilities maja wzmacniac ten workflow, a nie tworzyc konkurencyjne sciezki.
 
+Important interpretation:
+- `configure scope/modes` moze byc explicit albo implicit,
+- user nie musi przechodzic przez osobny setup screen,
+- ale produkt musi dawac mu zrozumienie aktywnego context, source classes i trybow zanim wysle pytanie.
+
 ---
 
 ## 2. Entry points
@@ -96,6 +101,8 @@ Po odpowiedzi user musi moc ocenic:
 
 User moze:
 - zadac follow-up,
+- edytowac ostatni prompt lub zregenerowac odpowiedz tam, gdzie produkt to wspiera,
+- rozwidlic watek lub porownac wariant odpowiedzi tam, gdzie produkt to wspiera,
 - dopiac nowe attachments,
 - wlaczyc inny mode,
 - przejsc w research/deeper reasoning,
@@ -168,7 +175,7 @@ Rules:
 Historia `Chat v8` nie jest tylko "sidebar".
 To library workflow:
 
-`all/recent -> pinned -> folder -> archived -> search -> open thread -> continue`
+`all/recent -> pinned -> folder -> search -> archived -> open thread -> continue`
 
 Required semantics:
 - create in place,
@@ -196,17 +203,31 @@ Rules:
 
 ## 7. Source and trust workflow
 
-Chat `v8` musi jawnie rozroznic cztery klasy odpowiedzi:
+Chat `v8` musi jawnie rozroznic cztery glownie user-facing klasy odpowiedzi:
 - general answer,
 - workspace-grounded answer,
 - attachment-grounded answer,
 - web/research-grounded answer.
+
+Pelna source taxonomy obejmuje dodatkowo:
+- conversation history,
+- organizational memory.
+
+Te source classes sa opisane normatywnie w:
+- `CHAT_V8_ATTACHMENTS_AND_RETRIEVAL.md`
+- `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
+- `CHAT_V8_MODES_AND_SCOPE_MODEL.md`
 
 User powinien wiedziec:
 - skad odpowiedz przyszla,
 - czy citations sa expected,
 - czy answer jest policy-governed,
 - czy odpowiedz moze prowadzic do wykonania akcji.
+
+Related specs:
+- `CHAT_V8_RESPONSE_MODEL.md`
+- `CHAT_V8_ACTIONS_AND_APPROVALS.md`
+- `CHAT_V8_RICH_OUTPUT_AND_RENDERING.md`
 
 ---
 

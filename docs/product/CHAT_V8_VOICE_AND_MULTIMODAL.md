@@ -129,6 +129,9 @@ Nie obejmuja automatycznie:
 
 chyba ze osobny runtime contract to potwierdzi.
 
+For v8 baseline this is an explicit non-goal, not a hidden omission.
+If broader multimodal parity becomes a target later, it requires a separate canonical spec.
+
 ---
 
 ## 8. Classification rules

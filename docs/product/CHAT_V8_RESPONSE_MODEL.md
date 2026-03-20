@@ -20,6 +20,16 @@ User musi rozumiec, czy dostal:
 
 ## 2. Canonical response classes
 
+Important distinction:
+- `response class` opisuje to, jaki typ outputu user dostaje,
+- `source class` opisuje, z czego AI korzystalo,
+- `action state` opisuje, czy output prowadzi do governed action lifecycle.
+
+Source-class details live in:
+- `CHAT_V8_ATTACHMENTS_AND_RETRIEVAL.md`
+- `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
+- `CHAT_V8_MODES_AND_SCOPE_MODEL.md`
+
 ### 2.1 General answer
 
 Znaczenie:
@@ -85,6 +95,16 @@ UX expectation:
 - naturalny handoff do notes/tasks/decisions/ideas,
 - jasny rezultat save action.
 
+### 2.8 Rich structured response
+
+Znaczenie:
+- odpowiedz, ktora wymaga bogatszego renderingu niz plain prose,
+- moze zawierac structured sections, code, tables, checklists, citations clusters lub exportable blocks.
+
+UX expectation:
+- rendering rules sa przewidywalne,
+- user wie, co zostaje in-thread, a co powinno byc zapisane jako artifact.
+
 ---
 
 ## 3. Required response metadata
@@ -99,6 +119,10 @@ W miare mozliwosci runtime odpowiedz powinna miec metadata dla:
 
 Nie wszystko musi byc obecne zawsze.
 Ale `v8` wymaga jednej prawdy co te pola znacza.
+
+Normative rendering and metadata usage details live in:
+- `CHAT_V8_RICH_OUTPUT_AND_RENDERING.md`
+- `CHAT_V8_ACTIONS_AND_APPROVALS.md`
 
 ---
 
@@ -126,6 +150,7 @@ Required behaviors:
 | Proposal response | medium-high | high | explicit next step |
 | Action-carrying response | high | very high | explicit approval state |
 | Artifact-oriented response | high | high | explicit save semantics |
+| Rich structured response | variable by source class | medium-high | depends on embedded proposal/action state |
 
 ---
 
@@ -135,6 +160,9 @@ Required behaviors:
 - proposal i action-carrying response nie moga byc mylone z neutral answer,
 - message actions musza odpowiadac typowi odpowiedzi,
 - response state should support follow-up, save, approve or inspect actions naturally.
+
+Thread operations related to responses are defined in:
+- `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
 
 ---
 

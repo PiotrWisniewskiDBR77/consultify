@@ -151,6 +151,16 @@ User powinien rozumiec, czy answer opiera sie na:
 - web search,
 - general knowledge.
 
+### 8.3 Research mode matrix
+
+| Mode | Expected primary sources | Output expectation | Citation expectation | Failure/degrade expectation |
+|---|---|---|---|---|
+| General answer | model knowledge + conversation | fast answer | low | normal answer without sourced framing |
+| Attachment-grounded | files / URL-ingested docs | grounded answer | medium-high | answer should disclose weak or missing grounding |
+| Workspace-grounded | workspace context + conversation | contextual answer | medium | answer should disclose limits of visible context |
+| Web/research | web + planning + optional other context | slower, more structured answer | high | product should surface reduced confidence or blocked search limitations |
+| Deep research | explicit confirm + broader retrieval workflow | reviewable research result | high | partial/blocked result should remain reviewable, not silent |
+
 ---
 
 ## 9. UX rules
@@ -179,3 +189,8 @@ Attachments and retrieval sa domkniete, gdy:
 - source transparency jest uczciwa,
 - sourced answer ma odrebny contract,
 - docs nie overpromise'uja relative do runtime.
+
+Related specs:
+- `CHAT_V8_MODES_AND_SCOPE_MODEL.md`
+- `CHAT_V8_RESPONSE_MODEL.md`
+- `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
