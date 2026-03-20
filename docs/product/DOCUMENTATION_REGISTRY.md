@@ -294,6 +294,11 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: canonical separation between execution agent, audit agents, virtual workers and RAG management; defines correct foundation for future execution-agent work
   - **Authority**: Highest for agent-domain taxonomy and next-step scoping before `Execution Agent` design
 
+- `docs/product/AGENT_EXECUTION_V1_SSOT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical concept for a chat-started execution agent that plans, proposes, approves and executes work across application artifacts
+  - **Authority**: Highest for `Execution Agent` target concept and product/runtime boundaries
+
 ### Supporting (canonical, but secondary)
 
 - `docs/architecture/WORK_DIMENSIONS`
