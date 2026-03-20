@@ -287,6 +287,13 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: evidence-led deep research architecture, review model and runtime expectations
   - **Authority**: Highest for deep research evidence semantics
 
+### Agent execution domain cleanup
+
+- `docs/product/AGENT_EXECUTION_DOMAIN_MAP_V1.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical separation between execution agent, audit agents, virtual workers and RAG management; defines correct foundation for future execution-agent work
+  - **Authority**: Highest for agent-domain taxonomy and next-step scoping before `Execution Agent` design
+
 ### Supporting (canonical, but secondary)
 
 - `docs/architecture/WORK_DIMENSIONS`
