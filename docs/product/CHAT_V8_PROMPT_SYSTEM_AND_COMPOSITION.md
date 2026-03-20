@@ -357,6 +357,7 @@ But the system should know them.
 - Register prompt governance and AI OS docs explicitly alongside `Chat v8` canonical suite.
 - Keep `Chat v8` as product SSOT, but make prompt runtime docs authoritative for composition details.
 - Add one explicit mapping between product source classes and runtime prompt layers.
+- Add one prompt-content quality standard so teams can evaluate actual prompt text, not only prompt architecture.
 
 ### 11.2 Product/documentation changes
 
@@ -372,6 +373,14 @@ But the system should know them.
 - one language rule,
 - one deduplicated KB injection path,
 - one prompt manifest/tracing contract.
+
+### 11.4 Content-quality changes to target
+
+- reduce giant client-side persona overlays,
+- keep base persona concise and versioned,
+- ensure co-thinker prompts are modifiers, not replacement identities,
+- maintain explicit prompt budget discipline,
+- connect prompt edits to eval and regression review.
 
 ---
 
@@ -391,3 +400,4 @@ Related specs:
 - `CHAT_V8_ATTACHMENTS_AND_RETRIEVAL.md`
 - `CHAT_V8_AI_GOVERNANCE.md`
 - `CHAT_V8_RUNTIME_TRUTH_MAP.md`
+- `CHAT_V8_PROMPT_CONTENT_AND_QUALITY.md`

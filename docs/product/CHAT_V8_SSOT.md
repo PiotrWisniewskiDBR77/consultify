@@ -271,6 +271,7 @@ Build-ready supporting specs:
 - `CHAT_V8_VOICE_AND_MULTIMODAL.md`
 - `CHAT_V8_RESPONSE_MODEL.md`
 - `CHAT_V8_PROMPT_SYSTEM_AND_COMPOSITION.md`
+- `CHAT_V8_PROMPT_CONTENT_AND_QUALITY.md`
 - `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
 - `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
 - `CHAT_V8_SHARING_AND_PERMISSIONS.md`
@@ -294,6 +295,7 @@ Normative ownership by topic:
 - action lifecycle and approvals: `CHAT_V8_ACTIONS_AND_APPROVALS.md`
 - response classes and rich in-thread rendering: `CHAT_V8_RESPONSE_MODEL.md`, `CHAT_V8_RICH_OUTPUT_AND_RENDERING.md`
 - prompt composition and precedence rules: `CHAT_V8_PROMPT_SYSTEM_AND_COMPOSITION.md`
+- prompt text quality and anti-duplication rules: `CHAT_V8_PROMPT_CONTENT_AND_QUALITY.md`
 - memory and personalization: `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
 - message/thread edits and branching: `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
 - sharing, roles and visibility: `CHAT_V8_SHARING_AND_PERMISSIONS.md`

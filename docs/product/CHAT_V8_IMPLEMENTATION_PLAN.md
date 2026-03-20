@@ -81,6 +81,7 @@ Deliverables:
 - actions/approvals spec,
 - response model,
 - prompt system and composition spec,
+- prompt content and quality spec,
 - message/thread operations spec,
 - rich output/rendering spec.
 
@@ -437,6 +438,7 @@ Detailed spec map used by this plan:
 - `CHAT_V8_VOICE_AND_MULTIMODAL.md`
 - `CHAT_V8_RESPONSE_MODEL.md`
 - `CHAT_V8_PROMPT_SYSTEM_AND_COMPOSITION.md`
+- `CHAT_V8_PROMPT_CONTENT_AND_QUALITY.md`
 - `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
 - `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
 - `CHAT_V8_SHARING_AND_PERMISSIONS.md`
@@ -546,7 +548,8 @@ PromptSystemAndComposition:
 - prompt registry, runtime sections and mode/retrieval addons have one documented order,
 - one canonical owner for base persona semantics is identified,
 - fallback and language rules are explicit,
-- product docs and runtime/governance docs are linked without contradiction.
+- product docs and runtime/governance docs are linked without contradiction,
+- prompt content quality standards exist for evaluating actual prompt text.
 
 RolloutTruthAndAdoption:
 - package is registered as canonical,

@@ -230,6 +230,11 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: prompt composition order, precedence, base persona ownership, fallback and traceability rules for chat
   - **Authority**: Highest for chat prompt-system contract at product/runtime boundary
 
+- `docs/product/CHAT_V8_PROMPT_CONTENT_AND_QUALITY.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: quality standards for prompt text, anti-duplication rules, content evaluation checklist and prompt-layer quality targets
+  - **Authority**: Highest for chat prompt content quality rules
+
 - `docs/product/CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
   - **Owner**: Product + Engineering
   - **Scope**: conversation/user/org memory, personalization, private mode and trust boundaries
