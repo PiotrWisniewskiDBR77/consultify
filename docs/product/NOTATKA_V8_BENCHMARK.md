@@ -80,9 +80,26 @@ Wniosek:
 
 ---
 
-## 4. Benchmark po obszarach
+## 4. Macierz Notion vs Evernote vs Consultify as-is
 
-### 4.1 Capture
+| Obszar | Notion | Evernote | Consultify as-is | Wniosek v8 |
+|---|---|---|---|---|
+| Capture | Dobre szybkie tworzenie, ale szybciej przechodzi do struktury | Najmocniejszy benchmark frictionless capture | Capture connectors i ingest juz istnieja | Trzeba domknac jeden kanoniczny capture workflow |
+| Structured content | Najmocniejszy benchmark blokowej i semantycznej tresci | Bardziej klasyczna nota z rich content | Edytor blokowy jest juz silny | Trzeba dopisac jeden content contract i role templates |
+| Knowledge architecture | Mocne relacje, pages, reusable structures | Mocne notatniki, tagi i search-first organization | Istnieja status, visibility, maturity, context links | Potrzebny jeden domain model i artifact boundary |
+| Discovery / retrieval | Search + structured discovery + AI connectors | Bardzo mocny search-first mindset | FTS, semantic search, RAG i context recall juz istnieja | Trzeba zdefiniowac retrieval quality i explainability contract |
+| Collaboration / review | Comments i review objects sa mocne | Lzejszy sharing/activity mindset | Sa review-like i AI-side surfaces, ale bez jednego kontraktu | Trzeba dopiac comments/review/verification layer |
+| AI-native | Silny benchmark AI assist i structured prompts | Wnosi glownie prostote i discipline against overbuilding | AI proposals, extraction i resolve flow juz istnieja | Trzeba ujednolicic AI contract i audit trail |
+| Conversion to outputs | Mocne systemowe przechodzenie miedzy strukturami | Slabsze w systemowej konwersji, mocniejsze w archiwizacji | Sa convert flows i extract logic | Trzeba dopiac readiness rules i source traceability |
+
+Ta macierz nie zastępuje benchmarku opisowego.
+Jej celem jest szybkie zestawienie wzorcow liderow z realnym stanem `Notebook`.
+
+---
+
+## 5. Benchmark po obszarach
+
+### 5.1 Capture
 
 #### Wzorzec A - Quick note / frictionless capture
 
@@ -136,7 +153,7 @@ RyzykoPrzeinżynierowania:
 - Budowanie zbyt wielu konektorow naraz.
 - Skupienie sie na ilosci wejsc zamiast na jakosci ingest i retrieval.
 
-### 4.2 Structured content
+### 5.2 Structured content
 
 #### Wzorzec C - Blokowa struktura tresci
 
@@ -190,7 +207,7 @@ RyzykoPrzeinżynierowania:
 - Zbyt wiele szablonow bez jasnych use case.
 - Traktowanie template gallery jako osobnego produktu zamiast warstwy przyspieszenia pracy.
 
-### 4.3 Knowledge architecture
+### 5.3 Knowledge architecture
 
 #### Wzorzec E - Notatka jako element systemu, nie tylko lista stron
 
@@ -238,7 +255,7 @@ AdaptacjaV8:
 RyzykoPrzeinżynierowania:
 - Zbyt wczesne skupienie na "magic AI search" bez dobrego indeksu i metadata discipline.
 
-### 4.4 Collaboration
+### 5.4 Collaboration
 
 #### Wzorzec G - Comments, suggestions, shared context
 
@@ -264,7 +281,7 @@ RyzykoPrzeinżynierowania:
 - Wejscie od razu w realtime collaborative editing.
 - Budowanie pelnego approval workflow zamiast lekkiego review layer.
 
-### 4.5 AI-native layer
+### 5.5 AI-native layer
 
 #### Wzorzec H - AI as co-thinker, not ghost writer
 
@@ -293,7 +310,7 @@ RyzykoPrzeinżynierowania:
 
 ---
 
-## 5. Co adoptujemy, a czego nie kopiujemy
+## 6. Co adoptujemy, a czego nie kopiujemy
 
 ### 5.1 Adoptujemy
 
@@ -315,7 +332,7 @@ RyzykoPrzeinżynierowania:
 
 ---
 
-## 6. Benchmark conclusion
+## 7. Benchmark conclusion
 
 Docelowy model `Notatka v8` powinien laczyc trzy rzeczy:
 - `Evernote quality of capture`
@@ -331,7 +348,7 @@ To oznacza:
 
 ---
 
-## 7. Wnioski dla serii v8
+## 8. Wnioski dla serii v8
 
 Z benchmarku wynikaja nastepujace priorytety:
 
@@ -355,7 +372,7 @@ Z benchmarku wynikaja nastepujace priorytety:
 
 ---
 
-## 8. Evidence map
+## 9. Evidence map
 
 Ta sekcja nie jest pelnym indeksem archiwow.
 Jej celem jest pokazanie, z jakich klas materialow wynikaly glownie wnioski benchmarkowe.

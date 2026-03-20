@@ -27,7 +27,7 @@ Program `v8` dzielimy na 6 strumieni:
 - `V8-NOTE-05 AIContractAndOperations`
 - `V8-NOTE-06 ConversionGovernanceAndQuality`
 
-Kazdy strumien ma scope frontend, backend, data/search, AI i testy.
+Kazdy strumien ma scope frontend, backend, data/search, AI, migration/rollout i testy.
 
 ---
 
@@ -126,6 +126,10 @@ Data/search:
 AI:
 - optional AI classify/suggest title/tag/template po capture.
 
+Migration/rollout:
+- zachowac compatibility dla istniejacych create flows i capture connectors,
+- nie zrywac ingest dla juz istniejacych source types.
+
 Test scope:
 - unit dla normalization rules,
 - integration dla capture endpoints,
@@ -156,6 +160,10 @@ Data/search:
 
 AI:
 - structured draft operations i block-aware suggestion flows.
+
+Migration/rollout:
+- nie psuc zgodnosci z obecnym `NotebookContent` i zapisanym `contentJson`,
+- wdrazac semantyke blokow bez utraty starych notatek.
 
 Test scope:
 - editor behavior tests,
@@ -189,6 +197,10 @@ Data/search:
 AI:
 - suggestions oparte o note state i context.
 
+Migration/rollout:
+- utrzymac compatibility dla istniejacych statusow, maturity heuristics i relacji,
+- nowe metadata fields wprowadzac bez destabilizacji obecnych notatek.
+
 Test scope:
 - permissions tests,
 - metadata transitions tests,
@@ -221,6 +233,10 @@ Data/search:
 
 AI:
 - contextual recall i note recommendation rationale.
+
+Migration/rollout:
+- utrzymac ciaglosc indeksacji i search behavior dla juz istniejacych notatek,
+- wdrazac quality gates bez regresji dla obecnych search endpoints.
 
 Test scope:
 - search relevance checks,
@@ -260,6 +276,10 @@ AI:
 - missing angles,
 - context packs.
 
+Migration/rollout:
+- nowe audit i proposal rules nie moga lamac obecnych AI surfaces,
+- rollout governance musi zachowac backward compatibility tam, gdzie user ma juz aktywne flows AI.
+
 Test scope:
 - audit consistency tests,
 - acceptance/rejection flow tests,
@@ -292,6 +312,10 @@ Data/search:
 
 AI:
 - outline generation i conversion assist.
+
+Migration/rollout:
+- zachowac source traceability dla juz istniejacych notatek i target artifacts,
+- rollout readiness cues wdrazac bez psucia obecnych convert flows.
 
 Test scope:
 - conversion integration tests,
