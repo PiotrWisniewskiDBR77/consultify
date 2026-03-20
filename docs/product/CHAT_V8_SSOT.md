@@ -1,0 +1,321 @@
+# Chat v8 - SSOT
+
+> Status: Draft v8
+> Cel: Kanoniczna definicja celu, zakresu, modelu produktu i completeness criteria dla rozwoju czatu w serii `v8`.
+> Zakres: chat jako centralny operating system AI w `consultify`, nie osobny produkt obok platformy.
+
+---
+
+## 1. Co oznacza `Chat v8`
+
+`Chat v8` to seria zmian i dokumentow opartych o benchmark pracy liderow rynku, ale wdrazanych jako rozwoj istniejacego stacku:
+- `UnifiedChatPanel`,
+- `EnhancedChatInput`,
+- `ChatHistorySidebar`,
+- `useConversationStore`,
+- backendowego streamingu, attachments i AI actions.
+
+Znaczenie `v8`:
+- wspolny prefix dla pakietu dokumentacji i pracy wdrozeniowej,
+- nacisk na kompletny, leader-grade chat operating system,
+- jedna prawda produktu i jedna prawda runtime,
+- zero vendor UI copying,
+- maksymalny reuse tego, co juz istnieje i dziala.
+
+Kluczowa decyzja tej iteracji:
+- `UnifiedChatPanel` staje sie jedynym kanonicznym shellem czatu,
+- `AIChatWelcomeView` staje sie legacy / migration target,
+- `consultify` zachowuje swoje przewagi: workspace context, split mode, actions with approval, artifact handoff i organizational memory.
+
+---
+
+## 2. Mission
+
+Zbudowac w `consultify` chat, ktory:
+- odpowiada jak leader-grade assistant,
+- pracuje na rozmowach, plikach, URL-ach i kontekscie workspace,
+- jest czytelny w historii i revisit flow,
+- ma jasne source and scope semantics,
+- nie robi silent mutations,
+- potrafi prowadzic usera od rozmowy do dzialania.
+
+Docelowy user feeling ma byc bliski liderom:
+- `ChatGPT`: prosty i szybki core chat flow,
+- `Claude`: mocna historia, folders/projects semantics i file work,
+- `Perplexity`: retrieval transparency i research discipline.
+
+`Consultify` ma dodac do tego:
+- workspace-aware split mode,
+- AI actions z review i approval,
+- save-to-artifact flows,
+- business context i organizational memory.
+
+---
+
+## 3. Scope produktu
+
+### 3.1 In scope
+
+- full chat i split chat jako jeden produkt,
+- conversation history i library,
+- folders personal/team,
+- conversation lifecycle: create, title, rename, pin, archive, delete, move, revisit,
+- local files i URL attachments,
+- cloud file usage tylko tam, gdzie runtime jest realny,
+- scope/modes/tools/custom instructions,
+- model/tier selection,
+- response streaming, stop, retry, error states,
+- AI actions i approvals,
+- feedback i learning loops,
+- voice and multimodal contract dla obecnego runtime,
+- source transparency i citation expectations,
+- handoff do notes/tasks/decisions/ideas i innych artifact flows.
+
+### 3.2 Out of scope for v8 baseline
+
+- budowa osobnego komunikatora team-chat klasy Slack,
+- vendor-style app marketplace,
+- ukrywanie roznicy miedzy best-effort a guaranteed citations,
+- pokazywanie w UI funkcji, ktore nie maja realnego runtime support,
+- greenfield rewrite calego chat stacku bez reuse istniejacych komponentow.
+
+---
+
+## 4. Product principles
+
+### 4.1 One canonical shell
+
+Chat ma miec jedna glowna surface definition.
+Canonical shell to `UnifiedChatPanel`.
+
+### 4.2 One conversation system
+
+Historia, foldery, archiwum, search i revisit nie sa dodatkiem.
+To rownorzadna czesc produktu.
+
+### 4.3 One scope model
+
+User musi rozumiec, z czego AI korzysta:
+- `workspace`,
+- `conversation history`,
+- `attachments`,
+- `web`,
+- `org memory`,
+- `project/business context`.
+
+Brak ukrytych lub implicit scope paths.
+
+### 4.4 Retrieval must be honest
+
+Jesli UI obiecuje plik, URL, cloud source albo citations, runtime musi to wspierac.
+Jesli cos jest partial, dokumentacja i produkt maja to mowic wprost.
+
+### 4.5 AI actions are governed
+
+AI moze sugerowac i przygotowywac akcje, ale nie moze robic istotnych zmian silent.
+Model kanoniczny:
+
+`propose -> review -> approve/reject -> execute/audit`
+
+### 4.6 Voice is one user-facing system
+
+Voice nie moze byc zbiorem ukrytych eksperymentow.
+User-visible contract musi jasno rozroznic:
+- dictation,
+- voice conversation,
+- TTS / auto-read.
+
+### 4.7 Split mode is a product advantage
+
+Split chat nie jest mniejsza kopia full chat.
+To tryb pracy z workspace context i jedna z glownych przewag `consultify`.
+
+---
+
+## 5. Canonical product path
+
+Nadrzedna sciezka produktu ma byc:
+
+`entry -> new/existing conversation -> ask -> stream -> inspect -> refine -> act/save -> revisit`
+
+Rozszerzenia tej sciezki:
+- `entry -> attach -> ask grounded question -> inspect sources -> continue`,
+- `entry -> deep research confirm -> stream -> review -> save or act`,
+- `split workspace -> ask contextual question -> approve action -> continue working`.
+
+---
+
+## 6. Model domenowy
+
+### 6.1 Encja `Conversation`
+
+Kanonicznie rozmowa ma:
+- `conversationId`
+- `title`
+- `titleSource`
+- `language`
+- `messageCount`
+- `lastMessageAt`
+- `starred`
+- `archived`
+- `chatFolderId?`
+- `projectId?`
+- `workspaceContextSnapshot?`
+- `createdBy`
+- `createdAt`
+- `updatedAt`
+
+### 6.2 Encja `ChatFolder`
+
+Folder historii ma:
+- `folderId`
+- `name`
+- `scope` as `personal | team`
+- `color`
+- `description?`
+- `conversationCount`
+- `createdBy`
+- `organizationId`
+- `createdAt`
+- `updatedAt`
+
+### 6.3 Encja `ConversationMessage`
+
+Wiadomosc ma:
+- `messageId`
+- `conversationId`
+- `role`
+- `content`
+- `messageType`
+- `metadata`
+- `artifacts?`
+- `citations?`
+- `actions?`
+- `createdAt`
+
+### 6.4 Encja `ChatActionProposal`
+
+Akcja AI ma:
+- `actionId`
+- `conversationId`
+- `targetType`
+- `proposalType`
+- `status`
+- `approvalState`
+- `auditRef`
+- `createdAt`
+- `resolvedAt?`
+
+### 6.5 Encja `AttachmentContext`
+
+Kontekst grounded conversation ma:
+- `docIds`
+- `sourceType`
+- `sourceLabel`
+- `ingestionState`
+- `retrievalMode`
+- `citationExpectation`
+
+---
+
+## 7. Canonical runtime sources
+
+Glowne runtime zrodla prawdy dla `Chat v8`:
+- `src/components/AIChat/UnifiedChatPanel.tsx`
+- `src/components/AIChat/EnhancedChatInput.tsx`
+- `src/components/AIChat/ChatHistorySidebar.tsx`
+- `src/store/useConversationStore.ts`
+- `src/store/useChatProjectStore.ts`
+- `src/services/api.ts`
+- `src/hooks/useAIStream.ts`
+- `server/src/routes/ai.routes.ts`
+- `server/src/routes/conversations.routes.ts`
+- `server/src/routes/chat-projects.routes.ts`
+- `server/src/routes/voice.routes.ts`
+
+Legacy but live surface:
+- `src/views/AIChatWelcomeView.tsx`
+
+---
+
+## 8. Package map
+
+Main `v8` suite:
+- `CHAT_V8_SSOT.md`
+- `CHAT_V8_BENCHMARK.md`
+- `CHAT_V8_WORKFLOW_MODEL.md`
+- `CHAT_V8_AS_IS.md`
+- `CHAT_V8_GAP_MATRIX.md`
+- `CHAT_V8_IMPLEMENTATION_PLAN.md`
+- `CHAT_V8_AI_GOVERNANCE.md`
+- `CHAT_V8_RUNTIME_TRUTH_MAP.md`
+
+Build-ready supporting specs:
+- `CHAT_V8_CONTROL_SURFACE_SPEC.md`
+- `CHAT_V8_HISTORY_AND_LIBRARY_MODEL.md`
+- `CHAT_V8_ATTACHMENTS_AND_RETRIEVAL.md`
+- `CHAT_V8_MODES_AND_SCOPE_MODEL.md`
+- `CHAT_V8_ACTIONS_AND_APPROVALS.md`
+- `CHAT_V8_VOICE_AND_MULTIMODAL.md`
+- `CHAT_V8_RESPONSE_MODEL.md`
+
+Reading order:
+- start with `SSOT`,
+- then `BENCHMARK`, `WORKFLOW_MODEL`, `AS_IS`, `GAP_MATRIX`, `RUNTIME_TRUTH_MAP`,
+- then `AI_GOVERNANCE` and `IMPLEMENTATION_PLAN`,
+- then detailed specs.
+
+Background-only references after `v8`:
+- `docs/UNIFIED_AI_CHAT_SYSTEM.md`
+- `docs/AI_CHAT_SYSTEM_DESIGN.md`
+- `docs/AI_CHAT_DATA_MODEL.md`
+- `docs/api/AI_CHAT_API.md`
+- `docs/flows/core/AI_CHAT_ASSISTANCE_FLOW.md`
+- `docs/product/modules/ai/AI_CHAT_CONTROL_AUDIT_2026-03-07.md`
+
+Po utworzeniu pakietu `CHAT_V8_*` powyzsze dokumenty nie powinny byc juz traktowane jako rownorzedny SSOT.
+
+---
+
+## 9. Product advantages unique to Consultify
+
+`Chat v8` nie ma byc tylko "jak liderzy plus polish".
+Ma miec cztery przewagi:
+
+1. `Workspace-native`
+AI wie, nad czym user pracuje, i moze pomagac w split mode.
+
+2. `Action-native`
+Chat nie konczy sie na odpowiedzi. Moze przejsc do reviewable actions.
+
+3. `Artifact-native`
+Wyniki rozmowy moga byc zapisane do notatki, taska, decyzji, idei i dalszych modulow.
+
+4. `Governed`
+AI operations, retrieval i approvals sa jawne, reviewable i audytowalne.
+
+---
+
+## 10. Non-negotiable rules for v8
+
+- nie utrzymujemy dwoch rownoleglych definicji glownego chat produktu,
+- nie dokumentujemy fikcyjnych lub placeholder flows jako "done",
+- nie mieszamy `chat folder` z `PMO project`,
+- nie pokazujemy cloud connect jako completed, jesli OAuth nie jest realny,
+- nie traktujemy citations jako guaranteed, jesli runtime jest best-effort,
+- nie dopuszczamy silent execution of meaningful AI actions,
+- nie rozpraszamy source of truth po wielu niespojnych dokumentach.
+
+---
+
+## 11. Completeness criteria
+
+`Chat v8` jest kompletne dopiero wtedy, gdy:
+- istnieje jeden canonical shell i jeden canonical route model,
+- historia jest pelnym systemem library, a nie tylko lista rozmow,
+- wszystkie glowne control groups maja explicit contract,
+- scope/modes i retrieval sa opisane bez luk i bez niespojnych obietnic,
+- AI actions maja twardy review and approval contract,
+- voice ma jeden czytelny user-facing model,
+- starsze dokumenty nie sa juz wymagane jako rownorzedne SSOT,
+- pakiet `CHAT_V8_*` wystarcza do projektowania i wdrazania zmian bez zgadywania.
