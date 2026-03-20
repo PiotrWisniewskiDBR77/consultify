@@ -383,6 +383,15 @@ oraz dodac czwarty filar:
 - glebsza automatyzacja refresh i deck maintenance,
 - szersze team workflow beyond baseline.
 
+## 8A. Vendor process follow-up
+
+Ten benchmark pozostaje benchmarkiem funkcjonalnym.
+Pelna analiza procesu pracy vendorow i jej wplywu na `v8` jest domknieta w:
+- `PREZENTACJE_V8_VENDOR_PROCESS_ANALYSIS.md`
+- `PREZENTACJE_V8_SLIDE_COMPONENT_SYSTEM.md`
+- `PREZENTACJE_V8_SLIDE_PLANNING_ENGINE.md`
+- `PREZENTACJE_V8_VISUAL_PLANNING_AND_GRAPHICS.md`
+
 ---
 
 ## 9. Evidence map
