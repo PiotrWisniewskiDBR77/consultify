@@ -316,6 +316,7 @@ Prompt content quality is complete only when:
 
 Related specs:
 - `CHAT_V8_PROMPT_SYSTEM_AND_COMPOSITION.md`
+- `CHAT_V8_PROMPT_MASTERY_GAP_MATRIX.md`
 - `CHAT_V8_AI_GOVERNANCE.md`
 - `CHAT_V8_MODES_AND_SCOPE_MODEL.md`
 - `CHAT_V8_RESPONSE_MODEL.md`

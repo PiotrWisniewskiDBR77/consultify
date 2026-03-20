@@ -82,6 +82,7 @@ Deliverables:
 - response model,
 - prompt system and composition spec,
 - prompt content and quality spec,
+- prompt mastery gap matrix,
 - message/thread operations spec,
 - rich output/rendering spec.
 
@@ -439,6 +440,7 @@ Detailed spec map used by this plan:
 - `CHAT_V8_RESPONSE_MODEL.md`
 - `CHAT_V8_PROMPT_SYSTEM_AND_COMPOSITION.md`
 - `CHAT_V8_PROMPT_CONTENT_AND_QUALITY.md`
+- `CHAT_V8_PROMPT_MASTERY_GAP_MATRIX.md`
 - `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
 - `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
 - `CHAT_V8_SHARING_AND_PERMISSIONS.md`
@@ -550,6 +552,11 @@ PromptSystemAndComposition:
 - fallback and language rules are explicit,
 - product docs and runtime/governance docs are linked without contradiction,
 - prompt content quality standards exist for evaluating actual prompt text.
+
+PromptMasteryHardening:
+- prompt mastery gaps are prioritized in one canonical matrix,
+- one path exists from architecture gaps to rollout and eval hardening,
+- team can distinguish P0 trust blockers from later optimization work.
 
 RolloutTruthAndAdoption:
 - package is registered as canonical,

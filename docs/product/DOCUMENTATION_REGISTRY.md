@@ -235,6 +235,11 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: quality standards for prompt text, anti-duplication rules, content evaluation checklist and prompt-layer quality targets
   - **Authority**: Highest for chat prompt content quality rules
 
+- `docs/product/CHAT_V8_PROMPT_MASTERY_GAP_MATRIX.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: prioritized mastery gaps for prompt architecture, trust semantics, eval discipline, release hardening and prompt operations
+  - **Authority**: Highest for prompt mastery gap prioritization and target-state hardening path
+
 - `docs/product/CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
   - **Owner**: Product + Engineering
   - **Scope**: conversation/user/org memory, personalization, private mode and trust boundaries
