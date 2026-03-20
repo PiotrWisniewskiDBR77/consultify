@@ -426,7 +426,18 @@ Najwazniejsze kotwice Gamma-primary:
 
 ---
 
-## 10. Definition of done for `Prezentacje v8`
+## 10. Supporting build-ready specs
+
+Ten dokument jest SSOT produktu.
+Build-ready execution details sa domkniete dodatkowymi specami:
+- `PREZENTACJE_V8_RUNTIME_TRUTH_MAP.md`
+- `PREZENTACJE_V8_CANONICAL_DECK_MODEL.md`
+- `PREZENTACJE_V8_BUILDER_P0_CONTRACT.md`
+- `PREZENTACJE_V8_AI_OPERATIONS_SPEC.md`
+
+---
+
+## 11. Definition of done for `Prezentacje v8`
 
 `Prezentacje v8` sa domkniete dopiero wtedy, gdy:
 - user ma jedna czytelna sciezke `source/brief -> outline -> deck -> deliver`,

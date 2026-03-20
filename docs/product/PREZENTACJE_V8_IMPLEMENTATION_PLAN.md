@@ -57,6 +57,10 @@ Deliverables:
 - `PREZENTACJE_V8_BENCHMARK.md`
 - `PREZENTACJE_V8_WORKFLOW_MODEL.md`
 - `PREZENTACJE_V8_AS_IS.md`
+- `PREZENTACJE_V8_RUNTIME_TRUTH_MAP.md`
+- `PREZENTACJE_V8_CANONICAL_DECK_MODEL.md`
+- `PREZENTACJE_V8_BUILDER_P0_CONTRACT.md`
+- `PREZENTACJE_V8_AI_OPERATIONS_SPEC.md`
 
 Definition of done:
 - nie ma sporu, czym sa prezentacje jako produkt i jak odnosza sie do starego `v3`,
