@@ -42,6 +42,10 @@ To oznacza:
 - modul nie jest greenfieldem,
 - `v8` powinno rozwijac istniejacy produkt, a nie tworzyc obok nowy deck app.
 
+Po korekcie Gamma-primary oznacza to dodatkowo:
+- glowny user workflow ma byc bliski Gamma,
+- ale nie porzucamy istniejacych przewag `consultify`, tylko chowamy je pod prostsza sciezka produktu.
+
 ---
 
 ## 3. Obecny stan po warstwach
@@ -85,6 +89,9 @@ Brak jednej warstwy SSOT, ktora spina:
 - outline review,
 - role AI i traceability w generate flow.
 
+Mocna strona pod Gamma-primary:
+- outline-first i setup-first flow juz istnieja, wiec nie trzeba wymyslac create spine od zera.
+
 ### 3.3 AuthoringAndDeckModel
 
 #### Co juz jest
@@ -103,6 +110,9 @@ Brak jednej definicji:
 - kiedy user zostaje w wizard,
 - kiedy przechodzi do buildera,
 - jaki jest kanoniczny model decku dla `v8`.
+
+Mocna strona pod Gamma-primary:
+- builder da sie potraktowac jako druga polowe tego samego workflow, nie osobny produkt.
 
 ### 3.4 BrandAndQuality
 
@@ -211,9 +221,62 @@ Brak jednego jawnego AI contract dla:
 - speaker notes,
 - share-safe governance.
 
+Mocna strona pod Gamma-primary:
+- AI juz teraz umie wiecej niz prosty "generate one-shot", wiec kierunek AI-as-primary-builder jest realistyczny.
+
 ---
 
-## 4. Co jest juz mocne
+## 4A. What we already have and will reuse
+
+Najwazniejsze elementy do bezposredniego reuse:
+- `ReportsAndPresentationsHub` jako library entry,
+- `PresentationWizard` jako create/setup/outline/generate spine,
+- `DeckBuilder` jako refinement surface,
+- generator outline/deck/context w backendzie,
+- `source_type`, `source_id`, `source_refs_json`, `context_pack_snapshot`,
+- share/embed/export i analytics,
+- brand kit, templates, visuals i quality-oriented surfaces.
+
+Wniosek:
+- najwieksza zmiana `v8` jest produktowa i dokumentacyjna,
+- nie polega na wymianie calego runtime.
+
+---
+
+## 5. Runtime truth map
+
+### Baseline spine
+
+To, co juz uklada glowny produktowy workflow:
+- `ReportsAndPresentationsHub`,
+- `PresentationWizard`,
+- `DeckBuilder`,
+- generator i deck persistence z glownego `/api/presentations`,
+- share/embed/export oraz deck viewing surfaces.
+
+### Enterprise / extension spine
+
+To, co juz istnieje jako rozszerzenia i zaawansowane capabilities:
+- `/api/presentations-v4`,
+- bindings,
+- export QA,
+- template governance,
+- PPTX import,
+- REST collab sessions,
+- media library rights workflows.
+
+### Aktualny problem
+
+System ma dwie historie runtime:
+- jedna bardziej zwiazana z glownym deck workflow,
+- druga z enterprise capabilities i rollout-ready governance extras.
+
+Najwieksza luka nie polega na braku funkcji.
+Polega na braku jednej jawnej prawdy, ktora z tych warstw jest kanonicznym spine'em produktu `v8`.
+
+---
+
+## 6. Co jest juz mocne
 
 Najmocniejsze obszary `as-is`:
 - wizard and outline-first generation,
@@ -225,17 +288,18 @@ Najmocniejsze obszary `as-is`:
 
 ---
 
-## 5. Co jest jeszcze niejednoznaczne
+## 7. Co jest jeszcze niejednoznaczne
 
 - relacja `ReportsAndPresentationsHub` vs `PresentationsHub`,
 - granica `/api/presentations` vs `/api/presentations-v4`,
 - relacja wizard vs builder,
+- kanoniczny deck document vs projections `deck_json` / `unified_json`,
 - baseline collaboration vs aspiracyjny team deck product,
 - granica miedzy as-is i targetem opisana w starym `v3` SSOT.
 
 ---
 
-## 6. Mapa `as-is -> v8`
+## 8. Mapa `as-is -> v8`
 
 | Warstwa | As-is strength | Glowna luka v8 |
 |---|---|---|
@@ -250,7 +314,7 @@ Najmocniejsze obszary `as-is`:
 
 ---
 
-## 7. Glowny wniosek
+## 9. Glowny wniosek
 
 `Prezentacje` w obecnym kodzie nie wymagaja wymyslania od nowa.
 Najwieksza luka `v8` nie lezy w samym braku funkcji, tylko w braku jednej, kompletnej i kanonicznej formuly produktu, ktora:

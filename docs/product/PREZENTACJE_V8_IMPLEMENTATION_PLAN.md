@@ -10,10 +10,21 @@
 `Prezentacje v8` maja zostac wdrozone jako rozwoj istniejacego modulu prezentacji, a nie jako nowy produkt obok `consultify`.
 
 Cel programu:
+- ustawic `Gamma-primary workflow` jako kanoniczna sciezke produktu,
 - uporzadkowac obecny potencjal hub/wizard/builder,
 - dopiac traceability i delivery lifecycle,
 - zintegrowac AI, visuals i quality gates w jeden model,
 - zachowac zgodnosc z aktualnym shell, routes i artifact ecosystem.
+
+Program nie jest greenfieldem.
+Ma maksymalnie reuse'owac to, co juz istnieje:
+- `ReportsAndPresentationsHub`,
+- `PresentationWizard`,
+- `DeckBuilder`,
+- generator runtime,
+- traceability metadata,
+- share/embed/export,
+- brand/media foundations.
 
 ---
 
@@ -38,6 +49,7 @@ Kazdy strumien ma scope frontend, backend, data/traceability, AI, migration/roll
 Cel:
 - zamknac SSOT,
 - doprecyzowac realny model produktu,
+- przestawic narracje na Gamma-primary,
 - opisac benchmark i as-is.
 
 Deliverables:
@@ -47,7 +59,8 @@ Deliverables:
 - `PREZENTACJE_V8_AS_IS.md`
 
 Definition of done:
-- nie ma sporu, czym sa prezentacje jako produkt i jak odnosza sie do starego `v3`.
+- nie ma sporu, czym sa prezentacje jako produkt i jak odnosza sie do starego `v3`,
+- glowna sciezka `hub -> wizard -> builder -> deliver` jest kanoniczna.
 
 ### Fala B - Core operating model
 
@@ -59,10 +72,12 @@ Deliverables:
 - generation contract,
 - deck model,
 - template contract,
-- traceability contract.
+- traceability contract,
+- runtime truth map.
 
 Definition of done:
-- istnieje jedna formula pracy zamiast zbioru osobnych surfaces.
+- istnieje jedna formula pracy zamiast zbioru osobnych surfaces,
+- baseline runtime i extension runtime nie sa mylone.
 
 ### Fala C - Quality and AI hardening
 
@@ -107,7 +122,8 @@ Zakres:
 Frontend:
 - jasny hub contract,
 - spojne CTA flows do wizarda i buildera,
-- czytelne cards/table semantics.
+- czytelne cards/table semantics,
+- create flow z library jako punktem startowym.
 
 Backend:
 - list endpoints i metadata potrzebne dla huba.
@@ -136,6 +152,7 @@ Priority:
 Zakres:
 - source selection,
 - setup semantics,
+- prompt semantics,
 - outline contract,
 - template contract,
 - generation inputs and outputs.
@@ -143,7 +160,8 @@ Zakres:
 Frontend:
 - wizard steps,
 - outline review,
-- template-first i blank-first entry.
+- template-first i blank-first entry,
+- artifact-first i library-first entry.
 
 Backend:
 - outline generation,
@@ -159,7 +177,8 @@ Data/traceability:
 AI:
 - outline suggestions,
 - narrative generation,
-- source-aware slide planning.
+- source-aware slide planning,
+- AI as primary builder of the first draft.
 
 Migration/rollout:
 - zachowac compatibility z istniejacymi templates i seeded defaults,
@@ -169,7 +188,8 @@ Test scope:
 - wizard integration,
 - outline generation,
 - template selection,
-- generation endpoint stability.
+- generation endpoint stability,
+- setup -> outline -> generate continuity.
 
 Priority:
 - P0
@@ -191,12 +211,14 @@ Frontend:
 Backend:
 - deck CRUD/update,
 - deck_json/unified_json handling,
-- builder save/load invariants.
+- builder save/load invariants,
+- canonical deck normalization bridge.
 
 Data/traceability:
 - card/block/source refs,
 - locked state,
-- refreshable block semantics.
+- refreshable block semantics,
+- canonical deck document vs runtime projections.
 
 AI:
 - agent-like deck edit operations,
@@ -204,7 +226,8 @@ AI:
 
 Migration/rollout:
 - nie psuc obecnych saved decks,
-- zachowac compatibility dla aktualnego deck payload modelu.
+- zachowac compatibility dla aktualnego deck payload modelu,
+- otwierac stare decki przez compatibility layer bez wymuszania jednorazowej migracji.
 
 Test scope:
 - deck persistence,
@@ -239,7 +262,8 @@ Data/traceability:
 - source refs integrity,
 - export history,
 - analytics records,
-- deck lifecycle metadata.
+- deck lifecycle metadata,
+- `context_pack_snapshot` and refresh rationale.
 
 AI:
 - quality suggestions,
@@ -266,12 +290,14 @@ Zakres:
 - AI generation/edit/rewrite/refresh classes,
 - review and acceptance model,
 - audit baseline,
-- explainability and source-backed AI.
+- explainability and source-backed AI,
+- AI as primary deck builder.
 
 Frontend:
 - proposal review surfaces,
 - AI edit distinctions,
-- visible rationale and diff.
+- visible rationale and diff,
+- clear distinction between `AI suggest`, `AI draft`, `AI apply after acceptance`.
 
 Backend:
 - proposal audit,
@@ -281,7 +307,8 @@ Backend:
 Data/traceability:
 - operation metadata,
 - source-backed AI references,
-- diffable AI actions.
+- diffable AI actions,
+- preserved wizard -> builder review context.
 
 AI:
 - outline, narrative, edits, notes, visuals, quality suggestions.
@@ -313,7 +340,8 @@ Frontend:
 
 Backend:
 - reality map of routes, migrations and schema expectations,
-- legal hold and org policy constraints.
+- legal hold and org policy constraints,
+- explicit primary-vs-extension capability map.
 
 Data/traceability:
 - schema readiness,
@@ -352,12 +380,14 @@ Priority:
 - User moze przejsc od source/brief do reviewable outline i generated decku bez chaosu.
 - Template ma jawny kontrakt i wspiera generation rules.
 - Outline jest czytelny i reviewable przed finalna generacja.
+- Setup/prompt flow daje Gamma-like szybki start bez utraty source context.
 
 ### V8-PRES-03 DeckModelAndBuilder
 
 - Builder otwiera generated deck bez utraty continuity.
 - Deck, cards i blocks maja stabilny model danych.
 - Edit flows nie zrywaja source refs i deck integrity.
+- Stare decki otwieraja sie przez compatibility bridge.
 
 ### V8-PRES-04 TraceabilityDeliveryAndQuality
 
@@ -370,6 +400,7 @@ Priority:
 - Kazda istotna operacja AI dziala w modelu `propose -> review -> accept/reject`.
 - User odroznia AI-generated content od wlasnej tresci.
 - Audit trail jest kompletny dla istotnych AI deck operations.
+- AI realnie buduje wiekszosc pierwszej wersji decku.
 
 ### V8-PRES-06 RolloutRealityAndGovernance
 

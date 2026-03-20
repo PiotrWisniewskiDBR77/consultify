@@ -20,6 +20,10 @@ Znaczenie `v8`:
 - rozwoj w ramach istniejacej architektury `consultify`,
 - zero vendor UI copying.
 
+Kluczowa decyzja tej iteracji:
+- `Gamma-like workflow` staje sie nadrzednym modelem pracy produktu,
+- `consultify` zachowuje swoje przewagi pod spodem: artifacts, traceability, org brand/media, governance i policy controls.
+
 ---
 
 ## 2. Mission
@@ -31,6 +35,12 @@ Zbudowac w `consultify` prezentacje, ktora nie jest tylko eksportem do `.pptx`, 
 - pozwala wejsc w refinement bez chaosu,
 - wspiera present/share/export,
 - wykorzystuje AI w sposob kontrolowany i audytowalny.
+
+Docelowy user feeling ma byc bliski Gamma:
+- szybki start,
+- AI buduje duza czesc decku,
+- outline i builder daja kontrole,
+- delivery jest czescia tego samego produktu.
 
 ---
 
@@ -65,6 +75,15 @@ Zbudowac w `consultify` prezentacje, ktora nie jest tylko eksportem do `.pptx`, 
 Deck w `consultify` ma byc osadzony w artefaktach i kontekscie organizacji.
 Nie jest anonimowym plikiem tworzonym w prozni.
 
+### 4.1A Gamma-primary workflow
+
+Nadrzedna sciezka produktu ma byc:
+
+`library -> create -> setup/prompt -> outline -> generate -> builder -> present/share/export -> analytics`
+
+To jest glowny mental model dla usera.
+Warstwy `consultify` maja wzmacniac ten workflow, a nie go komplikowac.
+
 ### 4.2 Outline first, deck second
 
 Glownym review gate jest outline.
@@ -74,6 +93,10 @@ User powinien zobaczyc strukture zanim dostanie finalny deck.
 
 Wizard daje szybki draft i prowadzi przez intencje.
 Builder sluzy do refinement, review, share i quality hardening.
+
+To rozroznienie jest kanoniczne:
+- wizard = szybkie zbudowanie reviewable decku,
+- builder = dopracowanie decku bez utraty continuity.
 
 ### 4.4 Traceability is non-negotiable
 
@@ -97,6 +120,19 @@ AI nie moze:
 - wprowadzac silent edits,
 - ukrywac pochodzenia tresci,
 - udostepniac decku lub zmieniac governance bez zgody usera.
+
+### 4.5A AI builds most of the deck
+
+W `v8` AI ma budowac duza czesc prezentacji:
+- outline,
+- slide intents,
+- pierwsza wersje copy,
+- notes,
+- visual suggestions,
+- refresh suggestions,
+- bulk rewrite proposals.
+
+User nie powinien recznie skladac decku od zera, jesli nie chce.
 
 ### 4.6 Delivery matters as much as authoring
 
@@ -174,6 +210,17 @@ Template w `v8` oznacza:
 - quality and layout discipline,
 - optional auto-apply hints.
 
+### 5.4A What we already have and will reuse
+
+Ta iteracja `v8` nie projektuje deck product od zera.
+Wykorzystujemy bezposrednio:
+- `ReportsAndPresentationsHub` jako glowny library entry,
+- `PresentationWizard` jako szkic create flow,
+- `DeckBuilder` jako refinement surface,
+- `presentationGeneratorService` jako generator outline/deck/context,
+- `source_type`, `source_id`, `source_refs`, `context_pack_snapshot` jako fundament traceability,
+- brand kit, templates, share/embed/export i analytics tam, gdzie juz istnieja.
+
 ### 5.5 Deck status lifecycle
 
 Kanoniczny `status` decku:
@@ -191,6 +238,31 @@ Znaczenie:
 - `ready` - deck jest gotowy do delivery,
 - `shared` - deck ma aktywna forme udostepnienia lub dystrybucji,
 - `archived` - deck nie jest juz aktywnie utrzymywany.
+
+### 5.7 Canonical deck document and compatibility strategy
+
+Docelowa zasada `v8`:
+- istnieje jeden kanoniczny dokument decku uzywany do wizard -> builder -> delivery continuity,
+- export i runtime projections nie moga byc mylone z glownym modelem edycyjnym.
+
+Strategia kompatybilnosci:
+- czytamy stare decki przez warstwe zgodnosci,
+- normalizujemy je do jednego deck runtime modelu przy otwarciu lub zapisie,
+- nie robimy destrukcyjnej migracji wszystkich starych deckow na starcie,
+- backward read compatibility pozostaje wymogiem rollout.
+
+### 5.8 Runtime truth map
+
+Obecna rzeczywistosc runtime ma dwa poziomy:
+
+- `baseline spine`
+  Glownie: `ReportsAndPresentationsHub`, `PresentationWizard`, `DeckBuilder`, `/api/presentations`, generator, share/embed/export.
+- `enterprise / extension spine`
+  Glownie: `/api/presentations-v4`, bindings, export QA, template governance, PPTX import, REST collab, media library.
+
+Kanoniczna zasada `v8`:
+- user-facing workflow ma miec jedna prawde produktu,
+- extension capabilities nie moga rozbijac glownej sciezki ani udawac, ze sa glownym runtime, jesli nie sa jeszcze spine'em UI.
 
 ### 5.6 Artifact boundary matrix
 
@@ -216,6 +288,7 @@ Musi istniec:
 ### 6.2 Generation completeness
 
 Musi istniec:
+- setup/prompt flow zblizony do Gamma-like creation,
 - source-aware setup,
 - template-aware outline,
 - reviewable outline,
@@ -229,7 +302,8 @@ Musi istniec:
 - reorder,
 - notes,
 - theme/deck settings,
-- builder as refinement surface.
+- builder as refinement surface,
+- jawny kontrakt wizard -> builder continuity.
 
 ### 6.4 Brand and quality completeness
 
@@ -247,7 +321,8 @@ Musi istniec:
 - source type/id,
 - source-backed deck and blocks,
 - context pack snapshot,
-- refresh semantics tam, gdzie sa deklarowane.
+- refresh semantics tam, gdzie sa deklarowane,
+- jedna definicja canonical deck vs projections/export shapes.
 
 ### 6.6 Delivery completeness
 
@@ -265,7 +340,8 @@ Musi istniec:
 - org-safe access,
 - legal/policy constraints,
 - no silent edits,
-- audytowalnosc deck operations.
+- audytowalnosc deck operations,
+- jedna mapa baseline runtime vs extension runtime.
 
 ---
 
@@ -286,6 +362,14 @@ Kazda istotna operacja AI w decku dziala w modelu:
 - sugerowac visuals,
 - odswiezac refreshable data blocks,
 - proponowac quality improvements.
+
+Macierz operacji AI dla `v8`:
+- `AI suggest`
+  Rekomendacja bez zapisu.
+- `AI draft`
+  Draft slajdu, outline albo notes do review.
+- `AI apply after acceptance`
+  Jawna mutacja decku po decyzji usera.
 
 ### 7.3 AI nie moze
 
@@ -332,6 +416,13 @@ Najwazniejsze kotwice `as-is`:
 - `presentationGeneratorService.ts`
 - `ReportsAndPresentationsHub`
 - `PRESENTATION_GENERATOR_V3.md`
+
+Najwazniejsze kotwice Gamma-primary:
+- prompt/setup flow zblizony do Gamma,
+- outline as review gate,
+- builder as second half of the same product,
+- AI-led deck construction,
+- present/share/export/analytics jako czesc jednego lifecycle.
 
 ---
 

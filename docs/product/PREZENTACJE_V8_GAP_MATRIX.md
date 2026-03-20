@@ -42,10 +42,11 @@ W kodzie istnieje realny, rozbudowany modul prezentacji:
 
 ### V8 target
 
-Pelny AI-native, source-backed deck operating system:
-- artifact-first,
+Pelny `Gamma-primary`, AI-native, source-backed deck operating system:
+- library-first,
+- setup/prompt-first,
 - outline-first,
-- builder-aware,
+- builder-as-second-half,
 - brand-safe,
 - source-traceable,
 - governed przez reviewable AI i delivery lifecycle.
@@ -66,14 +67,15 @@ Pelny AI-native, source-backed deck operating system:
 | Area | As-is | V8 target | Gap | Proposal | Priority | Dependencies | Risks |
 |---|---|---|---|---|---|---|---|
 | Library and navigation | Istnieje `ReportsAndPresentationsHub` i deck routes | Jeden kanoniczny library model dla deckow | Brak jednego SSOT dla entry points i relacji do starszych surfaces | Opisac canonical hub/navigation contract | P0 | routes, hub, docs | Rozjazd miedzy UX i dokumentacja |
-| Wizard generation | Outline-first wizard istnieje | Kanoniczny generate flow z reviewable outline | Brak jednej definicji generate contract | Spisac source/setup/outline/deck contract | P0 | wizard, generator service, templates | Nadmierne obietnice AI generation |
-| Builder | `DeckBuilder` istnieje i jest bogaty | Builder jako refinement surface | Brak jednej definicji roli buildera wzgledem wizarda | Dookreslic builder contract i deck model | P0 | deck_json, builder UI, routes | Modul bedzie wygladal jak dwa osobne produkty |
+| Gamma-primary create flow | Outline-first wizard istnieje | Kanoniczny `library -> create -> setup/prompt -> outline -> generate` flow | Brak jednej definicji create contract | Spisac source/setup/outline/deck contract | P0 | wizard, generator service, templates | Nadmierne obietnice AI generation albo zbyt techniczny flow |
+| Builder continuity | `DeckBuilder` istnieje i jest bogaty | Builder jako refinement surface drugiej polowy tego samego workflow | Brak jednej definicji roli buildera wzgledem wizarda | Dookreslic builder contract i continuity wizard -> builder | P0 | deck_json, builder UI, routes | Modul bedzie wygladal jak dwa osobne produkty |
 | Template system | Templates istnieja | Template = struktura + intent + brand + source expectations | Brak jednego canonical template contract | Dopisac template semantics i quality rules | P0 | templates DB, brand kit, wizard | Templates beda tylko lista wzorcow bez logiki |
 | Brand and quality | Brand kit i visuals pipeline istnieja | Good-by-default branded deck | Brak jednego quality baseline | Zdefiniowac quality gates i brand-safe defaults | P1 | visuals, QA, builder | Decki beda technicznie generowane, ale nierowne jakosciowo |
+| Canonical deck model | `deck_json` / `unified_json` i persisted decks juz istnieja | Jeden kanoniczny model decku dla edycji i continuity | Brak jednej definicji canonical deck document vs projections | Zdefiniowac canonical deck model i compatibility bridge | P0 | persistence, builder, generator | Rozjazd danych i niebezpieczna migracja rollout |
 | Traceability | Source refs, source ids i context packs istnieja | Source-backed deck jako zasada produktu | Brak jednej definicji source-backed artifact semantics | Spisac traceability contract i refresh model | P0 | generator, exports, source artifacts | Utrata zaufania i refresh bez kontroli |
 | Delivery | Share/embed/export/analytics istnieja | Jasny lifecycle `draft -> ready -> shared -> archived` | Brak jednego delivery contract | Dookreslic statusy, analytics i share semantics | P1 | routes, analytics, shared view | Prezentacja pozostanie tylko plikiem do pobrania |
 | Collaboration and review | Sa hooks i sharing surfaces | Lekki baseline review/collab | Brak jasnego baseline vs aspirational team features | Zdefiniowac review/collab baseline | P2 | builder hooks, permissions | Overbuild w zlym momencie |
-| AI deck operations | Sa AI narrative, visuals i agent-like edits | Jeden AI contract dla wszystkich klas operacji | AI jest rozproszone i niespojnie nazwane | Wydzielic AI governance i operation classes | P0 | AI services, builder, routes | Silent edits lub niespojny UX review |
+| AI deck operations | Sa AI narrative, visuals i agent-like edits | AI jako glowny builder decku i jeden contract operacji | AI jest rozproszone i niespojnie nazwane | Wydzielic AI governance i operation classes | P0 | AI services, builder, routes | Silent edits lub niespojny UX review |
 | API and rollout reality | Sa `/api/presentations` i `/api/presentations-v4` | Jedna jasna mapa runtime reality | Brak jednej prawdy o baseline vs enterprise surface | Opisac rollout/migration reality i API boundaries | P0 | routes, services, migrations | Zla interpretacja tego, co jest naprawde live |
 
 ---
@@ -134,7 +136,8 @@ As-is:
 - AI generation i AI edits istnieja.
 
 Gap:
-- brak jednego governance modelu i eval framing.
+- brak jednego governance modelu i eval framing,
+- brak jawnej definicji AI as primary builder.
 
 ---
 
@@ -144,6 +147,7 @@ Gap:
 
 - canonical hub/wizard/builder model,
 - generate contract,
+- canonical deck model,
 - template contract,
 - traceability contract,
 - AI governance,
@@ -208,6 +212,7 @@ Cross-module:
 `Prezentacje` w obecnym kodzie sa juz daleko bardziej rozwiniete niz prosty export module.
 Najwieksza luka `v8` nie lezy w samym braku funkcji, tylko w braku jednej, kompletnej i kanonicznej formuly produktu, ktora:
 - spina library, wizard i builder,
+- spina Gamma-like create flow z realnym runtime,
 - spina traceability i delivery,
 - spina AI contract,
 - i opisuje jasno, co jest baseline `v8`, a co pozostaje dalszym rozwojem ponad aktualny rollout.

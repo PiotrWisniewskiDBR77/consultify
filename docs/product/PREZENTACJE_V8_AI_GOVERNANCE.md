@@ -22,6 +22,9 @@ To jest zasada nadrzedna dla:
 - speaker notes,
 - audience variants.
 
+Jednoczesnie `v8` zaklada, ze AI buduje duza czesc pierwszej wersji decku.
+To nie jest poboczna funkcja, tylko glowny silnik scaffoldingu i refinementu.
+
 ---
 
 ## 2. Dopuszczalne klasy operacji AI
@@ -53,6 +56,22 @@ AI generuje tresc lub strukture do akceptacji:
 - shortened copy,
 - alternate title,
 - alternate structure.
+
+### 2.3A AI-as-primary-builder
+
+W modelu Gamma-primary AI ma prawo budowac wiekszosc pierwszego draftu:
+- outline decku,
+- slide intents,
+- card copy,
+- notes,
+- visual directions,
+- rewrite proposals,
+- refresh suggestions.
+
+Warunek:
+- user review pozostaje jawny,
+- acceptance jest wymagane dla mutacji decku,
+- system musi odroznic proposal od applied change.
 
 ### 2.4 Refresh-and-compare
 
@@ -102,6 +121,10 @@ Kazda operacja AI, ktora ma znaczenie produktowe, musi miec:
 Jesli operacja dotyczy visuals lub retrieval:
 - warto przechowywac tez source set, rationale i score explanation.
 
+Jesli operacja prowadzi do mutacji decku:
+- warto przechowywac tez diff lub normalized patch description,
+- warto rozrozniac `drafted`, `accepted`, `rejected`, `applied`.
+
 ---
 
 ## 5. UX contract
@@ -123,6 +146,16 @@ User musi miec jasne akcje:
 - regenerate,
 - edit manually,
 - inspect source context.
+
+### 5.2A AI operation classes must stay explicit
+
+Kazda operacja AI powinna byc sklasyfikowana jako jedna z trzech:
+- `AI suggest`
+  Bez zapisu, tylko rekomendacja albo analiza.
+- `AI draft`
+  Tworzy outline, slide, notes, rewrite proposal albo refresh proposal do review.
+- `AI apply after acceptance`
+  Wykonuje mutacje decku dopiero po akceptacji usera.
 
 ### 5.3 No dark patterns
 
@@ -147,6 +180,11 @@ Minimalne reguly:
 - nie pokazuj tresci spoza scope usera,
 - nie udawaj, ze generated content jest "faktem" bez source,
 - dawaj userowi mozliwosc wejscia w source context.
+
+Rozroznienie wymagane w UX:
+- `source-backed content`
+- `AI draft without source grounding`
+- `AI rewrite of source-backed content`
 
 ---
 
@@ -194,7 +232,8 @@ Przed uznaniem AI operacji za rollout-ready:
 - czy deck draft jest uzyteczny,
 - czy outline ma sens,
 - czy rewrite pomaga,
-- czy visuals sa trafne.
+- czy visuals sa trafne,
+- czy AI rzeczywiscie odciaza usera z recznego skladania pierwszej wersji.
 
 ### 9.2 Trust quality
 
@@ -213,6 +252,12 @@ Przed uznaniem AI operacji za rollout-ready:
 - czy wszystko jest audytowalne,
 - czy model i prompt lineage sa identyfikowalne,
 - czy da sie odtworzyc przebieg deck operation.
+
+### 9.5 Continuity quality
+
+- czy AI output przechodzi z wizarda do buildera bez rekonstrukcji,
+- czy review state nie ginie po otwarciu decku,
+- czy refresh/share/export dzialaja na tym samym deck context.
 
 ---
 
@@ -258,7 +303,8 @@ Sprawdzac:
 ## 11. Operating recommendation
 
 Najlepszy model dla `Prezentacje v8`:
-- AI ma byc szybkie w scaffoldingu i refinement,
+- AI ma byc glownym builderem pierwszej wersji decku,
+- ma byc szybkie w scaffoldingu i refinement,
 - ale konserwatywne w operacjach delivery i governance.
 
 To znaczy:

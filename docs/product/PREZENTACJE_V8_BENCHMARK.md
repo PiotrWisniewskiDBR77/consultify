@@ -4,6 +4,10 @@
 > Cel: Ekstrakcja wzorcow funkcjonalnych z materialow `Softs/Prezentacje` dla rozwoju modulu prezentacji w `consultify`.
 > Zasada: Inspirujemy sie mechanika produktu i workflow, nie kopiujemy UI, layoutow ani vendorowego nazewnictwa 1:1.
 
+W tej iteracji benchmark ma dodatkowa role:
+- Gamma jest benchmarkiem nadrzednym dla glownej sciezki produktu,
+- Beautiful.ai i Pitch pozostaja benchmarkami wspierajacymi dla quality, delivery i team semantics.
+
 ---
 
 ## 1. Scope benchmarku
@@ -82,10 +86,14 @@ Wniosek:
 ### 3.4 Strategia dla Consultify
 
 `Consultify Presentations v8` powinny:
-- z Gamma przejac jakosc outline-first AI generation,
+- z Gamma przejac glowny model pracy `library/create -> prompt/setup -> outline -> generate -> builder -> deliver`,
 - z Beautiful.ai przejac discipline wokol layout quality i brand consistency,
 - z Pitch przejac jakosc authoring/present/share,
 - dodac warstwe, ktorej te produkty nie maja w tej samej formie: deck jako artefakt osadzony w platform artifacts, traceability, organization context i governed AI.
+
+Decyzja tej iteracji:
+- to nie jest juz "balanced benchmark",
+- to jest `Gamma-primary workflow, Consultify-under-the-hood`.
 
 ---
 
@@ -93,13 +101,13 @@ Wniosek:
 
 | Obszar | Gamma | Beautiful.ai | Pitch | Consultify as-is | Wniosek v8 |
 |---|---|---|---|---|---|
-| Generation | Bardzo mocny AI-first start | Slabszy generacyjnie, mocniejszy w smart slide quality | Mniej AI-first, mocniejszy w team authoring | Wizard + generator + outline juz istnieja | Domknac jeden kanoniczny generate flow |
+| Generation | Bardzo mocny AI-first start | Slabszy generacyjnie, mocniejszy w smart slide quality | Mniej AI-first, mocniejszy w team authoring | Wizard + generator + outline juz istnieja | Domknac jeden kanoniczny Gamma-primary generate flow |
 | Authoring model | Szybkie scaffoldowanie i szybka edycja | Constraint-driven smart slides | Mocny deck builder i blocks | DeckBuilder juz istnieje | Trzeba jasno rozdzielic wizard vs builder roles |
 | Template system | Templates i themes sa centralne | Templates + smart layout discipline | Templates i styles wspieraja team workflow | Template gallery juz istnieje | Dopisac canonical template contract |
 | Brand system | Themes/folders/API oriented | Bardzo mocny branding i design constraints | Mocne style i share-ready polish | Brand kit i template/theme warstwa juz istnieje | Uczynic brand-first output quality twardym standardem |
 | Present/share | Obecne, ale mniej centralne niz generation | Present/export sa wazne, ale nie glowny differentiator | Bardzo mocne present/share/analytics | Share/export/embed juz istnieja | Domknac delivery model i analytics semantics |
 | Collaboration | Mniej centralne | Umiarkowane | Najmocniejsze w tym benchmarku | Deck builder ma collab hooks, ale story jest niepelne | Ustalic baseline review/share bez overbuild |
-| AI edits | Prompt-to-deck i iterative edits | Slide AI, ale pod kontrola layout rules | Mniej vendorowego AI-first story | Agent-like edits i AI generation juz istnieja | Ujednolicic AI contract i auditowalnosc |
+| AI edits | Prompt-to-deck i iterative edits | Slide AI, ale pod kontrola layout rules | Mniej vendorowego AI-first story | Agent-like edits i AI generation juz istnieja | Ujednolicic AI contract i zrobic z AI glownego buildera draftu |
 | Traceability / platform context | Slabe | Slabe | Slabe | To jest mocna przewaga `consultify` | Zrobic z traceability glowny filar produktu |
 
 Ta macierz nie zastepuje benchmarku opisowego.
@@ -126,12 +134,13 @@ DlaczegoToDziala:
 
 CzyPasujeDoConsultify:
 - Tak, bardzo mocno.
-- To powinien byc glowny start flow.
+- To powinien byc glowny start flow i glowny mental model produktu.
 
 AdaptacjaV8:
 - outline-first jako kanoniczny pattern,
 - source-aware generation z artifacts i context pack,
-- reviewable deck draft przed dalsza edycja.
+- reviewable deck draft przed dalsza edycja,
+- builder jako naturalna druga polowa tej samej sciezki.
 
 RyzykoPrzeinzynierowania:
 - Obiecywanie "one click magic" bez dobrego outline i traceability.
