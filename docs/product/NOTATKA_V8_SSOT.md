@@ -167,19 +167,47 @@ Typ moze byc:
 
 ### 5.3 Lifecycle
 
-Kanoniczny lifecycle:
-- `captured`
+Kanoniczny model stanu ma dwa odrebne wymiary:
+- `status` opisuje faze operacyjna notatki,
+- `maturity` opisuje dojrzalosc tresci i gotowosc do dalszego wykorzystania.
+
+#### Status operacyjny
+
+Kanoniczny `status` dla `v8`:
+- `inbox`
 - `active`
-- `growing`
-- `mature`
-- `actionable`
 - `converted`
 - `archived`
 
-Uwaga:
-- `maturity` i `status` nie sa tym samym.
-- `status` opisuje faze operacyjna.
-- `maturity` opisuje dojrzalosc tresci.
+Znaczenie:
+- `inbox` - notatka swiezo przechwycona lub jeszcze nieopracowana,
+- `active` - notatka pozostaje zywa i pracuje w systemie,
+- `converted` - notatka stala sie zrodlem dla artefaktu wyjsciowego lub dzialania,
+- `archived` - notatka pozostaje dostepna, ale nie jest juz aktywnie rozwijana.
+
+#### Dojrzalosc tresci
+
+Kanoniczny `maturity` dla `v8`:
+- `seed`
+- `growing`
+- `mature`
+- `actionable`
+
+Znaczenie:
+- `seed` - zalazek mysli lub sygnalu,
+- `growing` - notatka posiada juz pierwsza strukture i kontekst,
+- `mature` - notatka jest dojrzala poznawczo i nadaje sie do syntezy,
+- `actionable` - notatka jest gotowa do konwersji lub operacyjnego wykorzystania.
+
+#### Mapping as-is -> v8
+
+Obecny kod juz stosuje ten rozdzial:
+- `NotebookPageStatus`: `inbox | active | converted | archived`
+- `NotebookMaturity`: `seed | growing | mature | actionable`
+
+Wniosek:
+- `v8` nie powinno wprowadzac nowego lifecycle mieszajacego oba wymiary,
+- `status` i `maturity` musza pozostac dwiema osobnymi osiami modelu domenowego.
 
 ### 5.4 Relacje
 
@@ -200,6 +228,25 @@ Relacje musza wspierac:
 - preview,
 - used-in traceability,
 - contextual recall.
+
+### 5.5 Artifact boundary matrix
+
+Notatka `v8` musi miec jasna granice wzgledem innych artefaktow systemu.
+
+| Artefakt | Głowny cel | Kiedy uzyc | Kiedy nie uzywac | Relacja do notatki |
+|---|---|---|---|---|
+| `Notebook note` | Capture, myslenie, synteza, dojrzewanie wiedzy | Gdy wiedza jest jeszcze robocza, nie domknieta lub wielowatkowa | Gdy potrzebny jest finalny, ustrukturyzowany output z wlasnym workflow | Artefakt zrodlowy i roboczy |
+| `Task` | Egzekucja pojedynczego dzialania | Gdy istnieje konkretna akcja, owner i oczekiwany wynik | Gdy tresc jest nadal eksploracyjna lub strategicznie niejasna | Notatka moze wyekstrahowac lub utworzyc task |
+| `Decision` | Udokumentowana decyzja i jej konsekwencje | Gdy temat wymaga rozstrzygniecia, a nie dalszego swobodnego zbierania mysli | Gdy istnieja tylko hipotezy lub nie ma jeszcze wariantow do oceny | Notatka moze dojrzec do decision draft |
+| `Initiative` | Zarzadzany strumien pracy / lifecycle zmiany | Gdy temat ma scope, outcome i governance | Gdy material jest jeszcze na etapie sygnalow i idei | Notatka moze byc initiative seed |
+| `Knowledge article` | Trwala, kuratorowana wiedza referencyjna | Gdy tresc ma byc stabilna, wielokrotnie odzyskiwana i mniej osobista | Gdy notatka nadal zyje, jest robocza albo silnie kontekstowa | Notatka moze zostac zsyntetyzowana do article |
+| `Interview artifact` | Zapis przebiegu i wynikow rozmowy badawczej | Gdy zrodlem jest proces wywiadu z wlasna struktura i przebiegiem | Gdy user tylko lapie luźne obserwacje poza formalnym wywiadem | Moze byc zrodlem notatek lub celem linkowania |
+| `Meeting note` | Powtarzalny typ notatki operacyjnej | Gdy material pochodzi ze spotkania i wymaga template meetingowego | Gdy tresc nie odnosi sie do konkretnego spotkania | To specjalizacja `Notebook note`, nie osobny modul domenowy |
+| `Report / Presentation / Assessment` | Finalny output dla odbiorcy | Gdy potrzebny jest artefakt wyjsciowy lub deliverable | Gdy tresc jest nadal w fazie swobodnego rozwoju | Notatka powinna byc zrodlem outline-first conversion |
+
+Zasada:
+- `Notebook note` jest miejscem dojrzewania wiedzy,
+- inne artefakty przejmuja wiedze wtedy, gdy potrzebny jest bardziej scisly workflow, governance albo finalna forma.
 
 ---
 

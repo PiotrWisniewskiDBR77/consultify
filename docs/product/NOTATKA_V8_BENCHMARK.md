@@ -352,3 +352,47 @@ Z benchmarku wynikaja nastepujace priorytety:
 - advanced collaboration,
 - enterprise governance expansion,
 - deeper automation and recommendation loops.
+
+---
+
+## 8. Evidence map
+
+Ta sekcja nie jest pelnym indeksem archiwow.
+Jej celem jest pokazanie, z jakich klas materialow wynikaly glownie wnioski benchmarkowe.
+
+### 8.1 Notion evidence clusters
+
+- `Notion help/www.notion.com/templates.html`
+  Potwierdza template-first operating model.
+- `Notion help/www.notion.com/web-clipper.html`
+  Potwierdza znaczenie lekkiego capture z weba.
+- `Notion help/www.notion.com/mobile.html`
+  Potwierdza capture mindset niezalezny od miejsca pracy.
+- `Notion help/www.notion.com/integrations.html`
+  Potwierdza systemowosc i cross-context work.
+- `Notion dev/developers.notion.com/reference/*`
+  Potwierdza bogaty model `page`, `block`, `database`, `comment`, `search`, `link previews`.
+
+### 8.2 Evernote evidence clusters
+
+- `evernote help/help.evernote.com/hc/en-us/search*.html`
+  Potwierdza search-first support i discoverability mindset.
+- `evernote help/cdn1.evernote.com/support-assets/en/*offline*`
+  Potwierdza nacisk na niezawodne przechwytywanie i dostep do notatek.
+- `evernote help/cdn1.evernote.com/support-assets/en/*import-notebooks*`
+  Potwierdza import/archiwizacja jako silny element capture.
+- `evernote help/cdn1.evernote.com/support-assets/en/*tasks*`
+  Pokazuje praktyczny zwiazek notatki z dzialaniem.
+- `evernote dev/dev.evernote.com/*`
+  Potwierdza historyczny orientation na notes/notebooks/search/API basics.
+
+### 8.3 Jak korzystac z evidence map
+
+Zasada dla kolejnych serii `v8`:
+- benchmark powinien miec nie tylko wniosek,
+- powinien miec tez minimalny `evidence trail`,
+- tak aby pozniej bylo jasne, z czego wynikala adaptacja funkcjonalna.
+
+Wniosek:
+- `Notatka v8` ma juz wystarczajacy evidence base do dalszego rozwoju,
+- ale przyszle benchmarki warto budowac z jeszcze bardziej jawna mapa `wzorzec -> zrodlo -> decyzja`.

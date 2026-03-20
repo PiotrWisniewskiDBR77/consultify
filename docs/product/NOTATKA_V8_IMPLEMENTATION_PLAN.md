@@ -303,6 +303,60 @@ Priority:
 
 ---
 
+## 4A. Acceptance criteria matrix
+
+Ponizsza macierz doprecyzowuje, po czym poznamy, ze epic jest naprawde gotowy do dalszej implementacji i rollout.
+
+### V8-NOTE-01 Capture
+
+- Uzytkownik moze utworzyc notatke z co najmniej jednego flow `quick note` oraz z kazdego wspieranego source connectora bez utraty tresci zrodla.
+- Kazdy record capture ma jawny `captureSource` oraz `captureMetadata`, dostepne w API i zgodne z modelem domenowym.
+- Ingest zapisuje tresc w postaci nadajacej sie do search i dalszego AI processing.
+- Bledy capture sa klasyfikowane i komunikowane bez cichej utraty danych.
+- Istnieja testy integracyjne dla `web clip`, `email`, `upload`, `import`.
+
+### V8-NOTE-02 ContentModel
+
+- Notatka ma jawnie okreslony `note type` lub mozliwosc jego bezpiecznej sugestii przez AI.
+- Template ma zdefiniowany kontrakt: struktura, metadata, AI prompts, convert intents.
+- Edytor rozroznia tresc usera od tresci proponowanej przez AI.
+- Model blokow jest serializowalny i stabilny wzgledem obecnego `NotebookContent`.
+- Istnieja testy dla template flow, serializacji i zachowan edytora.
+
+### V8-NOTE-03 KnowledgeArchitecture
+
+- `status`, `maturity`, `visibility`, `verificationStatus` i `reviewCadence` sa jednoznacznie rozdzielone w SSOT i API.
+- Granica miedzy `Notebook note`, `Knowledge article`, `Task`, `Decision`, `Initiative` i output artifact jest jawna i testowalna poznawczo.
+- Powiazania note-to-artifact nie zrywaja traceability i backlinks.
+- Uprawnienia organizacyjne i user scope sa egzekwowane po stronie backendu.
+- Istnieja testy dla przejsc statusow, widocznosci i integralnosci relacji.
+
+### V8-NOTE-04 DiscoveryAndRetrieval
+
+- Search keyword i search semantyczny zwracaja wyniki z czytelnym `matchType`, snippetem i zrodlem.
+- Retrieval nie ujawnia tresci poza permission boundary.
+- `Related notes`, `backlinks` i `used in` maja jawny kontrakt danych i powierzchni UI.
+- Istnieje minimalny eval set dla sprawdzenia trafnosci retrieval.
+- Istnieja testy integracyjne dla search endpoints i quality checks dla rankingu.
+
+### V8-NOTE-05 AIContractAndOperations
+
+- Kazda istotna operacja AI dziala w modelu `propose -> review -> accept/reject`.
+- Nie ma silent writes ani silent conversion flows.
+- Proposal ma audit trail zawierajacy minimum: actor, note, operation type, payload, status, timestamps.
+- User odroznia tresc AI od tresci wlasnej i moze jawnie rozstrzygnac proposal.
+- Istnieja testy dla acceptance/rejection flow i regresji governance.
+
+### V8-NOTE-06 ConversionGovernanceAndQuality
+
+- Konwersja z notatki do task/decision/initiative/output zachowuje source traceability.
+- Dla artefaktow zlozonych obowiazuje `outline-first` lub rownowazny review gate.
+- Notatka ma jasne sygnaly gotowosci do konwersji i nie tworzy "smieciowych" obiektow.
+- Link source -> target pozostaje widoczny po konwersji.
+- Istnieja testy integracyjne dla conversion flow i weryfikacja backlink continuity.
+
+---
+
 ## 5. Execution order
 
 ### Step 1
