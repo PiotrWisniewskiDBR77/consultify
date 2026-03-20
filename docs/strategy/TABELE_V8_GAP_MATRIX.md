@@ -23,6 +23,7 @@
 | Field governance | Typy pol i computed semantics istnieja | Typ, config i konsekwencje zmian sa transparentne i governowane | Za malo twardych zasad governance i destructive-change UX | P0 | audit, review UX | Regresje i uszkodzenia modelu danych |
 | Records core | CRUD, batch, bulk, expand, comments, watchers sa obecne | Records flow jest pilot-grade i konsekwentny we wszystkich surfaces | Miejscami bogactwo funkcji nie tworzy jednej glownej sciezki pracy | P1 | records API, FE consolidation | Trudny onboarding i niepewne wsparcie |
 | Views model | Wiele view types istnieje | Saved views sa first-class i spojne z query/presentation semantics | Potrzeba silniejszego rozroznienia core views vs advanced surfaces | P1 | query engine, FE IA | Rozrost funkcji bez spojnego modelu |
+| Discovery/retrieval | Query i filters istnieja, ale retrieval nie jest jeszcze jawnie nazwanym filarem produktu | Search/retrieval jest czescia canonical workflow od pytania do rekordu, widoku lub interface | Brak wyraznego produktu i testow dla retrieval flows | P1 | query engine, FE entry points, AI context | Uzytkownik bedzie mial duzo danych, ale slaby powrot do trafnych odpowiedzi |
 | Footers/status cues | `StatusBar` istnieje | Operacyjne sygnaly gridu sa stalym elementem core experience | Nie jest jeszcze oczywiste, co jest kanonicznym standardem grid discipline | P2 | FE polish | Mniejsza czytelnosc pracy operacyjnej |
 | Relations | Linked records, lookup, rollup sa obecne | Relacje staja sie czytelna semantyka miedzy tabelami i workflows | Potrzebna mocniejsza definicja reverse semantics i UX contract | P0 | backend relations, FE record expand | Pol-relacje beda zbyt eksperckie |
 | Dependencies | Date dependencies i cycle detection sa obecne | Zaleznosci procesowe sa backendowo trwale i pilot-ready | Trzeba domknac, co jest trwala semantyka, a co tylko affordance view | P1 | DateDependencyConfig, persistence | Pozorna funkcja bez zaufania procesowego |
@@ -48,6 +49,7 @@
 - twarda granica canonical persistence vs projection,
 - schema governance,
 - relation semantics,
+- discovery/retrieval model,
 - AI governance,
 - migration and rollout readiness,
 - porzadek dokumentacyjny `SSOT`.
@@ -56,6 +58,7 @@
 
 - records workflow consolidation,
 - views/product hierarchy,
+- search/retrieval flows,
 - forms,
 - record templates,
 - interfaces,

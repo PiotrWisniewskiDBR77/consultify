@@ -84,9 +84,28 @@ Wniosek:
 
 ---
 
-## 4. Benchmark po obszarach
+## 4. Macierz Airtable vs Coda vs Consultify as-is
 
-### 4.1 Base and multi-table model
+| Obszar | Airtable | Coda | Consultify as-is | Wniosek v8 |
+|---|---|---|---|---|
+| Base / multi-table model | Bardzo mocny model `base` i wielu tabel | Mocniejsze komponowanie w dokumencie niz wyrazny `base shell` | Backend ma `base`, ale UX nie traktuje go jeszcze jako glownego modelu | Trzeba wyniesc `base` i multi-table work do kanonicznego experience |
+| Schema / field system | Najmocniejszy benchmark typow pol i field governance | Mniej nacisku na klasyczny field system, wiecej na workflow composition | Szeroki model typow juz istnieje | Domknac governance i canonical schema workflow |
+| Records / views | Bardzo mocne widoki i saved view discipline | Silne surfaces kontekstowe ponad danymi | Widoki i query sa bogate, ale produktowo nie w pelni skonsolidowane | Utrzymac view richness, ale uproscic operating model |
+| Relations / dependencies | Linked records, lookup, rollup, date dependencies | Relacje bardziej osadzone w workflow dokumentowym | Relacje i dependencies istnieja technicznie | Doprecyzowac semantyke backendowa i product contract |
+| Input layer | Forms i templates sa mocne i praktyczne | Workflow intake osadzony w dokumencie | Forms, templates i importy juz istnieja | Zrobic z inputu first-class workflow, nie tylko funkcje poboczne |
+| Interfaces / presentation | Curated interfaces nad tymi samymi danymi | Bardzo mocne composite surfaces | Interfaces sa obecne, ale nie sa jeszcze pierwszoplanowym story | Zdefiniowac role interfaces vs views |
+| Automation / distribution | Silne automations i sync mindset | Packs, publishing i workflow composition | Automations, webhooks i sharing istnieja | Etapowac rollout: core first, process layer second |
+| AI-native | Omni: `describe -> plan -> build` | AI bardziej wspiera workflow i dokument | Schema proposal flow istnieje architektonicznie | Uczynic AI proposal-driven governance glowna przewaga produktu |
+| Search / retrieval | Search jest bardziej data-surface oriented | Retrieval mocniej osadzone w dokumencie i workflow | Search/retrieval nie jest jeszcze osobno nazwanym filarem planu | Dodac jawny filar discovery/retrieval w v8 |
+
+Ta tabela nie zastępuje benchmarku opisowego.
+Jej celem jest szybkie zestawienie trzech perspektyw w jednym miejscu.
+
+---
+
+## 5. Benchmark po obszarach
+
+### 5.1 Base and multi-table model
 
 #### Wzorzec A - Base jako kontener wielu tabel
 
@@ -115,7 +134,7 @@ RyzykoPrzeinzynierowania:
 - Probowac migrowac wszystkie legacy workspace od razu.
 - Rozszerzac shell zbyt szeroko przed stabilizacja adapterow.
 
-### 4.2 Schema and fields
+### 5.2 Schema and fields
 
 #### Wzorzec B - Zarzadzanie polami jako zarzadzanie modelem danych
 
@@ -142,7 +161,7 @@ RyzykoPrzeinzynierowania:
 - Dodanie wielu typow bez domknietego UX dla ich konfiguracji.
 - Traktowanie pola jak czysto frontendowej konfiguracji.
 
-### 4.3 Records and views
+### 5.3 Records and views
 
 #### Wzorzec C - Widoki to warstwa pracy, nie dekoracja
 
@@ -169,7 +188,7 @@ AdaptacjaV8:
 RyzykoPrzeinzynierowania:
 - Mnozenie view types bez stabilnego kontraktu query i danych.
 
-### 4.4 Relations and dependencies
+### 5.4 Relations and dependencies
 
 #### Wzorzec D - Relacje i date dependencies sa semantyka platformy
 
@@ -196,7 +215,7 @@ AdaptacjaV8:
 RyzykoPrzeinzynierowania:
 - Dodac zaleznosci tylko jako UI arrows bez trwalej semantyki w backendzie.
 
-### 4.5 Input layer
+### 5.5 Input layer
 
 #### Wzorzec E - Forms i record templates
 
@@ -223,7 +242,7 @@ AdaptacjaV8:
 RyzykoPrzeinzynierowania:
 - Traktowac forms jako osobny produkt bez pelnego spiecia z records/schema.
 
-### 4.6 Interfaces and presentation
+### 5.6 Interfaces and presentation
 
 #### Wzorzec F - Interfaces jako curated surfaces
 
@@ -250,7 +269,7 @@ AdaptacjaV8:
 RyzykoPrzeinzynierowania:
 - Budowanie page buildera bez jasnego modelu runtime i zapisow.
 
-### 4.7 Automation and distribution
+### 5.7 Automation and distribution
 
 #### Wzorzec G - Tabela jako centrum procesow
 
@@ -274,7 +293,7 @@ AdaptacjaV8:
 RyzykoPrzeinzynierowania:
 - Rozbudowa automations przed domknieciem podstaw platformy.
 
-### 4.8 AI-native table building
+### 5.8 AI-native table building
 
 #### Wzorzec H - NL to schema plan to approval
 
@@ -302,7 +321,7 @@ RyzykoPrzeinzynierowania:
 
 ---
 
-## 5. Co adoptujemy, a czego nie kopiujemy
+## 6. Co adoptujemy, a czego nie kopiujemy
 
 ### 5.1 Adoptujemy
 
@@ -324,7 +343,7 @@ RyzykoPrzeinzynierowania:
 
 ---
 
-## 6. Benchmark conclusion
+## 7. Benchmark conclusion
 
 Docelowy model `Tabele v8` powinien laczyc trzy rzeczy:
 - `Airtable quality of table operating model`
@@ -338,7 +357,7 @@ To oznacza:
 
 ---
 
-## 7. Priorytety wynikajace z benchmarku
+## 8. Priorytety wynikajace z benchmarku
 
 ### P0
 
@@ -364,7 +383,7 @@ To oznacza:
 
 ---
 
-## 8. Evidence map
+## 9. Evidence map
 
 Ta sekcja nie jest pelnym indeksem archiwow.
 Jej celem jest pokazanie, z jakich klas materialow wynikaly glownie wnioski benchmarkowe.

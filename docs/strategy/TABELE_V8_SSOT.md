@@ -304,6 +304,7 @@ Wymagania:
 - records/query API jest kanoniczne,
 - saved views sa first-class,
 - grid i alternatywne views pracuja na tym samym modelu danych,
+- search/retrieval entry points prowadza do tych samych canonical records i views,
 - bulk actions, footers i status signals sa spojne.
 
 ### 8.4 RelationsAndDependencies
@@ -351,6 +352,7 @@ Wymagania:
 - czas od intencji do dzialajacej bazy,
 - jakosc pierwszego schema,
 - bezpieczenstwo ewolucji schema,
+- czas od pytania do trafnego rekordu, widoku lub odpowiedzi,
 - procent flows obslugiwanych bez manual workaround,
 - pilot success rate dla metadata-first mode,
 - zaufanie do AI poprzez reviewability i audit.

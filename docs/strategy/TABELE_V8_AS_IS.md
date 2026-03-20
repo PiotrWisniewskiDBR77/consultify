@@ -95,6 +95,7 @@ To realny model danych o duzej glebi.
 - Widoki: grid, kanban, calendar, gallery, timeline, gantt, form, chart.
 - `ViewRouter`, `ViewConfigPanel`, `StatusBar`.
 - Filtrowanie, sortowanie, grupowanie, server-side query.
+- Fundament retrieval istnieje przez query/filter/view mechanics, ale nie jest jeszcze nazwany jako osobny filar produktu.
 - Record expand, comments, watchers, attachments, audit.
 
 ### Co to znaczy

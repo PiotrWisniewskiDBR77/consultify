@@ -9,7 +9,7 @@
 
 Kanoniczny workflow `Tabele v8`:
 
-`start -> define base -> shape schema -> populate data -> create working views -> collect and connect -> present and automate -> analyze and govern`
+`start -> define base -> shape schema -> populate data -> create working views -> retrieve and analyze -> collect and connect -> present and automate -> govern and scale`
 
 To oznacza:
 - tabela nie konczy sie na gridzie,
@@ -152,7 +152,21 @@ Rola AI:
 - generuje sensowne default views dla nowej bazy,
 - sugeruje field visibility i grouping.
 
-### 4.4 Input layer
+### 4.4 Search and retrieval
+
+Uzytkownik wykonuje:
+- szybkie wyszukiwanie rekordow i tabel,
+- query po polach, filtrach i formule,
+- odzyskiwanie zapisanych views dla konkretnego zadania,
+- przechodzenie od pytania biznesowego do zestawu rekordow, widoku lub interface.
+
+Rola AI:
+- proponuje query i filtry pod pytanie uzytkownika,
+- buduje retrieval context dla dalszej analizy,
+- wskazuje najlepszy view lub surface dla znalezionych danych,
+- nie ukrywa, z jakich rekordow i warunkow wynika odpowiedz.
+
+### 4.5 Input layer
 
 Uzytkownik wykonuje:
 - budowe forms,
@@ -165,7 +179,7 @@ Rola AI:
 - podpowiada required fields,
 - wykrywa slabe punkty intake.
 
-### 4.5 Interfaces and presentation
+### 4.6 Interfaces and presentation
 
 Uzytkownik wykonuje:
 - komponowanie curated surfaces,
@@ -176,7 +190,7 @@ Rola AI:
 - proponuje interface layout plan,
 - sugeruje, jakie bloki i views najlepiej sluza danemu use case.
 
-### 4.6 Automation and distribution
+### 4.7 Automation and distribution
 
 Uzytkownik wykonuje:
 - uruchamianie trigger-based actions,
@@ -209,7 +223,8 @@ Rola AI:
 2. Forms zbieraja dane od respondentow lub zespolu.
 3. Records sa walidowane i wzbogacane.
 4. Views dziela prace operacyjna od analitycznej.
-5. AI pomaga w czyszczeniu danych i wykrywaniu luk.
+5. Search/retrieval pomaga szybko wracac do trafnych rekordow i widokow.
+6. AI pomaga w czyszczeniu danych i wykrywaniu luk.
 
 ### 5.3 CRM / account operating system
 
