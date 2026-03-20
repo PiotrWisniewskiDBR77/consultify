@@ -111,6 +111,18 @@ Znaczenie:
 - output behavior toggle,
 - nie zmienia merytorycznej tresci odpowiedzi, tylko sposob delivery.
 
+### 4.8 Prompt-composition implication
+
+Kazdy mode powinien miec jawny wplyw na prompt composition:
+- czy zmienia base instructions,
+- czy dopina runtime modifier,
+- czy zmienia retrieval behavior,
+- czy zmienia output expectations,
+- czy tylko steruje UI/runtime behavior bez zmiany promptu.
+
+Ten mapping jest normatywnie opisany w:
+- `CHAT_V8_PROMPT_SYSTEM_AND_COMPOSITION.md`
+
 ---
 
 ## 5. Scope model
@@ -192,3 +204,4 @@ Related specs:
 - `CHAT_V8_ATTACHMENTS_AND_RETRIEVAL.md`
 - `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
 - `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
+- `CHAT_V8_PROMPT_SYSTEM_AND_COMPOSITION.md`

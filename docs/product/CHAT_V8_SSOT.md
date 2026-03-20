@@ -270,6 +270,7 @@ Build-ready supporting specs:
 - `CHAT_V8_ACTIONS_AND_APPROVALS.md`
 - `CHAT_V8_VOICE_AND_MULTIMODAL.md`
 - `CHAT_V8_RESPONSE_MODEL.md`
+- `CHAT_V8_PROMPT_SYSTEM_AND_COMPOSITION.md`
 - `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
 - `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
 - `CHAT_V8_SHARING_AND_PERMISSIONS.md`
@@ -292,6 +293,7 @@ Normative ownership by topic:
 - modes, scope and personalization toggles: `CHAT_V8_MODES_AND_SCOPE_MODEL.md`
 - action lifecycle and approvals: `CHAT_V8_ACTIONS_AND_APPROVALS.md`
 - response classes and rich in-thread rendering: `CHAT_V8_RESPONSE_MODEL.md`, `CHAT_V8_RICH_OUTPUT_AND_RENDERING.md`
+- prompt composition and precedence rules: `CHAT_V8_PROMPT_SYSTEM_AND_COMPOSITION.md`
 - memory and personalization: `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
 - message/thread edits and branching: `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
 - sharing, roles and visibility: `CHAT_V8_SHARING_AND_PERMISSIONS.md`
@@ -327,6 +329,9 @@ Wyniki rozmowy moga byc zapisane do notatki, taska, decyzji, idei i dalszych mod
 4. `Governed`
 AI operations, retrieval i approvals sa jawne, reviewable i audytowalne.
 
+5. `Prompt-governed`
+Prompt system ma byc traceable, deduplikowany i oparty o jedna composition truth, a nie o konkurujace warstwy instrukcji.
+
 ---
 
 ## 10. Taxonomy index
@@ -345,6 +350,7 @@ Source-class details live in:
 - `CHAT_V8_ATTACHMENTS_AND_RETRIEVAL.md`
 - `CHAT_V8_MODES_AND_SCOPE_MODEL.md`
 - `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
+- `CHAT_V8_PROMPT_SYSTEM_AND_COMPOSITION.md`
 
 ### 10.2 Response classes
 
@@ -392,6 +398,7 @@ Action lifecycle details live in:
 - historia jest pelnym systemem library, a nie tylko lista rozmow,
 - wszystkie glowne control groups maja explicit contract,
 - scope/modes i retrieval sa opisane bez luk i bez niespojnych obietnic,
+- prompt system ma jedna composition order i jednego ownera dla base persona semantics,
 - memory/personalization ma jawny trust contract,
 - message and thread operations sa okreslone jak u liderow lub maja jawny non-goal,
 - sharing/permissions i enterprise boundaries sa opisane bez zgadywania,

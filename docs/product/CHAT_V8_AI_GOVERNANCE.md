@@ -126,7 +126,36 @@ Jesli sources sa best-effort, to docs i UX nie moga sugerowac, ze sa guaranteed.
 
 ---
 
-## 7. Memory and privacy rules
+## 7. Prompt governance rules
+
+### 7.1 One base persona truth
+
+Canonical chat should have one owner for base persona semantics.
+Client-side giant persona overlays should not remain a competing second base prompt in the long-term target model.
+
+### 7.2 Precedence clarity
+
+Governance and safety constraints must have higher authority than:
+- co-thinker variations,
+- retrieval addons,
+- style modifiers,
+- client-provided prompt embellishments.
+
+### 7.3 Fallback honesty
+
+If prompt assembly fails and runtime degrades:
+- the system should remain safe,
+- critical governed surfaces may need explicit degrade/fail policy,
+- silent regressions to legacy behavior should not be treated as invisible success.
+
+### 7.4 Language consistency
+
+Prompt language rules must not be duplicated in conflicting ways.
+One canonical language policy should dominate.
+
+---
+
+## 8. Memory and privacy rules
 
 ### 7.1 Private mode
 
@@ -151,7 +180,7 @@ User musi miec rozsadny poziom kontroli nad:
 
 ---
 
-## 8. Voice governance rules
+## 9. Voice governance rules
 
 Voice w `Chat v8` musi jasno komunikowac:
 - kiedy audio jest transkrybowane lokalnie vs serwerowo,
@@ -163,7 +192,7 @@ Nie wolno sugerowac "full conversational voice parity", jesli produkt ma tylko c
 
 ---
 
-## 9. Feedback governance
+## 10. Feedback governance
 
 Feedback pipeline ma spelniac trzy warunki:
 - byc realny, nie placeholder,
@@ -174,7 +203,7 @@ Legacy feedback paths nie powinny byc traktowane jako canonical.
 
 ---
 
-## 10. UX requirements from governance
+## 11. UX requirements from governance
 
 Produkt musi odroznic wizualnie:
 - zwykla odpowiedz,
@@ -188,10 +217,11 @@ Jesli user nie widzi tej roznicy, governance istnieje tylko na papierze.
 
 ---
 
-## 11. Definition of done for AI governance
+## 12. Definition of done for AI governance
 
 Governance `Chat v8` jest domkniete, gdy:
 - answer/proposal/action sa rozdzielone semantycznie,
+- prompt precedence and fallback rules sa jawne,
 - AI actions maja jawny review and audit contract,
 - source and scope semantics sa uczciwe,
 - private mode i memory behavior sa zrozumiale,

@@ -225,6 +225,11 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: response classes, metadata and trust expectations
   - **Authority**: Highest for response semantics in chat
 
+- `docs/product/CHAT_V8_PROMPT_SYSTEM_AND_COMPOSITION.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: prompt composition order, precedence, base persona ownership, fallback and traceability rules for chat
+  - **Authority**: Highest for chat prompt-system contract at product/runtime boundary
+
 - `docs/product/CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
   - **Owner**: Product + Engineering
   - **Scope**: conversation/user/org memory, personalization, private mode and trust boundaries
@@ -249,6 +254,28 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Owner**: Product + Engineering
   - **Scope**: retention, audit, export, admin visibility, tenant isolation and compliance boundaries
   - **Authority**: Highest for chat enterprise/compliance promises
+
+### AI prompt and runtime governance companions (implementation-authoritative)
+
+- `docs/product/modules/ai/AI_PROMPT_GOVERNANCE_AUDIT_2026-03-07.md`
+  - **Owner**: Engineering
+  - **Scope**: canonical prompt CRUD/runtime assembly/governed publish stack and gaps
+  - **Authority**: Highest for current prompt governance as-is and release-control architecture
+
+- `docs/product/modules/ai/AI_LLM_OPERATING_SYSTEM_V3.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: target-state operating system for routing, purposes, privacy, context and runtime AI controls
+  - **Authority**: Highest for platform-level AI operating model beyond chat-specific UX
+
+- `docs/product/modules/ai/AI_AGENT_ORCHESTRATION_V3.md`
+  - **Owner**: Engineering
+  - **Scope**: context builder, orchestration and runtime agent/mode pipeline
+  - **Authority**: High for implementation details of AI orchestration
+
+- `docs/product/modules/ai/AI_DEEP_RESEARCH_EVIDENCE_SYSTEM_V3.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: evidence-led deep research architecture, review model and runtime expectations
+  - **Authority**: Highest for deep research evidence semantics
 
 ### Supporting (canonical, but secondary)
 

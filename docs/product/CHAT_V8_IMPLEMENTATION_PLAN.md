@@ -39,7 +39,8 @@ Program `v8` dzielimy na 6 strumieni:
 - `V8-CHAT-04 ActionsGovernanceAndArtifacts`
 - `V8-CHAT-05 VoiceAndMultimodal`
 - `V8-CHAT-06 MemorySharingAndEnterpriseTrust`
-- `V8-CHAT-07 RolloutTruthAndAdoption`
+- `V8-CHAT-07 PromptSystemAndComposition`
+- `V8-CHAT-08 RolloutTruthAndAdoption`
 
 Kazdy strumien ma scope frontend, backend, data/contracts, UX, governance i testy.
 
@@ -79,6 +80,7 @@ Deliverables:
 - modes/scope model,
 - actions/approvals spec,
 - response model,
+- prompt system and composition spec,
 - message/thread operations spec,
 - rich output/rendering spec.
 
@@ -349,7 +351,45 @@ Test scope:
 Priority:
 - P1
 
-### V8-CHAT-07 RolloutTruthAndAdoption
+### V8-CHAT-07 PromptSystemAndComposition
+
+Zakres:
+- canonical prompt composition order,
+- base persona ownership,
+- prompt registry vs runtime layering,
+- mode/prompt interactions,
+- fallback, traceability and budget rules.
+
+Frontend:
+- reduce dependence on giant client-side persona overlays,
+- clarify which UI toggles are prompt modifiers vs runtime-only settings.
+
+Backend:
+- prompt assembler ownership,
+- runtime composition precedence,
+- retrieval and persona addon order,
+- traceability manifest.
+
+Data/contracts:
+- promptKey and promptVersion semantics,
+- fallback policy,
+- language policy,
+- request-to-runtime trace metadata.
+
+Migration/rollout:
+- align product docs with v3 prompt governance docs,
+- classify legacy prompt paths and deprecated APIs clearly.
+
+Test scope:
+- one canonical prompt composition story exists,
+- language rule is consistent,
+- persona and retrieval addons do not override governance ambiguously,
+- critical surfaces define fail-soft vs fail-closed policy.
+
+Priority:
+- P0
+
+### V8-CHAT-08 RolloutTruthAndAdoption
 
 Zakres:
 - rollout notes,
@@ -396,6 +436,7 @@ Detailed spec map used by this plan:
 - `CHAT_V8_ACTIONS_AND_APPROVALS.md`
 - `CHAT_V8_VOICE_AND_MULTIMODAL.md`
 - `CHAT_V8_RESPONSE_MODEL.md`
+- `CHAT_V8_PROMPT_SYSTEM_AND_COMPOSITION.md`
 - `CHAT_V8_MEMORY_AND_PERSONALIZATION.md`
 - `CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
 - `CHAT_V8_SHARING_AND_PERMISSIONS.md`
@@ -409,6 +450,12 @@ Legacy/background references only:
 - `docs/api/AI_CHAT_API.md`
 - `docs/flows/core/AI_CHAT_ASSISTANCE_FLOW.md`
 - `docs/product/modules/ai/AI_CHAT_CONTROL_AUDIT_2026-03-07.md`
+
+Implementation-authoritative prompt/governance companions:
+- `docs/product/modules/ai/AI_PROMPT_GOVERNANCE_AUDIT_2026-03-07.md`
+- `docs/product/modules/ai/AI_LLM_OPERATING_SYSTEM_V3.md`
+- `docs/product/modules/ai/AI_AGENT_ORCHESTRATION_V3.md`
+- `docs/product/modules/ai/AI_DEEP_RESEARCH_EVIDENCE_SYSTEM_V3.md`
 
 ---
 
@@ -459,7 +506,8 @@ Legacy/background references only:
 | ActionsGovernanceAndArtifacts | Proposal, approval, execution and artifact handoff are explicit |
 | VoiceAndMultimodal | One coherent voice contract exists |
 | MemorySharingAndEnterpriseTrust | Memory, privacy, sharing and enterprise boundaries are explicit and non-contradictory |
-| RolloutTruthAndAdoption | New package can serve as the only required SSOT for future work |
+| PromptSystemAndComposition | Prompt composition, precedence and traceability are explicit |
+| RolloutTruthAndAdoption | New package can serve as the only required product SSOT for future work |
 
 ### 8.1 Testable acceptance checklist
 
@@ -493,6 +541,12 @@ MemorySharingAndEnterpriseTrust:
 - private mode semantics are explicit,
 - sharing/visibility layers are explicit,
 - retention owner and compliance boundaries are explicit.
+
+PromptSystemAndComposition:
+- prompt registry, runtime sections and mode/retrieval addons have one documented order,
+- one canonical owner for base persona semantics is identified,
+- fallback and language rules are explicit,
+- product docs and runtime/governance docs are linked without contradiction.
 
 RolloutTruthAndAdoption:
 - package is registered as canonical,
