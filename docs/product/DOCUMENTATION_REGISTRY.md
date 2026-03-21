@@ -277,6 +277,86 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: target-state operating system for routing, purposes, privacy, context and runtime AI controls
   - **Authority**: Highest for platform-level AI operating model beyond chat-specific UX
 
+- `docs/product/AI_LLM_MODEL_MANAGEMENT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical analysis and build direction for multi-LLM management, including model profiles, task-shape routing, effort policy, context classes, lifecycle management and cost-aware execution
+  - **Authority**: Highest for next-step design of cross-app model selection and execution-profile management
+
+### AI leader parity architecture package (cross-cutting canonical)
+
+- `docs/product/AI_LEADER_PARITY_ARCHITECTURE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: master parity package for 12 cross-cutting AI architecture areas missing between current `V8` suites and leader-grade AI operating environments
+  - **Authority**: Highest for package structure, prioritization, ownership map and cross-package hardening status of the parity architecture program
+
+- `docs/product/AI_WORKSPACE_PROJECT_RUNTIME_ARCHITECTURE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical runtime contract across workspace, project, conversation, run and artifact contexts
+  - **Authority**: Highest for cross-surface workspace/project runtime semantics
+
+- `docs/product/AI_CONNECTORS_ENTERPRISE_SEARCH_ARCHITECTURE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical architecture for connectors, enterprise search, ACL-aware retrieval, sync, freshness and source audit
+  - **Authority**: Highest for connector lifecycle, enterprise search governance and retrieval-source control shared across AI consumers
+
+- `docs/product/AI_ARTIFACT_RUNTIME_ARCHITECTURE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical draft, preview, version trace and publish lifecycle for AI-produced artifacts
+  - **Authority**: Highest for cross-module AI artifact runtime semantics
+
+- `docs/product/AI_BACKGROUND_AND_SCHEDULED_AGENT_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical job lifecycle for background, scheduled, batch and long-running AI work
+  - **Authority**: Highest for non-interactive AI runtime semantics and long-running AI work classes
+
+- `docs/product/AI_AGENT_SECURITY_AND_TOOL_GOVERNANCE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical least-privilege model for AI tools, delegation, risk classes and approval-aware tool access
+  - **Authority**: Highest for AI tool governance and delegation safety
+
+- `docs/product/AI_OPERATIONS_AND_RELEASE_ARCHITECTURE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical AI ops and release discipline for evals, release bundles, canary, rollback, deprecation and org impact
+  - **Authority**: Highest for AI release-management, rollout discipline and operator-control semantics
+
+- `docs/product/AI_HUMAN_IN_THE_LOOP_GOVERNANCE_ARCHITECTURE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical review, approval, escalation and override doctrine for AI work
+  - **Authority**: Highest for cross-surface human-in-the-loop governance semantics
+
+- `docs/product/AI_COLLABORATION_AND_PUBLISHING_ARCHITECTURE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical collaboration, sharing and publishing lifecycle for AI outputs and artifacts
+  - **Authority**: Highest for cross-surface AI collaboration semantics
+
+- `docs/product/AI_IDENTITY_ROLES_AND_SCOPE_ARCHITECTURE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical mapping from identity and roles into AI scope and consumer visibility
+  - **Authority**: Highest for AI identity/scope resolution semantics
+
+- `docs/product/AI_WORKLOAD_CLASSES_AND_SLA_ARCHITECTURE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical workload taxonomy and SLA mapping for latency, reliability, cost and execution mode
+  - **Authority**: Highest for AI workload classes and shared SLA vocabulary
+
+- `docs/product/AI_MEMORY_LIFECYCLE_ARCHITECTURE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical lifecycle for ephemeral, working and durable memory including freshness, retention and deletion cascade
+  - **Authority**: Highest for memory lifecycle semantics across AI consumers
+
+- `docs/product/AI_OUTPUT_TRUST_ARCHITECTURE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical trust contract for citations, evidence, provenance, routing explanation and support-visible explainability
+  - **Authority**: Highest for cross-surface AI output trust semantics
+
+### Core AI hardening rule
+
+For `Chat v8`, `Execution Agent v8`, `Knowledge RAG v8`, `Multi-Agent v8` and `AI_LLM_MODEL_MANAGEMENT_V8`:
+
+- local package docs still own product/domain behavior,
+- parity package docs own cross-cutting architecture,
+- benchmark, gap matrix and implementation docs must stay synchronized with both when hardening status changes.
+
 - `docs/product/modules/ai/AI_AGENT_ORCHESTRATION_V3.md`
   - **Owner**: Engineering
   - **Scope**: context builder, orchestration and runtime agent/mode pipeline
@@ -289,15 +369,72 @@ If you are implementing product changes, treat **Canonical** documents as the so
 
 ### Agent execution domain cleanup
 
-- `docs/product/AGENT_EXECUTION_DOMAIN_MAP_V1.md`
+- `docs/product/AGENT_AND_KNOWLEDGE_V8_MASTER_PLAN.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: master implementation order, dependency model and build-now execution plan that unifies `Execution Agent v8` and `Knowledge RAG v8` into one delivery program
+  - **Authority**: Highest for cross-package sequencing and implementation-readiness across agent + knowledge architecture
+
+- `docs/product/AGENT_MULTI_AGENT_WORK_MANAGEMENT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical component model for supervisor-led multi-agent work management, typed delegation, task graphs, branch isolation, merge semantics and observability
+  - **Authority**: Highest for multi-agent orchestration semantics inside the execution architecture
+
+- `docs/product/AGENT_EXECUTION_DOMAIN_MAP_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: canonical separation between execution agent, audit agents, virtual workers and RAG management; defines correct foundation for future execution-agent work
   - **Authority**: Highest for agent-domain taxonomy and next-step scoping before `Execution Agent` design
 
-- `docs/product/AGENT_EXECUTION_V1_SSOT.md`
+- `docs/product/AGENT_EXECUTION_V8_SSOT.md`
   - **Owner**: Product + Engineering
   - **Scope**: canonical concept for a chat-started execution agent that plans, proposes, approves and executes work across application artifacts
   - **Authority**: Highest for `Execution Agent` target concept and product/runtime boundaries
+
+- `docs/product/AGENT_EXECUTION_V8_AS_IS.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: runtime truth of current execution-related patterns, reusable foundations, fragmented proposal systems and non-canonical/legacy execution-adjacent layers
+  - **Authority**: Highest for current-state assessment of execution-agent foundations
+
+- `docs/product/AGENT_EXECUTION_V8_GAP_MATRIX.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: prioritized gap analysis between current runtime and target execution-agent model
+  - **Authority**: Highest for execution-agent gap prioritization and sequencing logic
+
+- `docs/product/AGENT_EXECUTION_V8_IMPLEMENTATION_PLAN.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: build-ready workstreams, waves, acceptance criteria and sequencing for execution-agent rebuild
+  - **Authority**: Highest for execution-agent implementation sequencing
+
+### Knowledge / RAG governance
+
+- `docs/product/KNOWLEDGE_RAG_V8_SSOT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical ownership, scope, sharing and governance model for user-private and organization-shared knowledge/RAG
+  - **Authority**: Highest for knowledge/RAG target model and security boundaries
+
+- `docs/product/KNOWLEDGE_RAG_V8_BENCHMARK.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: benchmark of mature knowledge/RAG system concerns and missing areas still to be covered in `consultify`
+  - **Authority**: Highest for completeness benchmarking of the knowledge/RAG package
+
+- `docs/product/KNOWLEDGE_RAG_V8_AS_IS.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: runtime truth of current memory, org knowledge, document corpus, retrieval engine and worker knowledge foundations
+  - **Authority**: Highest for current-state assessment of knowledge/RAG foundations
+
+- `docs/product/KNOWLEDGE_RAG_V8_GAP_MATRIX.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: prioritized gap analysis between current knowledge/RAG package and mature enterprise-grade target state
+  - **Authority**: Highest for knowledge/RAG completeness gaps and hardening priorities
+
+- `docs/product/KNOWLEDGE_RAG_V8_IMPLEMENTATION_PLAN.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: build-ready strategy and sequencing for user-private knowledge, organization-shared knowledge, promotion workflow and retrieval gateway unification
+  - **Authority**: Highest for knowledge/RAG implementation sequencing
+
+- `docs/product/KNOWLEDGE_RAG_V8_WORKING_MEMORY_ARCHITECTURE.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical architecture for short-term / working memory, active document sets, compaction, issue summaries and run-scoped context assembly across AI consumers
+  - **Authority**: Highest for working-memory design and context-budget semantics inside the knowledge/RAG package
 
 ### Supporting (canonical, but secondary)
 

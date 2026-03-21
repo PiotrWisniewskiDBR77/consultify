@@ -1,6 +1,6 @@
-# Agent execution v1 - SSOT
+# Agent execution v8 - SSOT
 
-> Status: Draft v1
+> Status: Draft v8
 > Owner: Product + Engineering
 > Cel: Kanoniczna definicja agenta wykonawczego, ktory startuje z komunikacji w czacie i realizuje kompletne, reviewable zadania w calej aplikacji.
 
@@ -9,7 +9,11 @@
 ## 0. Canonical anchors
 
 Documents:
-- `docs/product/AGENT_EXECUTION_DOMAIN_MAP_V1.md`
+- `docs/product/AGENT_EXECUTION_DOMAIN_MAP_V8.md`
+- `docs/product/AGENT_MULTI_AGENT_WORK_MANAGEMENT_V8.md`
+- `docs/product/AGENT_EXECUTION_V8_AS_IS.md`
+- `docs/product/AGENT_EXECUTION_V8_GAP_MATRIX.md`
+- `docs/product/AGENT_EXECUTION_V8_IMPLEMENTATION_PLAN.md`
 - `docs/product/CHAT_V8_SSOT.md`
 - `docs/product/CHAT_V8_WORKFLOW_MODEL.md`
 - `docs/product/CHAT_V8_ACTIONS_AND_APPROVALS.md`
@@ -31,9 +35,37 @@ Code and runtime references:
 
 ---
 
-## 1. What `Agent Execution v1` means
+## 0.1 Cross-cutting parity architecture
 
-`Agent Execution v1` to nowa warstwa produktu, w ktorej AI:
+`Agent Execution v8` pozostaje kanonicznym SSOT dla execution layer.
+
+Przekrojowe warstwy, ktorych ten dokument nie powinien juz definiowac lokalnie, sa delegowane do:
+
+- `docs/product/AI_WORKSPACE_PROJECT_RUNTIME_ARCHITECTURE_V8.md`
+- `docs/product/AI_ARTIFACT_RUNTIME_ARCHITECTURE_V8.md`
+- `docs/product/AI_BACKGROUND_AND_SCHEDULED_AGENT_RUNTIME_V8.md`
+- `docs/product/AI_AGENT_SECURITY_AND_TOOL_GOVERNANCE_V8.md`
+- `docs/product/AI_HUMAN_IN_THE_LOOP_GOVERNANCE_ARCHITECTURE_V8.md`
+- `docs/product/AI_OUTPUT_TRUST_ARCHITECTURE_V8.md`
+
+This document still owns:
+
+- execution lifecycle,
+- run semantics,
+- proposal/preview/apply model,
+- artifact mutation intent at the execution layer.
+
+Current hardening expectation:
+
+- `Execution Agent v8` is not leader-grade until background runtime, tool governance, workspace context and output trust are hardened together,
+- execution gap status must stay aligned with parity package status,
+- no new execution-adjacent feature should bypass the shared run, trust or governance model.
+
+---
+
+## 1. What `Agent Execution v8` means
+
+`Agent Execution v8` to nowa warstwa produktu, w ktorej AI:
 - odbiera cel w czacie,
 - rozumie intencje i kontekst pracy,
 - buduje plan krokow,
@@ -90,7 +122,7 @@ Execution Agent ma byc mocniejszy od klasycznego chatu, bo:
 
 ### 4.1 Chat starts the run, but chat is not the whole system
 
-Agent startuje z czatu, ale wykonanie nie moze byc uwięzione w samej rozmowie.
+Agent startuje z czatu, ale wykonanie nie moze byc uwiezione w samej rozmowie.
 Chat jest surface entry.
 Execution jest osobna warstwa runtime i artifact operations.
 
@@ -155,7 +187,7 @@ To oznacza, ze kanonicznym targetem sa:
 
 ## 5. Scope
 
-### 5.1 In scope for v1
+### 5.1 In scope for v8
 
 - chat-started task intake,
 - intent understanding and task decomposition,
@@ -169,7 +201,7 @@ To oznacza, ze kanonicznym targetem sa:
 - explicit failure and rollback-ready semantics,
 - org/project/user-context-aware execution.
 
-### 5.2 Out of scope for v1 baseline
+### 5.2 Out of scope for v8 baseline
 
 - silent autonomous background execution without visible review,
 - replacing formal governance roles,
@@ -656,18 +688,18 @@ The execution-agent concept is complete only when:
 
 ## 18. Recommended next docs
 
-After this SSOT, the next canonical documents should be:
-- `AGENT_EXECUTION_V1_AS_IS.md`
-- `AGENT_EXECUTION_V1_GAP_MATRIX.md`
-- `AGENT_EXECUTION_V1_IMPLEMENTATION_PLAN.md`
+This SSOT is part of the canonical execution-agent package:
+- `AGENT_EXECUTION_V8_AS_IS.md`
+- `AGENT_EXECUTION_V8_GAP_MATRIX.md`
+- `AGENT_EXECUTION_V8_IMPLEMENTATION_PLAN.md`
 
-Those documents should answer:
+Together, these documents answer:
 - what runtime pieces already exist,
 - what gaps block whole-app execution,
 - in what order we build the execution spine.
 
 Related references:
-- `AGENT_EXECUTION_DOMAIN_MAP_V1.md`
+- `AGENT_EXECUTION_DOMAIN_MAP_V8.md`
 - `CHAT_V8_ACTIONS_AND_APPROVALS.md`
 - `CHAT_V8_RUNTIME_TRUTH_MAP.md`
 - `AI_AGENT_ORCHESTRATION_V3.md`

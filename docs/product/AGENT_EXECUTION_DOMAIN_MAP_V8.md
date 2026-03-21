@@ -1,6 +1,6 @@
-# Agent execution domain map v1
+# Agent execution domain map v8
 
-> Status: Draft v1
+> Status: Draft v8
 > Cel: Uporzadkowac znaczenie slowa `agent` w `consultify`, rozdzielic istniejace systemy i ustawic jeden poprawny punkt startu dla budowy agenta wykonujacego realna prace w aplikacji.
 
 ---
@@ -91,6 +91,11 @@ To osobny system zarzadzania wiedza:
 
 RAG management jest warstwa wiedzy i source governance.
 Nie jest sam w sobie agentem.
+
+Canonical docs for this stream:
+- `docs/product/KNOWLEDGE_RAG_V8_SSOT.md`
+- `docs/product/KNOWLEDGE_RAG_V8_AS_IS.md`
+- `docs/product/KNOWLEDGE_RAG_V8_IMPLEMENTATION_PLAN.md`
 
 ---
 
@@ -320,10 +325,10 @@ But RAG management is not the same thing as the execution agent product.
 ### 9.1 Execution Agent package
 
 Recommended next canonical docs:
-- `AGENT_EXECUTION_V1_SSOT.md`
-- `AGENT_EXECUTION_V1_AS_IS.md`
-- `AGENT_EXECUTION_V1_GAP_MATRIX.md`
-- `AGENT_EXECUTION_V1_IMPLEMENTATION_PLAN.md`
+- `AGENT_EXECUTION_V8_SSOT.md`
+- `AGENT_EXECUTION_V8_AS_IS.md`
+- `AGENT_EXECUTION_V8_GAP_MATRIX.md`
+- `AGENT_EXECUTION_V8_IMPLEMENTATION_PLAN.md`
 
 ### 9.2 RAG management package
 

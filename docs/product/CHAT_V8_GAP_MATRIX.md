@@ -40,6 +40,11 @@ Kazdy wiersz opisuje:
 | Feedback | One real pipeline | Real on unified path, legacy drift elsewhere | Duplicate/legacy/fake path confusion | P1 | Needs consolidation |
 | Voice | One coherent user-facing system | Dictation, TTS and STT pieces exist | Product story weaker than runtime possibilities | P1 | Needs dedicated spec |
 | Artifact handoff | Save outcomes into work system | Partly real | Needs explicit canonical actions model | P1 | Local differentiator |
+| Workspace runtime contract | One shared workspace/project/run context chain | Partly described in chat and execution docs | Missing full cross-surface runtime contract | P0 | Now owned jointly with parity package |
+| Enterprise search and connectors | Honest retrieval across org sources with ACL and freshness | Attachments and retrieval exist, connector story is shallow | Search depth below leader-grade assistants | P1 | Must align with parity architecture |
+| Collaboration and publishing | Team-safe sharing and publish lifecycle | Sharing exists mainly for conversations | Weak cross-surface collaboration model | P1 | Needed for B2B parity |
+| Identity and scope explainability | User can understand effective scope from role and context | Modes exist, but effective scope is still implicit | Scope explanation weaker than enterprise standard | P1 | Must align with role model |
+| Output trust | One evidence/provenance/routing explanation contract | Partial citations and retrieval honesty | No full trust contract yet | P0 | Critical for leader-grade parity |
 | Documentation | One `Chat v8` package as SSOT | Fragmented docs | No safe build-ready package | P0 | This program addresses it |
 
 ---
@@ -63,6 +68,17 @@ If the system proposes business actions, approval and execution semantics must b
 
 Current history is stronger than expected, but still under-defined at product level.
 
+### 3.5 Chat still depends on cross-cutting architecture
+
+`Chat v8` no longer has only local product gaps.
+It now also depends on:
+
+- shared workspace runtime,
+- enterprise search depth,
+- identity/scope explainability,
+- collaboration lifecycle,
+- output trust.
+
 ---
 
 ## 4. Key dependencies
@@ -72,6 +88,7 @@ Current history is stronger than expected, but still under-defined at product le
 - source and scope model must align UI, store, stream payload and docs,
 - action model must align UI, API, and backend executor,
 - voice model must align visible controls with runtime capabilities.
+- chat benchmark status must stay aligned with parity package status for trust, search, collaboration and scope.
 
 ---
 

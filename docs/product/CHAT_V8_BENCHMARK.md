@@ -169,6 +169,29 @@ Current intended classification:
 
 ---
 
+## 8A. Cross-cutting architecture the benchmark now requires
+
+`Chat v8` benchmark can no longer be treated as chat-only UX guidance.
+
+Leader-grade parity for chat now depends on the shared architecture package:
+
+| Chat benchmark concern | Required cross-cutting architecture |
+| --- | --- |
+| folder/project semantics and contextual co-working | `AI_WORKSPACE_PROJECT_RUNTIME_ARCHITECTURE_V8.md` |
+| sourced answers and research honesty | `AI_CONNECTORS_ENTERPRISE_SEARCH_ARCHITECTURE_V8.md`, `AI_OUTPUT_TRUST_ARCHITECTURE_V8.md` |
+| governed actions and reviewable execution | `AI_HUMAN_IN_THE_LOOP_GOVERNANCE_ARCHITECTURE_V8.md`, `AI_AGENT_SECURITY_AND_TOOL_GOVERNANCE_V8.md` |
+| sharing and team-safe history | `AI_COLLABORATION_AND_PUBLISHING_ARCHITECTURE_V8.md`, `AI_IDENTITY_ROLES_AND_SCOPE_ARCHITECTURE_V8.md` |
+| memory and personalization trust | `AI_MEMORY_LIFECYCLE_ARCHITECTURE_V8.md`, `AI_IDENTITY_ROLES_AND_SCOPE_ARCHITECTURE_V8.md` |
+| long-running research and deep work | `AI_BACKGROUND_AND_SCHEDULED_AGENT_RUNTIME_V8.md`, `AI_WORKLOAD_CLASSES_AND_SLA_ARCHITECTURE_V8.md` |
+
+That means leader-grade chat parity is now a combination of:
+
+- chat-native UX and workflow docs,
+- shared runtime and trust architecture,
+- honest benchmark status in gap matrices.
+
+---
+
 ## 9. Benchmark conclusions for v8
 
 ### 8.1 Must-have
@@ -192,3 +215,13 @@ Current intended classification:
 - nie kopiowac UI vendorow 1:1,
 - nie obiecywac capabilities bez realnego runtime,
 - nie utrzymywac rownoleglej prawdy produktu pomiedzy starym i nowym shellem.
+
+### 8.4 Still below leader-grade today
+
+Even after creating the parity package, `Chat v8` should still consider these areas open:
+
+- enterprise search and connector depth below mature workspace assistants,
+- output trust below fully evidence-native systems,
+- collaboration and publishing weaker than strong team-oriented AI products,
+- background research and queue semantics weaker than long-running workflow products,
+- identity/scope explanation still weaker than strict enterprise AI environments.

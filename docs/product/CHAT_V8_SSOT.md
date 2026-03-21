@@ -29,6 +29,34 @@ Kluczowa decyzja tej iteracji:
 
 ---
 
+## 1.1 Cross-cutting parity architecture
+
+`Chat v8` pozostaje kanonicznym SSOT dla produktu chat.
+
+Jednoczesnie `Chat v8` deleguje przekrojowe zasady do pakietu `AI Leader Parity Architecture v8`, przede wszystkim:
+
+- `AI_WORKSPACE_PROJECT_RUNTIME_ARCHITECTURE_V8.md` for shared workspace/project runtime,
+- `AI_CONNECTORS_ENTERPRISE_SEARCH_ARCHITECTURE_V8.md` for connector and enterprise retrieval rules,
+- `AI_HUMAN_IN_THE_LOOP_GOVERNANCE_ARCHITECTURE_V8.md` for shared approval doctrine,
+- `AI_COLLABORATION_AND_PUBLISHING_ARCHITECTURE_V8.md` for cross-surface sharing and publishing,
+- `AI_IDENTITY_ROLES_AND_SCOPE_ARCHITECTURE_V8.md` for AI scope resolution,
+- `AI_OUTPUT_TRUST_ARCHITECTURE_V8.md` for trust, provenance and routing explainability.
+
+This document still owns:
+
+- chat shell,
+- chat workflow,
+- message/thread semantics,
+- chat-specific controls and UX promises.
+
+Current hardening expectation:
+
+- `Chat v8` must no longer claim leader-grade parity only from local chat UX,
+- leader-grade status now depends on shared progress in workspace runtime, enterprise search, collaboration, identity/scope and output trust,
+- benchmark, gap matrix and parity package must stay synchronized when statuses change.
+
+---
+
 ## 2. Mission
 
 Zbudowac w `consultify` chat, ktory:
