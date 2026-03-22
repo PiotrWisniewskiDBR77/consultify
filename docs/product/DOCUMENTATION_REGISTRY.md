@@ -407,6 +407,31 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: canonical notification, reminder and reengagement model for pending review, async completion, proposal expiry and Teresa or agent return paths
   - **Authority**: Highest for async user-visible state and reentry semantics across chat and agent flows
 
+- `docs/product/COMMUNICATION_V8_SSOT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical product truth for internal and external communication, collaboration, channel policy, communication routing and message-to-work conversion
+  - **Authority**: Highest for communication product identity and channel-governance semantics across the platform
+
+- `docs/product/COMMUNICATION_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: readiness audit for communication across internal collaboration, external communication, channel routing and connector-backed delivery
+  - **Authority**: Highest for current-state communication coverage and package read order
+
+- `docs/product/INTERNAL_COMMUNICATION_POLICY_AND_COLLABORATION_GOVERNANCE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical policy for internal communication, collaboration governance, channel ownership and message-to-work conversion
+  - **Authority**: Highest for internal communication governance and collaboration rules
+
+- `docs/product/EXTERNAL_COMMUNICATION_AND_CLIENT_CHANNELS_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical model for external communication, client-facing channels, delivery updates and safe outbound messaging
+  - **Authority**: Highest for client-safe and external communication semantics
+
+- `docs/product/COMMUNICATION_CHANNEL_SYNC_AND_ROUTING_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical channel-binding, routing, connector-backed delivery and communication-to-work materialization model
+  - **Authority**: Highest for communication routing and channel-sync semantics
+
 - `docs/product/AGENT_INTERRUPT_AND_RESUME_RUNTIME_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: canonical interrupt, resume, revalidation and recovery semantics for Teresa voice, proposal-only work and async agent flows
