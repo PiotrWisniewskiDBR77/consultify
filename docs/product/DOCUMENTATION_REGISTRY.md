@@ -13,6 +13,11 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
 
 ### Product governance & lifecycle
 
+- `docs/product/PROJECT_MANAGEMENT_V8_BENCHMARK.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: benchmark of modern project and initiative platforms across intake, governance, planning, execution, automation, AI support and closure
+  - **Authority**: Highest for benchmark and parity target-setting in the initiative and execution package
+
 - `docs/product/PROJECT_MANAGEMENT_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
   - **Scope**: canonical readiness audit, read order, ownership map and cleanup agenda for project management documentation (projects, initiatives, tasks, decisions, inbox/SLA)
@@ -47,6 +52,21 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Owner**: Product + Engineering
   - **Scope**: AI-first automation, eventing, agent sessions, approvals, background execution, replay, observability and integration governance for task/workflow runtime
   - **Authority**: Highest for automation and eventing semantics in the task/workflow package
+
+- `docs/product/INITIATIVE_AI_COPILOT_AND_EXECUTION_SUPPORT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical AI support for initiative creation, planning, scheduling, execution support, task management and delivery follow-through
+  - **Authority**: Highest for initiative-specific AI copilot and execution-support doctrine
+
+- `docs/product/INITIATIVE_TIMELINE_CAPACITY_AND_CRITICAL_PATH_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical planning doctrine for initiative baselines, sequencing, dependencies, capacity, workload and critical-path management
+  - **Authority**: Highest for initiative timeline, capacity and critical-path doctrine
+
+- `docs/product/DELIVERY_REPORTING_AND_EXECUTION_RISK_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical reporting, accountability, blocker, risk and recovery model for initiative execution
+  - **Authority**: Highest for delivery reporting and execution-risk doctrine
 
 - `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
   - **Owner**: Product
