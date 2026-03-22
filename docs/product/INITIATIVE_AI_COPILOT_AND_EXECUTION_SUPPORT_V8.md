@@ -21,6 +21,15 @@ AI should support initiatives in two connected roles:
 - `initiative copilot` during shaping, planning and governance preparation
 - `execution support copilot` during daily delivery, task follow-through and recovery
 
+Inside these roles, AI should be able to act as:
+
+- writer
+- consultant
+- domain expert
+- planner
+- execution analyst
+- coordination copilot
+
 Rule:
 
 `AI support must stay proposal-based, context-aware and governance-safe across both roles`
@@ -37,6 +46,8 @@ AI may help:
 - structure scope, KPI, team and resource inputs
 - suggest missing sections
 - identify weak assumptions
+- challenge vague business logic
+- draft stronger executive-ready language
 
 ### 3.2 Planning and approval readiness
 
@@ -46,6 +57,8 @@ AI may help:
 - detect missing owners, dates and milestones
 - propose baseline sequencing
 - summarize risks before gate decisions
+- draft approval-ready decision packs
+- surface hidden dependencies, workload gaps and readiness weaknesses
 
 ### 3.3 Scheduling and timeline support
 
@@ -65,6 +78,7 @@ AI may help:
 - draft unblock and escalation paths
 - summarize status for owners and PMO
 - propose task regrouping or recovery plans
+- switch between writer help and real execution consulting depending on context
 
 ### 3.5 Closure and tracking
 
@@ -85,6 +99,7 @@ This support should be available from:
 - Execution hub
 - chat and Teresa-led execution requests
 - inbox re-entry from automation and events
+- task and decision detail surfaces where initiative context is already available
 
 ---
 
@@ -121,3 +136,4 @@ The initiative package should explicitly recognize that:
 - `INITIATIVE_TIMELINE_CAPACITY_AND_CRITICAL_PATH_V8.md`
 - `AGENT_EXECUTION_V8_SSOT.md`
 - `EXECUTION_RUN_AND_PROPOSAL_SPINE_V8.md`
+- `AI_COLLABORATION_WITH_INITIATIVES_TASKS_AND_DECISIONS_V8.md`

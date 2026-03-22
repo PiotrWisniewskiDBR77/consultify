@@ -156,10 +156,17 @@ AI may:
 - propose decisions
 - suggest decomposition improvements
 - suggest priority, sequence and missing work
+- draft clearer task and decision content
+- prepare option comparison and blocker analysis
+- act as writer, consultant and domain expert inside governed execution support
 
 AI may not:
 
 - silently create execution truth without governed acceptance
+
+Rule:
+
+`AI for tasks and decisions must help both with content quality and execution quality`
 
 ---
 
@@ -169,3 +176,4 @@ AI may not:
 - `TASK_AUTOMATION_AND_EVENTING_V8.md`
 - `INITIATIVE_AI_COPILOT_AND_EXECUTION_SUPPORT_V8.md`
 - `EXECUTION_RUN_AND_PROPOSAL_SPINE_V8.md`
+- `AI_COLLABORATION_WITH_INITIATIVES_TASKS_AND_DECISIONS_V8.md`

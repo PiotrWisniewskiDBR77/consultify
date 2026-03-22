@@ -58,6 +58,7 @@ Strong current elements:
 - no single delivery reporting and execution-risk package
 - no explicit initiative-element completeness and gap matrix
 - no explicit benchmark-backed task and decision completeness audit
+- no explicit canonical AI collaboration model across initiatives, tasks and decisions
 - legacy AI initiative creation path is misaligned with canonical lifecycle
 
 ---
@@ -150,6 +151,7 @@ Readiness:
 Main risk:
 
 - AI is stronger in initiative authoring than in daily execution support, scheduling and task management
+- AI still needs one shared canon for writer, consultant, expert and execution-copilot behaviors across initiative, task and decision objects
 
 ### 4.6 Reporting, accountability and risk
 
@@ -188,13 +190,14 @@ The main challenge is no longer whether an initiative runtime exists, but whethe
 7. `TASK_AUTOMATION_AND_EVENTING_V8.md`
 8. `TASK_AND_DECISION_COMPLETENESS_AUDIT_V8.md`
 9. `INITIATIVE_AI_COPILOT_AND_EXECUTION_SUPPORT_V8.md`
-10. `INITIATIVE_ANALYSIS_QUALITY_LOGIC_AND_CAPACITY_RUNTIME_V8.md`
-11. `INITIATIVE_TECHNOLOGY_ADVISORY_AND_ARCHITECTURE_RUNTIME_V8.md`
-12. `INITIATIVE_SKILL_GAP_AND_CAPABILITY_DEVELOPMENT_V8.md`
-13. `PROJECT_AND_INITIATIVE_ROLE_RESOLUTION_V8.md`
-14. `INITIATIVE_TEAM_MEMBERSHIP_AND_PERMISSION_RUNTIME_V8.md`
-15. `INITIATIVE_TIMELINE_CAPACITY_AND_CRITICAL_PATH_V8.md`
-16. `DELIVERY_REPORTING_AND_EXECUTION_RISK_V8.md`
+10. `AI_COLLABORATION_WITH_INITIATIVES_TASKS_AND_DECISIONS_V8.md`
+11. `INITIATIVE_ANALYSIS_QUALITY_LOGIC_AND_CAPACITY_RUNTIME_V8.md`
+12. `INITIATIVE_TECHNOLOGY_ADVISORY_AND_ARCHITECTURE_RUNTIME_V8.md`
+13. `INITIATIVE_SKILL_GAP_AND_CAPABILITY_DEVELOPMENT_V8.md`
+14. `PROJECT_AND_INITIATIVE_ROLE_RESOLUTION_V8.md`
+15. `INITIATIVE_TEAM_MEMBERSHIP_AND_PERMISSION_RUNTIME_V8.md`
+16. `INITIATIVE_TIMELINE_CAPACITY_AND_CRITICAL_PATH_V8.md`
+17. `DELIVERY_REPORTING_AND_EXECUTION_RISK_V8.md`
 
 ---
 
@@ -209,6 +212,7 @@ The main challenge is no longer whether an initiative runtime exists, but whethe
 - `INITIATIVE_SKILL_GAP_AND_CAPABILITY_DEVELOPMENT_V8.md`
 - `TASK_AND_DECISION_BENCHMARK_V8.md`
 - `TASK_AND_DECISION_COMPLETENESS_AUDIT_V8.md`
+- `AI_COLLABORATION_WITH_INITIATIVES_TASKS_AND_DECISIONS_V8.md`
 - `PROJECT_AND_INITIATIVE_ROLE_RESOLUTION_V8.md`
 - `INITIATIVE_TEAM_MEMBERSHIP_AND_PERMISSION_RUNTIME_V8.md`
 - `EXECUTION_V3.md`

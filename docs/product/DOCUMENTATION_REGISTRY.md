@@ -68,6 +68,11 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: canonical AI support for initiative creation, planning, scheduling, execution support, task management and delivery follow-through
   - **Authority**: Highest for initiative-specific AI copilot and execution-support doctrine
 
+- `docs/product/AI_COLLABORATION_WITH_INITIATIVES_TASKS_AND_DECISIONS_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical AI collaboration model across initiatives, tasks and decisions, including writer, consultant, expert, planner and execution-copilot roles, benchmarked against ClickUp and Notion patterns
+  - **Authority**: Highest for object-level AI collaboration doctrine across the execution spine
+
 - `docs/product/INITIATIVE_ANALYSIS_QUALITY_LOGIC_AND_CAPACITY_RUNTIME_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: canonical Analysis tab runtime for initiative quality, feasibility, sequencing logic, timeline sanity, capacity balancing and AI-assisted remediation
