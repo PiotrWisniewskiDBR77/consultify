@@ -169,6 +169,16 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: canonical chat-sidekick behavior, proposal doctrine, node/branch context contract, and collaboration-safe AI runtime for `Mind Map`
   - **Authority**: Highest for Mind Map chat integration and collaborative AI behavior
 
+- `docs/product/WHITEBOARD_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: readiness verdict, real versus partial capability truth, and finalization direction for the full Whiteboard package inside `Idea Workspace`
+  - **Authority**: Highest for Whiteboard package navigation, readiness truth, and step-3 closure in the `Idea v8` program
+
+- `docs/product/WHITEBOARD_V8_SSOT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical product truth for `Whiteboard`, including workshop identity, facilitation runtime, synthesis flows, missing functions, and the exact way those functions should be added to the system
+  - **Authority**: Highest for Whiteboard product behavior
+
 - `docs/product/ECONOMIC_ANALYSIS_POLICY.md`
   - **Owner**: Product + Engineering
   - **Scope**: when economics is required, minimal fields, gate enforcement, reporting/baselines

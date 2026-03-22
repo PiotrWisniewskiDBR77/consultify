@@ -836,6 +836,14 @@ A node may include:
 
 ## 11) Whiteboard system
 
+This section is extended in the `Idea v8` program by:
+
+- `docs/product/WHITEBOARD_V8_READINESS_AUDIT.md`
+- `docs/product/WHITEBOARD_V8_SSOT.md`
+
+These documents do not replace the inherited `V5` product thesis.
+They finalize the whiteboard package by freezing readiness truth, missing functions, and the final product contract for step 3 of the `Idea` program.
+
 ## 11.1 Purpose
 
 Whiteboard is the free-form ideation and workshop system.
