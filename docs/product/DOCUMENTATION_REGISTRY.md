@@ -6,6 +6,9 @@ This document clarifies which documents are **canonical** for product behavior a
 
 If you are implementing product changes, treat **Canonical** documents as the source of truth.
 
+Repository hygiene, parallel-tree classification, and cleanup policy live in `docs/cleanup/README.md`.
+Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative snapshot duplicates unless a registry says otherwise.
+
 ## Canonical documents (source of truth)
 
 ### Product governance & lifecycle

@@ -203,6 +203,12 @@ server/backups/
 
 # iCloud/Finder duplicates (macOS numbered copies)
 * [0-9]*.*
+* copy.*
+* Copy.*
+* conflicted copy *
+*.icloud
+*.orig
+*.rej
 
 # Vendored packages
 *.tgz

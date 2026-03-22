@@ -15,6 +15,8 @@
 - Przed utworzeniem nowego komponentu — **ZAWSZE** sprawdź czy istnieje w katalogu poniżej.
 - Przed zmianą stylu/układu — **ZAWSZE** przeczytaj odpowiedni standard.
 - Jeśli standard nie opisuje przypadku — **ZAPYTAJ** zamiast wymyślać. Aktualizacja standardu wymaga świadomej decyzji.
+- `README.md` i `FROZEN_LAYOUTS.md` sa autoratywne dla nawigacji po tym pakiecie.
+- Lokalne kopie z sufiksami typu ` 2.md` albo ` 3.md` nie sa autorytatywne i powinny byc traktowane jako snapshot duplicates.
 
 ---
 

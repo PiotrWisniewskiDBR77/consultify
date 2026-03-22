@@ -2,6 +2,13 @@
 
 This directory contains the strategy package for the future Consultify Airtable-like platform.
 
+## Authority
+
+- This `README.md` is the canonical strategy index for this namespace.
+- `TABLE_PLATFORM_IMPLEMENTATION_PLAN_V7.md` is the current execution reference for the table-platform strategy package.
+- Historical or working planning exports belong in `docs/plans/`, not in the strategy canon by default.
+- Local numbered copies such as ` 2.md` or ` 3.md` are snapshot duplicates, not strategy authority.
+
 The documents in this folder are intended to support pre-implementation analysis. They define:
 
 - why the current `graph-first table` model is insufficient
