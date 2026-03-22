@@ -63,6 +63,16 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: canonical Analysis tab runtime for initiative quality, feasibility, sequencing logic, timeline sanity, capacity balancing and AI-assisted remediation
   - **Authority**: Highest for initiative analysis cockpit semantics and issue-remediation doctrine
 
+- `docs/product/INITIATIVE_TECHNOLOGY_ADVISORY_AND_ARCHITECTURE_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical technology-advisory layer inside initiative design, covering solution direction, architecture choices, tool and infrastructure fit, implementation constraints and AI-assisted technology guidance
+  - **Authority**: Highest for technology-advisory and architecture guidance inside initiative design
+
+- `docs/product/INITIATIVE_SKILL_GAP_AND_CAPABILITY_DEVELOPMENT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical capability-requirements, skills-gap, staffing and capability-development layer for initiatives
+  - **Authority**: Highest for skill-gap analysis and capability-development doctrine in initiative planning
+
 - `docs/product/INITIATIVE_TIMELINE_CAPACITY_AND_CRITICAL_PATH_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: canonical planning doctrine for initiative baselines, sequencing, dependencies, capacity, workload and critical-path management

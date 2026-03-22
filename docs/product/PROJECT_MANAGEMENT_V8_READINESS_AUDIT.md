@@ -52,6 +52,8 @@ Strong current elements:
 - no initiative-specific AI copilot and execution-support contract
 - no single timeline, capacity and critical-path package
 - no single V8 contract for the initiative Analysis cockpit
+- no explicit technology-advisory contract inside initiative design
+- no explicit capability-development and skills-gap contract inside initiative planning
 - no single delivery reporting and execution-risk package
 - legacy AI initiative creation path is misaligned with canonical lifecycle
 
@@ -84,6 +86,26 @@ Readiness:
 Main risk:
 
 - the Analysis tab is real, but still relies too much on heuristic issue generation instead of one canonical issue and remediation doctrine
+
+### 4.2.2 Technology advisory inside initiative design
+
+Readiness:
+
+`medium`
+
+Main risk:
+
+- technical specification, tools and infrastructure can still drift apart without one advisory doctrine linking architecture choices to delivery reality
+
+### 4.2.3 Capability-development planning
+
+Readiness:
+
+`medium`
+
+Main risk:
+
+- competency requirements and skills-gap runtime exist, but need one product contract that connects them to staffing, resequencing, training and execution risk
 
 ### 4.3 Execution operations
 
@@ -149,8 +171,10 @@ The main challenge is no longer whether an initiative runtime exists, but whethe
 5. `TASK_AUTOMATION_AND_EVENTING_V8.md`
 6. `INITIATIVE_AI_COPILOT_AND_EXECUTION_SUPPORT_V8.md`
 7. `INITIATIVE_ANALYSIS_QUALITY_LOGIC_AND_CAPACITY_RUNTIME_V8.md`
-8. `INITIATIVE_TIMELINE_CAPACITY_AND_CRITICAL_PATH_V8.md`
-9. `DELIVERY_REPORTING_AND_EXECUTION_RISK_V8.md`
+8. `INITIATIVE_TECHNOLOGY_ADVISORY_AND_ARCHITECTURE_RUNTIME_V8.md`
+9. `INITIATIVE_SKILL_GAP_AND_CAPABILITY_DEVELOPMENT_V8.md`
+10. `INITIATIVE_TIMELINE_CAPACITY_AND_CRITICAL_PATH_V8.md`
+11. `DELIVERY_REPORTING_AND_EXECUTION_RISK_V8.md`
 
 ---
 
@@ -160,5 +184,7 @@ The main challenge is no longer whether an initiative runtime exists, but whethe
 - `INITIATIVE_CAPABILITIES_SYSTEM.md`
 - `INITIATIVE_AUTOMATION_AND_TRANSITIONS.md`
 - `INITIATIVE_ANALYSIS_QUALITY_LOGIC_AND_CAPACITY_RUNTIME_V8.md`
+- `INITIATIVE_TECHNOLOGY_ADVISORY_AND_ARCHITECTURE_RUNTIME_V8.md`
+- `INITIATIVE_SKILL_GAP_AND_CAPABILITY_DEVELOPMENT_V8.md`
 - `EXECUTION_V3.md`
 - `AGENT_EXECUTION_V8_SSOT.md`
