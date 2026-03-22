@@ -282,6 +282,7 @@ Companion documents:
 - `MYWORK_RADAR_V8_SSOT.md`
 - `MYWORK_RADAR_SIGNAL_PIPELINE_AND_RUNTIME_V8.md`
 - `MYWORK_RADAR_PERSONALIZATION_AND_ACTION_ENGINE_V8.md`
+- `MYWORK_RADAR_IDEA_AND_LEARNING_ACTIVATION_V8.md`
 - `MYWORK_RADAR_BRIEFINGS_AND_DISTRIBUTION_V8.md`
 - `MYWORK_RADAR_SOURCE_TRUST_AND_GOVERNANCE_V8.md`
 
@@ -295,6 +296,7 @@ Radar is:
 - a personalized signal ranking surface for transformation work
 - a bridge between external signals, internal work context, and AI follow-up
 - a decision-support layer, not an operational telemetry cockpit
+- a contextual learning and improvement layer around real work, not beside it
 
 ### 12.2 Core Flow
 
@@ -303,9 +305,10 @@ Radar must work in this sequence:
 1. ingest signals from registered sources
 2. normalize them into processed signals
 3. rank them against user role, industry, and live My Work context
-4. apply preference signals from prior user actions
-5. localize content into the active app language
-6. present a daily briefing plus ranked downstream sections
+4. estimate whether the user likely needs more explanation or can move straight to action
+5. apply preference signals from prior user actions
+6. localize content into the active app language
+7. present a daily briefing plus ranked downstream sections
 
 ### 12.3 Personalization Model
 
@@ -321,6 +324,12 @@ The system must learn from user behavior:
 - `more_like_this` strengthens similar topics and sources
 - `less_like_this` suppresses similar topics and sources
 - `ask_ai`, `save`, `dismiss` affect behavioral ranking signals
+
+Radar should also evolve toward:
+
+- estimating what the user likely already knows well
+- detecting when a signal maps to an active task or decision
+- routing some signals first through learning or explanation before stronger execution moves
 
 Profile fields currently used by ranking:
 
@@ -355,12 +364,14 @@ The Radar hero is the “front page” of the experience and must:
 - provide enough narrative depth to feel like a mini article, not a one-line summary
 - anchor actions directly from the active signal
 - allow optional reveal of supporting daily signals without permanently inflating the layout
+- keep the tone clarifying, energizing and non-heavy even when the signal itself is serious
 
 The hero must support:
 
 - one active brief at a time
 - navigation between daily signals / briefs
 - `Pogadaj z AI`, `Do notatki`, `Utwórz zadanie`
+- optional contextual `learn this first` guidance
 - optional info reveal
 - optional signal tray reveal
 
@@ -389,6 +400,19 @@ The chat-open packet must contain:
 - starter prompt aligned to the active signal
 
 Radar-to-chat context must never degrade into a generic “home” conversation without signal details.
+
+Radar may also proactively suggest opening AI when:
+
+- the signal is strongly tied to the user's active task or decision
+- the system believes a short conversation would improve understanding or quality of the next move
+- a knowledge gap is likely more important than immediate execution
+
+These prompts must remain:
+
+- contextual
+- lightweight
+- dismissible
+- non-intrusive
 
 ### 12.8 Canonical Files
 

@@ -17,6 +17,12 @@ On jeszcze umie:
 - przypomniec o sygnale we wlasciwym momencie,
 - i nie przeciac usera dziesiecioma rownorzednymi kartami.
 
+It must also:
+
+- podpowiedziec, kiedy warto sie czegos douczyc,
+- delikatnie zaprosic do rozmowy z AI,
+- i zostawiac usera z poczuciem orientacji oraz energii, nie przeciazenia.
+
 ---
 
 ## 2. Inherited truth
@@ -33,6 +39,10 @@ Rule:
 
 `distribution exists to deliver decision value, not content volume`
 
+and:
+
+`Radar should create forward motion and curiosity, not heaviness`
+
 ---
 
 ## 3. The briefing doctrine
@@ -45,17 +55,21 @@ It should:
 - give a short synthesis, not only a headline
 - expose at least one actionable move
 - allow expansion into supporting signals
+- optionally surface one contextual learning move when action without understanding would be weak
 
 The briefing must feel like:
 
 - mini strategy memo
 - consultant note for today
 - decision context primer
+- encouraging orientation layer for the next useful move
 
 not:
 
 - feed hero card
 - carousel of unrelated stories
+- gloomy alert center
+- heavy research wall
 
 ---
 
@@ -66,6 +80,13 @@ The baseline package includes:
 - `mainInsight`
 - `keySignals`
 - `recommendedMove`
+
+The package should also be able to carry:
+
+- `learningPrompt?`
+- `aiConversationInvite?`
+- `ideaPrompt?`
+- `notePrompt?`
 
 This is already aligned with current runtime and remains canonical.
 
@@ -88,6 +109,11 @@ This creates a balanced mix of:
 - personalization
 - actionability
 - long-term learning
+- confidence-building guidance
+
+Tone rule:
+
+`the screen should feel alive, clarifying and supportive, never punishing or emotionally heavy`
 
 ---
 
@@ -105,12 +131,14 @@ Radar should notify for:
 - watchlist-critical movement
 - regulation or compliance shift with immediate relevance
 - unusually strong opportunity worth immediate review
+- high-value AI conversation invitation tied to an active task or decision
 
 Radar should not notify for:
 
 - low-impact educational content
 - broad-interest news without current fit
 - duplicate or stale stories
+- generic `come back and read this` prompts with no current task relevance
 
 ---
 
@@ -121,6 +149,13 @@ The baseline digest forms are:
 - `daily briefing`
 - `top 3 signals`
 - `action summary`
+
+Where useful, the digest may include one:
+
+- `learn this next`
+- `talk this through with AI`
+- `capture this as a note`
+- `shape this into an idea`
 
 Extensions may later include:
 
@@ -141,6 +176,7 @@ Radar notifications mean:
 - `worth looking at`
 - `worth thinking about`
 - `worth converting into action`
+- `worth understanding now because it touches your work`
 
 Inbox means:
 
@@ -163,8 +199,16 @@ Future channels may include:
 - mobile push
 - manager digest
 - assistant-spoken briefing
+- AI chat-initiated nudge inside the app
 
 But they must reuse one canonical Radar briefing contract instead of inventing channel-local copy.
+
+AI chat nudge doctrine:
+
+- AI may proactively invite a conversation about a Radar signal
+- the nudge must reference the user's current work context
+- the nudge must be optional and easy to dismiss
+- the nudge should privilege clarity, confidence and usefulness over urgency theater
 
 ---
 
@@ -175,8 +219,18 @@ Radar should pull the user back when:
 - a previously important signal now escalates in relevance
 - a watchlist item becomes materially important
 - a suggested action was not yet converted and remains timely
+- a timely AI conversation could improve an active task or decision
+- a short knowledge refresh would materially improve the next move
 
 Radar should not endlessly re-ping the same unresolved content without changed relevance.
+
+Reengagement should feel like:
+
+- `this can help you now`
+
+not:
+
+- `you still have unread content`
 
 ---
 
@@ -187,9 +241,14 @@ Distribution quality should be measured by:
 - daily active use of Radar
 - open rate of top signals
 - `ask_ai` from Radar
+- note creation from Radar
+- idea creation from Radar
 - `create_task` and `add_to_decision`
 - repeat return after briefing
 - depth of use without feed-browsing inflation
+- use of knowledge-base or playbook follow-ups prompted by Radar
+- completion of AI conversations started from Radar nudges
+- evidence that Radar reduces confusion and increases readiness to act
 
 Important:
 
@@ -199,6 +258,10 @@ The goal is:
 
 `better decisions and better conversion into work`
 
+and:
+
+`more learning in context without making the product feel like homework`
+
 ---
 
 ## 12. Acceptance criteria
@@ -207,3 +270,5 @@ The goal is:
 - notifications remain selective and high-signal
 - app, email and future channels reuse one common briefing contract
 - Radar distribution stays separate from Inbox enforcement semantics
+- Radar can include learning and AI-conversation invitations without becoming noisy
+- the product tone remains light, encouraging and non-depressing

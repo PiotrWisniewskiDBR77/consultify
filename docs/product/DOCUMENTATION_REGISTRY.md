@@ -122,6 +122,11 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: user relevance logic, consultant-style interpretation and next-move handoff from signals into system work
   - **Authority**: Highest for Radar personalization and action semantics
 
+- `docs/product/MYWORK_RADAR_IDEA_AND_LEARNING_ACTIVATION_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: how Radar activates ideas, notes, knowledge revisits, AI conversations and lightweight transformation momentum from high-value signals
+  - **Authority**: Highest for Radar activation semantics beyond passive interpretation
+
 - `docs/product/MYWORK_RADAR_BRIEFINGS_AND_DISTRIBUTION_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: daily briefing, ranked streams, digest logic, selective notifications and distribution channels for Radar

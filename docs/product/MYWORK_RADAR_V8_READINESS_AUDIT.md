@@ -69,10 +69,11 @@ To oznacza:
 1. `MYWORK_RADAR_V8_SSOT.md`
 2. `MYWORK_RADAR_SIGNAL_PIPELINE_AND_RUNTIME_V8.md`
 3. `MYWORK_RADAR_PERSONALIZATION_AND_ACTION_ENGINE_V8.md`
-4. `MYWORK_RADAR_BRIEFINGS_AND_DISTRIBUTION_V8.md`
-5. `MYWORK_RADAR_SOURCE_TRUST_AND_GOVERNANCE_V8.md`
-6. `MYWORK_HOME_V1_SSOT.md`
-7. `MY_WORK_INBOX_AND_SLA.md`
+4. `MYWORK_RADAR_IDEA_AND_LEARNING_ACTIVATION_V8.md`
+5. `MYWORK_RADAR_BRIEFINGS_AND_DISTRIBUTION_V8.md`
+6. `MYWORK_RADAR_SOURCE_TRUST_AND_GOVERNANCE_V8.md`
+7. `MYWORK_HOME_V1_SSOT.md`
+8. `MY_WORK_INBOX_AND_SLA.md`
 
 This order is important:
 
@@ -92,6 +93,7 @@ Ownership by document:
 - `MYWORK_RADAR_V8_SSOT.md` owns product purpose, boundaries, surfaces and canonical promises
 - `MYWORK_RADAR_SIGNAL_PIPELINE_AND_RUNTIME_V8.md` owns source-to-signal-to-insight runtime
 - `MYWORK_RADAR_PERSONALIZATION_AND_ACTION_ENGINE_V8.md` owns relevance, consultant-style interpretation and in-system moves
+- `MYWORK_RADAR_IDEA_AND_LEARNING_ACTIVATION_V8.md` owns how Radar turns signals into ideas, notes, knowledge revisits, AI conversations and transformation momentum
 - `MYWORK_RADAR_BRIEFINGS_AND_DISTRIBUTION_V8.md` owns hero briefings, digests, notifications and reengagement
 - `MYWORK_RADAR_SOURCE_TRUST_AND_GOVERNANCE_V8.md` owns source trust, citation honesty, freshness, dedupe and policy boundaries
 - `MYWORK_HOME_V1_SSOT.md` still owns frozen `My Work > Home` position, block semantics and shell-level layout
@@ -106,6 +108,7 @@ The package now clearly covers:
 - one signal pipeline from source to ranked interpretation
 - one personalization model tied to role, industry, project and behavior
 - one action engine focused on `task`, `decision`, `note`, `chat` and watchlist handoff
+- one activation layer for ideas, notes, learning and AI-guided transformation work
 - one briefing and digest model
 - one source-trust and governance doctrine
 
@@ -175,6 +178,7 @@ But it does give `MyWork` its first leader-grade intelligence surface.
 - `MYWORK_RADAR_V8_SSOT.md`
 - `MYWORK_RADAR_SIGNAL_PIPELINE_AND_RUNTIME_V8.md`
 - `MYWORK_RADAR_PERSONALIZATION_AND_ACTION_ENGINE_V8.md`
+- `MYWORK_RADAR_IDEA_AND_LEARNING_ACTIVATION_V8.md`
 - `MYWORK_RADAR_BRIEFINGS_AND_DISTRIBUTION_V8.md`
 - `MYWORK_RADAR_SOURCE_TRUST_AND_GOVERNANCE_V8.md`
 - `MYWORK_HOME_V1_SSOT.md`
