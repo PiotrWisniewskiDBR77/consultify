@@ -58,6 +58,11 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: canonical AI support for initiative creation, planning, scheduling, execution support, task management and delivery follow-through
   - **Authority**: Highest for initiative-specific AI copilot and execution-support doctrine
 
+- `docs/product/INITIATIVE_ANALYSIS_QUALITY_LOGIC_AND_CAPACITY_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical Analysis tab runtime for initiative quality, feasibility, sequencing logic, timeline sanity, capacity balancing and AI-assisted remediation
+  - **Authority**: Highest for initiative analysis cockpit semantics and issue-remediation doctrine
+
 - `docs/product/INITIATIVE_TIMELINE_CAPACITY_AND_CRITICAL_PATH_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: canonical planning doctrine for initiative baselines, sequencing, dependencies, capacity, workload and critical-path management
