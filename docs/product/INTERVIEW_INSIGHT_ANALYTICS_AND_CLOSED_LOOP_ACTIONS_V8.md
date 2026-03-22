@@ -40,6 +40,12 @@ Insights should distinguish:
 - assumption
 - unresolved gap
 
+Important insights should also preserve:
+
+- evidence class
+- confidence level
+- triangulation state
+
 ---
 
 ## 4. Closed-loop action doctrine
@@ -51,6 +57,8 @@ Interview findings should be able to produce:
 - decision candidate
 - risk note
 - knowledge object
+- clarification follow-up
+- targeted re-interview
 
 Rule:
 
@@ -62,4 +70,6 @@ Rule:
 
 - `INTERVIEW_REPORTING_AND_DASHBOARDS_V8.md`
 - `INTERVIEW_INTEGRATION_AND_EXPORT_CONTRACT_V8.md`
+- `INTERVIEW_EVIDENCE_CONFIDENCE_AND_TRIANGULATION_V8.md`
+- `INTERVIEW_CONTRADICTION_AND_CLIENT_READBACK_RUNTIME_V8.md`
 - `INBOX_AND_WORKFLOW_RUNTIME_CONTRACT_V8.md`

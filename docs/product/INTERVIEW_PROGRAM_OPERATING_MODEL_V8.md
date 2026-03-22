@@ -22,6 +22,7 @@ This document defines how Interview works as a managed operating model around se
 - multi-participant waves
 - program-level coverage tracking
 - governed synthesis across many sessions
+- consulting-style discovery built around explicit goals and hypotheses
 
 without replacing the core interview mechanics already present.
 
@@ -34,6 +35,8 @@ The operating model should include:
 - `InterviewProgram`
 - `InterviewWave`
 - `InterviewCoveragePlan`
+- `InterviewDiscoveryBrief`
+- `InterviewHypothesis`
 - `InterviewSession`
 - `InterviewParticipantRef`
 - `InterviewInsightBatch`
@@ -45,8 +48,10 @@ The operating model should include:
 The platform should support:
 
 - target participant groups
+- weighted stakeholder coverage
 - topic coverage goals
 - open coverage gaps
+- hypothesis status tracking
 - session status by wave
 - review and synthesis checkpoints
 
@@ -59,6 +64,8 @@ Coverage should not be measured only by number of responses.
 It should also consider:
 
 - respondent role
+- influence weight
+- risk of omission
 - org area
 - initiative relevance
 - unanswered critical themes
@@ -74,11 +81,13 @@ Interview programs should feed:
 - gap identification
 - change-management input
 - organizational knowledge capture
+- decision-ready consulting synthesis
 
 ---
 
 ## 7. Related canonical docs
 
 - `INTERVIEW_DISTRIBUTION_AND_PARTICIPANT_RUNTIME_V8.md`
+- `INTERVIEW_DISCOVERY_AND_HYPOTHESIS_OPERATING_MODEL_V8.md`
 - `INTERVIEW_INSIGHT_ANALYTICS_AND_CLOSED_LOOP_ACTIONS_V8.md`
 - `INTERVIEW_REPORTING_AND_DASHBOARDS_V8.md`

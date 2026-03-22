@@ -31,6 +31,9 @@ Dashboards should surface:
 - theme density
 - contradiction clusters
 - evidence sufficiency
+- confidence distribution
+- triangulation status
+- missing stakeholder coverage
 - respondent coverage
 - action readiness
 
@@ -50,5 +53,7 @@ Interview reporting should support:
 ## 5. Related canonical docs
 
 - `INTERVIEW_INSIGHT_ANALYTICS_AND_CLOSED_LOOP_ACTIONS_V8.md`
+- `INTERVIEW_DISCOVERY_AND_HYPOTHESIS_OPERATING_MODEL_V8.md`
+- `INTERVIEW_CONTRADICTION_AND_CLIENT_READBACK_RUNTIME_V8.md`
 - `INTERVIEW_INTEGRATION_AND_EXPORT_CONTRACT_V8.md`
 - `REPORT_GENERATOR_V3.md`

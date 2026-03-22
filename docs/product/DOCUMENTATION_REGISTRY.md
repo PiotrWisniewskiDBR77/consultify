@@ -318,6 +318,11 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: canonical program, wave, coverage and research-operations model for Interview without changing the core session mechanics
   - **Authority**: Highest for Interview program orchestration and operating model around sessions
 
+- `docs/product/INTERVIEW_DISCOVERY_AND_HYPOTHESIS_OPERATING_MODEL_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical consulting-discovery model for Interview programs, including discovery brief, hypotheses, stakeholder weighting and decision-oriented inquiry
+  - **Authority**: Highest for Interview as a consulting discovery operating model
+
 - `docs/product/INTERVIEW_DISTRIBUTION_AND_PARTICIPANT_RUNTIME_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: participant management, invitation flow, reminder policy, representation rules and participation funnel for Interview
@@ -342,6 +347,16 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Owner**: Product + Engineering
   - **Scope**: analytics layers, cross-session rollups, contradiction handling and governed handoff from Interview findings into change-management work
   - **Authority**: Highest for Interview insight analytics and closed-loop transition semantics
+
+- `docs/product/INTERVIEW_EVIDENCE_CONFIDENCE_AND_TRIANGULATION_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical model for classifying interview evidence, assigning confidence, and triangulating interview findings with other sources
+  - **Authority**: Highest for Interview evidence class, confidence and triangulation doctrine
+
+- `docs/product/INTERVIEW_CONTRADICTION_AND_CLIENT_READBACK_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical runtime for contradiction handling, clarification loops, targeted re-interviews and client readback of interpreted meaning
+  - **Authority**: Highest for Interview contradiction handling and client interpretation readback
 
 - `docs/product/INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
   - **Owner**: Product + Engineering

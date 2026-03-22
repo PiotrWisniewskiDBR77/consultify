@@ -29,6 +29,7 @@ But it still needed a complete V8 package to describe:
 - knowledge export and vector-memory continuity
 - assignment lifecycle, reminders, escalation and confirmation loop
 - agent-guided capture and organization-context memory formation
+- consulting-style discovery, evidence confidence and contradiction readback
 
 Verdict:
 
@@ -57,6 +58,7 @@ Strong current elements:
 - no full branching and flow architecture
 - no explicit Interview-to-vector-knowledge contract
 - no single collaboration and sharing doctrine
+- no explicit consulting-discovery operating model with hypotheses and evidence confidence
 
 ---
 
@@ -96,6 +98,10 @@ Readiness:
 
 `medium`
 
+Main remaining risk:
+
+- dashboards can still look complete before confidence, triangulation and stakeholder weighting are first-class
+
 ### 4.5 Knowledge and vector continuity
 
 Readiness:
@@ -118,6 +124,16 @@ Readiness:
 
 `medium`
 
+### 4.7 Consulting discovery depth
+
+Readiness:
+
+`medium`
+
+Main remaining risk:
+
+- Interview must stay decision-oriented and evidence-aware, not drift back toward generic survey behavior
+
 ---
 
 ## 5. Final conclusion
@@ -130,6 +146,7 @@ Main implementation-facing risks after documentation:
 - program operations
 - external distribution depth
 - semantic retrieval and knowledge reuse
+- evidence confidence and contradiction handling must stay aligned with downstream consulting outputs
 
 ---
 
@@ -137,16 +154,19 @@ Main implementation-facing risks after documentation:
 
 1. `INTERVIEW_V8_READINESS_AUDIT.md`
 2. `INTERVIEW_PROGRAM_OPERATING_MODEL_V8.md`
-3. `INTERVIEW_DISTRIBUTION_AND_PARTICIPANT_RUNTIME_V8.md`
-4. `INTERVIEW_ASSIGNMENT_REVIEW_AND_CONFIRMATION_RUNTIME_V8.md`
-5. `INTERVIEW_TEMPLATE_QUALITY_AND_METHODOLOGY_GUARDRAILS_V8.md`
-6. `INTERVIEW_BRANCHING_AND_FLOW_ARCHITECTURE_V8.md`
-7. `INTERVIEW_INSIGHT_ANALYTICS_AND_CLOSED_LOOP_ACTIONS_V8.md`
-8. `INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
-9. `INTERVIEW_INTEGRATION_AND_EXPORT_CONTRACT_V8.md`
-10. `INTERVIEW_AGENT_AND_ORG_CONTEXT_MEMORY_V8.md`
-11. `INTERVIEW_COLLABORATION_AND_SHARING_MODEL_V8.md`
-12. `INTERVIEW_AGENT_GUIDED_RUNTIME_V8.md`
+3. `INTERVIEW_DISCOVERY_AND_HYPOTHESIS_OPERATING_MODEL_V8.md`
+4. `INTERVIEW_DISTRIBUTION_AND_PARTICIPANT_RUNTIME_V8.md`
+5. `INTERVIEW_ASSIGNMENT_REVIEW_AND_CONFIRMATION_RUNTIME_V8.md`
+6. `INTERVIEW_TEMPLATE_QUALITY_AND_METHODOLOGY_GUARDRAILS_V8.md`
+7. `INTERVIEW_BRANCHING_AND_FLOW_ARCHITECTURE_V8.md`
+8. `INTERVIEW_EVIDENCE_CONFIDENCE_AND_TRIANGULATION_V8.md`
+9. `INTERVIEW_CONTRADICTION_AND_CLIENT_READBACK_RUNTIME_V8.md`
+10. `INTERVIEW_INSIGHT_ANALYTICS_AND_CLOSED_LOOP_ACTIONS_V8.md`
+11. `INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
+12. `INTERVIEW_INTEGRATION_AND_EXPORT_CONTRACT_V8.md`
+13. `INTERVIEW_AGENT_AND_ORG_CONTEXT_MEMORY_V8.md`
+14. `INTERVIEW_COLLABORATION_AND_SHARING_MODEL_V8.md`
+15. `INTERVIEW_AGENT_GUIDED_RUNTIME_V8.md`
 
 ---
 
