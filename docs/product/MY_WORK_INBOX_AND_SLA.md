@@ -7,6 +7,12 @@ This document defines:
 - how SLA, reminders, and escalations work
 - how Inbox enforces governance and decisions
 
+Canonical v8 runtime extensions for this area now live in:
+
+- `docs/product/PROJECT_TASKS_AND_WORKFLOW_SOFTS_BENCHMARK_V8.md`
+- `docs/product/INBOX_AND_WORKFLOW_RUNTIME_CONTRACT_V8.md`
+- `docs/product/INTAKE_AND_TRIAGE_RUNTIME_V8.md`
+
 Inbox is a **control mechanism**, not a task list.
 
 ---
