@@ -36,6 +36,13 @@ Templates should be checked for:
 - duplicate questions
 - wrong modality for the question intent
 
+This is only one validation layer.
+Interview must also distinguish:
+
+- template validation
+- respondent submission validation
+- reviewer quality validation
+
 ---
 
 ## 4. Methodology guardrails
@@ -82,3 +89,4 @@ AI may not:
 - `INTERVIEW_BRANCHING_AND_FLOW_ARCHITECTURE_V8.md`
 - `INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
 - `INTERVIEW_TEMPLATES_LIBRARY_V6.md`
+- `INTERVIEW_ASSIGNMENT_REVIEW_AND_CONFIRMATION_RUNTIME_V8.md`

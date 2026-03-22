@@ -70,6 +70,14 @@ The guided runtime should help capture:
 
 This is one of the core ways Interview moves beyond simple answers.
 
+If the final stored answer is based on:
+
+- transcript parsing
+- AI structuring
+- context enrichment
+
+the respondent should confirm that the answer reflects their intended meaning before it becomes the accepted answer state.
+
 ---
 
 ## 6. Related canonical docs
@@ -77,3 +85,4 @@ This is one of the core ways Interview moves beyond simple answers.
 - `INTERVIEW_BRANCHING_AND_FLOW_ARCHITECTURE_V8.md`
 - `INTERVIEW_INTEGRATION_AND_EXPORT_CONTRACT_V8.md`
 - `TERESA_ASSISTANT_CONTRACT_V8.md`
+- `INTERVIEW_ASSIGNMENT_REVIEW_AND_CONFIRMATION_RUNTIME_V8.md`

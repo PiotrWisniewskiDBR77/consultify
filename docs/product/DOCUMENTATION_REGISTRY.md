@@ -323,6 +323,11 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: participant management, invitation flow, reminder policy, representation rules and participation funnel for Interview
   - **Authority**: Highest for Interview distribution and respondent runtime operations
 
+- `docs/product/INTERVIEW_ASSIGNMENT_REVIEW_AND_CONFIRMATION_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical assignment lifecycle, reminder memory, escalation policy, answer validation, respondent confirmation and reviewer rework loop for Interview
+  - **Authority**: Highest for Interview assignment operations, confirmation semantics and review-loop behavior
+
 - `docs/product/INTERVIEW_TEMPLATE_QUALITY_AND_METHODOLOGY_GUARDRAILS_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: template checker, publish quality gates, methodology policies and promotion readiness for Interview templates

@@ -22,6 +22,12 @@ Interview distribution in Consultify should support:
 - how to resume
 - how to understand drop-off and coverage
 
+The current runtime also includes a strong internal-assignment path.
+So this document covers both:
+
+- internal accountable assignment flow
+- broader participant distribution target
+
 ---
 
 ## 3. Participant runtime objects
@@ -33,6 +39,13 @@ The system should use:
 - `ParticipantAccessLink`
 - `ParticipantReminder`
 - `ParticipantProgressState`
+
+For the current shipped internal path, the runtime should also preserve:
+
+- `InterviewAssignment`
+- `AssignmentReminderState`
+- `AssignmentReviewState`
+- `AssignmentEscalationState`
 
 ---
 
@@ -85,10 +98,37 @@ The platform should support:
 - reminder policy
 - expiration policy
 
+For internal assignments this should also include:
+
+- draft inactivity tracking
+- sent-back waiting state
+- review waiting state
+- clear resubmission path after rework
+
 ---
 
-## 8. Related canonical docs
+## 8. Internal assignment and reviewer loop
+
+The internal Interview path should support:
+
+- assignment
+- start
+- answer
+- submit
+- review
+- approve or send back
+- resubmit
+- escalate when stalled
+
+This path is owned in detail by:
+
+- `INTERVIEW_ASSIGNMENT_REVIEW_AND_CONFIRMATION_RUNTIME_V8.md`
+
+---
+
+## 9. Related canonical docs
 
 - `INTERVIEW_PROGRAM_OPERATING_MODEL_V8.md`
 - `INTERVIEW_REPORTING_AND_DASHBOARDS_V8.md`
 - `INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
+- `INTERVIEW_ASSIGNMENT_REVIEW_AND_CONFIRMATION_RUNTIME_V8.md`

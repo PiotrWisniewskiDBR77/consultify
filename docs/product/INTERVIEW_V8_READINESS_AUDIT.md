@@ -27,6 +27,7 @@ But it still needed a complete V8 package to describe:
 - quality guardrails
 - analytics
 - knowledge export and vector-memory continuity
+- assignment lifecycle, reminders, escalation and confirmation loop
 
 Verdict:
 
@@ -49,9 +50,9 @@ Strong current elements:
 
 ## 3. Main blockers that V8 must close
 
-- no complete V8 Interview package physically present on this branch
-- no explicit program operating model
-- no clear participant distribution doctrine
+- assignment and reviewer lifecycle was previously under-specified
+- no explicit reminder-memory and escalation doctrine
+- no single answer-validation and confirmation contract
 - no full branching and flow architecture
 - no explicit Interview-to-vector-knowledge contract
 - no single collaboration and sharing doctrine
@@ -77,6 +78,16 @@ Readiness:
 Readiness:
 
 `low to medium`
+
+### 4.3.1 Assignment, review and confirmation flow
+
+Readiness:
+
+`medium`
+
+Main remaining risk:
+
+- runtime and gate-policy alignment for rework and resubmission
 
 ### 4.4 Analytics and reporting
 
@@ -116,13 +127,14 @@ Main implementation-facing risks after documentation:
 1. `INTERVIEW_V8_READINESS_AUDIT.md`
 2. `INTERVIEW_PROGRAM_OPERATING_MODEL_V8.md`
 3. `INTERVIEW_DISTRIBUTION_AND_PARTICIPANT_RUNTIME_V8.md`
-4. `INTERVIEW_TEMPLATE_QUALITY_AND_METHODOLOGY_GUARDRAILS_V8.md`
-5. `INTERVIEW_BRANCHING_AND_FLOW_ARCHITECTURE_V8.md`
-6. `INTERVIEW_INSIGHT_ANALYTICS_AND_CLOSED_LOOP_ACTIONS_V8.md`
-7. `INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
-8. `INTERVIEW_INTEGRATION_AND_EXPORT_CONTRACT_V8.md`
-9. `INTERVIEW_COLLABORATION_AND_SHARING_MODEL_V8.md`
-10. `INTERVIEW_AGENT_GUIDED_RUNTIME_V8.md`
+4. `INTERVIEW_ASSIGNMENT_REVIEW_AND_CONFIRMATION_RUNTIME_V8.md`
+5. `INTERVIEW_TEMPLATE_QUALITY_AND_METHODOLOGY_GUARDRAILS_V8.md`
+6. `INTERVIEW_BRANCHING_AND_FLOW_ARCHITECTURE_V8.md`
+7. `INTERVIEW_INSIGHT_ANALYTICS_AND_CLOSED_LOOP_ACTIONS_V8.md`
+8. `INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
+9. `INTERVIEW_INTEGRATION_AND_EXPORT_CONTRACT_V8.md`
+10. `INTERVIEW_COLLABORATION_AND_SHARING_MODEL_V8.md`
+11. `INTERVIEW_AGENT_GUIDED_RUNTIME_V8.md`
 
 ---
 
