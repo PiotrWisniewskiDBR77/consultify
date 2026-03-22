@@ -14,6 +14,7 @@
 
 Module / platform:
 - `docs/MYWORK_MODULE_SPECIFICATION.md`
+- `docs/product/IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md`
 - `docs/product/PROCESS_MYWORK_TO_DELIVERABLES_V3.md`
 - `docs/product/LINK_GRAPH_V3.md`
 - `docs/product/CONSULTING_TOOLS_TOOL_SPECS_V3.md`
@@ -46,6 +47,16 @@ Cross-platform identity / traceability:
 ---
 
 ## 1) Product thesis
+
+This document remains the main product thesis for `Idea Workspace V5`.
+
+The newer document `IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md` extends it by freezing:
+
+- the shared organization of the whole `Idea` system,
+- the one-idea-many-canvases doctrine,
+- and the 6-step documentation order for the next phase.
+
+It does not replace the core thesis below.
 
 `Idea Workspace V5` is not just a mind map, a whiteboard, a flowchart tool, or a table.
 

@@ -147,6 +147,13 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: Inbox/My Work definition, SLA defaults, escalation rules, governance enforcement UX
   - **Authority**: Highest for execution control layer behavior
 
+### Idea Workspace
+
+- `docs/product/IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: shared organization of the entire Idea system, one-idea-one-workspace doctrine, navigation layers, and orchestration rules across the four native canvases
+  - **Authority**: Highest for Idea-system organization before canvas-specific specialization
+
 - `docs/product/ECONOMIC_ANALYSIS_POLICY.md`
   - **Owner**: Product + Engineering
   - **Scope**: when economics is required, minimal fields, gate enforcement, reporting/baselines
