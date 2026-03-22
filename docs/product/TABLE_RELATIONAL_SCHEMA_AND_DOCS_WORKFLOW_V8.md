@@ -15,6 +15,10 @@ This companion document exists because two benchmark strengths need extra precis
 - Airtable-grade relational schema and field governance
 - Coda-grade docs-plus-data workflow composition
 
+For the full exhaustive missing-capabilities ledger, including input/import/sync gaps, use:
+
+- `TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
+
 Without freezing these two areas more explicitly, `Table` risks remaining technically broad but product-fragmented.
 
 ---
@@ -260,4 +264,5 @@ This document is satisfied only when:
 
 - `TABLE_V8_SSOT.md`
 - `TABLE_V8_READINESS_AUDIT.md`
+- `TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
 - `IDEA_WORKSPACE_V5_SSOT.md`

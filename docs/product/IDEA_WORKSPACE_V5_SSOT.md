@@ -976,9 +976,10 @@ This section is extended in the `Idea v8` program by:
 - `docs/product/TABLE_V8_READINESS_AUDIT.md`
 - `docs/product/TABLE_V8_SSOT.md`
 - `docs/product/TABLE_RELATIONAL_SCHEMA_AND_DOCS_WORKFLOW_V8.md`
+- `docs/product/TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
 
 These documents do not replace the inherited `V5` product thesis.
-They finalize the table package by freezing readiness truth, the final relational operating model, and the docs-plus-data/schema specialization for step 5 of the `Idea` program.
+They finalize the table package by freezing readiness truth, the final relational operating model, the docs-plus-data/schema specialization, and the exhaustive ledger of what still remains to be implemented for step 5 of the `Idea` program.
 
 ## 13.1 Purpose
 

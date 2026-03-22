@@ -54,11 +54,12 @@ This means:
 1. `TABLE_V8_READINESS_AUDIT.md`
 2. `TABLE_V8_SSOT.md`
 3. `TABLE_RELATIONAL_SCHEMA_AND_DOCS_WORKFLOW_V8.md`
-4. `IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md`
-5. `IDEA_WORKSPACE_V5_SSOT.md`
-6. `docs/strategy/TABELE_V8_AS_IS.md`
-7. `docs/strategy/TABELE_V8_BENCHMARK.md`
-8. `docs/strategy/AIRTABLE_REPRESENTATION_ANALYSIS_FOR_CONSULTIFY_2026-03-16.md`
+4. `TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
+5. `IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md`
+6. `IDEA_WORKSPACE_V5_SSOT.md`
+7. `docs/strategy/TABELE_V8_AS_IS.md`
+8. `docs/strategy/TABELE_V8_BENCHMARK.md`
+9. `docs/strategy/AIRTABLE_REPRESENTATION_ANALYSIS_FOR_CONSULTIFY_2026-03-16.md`
 
 This order matters:
 
@@ -165,6 +166,10 @@ The most important missing additions are:
 8. AI-led build/refine/approve relational workflow
 9. template system for schema, records, interfaces, and operational setups
 
+For the exhaustive closure list, including input/import/sync/connector gaps and cross-cutting contracts, see:
+
+- `TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
+
 These are not extra polish.
 These are the missing elements that make the platform feel like Airtable/Coda-class product quality.
 
@@ -203,5 +208,6 @@ That is the purpose of the `Table v8` package.
 
 - `TABLE_V8_SSOT.md`
 - `TABLE_RELATIONAL_SCHEMA_AND_DOCS_WORKFLOW_V8.md`
+- `TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
 - `IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md`
 - `IDEA_WORKSPACE_V5_SSOT.md`

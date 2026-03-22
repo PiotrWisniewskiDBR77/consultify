@@ -214,6 +214,11 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: specialization of the Table package around relational schema governance, linked-data explainability, and docs-plus-data workflow composition over the same source of truth
   - **Authority**: Highest for Table relational-schema doctrine and docs-plus-data composition behavior
 
+- `docs/product/TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: exhaustive missing-capabilities matrix for the Table package, including remaining gaps across base shell, schema, relations, records, views, interfaces, forms, AI builder, input/import/sync, governance, and decision-support layers
+  - **Authority**: Highest for the final explicit ledger of what still remains to be completed in the Table package
+
 - `docs/product/ECONOMIC_ANALYSIS_POLICY.md`
   - **Owner**: Product + Engineering
   - **Scope**: when economics is required, minimal fields, gate enforcement, reporting/baselines

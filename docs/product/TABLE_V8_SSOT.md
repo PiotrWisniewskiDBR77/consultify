@@ -30,6 +30,7 @@ This document inherits:
 - `CANVAS_OS_CONTRACT_FREEZE.md`
 - `TABLE_V8_READINESS_AUDIT.md`
 - `TABLE_RELATIONAL_SCHEMA_AND_DOCS_WORKFLOW_V8.md`
+- `TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
 - `docs/strategy/TABELE_V8_AS_IS.md`
 - `docs/strategy/TABELE_V8_BENCHMARK.md`
 - `docs/strategy/AIRTABLE_REPRESENTATION_ANALYSIS_FOR_CONSULTIFY_2026-03-16.md`
@@ -88,6 +89,7 @@ Canonical statement:
 - expose the same data through interfaces and forms
 - use formulas, rollups, and dependencies as real semantics
 - use AI to propose, refine, and evolve data structure safely
+- feed the same table system with data from forms, imports, APIs, sync, and internal sources
 - connect structured data to the wider Consultify graph, initiatives, execution, and results
 
 ---
@@ -133,6 +135,7 @@ Use capability labels from `CANVAS_OS_CONTRACT_FREEZE.md`.
 - docs-plus-data fusion
 - final split between views, interfaces, and forms
 - clear AI-first creation front door
+- canonical input/import/sync operating model
 
 ### 7.3 Out of scope for current closure
 
@@ -501,6 +504,34 @@ System placement:
 - search/discovery surface
 - command palette and retrieval layer
 
+### 8.15 Canonical input, import, and sync operating model
+
+Missing capability:
+
+- one complete and explicit way to feed table systems with trusted data from manual input, forms, imports, APIs, recurring sync, and internal sources
+
+Why it matters:
+
+- a complete relational work system must not only be designed well; it must also stay alive with data
+
+How it must be added:
+
+- define one canonical intake grammar for:
+  - manual row creation
+  - form submissions
+  - CSV/XLSX/Google Sheet imports
+  - API ingestion
+  - recurring sync
+  - internal Consultify projections
+- make source mapping, provenance, validation, refresh health, and failure handling visible
+- define clear object relationships between table, connector, sync, import run, and resulting records
+
+System placement:
+
+- input/import layer
+- connector and sync managers
+- provenance and diagnostics surfaces
+
 ---
 
 ## 9. AI operating model
@@ -601,5 +632,6 @@ This document is satisfied only when:
 
 - `TABLE_V8_READINESS_AUDIT.md`
 - `TABLE_RELATIONAL_SCHEMA_AND_DOCS_WORKFLOW_V8.md`
+- `TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
 - `IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md`
 - `IDEA_WORKSPACE_V5_SSOT.md`
