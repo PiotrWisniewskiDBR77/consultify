@@ -626,6 +626,16 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: canonical architecture for connectors, enterprise search, ACL-aware retrieval, sync, freshness and source audit
   - **Authority**: Highest for connector lifecycle, enterprise search governance and retrieval-source control shared across AI consumers
 
+- `docs/product/SYNC_PLATFORM_BENCHMARK_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: benchmark of mature sync and integration platforms based on the local `Softs/synchronizacja` corpus including `Boomi`, `Workato` and `MuleSoft`
+  - **Authority**: Highest for external benchmark conclusions that shape the sync package
+
+- `docs/product/EXTERNAL_SYNC_READINESS_AUDIT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: readiness audit of current external synchronization capability across calendars, communication, PM systems, cloud docs, knowledge sources and AI provider ecosystems
+  - **Authority**: Highest for current-state verdict and severity-tier gap framing of the sync package
+
 - `docs/product/AI_SYNC_AND_INTEROPERABILITY_STANDARDS_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: cross-vendor standards for sync, interoperability, webhooks, reconciliation, connector modes, cloud-object behavior and AI-first work with external systems

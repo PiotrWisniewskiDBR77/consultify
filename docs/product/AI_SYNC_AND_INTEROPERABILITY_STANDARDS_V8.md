@@ -36,6 +36,8 @@ This document inherits:
 - `INTEGRATIONS_SYNC_MCP_PLAN_V3.md`
 - `INTEGRATIONS_CONNECTOR_RUNBOOKS_ENTERPRISE_V3.md`
 - `AI_CONNECTORS_ENTERPRISE_SEARCH_ARCHITECTURE_V8.md`
+- `SYNC_PLATFORM_BENCHMARK_V8.md`
+- `EXTERNAL_SYNC_READINESS_AUDIT_V8.md`
 - `PROJECT_TASKS_AND_WORKFLOW_SOFTS_BENCHMARK_V8.md`
 - `ASYNC_NOTIFICATIONS_AND_REENGAGEMENT_V8.md`
 - `TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
@@ -339,16 +341,28 @@ They need:
 
 ## 7. What the leaders teach about easy sync
 
-From the benchmark logic already captured in repo docs:
+From the benchmark logic captured across `Boomi`, `Workato`, `MuleSoft` and other repo benchmarks:
 
+- `Boomi` teaches that connectors, event streams, API management and operator surfaces belong to one platform story
+- `Workato` teaches that connection setup can be easy without becoming shallow, as long as connection, workflow and job are clearly separated
+- `MuleSoft` teaches that control plane, runtime plane, governance and monitoring must be explicit if the platform is to scale
 - `Notion` teaches that sync should feel close to workspace context and not like a separate ops product
 - `ClickUp` teaches dense operational control, visible statuses and clear integration settings
-- enterprise connector platforms teach that setup simplicity must coexist with serious run history and mapping control
 - agent ecosystems teach that async work and external calls need visible re-entry and operator safety
 
 The key lesson:
 
 `easy sync` does not mean shallow sync. It means strong defaults, progressive disclosure and visible state.
+
+### 7.1 Structural lessons that must become standards
+
+The benchmark also implies these platform rules:
+
+- the product must distinguish `catalog`, `connection`, `mapping`, `runtime`, and `support`
+- event-driven sync must not be treated as just another scheduled import
+- runtime jobs must be inspectable, retryable and explainable
+- private or on-prem connectivity must remain possible in the architecture
+- reusable connector assets and playbooks reduce future connector cost
 
 ---
 
@@ -380,6 +394,8 @@ This standard is doing its job if:
 
 ## 10. Related canonical docs
 
+- `SYNC_PLATFORM_BENCHMARK_V8.md`
+- `EXTERNAL_SYNC_READINESS_AUDIT_V8.md`
 - `CURRENT_SYNC_CONNECTION_METHOD_AND_TARGET_FLOW_V8.md`
 - `CONNECTOR_IMPLEMENTATION_PLAN_V8.md`
 - `INTEGRATIONS_SYNC_MCP_PLAN_V3.md`

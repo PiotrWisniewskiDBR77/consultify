@@ -19,6 +19,7 @@ This document closes that gap by explaining:
 - the current connection methods
 - the current fragmentation
 - the target consolidated flow
+- the benchmark-informed missing layers that still prevent mature external synchronization
 
 ---
 
@@ -99,6 +100,22 @@ It is:
 
 ---
 
+## 4.1 Hard blockers confirmed by readiness analysis
+
+The benchmark and code audit together confirm that the main blockers are:
+
+- no single canonical integration platform across all current surfaces
+- no full OAuth lifecycle for major vendors
+- no superadmin provider control plane
+- no first-class mapping product
+- no fully mature queue, replay and dead-letter runtime
+- no unified operator support surface
+
+These are not optional refinements.
+They are the difference between partial integrations and a trusted sync platform.
+
+---
+
 ## 5. Current connection method by family
 
 ### 5.1 Calendars
@@ -154,6 +171,20 @@ Current reality:
 Current weakness:
 
 - users and operators still need one simpler mental model for what is a model/provider integration versus what is business-object synchronization
+
+---
+
+## 5.6 Benchmark-informed missing layers
+
+The current repo shape is still missing several layers that mature platforms make explicit:
+
+- `control plane` for provider catalog, policy and deployment governance
+- `connection objects` reusable across flows and environments
+- `workflow or sync definitions` that are distinct from credentials and runs
+- `job runtime` with inspectable retries, failures and replay
+- `support surfaces` for operator and support teams
+
+Without these layers, new connectors increase complexity faster than they increase capability.
 
 ---
 
@@ -282,6 +313,8 @@ It is:
 - one ownership model
 - one health and troubleshooting story
 - one clear split between sync, automation and AI grounding
+- one explicit split between control plane and runtime plane
+- one consistent model for connection, sync definition and run record
 
 ---
 

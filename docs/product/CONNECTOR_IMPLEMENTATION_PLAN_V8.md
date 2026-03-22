@@ -36,6 +36,8 @@ This plan focuses on:
 - one object mapping model
 - one conflict and provenance doctrine
 - simple operator and user setup
+- explicit separation of control plane and runtime plane
+- reusable connection objects and reusable connector assets
 
 ---
 
@@ -82,6 +84,7 @@ Deliverables:
 - one connector catalog model
 - one health/log vocabulary
 - deprecation plan for overlapping surfaces
+- superadmin provider policy layer
 
 Definition of done:
 
@@ -103,6 +106,7 @@ Deliverables:
 - test connection
 - enable / disable
 - reauth states
+- honest capability badges
 
 Definition of done:
 
@@ -120,8 +124,10 @@ Deliverables:
 - Outlook Calendar
 - Slack
 - Teams
+- email pathway hardening
 - clear message and event routing rules
 - honest sync-direction labeling
+- DM vs channel policy
 
 Definition of done:
 
@@ -140,6 +146,7 @@ Deliverables:
 - ClickUp path defined and prioritized
 - field mapping, assignee mapping, status mapping
 - conflict rules
+- reusable PM connector template
 
 Definition of done:
 
@@ -157,6 +164,7 @@ Deliverables:
 - OneDrive / SharePoint
 - explicit publish vs link vs mirror behavior
 - health and freshness semantics for external docs
+- connect and destination-picking UX
 
 Definition of done:
 
@@ -173,6 +181,7 @@ Deliverables:
 - Notion-like knowledge connectors where justified
 - AI provider integration surfaces
 - MCP and remote-tool governance aligned with sync layer
+- explicit split between AI provider integration and business-object synchronization
 
 Definition of done:
 
@@ -192,6 +201,8 @@ Deliverables:
 - conflict handling surface
 - support diagnostics
 - user-facing failure explanations
+- replay and dead-letter semantics
+- correlation between sync runs and affected business objects
 
 Definition of done:
 
@@ -259,6 +270,25 @@ Must define:
 - cost / token visibility
 - remote mutation policy
 - tool allowlist
+
+### 5.7 Platform runtime
+
+Must define:
+
+- queued run model
+- retry policy
+- dead-letter policy
+- replay policy
+- job correlation and tracing
+
+### 5.8 Governance
+
+Must define:
+
+- superadmin catalog policy
+- org-level ownership
+- RBAC for connection, mapping and run visibility
+- connector lifecycle and deprecation rules
 
 ---
 
