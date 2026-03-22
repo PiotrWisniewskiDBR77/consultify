@@ -199,6 +199,21 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: quantitative-analysis layer for `Process Flow`, including VSM metrics, bottleneck analysis, automation candidate scoring, scenario comparison, and process intelligence promotion into ROI/execution artifacts
   - **Authority**: Highest for Process Flow numeric analysis, VSM intelligence, and automation-planning behavior
 
+- `docs/product/TABLE_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: readiness verdict, capability truth, and finalization direction for the full Table package inside `Idea Workspace`, with explicit comparison to existing Consultify reality
+  - **Authority**: Highest for Table package navigation, readiness truth, and step-5 closure in the `Idea v8` program
+
+- `docs/product/TABLE_V8_SSOT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical product truth for `Table`, including the final relational operating model, current-vs-missing capability split, and the exact way Airtable/Coda-class additions should be added to the current system
+  - **Authority**: Highest for Table product behavior
+
+- `docs/product/TABLE_RELATIONAL_SCHEMA_AND_DOCS_WORKFLOW_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: specialization of the Table package around relational schema governance, linked-data explainability, and docs-plus-data workflow composition over the same source of truth
+  - **Authority**: Highest for Table relational-schema doctrine and docs-plus-data composition behavior
+
 - `docs/product/ECONOMIC_ANALYSIS_POLICY.md`
   - **Owner**: Product + Engineering
   - **Scope**: when economics is required, minimal fields, gate enforcement, reporting/baselines
