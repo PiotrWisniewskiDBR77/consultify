@@ -245,6 +245,36 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: one synthetic assessment of forgotten or still-missing functionality across chat, Teresa, application-agent runtime and execution-adjacent product behavior
   - **Authority**: Highest for cross-package completeness assessment of chat plus agent functionality
 
+- `docs/product/ASYNC_NOTIFICATIONS_AND_REENGAGEMENT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical notification, reminder and reengagement model for pending review, async completion, proposal expiry and Teresa or agent return paths
+  - **Authority**: Highest for async user-visible state and reentry semantics across chat and agent flows
+
+- `docs/product/AGENT_INTERRUPT_AND_RESUME_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical interrupt, resume, revalidation and recovery semantics for Teresa voice, proposal-only work and async agent flows
+  - **Authority**: Highest for resumability and interruption truth across chat and agent runtime
+
+- `docs/product/EXECUTION_RUN_AND_PROPOSAL_SPINE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: one shared run, proposal, approval and apply spine for chat-started work, Teresa, execution runtime and module adapters
+  - **Authority**: Highest for cross-surface execution and proposal truth
+
+- `docs/product/USER_AND_ADMIN_MEMORY_CONTROLS_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: visible user, tenant-admin and operator-facing controls for personalization, memory access, private mode and deletion semantics
+  - **Authority**: Highest for memory controls semantics exposed in product surfaces
+
+- `docs/product/OPERATOR_SUPPORT_AND_FAILURE_RECOVERY_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: support-grade diagnosis, reconstruction and recovery doctrine for Teresa, proposals, applies and async agent failures
+  - **Authority**: Highest for operator support and governed failure recovery across chat and agent runtime
+
+- `docs/product/TEAM_APPROVAL_AND_SHARED_AGENT_REVIEW_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: shared review, delegated approval ownership and team-safe proposal collaboration for Teresa and agent-generated work
+  - **Authority**: Highest for team approval and shared review semantics in chat and agent flows
+
 - `docs/product/CHAT_V8_SSOT.md`
   - **Owner**: Product
   - **Scope**: canonical chat product purpose, principles, taxonomy index, package map and completeness criteria
