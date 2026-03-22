@@ -36,6 +36,16 @@ Rule:
 
 `user works on one idea through many work systems, not on many disconnected tools that happen to share an id`
 
+Imported benchmark directions that strengthen this doctrine:
+
+- `Lucid` style multi-surface document thinking: one container may hold many structured pages or diagram states without breaking shared identity
+- `Miro` and whiteboard-class products: discovery, facilitation, templates, and workshop flow are first-class, but should not fracture the workspace shell
+- `Airtable` and `Coda` table lessons: structured systems may live inside the same problem-solving container, but still need their own strong operating grammar
+
+These benchmarks reinforce one key decision:
+
+`Idea Workspace should behave like one intelligent container with several native ways of thinking, not a launcher for disconnected specialist apps.`
+
 ---
 
 ## 3. Core product statement
@@ -68,6 +78,16 @@ This document owns step 1.
 
 It freezes the shared logic that all later canvas documents must inherit.
 
+All later steps should use capability labels from `CANVAS_OS_CONTRACT_FREEZE.md` where useful:
+
+- `real`
+- `partial`
+- `scaffold`
+- `missing`
+- `out_of_scope`
+
+This prevents later canvas docs from overstating maturity.
+
 ---
 
 ## 5. One idea = one workspace
@@ -89,6 +109,15 @@ Prohibited model:
 - separate process-flow file
 
 that only look related in UI but do not behave as one living workspace.
+
+Allowed model:
+
+- one workspace may contain many frames
+- one workspace may contain many clusters or sections
+- one workspace may contain many focused areas of work
+- one workspace may later expose richer sub-views over the same substrate
+
+But those are still parts of the same idea workspace, not sibling mini-products.
 
 ---
 
@@ -156,7 +185,42 @@ Purpose:
 
 ---
 
-## 8. Start-with-what-feels-natural doctrine
+## 8. Discovery vs workspace doctrine
+
+The system must clearly separate:
+
+- discovery and library entry
+- active problem-solving work
+
+Allowed discovery surfaces:
+
+- ideas hub
+- template picker
+- left discovery rail
+- search and library entry
+
+Allowed active-work surfaces:
+
+- SuperCanvas
+- idea card depth layer
+- output promotion flows
+
+Rule:
+
+`discovery may help the user enter the work, but it must not replace or fragment the workspace shell`
+
+This is especially important for:
+
+- template systems
+- library search
+- imported diagrams
+- AI-suggested starts
+
+The user should feel they are entering one workspace, not hopping through multiple launchers.
+
+---
+
+## 9. Start-with-what-feels-natural doctrine
 
 Different users start differently:
 
@@ -184,7 +248,49 @@ not:
 
 ---
 
-## 9. Canvas switching doctrine
+## 10. Focus modes doctrine
+
+The workspace should support at least these focus modes conceptually:
+
+- `whole idea mode`
+- `focused canvas mode`
+- `focused object mode`
+
+Meaning:
+
+- `whole idea mode` lets the user understand the broader workspace and switch lenses
+- `focused canvas mode` lets the user work deeply in one native system without feeling distracted
+- `focused object mode` lets the user deepen one branch, frame, row, cluster, or flow path
+
+These are focus states inside one workspace.
+They are not separate navigation products.
+
+This helps the module feel deep without becoming fragmented.
+
+---
+
+## 11. Template and library entry doctrine
+
+Templates and starter libraries should be first-class entry points.
+
+But they must obey three rules:
+
+1. they are intent-led before they are tool-led
+2. they create or extend the current idea workspace rather than pulling the user into a detached flow
+3. they carry enough metadata to support governance, discoverability, and later AI recommendations
+
+Examples:
+
+- `Start from workshop template`
+- `Start from process template`
+- `Start from decision-comparison table`
+- `Start from root-cause map`
+
+The system should increasingly support searchable template and library entry, but always as a doorway into the shared workspace.
+
+---
+
+## 12. Canvas switching doctrine
 
 Switching canvases must preserve:
 
@@ -208,7 +314,7 @@ not:
 
 ---
 
-## 10. Shared shell doctrine
+## 13. Shared shell doctrine
 
 The shared shell must remain stable across all four systems.
 
@@ -228,9 +334,33 @@ Inside the workspace, the shell should provide:
 - access to context and AI without breaking flow
 - shared conversion and export entry points
 
+The shell should also preserve:
+
+- discovery-first entry without discovery clutter during deep work
+- stable keyboard and focus grammar
+- shared viewport expectations where cross-canvas primitives overlap
+
 ---
 
-## 11. Canvas roles inside one idea
+## 14. Shared platform primitives doctrine
+
+The workspace should increasingly share a common set of primitives across canvases where it helps continuity:
+
+- frames and sections
+- selection grammar
+- lasso or marquee where relevant
+- comments and anchored discussion
+- export and share entry
+- hand tool and viewport behavior where relevant
+- presentation or reveal modes where useful
+
+These should feel consistent across the work systems even if the editing grammar differs.
+
+Consistency here is a major anti-fragmentation mechanism.
+
+---
+
+## 15. Canvas roles inside one idea
 
 Each canvas should have a distinct role in the same journey:
 
@@ -252,7 +382,30 @@ This is the desired product behavior.
 
 ---
 
-## 12. Shared substrate doctrine
+## 16. Collaboration and facilitation doctrine
+
+Collaboration should be treated as a shared workspace concern, not as an afterthought inside one canvas.
+
+That means the overall Idea system should be able to support:
+
+- presence
+- selections or attention cues
+- comments anchored to workspace objects
+- workshop or facilitation modes
+- voting or structured convergence where relevant
+
+Not every canvas needs the same facilitation depth.
+
+But the overall product should preserve one collaboration story across them.
+
+Especially important:
+
+- `Whiteboard` may be the strongest facilitation canvas
+- but it must not become the only place where collaboration makes sense
+
+---
+
+## 17. Shared substrate doctrine
 
 The canvases may differ in editing grammar, but they must share the same deeper truth:
 
@@ -275,7 +428,7 @@ But at the product level the promise is simpler:
 
 ---
 
-## 13. AI doctrine across canvases
+## 18. AI doctrine across canvases
 
 AI must work across the whole idea, not as four unrelated assistants.
 
@@ -296,7 +449,7 @@ AI should strengthen the continuity of the idea, not fragment it.
 
 ---
 
-## 14. Knowledge and note attachment doctrine
+## 19. Knowledge and note attachment doctrine
 
 The idea workspace should not be only geometric canvas work.
 
@@ -314,7 +467,7 @@ They are part of the same thinking system.
 
 ---
 
-## 15. Promotion doctrine
+## 20. Promotion doctrine
 
 The system should support promotion without losing source traceability:
 
@@ -337,7 +490,32 @@ not:
 
 ---
 
-## 16. UX tone doctrine
+## 21. Integration readiness doctrine
+
+Step 1 must already prepare for step 6.
+
+That means the workspace organization should assume future deep links to:
+
+- chat
+- notebook
+- tasks
+- decisions
+- initiatives
+- reports and presentations
+
+These integrations should remain idea-centric.
+
+The rest of the app should connect to:
+
+- the idea
+- the selected object
+- the selected canvas context
+
+not to one canvas as if it were an isolated application.
+
+---
+
+## 22. UX tone doctrine
 
 The idea workspace should feel:
 
@@ -359,7 +537,7 @@ The user should feel safe to begin lightly and deepen later.
 
 ---
 
-## 17. Biggest current structural gaps this document closes
+## 23. Biggest current structural gaps this document closes
 
 Without this doctrine, the biggest future risks are:
 
@@ -373,10 +551,13 @@ This document closes those risks by freezing the shared organization first.
 
 ---
 
-## 18. Acceptance criteria
+## 24. Acceptance criteria
 
 - the user journey is organized around one idea, not around isolated tools
 - all four canvases are explicitly defined as native work systems inside one workspace
 - switching canvas preserves idea continuity and user confidence
 - shell, strip, and workspace structure remain aligned with frozen layouts
 - later canvas-specific docs can specialize behavior without reopening the shared organization model
+- discovery, templates, and library entry are clearly separated from deep-work navigation
+- focus modes and collaboration are treated as shared workspace concerns, not per-canvas accidents
+- the whole organization is ready for later integration with the rest of Consultify without reopening the core model
