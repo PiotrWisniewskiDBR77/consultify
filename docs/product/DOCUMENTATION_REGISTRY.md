@@ -154,6 +154,21 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: shared organization of the entire Idea system, one-idea-one-workspace doctrine, navigation layers, and orchestration rules across the four native canvases
   - **Authority**: Highest for Idea-system organization before canvas-specific specialization
 
+- `docs/product/MINDMAP_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: readiness verdict, read order, true blockers, and finalization direction for the full Mind Map package inside `Idea Workspace`
+  - **Authority**: Highest for Mind Map package navigation, readiness truth, and step-2 closure in the `Idea v8` program
+
+- `docs/product/MINDMAP_V1_SSOT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical product truth for the `Mind Map` system, including direct tree growth, semantic node editing, interaction grammar, and stable placement inside the shared Idea shell
+  - **Authority**: Highest for Mind Map product behavior
+
+- `docs/product/MINDMAP_CHAT_SIDEKICK_AND_COLLABORATIVE_IDEA_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical chat-sidekick behavior, proposal doctrine, node/branch context contract, and collaboration-safe AI runtime for `Mind Map`
+  - **Authority**: Highest for Mind Map chat integration and collaborative AI behavior
+
 - `docs/product/ECONOMIC_ANALYSIS_POLICY.md`
   - **Owner**: Product + Engineering
   - **Scope**: when economics is required, minimal fields, gate enforcement, reporting/baselines

@@ -8,15 +8,22 @@
 
 > **Important:** this document does not replace `docs/product/IDEA_WORKSPACE_V5_SSOT.md`.
 > It specializes that product truth for the `Mind Map` system and turns recent benchmark analysis into one explicit target state.
+>
+> In the `Idea v8` program this document remains the product SSOT for `Mind Map`, while:
+> - `docs/product/MINDMAP_V8_READINESS_AUDIT.md` is the package entrypoint and readiness verdict
+> - `docs/product/MINDMAP_CHAT_SIDEKICK_AND_COLLABORATIVE_IDEA_RUNTIME_V8.md` freezes the chat-sidekick and collaborative runtime layer
 
 ---
 
 ## 0) Canonical references
 
 Internal:
+- `docs/product/MINDMAP_V8_READINESS_AUDIT.md`
+- `docs/product/IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md`
 - `docs/product/IDEA_WORKSPACE_V5_SSOT.md`
 - `docs/product/IDEA_WORKSPACE_V5_FINAL_SSOT.md`
 - `docs/product/ARTIFACT_LINKING_V5_SSOT.md`
+- `docs/product/MINDMAP_CHAT_SIDEKICK_AND_COLLABORATIVE_IDEA_RUNTIME_V8.md`
 - `docs/product/MINDMAP_COMPLETION_FINDINGS_2026-03-12.md`
 - `docs/ui-standards/FROZEN_LAYOUTS.md`
 - `docs/ui-standards/README.md`
