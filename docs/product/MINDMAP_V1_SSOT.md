@@ -11,6 +11,7 @@
 >
 > In the `Idea v8` program this document remains the product SSOT for `Mind Map`, while:
 > - `docs/product/MINDMAP_V8_READINESS_AUDIT.md` is the package entrypoint and readiness verdict
+> - `docs/product/MINDMAP_NAVIGATION_NODE_OPERATIONS_AND_AI_COPILOT_V8.md` freezes navigation, node operations, and branch/note AI copilot behavior
 > - `docs/product/MINDMAP_CHAT_SIDEKICK_AND_COLLABORATIVE_IDEA_RUNTIME_V8.md` freezes the chat-sidekick and collaborative runtime layer
 
 ---
@@ -19,6 +20,7 @@
 
 Internal:
 - `docs/product/MINDMAP_V8_READINESS_AUDIT.md`
+- `docs/product/MINDMAP_NAVIGATION_NODE_OPERATIONS_AND_AI_COPILOT_V8.md`
 - `docs/product/IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md`
 - `docs/product/IDEA_WORKSPACE_V5_SSOT.md`
 - `docs/product/IDEA_WORKSPACE_V5_FINAL_SSOT.md`

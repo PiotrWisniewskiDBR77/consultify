@@ -169,6 +169,11 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: canonical chat-sidekick behavior, proposal doctrine, node/branch context contract, and collaboration-safe AI runtime for `Mind Map`
   - **Authority**: Highest for Mind Map chat integration and collaborative AI behavior
 
+- `docs/product/MINDMAP_NAVIGATION_NODE_OPERATIONS_AND_AI_COPILOT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical navigation model for `Mind Map`, including branch drill-down, outline jump navigation, fast node operations, quick note access, and AI copilot behavior for branches and notes
+  - **Authority**: Highest for Mind Map navigation, node interaction grammar, and branch/note AI assistance
+
 - `docs/product/WHITEBOARD_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
   - **Scope**: readiness verdict, real versus partial capability truth, and finalization direction for the full Whiteboard package inside `Idea Workspace`
