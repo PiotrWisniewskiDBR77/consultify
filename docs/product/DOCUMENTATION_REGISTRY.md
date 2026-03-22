@@ -194,6 +194,11 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: canonical product truth for `Process Flow`, including process semantics, enterprise runtime gaps, interoperability, and the exact way missing capabilities should be added to the system
   - **Authority**: Highest for Process Flow product behavior
 
+- `docs/product/PROCESS_FLOW_QUANTITATIVE_ANALYSIS_AND_AUTOMATION_INTELLIGENCE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: quantitative-analysis layer for `Process Flow`, including VSM metrics, bottleneck analysis, automation candidate scoring, scenario comparison, and process intelligence promotion into ROI/execution artifacts
+  - **Authority**: Highest for Process Flow numeric analysis, VSM intelligence, and automation-planning behavior
+
 - `docs/product/ECONOMIC_ANALYSIS_POLICY.md`
   - **Owner**: Product + Engineering
   - **Scope**: when economics is required, minimal fields, gate enforcement, reporting/baselines

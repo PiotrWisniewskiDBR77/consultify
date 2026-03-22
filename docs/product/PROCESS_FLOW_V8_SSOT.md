@@ -17,6 +17,10 @@ This document exists to freeze:
 - what capabilities are still missing or only partial
 - how those missing capabilities should be added into the existing system architecture
 
+In the `Idea v8` program, the quantitative and automation-intelligence layer of this package is further specialized by:
+
+- `docs/product/PROCESS_FLOW_QUANTITATIVE_ANALYSIS_AND_AUTOMATION_INTELLIGENCE_V8.md`
+
 This is the `Process Flow` equivalent of final product closure for step 4 of the `Idea v8` program.
 
 ---
@@ -31,6 +35,7 @@ This document inherits:
 - `WORKSTATION_CANVAS_FINAL_MASTER_PLAN_2026-03-16.md`
 - `WORKSTATION_CANVAS_IMPLEMENTATION_PLAN_2026-03-16.md`
 - `PROCESS_FLOW_V8_READINESS_AUDIT.md`
+- `PROCESS_FLOW_QUANTITATIVE_ANALYSIS_AND_AUTOMATION_INTELLIGENCE_V8.md`
 
 Rule:
 
@@ -85,6 +90,7 @@ Canonical statement:
 - validate the quality of a flow
 - reason about automation candidates
 - reason about value stream bottlenecks and waiting time
+- reason numerically about time, effort, cost, and savings
 - convert process work into tasks, initiatives, execution plans, and ROI logic
 
 ---
