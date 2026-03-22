@@ -150,6 +150,31 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: Inbox/My Work definition, SLA defaults, escalation rules, governance enforcement UX
   - **Authority**: Highest for execution control layer behavior
 
+- `docs/product/NOTATKA_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical entry point, benchmark conclusion, read order and readiness verdict for the `Notatka v8` package
+  - **Authority**: Highest for Notebook package navigation and completeness interpretation
+
+- `docs/product/NOTATKA_V8_SSOT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical product truth for `Notebook` as the durable AI-native knowledge surface inside `My Work`
+  - **Authority**: Highest for Notebook target state, domain model and completeness contract
+
+- `docs/product/NOTATKA_V8_PLATFORM_CONTEXT_AND_INTEGRATION.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical integration contract for notebook knowledge across chat, radar, idea, interview, execution, outputs, organization context and synced external sources
+  - **Authority**: Highest for Notebook-to-platform integration and durable-note boundary rules
+
+- `docs/product/NOTATKA_V8_WORKFLOW_MODEL.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: end-to-end workflow model for notebook capture, enrich, connect, retrieve and convert lifecycle
+  - **Authority**: Highest for Notebook workflow semantics
+
+- `docs/product/NOTATKA_V8_AI_GOVERNANCE.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: AI governance baseline, propose/review/accept model and trust rules for notebook operations
+  - **Authority**: Highest for Notebook AI trust and audit behavior
+
 ### Idea Workspace
 
 - `docs/product/IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md`

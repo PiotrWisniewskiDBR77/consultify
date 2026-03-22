@@ -10,8 +10,10 @@
 ## 0. Canonical anchors
 
 Dokumenty:
+- `docs/product/NOTATKA_V8_READINESS_AUDIT.md`
 - `docs/modules/LIVING_NOTEBOOK_MODULE.md`
 - `docs/product/NOTEBOOK_V3.md`
+- `docs/product/NOTATKA_V8_PLATFORM_CONTEXT_AND_INTEGRATION.md`
 - `docs/flows/core/NOTEBOOK_UX_SPEC.md`
 - `docs/product/V4_GAP_ANALYSIS.md`
 - `docs/ui-standards/README.md`
@@ -31,6 +33,10 @@ Benchmark inputs:
 - `Softs/Notatki/Notion help.zip`
 - `Softs/Notatki/evernote dev.zip`
 - `Softs/Notatki/evernote help.zip`
+
+Final benchmark reading:
+- `docs/product/NOTATKA_V8_BENCHMARK.md`
+- `docs/product/NOTATKA_V8_READINESS_AUDIT.md`
 
 ---
 
