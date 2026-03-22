@@ -78,6 +78,7 @@ The final package closure for steps 1-6 is completed by:
 
 - `IDEA_V8_READINESS_AUDIT.md`
 - `IDEA_WORKSPACE_INTEGRATION_AND_PROMOTION_RUNTIME_V8.md`
+- `IDEA_WORKSPACE_UI_UX_UNIFICATION_V8.md`
 
 This document owns step 1.
 
@@ -344,6 +345,10 @@ The shell should also preserve:
 - discovery-first entry without discovery clutter during deep work
 - stable keyboard and focus grammar
 - shared viewport expectations where cross-canvas primitives overlap
+
+The visual and UI-element unification layer across all native work systems is specialized by:
+
+- `IDEA_WORKSPACE_UI_UX_UNIFICATION_V8.md`
 
 ---
 

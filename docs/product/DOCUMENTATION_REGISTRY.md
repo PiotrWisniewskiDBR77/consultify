@@ -164,6 +164,11 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: canonical integration and promotion runtime for `Idea`, including inbound context, lateral cross-canvas movement, outbound artifact promotion, and traceability into downstream modules
   - **Authority**: Highest for Idea-to-platform integration, promotion behavior, and module-level traceability expectations
 
+- `docs/product/IDEA_WORKSPACE_UI_UX_UNIFICATION_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical UI/UX unification contract for the whole Idea module, including colors, state language, shell behavior, shared controls, and cross-canvas visual consistency
+  - **Authority**: Highest for cross-canvas Idea UI/UX coherence and visual interaction consistency
+
 - `docs/product/MINDMAP_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
   - **Scope**: readiness verdict, read order, true blockers, and finalization direction for the full Mind Map package inside `Idea Workspace`

@@ -35,7 +35,7 @@ This document exists to close the loop and answer one question:
 
 Current verdict for `Idea` is:
 
-`The Idea module now has strong v8 documentation coverage across workspace organization, all four native work systems, and the integration/promotion layer. Step 6 now explicitly covers AI-agent orchestration, all-canvas integration, organization context, note continuity, and synced external-source grounding. The remaining blockers are primarily implementation, runtime hardening, and package cleanup, not missing core product doctrine.`
+`The Idea module now has strong v8 documentation coverage across workspace organization, all four native work systems, the integration/promotion layer, and cross-canvas UI/UX unification. Step 6 now explicitly covers AI-agent orchestration, all-canvas integration, organization context, note continuity, and synced external-source grounding. The remaining blockers are primarily implementation, runtime hardening, and package cleanup, not missing core product doctrine.`
 
 This means:
 
@@ -49,20 +49,21 @@ This means:
 
 1. `IDEA_V8_READINESS_AUDIT.md`
 2. `IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md`
-3. `MINDMAP_V8_READINESS_AUDIT.md`
-4. `MINDMAP_NAVIGATION_NODE_OPERATIONS_AND_AI_COPILOT_V8.md`
-5. `MINDMAP_CHAT_SIDEKICK_AND_COLLABORATIVE_IDEA_RUNTIME_V8.md`
-6. `WHITEBOARD_V8_READINESS_AUDIT.md`
-7. `WHITEBOARD_V8_SSOT.md`
-8. `PROCESS_FLOW_V8_READINESS_AUDIT.md`
-9. `PROCESS_FLOW_V8_SSOT.md`
-10. `PROCESS_FLOW_QUANTITATIVE_ANALYSIS_AND_AUTOMATION_INTELLIGENCE_V8.md`
-11. `TABLE_V8_READINESS_AUDIT.md`
-12. `TABLE_V8_SSOT.md`
-13. `TABLE_RELATIONAL_SCHEMA_AND_DOCS_WORKFLOW_V8.md`
-14. `TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
-15. `IDEA_WORKSPACE_INTEGRATION_AND_PROMOTION_RUNTIME_V8.md`
-16. `IDEA_WORKSPACE_V5_SSOT.md`
+3. `IDEA_WORKSPACE_UI_UX_UNIFICATION_V8.md`
+4. `MINDMAP_V8_READINESS_AUDIT.md`
+5. `MINDMAP_NAVIGATION_NODE_OPERATIONS_AND_AI_COPILOT_V8.md`
+6. `MINDMAP_CHAT_SIDEKICK_AND_COLLABORATIVE_IDEA_RUNTIME_V8.md`
+7. `WHITEBOARD_V8_READINESS_AUDIT.md`
+8. `WHITEBOARD_V8_SSOT.md`
+9. `PROCESS_FLOW_V8_READINESS_AUDIT.md`
+10. `PROCESS_FLOW_V8_SSOT.md`
+11. `PROCESS_FLOW_QUANTITATIVE_ANALYSIS_AND_AUTOMATION_INTELLIGENCE_V8.md`
+12. `TABLE_V8_READINESS_AUDIT.md`
+13. `TABLE_V8_SSOT.md`
+14. `TABLE_RELATIONAL_SCHEMA_AND_DOCS_WORKFLOW_V8.md`
+15. `TABLE_MISSING_CAPABILITIES_MATRIX_V8.md`
+16. `IDEA_WORKSPACE_INTEGRATION_AND_PROMOTION_RUNTIME_V8.md`
+17. `IDEA_WORKSPACE_V5_SSOT.md`
 
 This order matters because:
 
@@ -214,6 +215,7 @@ The package now clearly covers:
 - module-level integration into decisions, initiatives, tasks, reports, presentations, and other platform objects
 - AI-driven invisible integration across all canvases
 - organization context, notes, and synced external-source grounding as part of Idea runtime
+- cross-canvas color, state, shell, and UI-element unification
 
 ---
 
@@ -291,6 +293,7 @@ That is the correct moment to say the module is analytically closed and ready fo
 ## 11. Related canonical docs
 
 - `IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md`
+- `IDEA_WORKSPACE_UI_UX_UNIFICATION_V8.md`
 - `MINDMAP_V8_READINESS_AUDIT.md`
 - `WHITEBOARD_V8_READINESS_AUDIT.md`
 - `PROCESS_FLOW_V8_READINESS_AUDIT.md`
