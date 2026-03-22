@@ -59,6 +59,7 @@ Strong current elements:
 - no explicit initiative-element completeness and gap matrix
 - no explicit benchmark-backed task and decision completeness audit
 - no explicit canonical AI collaboration model across initiatives, tasks and decisions
+- no benchmark-backed execution-management package focused on operator control
 - legacy AI initiative creation path is misaligned with canonical lifecycle
 
 ---
@@ -130,6 +131,7 @@ Readiness:
 Main risk:
 
 - execution surface is richer than the current documentation package that should govern it
+- workload, balance, timeliness and intervention still needed a clearer execution control-tower doctrine
 
 ### 4.4 Task and decision management
 
@@ -197,7 +199,10 @@ The main challenge is no longer whether an initiative runtime exists, but whethe
 14. `PROJECT_AND_INITIATIVE_ROLE_RESOLUTION_V8.md`
 15. `INITIATIVE_TEAM_MEMBERSHIP_AND_PERMISSION_RUNTIME_V8.md`
 16. `INITIATIVE_TIMELINE_CAPACITY_AND_CRITICAL_PATH_V8.md`
-17. `DELIVERY_REPORTING_AND_EXECUTION_RISK_V8.md`
+17. `EXECUTION_MANAGEMENT_BENCHMARK_V8.md`
+18. `EXECUTION_CONTROL_TOWER_AND_OPERATOR_RUNTIME_V8.md`
+19. `EXECUTION_READINESS_AUDIT_V8.md`
+20. `DELIVERY_REPORTING_AND_EXECUTION_RISK_V8.md`
 
 ---
 
@@ -215,5 +220,8 @@ The main challenge is no longer whether an initiative runtime exists, but whethe
 - `AI_COLLABORATION_WITH_INITIATIVES_TASKS_AND_DECISIONS_V8.md`
 - `PROJECT_AND_INITIATIVE_ROLE_RESOLUTION_V8.md`
 - `INITIATIVE_TEAM_MEMBERSHIP_AND_PERMISSION_RUNTIME_V8.md`
+- `EXECUTION_MANAGEMENT_BENCHMARK_V8.md`
+- `EXECUTION_CONTROL_TOWER_AND_OPERATOR_RUNTIME_V8.md`
+- `EXECUTION_READINESS_AUDIT_V8.md`
 - `EXECUTION_V3.md`
 - `AGENT_EXECUTION_V8_SSOT.md`

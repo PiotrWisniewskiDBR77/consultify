@@ -103,6 +103,21 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: canonical reporting, accountability, blocker, risk and recovery model for initiative execution
   - **Authority**: Highest for delivery reporting and execution-risk doctrine
 
+- `docs/product/EXECUTION_MANAGEMENT_BENCHMARK_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: benchmark of leading execution-management patterns for workload, balance, timeliness, dependencies, dashboards, recovery and delivery control
+  - **Authority**: Highest for benchmark and parity target-setting in the Execution or Wdrozenie package
+
+- `docs/product/EXECUTION_CONTROL_TOWER_AND_OPERATOR_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical runtime for the execution control tower, including workload, balance, timeliness, intervention queues, recovery and operator actions
+  - **Authority**: Highest for execution operator-runtime doctrine
+
+- `docs/product/EXECUTION_READINESS_AUDIT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: readiness audit for Execution or Wdrozenie across runtime, operator control, workload, timeliness, risk and PMO-style oversight
+  - **Authority**: Highest for execution-package completeness assessment and read-order gating
+
 - `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
   - **Owner**: Product
   - **Scope**: Initiative lifecycle, decision gates, RACI, UX permissions, role vocabulary
