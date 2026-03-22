@@ -37,6 +37,9 @@ It is also reinforced by current official product guidance from:
 
 - ClickUp workload, dashboards and resource-management materials
 - monday.com workload and resource-management materials
+- Asana portfolio, workload and timeline materials
+- Wrike workload and AI risk-prediction materials
+- Smartsheet baseline, variance and critical-path materials
 - Linear cycle and planning materials
 
 Rule:
@@ -88,6 +91,46 @@ Execution lessons:
 Strong imported lesson:
 
 `execution excellence also requires cadence discipline and realistic throughput expectations`
+
+### 3.4 Asana
+
+Execution lessons:
+
+- portfolio-level visibility across multiple projects matters
+- project timelines and milestones should be coordinated in one pane
+- workload should span all projects in a portfolio
+- status history and stakeholder updates should live in the same operating surface
+- rollups across projects strengthen executive control
+
+Strong imported lesson:
+
+`managing projects on time requires one place where schedule, status, workload and portfolio rollups stay connected`
+
+### 3.5 Wrike
+
+Execution lessons:
+
+- workload charts must support real allocation control
+- multi-project Gantt views matter for operators
+- RAID-style risk systems should remain explicit
+- AI should help predict risk and surface red flags before slippage becomes obvious
+
+Strong imported lesson:
+
+`execution control improves when the system predicts delivery risk, not only reports late work`
+
+### 3.6 Smartsheet
+
+Execution lessons:
+
+- baseline start and finish must be preserved as first-class reference points
+- variance against baseline should be visible and computable
+- critical path should update automatically as dates and dependencies change
+- operators should be able to filter to only the schedule-driving tasks
+
+Strong imported lesson:
+
+`on-time delivery needs baseline and critical-path truth, not only overdue counts`
 
 ---
 
@@ -176,6 +219,24 @@ They should help run delivery, including:
 - risk clusters
 - time estimate vs actual where available
 
+### 4.9 Baseline, variance and schedule confidence
+
+Execution leaders preserve:
+
+- original baseline
+- current forecast
+- variance
+- confidence in planned delivery
+
+### 4.10 Resource smoothing and reallocation
+
+The strongest systems support:
+
+- balancing overloaded owners
+- moving work between people or periods
+- smoothing without blindly breaking deadlines
+- using work schedules and effort data instead of intuition only
+
 ---
 
 ## 5. Benchmark-derived requirement areas for consultify
@@ -185,11 +246,15 @@ They should help run delivery, including:
 - operator control tower
 - workload and balancing
 - timeliness and baseline honesty
+- baseline, variance and critical-path truth
 - dependency and blocker blast radius
 - decision pressure
 - intervention and recovery queues
 - throughput and cadence signals
 - time estimate vs actual where available
+- resource smoothing and reassignment
+- portfolio-level schedule coordination
+- forecast confidence and risk prediction
 - cross-initiative and cross-project execution visibility
 
 ---

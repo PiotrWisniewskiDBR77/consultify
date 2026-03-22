@@ -77,6 +77,7 @@ It should support:
 - day, week and month views
 - work schedule-aware capacity
 - estimate-based and effort-based views where available
+- balancing confidence based on data quality
 
 ### 4.3 Timeliness and baseline honesty
 
@@ -92,6 +93,13 @@ The system should distinguish:
 Important:
 
 `execution must stay honest when planning inputs are weak`
+
+This includes:
+
+- missing baseline
+- missing estimate
+- low-confidence forecast
+- unstable dependency data
 
 ### 4.4 Blockers, risks and dependency pressure
 
@@ -136,6 +144,15 @@ Execution should also reason about:
 - stale work without meaningful update
 - rollover or carryover pressure
 - whether current cadence supports the planned path
+
+### 4.8 Baseline and forecast control
+
+The operator layer should also preserve:
+
+- baseline versus current plan
+- variance visibility
+- delivery confidence
+- critical-path awareness
 
 ---
 
@@ -202,6 +219,9 @@ Minimum execution signals:
 - stale_items_count
 - missing_baseline_count
 - missing_estimate_count
+- critical_path_slip_count
+- forecast_low_confidence_count
+- rollover_pressure_count
 
 ---
 
@@ -272,6 +292,8 @@ The module is execution-grade when:
 ## 13. Related canonical docs
 
 - `EXECUTION_MANAGEMENT_BENCHMARK_V8.md`
+- `EXECUTION_ON_TIME_DELIVERY_FORECASTING_AND_BASELINE_CONTROL_V8.md`
+- `EXECUTION_RESOURCE_BALANCING_AND_CAPACITY_OPERATIONS_V8.md`
 - `DELIVERY_REPORTING_AND_EXECUTION_RISK_V8.md`
 - `INITIATIVE_TIMELINE_CAPACITY_AND_CRITICAL_PATH_V8.md`
 - `TASK_AND_DECISION_RUNTIME_CONTRACT_V8.md`

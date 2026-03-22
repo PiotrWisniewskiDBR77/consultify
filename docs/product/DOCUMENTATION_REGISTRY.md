@@ -113,6 +113,16 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: canonical runtime for the execution control tower, including workload, balance, timeliness, intervention queues, recovery and operator actions
   - **Authority**: Highest for execution operator-runtime doctrine
 
+- `docs/product/EXECUTION_ON_TIME_DELIVERY_FORECASTING_AND_BASELINE_CONTROL_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical doctrine for on-time delivery through baseline control, variance tracking, critical path, forecast confidence and recovery-oriented schedule management
+  - **Authority**: Highest for schedule-control and on-time-delivery doctrine in the Execution package
+
+- `docs/product/EXECUTION_RESOURCE_BALANCING_AND_CAPACITY_OPERATIONS_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical runtime for capacity operations, workload balancing, resource smoothing and estimate-vs-actual control during delivery
+  - **Authority**: Highest for balancing and capacity-operations doctrine in the Execution package
+
 - `docs/product/EXECUTION_READINESS_AUDIT_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: readiness audit for Execution or Wdrozenie across runtime, operator control, workload, timeliness, risk and PMO-style oversight
