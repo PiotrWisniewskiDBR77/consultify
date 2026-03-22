@@ -21,6 +21,7 @@ Agent-guided Interview should allow Teresa or another governed assistant to:
 - probe deeper
 - adapt based on context and prior answers
 - help structure responses
+- support both typed and spoken answering paths
 
 without replacing human review or governance.
 
@@ -56,6 +57,12 @@ Agent-guided runtime may adapt based on:
 
 All meaningful adaptations should be auditable.
 
+This includes adaptation when the user:
+
+- types directly
+- dictates
+- answers in a spoken interview with Teresa
+
 ---
 
 ## 5. Answer enrichment
@@ -86,3 +93,4 @@ the respondent should confirm that the answer reflects their intended meaning be
 - `INTERVIEW_INTEGRATION_AND_EXPORT_CONTRACT_V8.md`
 - `TERESA_ASSISTANT_CONTRACT_V8.md`
 - `INTERVIEW_ASSIGNMENT_REVIEW_AND_CONFIRMATION_RUNTIME_V8.md`
+- `INTERVIEW_AGENT_AND_ORG_CONTEXT_MEMORY_V8.md`

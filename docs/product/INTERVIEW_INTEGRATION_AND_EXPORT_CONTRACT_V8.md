@@ -67,6 +67,10 @@ Each chunk should preserve metadata such as:
 - `source_type`
 - `privacy_class`
 
+The promotion path should be:
+
+`raw interview capture -> confirmed answer -> approved reusable context -> organization-shared knowledge object -> vector chunk where policy allows`
+
 Rule:
 
 `Interview content may enter organizational vector knowledge only through explicit scope, privacy and provenance rules`
@@ -83,6 +87,13 @@ The Interview module should support context completion from:
 - synced external data where policy allows
 
 This enrichment should be visible and attributable, not hidden.
+
+It may support:
+
+- typed answer refinement
+- dictated answer refinement
+- Teresa-guided spoken answer capture
+- context completion from already-allowed organization data
 
 ---
 
@@ -101,5 +112,6 @@ These are not the same product behavior and must not be confused.
 
 - `INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
 - `INTERVIEW_INSIGHT_ANALYTICS_AND_CLOSED_LOOP_ACTIONS_V8.md`
+- `INTERVIEW_AGENT_AND_ORG_CONTEXT_MEMORY_V8.md`
 - `KNOWLEDGE_RAG_V8_SSOT.md`
 - `AI_CONNECTORS_ENTERPRISE_SEARCH_ARCHITECTURE_V8.md`

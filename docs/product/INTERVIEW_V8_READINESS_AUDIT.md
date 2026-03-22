@@ -28,6 +28,7 @@ But it still needed a complete V8 package to describe:
 - analytics
 - knowledge export and vector-memory continuity
 - assignment lifecycle, reminders, escalation and confirmation loop
+- agent-guided capture and organization-context memory formation
 
 Verdict:
 
@@ -101,6 +102,16 @@ Readiness:
 
 `low to medium`
 
+### 4.5.1 Agent and organizational context memory
+
+Readiness:
+
+`medium`
+
+Main remaining risk:
+
+- runtime and policy must stay aligned so only confirmed and eligible interview meaning becomes organization-shared context
+
 ### 4.6 Governance and privacy
 
 Readiness:
@@ -133,8 +144,9 @@ Main implementation-facing risks after documentation:
 7. `INTERVIEW_INSIGHT_ANALYTICS_AND_CLOSED_LOOP_ACTIONS_V8.md`
 8. `INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
 9. `INTERVIEW_INTEGRATION_AND_EXPORT_CONTRACT_V8.md`
-10. `INTERVIEW_COLLABORATION_AND_SHARING_MODEL_V8.md`
-11. `INTERVIEW_AGENT_GUIDED_RUNTIME_V8.md`
+10. `INTERVIEW_AGENT_AND_ORG_CONTEXT_MEMORY_V8.md`
+11. `INTERVIEW_COLLABORATION_AND_SHARING_MODEL_V8.md`
+12. `INTERVIEW_AGENT_GUIDED_RUNTIME_V8.md`
 
 ---
 
