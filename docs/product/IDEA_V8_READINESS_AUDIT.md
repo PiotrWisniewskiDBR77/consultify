@@ -35,7 +35,7 @@ This document exists to close the loop and answer one question:
 
 Current verdict for `Idea` is:
 
-`The Idea module now has strong v8 documentation coverage across workspace organization, all four native work systems, and the integration/promotion layer. The remaining blockers are primarily implementation, runtime hardening, and package cleanup, not missing core product doctrine.`
+`The Idea module now has strong v8 documentation coverage across workspace organization, all four native work systems, and the integration/promotion layer. Step 6 now explicitly covers AI-agent orchestration, all-canvas integration, organization context, note continuity, and synced external-source grounding. The remaining blockers are primarily implementation, runtime hardening, and package cleanup, not missing core product doctrine.`
 
 This means:
 
@@ -193,7 +193,7 @@ Status:
 
 Why:
 
-- promotion, artifact linking, context handoff, and downstream module contracts are now described at module level
+- promotion, artifact linking, context handoff, AI-agent orchestration, organization grounding, note continuity, and synced-source integration are now described at module level
 
 Canonical doc:
 
@@ -212,6 +212,8 @@ The package now clearly covers:
 - maturing artifact layer and conversion logic
 - traceability expectations across the module
 - module-level integration into decisions, initiatives, tasks, reports, presentations, and other platform objects
+- AI-driven invisible integration across all canvases
+- organization context, notes, and synced external-source grounding as part of Idea runtime
 
 ---
 
