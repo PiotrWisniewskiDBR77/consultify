@@ -888,6 +888,14 @@ Keep it:
 
 ## 12) Process / System Flow system
 
+This section is extended in the `Idea v8` program by:
+
+- `docs/product/PROCESS_FLOW_V8_READINESS_AUDIT.md`
+- `docs/product/PROCESS_FLOW_V8_SSOT.md`
+
+These documents do not replace the inherited `V5` product thesis.
+They finalize the process-flow package by freezing readiness truth, missing enterprise capabilities, and the final product contract for step 4 of the `Idea` program.
+
 ## 12.1 Purpose
 
 This system is for:

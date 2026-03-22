@@ -184,6 +184,16 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: canonical product truth for `Whiteboard`, including workshop identity, facilitation runtime, synthesis flows, missing functions, and the exact way those functions should be added to the system
   - **Authority**: Highest for Whiteboard product behavior
 
+- `docs/product/PROCESS_FLOW_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: readiness verdict, capability truth, and finalization direction for the full Process Flow package inside `Idea Workspace`
+  - **Authority**: Highest for Process Flow package navigation, readiness truth, and step-4 closure in the `Idea v8` program
+
+- `docs/product/PROCESS_FLOW_V8_SSOT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical product truth for `Process Flow`, including process semantics, enterprise runtime gaps, interoperability, and the exact way missing capabilities should be added to the system
+  - **Authority**: Highest for Process Flow product behavior
+
 - `docs/product/ECONOMIC_ANALYSIS_POLICY.md`
   - **Owner**: Product + Engineering
   - **Scope**: when economics is required, minimal fields, gate enforcement, reporting/baselines
