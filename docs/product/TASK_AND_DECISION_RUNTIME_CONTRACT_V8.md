@@ -52,16 +52,29 @@ Tasks should preserve:
 
 - initiative linkage
 - milestone or phase linkage where applicable
+- parent or child hierarchy where applicable
 - owner
 - due or target timing
 - current status
 - execution notes
 - why the task exists
+- expected outcome
+- acceptance or completion evidence where needed
+- dependencies and blockers
+- effort or workload signal where relevant
+- field structure that can safely evolve for different task types
 
 Tasks should support both:
 
 - manually authored work
 - AI-proposed work that still requires review or acceptance
+
+Tasks should also support:
+
+- decomposition into subtasks or work packages
+- move across initiative structure where policy allows
+- automation and escalation triggers
+- reporting-safe custom metadata without breaking canonical execution truth
 
 ---
 
@@ -76,6 +89,21 @@ The system should distinguish:
 - approved decision
 - rejected decision
 - expired or escalated decision
+
+Decisions should preserve:
+
+- explicit decider ownership
+- decision options and recommendation
+- consequences of non-decision
+- blocked work count and affected objects
+- escalation state
+- implementation follow-through into tasks, gates or schedule changes
+
+Where needed, the system should also support:
+
+- delegated decision handling
+- approval chains or committee-style review
+- conditional decisions and required follow-up actions
 
 Important:
 
@@ -96,6 +124,10 @@ The same task or decision may appear in:
 
 But the underlying object should remain one.
 
+Rule:
+
+`many views are allowed; duplicate truth is not`
+
 ---
 
 ## 7. Readiness and quality rule
@@ -108,6 +140,9 @@ Examples:
 - no due timing
 - no decision owner
 - no milestone link for critical work
+- no acceptance condition for completion-sensitive work
+- no blocker link where blocked-by-decision is the real reason
+- no effort signal where workload balancing depends on the task
 
 These should become visible readiness or execution warnings.
 

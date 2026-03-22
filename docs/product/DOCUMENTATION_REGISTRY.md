@@ -38,6 +38,16 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: canonical task runtime, task classes, lifecycle, blocker model, decision linkage, templates, recurrence, state timing, AI-assisted task execution
   - **Authority**: Highest for task semantics and task-to-decision operating contract
 
+- `docs/product/TASK_AND_DECISION_BENCHMARK_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: benchmark of ClickUp, Monday and adjacent work-management patterns for task structure, decision coupling, approvals, automation, workload and AI support
+  - **Authority**: Highest for benchmark and parity target-setting in the task-and-decision package
+
+- `docs/product/TASK_AND_DECISION_COMPLETENESS_AUDIT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: readiness and gap audit for task and decision runtime across MyWork, Initiatives, Execution and PMO layers
+  - **Authority**: Highest for task-and-decision completeness assessment and read-order gating
+
 - `docs/product/INBOX_AND_WORKFLOW_RUNTIME_CONTRACT_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: canonical intake, triage, inbox, workflow state families, SLA clocks, handoffs, automation, replay and audit runtime
@@ -62,6 +72,11 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Owner**: Product + Engineering
   - **Scope**: canonical Analysis tab runtime for initiative quality, feasibility, sequencing logic, timeline sanity, capacity balancing and AI-assisted remediation
   - **Authority**: Highest for initiative analysis cockpit semantics and issue-remediation doctrine
+
+- `docs/product/INITIATIVE_ELEMENT_COVERAGE_AND_GAP_MATRIX_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: explicit audit of initiative element coverage across docs, runtime sections and project-management expectations, including missing or under-specified initiative domains
+  - **Authority**: Highest for initiative object completeness and section-coverage assessment
 
 - `docs/product/INITIATIVE_TECHNOLOGY_ADVISORY_AND_ARCHITECTURE_RUNTIME_V8.md`
   - **Owner**: Product + Engineering
