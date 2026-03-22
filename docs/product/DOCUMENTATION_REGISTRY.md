@@ -432,6 +432,36 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: canonical channel-binding, routing, connector-backed delivery and communication-to-work materialization model
   - **Authority**: Highest for communication routing and channel-sync semantics
 
+- `docs/product/MYWORK_CALENDAR_V8_BENCHMARK.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: benchmark of calendar interoperability and PMO-grade time orchestration based on the local `Softs/Kalendarz` corpus and current platform goals
+  - **Authority**: Highest for benchmark conclusions that shape the MyWork Calendar v8 package
+
+- `docs/product/MYWORK_CALENDAR_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: readiness audit for the calendar capability as a PMO-grade unified time surface with external sync
+  - **Authority**: Highest for current-state verdict and read order of the calendar v8 package
+
+- `docs/product/MYWORK_CALENDAR_V8_SSOT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical product truth for the My Work calendar as a unified PMO-grade time surface across internal work and external calendar systems
+  - **Authority**: Highest for MyWork Calendar v8 target state and object-model ownership
+
+- `docs/product/MYWORK_CALENDAR_V8_AS_IS.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: current-state interpretation of the existing calendar runtime, documentation and connector reality
+  - **Authority**: Highest for as-is interpretation during calendar v8 work
+
+- `docs/product/MYWORK_CALENDAR_V8_GAP_MATRIX.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: explicit gap matrix between the current calendar runtime and the target PMO-grade calendar system
+  - **Authority**: Highest for prioritization and sequencing of calendar gaps
+
+- `docs/product/MYWORK_CALENDAR_V8_IMPLEMENTATION_PLAN.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: wave-by-wave plan for turning the current calendar baseline into a PMO-grade calendar with Outlook and Google synchronization
+  - **Authority**: Highest for calendar v8 delivery sequencing
+
 - `docs/product/AGENT_INTERRUPT_AND_RESUME_RUNTIME_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: canonical interrupt, resume, revalidation and recovery semantics for Teresa voice, proposal-only work and async agent flows

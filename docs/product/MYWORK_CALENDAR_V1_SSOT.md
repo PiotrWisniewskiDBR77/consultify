@@ -156,6 +156,12 @@ View mode is stored in component state and passed to CalendarGrid. Default: mont
 
 ## Related Documents
 
+- `docs/product/MYWORK_CALENDAR_V8_BENCHMARK.md` - benchmark and interoperability lessons for the v8 target
+- `docs/product/MYWORK_CALENDAR_V8_READINESS_AUDIT.md` - readiness verdict and remaining blockers for the v8 package
+- `docs/product/MYWORK_CALENDAR_V8_SSOT.md` - canonical v8 product truth that extends this v1 baseline
+- `docs/product/MYWORK_CALENDAR_V8_AS_IS.md` - current runtime interpretation for the v8 work
+- `docs/product/MYWORK_CALENDAR_V8_GAP_MATRIX.md` - explicit gap matrix between current state and v8 target
+- `docs/product/MYWORK_CALENDAR_V8_IMPLEMENTATION_PLAN.md` - phased delivery plan for the v8 package
 - `docs/ui-standards/FROZEN_LAYOUTS.md` — Module topbar, view modes order
 - `docs/ui-standards/README.md` — UI/UX baseline
 - `server/src/routes/my-work.routes.ts` — Calendar endpoint implementation
