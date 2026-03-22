@@ -98,6 +98,16 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: canonical project roles + optional steering board model
   - **Authority**: High (project governance vocabulary)
 
+- `docs/product/PROJECT_AND_INITIATIVE_ROLE_RESOLUTION_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical resolution of organization roles, project roles, steering-board membership, consultant overlay and initiative-effective roles for workflow and capabilities
+  - **Authority**: Highest for project and initiative role-resolution doctrine
+
+- `docs/product/INITIATIVE_TEAM_MEMBERSHIP_AND_PERMISSION_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical team-building, initiative staffing, membership-derived permissions and permission-safe collaboration inside project and initiative runtime
+  - **Authority**: Highest for initiative team membership and permission-runtime doctrine
+
 - `docs/product/CONSULTANT_OVERLAY_MODEL.md`
   - **Owner**: Product + Engineering
   - **Scope**: consultant overlay fields, visibility/audit rules, invitation model

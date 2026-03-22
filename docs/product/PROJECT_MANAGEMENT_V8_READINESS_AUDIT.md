@@ -54,6 +54,7 @@ Strong current elements:
 - no single V8 contract for the initiative Analysis cockpit
 - no explicit technology-advisory contract inside initiative design
 - no explicit capability-development and skills-gap contract inside initiative planning
+- no explicit V8 hardening for organization-role vs project-role resolution and initiative team permission runtime
 - no single delivery reporting and execution-risk package
 - legacy AI initiative creation path is misaligned with canonical lifecycle
 
@@ -106,6 +107,16 @@ Readiness:
 Main risk:
 
 - competency requirements and skills-gap runtime exist, but need one product contract that connects them to staffing, resequencing, training and execution risk
+
+### 4.2.4 Role resolution and team permissions
+
+Readiness:
+
+`medium`
+
+Main risk:
+
+- role layers are conceptually present, but multiple vocabularies and duplicated mappings can still break initiative team permissions and gate authority
 
 ### 4.3 Execution operations
 
@@ -173,8 +184,10 @@ The main challenge is no longer whether an initiative runtime exists, but whethe
 7. `INITIATIVE_ANALYSIS_QUALITY_LOGIC_AND_CAPACITY_RUNTIME_V8.md`
 8. `INITIATIVE_TECHNOLOGY_ADVISORY_AND_ARCHITECTURE_RUNTIME_V8.md`
 9. `INITIATIVE_SKILL_GAP_AND_CAPABILITY_DEVELOPMENT_V8.md`
-10. `INITIATIVE_TIMELINE_CAPACITY_AND_CRITICAL_PATH_V8.md`
-11. `DELIVERY_REPORTING_AND_EXECUTION_RISK_V8.md`
+10. `PROJECT_AND_INITIATIVE_ROLE_RESOLUTION_V8.md`
+11. `INITIATIVE_TEAM_MEMBERSHIP_AND_PERMISSION_RUNTIME_V8.md`
+12. `INITIATIVE_TIMELINE_CAPACITY_AND_CRITICAL_PATH_V8.md`
+13. `DELIVERY_REPORTING_AND_EXECUTION_RISK_V8.md`
 
 ---
 
@@ -186,5 +199,7 @@ The main challenge is no longer whether an initiative runtime exists, but whethe
 - `INITIATIVE_ANALYSIS_QUALITY_LOGIC_AND_CAPACITY_RUNTIME_V8.md`
 - `INITIATIVE_TECHNOLOGY_ADVISORY_AND_ARCHITECTURE_RUNTIME_V8.md`
 - `INITIATIVE_SKILL_GAP_AND_CAPABILITY_DEVELOPMENT_V8.md`
+- `PROJECT_AND_INITIATIVE_ROLE_RESOLUTION_V8.md`
+- `INITIATIVE_TEAM_MEMBERSHIP_AND_PERMISSION_RUNTIME_V8.md`
 - `EXECUTION_V3.md`
 - `AGENT_EXECUTION_V8_SSOT.md`
