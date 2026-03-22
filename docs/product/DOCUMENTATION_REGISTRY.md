@@ -100,6 +100,43 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: canonical report types, RAG logic, escalation rules, reporting UX
   - **Authority**: Highest for reporting behavior and management layer outputs
 
+### My Work and Radar
+
+- `docs/product/MYWORK_RADAR_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical entry point, read order and readiness verdict for the `MyWork Radar v8` package
+  - **Authority**: Highest for Radar package navigation and readiness interpretation
+
+- `docs/product/MYWORK_RADAR_V8_SSOT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical product purpose, boundaries, promises and surface semantics for `Radar` as AI executive radar inside `MyWork`
+  - **Authority**: Highest for `Radar v8` target state and product definition
+
+- `docs/product/MYWORK_RADAR_SIGNAL_PIPELINE_AND_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: source-to-signal-to-insight runtime, object model, dedupe, localization and assembly of Radar payloads
+  - **Authority**: Highest for Radar runtime semantics and processing spine
+
+- `docs/product/MYWORK_RADAR_PERSONALIZATION_AND_ACTION_ENGINE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: user relevance logic, consultant-style interpretation and next-move handoff from signals into system work
+  - **Authority**: Highest for Radar personalization and action semantics
+
+- `docs/product/MYWORK_RADAR_BRIEFINGS_AND_DISTRIBUTION_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: daily briefing, ranked streams, digest logic, selective notifications and distribution channels for Radar
+  - **Authority**: Highest for Radar briefing and push semantics
+
+- `docs/product/MYWORK_RADAR_SOURCE_TRUST_AND_GOVERNANCE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: source classes, freshness, trust, dedupe, citation honesty and recommendation-strength guardrails for Radar
+  - **Authority**: Highest for Radar source trust and governance doctrine
+
+- `docs/product/MYWORK_HOME_V1_SSOT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: frozen `My Work > Home` shell, block registry, home-level role and placement of Radar inside the My Work landing experience
+  - **Authority**: Highest for Home shell structure and frozen My Work Home positioning
+
 - `docs/product/MY_WORK_INBOX_AND_SLA.md`
   - **Owner**: Product + Engineering
   - **Scope**: Inbox/My Work definition, SLA defaults, escalation rules, governance enforcement UX

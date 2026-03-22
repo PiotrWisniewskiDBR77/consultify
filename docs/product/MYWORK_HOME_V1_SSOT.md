@@ -268,6 +268,23 @@ Home V2 uses Canvas Mode, but as a more mature “living transformation screen�
 
 ## 12. Radar 2.0 — Current Home SSOT
 
+This section remains the shell-level and Home-surface truth for Radar inside `My Work > Home`.
+
+Detailed `Radar v8` package documents now extend this section without changing:
+
+- the frozen My Work tab order,
+- the role of Home as the landing surface,
+- or the distinction between Radar and Inbox.
+
+Companion documents:
+
+- `MYWORK_RADAR_V8_READINESS_AUDIT.md`
+- `MYWORK_RADAR_V8_SSOT.md`
+- `MYWORK_RADAR_SIGNAL_PIPELINE_AND_RUNTIME_V8.md`
+- `MYWORK_RADAR_PERSONALIZATION_AND_ACTION_ENGINE_V8.md`
+- `MYWORK_RADAR_BRIEFINGS_AND_DISTRIBUTION_V8.md`
+- `MYWORK_RADAR_SOURCE_TRUST_AND_GOVERNANCE_V8.md`
+
 ### 12.1 Product Positioning
 
 `My Work > Home` currently operates as **Radar 2.0** for the default landing experience.
