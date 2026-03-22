@@ -10,6 +10,41 @@ If you are implementing product changes, treat **Canonical** documents as the so
 
 ### Product governance & lifecycle
 
+- `docs/product/PROJECT_MANAGEMENT_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical readiness audit, read order, ownership map and cleanup agenda for project management documentation (projects, initiatives, tasks, decisions, inbox/SLA)
+  - **Authority**: Highest for project-management documentation navigation and downstream documentation gating
+
+- `docs/product/INITIATIVE_CHANGE_MANAGEMENT_SYSTEM_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: initiative-first doctrine for the whole change-management system; defines initiative as the primary consulting instrument and tasks/decisions/economics/risks/benefits as subordinate parts of one coherent change machine
+  - **Authority**: Highest for initiative-centric product doctrine across project-management documentation
+
+- `docs/product/PROJECT_TASKS_AND_WORKFLOW_SOFTS_BENCHMARK_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: imported leader patterns from `Softs` for task management, workflow runtime, triage, inbox, eventing, SLA and human-agent handoff
+  - **Authority**: Highest for benchmark and parity target-setting in the task/workflow package
+
+- `docs/product/TASK_AND_DECISION_RUNTIME_CONTRACT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical task runtime, task classes, lifecycle, blocker model, decision linkage, templates, recurrence, state timing, AI-assisted task execution
+  - **Authority**: Highest for task semantics and task-to-decision operating contract
+
+- `docs/product/INBOX_AND_WORKFLOW_RUNTIME_CONTRACT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical intake, triage, inbox, workflow state families, SLA clocks, handoffs, automation, replay and audit runtime
+  - **Authority**: Highest for workflow runtime and personal enforcement semantics in project management
+
+- `docs/product/INTAKE_AND_TRIAGE_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: AI-first runtime for incoming work capture, enrichment, dedupe, triage routing, initiative candidate formation, and governed commitment into initiative/task/decision objects
+  - **Authority**: Highest for intake and triage semantics in the project-management package
+
+- `docs/product/TASK_AUTOMATION_AND_EVENTING_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: AI-first automation, eventing, agent sessions, approvals, background execution, replay, observability and integration governance for task/workflow runtime
+  - **Authority**: Highest for automation and eventing semantics in the task/workflow package
+
 - `docs/product/INITIATIVE_GOVERNANCE_MODEL.md`
   - **Owner**: Product
   - **Scope**: Initiative lifecycle, decision gates, RACI, UX permissions, role vocabulary
@@ -32,17 +67,17 @@ If you are implementing product changes, treat **Canonical** documents as the so
 
 - `docs/product/INITIATIVE_CAPABILITIES_SYSTEM.md`
   - **Owner**: Engineering
-  - **Scope**: backend → frontend capabilities contract for initiative UI enablement
+  - **Scope**: backend -> frontend capabilities contract for initiative UI enablement
   - **Authority**: Highest for UI capability contract
 
 - `docs/product/INITIATIVE_STATUS_ROLE_CTA_MATRIX.md`
   - **Owner**: Product + Engineering
-  - **Scope**: normative status×role×CTA behavior (validated by tests)
+  - **Scope**: normative status x role x CTA behavior (validated by tests)
   - **Authority**: High (workflow + CTA behavior)
 
 - `docs/product/INITIATIVE_AUTOMATION_AND_TRANSITIONS.md`
   - **Owner**: Engineering
-  - **Scope**: automated transitions (e.g. SCHEDULED → EXECUTING by date), terminal/archival policies
+  - **Scope**: automated transitions (e.g. SCHEDULED -> EXECUTING by date), terminal/archival policies
   - **Authority**: High (automation behavior)
 
 - `docs/product/GATE_DEFINITION_OF_DONE.md`
@@ -80,9 +115,9 @@ If you are implementing product changes, treat **Canonical** documents as the so
 - `docs/product/SYSTEM_ARCHITECTURE_BRIEF.md`
   - **Owner**: Product
   - **Scope**: system purpose, core modules order, role vocabulary, closed artefact list
-  - **Authority**: Highest for “what the system is” and “what artefacts exist”
+  - **Authority**: Highest for "what the system is" and "what artefacts exist"
 
-### Reports & Presentations (v3) — canonical generator specs
+### Reports & Presentations (v3) - canonical generator specs
 
 - `docs/product/PRESENTATIONS_AND_REPORTS_V3.md`
   - **Owner**: Product
@@ -96,10 +131,15 @@ If you are implementing product changes, treat **Canonical** documents as the so
 
 - `docs/product/REPORT_GENERATOR_V3.md`
   - **Owner**: Product + Engineering
-  - **Scope**: end-to-end Report Generator SSOT (R1–R4 canonical report types, wizard/builder, templates, AI narrative, RAG/escalation mapping, export quality gates PDF/DOCX/PPTX)
+  - **Scope**: end-to-end Report Generator SSOT (R1-R4 canonical report types, wizard/builder, templates, AI narrative, RAG/escalation mapping, export quality gates PDF/DOCX/PPTX)
   - **Authority**: Highest for report generator behavior
 
 ### Interview (v3 as-is + v6 redesign target)
+
+- `docs/product/INTERVIEW_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: readiness verdict, read order, ownership model and remaining blockers for the whole Interview package across V3, V6 and V8 docs
+  - **Authority**: Highest for Interview package navigation, readiness assessment and downstream documentation gating
 
 - `docs/product/INTERVIEW_FORM_ENGINE_V3.md`
   - **Owner**: Product + Engineering
@@ -115,6 +155,51 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Owner**: Product + Engineering
   - **Scope**: canonical system / organization / private template library and seed packs for V6
   - **Authority**: High for template taxonomy, seed library scope and AI-first authoring rules
+
+- `docs/product/INTERVIEW_PROGRAM_OPERATING_MODEL_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical program, wave, coverage and research-operations model for Interview without changing the core session mechanics
+  - **Authority**: Highest for Interview program orchestration and operating model around sessions
+
+- `docs/product/INTERVIEW_DISTRIBUTION_AND_PARTICIPANT_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: participant management, invitation flow, reminder policy, representation rules and participation funnel for Interview
+  - **Authority**: Highest for Interview distribution and respondent runtime operations
+
+- `docs/product/INTERVIEW_TEMPLATE_QUALITY_AND_METHODOLOGY_GUARDRAILS_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: template checker, publish quality gates, methodology policies and promotion readiness for Interview templates
+  - **Authority**: Highest for Interview template quality governance and methodology guardrails
+
+- `docs/product/INTERVIEW_INSIGHT_ANALYTICS_AND_CLOSED_LOOP_ACTIONS_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: analytics layers, cross-session rollups, contradiction handling and governed handoff from Interview findings into change-management work
+  - **Authority**: Highest for Interview insight analytics and closed-loop transition semantics
+
+- `docs/product/INTERVIEW_ADMIN_PRIVACY_AND_AI_GOVERNANCE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: consent, access policy, retention, auditability and AI policy for Interview voice, transcript, evidence and knowledge reuse
+  - **Authority**: Highest for Interview admin, privacy and AI governance
+
+- `docs/product/INTERVIEW_BRANCHING_AND_FLOW_ARCHITECTURE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: branching, routing, reusable flow fragments, path simulation and runtime path audit for Interview templates
+  - **Authority**: Highest for Interview flow architecture beyond base conditional visibility
+
+- `docs/product/INTERVIEW_REPORTING_AND_DASHBOARDS_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: session, wave, program and executive reporting layers plus dashboard semantics for Interview
+  - **Authority**: Highest for Interview reporting and dashboard behavior
+
+- `docs/product/INTERVIEW_INTEGRATION_AND_EXPORT_CONTRACT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: internal handoff, knowledge ingestion, export object classes and external delivery rules for Interview outputs
+  - **Authority**: Highest for Interview integration and export semantics
+
+- `docs/product/INTERVIEW_COLLABORATION_AND_SHARING_MODEL_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: collaboration levels, sharing scopes, role overlays and permission boundaries around Interview programs, sessions and insights
+  - **Authority**: Highest for Interview collaboration and sharing semantics
 
 ### Authoritative backend data model (ERD)
 
@@ -133,7 +218,7 @@ If you are implementing product changes, treat **Canonical** documents as the so
 ### Core process flows
 
 - `docs/flows/core/ASSESSMENT_EXECUTION_FLOW.md`
-  - Assessment execution → report → initiative draft generation
+  - Assessment execution -> report -> initiative draft generation
 - `docs/flows/core/INITIATIVE_MANAGEMENT_FLOW.md`
   - End-to-end initiative lifecycle and governance gates
 - `docs/flows/core/DECISION_SYSTEM_FLOW.md`
@@ -149,6 +234,16 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Authority**: Highest for standards alignment and audit language
 
 ### Chat v8 (canonical chat product suite)
+
+- `docs/product/CHAT_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: readiness verdict, read order, ownership model and remaining blockers for the whole Chat v8 package
+  - **Authority**: Highest for Chat v8 package navigation, readiness assessment and downstream documentation gating
+
+- `docs/product/CHAT_AND_AGENT_FUNCTIONAL_COMPLETENESS_AUDIT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: one synthetic assessment of forgotten or still-missing functionality across chat, Teresa, application-agent runtime and execution-adjacent product behavior
+  - **Authority**: Highest for cross-package completeness assessment of chat plus agent functionality
 
 - `docs/product/CHAT_V8_SSOT.md`
   - **Owner**: Product
@@ -220,6 +315,26 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: dictation, voice conversation, TTS and multimodal boundaries
   - **Authority**: Highest for chat voice contract
 
+- `docs/product/CHAT_APPLICATION_AGENT_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical runtime for chat as application agent, with Teresa as right-rail copilot, proposal-only app work and module adapter routing
+  - **Authority**: Highest for chat-started application-agent runtime semantics below full execution-agent scope
+
+- `docs/product/AI_PROPOSAL_ONLY_APPLICATION_MODE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical proposal-only contract for AI work inside the application without hidden apply rights
+  - **Authority**: Highest for proposal-only app-work semantics across Teresa and related in-app copilot flows
+
+- `docs/product/TERESA_VOICE_CHAT_RAIL_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: right-side Teresa voice rail inside chat, including dual voice modes, state machine, controls and proposal integration
+  - **Authority**: Highest for Teresa-specific in-chat voice surface behavior
+
+- `docs/product/VOICE_TRUST_AND_APPROVALS_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: trust, review and approval semantics for voice-driven chat and Teresa copilot flows
+  - **Authority**: Highest for keeping voice flows aligned with proposal and approval doctrine
+
 - `docs/product/CHAT_V8_RESPONSE_MODEL.md`
   - **Owner**: Product + Engineering
   - **Scope**: response classes, metadata and trust expectations
@@ -244,6 +359,21 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Owner**: Product + Engineering
   - **Scope**: conversation/user/org memory, personalization, private mode and trust boundaries
   - **Authority**: Highest for memory semantics in chat
+
+- `docs/product/TERESA_ASSISTANT_CONTRACT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: named in-platform assistant contract for Teresa including persona, scope, memory, voice posture and tenant-safe behavior across chat and interview-adjacent work
+  - **Authority**: Highest for Teresa as a productized named assistant inside Consultify
+
+- `docs/product/INTERVIEW_AGENT_GUIDED_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: Teresa-guided runtime for asking questions, capturing answers and supporting interview flows without replacing canonical interview mechanics
+  - **Authority**: Highest for Teresa-specific guided interview behavior inside the Interview package
+
+- `docs/product/TOOLS_AND_ASSESSMENT_AGENT_ADAPTERS_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical module-adapter contract for Teresa working with Tools and Assessment through typed proposals and guided steps
+  - **Authority**: Highest for application-agent adapter semantics across Tools and Assessment
 
 - `docs/product/CHAT_V8_MESSAGE_AND_THREAD_OPERATIONS.md`
   - **Owner**: Product + Engineering
@@ -282,7 +412,17 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: canonical analysis and build direction for multi-LLM management, including model profiles, task-shape routing, effort policy, context classes, lifecycle management and cost-aware execution
   - **Authority**: Highest for next-step design of cross-app model selection and execution-profile management
 
+- `docs/product/MULTI_LLM_AND_MULTI_AGENT_READINESS_AUDIT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: one synthetic readiness verdict for combined multi-LLM management, multi-agent orchestration, chat-started application-agent runtime and virtual-worker control-plane maturity
+  - **Authority**: Highest for integrated readiness assessment across the multi-LLM plus multi-agent architecture
+
 ### AI leader parity architecture package (cross-cutting canonical)
+
+- `docs/product/AI_CORE_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical readiness audit, read order, ownership map and safe sequencing for further AI-core-dependent documentation work
+  - **Authority**: Highest for AI core documentation navigation, readiness assessment and downstream documentation gating
 
 - `docs/product/AI_LEADER_PARITY_ARCHITECTURE_V8.md`
   - **Owner**: Product + Engineering
@@ -298,6 +438,86 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Owner**: Product + Engineering
   - **Scope**: canonical architecture for connectors, enterprise search, ACL-aware retrieval, sync, freshness and source audit
   - **Authority**: Highest for connector lifecycle, enterprise search governance and retrieval-source control shared across AI consumers
+
+- `docs/product/AI_SYNC_AND_INTEROPERABILITY_STANDARDS_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: cross-vendor standards for sync, interoperability, webhooks, reconciliation, connector modes, cloud-object behavior and AI-first work with external systems
+  - **Authority**: Highest for shared sync/interoperability doctrine across connectors, cloud integrations, remote tools and external-system runtime behavior
+
+- `docs/product/CONNECTOR_EVENT_CATALOG_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical connector event taxonomy, event envelope, idempotency doctrine, runtime recovery and replay semantics for sync, reconciliation and publish flows
+  - **Authority**: Highest for connector runtime event naming and persisted event semantics
+
+- `docs/product/EXTERNAL_OBJECT_LINEAGE_AND_PROVENANCE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical identity, version, mirror snapshot, freshness and transformation-lineage model for external objects consumed or published by the platform
+  - **Authority**: Highest for external object lineage and provenance continuity across sync, retrieval, proposals and artifacts
+
+- `docs/product/CONNECTOR_SYNC_MODES_AND_CONFLICT_RESOLUTION_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical sync modes, field authority model, direction semantics, conflict classes and conflict-resolution policy for external integrations
+  - **Authority**: Highest for connector sync-mode semantics and conflict-handling behavior
+
+- `docs/product/MCP_AND_REMOTE_TOOL_TRUST_MODEL_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical trust model for MCP servers, remote tool providers, credential delegation, remote mutation policy and external trust boundaries
+  - **Authority**: Highest for trust admission and execution policy of remote MCP servers and external tool runtimes
+
+- `docs/product/CLOUD_FILES_AND_EXTERNAL_DOCS_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical runtime semantics for external docs and files including access, preview, extraction completeness, live/mirrored freshness and publish/share behavior
+  - **Authority**: Highest for cloud-file and external-document runtime behavior across connectors, retrieval and artifact publishing
+
+- `docs/product/CONNECTOR_OPERATOR_AND_SUPPORT_SURFACES_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical admin, operator, support and user-explanation surfaces for connector health, failures, incident reconstruction and degraded-state explainability
+  - **Authority**: Highest for connector operator/support visibility and explanation surfaces
+
+- `docs/product/CONNECTOR_EVENT_CONTRACTS_AND_SCHEMA_EVOLUTION_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical event-channel, binding, payload-schema, compatibility and schema-evolution model for event-driven connectors and publish/subscribe contracts
+  - **Authority**: Highest for event-contract semantics and schema/version governance in sync architecture
+
+- `docs/product/CONNECTOR_DESIGN_RUNTIME_AND_PROMOTION_MODEL_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical design-time assets, runtime deployments, review/promote/rollback lifecycle and drift model for connector packages
+  - **Authority**: Highest for design/runtime separation and deployment-governance semantics of integration assets
+
+- `docs/product/CONNECTOR_EDGE_RELIABILITY_AND_GATEWAY_POLICY_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical timeout, retry, circuit-breaker, ingress-limit, backpressure and edge-SLO policy for connector and webhook runtime
+  - **Authority**: Highest for edge reliability and gateway protection semantics across sync surfaces
+
+- `docs/product/CONNECTOR_BACKEND_DOMAIN_MODEL_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: implementation-grade backend aggregate model for provider catalog, connector installations, mappings, runtime runs, external objects and MCP/remote-tool audit
+  - **Authority**: Highest for backend domain semantics of the sync package
+
+- `docs/product/CONNECTOR_CONTROL_PLANE_AND_API_CONTRACT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: implementation-grade control-plane, webhook-ingress, operator-runtime and support-read API contract for the sync backend
+  - **Authority**: Highest for API surface and control-plane contract of the sync package
+
+- `docs/product/CONNECTOR_RUNTIME_JOBS_AND_STORAGE_MODEL_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: implementation-grade queue, worker, job, dead-letter, retention and storage model for connector runtime
+  - **Authority**: Highest for runtime execution and storage semantics of the sync package
+
+- `docs/product/CONNECTOR_DB_SCHEMA_AND_MIGRATION_CONTRACT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: implementation-grade canonical table, key, index and migration contract for converging current sync schema into the V8 backend model
+  - **Authority**: Highest for sync-package database schema and migration semantics
+
+- `docs/product/CURRENT_SYNC_CONNECTION_METHOD_AND_TARGET_FLOW_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: code-informed explanation of the current sync connection methodology in the repo and the target consolidated connection flow
+  - **Authority**: Highest for interpreting current-to-target sync connection behavior across code and documentation
+
+- `docs/product/CONNECTOR_IMPLEMENTATION_PLAN_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: wave-by-wave refactor program for converging current sync code paths into one canonical backend, including epics, cutover order and migration safety rules
+  - **Authority**: Highest for delivery sequencing and cutover strategy of the sync package
 
 - `docs/product/AI_ARTIFACT_RUNTIME_ARCHITECTURE_V8.md`
   - **Owner**: Product + Engineering
@@ -344,6 +564,43 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: canonical lifecycle for ephemeral, working and durable memory including freshness, retention and deletion cascade
   - **Authority**: Highest for memory lifecycle semantics across AI consumers
 
+- `docs/product/AI_TENANT_MEMORY_BOOTSTRAP_AND_ASSIGNMENT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical bootstrap, ownership, policy defaults and assistant memory assignment model for new tenants and tenant-scoped AI memory layers
+  - **Authority**: Highest for tenant memory bootstrap and assistant-to-tenant memory assignment semantics
+
+- `docs/product/ANNA_LP_ASSISTANT_CONTRACT_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: public/landing assistant contract for Anna including persona, voice, knowledge boundaries, session memory limits and separation from tenant-bound assistants
+  - **Authority**: Highest for Anna as a landing-page and public sales assistant
+
+### Virtual workers control plane
+
+- `docs/product/VIRTUAL_WORKERS_SUPERADMIN_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical entry point, read order and readiness assessment for the `Superadmin -> Virtual Workers` package
+  - **Authority**: Highest for package framing and readiness status of virtual workers control-plane documentation
+
+- `docs/product/VIRTUAL_WORKERS_SUPERADMIN_BENCHMARK_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: benchmark translation of leader agent-platform patterns into target needs for `consultify` virtual workers
+  - **Authority**: Highest for completeness benchmarking of the virtual workers control-plane package
+
+- `docs/product/VIRTUAL_WORKERS_SUPERADMIN_CONTROL_PLANE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical target model for `Superadmin -> Virtual Workers`, including registry, profiles, knowledge, tools, memory, channels, evals, rollout and audit
+  - **Authority**: Highest for target control-plane behavior of virtual workers
+
+- `docs/product/VIRTUAL_WORKERS_CONVERSATION_INTELLIGENCE_AND_PRIVACY_ANALYTICS_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical privacy-first analytics contract for aggregated topic, duration, channel, outcome and knowledge-gap reporting across virtual worker conversations
+  - **Authority**: Highest for virtual worker conversation intelligence and transcript-light analytics semantics
+
+- `docs/product/VIRTUAL_WORKERS_SUPERADMIN_IMPLEMENTATION_PLAN_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: phased implementation plan for evolving the current `Virtual Workers` module into a leader-grade superadmin control plane
+  - **Authority**: Highest for implementation sequencing of the virtual workers control-plane package
+
 - `docs/product/AI_OUTPUT_TRUST_ARCHITECTURE_V8.md`
   - **Owner**: Product + Engineering
   - **Scope**: canonical trust contract for citations, evidence, provenance, routing explanation and support-visible explainability
@@ -355,6 +612,7 @@ For `Chat v8`, `Execution Agent v8`, `Knowledge RAG v8`, `Multi-Agent v8` and `A
 
 - local package docs still own product/domain behavior,
 - parity package docs own cross-cutting architecture,
+- `AI_CORE_V8_READINESS_AUDIT.md` owns read order and documentation readiness gating,
 - benchmark, gap matrix and implementation docs must stay synchronized with both when hardening status changes.
 
 - `docs/product/modules/ai/AI_AGENT_ORCHESTRATION_V3.md`
@@ -403,6 +661,11 @@ For `Chat v8`, `Execution Agent v8`, `Knowledge RAG v8`, `Multi-Agent v8` and `A
   - **Owner**: Product + Engineering
   - **Scope**: build-ready workstreams, waves, acceptance criteria and sequencing for execution-agent rebuild
   - **Authority**: Highest for execution-agent implementation sequencing
+
+- `docs/product/AI_AGENTIC_SYSTEM_NEXT_PHASE_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: unified next-phase delivery program across execution spine, adapters, tool/HITL governance, multi-LLM resolver layer, multi-agent work manager, AI ops/release, observability and Virtual Workers hardening; maps phases to existing v8 plans without replacing them
+  - **Authority**: Highest for cross-package sequencing of the combined agentic stack (use together with execution implementation plan, master plan and multi-LLM readiness audit)
 
 ### Knowledge / RAG governance
 
