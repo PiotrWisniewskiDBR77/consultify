@@ -74,6 +74,11 @@ The correct package order for `Idea` should be:
 5. `Table`
 6. `Integration with the rest of Consultify`
 
+The final package closure for steps 1-6 is completed by:
+
+- `IDEA_V8_READINESS_AUDIT.md`
+- `IDEA_WORKSPACE_INTEGRATION_AND_PROMOTION_RUNTIME_V8.md`
+
 This document owns step 1.
 
 It freezes the shared logic that all later canvas documents must inherit.

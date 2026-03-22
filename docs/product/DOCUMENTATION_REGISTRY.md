@@ -154,6 +154,16 @@ If you are implementing product changes, treat **Canonical** documents as the so
   - **Scope**: shared organization of the entire Idea system, one-idea-one-workspace doctrine, navigation layers, and orchestration rules across the four native canvases
   - **Authority**: Highest for Idea-system organization before canvas-specific specialization
 
+- `docs/product/IDEA_V8_READINESS_AUDIT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: module-level readiness verdict for the whole Idea package across shared workspace doctrine, all four native work systems, and the final integration layer with the rest of Consultify
+  - **Authority**: Highest for Idea package navigation, module-level completeness assessment, and final closure of the Idea documentation program
+
+- `docs/product/IDEA_WORKSPACE_INTEGRATION_AND_PROMOTION_RUNTIME_V8.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: canonical integration and promotion runtime for `Idea`, including inbound context, lateral cross-canvas movement, outbound artifact promotion, and traceability into downstream modules
+  - **Authority**: Highest for Idea-to-platform integration, promotion behavior, and module-level traceability expectations
+
 - `docs/product/MINDMAP_V8_READINESS_AUDIT.md`
   - **Owner**: Product + Engineering
   - **Scope**: readiness verdict, read order, true blockers, and finalization direction for the full Mind Map package inside `Idea Workspace`
