@@ -205,6 +205,28 @@ When economically relevant, Results should support:
 - dedicated reconciliation workflow when comparison needs review and action
 - no silent collapse of metric truth into finance model truth
 
+#### Reconciliation ownership
+
+> V8 Decision W6-5 applied — 2026-03-23
+
+- **Results** owns KPI truth and the reconciliation workflow trigger. Reconciliation starts in Results.
+- **Finance** owns finance interpretation, finance model truth, and CFO review semantics. Finance resolves finance-side meaning.
+- Reconciliation is a shared cross-module process; the primary runtime anchor starts in Results.
+
+Canonical rule:
+
+`Results starts reconciliation, Finance resolves finance-side meaning`
+
+### 6.4B Standalone KPI/ROI governance triggers
+
+> V8 Decision W6-6 applied — 2026-03-23
+
+Standalone KPI/ROI governance events are in scope. The system must not depend only on initiative-linked flows for governance triggers.
+
+Standalone mode requires its own activation, review, and deviation triggers that do not depend on initiative lifecycle events. Results dual-mode logic (initiative-linked + standalone) must be honored in event and review design.
+
+---
+
 ### 6.5 Lifecycle continuity doctrine
 
 KPI should survive the whole path:
@@ -243,6 +265,14 @@ They should preserve:
 - version history
 - review and lock semantics
 - initiative-linked and standalone registry modes
+
+### 6.7 ExecutiveReviewPack ownership
+
+> V8 Decision W6-7 applied — 2026-03-23
+
+`ExecutiveReviewPack` is a **Results-native** governed object. Results owns the executive review semantics, structure, and truth.
+
+Reports and Presentations consume `ExecutiveReviewPack` as a structured snapshot source. Reports may add presentation formatting and narrative, but must not create a parallel executive truth or become the source-of-truth owner of executive review semantics.
 
 ---
 
