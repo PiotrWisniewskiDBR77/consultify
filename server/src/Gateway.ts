@@ -247,6 +247,8 @@ import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
 import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
+import v8Router from './routes/v8/index.js';
+import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import logger from './utils/Logger.js';
 
 export class ApiGateway {
@@ -693,6 +695,10 @@ export class ApiGateway {
       app.use('/api/financial-modeling', financialModelingRoutes);
       app.use('/api/finance-v4', financeEnterpriseRoutes);
       app.use('/api/content', contentRoutes);
+
+      // V8 API namespace — feature-gated
+      console.log('[ApiGateway] Mounting /api/v8');
+      app.use('/api/v8', v8FeatureGate, v8Router);
 
       // Catch-all RBAC or 404 for /api
       app.use('/api', rbacRoutes);
