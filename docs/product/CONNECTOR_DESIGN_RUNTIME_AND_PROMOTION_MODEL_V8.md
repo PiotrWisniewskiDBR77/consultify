@@ -46,6 +46,18 @@ Canonical lifecycle:
 
 `draft -> reviewed -> approved -> promoted -> active -> deprecated -> retired`
 
+### 4.1 Package ownership model
+
+> V8 Decision W5-9 applied — 2026-03-23
+
+Connector packages are platform-managed assets.
+
+- Platform owns the full promotion lifecycle (draft through retired).
+- Tenant admins install and configure packages within platform-allowed scope.
+- Tenant admins do not author, promote, deprecate or retire connector packages.
+
+Rule: `connector package is a managed platform capability, not an ad hoc tenant plugin`
+
 ---
 
 ## 5. Rollback doctrine

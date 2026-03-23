@@ -110,7 +110,12 @@ Optional:
 
 - `connector.runtime.retry_scheduled`
 - `connector.runtime.dead_lettered`
+- `connector.runtime.schema_drift_detected`
 - `connector.support.note_added`
+
+> V8 Decision W5-4 applied — 2026-03-23
+>
+> `connector.runtime.schema_drift_detected` added to canonical catalog. Emitted when the runtime detects a provider API schema change (new/missing fields, changed response structure, webhook payload changes). Must be operator-visible and support-visible.
 
 ---
 
@@ -139,6 +144,21 @@ Replay must preserve:
 - replay time
 
 Replay must never silently erase the original event trail.
+
+### 6.1 Bulk replay doctrine
+
+> V8 Decision W5-7 applied — 2026-03-23
+
+Bulk replay is allowed when multiple dead-letter items share a common root cause (e.g., provider outage recovery, auth restoration, mapping correction).
+
+Required safeguards:
+
+- scoped selection — operator must define the replay set explicitly (by connector, error class, time range or root cause)
+- preview and impact visibility — operator must see the count, affected objects and estimated processing time before confirming
+- rate and volume guardrails — bulk replay must respect provider rate limits and platform backpressure controls
+- operator confirmation — explicit confirmation required before execution
+
+Rule: `bulk replay is allowed, never blind fire-and-forget`
 
 ---
 

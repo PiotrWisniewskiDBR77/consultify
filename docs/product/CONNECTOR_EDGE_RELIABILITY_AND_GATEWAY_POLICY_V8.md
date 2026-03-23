@@ -34,6 +34,19 @@ Canonical retry classes:
 - `do_not_retry`
 - `dead_letter_after_threshold`
 
+### 3.1 Retry policy shape
+
+> V8 Decision W5-5 applied — 2026-03-23
+
+The canonical retry policy shape defines the structure that every connector family must configure. Exact numeric values remain per-connector-family configuration; the platform canonicalizes the policy dimensions:
+
+- **max attempt classes** — each retry class defines its own max attempt count
+- **backoff family** — exponential, linear or fixed; with configurable base delay and multiplier
+- **jitter support** — mandatory randomization to prevent thundering herd
+- **escalation handoff** — defines the transition from retry exhaustion to dead-letter or operator escalation
+
+Rule: `common retry doctrine, family-specific tuning`
+
 ---
 
 ## 4. Circuit-breaker doctrine
@@ -45,6 +58,22 @@ External calls should support:
 - closed state
 
 Operator surfaces must expose when a connector is degraded because of breaker policy.
+
+### 4.1 Structured provider health model
+
+> V8 Decision W5-8 applied — 2026-03-23
+
+Provider health must be decomposed into minimum dimensions, not reduced to a single aggregate status:
+
+| Health dimension | What it measures |
+|---|---|
+| **Auth health** | Token validity, refresh success rate, scope integrity |
+| **Transport health** | HTTP error rate, latency percentiles, rate-limit pressure |
+| **Schema health** | Schema drift detection, mapping validity, field compatibility |
+| **Sync freshness** | Time since last successful sync, staleness breach rate |
+| **Replay / dead-letter pressure** | Dead-letter queue depth, unresolved item age, replay backlog |
+
+Rule: `provider health must be decomposed, not reduced to one vague status light`
 
 ---
 

@@ -65,6 +65,17 @@ The runtime should define retention separately for:
 - payload blobs
 - operator audit notes
 
+### 6.1 Dead-letter retention baseline
+
+> V8 Decision W5-6 applied — 2026-03-23
+
+Dead-letter retention baseline: **90 days**.
+
+- Unresolved dead-letter items must not be auto-purged regardless of age.
+- Resolved dead-letter items retain metadata for 90 days.
+- Stricter tenant policy may override with longer retention.
+- Compliance flows and incidents linked to audit may require longer lineage through adjacent systems.
+
 ---
 
 ## 7. Related canonical docs
