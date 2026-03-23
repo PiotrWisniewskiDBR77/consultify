@@ -486,6 +486,58 @@ export async function recordDegradedCondition(
 }
 
 /**
+ * Get all degraded conditions for an organization, scoped by date range.
+ */
+export async function getDegradedConditions(
+  organizationId: string,
+  fromDate?: string,
+  toDate?: string,
+): Promise<DegradedCondition[]> {
+  let sql = `SELECT * FROM v8_degraded_conditions WHERE organization_id = ?`;
+  const params: unknown[] = [organizationId];
+
+  if (fromDate) {
+    sql += ` AND created_at >= ?`;
+    params.push(fromDate);
+  }
+  if (toDate) {
+    sql += ` AND created_at <= ?`;
+    params.push(toDate);
+  }
+
+  sql += ` ORDER BY created_at DESC`;
+
+  const rows = await dbAll<DegradedConditionRow>(sql, params, { fallback: true });
+  return (rows || []).map(rowToDegradedCondition);
+}
+
+/**
+ * Get all health signals for an organization, scoped by date range.
+ */
+export async function getHealthSignals(
+  organizationId: string,
+  fromDate?: string,
+  toDate?: string,
+): Promise<HealthSignal[]> {
+  let sql = `SELECT * FROM v8_health_signals WHERE organization_id = ?`;
+  const params: unknown[] = [organizationId];
+
+  if (fromDate) {
+    sql += ` AND timestamp >= ?`;
+    params.push(fromDate);
+  }
+  if (toDate) {
+    sql += ` AND timestamp <= ?`;
+    params.push(toDate);
+  }
+
+  sql += ` ORDER BY timestamp DESC`;
+
+  const rows = await dbAll<HealthSignalRow>(sql, params, { fallback: true });
+  return (rows || []).map(rowToHealthSignal);
+}
+
+/**
  * Record a health signal for observability baseline.
  */
 export async function recordHealthSignal(
@@ -530,4 +582,318 @@ export async function recordHealthSignal(
     `${LOG_PREFIX} Recorded health signal ${signalId}: ${signal.signalType} = ${signal.status}`,
   );
   return signal;
+}
+
+// ==========================================
+// PROVENANCE LEDGER WIRING (Decision D24)
+// ==========================================
+
+export interface ProvenanceLedgerResult {
+  entries: ProvenanceLedgerEntry[];
+  explanation: RoutingExplanation | null;
+  supportTrace: SupportTrace | null;
+}
+
+/**
+ * Assemble the full provenance chain for an output — all provenance entries
+ * ordered by creation, with the latest support trace and routing explanation.
+ */
+export async function buildProvenanceLedger(
+  outputId: string,
+  organizationId: string,
+): Promise<ProvenanceLedgerResult> {
+  const entries = await getProvenanceByOutput(outputId, organizationId);
+
+  let explanation: RoutingExplanation | null = null;
+  let supportTrace: SupportTrace | null = null;
+
+  const routingExplanationId = entries.find((e) => e.routingExplanationId)?.routingExplanationId;
+  const executionRunId = entries.find((e) => e.executionRunId)?.executionRunId;
+
+  if (executionRunId) {
+    const traces = await getSupportTracesByRun(executionRunId, organizationId);
+    if (traces.length > 0) {
+      supportTrace = traces[traces.length - 1];
+      explanation = supportTrace.routingExplanation;
+    }
+  }
+
+  logger.info(
+    `${LOG_PREFIX} Built provenance ledger for output ${outputId}: ${entries.length} entries`,
+  );
+
+  return { entries, explanation, supportTrace };
+}
+
+/**
+ * Compute the effective trust class for an output based on its provenance chain.
+ *
+ * - If any entry has bindingStrength 'none' in any citation binding → degraded
+ * - If any entry has verificationState 'unverified' in any citation binding → uncertain_inference
+ * - If all entries are verified with strong binding → grounded_fact
+ * - Otherwise → synthesis
+ */
+export async function assessTrustClass(
+  outputId: string,
+  organizationId: string,
+): Promise<TrustClass> {
+  const entries = await getProvenanceByOutput(outputId, organizationId);
+
+  if (entries.length === 0) {
+    return 'uncertain_inference';
+  }
+
+  const allBindings = entries.flatMap((e) => e.citationBindings);
+  const allEvidenceRefs = allBindings.flatMap((b) => b.evidenceRefs);
+
+  if (allEvidenceRefs.length === 0) {
+    return 'uncertain_inference';
+  }
+
+  const hasNoneBinding = allEvidenceRefs.some((ref) => ref.bindingStrength === 'none');
+  if (hasNoneBinding) {
+    return 'degraded';
+  }
+
+  const hasUnverified = allEvidenceRefs.some((ref) => ref.verificationState === 'unverified');
+  if (hasUnverified) {
+    return 'uncertain_inference';
+  }
+
+  const allStrongVerified = allEvidenceRefs.every(
+    (ref) => ref.bindingStrength === 'strong' && ref.verificationState === 'verified',
+  );
+  if (allStrongVerified) {
+    return 'grounded_fact';
+  }
+
+  return 'synthesis';
+}
+
+/**
+ * Query provenance entries for an organization in a date range.
+ */
+export async function getProvenanceByOrg(
+  organizationId: string,
+  fromDate: string,
+  toDate: string,
+  limit?: number,
+): Promise<ProvenanceLedgerEntry[]> {
+  let sql = `SELECT * FROM v8_provenance_ledger
+     WHERE organization_id = ? AND created_at >= ? AND created_at <= ?
+     ORDER BY created_at DESC`;
+  const params: unknown[] = [organizationId, fromDate, toDate];
+
+  if (limit != null && limit > 0) {
+    sql += ` LIMIT ?`;
+    params.push(limit);
+  }
+
+  const rows = await dbAll<ProvenanceRow>(sql, params, { fallback: true });
+  return (rows || []).map(rowToProvenance);
+}
+
+// ==========================================
+// ROUTING EXPLANATION RUNTIME (Decision D25)
+// ==========================================
+
+export interface UserExplanationResult {
+  summary: string;
+  trustClass: TrustClass;
+  hasDegradedConditions: boolean;
+}
+
+/**
+ * Build a concise user-facing explanation string from the provenance chain.
+ * Hides internal details (model names, policy weights, raw heuristics).
+ */
+export async function buildUserExplanation(
+  outputId: string,
+  organizationId: string,
+): Promise<UserExplanationResult> {
+  const ledger = await buildProvenanceLedger(outputId, organizationId);
+  const trustClass = await assessTrustClass(outputId, organizationId);
+
+  const hasDegradedConditions =
+    ledger.supportTrace != null && ledger.supportTrace.degradedConditions.length > 0;
+
+  let summary: string;
+
+  switch (trustClass) {
+    case 'grounded_fact':
+      summary = 'This output is based on verified, strongly-bound sources.';
+      break;
+    case 'synthesis':
+      summary = 'This output synthesizes information from multiple sources.';
+      break;
+    case 'uncertain_inference':
+      summary = 'This output contains inferences that could not be fully verified.';
+      break;
+    case 'degraded':
+      summary = 'This output was produced under degraded conditions and may be less reliable.';
+      break;
+    default:
+      summary = 'Trust classification is unavailable for this output.';
+  }
+
+  if (hasDegradedConditions) {
+    const userMessages = ledger.supportTrace!.degradedConditions.map((d) => d.userMessage);
+    summary += ' ' + userMessages.join(' ');
+  }
+
+  if (ledger.explanation?.fallbackOccurred) {
+    summary += ' An alternative model was used due to temporary availability constraints.';
+  }
+
+  return { summary, trustClass, hasDegradedConditions };
+}
+
+export interface OperatorExplanationResult {
+  summary: string;
+  trustClass: TrustClass;
+  provenanceEntries: ProvenanceLedgerEntry[];
+  degradedConditions: DegradedCondition[];
+  healthSignals: HealthSignal[];
+}
+
+/**
+ * Build a full operator/support explanation with all provenance entries,
+ * degraded conditions, and health signals.
+ */
+export async function buildOperatorExplanation(
+  outputId: string,
+  organizationId: string,
+): Promise<OperatorExplanationResult> {
+  const ledger = await buildProvenanceLedger(outputId, organizationId);
+  const trustClass = await assessTrustClass(outputId, organizationId);
+  const degradedConditions = ledger.supportTrace?.degradedConditions ?? [];
+  const healthSignals = await getHealthSignals(organizationId);
+
+  let summary = `Trust class: ${trustClass}. Provenance entries: ${ledger.entries.length}.`;
+
+  if (ledger.explanation) {
+    const r = ledger.explanation;
+    summary += ` Model: ${r.modelSelected}. Reason: ${r.modelSelectionReason}.`;
+    summary += ` Workload: ${r.workloadClass}. Purpose: ${r.purpose}.`;
+    if (r.fallbackOccurred) {
+      summary += ` Fallback from ${r.fallbackFrom ?? 'unknown'}: ${r.fallbackReason ?? 'unspecified'}.`;
+    }
+    if (r.latencyObservedMs != null) {
+      summary += ` Latency: ${r.latencyObservedMs}ms.`;
+    }
+  }
+
+  if (degradedConditions.length > 0) {
+    summary += ` Degraded conditions: ${degradedConditions.length}.`;
+    for (const dc of degradedConditions) {
+      summary += ` [${dc.conditionType}/${dc.severity}] ${dc.operatorDetail}`;
+    }
+  }
+
+  return {
+    summary,
+    trustClass,
+    provenanceEntries: ledger.entries,
+    degradedConditions,
+    healthSignals,
+  };
+}
+
+// ==========================================
+// DEGRADED-STATE VOCABULARY RUNTIME (Decision D26)
+// ==========================================
+
+interface DegradedConditionRowExtended extends DegradedConditionRow {
+  resolved_at: string | null;
+  resolved_by: string | null;
+  resolution_note: string | null;
+}
+
+export interface ResolvedDegradedCondition extends DegradedCondition {
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+  resolutionNote: string | null;
+}
+
+function rowToResolvedDegradedCondition(row: DegradedConditionRowExtended): ResolvedDegradedCondition {
+  return {
+    ...rowToDegradedCondition(row),
+    resolvedAt: row.resolved_at,
+    resolvedBy: row.resolved_by,
+    resolutionNote: row.resolution_note,
+  };
+}
+
+/**
+ * Get all unresolved degraded conditions for an organization (where resolved_at IS NULL).
+ */
+export async function getActiveDegradedConditions(
+  organizationId: string,
+): Promise<ResolvedDegradedCondition[]> {
+  const rows = await dbAll<DegradedConditionRowExtended>(
+    `SELECT * FROM v8_degraded_conditions
+     WHERE organization_id = ? AND resolved_at IS NULL
+     ORDER BY created_at DESC`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToResolvedDegradedCondition);
+}
+
+/**
+ * Mark a degraded condition as resolved with timestamp and resolution note.
+ */
+export async function resolveDegradedCondition(
+  conditionId: string,
+  resolvedBy: string,
+  resolution: string,
+): Promise<ResolvedDegradedCondition | null> {
+  const now = new Date().toISOString();
+
+  await dbRun(
+    `UPDATE v8_degraded_conditions
+     SET resolved_at = ?, resolved_by = ?, resolution_note = ?
+     WHERE condition_id = ?`,
+    [now, resolvedBy, resolution, conditionId],
+  );
+
+  const row = await dbGet<DegradedConditionRowExtended>(
+    `SELECT * FROM v8_degraded_conditions WHERE condition_id = ?`,
+    [conditionId],
+    { fallback: true },
+  );
+
+  if (!row) return null;
+
+  logger.info(`${LOG_PREFIX} Resolved degraded condition ${conditionId} by ${resolvedBy}`);
+  return rowToResolvedDegradedCondition(row);
+}
+
+/**
+ * Get the latest health signal for each signal type — the health dashboard.
+ */
+export async function getHealthDashboard(
+  organizationId: string,
+): Promise<Map<string, HealthSignal>> {
+  const rows = await dbAll<HealthSignalRow>(
+    `SELECT h1.* FROM v8_health_signals h1
+     INNER JOIN (
+       SELECT signal_type, MAX(timestamp) AS max_ts
+       FROM v8_health_signals
+       WHERE organization_id = ?
+       GROUP BY signal_type
+     ) h2 ON h1.signal_type = h2.signal_type AND h1.timestamp = h2.max_ts
+     WHERE h1.organization_id = ?`,
+    [organizationId, organizationId],
+    { fallback: true },
+  );
+
+  const dashboard = new Map<string, HealthSignal>();
+  for (const row of rows || []) {
+    const signal = rowToHealthSignal(row);
+    dashboard.set(signal.signalType, signal);
+  }
+
+  return dashboard;
 }
