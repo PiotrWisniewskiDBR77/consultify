@@ -451,6 +451,66 @@ Critical path: W2 → W4 → W5 → W6. Parallel track: W3 alongside W4.
 
 ---
 
+## Report #15 — 2026-03-23 (WAVE 3 + WAVE 4 CLOSED — Retrieval + Execution)
+
+### 1. Wave 3 — Governed Retrieval — CLOSED
+
+| Packet | Deliverable | Status |
+|--------|-------------|--------|
+| WP-20W3-02 | ACL enforcement (3-layer: tenant, source ACL with D10 staleness, sensitivity ceiling) | **COMPLETE** |
+| WP-20W3-02 | Freshness runtime (fresh/drifted/stale/archived/disconnected) | **COMPLETE** |
+| WP-20W3-03 | 7-stage pipeline (tenant→scope→acl→sensitivity→freshness→privacy→connector) | **COMPLETE** |
+| WP-20W3-03 | Scope traceability (buildScopeResolution, getTracesBySnapshot) | **COMPLETE** |
+| WP-20W3-04 | Verification: 15 integration tests | **COMPLETE** |
+
+New functions: `checkACL` (real enforcement), `checkFreshness`, `runPipeline`, `getRequestsByOrg`, `buildScopeResolution`, `getTracesBySnapshot`.
+
+### 2. Wave 4 — Execution Approval — CLOSED
+
+| Packet | Deliverable | Status |
+|--------|-------------|--------|
+| WP-20W4-02 | Approval flow (submitForReview, approveRun, rejectRun, applyRun, completeRun) | **COMPLETE** |
+| WP-20W4-03 | Rebaseline (replanFromRejection, getRunsByOrg, getActiveRuns) | **COMPLETE** |
+| WP-20W4-03 | Batch approval (resolveProposalsBatch per D15) | **COMPLETE** |
+| WP-20W4-04 | Verification: 9 integration tests | **COMPLETE** |
+
+New functions: `submitForReview` (72h SLA per D13), `approveRun`, `rejectRun` (D14 re-plan), `applyRun`, `completeRun`, `replanFromRejection` (W3-10), `resolveProposalsBatch` (D15), `getRunsByOrg`, `getActiveRuns`.
+
+### 3. Test results
+
+| Suite | Tests | Status |
+|-------|------:|--------|
+| Wave 3 unit (pipeline) | 28 | **PASS** |
+| Wave 3 integration (verification) | 15 | **PASS** |
+| Wave 4 unit (approval flow) | 27 | **PASS** |
+| Wave 4 integration (verification) | 9 | **PASS** |
+| **Wave 3+4 total** | **79** | **ALL GREEN** |
+
+### 4. Updated program totals
+
+| Metric | Count |
+|---|---|
+| **Total V8 code files** | **116** (+4 from W3+W4) |
+| **Total integration test files** | **15** (+2) |
+| **Total passing tests** | **2,059** (+79 from W3+W4) |
+
+### 5. 20-wave implementation status
+
+| Wave | Status |
+|---|---|
+| **W1** | **CLOSED** |
+| **W2** | **CLOSED** |
+| **W3** | **CLOSED** |
+| **W4** | **CLOSED** |
+| W5 | **GREEN — ready to start** (tool governance, HITL) |
+| W6 | YELLOW — after W5 |
+
+### 6. Recommended next action
+
+**Start Wave 5 immediately** (tool governance, HITL, background mutation safety). Wave 6 (trust/provenance) follows after W5.
+
+---
+
 ## Report #12 — 2026-03-23 (INTEGRATION GATE PASSED)
 
 ### 1. Integration Test Program — ALL TIERS GREEN
