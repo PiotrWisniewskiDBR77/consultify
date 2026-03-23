@@ -1,12 +1,124 @@
-# V8 Program — Implementation Control Board
+# V8 Program — Post-20-Wave Closure Execution Board
 
 > Owner: Manager Agent
 > Cadence: Weekly
-> Authority: Source-of-truth chat + Decision Logs W1-W7
+> Authority: Source-of-truth chat + POST_20_WAVE_CLOSURE_AUDIT.md
+> Mode: **Closure Execution** (switched from wave-based reporting 2026-03-23)
 
 ---
 
-## Program totals
+## REPORTING MODE: POST-20-WAVE CLOSURE EXECUTION
+
+From this point forward, this board reports closure execution progress, NOT waves.
+The 20-wave foundation phase is complete. The program is now in integration/cutover mode.
+
+Maturity scale used in all reports:
+- `not started` → `in progress` → `implemented` → `wired` → `integrated` → `verified` → `blocked` → `needs decision`
+
+---
+
+## Closure Execution Report #1 — 2026-03-23 (Baseline)
+
+### 1. Current maturity position
+
+| Domain | Status | Level |
+|--------|--------|-------|
+| AI Core (7 services, 79 functions) | `implemented` | 2/8 |
+| Chat execution (1 service, 6 functions) | `implemented` | 2/8 |
+| Prompt OS (1 service, 11 functions) | `implemented` | 2/8 |
+| Knowledge RAG (1 service, 6 functions) | `implemented` | 2/8 |
+| Multiplayer (5 services, 73 functions) | `implemented` | 2/8 |
+| Workspace (4 services, 45 functions) | `implemented` | 2/8 |
+| Lifecycle (3 services, 39 functions) | `implemented` | 2/8 |
+| PM Sync (4 services, 52 functions) | `implemented` | 2/8 |
+| Outputs (2 services, 30 functions) | `implemented` | 2/8 |
+| Finance (1 service, 19 functions) | `implemented` | 2/8 |
+| Results/KPI (1 service, 20 functions) | `implemented` | 2/8 |
+| Tools/Org (2 services, 20 functions) | `implemented` | 2/8 |
+| Platform Health (1 service, 5 functions) | `implemented` | 2/8 |
+| Landing/Superadmin (1 service, 10 functions) | `implemented` | 2/8 |
+| **API Layer** | `not started` | 0/8 |
+| **Frontend Integration** | `not started` | 0/8 |
+| **Feature Flags** | `not started` | 0/8 |
+| **Auth Integration** | `not started` | 0/8 |
+| **Operator UI** | `not started` | 0/8 |
+| **Monitoring/Observability** | `not started` | 0/8 |
+
+### 2. Packets completed
+
+| Packet | Status |
+|--------|--------|
+| (none yet — first tranche just defined) | — |
+
+### 3. Packets in progress
+
+| Packet | Status |
+|--------|--------|
+| (none yet — awaiting decision approval) | — |
+
+### 4. Packets blocked
+
+| Packet | Blocked by |
+|--------|-----------|
+| CP-06 (Chat API Routes) | CP-03 (Router Foundation) + CP-04 (Auth) |
+| CP-07 (Frontend Client) | CP-03 (Router Foundation) + CP-05 (Feature Flags) |
+| CP-08 (Shadow Mode) | CP-05 (Feature Flags) + CP-06 (Chat Routes) |
+
+### 5. What moved from implemented → wired
+
+Nothing. Zero API routes exist.
+
+### 6. What moved from wired → integrated
+
+Nothing. Zero frontend integration exists.
+
+### 7. What moved from integrated → verified
+
+Nothing. Zero real-infrastructure verification exists.
+
+### 8. Operator / rollout readiness progress
+
+- Feature flags: `not started`
+- Monitoring: `not started`
+- Rollback procedure: `not started`
+- Operator dashboard: `not started`
+- Support runbook: `not started`
+
+### 9. Critical unresolved gaps
+
+| Gap | Status | Blocks |
+|-----|--------|--------|
+| G-01: No API routes | `not started` | Everything |
+| G-03: No DB migration execution | `not started` | All verification |
+| G-05: No auth integration | `not started` | All API exposure |
+| G-06: No feature flags | `not started` | All controlled rollout |
+| G-07: No WebSocket transport | `not started` | Multiplayer |
+| G-08: No legacy cutover plan | `needs decision` | Production switch |
+
+### 10. Next packet set
+
+Awaiting source-of-truth approval of decision package (6 decisions).
+Once approved, recommended first assignments:
+- **Worker 1 → CP-01** (Migration Runner)
+- **Worker 2 → CP-03** (API Router Foundation)
+- **Worker 3 → CP-05** (Feature Flags)
+
+---
+
+## Closure program documents
+
+| Document | Purpose |
+|----------|---------|
+| `POST_20_WAVE_CLOSURE_AUDIT.md` | Honest assessment of what 20 waves delivered and didn't |
+| `V8_DECISION_PACKAGE_POST_AUDIT.md` | 6 decisions requiring source-of-truth approval |
+| `V8_POST_20_WAVE_CLOSURE_PROGRAM.md` | Full 8-phase closure program |
+| `CP_TRANCHE_01_POST_WAVE_20_CLOSURE.md` | 11 bounded execution packets for first tranche |
+
+---
+
+## Historical wave reports (archived)
+
+## Program totals (foundation phase — archived)
 
 | Metric | Count |
 |---|---|
