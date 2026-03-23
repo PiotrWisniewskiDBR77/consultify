@@ -60,6 +60,7 @@ export interface DriftEvent {
 
 export interface ContextSnapshot {
   snapshotId: string;
+  parentSnapshotId: string | null;
   snapshotVersion: number;
   capturedAt: string;
   workspaceId: string;
@@ -113,6 +114,7 @@ export const DriftEventSchema = z.object({
 
 export const ContextSnapshotSchema = z.object({
   snapshotId: z.string().uuid(),
+  parentSnapshotId: z.string().uuid().nullable(),
   snapshotVersion: z.number().int().min(1),
   capturedAt: z.string().min(1),
   workspaceId: z.string().uuid(),
@@ -143,6 +145,7 @@ export const RetrievalScopeTokenSchema = z.object({
 // ==========================================
 
 export interface CaptureSnapshotParams {
+  parentSnapshotId?: string | null;
   workspaceId: string;
   organizationId: string;
   projectId?: string | null;
@@ -158,6 +161,7 @@ export interface CaptureSnapshotParams {
 }
 
 export const CaptureSnapshotParamsSchema = z.object({
+  parentSnapshotId: z.string().uuid().nullable().optional(),
   workspaceId: z.string().uuid(),
   organizationId: z.string().uuid(),
   projectId: z.string().uuid().nullable().optional(),

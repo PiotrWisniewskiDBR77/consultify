@@ -383,6 +383,7 @@ describe('Zod schema validation', () => {
   it('validates a correct ContextSnapshot', () => {
     const valid: ContextSnapshot = {
       snapshotId: '00000000-0000-4000-8000-aaaaaaaaaaaa',
+      parentSnapshotId: null,
       snapshotVersion: 1,
       capturedAt: '2026-03-23T10:00:00.000Z',
       workspaceId: WORKSPACE_ID,
