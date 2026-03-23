@@ -73,6 +73,28 @@ Canonical conflict classes:
 - `deleted_remote_object`
 - `deleted_local_object`
 - `identity_ambiguity`
+- `field_authority_conflict` — both sides updated a field where authority is declared and the updates diverge; distinct from `simultaneous_edit` because it references the field authority model (§3)
+- `stale_snapshot_conflict` — sync attempted with an outdated snapshot; source data changed since fetch; operationally distinct from real-time concurrent edits
+
+> Added per Decision 18 (DECISION_LOG_WAVE_1.md). Source: TASK_SYNC_AND_EXTERNAL_WORK_INTEROPERABILITY_RUNTIME_V8.md §11, cross-checked in WP-W1-PMSYNC-02.
+
+---
+
+## 4A. Conflict severity model
+
+Every conflict instance must carry a severity level:
+
+| Severity | Meaning | Example classes |
+|---|---|---|
+| `low` | Conflict logged; auto-resolved by declared authority rules or accepted as non-critical divergence | `stale_snapshot_conflict` with clear winner |
+| `medium` | Sync continues for non-conflicting fields; conflicting field frozen at last-known-good until resolution | `field_authority_conflict`, `simultaneous_edit` |
+| `high` | Sync for this object is halted until resolution | `identity_ambiguity`, `deleted_remote_object`, `deleted_local_object`, `missing_mapping` |
+
+Rule:
+
+`every connector family must declare default severity per conflict class; operator may override within policy bounds`
+
+> Added per Decision 18 (DECISION_LOG_WAVE_1.md).
 
 ---
 
@@ -100,8 +122,29 @@ Allowed resolution paths:
 - merge using explicit field selection
 - remap identity
 - dismiss after audit note
+- `replay_after_fix` — underlying issue fixed (auth, permission, mapping); replay the failed sync preserving audit lineage to the original attempt
+- `escalate` — conflict requires platform-level or cross-team decision; routes to designated escalation owner
+
+> `replay_after_fix` and `escalate` added per Decision 18 (DECISION_LOG_WAVE_1.md). Source: WP-W1-PMSYNC-01 §4.4, cross-checked in WP-W1-PMSYNC-02.
 
 All resolutions must be logged.
+
+---
+
+## 6A. Dead-letter doctrine reference
+
+Unrecoverable sync conflicts and errors must follow the dead-letter doctrine defined in `TASK_SYNC_AND_EXTERNAL_WORK_INTEROPERABILITY_RUNTIME_V8.md` §11:
+
+- unrecoverable sync items move to explicit `dead_letter` state
+- dead-letter items remain visible to operators and support
+- dead-letter items may be dismissed, remapped, replayed or escalated
+- operator recovery path: inspect → classify root cause → fix underlying issue → `replay_after_fix` or `dismiss` or `escalate`
+
+Rule:
+
+`dead-letter is a terminal conflict state for the current sync attempt, not a permanent discard; operator must have a recovery path`
+
+> Added per Decision 18 (DECISION_LOG_WAVE_1.md).
 
 ---
 
