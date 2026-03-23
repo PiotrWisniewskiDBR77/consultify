@@ -17,7 +17,7 @@
 | Canon doc updates done | **19 / 19 (100%)** |
 | Canon doc updates pending | **0** |
 | New canonical docs mandated | **4 / 4 created** |
-| Implementation started | **20 packets** (Waves 1-5 complete) |
+| Implementation started | **24 packets** (Waves 1-6 complete) |
 
 ---
 
@@ -317,6 +317,62 @@ Wave 1 code is complete. Next: Wave 2 implementation (3 packets):
 3. `WP-W2-AI-03` → Prompt OS runtime discipline
 
 These are integration-layer packets that wire Wave 1 primitives together.
+
+---
+
+## Report #10 — 2026-03-23 (Wave 6 code closure)
+
+### 1. Completed this cycle
+
+| # | Packet | Files | Tests | Status |
+|---|---|---|---|---|
+| 21 | WP-W6-OUT-01-IMPL — Reports/Presentations Operating Model | 4 files | 90 passing | **done** |
+| 22 | WP-W6-OUT-02-IMPL — Results/ROI Continuity | 4 files | 93 passing | **done** |
+| 23 | WP-W6-OUT-03-IMPL — Finance Integration/Promotion | 4 files | 96 passing | **done** |
+| 24 | WP-W6-OUT-04-IMPL — Shared Publish/Review Semantics | 4 files | 89 passing | **done** |
+
+**Cycle total**: 16 new files, 368 new tests.
+
+### 2. Wave 6 implementation — COMPLETE
+
+| Packet | Integration proof | Tests | Status |
+|---|---|---|---|
+| WP-W6-OUT-01 Reports/Pres Model | Delivery state machine, 3 template families, recurring automation, AI governance | 90 | **complete** |
+| WP-W6-OUT-02 Results/ROI | Dual-mode KPI, deviation governance, ROI tracking, executive review pack, reconciliation | 93 | **complete** |
+| WP-W6-OUT-03 Finance Integration | Ingestion pipeline, economics linkage, dual-gate promotion, delta escalation, source refresh | 96 | **complete** |
+| WP-W6-OUT-04 Publish/Review | 8-state publish lifecycle, review gates, coordinated publish, recall, finance locks | 89 | **complete** |
+
+### 3. Program totals (cumulative)
+
+| Metric | Count |
+|---|---|
+| V8 type files | 24 |
+| V8 migrations | 24 |
+| V8 services | 24 |
+| V8 test files | 24 |
+| **Total V8 files** | **96** |
+| **Total V8 DB tables** | **89** |
+| **Total passing tests** | **1,613** |
+| **Waves with code** | **Waves 1-6** |
+
+### 4. Implementation status by wave
+
+| Wave | Analysis | Canon docs | Code | Status |
+|---|---|---|---|---|
+| Wave 1 | 10/10 | 19/19 applied | 8/8 done | **CLOSED** |
+| Wave 2 | 3/3 | applied | 3/3 done | **CLOSED** |
+| Wave 3 | 3/3 | applied | 3/3 done | **CLOSED** |
+| Wave 4 | 3/3 | applied | 3/3 done | **CLOSED** |
+| Wave 5 | 3/3 | applied | 3/3 done | **CLOSED** |
+| Wave 6 | 4/4 | applied | 4/4 done | **CLOSED** |
+| Wave 7 | 3/3 | applied | 0/3 | Next (final) |
+
+### 5. Recommended next actions
+
+Wave 7 implementation (roof package — final wave):
+1. `WP-W7-ROOF-01` → MyWork roof package
+2. `WP-W7-ROOF-02` → Tools/Interview/Academy
+3. `WP-W7-ROOF-03` → Landing/Onboarding/Partner
 
 ---
 
