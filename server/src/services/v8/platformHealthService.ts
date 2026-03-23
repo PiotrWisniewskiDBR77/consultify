@@ -132,10 +132,11 @@ export async function getPlatformHealth(
   );
   if (aiResult.ok) {
     const env = aiResult.data;
-    const allUp = env.layers.every((l) => l.status === 'active');
+    const layerValues = Object.values(env.layers);
+    const allUp = layerValues.every((l) => l === 'active');
     domains['aiCore'] = {
       status: allUp ? 'healthy' : 'degraded',
-      details: { layerCount: env.layers.length, layers: env.layers },
+      details: { layerCount: layerValues.length, layers: env.layers },
     };
   } else {
     domains['aiCore'] = {
@@ -150,7 +151,7 @@ export async function getPlatformHealth(
   );
   if (mpResult.ok) {
     const rooms = mpResult.data;
-    const degradedRooms = rooms.filter((r) => r.state === 'degraded');
+    const degradedRooms = rooms.filter((r) => r.roomState === 'degraded');
     domains['multiplayer'] = {
       status: degradedRooms.length > 0 ? 'degraded' : 'healthy',
       details: {
@@ -471,7 +472,7 @@ export async function getDomainReadiness(
   if (aiResult.ok) {
     aiChecks.push({
       name: 'all_layers_active',
-      passed: aiResult.data.layers.every((l) => l.status === 'active'),
+      passed: Object.values(aiResult.data.layers).every((l) => l === 'active'),
     });
   }
   domains.push({
@@ -490,7 +491,7 @@ export async function getDomainReadiness(
     passed: mpResult.ok,
   });
   if (mpResult.ok) {
-    const degraded = mpResult.data.filter((r) => r.state === 'degraded');
+    const degraded = mpResult.data.filter((r) => r.roomState === 'degraded');
     mpChecks.push({
       name: 'no_degraded_rooms',
       passed: degraded.length === 0,
