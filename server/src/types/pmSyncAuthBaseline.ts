@@ -132,6 +132,25 @@ export interface AdminReBindRecord {
   auditTimestamp: string;
 }
 
+/** Recorded auth-break escalation for operator recovery (Wave 12). */
+export interface AuthEscalationRecord {
+  escalationId: string;
+  organizationId: string;
+  connectorId: string;
+  reason: string | null;
+  escalatedAt: string;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+}
+
+/** Org-level credential health rollup (Wave 12). */
+export interface CredentialHealthSummary {
+  total: number;
+  healthy: number;
+  failing: number;
+  escalated: number;
+}
+
 // ==========================================
 // DEFAULT ESCALATION LADDER (Decision W5-3)
 // ==========================================

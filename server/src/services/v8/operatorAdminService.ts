@@ -15,6 +15,8 @@ import type {
   SupportNote,
   EmergencyPause,
   FleetHealthSignal,
+  OperatorDashboardView,
+  PausedConnectorRef,
   RecordFleetHealthParams,
   RegisterPackageParams,
   InstallPackageForTenantParams,
@@ -40,6 +42,8 @@ import {
 } from '../../types/operatorAdminSurfaces.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+
+import { getActiveEscalations } from './pmSyncAuthService.js';
 
 // ==========================================
 // HELPERS
@@ -733,4 +737,104 @@ export async function checkFleetHealthSignals(
       breached: currentValue >= threshold,
     };
   });
+}
+
+// ==========================================
+// OPERATOR DASHBOARD & INCIDENTS (WAVE 12)
+// ==========================================
+
+const RECENT_NOTES_DEFAULT_LIMIT = 20;
+
+/**
+ * Aggregate fleet health, pauses, auth escalations, and recent support notes.
+ */
+export async function getOperatorDashboard(organizationId: string): Promise<OperatorDashboardView> {
+  const [fleetHealth, activePauses, unresolvedAuthEscalations] = await Promise.all([
+    getFleetHealth(organizationId),
+    getActiveEmergencyPauses(organizationId),
+    getActiveEscalations(organizationId),
+  ]);
+
+  const noteRows = await dbAll<SupportNoteRow>(
+    `SELECT * FROM v8_support_notes
+     WHERE organization_id = ?
+     ORDER BY created_at DESC
+     LIMIT ?`,
+    [organizationId, RECENT_NOTES_DEFAULT_LIMIT],
+    { fallback: true },
+  );
+
+  return {
+    fleetHealth,
+    activePauses,
+    unresolvedAuthEscalations,
+    recentSupportNotes: (noteRows || []).map(rowToSupportNote),
+  };
+}
+
+/**
+ * Connectors currently covered by an active emergency pause (org-wide or provider-scoped).
+ */
+export async function getPausedConnectors(organizationId: string): Promise<PausedConnectorRef[]> {
+  const pauses = await getActiveEmergencyPauses(organizationId);
+  const fleet = await getFleetHealth(organizationId);
+
+  const candidates: PausedConnectorRef[] = [];
+
+  for (const p of pauses) {
+    if (p.pauseScope === 'all_connectors') {
+      for (const e of fleet) {
+        candidates.push({
+          connectorId: e.connectorId,
+          pauseId: p.pauseId,
+          pauseScope: p.pauseScope,
+          providerKey: p.providerKey,
+          pausedAt: p.pausedAt,
+        });
+      }
+    } else if (p.pauseScope === 'provider_type' && p.providerKey) {
+      for (const e of fleet.filter((entry) => entry.providerKey === p.providerKey)) {
+        candidates.push({
+          connectorId: e.connectorId,
+          pauseId: p.pauseId,
+          pauseScope: p.pauseScope,
+          providerKey: p.providerKey,
+          pausedAt: p.pausedAt,
+        });
+      }
+    }
+  }
+
+  const byConnector = new Map<string, PausedConnectorRef>();
+  for (const ref of candidates) {
+    const prev = byConnector.get(ref.connectorId);
+    if (!prev || ref.pausedAt > prev.pausedAt) {
+      byConnector.set(ref.connectorId, ref);
+    }
+  }
+
+  return [...byConnector.values()];
+}
+
+/**
+ * Support notes with an incident reference in the last N days (default 7).
+ */
+export async function getRecentIncidents(
+  organizationId: string,
+  days?: number,
+): Promise<SupportNote[]> {
+  const windowDays = days === undefined ? 7 : Math.min(Math.max(days, 1), 365);
+  const cutoff = new Date(Date.now() - windowDays * 86_400_000).toISOString();
+
+  const rows = await dbAll<SupportNoteRow>(
+    `SELECT * FROM v8_support_notes
+     WHERE organization_id = ?
+     AND incident_ref IS NOT NULL AND incident_ref != ''
+     AND created_at >= ?
+     ORDER BY created_at DESC`,
+    [organizationId, cutoff],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToSupportNote);
 }

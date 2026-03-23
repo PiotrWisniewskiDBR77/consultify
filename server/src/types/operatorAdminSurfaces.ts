@@ -9,6 +9,8 @@
 
 import { z } from 'zod';
 
+import type { AuthEscalationRecord } from './pmSyncAuthBaseline.js';
+
 // ==========================================
 // ENUMS / LITERALS
 // ==========================================
@@ -138,6 +140,23 @@ export interface FleetHealthSignal {
   threshold: number;
   currentValue: number;
   breached: boolean;
+}
+
+/** Connector affected by an active emergency pause (Wave 12). */
+export interface PausedConnectorRef {
+  connectorId: string;
+  pauseId: string;
+  pauseScope: EmergencyPauseScope;
+  providerKey: string | null;
+  pausedAt: string;
+}
+
+/** Operator control-tower dashboard snapshot (Wave 12). */
+export interface OperatorDashboardView {
+  fleetHealth: ConnectorFleetHealthEntry[];
+  activePauses: EmergencyPause[];
+  unresolvedAuthEscalations: AuthEscalationRecord[];
+  recentSupportNotes: SupportNote[];
 }
 
 // ==========================================

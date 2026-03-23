@@ -14,6 +14,8 @@ import type {
   AdminReBindRecord,
   LastRefreshResult,
   EscalationLevel,
+  AuthEscalationRecord,
+  CredentialHealthSummary,
   StoreCredentialParams,
   RecordRefreshResultParams,
   SetRefreshTimingPolicyParams,
@@ -131,6 +133,34 @@ function rowToReBindRecord(row: ReBindRow): AdminReBindRecord {
     auditTimestamp: row.audit_timestamp,
   };
 }
+
+interface EscalationRow {
+  escalation_id: string;
+  organization_id: string;
+  connector_id: string;
+  reason: string | null;
+  escalated_at: string;
+  resolved_at: string | null;
+  resolved_by: string | null;
+}
+
+function rowToAuthEscalation(row: EscalationRow): AuthEscalationRecord {
+  return {
+    escalationId: row.escalation_id,
+    organizationId: row.organization_id,
+    connectorId: row.connector_id,
+    reason: row.reason,
+    escalatedAt: row.escalated_at,
+    resolvedAt: row.resolved_at,
+    resolvedBy: row.resolved_by,
+  };
+}
+
+const FAILING_REFRESH_RESULTS: ReadonlySet<string> = new Set([
+  'transient_failure',
+  'credential_expired',
+  'scope_revoked',
+]);
 
 // ==========================================
 // CREDENTIAL MANAGEMENT
@@ -548,4 +578,61 @@ export async function getReBindHistory(
   );
 
   return (rows || []).map(rowToReBindRecord);
+}
+
+// ==========================================
+// CREDENTIAL & ESCALATION HEALTH (WAVE 12)
+// ==========================================
+
+/**
+ * Roll up credential refresh health and active auth escalations for an org.
+ */
+export async function getCredentialHealth(organizationId: string): Promise<CredentialHealthSummary> {
+  const rows = await dbAll<CredentialRow>(
+    `SELECT * FROM v8_connection_credentials WHERE organization_id = ?`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const list = rows || [];
+  let failing = 0;
+  let healthy = 0;
+
+  for (const row of list) {
+    const result = row.last_refresh_result;
+    if (result != null && FAILING_REFRESH_RESULTS.has(result)) {
+      failing += 1;
+    } else {
+      healthy += 1;
+    }
+  }
+
+  const escRow = await dbGet<{ n: number }>(
+    `SELECT COUNT(*) as n FROM v8_auth_escalations
+     WHERE organization_id = ? AND resolved_at IS NULL`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  return {
+    total: list.length,
+    healthy,
+    failing,
+    escalated: escRow?.n ?? 0,
+  };
+}
+
+/**
+ * Active (unresolved) auth escalations for operator recovery.
+ */
+export async function getActiveEscalations(organizationId: string): Promise<AuthEscalationRecord[]> {
+  const rows = await dbAll<EscalationRow>(
+    `SELECT * FROM v8_auth_escalations
+     WHERE organization_id = ? AND resolved_at IS NULL
+     ORDER BY escalated_at DESC`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToAuthEscalation);
 }

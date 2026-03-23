@@ -13,6 +13,8 @@ import type {
   ProviderDepthProfile,
   BusinessObjectSyncState,
   ConflictRecord,
+  ConnectorSyncHealthSummary,
+  SyncStatus,
   SetConnectorAuthStateParams,
   RegisterProviderProfileParams,
   UpdateObjectSyncStateParams,
@@ -140,6 +142,7 @@ interface ConflictRow {
   conflict_class: string;
   severity: string;
   resolution_path: string | null;
+  resolution_strategy: string | null;
   resolved_at: string | null;
   resolved_by: string | null;
   created_at: string;
@@ -153,11 +156,23 @@ function rowToConflictRecord(row: ConflictRow): ConflictRecord {
     conflictClass: row.conflict_class as ConflictRecord['conflictClass'],
     severity: row.severity as ConflictRecord['severity'],
     resolutionPath: row.resolution_path as ConflictResolutionPath | null,
+    resolutionStrategy: row.resolution_strategy ?? null,
     resolvedAt: row.resolved_at,
     resolvedBy: row.resolved_by,
     createdAt: row.created_at,
   };
 }
+
+/** Higher rank = worse operational state for rollup health. */
+const SYNC_STATUS_RANK: Record<SyncStatus, number> = {
+  synced: 0,
+  not_synced: 1,
+  pending: 2,
+  stale: 3,
+  conflict: 4,
+  error: 5,
+  dead_letter: 6,
+};
 
 // ==========================================
 // AUTH STATE MANAGEMENT
@@ -527,15 +542,16 @@ export async function recordConflict(
   await dbRun(
     `INSERT INTO v8_conflict_records (
       conflict_id, object_sync_state_id, organization_id,
-      conflict_class, severity, resolution_path,
+      conflict_class, severity, resolution_path, resolution_strategy,
       resolved_at, resolved_by, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       conflictId,
       validated.objectSyncStateId,
       validated.organizationId,
       validated.conflictClass,
       validated.severity,
+      null,
       null,
       null,
       null,
@@ -554,6 +570,7 @@ export async function recordConflict(
     conflictClass: validated.conflictClass,
     severity: validated.severity,
     resolutionPath: null,
+    resolutionStrategy: null,
     resolvedAt: null,
     resolvedBy: null,
     createdAt: now,
@@ -561,12 +578,12 @@ export async function recordConflict(
 }
 
 /**
- * Resolve an existing conflict.
+ * Resolve an existing conflict with a canonical resolution path and strategy label.
  */
 export async function resolveConflict(
   conflictId: string,
+  resolution: ConflictResolutionPath,
   resolvedBy: string,
-  resolutionPath: ConflictResolutionPath,
 ): Promise<ConflictRecord> {
   const now = new Date().toISOString();
 
@@ -585,16 +602,17 @@ export async function resolveConflict(
 
   await dbRun(
     `UPDATE v8_conflict_records
-     SET resolution_path = ?, resolved_at = ?, resolved_by = ?
+     SET resolution_path = ?, resolution_strategy = ?, resolved_at = ?, resolved_by = ?
      WHERE conflict_id = ?`,
-    [resolutionPath, now, resolvedBy, conflictId],
+    [resolution, resolution, now, resolvedBy, conflictId],
   );
 
-  logger.info(`${LOG_PREFIX} Resolved conflict ${conflictId} via ${resolutionPath}`);
+  logger.info(`${LOG_PREFIX} Resolved conflict ${conflictId} via ${resolution}`);
 
   return {
     ...rowToConflictRecord(row),
-    resolutionPath,
+    resolutionPath: resolution,
+    resolutionStrategy: resolution,
     resolvedAt: now,
     resolvedBy,
   };
@@ -612,6 +630,86 @@ export async function getConflictsByObject(
      WHERE object_sync_state_id = ? AND organization_id = ?
      ORDER BY created_at DESC`,
     [objectSyncStateId, orgId],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToConflictRecord);
+}
+
+// ==========================================
+// CONNECTOR HEALTH & CONFLICT RECOVERY (WAVE 12)
+// ==========================================
+
+/**
+ * Aggregate sync status, unresolved conflicts, and auth state for connector truth health.
+ */
+export async function getConnectorHealth(
+  connectorId: string,
+  organizationId: string,
+): Promise<ConnectorSyncHealthSummary> {
+  const auth = await getConnectorAuthState(connectorId, organizationId);
+  const authState: ConnectorSyncHealthSummary['authState'] = auth?.authState ?? 'unknown';
+
+  const syncStates = await getObjectSyncStatesByConnector(connectorId, organizationId);
+
+  let worstRank = -1;
+  let rollupStatus: ConnectorSyncHealthSummary['syncStatus'] = 'unknown';
+  let lastSyncAt: string | null = null;
+
+  for (const s of syncStates) {
+    const rank = SYNC_STATUS_RANK[s.syncStatus];
+    if (rank > worstRank) {
+      worstRank = rank;
+      rollupStatus = s.syncStatus;
+    }
+    if (s.lastSyncedAt) {
+      if (!lastSyncAt || s.lastSyncedAt > lastSyncAt) {
+        lastSyncAt = s.lastSyncedAt;
+      }
+    }
+  }
+
+  const countRow = await dbGet<{ n: number }>(
+    `SELECT COUNT(*) as n
+     FROM v8_conflict_records cr
+     INNER JOIN v8_business_object_sync_states s ON s.sync_state_id = cr.object_sync_state_id
+     WHERE cr.organization_id = ? AND cr.resolved_at IS NULL AND s.connector_id = ?`,
+    [organizationId, connectorId],
+    { fallback: true },
+  );
+  const conflictCount = countRow?.n ?? 0;
+
+  const authHealthy =
+    authState === 'healthy' || authState === 'connected_pending_verification';
+  const syncClean =
+    rollupStatus === 'unknown' ||
+    !['error', 'dead_letter', 'conflict'].includes(rollupStatus);
+  const healthy = authHealthy && conflictCount === 0 && syncClean;
+
+  return {
+    healthy,
+    syncStatus: rollupStatus,
+    conflictCount,
+    lastSyncAt,
+    authState,
+  };
+}
+
+/**
+ * List unresolved sync conflicts for an organization (newest first).
+ */
+export async function getUnresolvedConflicts(
+  organizationId: string,
+  limit?: number,
+): Promise<ConflictRecord[]> {
+  const cap = limit === undefined ? 500 : Math.min(Math.max(limit, 1), 2000);
+
+  const rows = await dbAll<ConflictRow>(
+    `SELECT * FROM v8_conflict_records
+     WHERE organization_id = ? AND resolved_at IS NULL
+     ORDER BY created_at DESC
+     LIMIT ?`,
+    [organizationId, cap],
     { fallback: true },
   );
 

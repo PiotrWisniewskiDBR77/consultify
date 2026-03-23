@@ -145,9 +145,20 @@ export interface ConflictRecord {
   conflictClass: ConflictClass;
   severity: ConflictSeverity;
   resolutionPath: ConflictResolutionPath | null;
+  /** Optional extended resolution label (Wave 12 operator recovery). */
+  resolutionStrategy: string | null;
   resolvedAt: string | null;
   resolvedBy: string | null;
   createdAt: string;
+}
+
+/** Aggregated PM sync truth health for one connector (Wave 12). */
+export interface ConnectorSyncHealthSummary {
+  healthy: boolean;
+  syncStatus: SyncStatus | 'unknown';
+  conflictCount: number;
+  lastSyncAt: string | null;
+  authState: ConnectorAuthState | 'unknown';
 }
 
 // ==========================================
@@ -205,6 +216,7 @@ export const ConflictRecordSchema = z.object({
   conflictClass: z.enum(ConflictClassValues),
   severity: z.enum(ConflictSeverityValues),
   resolutionPath: z.enum(ConflictResolutionPathValues).nullable(),
+  resolutionStrategy: z.string().nullable(),
   resolvedAt: z.string().nullable(),
   resolvedBy: z.string().nullable(),
   createdAt: z.string().min(1),

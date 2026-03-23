@@ -60,6 +60,8 @@ import {
   recordConflict,
   resolveConflict,
   getConflictsByObject,
+  getConnectorHealth as getConnectorSyncHealthSummary,
+  getUnresolvedConflicts,
 } from '../pmSyncTruthService.js';
 
 // ==========================================
@@ -179,6 +181,7 @@ function makeConflictRow(overrides?: Partial<Record<string, unknown>>) {
     conflict_class: 'field_authority_conflict',
     severity: 'degraded',
     resolution_path: null,
+    resolution_strategy: null,
     resolved_at: null,
     resolved_by: null,
     created_at: '2026-03-23T10:00:00.000Z',
@@ -532,6 +535,7 @@ describe('recordConflict', () => {
     expect(result.conflictClass).toBe('field_authority_conflict');
     expect(result.severity).toBe('degraded');
     expect(result.resolutionPath).toBeNull();
+    expect(result.resolutionStrategy).toBeNull();
     expect(result.resolvedAt).toBeNull();
     expect(result.resolvedBy).toBeNull();
     expect(result.conflictId).toBeDefined();
@@ -577,11 +581,12 @@ describe('resolveConflict', () => {
 
     const result = await resolveConflict(
       '00000000-0000-4000-8000-cccccccccccc',
-      USER_ID,
       'manual_review',
+      USER_ID,
     );
 
     expect(result.resolutionPath).toBe('manual_review');
+    expect(result.resolutionStrategy).toBe('manual_review');
     expect(result.resolvedBy).toBe(USER_ID);
     expect(result.resolvedAt).toBeDefined();
     expect(mockDbRun).toHaveBeenCalledOnce();
@@ -591,7 +596,7 @@ describe('resolveConflict', () => {
     mockDbGet.mockResolvedValueOnce(null);
 
     await expect(
-      resolveConflict('nonexistent', USER_ID, 'dismiss'),
+      resolveConflict('nonexistent', 'dismiss', USER_ID),
     ).rejects.toThrow('not found');
   });
 
@@ -601,7 +606,7 @@ describe('resolveConflict', () => {
     );
 
     await expect(
-      resolveConflict('00000000-0000-4000-8000-cccccccccccc', USER_ID, 'dismiss'),
+      resolveConflict('00000000-0000-4000-8000-cccccccccccc', 'dismiss', USER_ID),
     ).rejects.toThrow('already resolved');
   });
 
@@ -609,6 +614,53 @@ describe('resolveConflict', () => {
     for (const path of ConflictResolutionPathValues) {
       expect(ConflictResolutionPathValues).toContain(path);
     }
+  });
+});
+
+describe('getConnectorSyncHealthSummary', () => {
+  it('aggregates auth, worst sync status, conflict count, and last sync', async () => {
+    mockDbGet.mockResolvedValueOnce(makeAuthRow({ auth_state: 'healthy' }));
+
+    mockDbAll.mockResolvedValueOnce([
+      makeSyncStateRow({ sync_status: 'synced', last_synced_at: '2026-03-23T09:00:00.000Z' }),
+      makeSyncStateRow({
+        sync_state_id: '00000000-0000-4000-8000-000000000099',
+        object_id: 'task-999',
+        sync_status: 'stale',
+        last_synced_at: '2026-03-23T11:00:00.000Z',
+      }),
+    ]);
+
+    mockDbGet.mockResolvedValueOnce({ n: 2 });
+
+    const summary = await getConnectorSyncHealthSummary(CONNECTOR_ID, ORG_ID);
+
+    expect(summary.authState).toBe('healthy');
+    expect(summary.syncStatus).toBe('stale');
+    expect(summary.conflictCount).toBe(2);
+    expect(summary.lastSyncAt).toBe('2026-03-23T11:00:00.000Z');
+    expect(summary.healthy).toBe(false);
+  });
+});
+
+describe('getUnresolvedConflicts', () => {
+  it('returns open conflicts for the org with limit', async () => {
+    mockDbAll.mockResolvedValueOnce([
+      makeConflictRow({ resolved_at: null }),
+      makeConflictRow({
+        conflict_id: '00000000-0000-4000-8000-dddddddddddd',
+        resolved_at: null,
+        conflict_class: 'concurrent_edit_conflict',
+      }),
+    ]);
+
+    const rows = await getUnresolvedConflicts(ORG_ID, 10);
+
+    expect(rows).toHaveLength(2);
+    expect(rows.every((r) => r.resolvedAt === null)).toBe(true);
+    const sql = mockDbAll.mock.calls[0][0] as string;
+    expect(sql).toContain('resolved_at IS NULL');
+    expect(mockDbAll.mock.calls[0][1]).toEqual([ORG_ID, 10]);
   });
 });
 
@@ -732,6 +784,7 @@ describe('Zod schema validation', () => {
         conflictClass: 'field_authority_conflict',
         severity: 'blocking',
         resolutionPath: 'manual_review',
+        resolutionStrategy: null,
         resolvedAt: null,
         resolvedBy: null,
         createdAt: '2026-03-23T10:00:00.000Z',
