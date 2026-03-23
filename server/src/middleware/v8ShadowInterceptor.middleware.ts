@@ -1,4 +1,5 @@
 import type { NextFunction, Response } from 'express';
+import jwt from 'jsonwebtoken';
 
 import type { AuthRequest } from './auth.middleware.js';
 import { recordShadowComparison } from '../services/v8/shadowModeService.js';
@@ -47,7 +48,18 @@ export function v8ShadowInterceptor(req: AuthRequest, res: Response, next: NextF
     return;
   }
 
-  const orgId = req.organizationId;
+  let orgId = req.organizationId;
+  if (!orgId) {
+    try {
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith('Bearer ')) {
+        const decoded = jwt.decode(authHeader.slice(7)) as { organizationId?: string } | null;
+        orgId = decoded?.organizationId;
+      }
+    } catch {
+      // ignore
+    }
+  }
   if (!orgId) {
     next();
     return;
