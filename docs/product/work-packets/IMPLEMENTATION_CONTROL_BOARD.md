@@ -2601,3 +2601,81 @@ railway redeploy -y
 - This is NOT `fully closed`
 - This is NOT approval for multi-org rollout
 - Pilot is shadow-mode only until explicit progression approval
+
+---
+
+## Report #14 — Single-Org Shadow Pilot Launch
+
+**Date:** 2026-03-23
+**Status:** `PILOT LIVE`
+**Reporting mode:** Single-Org Pilot Board
+
+### 1. Pre-Pilot Start Gate
+
+| Gate | Status |
+|------|--------|
+| Password rotation | PASS — old `123456` rejected, new 24-char bcrypt-hashed |
+| Secrets audit | PASS — no secrets in committed artifacts |
+| Flags for PM Test GmbH | PASS — `chat=true`, `ai_core=true` |
+| V8 system health | PASS — all 6 domains healthy + ready |
+| Shadow mode active | PASS — 43 comparisons, 0% error rate |
+| Emergency stop path | PASS — Railway CLI verified |
+| General infrastructure | PASS — app ok, DB connected, Redis connected |
+
+**All 7 gates: PASS**
+
+### 2. Bug Fix During Gate
+
+- **Issue:** `platformHealthService.ts` compared AI Core layer status against `'active'` but the actual status value is `'healthy'`
+- **Fix:** Accept both `'healthy'` and `'active'` as valid layer statuses in both health aggregation and readiness check paths
+- **Deployed:** 2026-03-23, verified on staging
+- **Impact:** aiCore domain now correctly reports `healthy` and `ready=True`
+
+### 3. Pilot Configuration
+
+| Parameter | Value |
+|-----------|-------|
+| Organization | PM Test GmbH |
+| Org ID | `15f69780-675c-4f32-9230-82a4646f15d8` |
+| Modules | Chat + AI Core |
+| Mode | Shadow only |
+| Start | `2026-03-23T21:53:50Z` |
+| Duration | 7 days minimum |
+
+### 4. Pilot Day 0 (Launch) Board
+
+| Section | Value |
+|---------|-------|
+| Pilot day | Day 0 (launch) |
+| Traffic / comparison volume | 43 comparisons (pre-pilot baseline) |
+| V8 error rate | 0% |
+| Legacy health status | healthy |
+| Shadow mismatch summary | 43 total, all format-only |
+| Operator observations | All gates passed, system fully green |
+| Incidents / anomalies | aiCore health check bug fixed and deployed |
+| Abort risk status | GREEN |
+| Current pilot verdict | ON TRACK |
+| Recommended next action | Day 1 monitoring tomorrow 09:00 CET |
+
+### 5. Success Criteria
+
+| Criterion | Threshold | Current |
+|-----------|-----------|---------|
+| V8 error rate | < 5% | 0% |
+| Legacy health | No degradation | healthy |
+| Comparison volume | 500+ by Day 7 | 43 (baseline) |
+| V8 incidents | Zero | Zero |
+| Monitoring stability | Continuous | Active |
+| Mismatch quality | All format-only | All format-only |
+| Latency delta | < 2x | 1.04x (134ms vs 129ms) |
+
+### 6. What this report does NOT claim
+
+- This is NOT `pilot complete`
+- This is NOT `active-mode ready`
+- This is NOT `production-ready`
+- Day 0 is launch confirmation only — real pilot evidence starts Day 1
+
+### 7. Full pilot plan
+
+See: `docs/product/work-packets/V8_SINGLE_ORG_SHADOW_PILOT.md`
