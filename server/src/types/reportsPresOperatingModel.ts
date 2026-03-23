@@ -241,3 +241,51 @@ export const SetAIGovernanceConfigParamsSchema = z.object({
   evalGateRef: z.string().nullable().optional().default(null),
   qualityThresholds: z.record(z.string(), z.unknown()).optional().default({}),
 });
+
+// ==========================================
+// OUTPUT RUNTIME — delivery, export, quality (Wave 17)
+// ==========================================
+
+export const OutputExportFormatValues = ['pdf', 'pptx', 'xlsx', 'html'] as const;
+export type OutputExportFormat = (typeof OutputExportFormatValues)[number];
+
+export interface OutputQualityScores {
+  contentScore: number;
+  designScore: number;
+  dataAccuracy: number;
+  overallScore: number;
+}
+
+export interface OutputExportRecord {
+  exportId: string;
+  artifactId: string;
+  organizationId: string;
+  format: OutputExportFormat;
+  requestedBy: string;
+  status: string;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface DeliveryPipelineSummary {
+  artifactsByState: Record<string, number>;
+  artifactsByOutputType: Record<string, number>;
+  averageQualityScore: number | null;
+  pendingExports: number;
+}
+
+export interface RecurringProgramHealth {
+  programId: string;
+  organizationId: string;
+  isActive: boolean;
+  lastExecution: string | null;
+  nextScheduled: string | null;
+  /** 0–1 when derivable from export outcomes for artifacts using the program template; otherwise null */
+  successRate: number | null;
+}
+
+export interface TemplateUsageStat {
+  familyId: string;
+  familyName: TemplateFamilyName;
+  usageCount: number;
+}

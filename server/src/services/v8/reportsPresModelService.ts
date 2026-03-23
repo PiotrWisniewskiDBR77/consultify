@@ -17,19 +17,29 @@ import { v4 as uuidv4 } from 'uuid';
 import type {
   CreateOutputArtifactParams,
   CreateRecurringProgramParams,
+  DeliveryPipelineSummary,
   OutputAIGovernanceConfig,
   OutputArtifact,
   OutputDeliveryState,
+  OutputExportFormat,
+  OutputExportRecord,
+  OutputQualityScores,
+  OutputType,
   RecurringOutputProgram,
+  RecurringProgramHealth,
   RegisterTemplateFamilyParams,
   SetAIGovernanceConfigParams,
   TemplateFamily,
+  TemplateUsageStat,
 } from '../../types/reportsPresOperatingModel.js';
 import {
   CreateOutputArtifactParamsSchema,
   CreateRecurringProgramParamsSchema,
   DELIVERY_TERMINAL_STATES,
   DELIVERY_VALID_TRANSITIONS,
+  OutputExportFormatValues,
+  OutputTypeValues,
+  OutputDeliveryStateValues,
   RegisterTemplateFamilyParamsSchema,
   SetAIGovernanceConfigParamsSchema,
 } from '../../types/reportsPresOperatingModel.js';
@@ -102,6 +112,46 @@ interface GovernanceConfigRow {
   quality_thresholds: string;
   created_at: string;
   updated_at: string;
+}
+
+interface ArtifactRowWithQuality extends ArtifactRow {
+  quality_scores: string | null;
+}
+
+interface ExportRow {
+  export_id: string;
+  artifact_id: string;
+  organization_id: string;
+  format: string;
+  requested_by: string;
+  status: string;
+  created_at: string;
+  completed_at: string | null;
+}
+
+interface CountGroupRow {
+  delivery_state?: string;
+  output_type?: string;
+  cnt: number;
+}
+
+interface AvgQualityRow {
+  avg: number | null;
+}
+
+interface CountOnlyRow {
+  cnt: number;
+}
+
+interface TemplateUsageRow {
+  family_id: string;
+  family_name: string;
+  usage_count: number;
+}
+
+interface ExportStatusCountRow {
+  status: string;
+  c: number;
 }
 
 // ==========================================
@@ -490,4 +540,416 @@ export async function getAIGovernanceConfig(
 
   if (!row) return null;
   return rowToGovernanceConfig(row);
+}
+
+// ==========================================
+// PUBLIC API — Output runtime (Wave 17)
+// ==========================================
+
+const OUTPUT_EXPORT_FORMAT_SET = new Set<string>(OutputExportFormatValues);
+
+function clampArtifactQueryLimit(limit?: number): number {
+  const raw = limit === undefined ? 100 : limit;
+  return Math.min(Math.max(raw, 1), 1000);
+}
+
+function assertQualityScores(scores: OutputQualityScores): void {
+  const keys: (keyof OutputQualityScores)[] = [
+    'contentScore',
+    'designScore',
+    'dataAccuracy',
+    'overallScore',
+  ];
+  for (const k of keys) {
+    if (typeof scores[k] !== 'number' || !Number.isFinite(scores[k])) {
+      throw new Error(`Invalid quality score field: ${String(k)}`);
+    }
+  }
+}
+
+function rowToExport(row: ExportRow): OutputExportRecord {
+  return {
+    exportId: row.export_id,
+    artifactId: row.artifact_id,
+    organizationId: row.organization_id,
+    format: row.format as OutputExportFormat,
+    requestedBy: row.requested_by,
+    status: row.status,
+    createdAt: row.created_at,
+    completedAt: row.completed_at,
+  };
+}
+
+export async function getArtifactsByOrg(
+  organizationId: string,
+  outputType?: OutputType,
+  state?: OutputDeliveryState,
+  limit?: number,
+): Promise<OutputArtifact[]> {
+  if (
+    outputType !== undefined &&
+    !(OutputTypeValues as readonly string[]).includes(outputType)
+  ) {
+    throw new Error(`Invalid outputType filter: ${outputType}`);
+  }
+  if (
+    state !== undefined &&
+    !(OutputDeliveryStateValues as readonly string[]).includes(state)
+  ) {
+    throw new Error(`Invalid delivery state filter: ${state}`);
+  }
+
+  const lim = clampArtifactQueryLimit(limit);
+  const clauses: string[] = ['organization_id = ?'];
+  const params: unknown[] = [organizationId];
+
+  if (outputType !== undefined) {
+    clauses.push('output_type = ?');
+    params.push(outputType);
+  }
+  if (state !== undefined) {
+    clauses.push('delivery_state = ?');
+    params.push(state);
+  }
+
+  const sql = `SELECT artifact_id, organization_id, output_type, delivery_state,
+      template_family_ref, source_initiative_id, ai_governance_preset_ref,
+      created_by, created_at, last_transition_at
+    FROM v8_output_artifacts
+    WHERE ${clauses.join(' AND ')}
+    ORDER BY created_at DESC
+    LIMIT ?`;
+
+  params.push(lim);
+
+  const rows = await dbAll<ArtifactRow>(sql, params, { fallback: true });
+  return (rows || []).map(rowToArtifact);
+}
+
+export async function getArtifactsByTemplate(
+  templateFamilyId: string,
+  organizationId: string,
+  limit?: number,
+): Promise<OutputArtifact[]> {
+  const lim = clampArtifactQueryLimit(limit);
+  const rows = await dbAll<ArtifactRow>(
+    `SELECT artifact_id, organization_id, output_type, delivery_state,
+      template_family_ref, source_initiative_id, ai_governance_preset_ref,
+      created_by, created_at, last_transition_at
+    FROM v8_output_artifacts
+    WHERE template_family_ref = ? AND organization_id = ?
+    ORDER BY created_at DESC
+    LIMIT ?`,
+    [templateFamilyId, organizationId, lim],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToArtifact);
+}
+
+export async function cloneArtifact(
+  artifactId: string,
+  organizationId: string,
+  clonedBy: string,
+): Promise<OutputArtifact> {
+  const row = await dbGet<ArtifactRowWithQuality>(
+    `SELECT * FROM v8_output_artifacts
+     WHERE artifact_id = ? AND organization_id = ?`,
+    [artifactId, organizationId],
+    { fallback: true },
+  );
+
+  if (!row) {
+    throw new Error(`Artifact ${artifactId} not found in organization ${organizationId}`);
+  }
+
+  const newId = uuidv4();
+  const now = new Date().toISOString();
+
+  await dbRun(
+    `INSERT INTO v8_output_artifacts (
+      artifact_id, organization_id, output_type, delivery_state,
+      template_family_ref, source_initiative_id, ai_governance_preset_ref,
+      created_by, created_at, last_transition_at, quality_scores
+    ) VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, NULL)`,
+    [
+      newId,
+      organizationId,
+      row.output_type,
+      row.template_family_ref,
+      row.source_initiative_id,
+      row.ai_governance_preset_ref,
+      clonedBy,
+      now,
+      now,
+    ],
+  );
+
+  logger.info(`${LOG_PREFIX} Cloned artifact ${artifactId} → ${newId} for org ${organizationId}`);
+
+  return {
+    artifactId: newId,
+    organizationId,
+    outputType: row.output_type as OutputArtifact['outputType'],
+    deliveryState: 'draft',
+    templateFamilyRef: row.template_family_ref,
+    sourceInitiativeId: row.source_initiative_id,
+    aiGovernancePresetRef: row.ai_governance_preset_ref,
+    createdBy: clonedBy,
+    createdAt: now,
+    lastTransitionAt: now,
+  };
+}
+
+export async function scoreArtifactQuality(
+  artifactId: string,
+  organizationId: string,
+  scores: OutputQualityScores,
+): Promise<void> {
+  assertQualityScores(scores);
+  const existing = await getOutputArtifact(artifactId, organizationId);
+  if (!existing) {
+    throw new Error(`Artifact ${artifactId} not found in organization ${organizationId}`);
+  }
+
+  const payload = JSON.stringify({
+    ...scores,
+    recordedAt: new Date().toISOString(),
+  });
+
+  await dbRun(
+    `UPDATE v8_output_artifacts
+     SET quality_scores = ?
+     WHERE artifact_id = ? AND organization_id = ?`,
+    [payload, artifactId, organizationId],
+  );
+
+  logger.info(`${LOG_PREFIX} Recorded quality scores for artifact ${artifactId}`);
+}
+
+export async function getQualityScores(
+  artifactId: string,
+  organizationId: string,
+): Promise<OutputQualityScores | null> {
+  const row = await dbGet<{ quality_scores: string | null }>(
+    `SELECT quality_scores FROM v8_output_artifacts
+     WHERE artifact_id = ? AND organization_id = ?`,
+    [artifactId, organizationId],
+    { fallback: true },
+  );
+
+  if (!row?.quality_scores) return null;
+
+  const parsed = safeJsonParse<Record<string, unknown>>(row.quality_scores, {});
+  const out: OutputQualityScores = {
+    contentScore: Number(parsed.contentScore),
+    designScore: Number(parsed.designScore),
+    dataAccuracy: Number(parsed.dataAccuracy),
+    overallScore: Number(parsed.overallScore),
+  };
+
+  if (
+    !Number.isFinite(out.contentScore) ||
+    !Number.isFinite(out.designScore) ||
+    !Number.isFinite(out.dataAccuracy) ||
+    !Number.isFinite(out.overallScore)
+  ) {
+    return null;
+  }
+
+  return out;
+}
+
+export async function scheduleExport(
+  artifactId: string,
+  organizationId: string,
+  format: OutputExportFormat,
+  requestedBy: string,
+): Promise<OutputExportRecord> {
+  if (!OUTPUT_EXPORT_FORMAT_SET.has(format)) {
+    throw new Error(`Invalid export format: ${format}`);
+  }
+
+  const artifact = await getOutputArtifact(artifactId, organizationId);
+  if (!artifact) {
+    throw new Error(`Artifact ${artifactId} not found in organization ${organizationId}`);
+  }
+
+  const exportId = uuidv4();
+  const now = new Date().toISOString();
+
+  const record: OutputExportRecord = {
+    exportId,
+    artifactId,
+    organizationId,
+    format,
+    requestedBy,
+    status: 'pending',
+    createdAt: now,
+    completedAt: null,
+  };
+
+  await dbRun(
+    `INSERT INTO v8_output_exports (
+      export_id, artifact_id, organization_id, format,
+      requested_by, status, created_at, completed_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      exportId,
+      artifactId,
+      organizationId,
+      format,
+      requestedBy,
+      'pending',
+      now,
+      null,
+    ],
+  );
+
+  logger.info(`${LOG_PREFIX} Scheduled ${format} export ${exportId} for artifact ${artifactId}`);
+  return record;
+}
+
+export async function getExportHistory(
+  artifactId: string,
+  organizationId: string,
+): Promise<OutputExportRecord[]> {
+  const rows = await dbAll<ExportRow>(
+    `SELECT * FROM v8_output_exports
+     WHERE artifact_id = ? AND organization_id = ?
+     ORDER BY created_at DESC`,
+    [artifactId, organizationId],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToExport);
+}
+
+export async function getDeliveryPipeline(organizationId: string): Promise<DeliveryPipelineSummary> {
+  const stateRows = await dbAll<CountGroupRow>(
+    `SELECT delivery_state, COUNT(*) as cnt FROM v8_output_artifacts
+     WHERE organization_id = ? GROUP BY delivery_state`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const typeRows = await dbAll<CountGroupRow>(
+    `SELECT output_type, COUNT(*) as cnt FROM v8_output_artifacts
+     WHERE organization_id = ? GROUP BY output_type`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const avgRow = await dbGet<AvgQualityRow>(
+    `SELECT AVG(CAST(json_extract(quality_scores, '$.overallScore') AS REAL)) as avg
+     FROM v8_output_artifacts
+     WHERE organization_id = ?
+       AND quality_scores IS NOT NULL
+       AND json_extract(quality_scores, '$.overallScore') IS NOT NULL`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const pendingRow = await dbGet<CountOnlyRow>(
+    `SELECT COUNT(*) as cnt FROM v8_output_exports
+     WHERE organization_id = ? AND status = 'pending'`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const artifactsByState: Record<string, number> = {};
+  for (const r of stateRows || []) {
+    if (r.delivery_state !== undefined) {
+      artifactsByState[r.delivery_state] = r.cnt;
+    }
+  }
+
+  const artifactsByOutputType: Record<string, number> = {};
+  for (const r of typeRows || []) {
+    if (r.output_type !== undefined) {
+      artifactsByOutputType[r.output_type] = r.cnt;
+    }
+  }
+
+  let averageQualityScore: number | null = null;
+  if (avgRow?.avg != null && Number.isFinite(Number(avgRow.avg))) {
+    averageQualityScore = Number(avgRow.avg);
+  }
+
+  return {
+    artifactsByState,
+    artifactsByOutputType,
+    averageQualityScore,
+    pendingExports: pendingRow?.cnt ?? 0,
+  };
+}
+
+export async function getRecurringProgramHealth(
+  programId: string,
+  organizationId: string,
+): Promise<RecurringProgramHealth | null> {
+  const row = await dbGet<RecurringProgramRow>(
+    `SELECT * FROM v8_recurring_output_programs
+     WHERE program_id = ? AND organization_id = ?`,
+    [programId, organizationId],
+    { fallback: true },
+  );
+
+  if (!row) return null;
+
+  let successRate: number | null = null;
+  if (row.template_family_ref) {
+    const statusRows = await dbAll<ExportStatusCountRow>(
+      `SELECT e.status as status, COUNT(*) as c
+       FROM v8_output_exports e
+       INNER JOIN v8_output_artifacts a
+         ON a.artifact_id = e.artifact_id AND a.organization_id = e.organization_id
+       WHERE e.organization_id = ?
+         AND a.template_family_ref = ?
+         AND e.status IN ('completed', 'failed')`,
+      [organizationId, row.template_family_ref],
+      { fallback: true },
+    );
+
+    let completed = 0;
+    let failed = 0;
+    for (const s of statusRows || []) {
+      if (s.status === 'completed') completed += s.c;
+      if (s.status === 'failed') failed += s.c;
+    }
+    const finished = completed + failed;
+    if (finished > 0) {
+      successRate = completed / finished;
+    }
+  }
+
+  return {
+    programId: row.program_id,
+    organizationId: row.organization_id,
+    isActive: row.is_active === 1,
+    lastExecution: row.last_run_at,
+    nextScheduled: row.next_run_at,
+    successRate,
+  };
+}
+
+export async function getTemplateUsageStats(organizationId: string): Promise<TemplateUsageStat[]> {
+  const rows = await dbAll<TemplateUsageRow>(
+    `SELECT tf.family_id, tf.family_name,
+            COUNT(a.artifact_id) as usage_count
+     FROM v8_template_families tf
+     LEFT JOIN v8_output_artifacts a
+       ON a.template_family_ref = tf.family_id AND a.organization_id = tf.organization_id
+     WHERE tf.organization_id = ?
+     GROUP BY tf.family_id, tf.family_name
+     ORDER BY usage_count DESC, tf.family_name ASC`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  return (rows || []).map((r) => ({
+    familyId: r.family_id,
+    familyName: r.family_name as TemplateUsageStat['familyName'],
+    usageCount: r.usage_count,
+  }));
 }
