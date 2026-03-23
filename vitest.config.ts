@@ -229,6 +229,8 @@ export default defineConfig({
       'tests/performance/**/*.{test,spec}.{js,ts,jsx,tsx}',
       // Table Platform service tests
       'server/src/services/**/__tests__/*.{test,spec}.{js,ts,jsx,tsx}',
+      // V8 integration tests (nested under __tests__/integration/)
+      'server/src/services/**/__tests__/**/*.{test,spec}.{js,ts,jsx,tsx}',
       // server/tests excluded - require full DB schema
       // Run separately with specialized setup
       // 'server/tests/**/*.{test,spec}.{js,ts,jsx,tsx}',
