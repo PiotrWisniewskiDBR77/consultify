@@ -92,7 +92,7 @@ export async function getV8Flags(organizationId: string): Promise<Record<string,
   if (!hasTable) return {};
 
   const rows = await dbAll<{ module: string; enabled: number }>(
-    `SELECT module, enabled FROM v8_feature_flags WHERE organization_id = $1`,
+    `SELECT module, enabled FROM v8.v8_feature_flags WHERE organization_id = $1`,
     [organizationId],
   );
 
@@ -123,7 +123,7 @@ export async function setV8OrgFlag(
   const flagId = `${organizationId}:${module}`;
 
   await dbRun(
-    `INSERT INTO v8_feature_flags (flag_id, organization_id, module, enabled, updated_at, updated_by)
+    `INSERT INTO v8.v8_feature_flags (flag_id, organization_id, module, enabled, updated_at, updated_by)
      VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (organization_id, module)
      DO UPDATE SET enabled = $4, updated_at = $5, updated_by = $6`,
@@ -143,7 +143,7 @@ export async function isV8ShadowMode(organizationId: string): Promise<boolean> {
   if (!hasTable) return false;
 
   const row = await dbGet<{ enabled: number }>(
-    `SELECT enabled FROM v8_feature_flags WHERE organization_id = $1 AND module = 'shadow_mode'`,
+    `SELECT enabled FROM v8.v8_feature_flags WHERE organization_id = $1 AND module = 'shadow_mode'`,
     [organizationId],
   );
 
@@ -161,7 +161,7 @@ export async function getAllOrgFlags(): Promise<
     module: string;
     enabled: number;
     updated_at: string;
-  }>(`SELECT organization_id, module, enabled, updated_at FROM v8_feature_flags ORDER BY organization_id, module`);
+  }>(`SELECT organization_id, module, enabled, updated_at FROM v8.v8_feature_flags ORDER BY organization_id, module`);
 
   return rows.map((r) => ({
     organizationId: r.organization_id,

@@ -439,13 +439,16 @@ export async function transaction(statements: TransactionStatement[]): Promise<T
 }
 
 /**
- * Check if a table exists (PostgreSQL)
+ * Check if a table exists (PostgreSQL).
+ * Tables prefixed with `v8_` are looked up in the `v8` schema first,
+ * then fall back to `public`. All other tables check `public` only.
  */
 export async function tableExists(tableName: string): Promise<boolean> {
+  const schemas = tableName.startsWith('v8_') ? ['v8', 'public'] : ['public'];
   const result = await get<{ table_name: string }>(
-    `SELECT table_name FROM information_schema.tables 
-     WHERE table_schema = 'public' AND table_type = 'BASE TABLE' AND table_name = $1`,
-    [tableName]
+    `SELECT table_name FROM information_schema.tables
+     WHERE table_schema = ANY($1) AND table_type = 'BASE TABLE' AND table_name = $2`,
+    [schemas, tableName]
   );
   return result !== null;
 }

@@ -89,7 +89,7 @@ export async function recordShadowComparison(params: {
   }
 
   await dbRun(
-    `INSERT INTO v8_shadow_comparisons
+    `INSERT INTO v8.v8_shadow_comparisons
      (comparison_id, organization_id, endpoint, method, legacy_status_code, v8_status_code,
       legacy_response_time_ms, v8_response_time_ms, responses_match, diff_summary,
       legacy_response_body, v8_response_body, created_at)
@@ -132,7 +132,7 @@ export async function getShadowStats(organizationId: string): Promise<ShadowMode
        AVG(legacy_response_time_ms) as avg_legacy,
        AVG(v8_response_time_ms) as avg_v8,
        SUM(CASE WHEN v8_status_code >= 400 THEN 1 ELSE 0 END) as v8_errors
-     FROM v8_shadow_comparisons
+     FROM v8.v8_shadow_comparisons
      WHERE organization_id = $1`,
     [organizationId],
   ) as any;
@@ -142,7 +142,7 @@ export async function getShadowStats(organizationId: string): Promise<ShadowMode
 
   const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const recentMismatches = await dbGet(
-    `SELECT COUNT(*) as count FROM v8_shadow_comparisons
+    `SELECT COUNT(*) as count FROM v8.v8_shadow_comparisons
      WHERE organization_id = $1 AND responses_match = 0
      AND created_at > $2`,
     [organizationId, cutoff24h],
@@ -172,7 +172,7 @@ export async function getRecentComparisons(
             legacy_status_code, v8_status_code,
             legacy_response_time_ms, v8_response_time_ms,
             responses_match, diff_summary, created_at
-     FROM v8_shadow_comparisons
+     FROM v8.v8_shadow_comparisons
      WHERE organization_id = $1
      ORDER BY created_at DESC
      LIMIT $2`,
