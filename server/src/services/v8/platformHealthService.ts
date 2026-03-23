@@ -133,7 +133,7 @@ export async function getPlatformHealth(
   if (aiResult.ok) {
     const env = aiResult.data;
     const layerValues = Object.values(env.layers);
-    const allUp = layerValues.every((l) => l === 'active');
+    const allUp = layerValues.every((l) => l === 'healthy' || l === 'active');
     domains['aiCore'] = {
       status: allUp ? 'healthy' : 'degraded',
       details: { layerCount: layerValues.length, layers: env.layers },
