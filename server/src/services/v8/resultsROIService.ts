@@ -27,6 +27,13 @@ import type {
   RecordROIRealizationParams,
   CreateExecutiveReviewPackParams,
   InitiateReconciliationParams,
+  DeviationSeverity,
+  KPIScorecardSummary,
+  KPITrendPoint,
+  ROIDashboardSummary,
+  ReviewPackTimelineEntry,
+  ReconciliationHealthSummary,
+  ResultsDashboardSnapshot,
 } from '../../types/resultsROIContinuity.js';
 import {
   CreateKPIParamsSchema,
@@ -37,6 +44,7 @@ import {
   KPI_STATUS_TRANSITIONS,
   KPIStatusValues,
   ReconciliationStatusValues,
+  DeviationSeverityValues,
 } from '../../types/resultsROIContinuity.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
@@ -86,6 +94,11 @@ interface DeviationRow {
   action_required: string;
   escalated_to: string | null;
   created_at: string;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  resolution: string | null;
+  observed_actual: number | null;
+  observed_target: number | null;
 }
 
 interface ROIRow {
@@ -155,6 +168,11 @@ function rowToDeviation(row: DeviationRow): DeviationRecord {
     actionRequired: row.action_required,
     escalatedTo: row.escalated_to,
     createdAt: row.created_at,
+    observedActual: row.observed_actual ?? null,
+    observedTarget: row.observed_target ?? null,
+    resolvedAt: row.resolved_at ?? null,
+    resolvedBy: row.resolved_by ?? null,
+    resolution: row.resolution ?? null,
   };
 }
 
@@ -338,13 +356,20 @@ export async function recordDeviation(
     actionRequired: validated.actionRequired,
     escalatedTo: validated.escalatedTo ?? null,
     createdAt: now,
+    observedActual: validated.observedActual ?? null,
+    observedTarget: validated.observedTarget ?? null,
+    resolvedAt: null,
+    resolvedBy: null,
+    resolution: null,
   };
 
   await dbRun(
     `INSERT INTO v8_deviation_records (
       deviation_id, organization_id, kpi_id, deviation_type,
-      severity, action_required, escalated_to, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      severity, action_required, escalated_to, created_at,
+      resolved_at, resolved_by, resolution,
+      observed_actual, observed_target
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       record.deviationId,
       record.organizationId,
@@ -354,6 +379,11 @@ export async function recordDeviation(
       record.actionRequired,
       record.escalatedTo,
       record.createdAt,
+      record.resolvedAt,
+      record.resolvedBy,
+      record.resolution,
+      record.observedActual,
+      record.observedTarget,
     ],
   );
 
@@ -593,4 +623,422 @@ export async function resolveReconciliation(
     `${LOG_PREFIX} Reconciliation ${reconciliationId} resolved to ${newStatus}`,
   );
   return updated;
+}
+
+// ==========================================
+// Runtime aggregates (Wave 19)
+// ==========================================
+
+function emptyKpiStatusCounts(): Partial<Record<KPIStatus, number>> {
+  return Object.fromEntries(KPIStatusValues.map((s) => [s, 0])) as Partial<
+    Record<KPIStatus, number>
+  >;
+}
+
+function emptyReconciliationStatusCounts(): Partial<Record<ReconciliationStatus, number>> {
+  return Object.fromEntries(ReconciliationStatusValues.map((s) => [s, 0])) as Partial<
+    Record<ReconciliationStatus, number>
+  >;
+}
+
+/**
+ * KPI scorecard: counts, status/category breakdown, average capped achievement vs target.
+ */
+export async function getKPIScorecard(organizationId: string): Promise<KPIScorecardSummary> {
+  const totalRow = await dbGet<{ total: number }>(
+    `SELECT COUNT(*) AS total FROM v8_kpi_definitions WHERE organization_id = ?`,
+    [organizationId],
+    { fallback: true },
+  );
+  const totalKpis = totalRow?.total ?? 0;
+
+  const statusRows = await dbAll<{ status: string; cnt: number }>(
+    `SELECT status, COUNT(*) AS cnt FROM v8_kpi_definitions
+     WHERE organization_id = ? GROUP BY status`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const categoryRows = await dbAll<{ metric_type: string; cnt: number }>(
+    `SELECT metric_type, COUNT(*) AS cnt FROM v8_kpi_definitions
+     WHERE organization_id = ? GROUP BY metric_type`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const avgRow = await dbGet<{ avg_rate: number | null }>(
+    `SELECT AVG(
+       CASE
+         WHEN target_value IS NOT NULL AND target_value != 0 AND current_value IS NOT NULL
+         THEN MIN(1.0, current_value / target_value)
+         ELSE NULL
+       END
+     ) AS avg_rate
+     FROM v8_kpi_definitions WHERE organization_id = ?`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const byStatus = emptyKpiStatusCounts();
+  for (const r of statusRows || []) {
+    const st = r.status as KPIStatus;
+    if (KPIStatusValues.includes(st)) {
+      byStatus[st] = r.cnt;
+    }
+  }
+
+  const byCategory: Partial<Record<KPIDefinition['metricType'], number>> = {};
+  for (const r of categoryRows || []) {
+    byCategory[r.metric_type as KPIDefinition['metricType']] = r.cnt;
+  }
+
+  return {
+    organizationId,
+    totalKpis,
+    byStatus,
+    byCategory,
+    averageTargetAchievementRate:
+      avgRow?.avg_rate != null && !Number.isNaN(avgRow.avg_rate) ? avgRow.avg_rate : null,
+  };
+}
+
+interface TrendJoinRow {
+  created_at: string;
+  observed_actual: number | null;
+  observed_target: number | null;
+  current_value: number | null;
+  target_value: number | null;
+}
+
+/**
+ * KPI value trend from deviation history (snapshots + KPI fallbacks).
+ */
+export async function getKPITrend(
+  kpiId: string,
+  organizationId: string,
+  periods?: number,
+): Promise<KPITrendPoint[]> {
+  const rows = await dbAll<TrendJoinRow>(
+    `SELECT d.created_at, d.observed_actual, d.observed_target,
+            k.current_value, k.target_value
+     FROM v8_deviation_records d
+     INNER JOIN v8_kpi_definitions k
+       ON k.kpi_id = d.kpi_id AND k.organization_id = d.organization_id
+     WHERE d.kpi_id = ? AND d.organization_id = ?
+     ORDER BY d.created_at ASC`,
+    [kpiId, organizationId],
+    { fallback: true },
+  );
+
+  let points: KPITrendPoint[] = (rows || []).map((row) => {
+    const actualValue =
+      row.observed_actual != null ? row.observed_actual : row.current_value;
+    const targetValue =
+      row.observed_target != null ? row.observed_target : row.target_value;
+    const deviation =
+      actualValue != null && targetValue != null ? actualValue - targetValue : null;
+    return {
+      period: row.created_at,
+      actualValue,
+      targetValue,
+      deviation,
+    };
+  });
+
+  if (periods != null && periods > 0 && points.length > periods) {
+    points = points.slice(-periods);
+  }
+
+  return points;
+}
+
+/**
+ * Unresolved deviation governance items for an organization.
+ */
+export async function getActiveDeviations(
+  organizationId: string,
+  severity?: DeviationSeverity,
+): Promise<DeviationRecord[]> {
+  if (severity != null && !DeviationSeverityValues.includes(severity)) {
+    throw new Error(`Invalid deviation severity: ${severity}`);
+  }
+
+  const rows = severity
+    ? await dbAll<DeviationRow>(
+        `SELECT * FROM v8_deviation_records
+         WHERE organization_id = ? AND resolved_at IS NULL AND severity = ?
+         ORDER BY created_at DESC`,
+        [organizationId, severity],
+        { fallback: true },
+      )
+    : await dbAll<DeviationRow>(
+        `SELECT * FROM v8_deviation_records
+         WHERE organization_id = ? AND resolved_at IS NULL
+         ORDER BY created_at DESC`,
+        [organizationId],
+        { fallback: true },
+      );
+
+  return (rows || []).map((row) => rowToDeviation(normalizeDeviationRow(row)));
+}
+
+function normalizeDeviationRow(row: DeviationRow): DeviationRow {
+  return {
+    ...row,
+    resolved_at: row.resolved_at ?? null,
+    resolved_by: row.resolved_by ?? null,
+    resolution: row.resolution ?? null,
+    observed_actual: row.observed_actual ?? null,
+    observed_target: row.observed_target ?? null,
+  };
+}
+
+/**
+ * Close the loop on a deviation record.
+ */
+export async function resolveDeviation(
+  deviationId: string,
+  organizationId: string,
+  resolution: string,
+  resolvedBy: string,
+): Promise<DeviationRecord> {
+  const row = await dbGet<DeviationRow>(
+    `SELECT * FROM v8_deviation_records
+     WHERE deviation_id = ? AND organization_id = ?`,
+    [deviationId, organizationId],
+    { fallback: true },
+  );
+
+  if (!row) {
+    throw new Error(`Deviation ${deviationId} not found in organization ${organizationId}`);
+  }
+
+  const now = new Date().toISOString();
+
+  await dbRun(
+    `UPDATE v8_deviation_records
+     SET resolved_at = ?, resolved_by = ?, resolution = ?
+     WHERE deviation_id = ? AND organization_id = ?`,
+    [now, resolvedBy, resolution, deviationId, organizationId],
+  );
+
+  const updated = normalizeDeviationRow({
+    ...row,
+    resolved_at: now,
+    resolved_by: resolvedBy,
+    resolution,
+  });
+
+  logger.info(`${LOG_PREFIX} Resolved deviation ${deviationId} by ${resolvedBy}`);
+  return rowToDeviation(updated);
+}
+
+interface RoiInitiativeAggRow {
+  initiative_id: string | null;
+  entry_count: number;
+  realized_sum: number;
+}
+
+/**
+ * ROI realization aggregates for dashboards.
+ */
+export async function getROIDashboard(organizationId: string): Promise<ROIDashboardSummary> {
+  const totalRow = await dbGet<{ total_entries: number; total_realized: number }>(
+    `SELECT COUNT(*) AS total_entries, COALESCE(SUM(realized_value), 0) AS total_realized
+     FROM v8_roi_realization_entries WHERE organization_id = ?`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const projectedRow = await dbGet<{ projected: number | null }>(
+    `SELECT COALESCE(SUM(k.target_value), 0) AS projected
+     FROM v8_kpi_definitions k
+     WHERE k.organization_id = ?
+       AND k.target_value IS NOT NULL
+       AND EXISTS (
+         SELECT 1 FROM v8_roi_realization_entries r
+         WHERE r.organization_id = k.organization_id AND r.kpi_id = k.kpi_id
+       )`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const initiativeRows = await dbAll<RoiInitiativeAggRow>(
+    `SELECT initiative_id, COUNT(*) AS entry_count, COALESCE(SUM(realized_value), 0) AS realized_sum
+     FROM v8_roi_realization_entries
+     WHERE organization_id = ?
+     GROUP BY initiative_id`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const totalEntries = totalRow?.total_entries ?? 0;
+  const totalRealized = totalRow?.total_realized ?? 0;
+  const projectedFromKpiTargets = projectedRow?.projected ?? 0;
+  const overallRealizationRate =
+    projectedFromKpiTargets > 0 ? totalRealized / projectedFromKpiTargets : null;
+
+  return {
+    organizationId,
+    totalEntries,
+    totalRealized,
+    projectedFromKpiTargets,
+    overallRealizationRate,
+    byInitiative: (initiativeRows || []).map((r) => ({
+      initiativeId: r.initiative_id,
+      entryCount: r.entry_count,
+      realizedSum: r.realized_sum,
+    })),
+  };
+}
+
+/**
+ * ROI entries whose created_at falls in [fromDate, toDate] (inclusive ISO strings).
+ */
+export async function getROIByDateRange(
+  organizationId: string,
+  fromDate: string,
+  toDate: string,
+): Promise<ROIRealizationEntry[]> {
+  const rows = await dbAll<ROIRow>(
+    `SELECT * FROM v8_roi_realization_entries
+     WHERE organization_id = ? AND created_at >= ? AND created_at <= ?
+     ORDER BY created_at ASC`,
+    [organizationId, fromDate, toDate],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToROI);
+}
+
+/**
+ * Executive review packs on a timeline with lightweight rollups.
+ */
+export async function getReviewPackTimeline(
+  organizationId: string,
+): Promise<ReviewPackTimelineEntry[]> {
+  const rows = await dbAll<ReviewPackRow>(
+    `SELECT * FROM v8_executive_review_packs
+     WHERE organization_id = ?
+     ORDER BY created_at ASC`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  return (rows || []).map((row) => {
+    const kpiSummaries = safeJsonParse<KPISummary[]>(row.kpi_summaries, []);
+    const deviationHighlights = safeJsonParse<DeviationHighlight[]>(row.deviation_highlights, []);
+    const roiSnap = safeJsonParse<ROISnapshot>(row.roi_snapshot, {
+      totalRealized: 0,
+      entriesCount: 0,
+      period: '',
+    });
+    return {
+      packId: row.pack_id,
+      reviewPeriod: row.review_period,
+      status: row.status as ExecutiveReviewPack['status'],
+      createdAt: row.created_at,
+      kpiSummaryCount: kpiSummaries.length,
+      deviationHighlightCount: deviationHighlights.length,
+      roiSnapshotTotalRealized: roiSnap.totalRealized,
+      roiSnapshotEntriesCount: roiSnap.entriesCount,
+    };
+  });
+}
+
+interface ReconStatusRow {
+  reconciliation_status: string;
+  cnt: number;
+}
+
+interface ReconResolvedRow {
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * KPI–Finance reconciliation health for an organization.
+ */
+export async function getReconciliationHealth(
+  organizationId: string,
+): Promise<ReconciliationHealthSummary> {
+  const statusRows = await dbAll<ReconStatusRow>(
+    `SELECT reconciliation_status, COUNT(*) AS cnt
+     FROM v8_kpi_finance_reconciliations
+     WHERE organization_id = ?
+     GROUP BY reconciliation_status`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const totalRow = await dbGet<{ total: number }>(
+    `SELECT COUNT(*) AS total FROM v8_kpi_finance_reconciliations WHERE organization_id = ?`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const resolvedRows = await dbAll<ReconResolvedRow>(
+    `SELECT created_at, updated_at FROM v8_kpi_finance_reconciliations
+     WHERE organization_id = ? AND reconciliation_status = 'reconciled'`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const byStatus = emptyReconciliationStatusCounts();
+  for (const r of statusRows || []) {
+    const st = r.reconciliation_status as ReconciliationStatus;
+    if (ReconciliationStatusValues.includes(st)) {
+      byStatus[st] = r.cnt;
+    }
+  }
+
+  const total = totalRow?.total ?? 0;
+  const unresolvedCount =
+    (byStatus.pending ?? 0) + (byStatus.disputed ?? 0) + (byStatus.escalated ?? 0);
+
+  let sumHours = 0;
+  let resolvedCount = 0;
+  for (const r of resolvedRows || []) {
+    const start = Date.parse(r.created_at);
+    const end = Date.parse(r.updated_at);
+    if (!Number.isNaN(start) && !Number.isNaN(end) && end >= start) {
+      sumHours += (end - start) / 3600000;
+      resolvedCount += 1;
+    }
+  }
+
+  return {
+    organizationId,
+    total,
+    byStatus,
+    unresolvedCount,
+    averageResolutionHours: resolvedCount > 0 ? sumHours / resolvedCount : null,
+  };
+}
+
+/**
+ * Master Results surface: composes scorecard, deviations, ROI, reconciliation, recent packs.
+ */
+export async function getResultsDashboard(
+  organizationId: string,
+): Promise<ResultsDashboardSnapshot> {
+  const [kpiScorecard, activeDeviations, roiDashboard, reconciliationHealth, reviewTimeline] =
+    await Promise.all([
+      getKPIScorecard(organizationId),
+      getActiveDeviations(organizationId),
+      getROIDashboard(organizationId),
+      getReconciliationHealth(organizationId),
+      getReviewPackTimeline(organizationId),
+    ]);
+
+  const recentReviewPacks = reviewTimeline.slice(-5);
+
+  return {
+    organizationId,
+    kpiScorecard,
+    activeDeviationsCount: activeDeviations.length,
+    roiDashboard,
+    reconciliationHealth,
+    recentReviewPacks,
+  };
 }

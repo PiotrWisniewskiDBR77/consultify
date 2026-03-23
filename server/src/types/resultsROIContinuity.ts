@@ -105,6 +105,12 @@ export interface DeviationRecord {
   actionRequired: string;
   escalatedTo: string | null;
   createdAt: string;
+  /** Snapshot at deviation time for trend analytics (optional). */
+  observedActual?: number | null;
+  observedTarget?: number | null;
+  resolvedAt?: string | null;
+  resolvedBy?: string | null;
+  resolution?: string | null;
 }
 
 export interface ROIRealizationEntry {
@@ -213,6 +219,11 @@ export const DeviationRecordSchema = z.object({
   actionRequired: z.string().min(1),
   escalatedTo: z.string().nullable(),
   createdAt: z.string().min(1),
+  observedActual: z.number().nullable().optional(),
+  observedTarget: z.number().nullable().optional(),
+  resolvedAt: z.string().nullable().optional(),
+  resolvedBy: z.string().nullable().optional(),
+  resolution: z.string().nullable().optional(),
 });
 
 export const ROIRealizationEntrySchema = z.object({
@@ -285,6 +296,9 @@ export interface RecordDeviationParams {
   severity: DeviationSeverity;
   actionRequired: string;
   escalatedTo?: string | null;
+  /** Optional KPI value snapshot for `getKPITrend`. */
+  observedActual?: number | null;
+  observedTarget?: number | null;
 }
 
 export const RecordDeviationParamsSchema = z.object({
@@ -294,6 +308,8 @@ export const RecordDeviationParamsSchema = z.object({
   severity: z.enum(DeviationSeverityValues),
   actionRequired: z.string().min(1),
   escalatedTo: z.string().nullable().optional(),
+  observedActual: z.number().nullable().optional(),
+  observedTarget: z.number().nullable().optional(),
 });
 
 export interface RecordROIRealizationParams {
@@ -345,6 +361,70 @@ export const InitiateReconciliationParamsSchema = z.object({
   financeRef: z.string().min(1),
   initiatedBy: z.enum(ReconciliationInitiatorValues),
 });
+
+// ==========================================
+// Runtime aggregates (Wave 19 — Results dashboard)
+// ==========================================
+
+export interface KPIScorecardSummary {
+  organizationId: string;
+  totalKpis: number;
+  byStatus: Partial<Record<KPIStatus, number>>;
+  byCategory: Partial<Record<MetricType, number>>;
+  /** Average achievement ratio in [0, 1], capped at 1; null when no eligible KPIs. */
+  averageTargetAchievementRate: number | null;
+}
+
+export interface KPITrendPoint {
+  period: string;
+  actualValue: number | null;
+  targetValue: number | null;
+  deviation: number | null;
+}
+
+export interface ROIDashboardSummary {
+  organizationId: string;
+  totalEntries: number;
+  totalRealized: number;
+  /** Sum of KPI targets for KPIs that have at least one ROI entry in the org. */
+  projectedFromKpiTargets: number;
+  /** totalRealized / projected when projected > 0; otherwise null. */
+  overallRealizationRate: number | null;
+  byInitiative: Array<{
+    initiativeId: string | null;
+    entryCount: number;
+    realizedSum: number;
+  }>;
+}
+
+export interface ReviewPackTimelineEntry {
+  packId: string;
+  reviewPeriod: string;
+  status: ReviewPackStatus;
+  createdAt: string;
+  kpiSummaryCount: number;
+  deviationHighlightCount: number;
+  roiSnapshotTotalRealized: number;
+  roiSnapshotEntriesCount: number;
+}
+
+export interface ReconciliationHealthSummary {
+  organizationId: string;
+  total: number;
+  byStatus: Partial<Record<ReconciliationStatus, number>>;
+  unresolvedCount: number;
+  /** Mean hours from created_at to updated_at for reconciled rows; null if none. */
+  averageResolutionHours: number | null;
+}
+
+export interface ResultsDashboardSnapshot {
+  organizationId: string;
+  kpiScorecard: KPIScorecardSummary;
+  activeDeviationsCount: number;
+  roiDashboard: ROIDashboardSummary;
+  reconciliationHealth: ReconciliationHealthSummary;
+  recentReviewPacks: ReviewPackTimelineEntry[];
+}
 
 // ==========================================
 // KPI STATUS LIFECYCLE (valid transitions)

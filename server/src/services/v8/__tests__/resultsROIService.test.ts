@@ -225,6 +225,11 @@ function makeFakeDeviationRow(overrides?: Partial<Record<string, unknown>>) {
     action_required: 'Investigate root cause',
     escalated_to: null,
     created_at: '2026-03-23T10:00:00.000Z',
+    resolved_at: null,
+    resolved_by: null,
+    resolution: null,
+    observed_actual: null,
+    observed_target: null,
     ...overrides,
   };
 }
@@ -514,6 +519,9 @@ describe('recordDeviation', () => {
     expect(mockDbRun).toHaveBeenCalledOnce();
     const sql = mockDbRun.mock.calls[0][0] as string;
     expect(sql).toContain('INSERT INTO v8_deviation_records');
+    expect(sql).toContain('observed_actual');
+    const args = mockDbRun.mock.calls[0][1] as unknown[];
+    expect(args).toHaveLength(13);
   });
 
   it('records a deviation with escalation', async () => {
