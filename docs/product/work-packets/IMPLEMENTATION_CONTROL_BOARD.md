@@ -17,7 +17,7 @@
 | Canon doc updates done | **19 / 19 (100%)** |
 | Canon doc updates pending | **0** |
 | New canonical docs mandated | **4 / 4 created** |
-| Implementation started | 0 packets |
+| Implementation started | **3 packets** (core primitives) |
 
 ---
 
@@ -152,6 +152,53 @@ Based on dependency analysis and architectural priority:
    - `WP-W1-AI-03` → Execution/Approval Spine (used by rebaseline, tool governance, publish/review)
 2. **Decision needed**: Wave 8 scope — approve, defer, or formally close.
 3. **Decision needed**: Implementation sequencing — confirm the 3 foundation packets as first code targets, or adjust priority.
+
+---
+
+## Report #3 — 2026-03-23 (first implementation cycle)
+
+### 1. Completed this cycle
+
+| # | Packet | Files created | Tests | Status |
+|---|---|---|---|---|
+| 1 | WP-W1-AI-01-IMPL — ContextSnapshot | 4 files (types, migration, service, tests) | 24 passing | **done** |
+| 2 | WP-W1-AI-03-IMPL — Execution/Approval Spine | 4 files (types, migration, service, tests) | 50 passing | **done** |
+| 3 | WP-W1-MP-01-IMPL — CollaborationRoom | 4 files (types, migration, service, tests) | 59 passing | **done** |
+
+**Total**: 12 new files, ~4,400 lines of TypeScript + SQL, 133 passing tests.
+
+### 2. Implementation inventory
+
+| Primitive | Types | Migration | Service | Tests | Status |
+|---|---|---|---|---|---|
+| ContextSnapshot | `contextSnapshot.ts` | `v8_context_snapshots` | `contextSnapshotService.ts` | 24 | **core done** |
+| Execution/Approval Spine | `executionSpine.ts` | `v8_execution_runs` + `v8_action_proposals` + `v8_run_state_transitions` | `executionSpineService.ts` | 50 | **core done** |
+| CollaborationRoom | `collaborationRoom.ts` | `v8_collaboration_rooms` + `v8_room_presence` + `v8_room_memberships` + `v8_collaboration_events` | `collaborationRoomService.ts` | 59 | **core done** |
+
+### 3. Architecture notes
+
+- All V8 tables use `v8_` prefix — no collision with existing tables.
+- All services follow existing `DbPromise` patterns (SQLite-compatible).
+- All types include Zod runtime validation schemas.
+- All services enforce organization-level isolation.
+- No existing code paths modified — purely additive.
+
+### 4. Risk burn-down update
+
+| Risk | Previous | Now | Trend |
+|---|---|---|---|
+| Implementation gap | **High** | **Medium** | 3 foundation primitives implemented |
+| Canon doc staleness | Resolved | Resolved | Stable |
+| Cross-wave integration debt | Low | Low | Stable |
+
+### 5. Recommended next actions
+
+1. **Next implementation batch** — based on dependency chain:
+   - `WP-W1-AI-02` → Governed Retrieval (depends on ContextSnapshot)
+   - `WP-W1-AI-04` → Tool Governance/HITL (depends on ContextSnapshot + Execution Spine)
+   - `WP-W1-TRUST-01` → Trust/Audit/Observability (depends on all three foundations)
+2. **Integration testing** — validate that ExecutionSpine correctly references ContextSnapshot IDs.
+3. **Decision needed**: Confirm next 3 implementation targets or adjust priority.
 
 ---
 
