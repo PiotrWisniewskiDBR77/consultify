@@ -654,6 +654,331 @@ export async function logInvocationTrace(
 }
 
 // ==========================================
+// CONSUMER CLASS ENFORCEMENT RUNTIME
+// ==========================================
+
+export interface EnforcementResult {
+  allowed: boolean;
+  approvalState: ToolApprovalState;
+  effectivePolicy: ConsumerToolPolicy | null;
+  reason: string;
+}
+
+/**
+ * Enforce consumer-class policy for a tool invocation.
+ *
+ * D20: effective policy = most restrictive of org + project layers.
+ * D22: background consumer class defaults to `deferred_approval` for mutating tools.
+ */
+export async function enforceConsumerPolicy(
+  toolId: string,
+  consumerClass: ConsumerClass,
+  organizationId: string,
+  projectId?: string | null,
+): Promise<EnforcementResult> {
+  const tool = await getTool(toolId, organizationId);
+  if (!tool) {
+    return {
+      allowed: false,
+      approvalState: 'blocked',
+      effectivePolicy: null,
+      reason: 'tool_not_found',
+    };
+  }
+
+  const policy = await getEffectiveConsumerPolicy(toolId, consumerClass, organizationId, projectId);
+
+  if (policy && !policy.allowed) {
+    return {
+      allowed: false,
+      approvalState: 'blocked',
+      effectivePolicy: policy,
+      reason: policy.projectId ? 'project_policy_denied' : 'org_policy_denied',
+    };
+  }
+
+  if (policy?.approvalOverride === 'force_blocked') {
+    return {
+      allowed: false,
+      approvalState: 'blocked',
+      effectivePolicy: policy,
+      reason: 'policy_force_blocked',
+    };
+  }
+
+  if (
+    consumerClass === 'background' &&
+    tool.mutationType !== 'read_only'
+  ) {
+    return {
+      allowed: false,
+      approvalState: 'deferred_approval',
+      effectivePolicy: policy,
+      reason: 'background_mutating_tool_deferred',
+    };
+  }
+
+  let effectiveApproval: ApprovalClass = tool.defaultApprovalMode;
+  if (policy) {
+    const overrideApproval = resolveOverride(policy.approvalOverride, effectiveApproval);
+    effectiveApproval = stricterApproval(effectiveApproval, overrideApproval);
+  }
+
+  if (effectiveApproval === 'requires_human_approval') {
+    return {
+      allowed: false,
+      approvalState: 'requires_approval',
+      effectivePolicy: policy,
+      reason: 'requires_human_approval',
+    };
+  }
+
+  return {
+    allowed: true,
+    approvalState: 'allowed',
+    effectivePolicy: policy,
+    reason: 'allowed',
+  };
+}
+
+/**
+ * Resolve the effective consumer policy for a tool + consumer class + org (+ optional project).
+ *
+ * D20: project may tighten (force_human_approval, force_blocked) but never loosen.
+ * Returns the merged effective policy, or null if none exists.
+ */
+export async function getEffectiveConsumerPolicy(
+  toolId: string,
+  consumerClass: ConsumerClass,
+  organizationId: string,
+  projectId?: string | null,
+): Promise<ConsumerToolPolicy | null> {
+  const now = new Date().toISOString();
+
+  const orgRows = await dbAll<PolicyRow>(
+    `SELECT * FROM v8_consumer_tool_policies
+     WHERE organization_id = ? AND tool_id = ? AND consumer_class = ?
+       AND project_id IS NULL
+       AND effective_from <= ?
+       AND (effective_until IS NULL OR effective_until > ?)
+     ORDER BY created_at DESC LIMIT 1`,
+    [organizationId, toolId, consumerClass, now, now],
+    { fallback: true },
+  );
+
+  const orgPolicy = (orgRows && orgRows.length > 0) ? rowToPolicy(orgRows[0]) : null;
+
+  if (!projectId) return orgPolicy;
+
+  const projectRows = await dbAll<PolicyRow>(
+    `SELECT * FROM v8_consumer_tool_policies
+     WHERE organization_id = ? AND tool_id = ? AND consumer_class = ?
+       AND project_id = ?
+       AND effective_from <= ?
+       AND (effective_until IS NULL OR effective_until > ?)
+     ORDER BY created_at DESC LIMIT 1`,
+    [organizationId, toolId, consumerClass, projectId, now, now],
+    { fallback: true },
+  );
+
+  const projectPolicy = (projectRows && projectRows.length > 0) ? rowToPolicy(projectRows[0]) : null;
+
+  if (!orgPolicy && !projectPolicy) return null;
+  if (!projectPolicy) return orgPolicy;
+  if (!orgPolicy) return projectPolicy;
+
+  const merged: ConsumerToolPolicy = { ...orgPolicy };
+
+  if (!projectPolicy.allowed) {
+    merged.allowed = false;
+  }
+
+  const OVERRIDE_STRICTNESS: Record<ApprovalOverride, number> = {
+    inherit_from_tool: 0,
+    force_policy_gate: 1,
+    force_human_approval: 2,
+    force_blocked: 3,
+  };
+
+  if (OVERRIDE_STRICTNESS[projectPolicy.approvalOverride] > OVERRIDE_STRICTNESS[merged.approvalOverride]) {
+    merged.approvalOverride = projectPolicy.approvalOverride;
+  }
+
+  if (
+    projectPolicy.maxInvocationsPerRun !== null &&
+    (merged.maxInvocationsPerRun === null || projectPolicy.maxInvocationsPerRun < merged.maxInvocationsPerRun)
+  ) {
+    merged.maxInvocationsPerRun = projectPolicy.maxInvocationsPerRun;
+  }
+
+  merged.policyId = projectPolicy.policyId;
+
+  return merged;
+}
+
+// ==========================================
+// DEFERRED APPROVAL QUEUE
+// ==========================================
+
+/**
+ * Query all invocation requests with `deferred_approval` state for an organization.
+ */
+export async function getDeferredApprovals(
+  organizationId: string,
+  limit: number = 50,
+): Promise<ToolInvocationRequest[]> {
+  const rows = await dbAll<InvocationRow>(
+    `SELECT * FROM v8_tool_invocation_log
+     WHERE organization_id = ? AND approval_result = 'deferred_approval'
+     ORDER BY created_at ASC
+     LIMIT ?`,
+    [organizationId, limit],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToInvocation);
+}
+
+/**
+ * Resolve a deferred approval — approve (→ allowed) or reject (→ blocked).
+ */
+export async function processDeferredApproval(
+  invocationId: string,
+  decision: 'approve' | 'reject',
+  resolvedBy: string,
+  reason?: string | null,
+): Promise<ToolInvocationRequest> {
+  const row = await dbGet<InvocationRow>(
+    `SELECT * FROM v8_tool_invocation_log WHERE invocation_id = ?`,
+    [invocationId],
+    { fallback: true },
+  );
+
+  if (!row) {
+    throw new Error(`Invocation ${invocationId} not found`);
+  }
+
+  if (row.approval_result !== 'deferred_approval') {
+    throw new Error(
+      `Invocation ${invocationId} is not in deferred_approval state (current: ${row.approval_result})`,
+    );
+  }
+
+  const newState: ToolApprovalState = decision === 'approve' ? 'allowed' : 'blocked';
+  const now = new Date().toISOString();
+
+  await dbRun(
+    `UPDATE v8_tool_invocation_log
+     SET approval_result = ?,
+         block_reason = ?,
+         deferred_resolved_at = ?,
+         deferred_resolved_by = ?
+     WHERE invocation_id = ?`,
+    [
+      newState,
+      decision === 'reject' ? (reason ?? 'deferred_rejected') : null,
+      now,
+      resolvedBy,
+      invocationId,
+    ],
+  );
+
+  logger.info(
+    `${LOG_PREFIX} Deferred approval ${invocationId}: ${decision} by ${resolvedBy}`,
+  );
+
+  const updated = rowToInvocation({
+    ...row,
+    approval_result: newState,
+    block_reason: decision === 'reject' ? (reason ?? 'deferred_rejected') : null,
+  });
+
+  return updated;
+}
+
+// ==========================================
+// SUBAGENT GOVERNANCE
+// ==========================================
+
+export interface SubagentAccessResult {
+  allowed: boolean;
+  reason: string;
+}
+
+export interface RunToolUsage {
+  invocations: ToolInvocationRequest[];
+  traces: ToolInvocationTrace[];
+}
+
+/**
+ * Validate whether a subagent may use a tool within a parent execution run.
+ *
+ * D21: subagents cannot use critical-risk tools.
+ * The parent run must exist and be in `applying` state.
+ */
+export async function validateSubagentAccess(
+  toolId: string,
+  parentRunId: string,
+  organizationId: string,
+): Promise<SubagentAccessResult> {
+  const runRow = await dbGet<{ run_id: string; state: string; organization_id: string }>(
+    `SELECT run_id, state, organization_id FROM v8_execution_runs
+     WHERE run_id = ? AND organization_id = ?`,
+    [parentRunId, organizationId],
+    { fallback: true },
+  );
+
+  if (!runRow) {
+    return { allowed: false, reason: 'parent_run_not_found' };
+  }
+
+  if (runRow.state !== 'applying') {
+    return { allowed: false, reason: `parent_run_not_in_applying_state (current: ${runRow.state})` };
+  }
+
+  const tool = await getTool(toolId, organizationId);
+  if (!tool) {
+    return { allowed: false, reason: 'tool_not_found' };
+  }
+
+  if (tool.riskClass === 'critical') {
+    return { allowed: false, reason: 'critical_tools_denied_for_subagents' };
+  }
+
+  return { allowed: true, reason: 'allowed' };
+}
+
+/**
+ * Get all invocations and their traces for a specific execution run.
+ */
+export async function getToolUsageByRun(
+  runId: string,
+  organizationId: string,
+): Promise<RunToolUsage> {
+  const invocationRows = await dbAll<InvocationRow>(
+    `SELECT * FROM v8_tool_invocation_log
+     WHERE execution_run_id = ? AND organization_id = ?
+     ORDER BY created_at ASC`,
+    [runId, organizationId],
+    { fallback: true },
+  );
+
+  const invocations = (invocationRows || []).map(rowToInvocation);
+
+  const traceRows = await dbAll<TraceRow>(
+    `SELECT * FROM v8_tool_invocation_traces
+     WHERE execution_run_id = ?
+     ORDER BY timestamp ASC`,
+    [runId],
+    { fallback: true },
+  );
+
+  const traces = (traceRows || []).map(rowToTrace);
+
+  return { invocations, traces };
+}
+
+// ==========================================
 // INTERNAL HELPERS
 // ==========================================
 
