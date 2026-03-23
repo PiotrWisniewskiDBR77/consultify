@@ -23,6 +23,11 @@ const SHADOW_ROUTE_MAPPINGS: ShadowRouteMapping[] = [
     v8Path: '/ai-core/environment',
     method: 'GET',
   },
+  {
+    legacyPattern: /^\/health$/,
+    v8Path: '/health',
+    method: 'GET',
+  },
 ];
 
 /**

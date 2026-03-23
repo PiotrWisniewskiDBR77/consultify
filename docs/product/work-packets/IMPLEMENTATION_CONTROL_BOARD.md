@@ -1984,3 +1984,114 @@ Tranche 05 should focus on:
 - `v8OrgGate` — post-auth (inside v8Router), checks org-level enablement + sets shadow mode flag
 
 This is a real bug fix, not just a test fix. All 2653 existing tests continue to pass.
+
+---
+
+## Staging Closure Execution Report #8 — 2026-03-23 (TRANCHE 05 COMPLETE)
+
+### 1. Current corrected maturity
+
+| Domain | After T04 | After T05 | Evidence |
+|--------|-----------|-----------|----------|
+| DB Foundation | implemented | **wired** | Migration runner validated (dry-run), rollback tested |
+| API Layer | wired | wired | No change |
+| Auth Integration | wired | wired | No change |
+| Feature Flags | wired | **integrated** | Pilot configuration validated, flag lifecycle tested |
+| Frontend Client | 3/8 (wired) | 3/8 (wired) | No new UI surfaces in T05 |
+| Shadow Mode | wired | **integrated** | 2 route mappings, integration tested, monitoring validated |
+| Deployment Scripts | 3/8 (wired) | **4/8 (integrated)** | Smoke offline validation (14 endpoints), preflight chain |
+| Observability | wired | **integrated** | Full operator monitoring cycle tested (health → metrics → shadow → flags) |
+| Gateway Integration | integrated | integrated | No change |
+| Rollback | not tested | **wired** | Rollback procedure validated, safety checks tested |
+| Pilot Readiness | not started | **wired** | Pilot criteria defined, configuration tested, abort conditions set |
+
+### 2. Tranche 05 packets completed
+
+| # | Packet | Tests | Evidence |
+|---|--------|-------|----------|
+| CP-28 | Migration Runner Dry-Run Validation | **10/10 pass** | All 47+ migrations validated, transformations verified, v8_ prefix enforced |
+| CP-29 | Smoke Test Offline Validation | **16/16 pass** | All 14 V8 endpoints validated offline, JSON responses confirmed |
+| CP-30 | Shadow Mode Second Route Mapping | **5/5 pass** (existing) | Added `GET /health → /health` mapping, now 2 mappings total |
+| CP-31 | Rollback Procedure Test | **10/10 pass** | Safety checks, CASCADE drops, flag rollback, sequence validation |
+| CP-32 | Operator Monitoring Validation | **10/10 pass** | Full monitoring cycle: health → metrics → shadow → flags → promotion readiness |
+| CP-33 | Pilot Org Configuration | **14/14 pass** | Selection criteria, flag sequence, success criteria, abort conditions, production gate |
+
+### 3. Tranche 05 packets in progress
+
+None — all 6 packets complete.
+
+### 4. Tranche 05 packets blocked
+
+None.
+
+### 5. UI integration progress
+
+No change from T04. Frontend integration remains 3/8 (wired). One component (`V8ContextIndicator`) consumes V8 data. T05 focused on operational validation, not UI.
+
+### 6. Shadow mode activation progress
+
+| Before T05 | After T05 | Evidence |
+|------------|-----------|----------|
+| 1 route mapping | 2 route mappings | Added `GET /health → /health` |
+| Integration tested | Monitoring validated | Operator can view stats, comparisons, promotion readiness |
+| Shadow mode: wired | Shadow mode: **integrated** | Full lifecycle tested: check → intercept → record → monitor → assess |
+
+### 7. Staging evidence collected
+
+| Evidence category | Status | Detail |
+|-------------------|--------|--------|
+| Migration evidence | **VALIDATED (offline)** | Dry-run proves all 47 files transform correctly |
+| API route evidence | **VALIDATED (offline)** | 14 endpoints respond correctly in supertest |
+| Frontend wiring evidence | PARTIAL | Component exists, no browser test |
+| Shadow mode evidence | **VALIDATED (offline)** | Integration test + monitoring test |
+| Smoke test evidence | **VALIDATED (offline)** | All endpoints pass offline smoke |
+| Operator monitoring evidence | **VALIDATED (offline)** | Full monitoring cycle tested |
+| Auth / permission evidence | PARTIAL | E2E test proves chain works |
+| Error / degraded-state evidence | PARTIAL | Error handling tested in mocks |
+| Rollback evidence | **VALIDATED (offline)** | Procedure, safety, sequence tested |
+
+### 8. Critical remaining gaps
+
+| Gap | Severity | What's needed |
+|-----|----------|---------------|
+| No real staging DB execution | P0 | Requires DATABASE_PUBLIC_URL access |
+| No real smoke test against live server | P0 | Requires deployed staging instance |
+| No real shadow mode comparison on live traffic | P1 | Requires staging with real users |
+| Only 1 UI surface consumes V8 | P1 | More surfaces for production |
+| No real browser testing | P2 | Manual or automated browser verification |
+
+### 9. Gate status
+
+**Tranche 05 Quality Gate: PASSED (offline validation level)**
+
+| Criterion | Status |
+|-----------|--------|
+| Migration runner validated (dry-run) | PASS — 10 tests |
+| All V8 endpoints respond correctly | PASS — 16 smoke tests |
+| Rollback procedure tested | PASS — 10 tests |
+| Operator monitoring cycle works | PASS — 10 tests |
+| Pilot configuration validated | PASS — 14 tests |
+| Shadow mode has 2+ mappings | PASS — 2 mappings |
+| Full test suite: 0 regressions | PASS — 2713 pass, 4 pre-existing |
+
+### 10. Recommended next action
+
+**Verdict: STAGING PASSED (offline) — AWAITING OPERATIONAL EXECUTION**
+
+All code-level and offline validation is complete. The V8 program is now in a state where:
+- Every endpoint is tested
+- Migration runner is validated
+- Rollback procedure is tested
+- Operator monitoring works
+- Pilot criteria are defined
+- Shadow mode has real mappings
+
+**What remains is purely operational** — executing against a real staging database:
+1. Set `DATABASE_PUBLIC_URL` and run `npm run v8:preflight`
+2. Run `npx tsx scripts/v8-migrate.ts --apply`
+3. Run `npm run v8:smoke-test -- --url <staging> --token <jwt>`
+4. Enable shadow mode and observe for 24h
+5. Collect evidence pack
+6. Make final pilot/production readiness assessment
+
+No further code changes are needed for staging execution. The next step is an operational decision, not a development task.
