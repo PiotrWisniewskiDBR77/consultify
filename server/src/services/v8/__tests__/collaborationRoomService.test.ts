@@ -291,12 +291,12 @@ describe('transitionRoomState', () => {
     ).rejects.toThrow('Invalid room state transition');
   });
 
-  it('rejects invalid transition: error → active', async () => {
+  it('transitions error → active (recovery path)', async () => {
     mockDbGet.mockResolvedValueOnce(makeFakeRoomRow({ room_state: 'error' }));
 
-    await expect(
-      transitionRoomState(ROOM_ID, ORG_ID, 'active'),
-    ).rejects.toThrow('Invalid room state transition');
+    const result = await transitionRoomState(ROOM_ID, ORG_ID, 'active', 'Recovered');
+
+    expect(result.roomState).toBe('active');
   });
 
   it('throws when room not found', async () => {
@@ -656,9 +656,10 @@ describe('state machine completeness', () => {
     expect(VALID_ROOM_TRANSITIONS.idle).toHaveLength(2);
   });
 
-  it('error allows only closed', () => {
+  it('error allows active (recovery) and closed', () => {
+    expect(VALID_ROOM_TRANSITIONS.error).toContain('active');
     expect(VALID_ROOM_TRANSITIONS.error).toContain('closed');
-    expect(VALID_ROOM_TRANSITIONS.error).toHaveLength(1);
+    expect(VALID_ROOM_TRANSITIONS.error).toHaveLength(2);
   });
 });
 

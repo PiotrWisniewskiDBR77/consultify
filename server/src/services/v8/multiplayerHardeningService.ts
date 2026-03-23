@@ -31,6 +31,7 @@ import type {
   WorkspaceTool,
   Surface,
 } from '../../types/multiplayerHardening.js';
+import type { RoomPresence, CollaborationRoom, RoomState } from '../../types/collaborationRoom.js';
 import {
   RegisterResourceTypeMappingParamsSchema,
   UpdateSurfacePresenceParamsSchema,
@@ -788,4 +789,158 @@ export async function getToolEvents(
   );
 
   return (rows || []).map(rowToToolEventRegistration);
+}
+
+// ==========================================
+// PUBLIC API — CROSS-CANVAS PRESENCE (Wave 7)
+// ==========================================
+
+interface RoomRow {
+  room_id: string;
+  resource_type: string;
+  resource_id: string;
+  organization_id: string;
+  room_state: string;
+  created_at: string;
+  closed_at: string | null;
+  metadata: string;
+  degraded_since: string | null;
+}
+
+interface PresenceRow {
+  presence_id: string;
+  room_id: string;
+  user_id: string;
+  presence_type: string;
+  cursor_state: string | null;
+  last_heartbeat: string;
+  connected_at: string;
+  client_id: string;
+  is_stale: number;
+}
+
+function rowToPresenceEntry(row: PresenceRow): RoomPresence {
+  return {
+    presenceId: row.presence_id,
+    roomId: row.room_id,
+    userId: row.user_id,
+    presenceType: row.presence_type as RoomPresence['presenceType'],
+    cursorState: safeJsonParse<Record<string, unknown> | null>(row.cursor_state, null),
+    lastHeartbeat: row.last_heartbeat,
+    connectedAt: row.connected_at,
+    clientId: row.client_id,
+    isStale: Boolean(row.is_stale),
+  };
+}
+
+export interface CrossCanvasPresenceEntry {
+  roomId: string;
+  resourceType: string;
+  resourceId: string;
+  presenceEntries: RoomPresence[];
+}
+
+/**
+ * Get presence across all rooms in a workspace (cross-canvas aggregation).
+ * Returns presence grouped by room with resource metadata.
+ */
+export async function getCrossCanvasPresence(
+  workspaceId: string,
+  organizationId: string,
+): Promise<CrossCanvasPresenceEntry[]> {
+  const roomRows = await dbAll<RoomRow>(
+    `SELECT * FROM v8_collaboration_rooms
+     WHERE organization_id = ? AND room_state != 'closed'
+       AND (resource_id = ? OR metadata LIKE ?)
+     ORDER BY created_at DESC`,
+    [organizationId, workspaceId, `%"workspaceId":"${workspaceId}"%`],
+    { fallback: true },
+  );
+
+  const rooms = roomRows || [];
+  if (rooms.length === 0) return [];
+
+  const result: CrossCanvasPresenceEntry[] = [];
+
+  for (const room of rooms) {
+    const presenceRows = await dbAll<PresenceRow>(
+      `SELECT * FROM v8_room_presence
+       WHERE room_id = ? AND is_stale = 0
+       ORDER BY connected_at ASC`,
+      [room.room_id],
+      { fallback: true },
+    );
+
+    const presenceEntries = (presenceRows || []).map(rowToPresenceEntry);
+
+    result.push({
+      roomId: room.room_id,
+      resourceType: room.resource_type,
+      resourceId: room.resource_id,
+      presenceEntries,
+    });
+  }
+
+  logger.info(`${LOG_PREFIX} Cross-canvas presence for workspace ${workspaceId}: ${result.length} rooms`);
+  return result;
+}
+
+export interface ToolRoomStatus {
+  room: CollaborationRoom | null;
+  activePresenceCount: number;
+  stalePresenceCount: number;
+  state: RoomState | null;
+}
+
+/**
+ * Get the room status for a specific tool+resource combination.
+ */
+export async function getToolRoomStatus(
+  toolType: WorkspaceTool,
+  resourceId: string,
+  organizationId: string,
+): Promise<ToolRoomStatus> {
+  const roomRow = await dbGet<RoomRow>(
+    `SELECT * FROM v8_collaboration_rooms
+     WHERE resource_type = ? AND resource_id = ? AND organization_id = ?
+       AND room_state != 'closed'
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [toolType, resourceId, organizationId],
+    { fallback: true },
+  );
+
+  if (!roomRow) {
+    return { room: null, activePresenceCount: 0, stalePresenceCount: 0, state: null };
+  }
+
+  const room: CollaborationRoom = {
+    roomId: roomRow.room_id,
+    resourceType: roomRow.resource_type,
+    resourceId: roomRow.resource_id,
+    organizationId: roomRow.organization_id,
+    roomState: roomRow.room_state as RoomState,
+    createdAt: roomRow.created_at,
+    closedAt: roomRow.closed_at || null,
+    metadata: safeJsonParse(roomRow.metadata, {}),
+  };
+
+  const activeRows = await dbAll<PresenceRow>(
+    `SELECT * FROM v8_room_presence WHERE room_id = ? AND is_stale = 0`,
+    [room.roomId],
+    { fallback: true },
+  );
+
+  const staleRows = await dbAll<PresenceRow>(
+    `SELECT * FROM v8_room_presence WHERE room_id = ? AND is_stale = 1`,
+    [room.roomId],
+    { fallback: true },
+  );
+
+  return {
+    room,
+    activePresenceCount: (activeRows || []).length,
+    stalePresenceCount: (staleRows || []).length,
+    state: room.roomState,
+  };
 }

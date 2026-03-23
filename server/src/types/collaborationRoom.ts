@@ -234,7 +234,7 @@ export const VALID_ROOM_TRANSITIONS: Record<RoomState, readonly RoomState[]> = {
   active: ['idle', 'closed', 'error'],
   idle: ['active', 'closed'],
   closed: [],
-  error: ['closed'],
+  error: ['active', 'closed'],
 } as const;
 
 export const TERMINAL_ROOM_STATES: ReadonlySet<RoomState> = new Set(['closed']);

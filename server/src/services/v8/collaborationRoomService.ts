@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import type {
   CollaborationEvent,
+  CollaborationEventType,
   CollaborationRoom,
   CreateRoomParams,
   GetEventsOptions,
@@ -599,4 +600,246 @@ export async function getEventsByRoom(
 
   const rows = await dbAll<EventRow>(query, queryParams, { fallback: true });
   return (rows || []).map(rowToEvent);
+}
+
+// ==========================================
+// PUBLIC API — PRESENCE RUNTIME (Wave 7)
+// ==========================================
+
+const DEFAULT_STALE_THRESHOLD_MS = 5 * 60 * 1000;
+
+/**
+ * Detect stale presence entries older than the threshold.
+ * Records `presence.stale_removed` events for each stale entry.
+ */
+export async function detectStalePresence(
+  roomId: string,
+  organizationId: string,
+  staleThresholdMs: number = DEFAULT_STALE_THRESHOLD_MS,
+): Promise<RoomPresence[]> {
+  const room = await getRoom(roomId, organizationId);
+  if (!room) {
+    throw new Error(`Room ${roomId} not found in organization ${organizationId}`);
+  }
+
+  const cutoff = new Date(Date.now() - staleThresholdMs).toISOString();
+
+  const staleRows = await dbAll<PresenceRow>(
+    `SELECT * FROM v8_room_presence
+     WHERE room_id = ? AND is_stale = 0 AND last_heartbeat < ?`,
+    [roomId, cutoff],
+    { fallback: true },
+  );
+
+  const staleRecords = (staleRows || []).map(rowToPresence);
+
+  for (const entry of staleRecords) {
+    await recordEvent({
+      roomId,
+      eventType: 'presence.stale_removed',
+      actorId: 'system',
+      actorType: 'system',
+      delivery: 'durable',
+      payload: { userId: entry.userId, clientId: entry.clientId, lastHeartbeat: entry.lastHeartbeat },
+    });
+  }
+
+  if (staleRecords.length > 0) {
+    logger.info(`${LOG_PREFIX} Detected ${staleRecords.length} stale presence entries in room ${roomId}`);
+  }
+
+  return staleRecords;
+}
+
+/**
+ * Room health summary for monitoring and degraded-mode detection.
+ */
+export interface RoomHealthSummary {
+  state: RoomState;
+  memberCount: number;
+  activePresenceCount: number;
+  stalePresenceCount: number;
+  lastEventAt: string | null;
+  degradedSince: string | null;
+}
+
+/**
+ * Get a room health summary: member count, active/stale presence, last event, degraded status.
+ */
+export async function getRoomHealth(
+  roomId: string,
+  organizationId: string,
+): Promise<RoomHealthSummary> {
+  const room = await getRoom(roomId, organizationId);
+  if (!room) {
+    throw new Error(`Room ${roomId} not found in organization ${organizationId}`);
+  }
+
+  const activeRows = await dbAll<PresenceRow>(
+    `SELECT * FROM v8_room_presence WHERE room_id = ? AND is_stale = 0`,
+    [roomId],
+    { fallback: true },
+  );
+  const activePresenceCount = (activeRows || []).length;
+
+  const staleRows = await dbAll<PresenceRow>(
+    `SELECT * FROM v8_room_presence WHERE room_id = ? AND is_stale = 1`,
+    [roomId],
+    { fallback: true },
+  );
+  const stalePresenceCount = (staleRows || []).length;
+
+  const memberRows = await dbAll<MembershipRow>(
+    `SELECT * FROM v8_room_memberships WHERE room_id = ? AND left_at IS NULL`,
+    [roomId],
+    { fallback: true },
+  );
+  const memberCount = (memberRows || []).length;
+
+  const lastEvent = await dbGet<EventRow>(
+    `SELECT * FROM v8_collaboration_events WHERE room_id = ? ORDER BY timestamp DESC LIMIT 1`,
+    [roomId],
+    { fallback: true },
+  );
+
+  const degradedRow = await dbGet<{ degraded_since: string | null }>(
+    `SELECT degraded_since FROM v8_collaboration_rooms WHERE room_id = ? AND organization_id = ?`,
+    [roomId, organizationId],
+    { fallback: true },
+  );
+
+  let degradedSince = degradedRow?.degraded_since ?? null;
+
+  if (!degradedSince && stalePresenceCount > activePresenceCount && activePresenceCount + stalePresenceCount > 0) {
+    degradedSince = new Date().toISOString();
+  }
+
+  return {
+    state: room.roomState,
+    memberCount,
+    activePresenceCount,
+    stalePresenceCount,
+    lastEventAt: lastEvent?.timestamp ?? null,
+    degradedSince,
+  };
+}
+
+/**
+ * Enter degraded mode: transition room to `error` state and record `system.degraded` event.
+ */
+export async function enterDegradedMode(
+  roomId: string,
+  organizationId: string,
+  reason: string,
+): Promise<CollaborationRoom> {
+  const room = await getRoom(roomId, organizationId);
+  if (!room) {
+    throw new Error(`Room ${roomId} not found in organization ${organizationId}`);
+  }
+
+  if (room.roomState === 'error') {
+    logger.info(`${LOG_PREFIX} Room ${roomId} already in error state`);
+    return room;
+  }
+
+  const now = new Date().toISOString();
+
+  const transitioned = await transitionRoomState(roomId, organizationId, 'error', reason);
+
+  await dbRun(
+    `UPDATE v8_collaboration_rooms SET degraded_since = ? WHERE room_id = ? AND organization_id = ?`,
+    [now, roomId, organizationId],
+  );
+
+  await recordEvent({
+    roomId,
+    eventType: 'system.degraded',
+    actorId: 'system',
+    actorType: 'system',
+    delivery: 'durable',
+    payload: { reason },
+  });
+
+  logger.info(`${LOG_PREFIX} Room ${roomId} entered degraded mode: ${reason}`);
+  return transitioned;
+}
+
+/**
+ * Recover from degraded mode: transition room from `error` back to `active`.
+ * Records `system.reconnected` event.
+ */
+export async function recoverFromDegraded(
+  roomId: string,
+  organizationId: string,
+): Promise<CollaborationRoom> {
+  const room = await getRoom(roomId, organizationId);
+  if (!room) {
+    throw new Error(`Room ${roomId} not found in organization ${organizationId}`);
+  }
+
+  if (room.roomState !== 'error') {
+    throw new Error(`Room ${roomId} is not in error state (current: ${room.roomState})`);
+  }
+
+  const transitioned = await transitionRoomState(roomId, organizationId, 'active', 'Recovered from degraded');
+
+  await dbRun(
+    `UPDATE v8_collaboration_rooms SET degraded_since = NULL WHERE room_id = ? AND organization_id = ?`,
+    [roomId, organizationId],
+  );
+
+  await recordEvent({
+    roomId,
+    eventType: 'system.reconnected',
+    actorId: 'system',
+    actorType: 'system',
+    delivery: 'durable',
+    payload: { recoveredAt: new Date().toISOString() },
+  });
+
+  logger.info(`${LOG_PREFIX} Room ${roomId} recovered from degraded mode`);
+  return transitioned;
+}
+
+/**
+ * Get all non-closed rooms for an organization.
+ */
+export async function getActiveRoomsByOrg(
+  organizationId: string,
+  limit: number = 100,
+): Promise<CollaborationRoom[]> {
+  const rows = await dbAll<RoomRow>(
+    `SELECT * FROM v8_collaboration_rooms
+     WHERE organization_id = ? AND room_state != 'closed'
+     ORDER BY created_at DESC
+     LIMIT ?`,
+    [organizationId, limit],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToRoom);
+}
+
+/**
+ * Broadcast a durable event to a room (convenience wrapper for recordEvent).
+ */
+export async function broadcastEvent(
+  roomId: string,
+  organizationId: string,
+  eventType: CollaborationEventType,
+  payload: Record<string, unknown>,
+): Promise<CollaborationEvent> {
+  const room = await getRoom(roomId, organizationId);
+  if (!room) {
+    throw new Error(`Room ${roomId} not found in organization ${organizationId}`);
+  }
+
+  return recordEvent({
+    roomId,
+    eventType,
+    actorId: 'system',
+    actorType: 'system',
+    delivery: 'durable',
+    payload,
+  });
 }
