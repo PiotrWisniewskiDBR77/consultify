@@ -17,7 +17,7 @@
 | Canon doc updates done | **19 / 19 (100%)** |
 | Canon doc updates pending | **0** |
 | New canonical docs mandated | **4 / 4 created** |
-| Implementation started | **14 packets** (Waves 1-3 complete) |
+| Implementation started | **17 packets** (Waves 1-4 complete) |
 
 ---
 
@@ -317,6 +317,60 @@ Wave 1 code is complete. Next: Wave 2 implementation (3 packets):
 3. `WP-W2-AI-03` → Prompt OS runtime discipline
 
 These are integration-layer packets that wire Wave 1 primitives together.
+
+---
+
+## Report #8 — 2026-03-23 (Wave 4 code closure)
+
+### 1. Completed this cycle
+
+| # | Packet | Files | Tests | Status |
+|---|---|---|---|---|
+| 15 | WP-W4-COLLAB-01-IMPL — Multiplayer Platform Hardening | 4 files | 86 passing | **done** |
+| 16 | WP-W4-COLLAB-02-IMPL — Tool Collaboration Readiness | 4 files | 80 passing | **done** |
+| 17 | WP-W4-COLLAB-03-IMPL — Concurrent Editing & Notification Spine | 4 files | 115 passing | **done** |
+
+**Cycle total**: 12 new files, 281 new tests.
+
+### 2. Wave 4 implementation — COMPLETE
+
+| Packet | Integration proof | Tests | Status |
+|---|---|---|---|
+| WP-W4-COLLAB-01 Platform Hardening | Surface-aware routing, facilitation lifecycle, seam registry | 86 | **complete** |
+| WP-W4-COLLAB-02 Tool Readiness | Per-tool adapter contracts, AI proposal visibility lifecycle | 80 | **complete** |
+| WP-W4-COLLAB-03 Concurrent Editing | 5 conflict classes, 7 lock types, notification spine, governance fields | 115 | **complete** |
+
+### 3. Program totals (cumulative)
+
+| Metric | Count |
+|---|---|
+| V8 type files | 17 |
+| V8 migrations | 17 |
+| V8 services | 17 |
+| V8 test files | 17 |
+| **Total V8 files** | **68** |
+| **Total V8 DB tables** | **57** |
+| **Total passing tests** | **998** |
+| **Waves with code** | **Waves 1-4** |
+
+### 4. Implementation status by wave
+
+| Wave | Analysis | Canon docs | Code | Status |
+|---|---|---|---|---|
+| Wave 1 | 10/10 | 19/19 applied | 8/8 done | **CLOSED** |
+| Wave 2 | 3/3 | applied | 3/3 done | **CLOSED** |
+| Wave 3 | 3/3 | applied | 3/3 done | **CLOSED** |
+| Wave 4 | 3/3 | applied | 3/3 done | **CLOSED** |
+| Wave 5 | 3/3 | applied | 0/3 | Next |
+| Wave 6 | 4/4 | applied | 0/4 | Pending |
+| Wave 7 | 3/3 | applied | 0/3 | Pending |
+
+### 5. Recommended next actions
+
+Wave 5 implementation (PM sync & external integration):
+1. `WP-W5-EXT-01` → PM Sync auth baseline
+2. `WP-W5-EXT-02` → Provider depth and sync health
+3. `WP-W5-EXT-03` → External task interoperability
 
 ---
 
