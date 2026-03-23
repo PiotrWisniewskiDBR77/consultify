@@ -17,7 +17,7 @@
 | Canon doc updates done | **19 / 19 (100%)** |
 | Canon doc updates pending | **0** |
 | New canonical docs mandated | **4 / 4 created** |
-| Implementation started | **3 packets** (core primitives) |
+| Implementation started | **6 packets** (core primitives) |
 
 ---
 
@@ -199,6 +199,65 @@ Based on dependency analysis and architectural priority:
    - `WP-W1-TRUST-01` → Trust/Audit/Observability (depends on all three foundations)
 2. **Integration testing** — validate that ExecutionSpine correctly references ContextSnapshot IDs.
 3. **Decision needed**: Confirm next 3 implementation targets or adjust priority.
+
+---
+
+## Report #4 — 2026-03-23 (second implementation cycle)
+
+### 1. Completed this cycle
+
+| # | Packet | Files | Tests | Status |
+|---|---|---|---|---|
+| 4 | WP-W1-AI-02-IMPL — Governed Retrieval | 4 files | 28 passing | **done** |
+| 5 | WP-W1-AI-04-IMPL — Tool Governance/HITL | 4 files | 49 passing | **done** |
+| 6 | WP-W1-TRUST-01-IMPL — Trust/Audit/Observability | 4 files | 65 passing | **done** |
+
+**Cycle total**: 12 new files, 142 new tests.
+**Program total**: 24 new files, 275 passing tests, 6/10 Wave 1 packets implemented.
+
+### 2. Full implementation inventory
+
+| Primitive | Types | Tables | Service | Tests | Status |
+|---|---|---|---|---|---|
+| ContextSnapshot | `contextSnapshot.ts` | 1 | `contextSnapshotService.ts` | 24 | **done** |
+| Execution/Approval Spine | `executionSpine.ts` | 3 | `executionSpineService.ts` | 50 | **done** |
+| CollaborationRoom | `collaborationRoom.ts` | 4 | `collaborationRoomService.ts` | 59 | **done** |
+| Governed Retrieval | `governedRetrieval.ts` | 2 | `governedRetrievalService.ts` | 28 | **done** |
+| Tool Governance/HITL | `toolGovernance.ts` | 4 | `toolGovernanceService.ts` | 49 | **done** |
+| Trust/Audit/Observability | `trustAudit.ts` | 4 | `trustAuditService.ts` | 65 | **done** |
+
+**Total V8 DB tables**: 18 (all `v8_` prefixed)
+
+### 3. Wave 1 implementation status
+
+| Packet | Analysis | Code | Status |
+|---|---|---|---|
+| WP-W1-AI-01 ContextSnapshot | done | **done** | Fully implemented |
+| WP-W1-AI-02 Governed Retrieval | done | **done** | Fully implemented |
+| WP-W1-AI-03 Execution/Approval Spine | done | **done** | Fully implemented |
+| WP-W1-AI-04 Tool Governance/HITL | done | **done** | Fully implemented |
+| WP-W1-MP-01 CollaborationRoom | done | **done** | Fully implemented |
+| WP-W1-MP-02 Version/Replay/Audit | done | pending | Next batch |
+| WP-W1-PMSYNC-01 PM Sync Platform Truth | done | pending | Next batch |
+| WP-W1-PMSYNC-02 Conflict Cross-check | done | N/A | Doc-only (ratification) |
+| WP-W1-PMSYNC-03 Canonical Doc Updates | done | N/A | Doc-only (applied) |
+| WP-W1-TRUST-01 Trust/Audit/Observability | done | **done** | Fully implemented |
+
+**6/10 Wave 1 packets have code implementations. 2 are doc-only. 2 remain for next batch.**
+
+### 4. Risk burn-down update
+
+| Risk | Previous | Now | Trend |
+|---|---|---|---|
+| Implementation gap | Medium | **Low** | 6 foundation primitives implemented |
+| Canon doc staleness | Resolved | Resolved | Stable |
+| Cross-wave integration debt | Low | Low | Stable |
+
+### 5. Recommended next actions
+
+1. **Complete Wave 1 code**: `WP-W1-MP-02` (Version/Replay/Audit Spine) + `WP-W1-PMSYNC-01` (PM Sync Platform Truth)
+2. **Then**: Begin Wave 2 code implementations (Chat→Execution integration, Knowledge+Retrieval integration)
+3. **Integration testing**: Cross-service validation (ExecutionSpine → ContextSnapshot, ToolGovernance → ExecutionSpine)
 
 ---
 
