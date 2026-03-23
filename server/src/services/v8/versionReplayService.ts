@@ -26,6 +26,18 @@ import type {
   RestoreStatus,
   SnapshotTrigger,
 } from '../../types/versionReplay.js';
+
+export interface AIStalenessResult {
+  isStale: boolean;
+  lastAISnapshotAt: string | null;
+  ageMs: number | null;
+}
+
+export interface ResourceTimelineEntry {
+  type: 'snapshot' | 'audit' | 'restore';
+  timestamp: string;
+  data: unknown;
+}
 import {
   CaptureSnapshotParamsSchema,
   RecordAuditEntryParamsSchema,
@@ -655,4 +667,283 @@ export async function getAuditTrail(
 
   const rows = await dbAll<AuditRow>(query, queryParams, { fallback: true });
   return (rows || []).map(rowToAuditEntry);
+}
+
+// ==========================================
+// PUBLIC API — RUNTIME EXTENSIONS (Wave 8)
+// ==========================================
+
+/**
+ * Get all snapshots for a resource ordered by version desc.
+ */
+export async function getSnapshotsByResource(
+  resourceId: string,
+  organizationId: string,
+  limit: number = 50,
+): Promise<VersionSnapshot[]> {
+  const rows = await dbAll<SnapshotRow>(
+    `SELECT * FROM v8_version_snapshots
+     WHERE resource_id = ? AND organization_id = ?
+     ORDER BY state_version DESC
+     LIMIT ?`,
+    [resourceId, organizationId, limit],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToSnapshot);
+}
+
+/**
+ * Get the most recent snapshot for a resource.
+ */
+export async function getLatestSnapshot(
+  resourceId: string,
+  organizationId: string,
+): Promise<VersionSnapshot | null> {
+  const row = await dbGet<SnapshotRow>(
+    `SELECT * FROM v8_version_snapshots
+     WHERE resource_id = ? AND organization_id = ?
+     ORDER BY state_version DESC
+     LIMIT 1`,
+    [resourceId, organizationId],
+    { fallback: true },
+  );
+
+  if (!row) return null;
+  return rowToSnapshot(row);
+}
+
+/**
+ * Full rollback flow: create a restore request, auto-approve it, record audit.
+ */
+export async function rollbackToSnapshot(
+  snapshotId: string,
+  organizationId: string,
+  requestedBy: ActorAttribution,
+): Promise<RestoreRequest> {
+  const targetSnapshot = await getVersionSnapshot(snapshotId, organizationId);
+  if (!targetSnapshot) {
+    throw new Error(`Snapshot ${snapshotId} not found in organization ${organizationId}`);
+  }
+
+  const latestSnapshot = await getLatestSnapshot(targetSnapshot.resourceId, organizationId);
+  const currentStateData = latestSnapshot?.stateData ?? {};
+
+  const restoreReq = await requestRestore({
+    roomId: targetSnapshot.roomId,
+    resourceType: targetSnapshot.resourceType,
+    resourceId: targetSnapshot.resourceId,
+    organizationId,
+    targetVersionSnapshotId: snapshotId,
+    requestedBy,
+    currentStateData,
+  });
+
+  const applied = await applyRestore(restoreReq.restoreId, organizationId);
+
+  await recordAuditEntry({
+    roomId: targetSnapshot.roomId,
+    resourceType: targetSnapshot.resourceType,
+    resourceId: targetSnapshot.resourceId,
+    organizationId,
+    actorAttribution: requestedBy,
+    action: 'snapshot.restored',
+    stateVersionBefore: latestSnapshot?.stateVersion ?? null,
+    stateVersionAfter: targetSnapshot.stateVersion,
+    metadata: { snapshotId, restoreId: applied.restoreId },
+  });
+
+  logger.info(
+    `${LOG_PREFIX} Rollback to snapshot ${snapshotId} completed (restore: ${applied.restoreId})`,
+  );
+
+  return applied;
+}
+
+const DEFAULT_AI_STALENESS_MS = 60 * 60 * 1000; // 1 hour
+
+/**
+ * Check if the latest AI-related snapshot is older than threshold.
+ */
+export async function detectAIStaleness(
+  resourceId: string,
+  organizationId: string,
+  maxAgeMs: number = DEFAULT_AI_STALENESS_MS,
+): Promise<AIStalenessResult> {
+  const row = await dbGet<SnapshotRow>(
+    `SELECT * FROM v8_version_snapshots
+     WHERE resource_id = ? AND organization_id = ? AND trigger_type = 'ai_proposal_accepted'
+     ORDER BY captured_at DESC
+     LIMIT 1`,
+    [resourceId, organizationId],
+    { fallback: true },
+  );
+
+  if (!row) {
+    return { isStale: false, lastAISnapshotAt: null, ageMs: null };
+  }
+
+  const capturedAt = new Date(row.captured_at).getTime();
+  const ageMs = Date.now() - capturedAt;
+
+  return {
+    isStale: ageMs > maxAgeMs,
+    lastAISnapshotAt: row.captured_at,
+    ageMs,
+  };
+}
+
+/**
+ * Aggregate audit entries by action type in a date range.
+ */
+export async function getAuditSummary(
+  resourceId: string,
+  organizationId: string,
+  fromDate: string,
+  toDate: string,
+): Promise<Map<AuditAction, number>> {
+  const rows = await dbAll<{ action: string; count: number }>(
+    `SELECT action, COUNT(*) as count FROM v8_audit_entries
+     WHERE resource_id = ? AND organization_id = ?
+       AND timestamp >= ? AND timestamp <= ?
+     GROUP BY action`,
+    [resourceId, organizationId, fromDate, toDate],
+    { fallback: true },
+  );
+
+  const summary = new Map<AuditAction, number>();
+  for (const row of rows || []) {
+    summary.set(row.action as AuditAction, row.count);
+  }
+  return summary;
+}
+
+/**
+ * Get all restore requests with status 'pending' for an org.
+ */
+export async function getPendingRestores(
+  organizationId: string,
+): Promise<RestoreRequest[]> {
+  const rows = await dbAll<RestoreRow>(
+    `SELECT * FROM v8_restore_requests
+     WHERE organization_id = ? AND status = 'pending'
+     ORDER BY requested_at DESC`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToRestore);
+}
+
+/**
+ * Reject a pending restore request, record audit entry.
+ */
+export async function rejectRestore(
+  restoreId: string,
+  organizationId: string,
+  rejectedBy: ActorAttribution,
+  reason: string,
+): Promise<RestoreRequest> {
+  const row = await dbGet<RestoreRow>(
+    `SELECT * FROM v8_restore_requests
+     WHERE restore_id = ? AND organization_id = ?`,
+    [restoreId, organizationId],
+    { fallback: true },
+  );
+
+  if (!row) {
+    throw new Error(`Restore request ${restoreId} not found in organization ${organizationId}`);
+  }
+
+  const request = rowToRestore(row);
+
+  if (request.status !== 'pending') {
+    throw new Error(`Restore request ${restoreId} is already ${request.status}, cannot reject`);
+  }
+
+  const now = new Date().toISOString();
+
+  await dbRun(
+    `UPDATE v8_restore_requests
+     SET status = 'rejected', resolved_at = ?
+     WHERE restore_id = ? AND organization_id = ?`,
+    [now, restoreId, organizationId],
+  );
+
+  await recordAuditEntry({
+    roomId: request.roomId,
+    resourceType: request.resourceType,
+    resourceId: request.resourceId,
+    organizationId,
+    actorAttribution: rejectedBy,
+    action: 'restore.rejected',
+    metadata: { restoreId, reason },
+  });
+
+  logger.info(`${LOG_PREFIX} Restore rejected: ${restoreId} by ${rejectedBy.actorId} — ${reason}`);
+
+  return {
+    ...request,
+    status: 'rejected',
+    resolvedAt: now,
+  };
+}
+
+/**
+ * Get combined timeline: snapshots + audit entries + restore requests, sorted by timestamp desc.
+ */
+export async function getResourceHistory(
+  resourceId: string,
+  organizationId: string,
+): Promise<ResourceTimelineEntry[]> {
+  const [snapshots, audits, restores] = await Promise.all([
+    dbAll<SnapshotRow>(
+      `SELECT * FROM v8_version_snapshots
+       WHERE resource_id = ? AND organization_id = ?`,
+      [resourceId, organizationId],
+      { fallback: true },
+    ),
+    dbAll<AuditRow>(
+      `SELECT * FROM v8_audit_entries
+       WHERE resource_id = ? AND organization_id = ?`,
+      [resourceId, organizationId],
+      { fallback: true },
+    ),
+    dbAll<RestoreRow>(
+      `SELECT * FROM v8_restore_requests
+       WHERE resource_id = ? AND organization_id = ?`,
+      [resourceId, organizationId],
+      { fallback: true },
+    ),
+  ]);
+
+  const timeline: ResourceTimelineEntry[] = [];
+
+  for (const row of snapshots || []) {
+    timeline.push({
+      type: 'snapshot',
+      timestamp: row.captured_at,
+      data: rowToSnapshot(row),
+    });
+  }
+
+  for (const row of audits || []) {
+    timeline.push({
+      type: 'audit',
+      timestamp: row.timestamp,
+      data: rowToAuditEntry(row),
+    });
+  }
+
+  for (const row of restores || []) {
+    timeline.push({
+      type: 'restore',
+      timestamp: row.requested_at,
+      data: rowToRestore(row),
+    });
+  }
+
+  timeline.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+
+  return timeline;
 }
