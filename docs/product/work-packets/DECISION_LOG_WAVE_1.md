@@ -157,10 +157,80 @@
 
 ---
 
+## Tool governance (carried forward from Cycle 3)
+
+### Decision 19 — Tool catalog population workflow
+
+- `risk_class` is not assigned solely by the tool author.
+- Workflow: tool owner proposes classification → platform / AI governance owner approves.
+- Until ratified, a new tool receives a safe default: `requires_approval`, conservative risk handling.
+- Rule: `new tool defaults to stricter handling until classified`.
+
+### Decision 20 — Policy override hierarchy
+
+- Project admin may `tighten` but never `loosen` relative to org policy.
+- Effective policy = the most restrictive of all active layers.
+- Org policy remains the ceiling of permission.
+- Project-level override is allowed only as a narrowing layer.
+
+### Decision 21 — Subagent credential delegation
+
+- Target: scoped temporary tokens only.
+- Wave 1 baseline: no broad credential pass-through; only ephemeral, least-privilege, task-scoped delegation.
+- If engineering cannot close this safely, fallback = no direct credential delegation; brokered access through the owning runtime.
+- Rule: `no long-lived credential inheritance to subagents`.
+
+### Decision 22 — Background job mutation path
+
+- Wave 1 default = deferred approval queue.
+- Background jobs may: research, prepare, validate, stage proposals.
+- Background jobs must not mutate durable truth as the default path.
+- Elevated consumer class only for explicitly defined, policy-approved low-risk paths in a later stage.
+
+---
+
+## Trust / observability (carried forward from Cycle 3)
+
+### Decision 23 — Trust class assignment mechanism
+
+- Hybrid.
+- Model may propose confidence/trust hints, but final trust class must not be model-declared only.
+- Final class derives from: source/provenance, retrieval quality, execution path, post-processing / policy checks.
+- Rule: `trust is assigned by runtime contract, not by model self-report alone`.
+
+### Decision 24 — Provenance ledger scope
+
+- Baseline provenance for all AI outputs.
+- Full rich provenance ledger mandatory for: saved artifacts, approved proposals, shared outputs, important business outputs, any mutation-capable or externally used output.
+- Rule: `lightweight provenance everywhere, full ledger where business meaning or durability matters`.
+
+### Decision 25 — Routing explanation visibility to end users
+
+- User-facing explanation must be concise, not internal.
+- Default user level shows: source family used, whether fallback/degraded happened, high-level reason for routing choice.
+- Default user level does not show: internal policy weights, prompt internals, raw routing heuristics.
+- Support/admin gets full routing trace.
+- Rule: `brief explanation for users, full trace for operators`.
+
+### Decision 26 — Teresa voice outputs
+
+- `voice_transcript_partial` is an explicit degraded condition.
+- User must see that transcript/understanding may be incomplete.
+- If output relies on partial transcript, trust/degraded signaling must show this explicitly.
+
+---
+
 ## Additional implementation rules
 
 - If these decisions require a wave-order change, escalate separately.
 - If the object-level sync enum after cross-check requires a new canonical doc or update to an existing doc, propose a minimal change, not a new parallel document.
+- Decisions 19-26 can be implemented during Wave 2 or early Wave 1 execution. No new parallel doctrine docs; update existing canonical governance/trust docs where needed.
+
+---
+
+## Wave 1 closure
+
+Wave 1 is formally closed as of 2026-03-23 with 10 completed packets and 26 binding decisions.
 
 ---
 
@@ -169,7 +239,10 @@
 - `WP-W1-AI-01_CONTEXT_IDENTITY_BASELINE.md`
 - `WP-W1-AI-02_GOVERNED_RETRIEVAL_BASELINE.md`
 - `WP-W1-AI-03_EXECUTION_PROPOSAL_APPROVAL_SPINE.md`
+- `WP-W1-AI-04_TOOL_GOVERNANCE_HITL_BASELINE.md`
 - `WP-W1-MP-01_MULTIPLAYER_PLATFORM_BASELINE.md`
 - `WP-W1-MP-02_VERSION_REPLAY_AUDIT_SPINE.md`
 - `WP-W1-PMSYNC-01_PM_SYNC_PLATFORM_TRUTH.md`
 - `WP-W1-PMSYNC-02_CONFLICT_CROSSCHECK_AND_RATIFICATION.md`
+- `WP-W1-PMSYNC-03_CANONICAL_DOC_UPDATES.md`
+- `WP-W1-TRUST-01_TRUST_AUDIT_OBSERVABILITY_BASELINE.md`
