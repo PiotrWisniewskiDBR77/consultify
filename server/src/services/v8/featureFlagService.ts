@@ -139,15 +139,18 @@ export async function isV8ShadowMode(organizationId: string): Promise<boolean> {
 
   if (!featureFlags.ENABLE_V8_SHADOW_MODE) return false;
 
+  // When ENABLE_V8_SHADOW_MODE env var is set, shadow mode is active for
+  // all V8-enabled orgs by default. A per-org shadow_mode=0 flag can opt out.
   const hasTable = await flagTableExists();
-  if (!hasTable) return false;
+  if (!hasTable) return true;
 
   const row = await dbGet<{ enabled: number }>(
     `SELECT enabled FROM v8.v8_feature_flags WHERE organization_id = $1 AND module = 'shadow_mode'`,
     [organizationId],
   );
 
-  return row?.enabled === 1;
+  // No row = default to enabled (global flag is on). Row with enabled=0 = opt-out.
+  return row === null || row.enabled === 1;
 }
 
 export async function getAllOrgFlags(): Promise<
