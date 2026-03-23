@@ -581,6 +581,81 @@ The AI runtime spine is production-wired: identity chain → retrieval governanc
 
 ---
 
+## Report #17 — 2026-03-23 (WAVES 7-9 CLOSED — AI Operating Environment Proven)
+
+### 1. Wave 7 — Multiplayer Platform — CLOSED
+
+| Deliverable | Status |
+|-------------|--------|
+| Stale presence detection + cleanup | **COMPLETE** |
+| Room health monitoring (active/stale/degraded) | **COMPLETE** |
+| Degraded mode enter/recover with events | **COMPLETE** |
+| Cross-canvas presence aggregation | **COMPLETE** |
+| Tool-room status queries | **COMPLETE** |
+| 38 unit tests | **ALL PASS** |
+
+### 2. Wave 8 — Version/Replay/Audit — CLOSED
+
+| Deliverable | Status |
+|-------------|--------|
+| Resource snapshot queries (by resource, latest) | **COMPLETE** |
+| Rollback-to-snapshot (full flow with audit) | **COMPLETE** |
+| AI staleness detection | **COMPLETE** |
+| Audit summary aggregation | **COMPLETE** |
+| Pending restore management (list, reject) | **COMPLETE** |
+| Resource history timeline (snapshots + audits + restores) | **COMPLETE** |
+| 29 unit tests | **ALL PASS** |
+
+### 3. Wave 9 — AI Operating Environment Integration Proof — CLOSED
+
+| Deliverable | Status |
+|-------------|--------|
+| `aiOperatingEnvironmentService.ts` — thin orchestrator | **COMPLETE** |
+| `processChatTurn` — chat → context → intent → handoff | **COMPLETE** |
+| `selectPromptPreset` — Prompt OS preset selection | **COMPLETE** |
+| `executeGovernedRetrieval` — retrieval with context binding | **COMPLETE** |
+| `getOperatingEnvironmentStatus` — cross-layer health | **COMPLETE** |
+| 14 unit + 12 integration tests | **ALL PASS** |
+
+### 4. MILESTONE: AI Operating Environment PROVEN
+
+The full AI runtime pipeline is now verified end-to-end:
+
+```
+Chat → Context Capture → Intent Classification → Prompt OS Preset
+  → Governed Retrieval (ACL + Freshness + Pipeline)
+  → Execution (Propose → Approve → Apply)
+  → Tool Governance (HITL + Deferred)
+  → Trust (Provenance + Explanation + Health)
+  → Multiplayer (Rooms + Presence + Version/Replay)
+```
+
+### 5. Updated program totals
+
+| Metric | Count |
+|---|---|
+| **Total V8 code files** | **126** |
+| **Total integration test files** | **18** |
+| **Total passing tests** | **~2,275** |
+| **Waves closed (20-wave)** | **9 / 20** |
+
+### 6. 20-wave implementation status
+
+| Wave | Status |
+|---|---|
+| **W1-W9** | **ALL CLOSED** |
+| W10 | **GREEN — ready** (source truth, transformation lifecycle) |
+| W11 | YELLOW — after W10 (planning, WBS, execution visibility) |
+| W12 | YELLOW — after W11 (PM sync, operator recovery) |
+| W13-W16 | Pending (workspace collaboration — weakest foundation) |
+| W17-W20 | Pending (outputs, finance, reports, roof) |
+
+### 7. Recommended next action
+
+**Start Waves 10-12** (lifecycle spine). W10 first, then W11+W12 can overlap.
+
+---
+
 ## Report #12 — 2026-03-23 (INTEGRATION GATE PASSED)
 
 ### 1. Integration Test Program — ALL TIERS GREEN
