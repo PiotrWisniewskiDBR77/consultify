@@ -17,7 +17,7 @@
 | Canon doc updates done | **19 / 19 (100%)** |
 | Canon doc updates pending | **0** |
 | New canonical docs mandated | **4 / 4 created** |
-| Implementation started | **6 packets** (core primitives) |
+| Implementation started | **8 packets** (core primitives — Wave 1 complete) |
 
 ---
 
@@ -258,6 +258,65 @@ Based on dependency analysis and architectural priority:
 1. **Complete Wave 1 code**: `WP-W1-MP-02` (Version/Replay/Audit Spine) + `WP-W1-PMSYNC-01` (PM Sync Platform Truth)
 2. **Then**: Begin Wave 2 code implementations (Chat→Execution integration, Knowledge+Retrieval integration)
 3. **Integration testing**: Cross-service validation (ExecutionSpine → ContextSnapshot, ToolGovernance → ExecutionSpine)
+
+---
+
+## Report #5 — 2026-03-23 (Wave 1 code closure)
+
+### 1. Completed this cycle
+
+| # | Packet | Files | Tests | Status |
+|---|---|---|---|---|
+| 7 | WP-W1-MP-02-IMPL — Version/Replay/Audit Spine | 4 files | 55 passing | **done** |
+| 8 | WP-W1-PMSYNC-01-IMPL — PM Sync Platform Truth | 4 files | 66 passing | **done** |
+
+**Cycle total**: 8 new files, 121 new tests.
+
+### 2. Wave 1 implementation — COMPLETE
+
+| Packet | Analysis | Code | Tests | Status |
+|---|---|---|---|---|
+| WP-W1-AI-01 ContextSnapshot | done | done | 24 | **complete** |
+| WP-W1-AI-02 Governed Retrieval | done | done | 28 | **complete** |
+| WP-W1-AI-03 Execution/Approval Spine | done | done | 50 | **complete** |
+| WP-W1-AI-04 Tool Governance/HITL | done | done | 49 | **complete** |
+| WP-W1-MP-01 CollaborationRoom | done | done | 59 | **complete** |
+| WP-W1-MP-02 Version/Replay/Audit | done | done | 55 | **complete** |
+| WP-W1-PMSYNC-01 PM Sync Platform Truth | done | done | 66 | **complete** |
+| WP-W1-PMSYNC-02 Conflict Cross-check | done | N/A | — | doc-only |
+| WP-W1-PMSYNC-03 Canonical Doc Updates | done | N/A | — | doc-only |
+| WP-W1-TRUST-01 Trust/Audit/Observability | done | done | 65 | **complete** |
+
+**8/8 implementable Wave 1 packets have code. 2 are doc-only. Wave 1 implementation is CLOSED.**
+
+### 3. Program totals
+
+| Metric | Count |
+|---|---|
+| V8 type files | 8 |
+| V8 migrations | 8 |
+| V8 services | 8 |
+| V8 test files | 8 |
+| **Total V8 files** | **32** |
+| **Total V8 DB tables** | **25** |
+| **Total passing tests** | **396** |
+
+### 4. Risk burn-down
+
+| Risk | Previous | Now | Trend |
+|---|---|---|---|
+| Implementation gap | Low | **Wave 1 resolved** | Wave 1 fully implemented |
+| Canon doc staleness | Resolved | Resolved | Stable |
+| Cross-wave integration debt | Low | Low | Stable |
+
+### 5. Recommended next actions
+
+Wave 1 code is complete. Next: Wave 2 implementation (3 packets):
+1. `WP-W2-AI-01` → Chat → Execution integration
+2. `WP-W2-AI-02` → Knowledge + Retrieval integration
+3. `WP-W2-AI-03` → Prompt OS runtime discipline
+
+These are integration-layer packets that wire Wave 1 primitives together.
 
 ---
 
