@@ -1,4 +1,5 @@
 import type { NextFunction, Response } from 'express';
+import jwt from 'jsonwebtoken';
 
 import type { AuthRequest } from './auth.middleware.js';
 import { isV8ShadowMode } from '../services/v8/featureFlagService.js';
@@ -12,13 +13,30 @@ import Logger from '../utils/Logger.js';
  *
  * Unlike v8FeatureGate, this middleware NEVER blocks the request —
  * it only annotates it. If the check fails, shadow mode is silently off.
+ *
+ * Because this runs before verifyToken on legacy routes, it extracts
+ * organizationId directly from the JWT without full auth validation.
  */
 export async function v8ShadowModeCheck(
   req: AuthRequest,
   _res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const orgId = req.organizationId;
+  let orgId = req.organizationId;
+
+  if (!orgId) {
+    try {
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.slice(7);
+        const decoded = jwt.decode(token) as { organizationId?: string } | null;
+        orgId = decoded?.organizationId;
+      }
+    } catch {
+      // ignore — shadow mode just won't fire
+    }
+  }
+
   if (!orgId) {
     (req as AuthRequest & { v8ShadowMode?: boolean }).v8ShadowMode = false;
     next();
