@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Response } from 'express';
 
-import verifyToken, { type AuthRequest, requireSuperAdmin } from '../../../middleware/auth.middleware.js';
+import { type AuthRequest, requireSuperAdmin } from '../../../middleware/auth.middleware.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { getV8Flags, setV8OrgFlag, getAllOrgFlags } from '../../../services/v8/featureFlagService.js';
 
@@ -9,13 +9,8 @@ const router = Router();
 
 router.get(
   '/',
-  verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const orgId = req.organizationId;
-    if (!orgId) {
-      res.status(400).json({ error: 'Organization context required', code: 'MISSING_ORG' });
-      return;
-    }
+    const orgId = req.organizationId!;
     const flags = await getV8Flags(orgId);
     res.json({ data: flags, meta: { version: 'v8', organizationId: orgId } });
   }),
@@ -23,7 +18,6 @@ router.get(
 
 router.get(
   '/all',
-  verifyToken,
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const allFlags = await getAllOrgFlags();
@@ -33,15 +27,9 @@ router.get(
 
 router.put(
   '/:module',
-  verifyToken,
   requireSuperAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const orgId = req.organizationId;
-    if (!orgId) {
-      res.status(400).json({ error: 'Organization context required', code: 'MISSING_ORG' });
-      return;
-    }
-
+    const orgId = req.organizationId!;
     const { module } = req.params;
     const { enabled } = req.body;
 
