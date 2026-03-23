@@ -26,6 +26,13 @@ function parseMode(): Mode {
   process.exit(1);
 }
 
+function hasFlag(flag: string): boolean {
+  return process.argv.slice(2).includes(flag);
+}
+
+const jsonOutput = hasFlag('--json');
+const forceMode = hasFlag('--force');
+
 interface CheckResult {
   name: string;
   passed: boolean;
@@ -146,6 +153,11 @@ async function main(): Promise<void> {
   switch (mode) {
     case 'check': {
       const results = await runPreflightChecks();
+      if (jsonOutput) {
+        const allPassed = results.every((r) => r.passed);
+        console.log(JSON.stringify({ passed: allPassed, results }, null, 2));
+        process.exit(allPassed ? 0 : 1);
+      }
       printResults(results);
       process.exit(results.every((r) => r.passed) ? 0 : 1);
     }

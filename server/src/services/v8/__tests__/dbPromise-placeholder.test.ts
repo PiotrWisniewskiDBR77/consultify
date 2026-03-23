@@ -78,5 +78,53 @@ describe('DbPromise placeholder translation', () => {
         'UPDATE t SET status = CASE WHEN id = $1 THEN $2 ELSE $3 END WHERE org = $4'
       );
     });
+
+    it('handles nested single quotes (escaped with double single-quote)', () => {
+      expect(translatePlaceholders(
+        "SELECT * FROM t WHERE name = ? AND note = 'it''s a test' AND id = ?"
+      )).toBe(
+        "SELECT * FROM t WHERE name = $1 AND note = 'it''s a test' AND id = $2"
+      );
+    });
+
+    it('handles multiline SQL with placeholders', () => {
+      const sql = [
+        'INSERT INTO v8_context_snapshots',
+        '  (id, organization_id, conversation_id, status)',
+        'VALUES',
+        '  (?, ?, ?, ?)',
+      ].join('\n');
+      const expected = [
+        'INSERT INTO v8_context_snapshots',
+        '  (id, organization_id, conversation_id, status)',
+        'VALUES',
+        '  ($1, $2, $3, $4)',
+      ].join('\n');
+      expect(translatePlaceholders(sql)).toBe(expected);
+    });
+
+    it('handles ? in LIKE patterns inside string literals', () => {
+      expect(translatePlaceholders(
+        "SELECT * FROM t WHERE name LIKE '%?%' AND id = ?"
+      )).toBe(
+        "SELECT * FROM t WHERE name LIKE '%?%' AND id = $1"
+      );
+    });
+
+    it('handles consecutive string literals with ? between them', () => {
+      expect(translatePlaceholders(
+        "SELECT * FROM t WHERE a = 'x' AND b = ? AND c = 'y'"
+      )).toBe(
+        "SELECT * FROM t WHERE a = 'x' AND b = $1 AND c = 'y'"
+      );
+    });
+
+    it('handles JSON-like content in string literals', () => {
+      expect(translatePlaceholders(
+        "INSERT INTO t (data) VALUES (?) WHERE meta = '{\"key\": \"value?\"}'"
+      )).toBe(
+        "INSERT INTO t (data) VALUES ($1) WHERE meta = '{\"key\": \"value?\"}'"
+      );
+    });
   });
 });

@@ -18,14 +18,14 @@ interface SmokeTestResult {
   error?: string;
 }
 
-function parseArgs(): { baseUrl: string; token: string } {
+function parseArgs(): { baseUrl: string; token: string; jsonOutput: boolean } {
   const args = process.argv.slice(2);
   const urlIdx = args.indexOf('--url');
   const tokenIdx = args.indexOf('--token');
 
   if (urlIdx === -1 || tokenIdx === -1) {
     console.error(
-      'Usage: npx tsx scripts/v8-smoke-test.ts --url <base-url> --token <jwt-token>',
+      'Usage: npx tsx scripts/v8-smoke-test.ts --url <base-url> --token <jwt-token> [--json]',
     );
     process.exit(1);
   }
@@ -34,7 +34,7 @@ function parseArgs(): { baseUrl: string; token: string } {
   const tokenArg = args[tokenIdx + 1];
   if (!baseUrlArg || !tokenArg) {
     console.error(
-      'Usage: npx tsx scripts/v8-smoke-test.ts --url <base-url> --token <jwt-token>',
+      'Usage: npx tsx scripts/v8-smoke-test.ts --url <base-url> --token <jwt-token> [--json]',
     );
     process.exit(1);
   }
@@ -42,6 +42,7 @@ function parseArgs(): { baseUrl: string; token: string } {
   return {
     baseUrl: baseUrlArg.replace(/\/$/, ''),
     token: tokenArg,
+    jsonOutput: args.includes('--json'),
   };
 }
 
@@ -91,7 +92,7 @@ async function runSmokeTest(
 }
 
 async function main(): Promise<void> {
-  const { baseUrl, token } = parseArgs();
+  const { baseUrl, token, jsonOutput } = parseArgs();
 
   console.log(`\n=== V8 Smoke Tests ===`);
   console.log(`Target: ${baseUrl}`);
@@ -122,14 +123,29 @@ async function main(): Promise<void> {
   tests.push(await runSmokeTest('AI Core tools', baseUrl, token, '/ai-core/tools'));
 
   // Print results
-  console.log('Results:\n');
   let passed = 0;
+  for (const t of tests) {
+    if (t.passed) passed++;
+  }
+
+  if (jsonOutput) {
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      target: baseUrl,
+      passed,
+      total: tests.length,
+      allPassed: passed === tests.length,
+      results: tests,
+    }, null, 2));
+    process.exit(passed === tests.length ? 0 : 1);
+  }
+
+  console.log('Results:\n');
   for (const t of tests) {
     const icon = t.passed ? '✅' : '❌';
     console.log(`${icon} ${t.name}`);
     console.log(`   ${t.method} ${t.endpoint} → ${t.statusCode ?? 'N/A'} (${t.responseTime}ms)`);
     if (t.error) console.log(`   Error: ${t.error}`);
-    if (t.passed) passed++;
   }
 
   console.log(`\n${passed}/${tests.length} smoke tests passed.`);

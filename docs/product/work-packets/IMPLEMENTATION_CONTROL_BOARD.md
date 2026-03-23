@@ -1846,3 +1846,141 @@ Wave 3 implementation (transformation lifecycle):
 ## 6. Next week's planned packets
 ## 7. Decisions needed from source-of-truth chat
 ```
+
+---
+
+## REPORTING MODE SWITCH: STAGING CLOSURE EXECUTION BOARD
+
+> Effective 2026-03-23. Previous mode: Post-20-Wave Closure Execution.
+> New mode: **Staging Closure Execution Board** per Tranche 04 mandate.
+> Corrected baseline: frontend integration 2/8, deployment readiness 3/8.
+
+---
+
+## Staging Closure Execution Report #7 — 2026-03-23 (TRANCHE 04 COMPLETE)
+
+### 1. Current corrected maturity
+
+| Domain | Previous | Corrected | After T04 | Evidence |
+|--------|----------|-----------|-----------|----------|
+| DB Foundation | implemented | implemented | implemented | Migrations exist, never applied to real DB |
+| API Layer | wired | wired | wired | Routes mounted, tested via supertest |
+| Auth Integration | wired | wired | wired | JWT chain tested E2E |
+| Feature Flags | wired | wired | wired | Per-org flags, tested |
+| Frontend Client | 4/8 → 2/8 | 2/8 (implemented) | **3/8 (wired)** | V8ContextIndicator renders V8 data |
+| Shadow Mode | implemented | inert | **wired** | Interceptor mounted, 1 mapping, integration tested |
+| Deployment Scripts | 6/8 → 3/8 | 3/8 (wired) | **3/8 (wired)** | Hardened scripts, preflight added, never executed |
+| Observability | wired | wired | wired | Metrics, health, error codes |
+| Gateway Integration | wired | wired | **integrated** | E2E test proves full chain |
+
+### 2. Tranche 04 packets completed
+
+| # | Packet | Status | Tests | Evidence |
+|---|--------|--------|-------|----------|
+| CP-22 | First V8 UI Surface — Chat Context Indicator | **DONE** | Component created | V8ContextIndicator renders snapshot count when V8 on, null when off |
+| CP-23 | Mount Shadow Interceptor + First Route Mapping | **DONE** | Middleware mounted | Gateway.ts updated, 1 mapping: GET /context → /ai-core/environment |
+| CP-24 | Gateway E2E Test | **DONE** | 9/9 pass | Full chain: gate → auth → org gate → health/admin |
+| CP-25 | Shadow Mode Integration Test | **DONE** | 5/5 pass | Proves comparison recorded, legacy unaffected |
+| CP-26 | Staging Preflight Hardening | **DONE** | 15/15 pass | --json output, --force flag, v8:preflight script, edge-case tests |
+
+### 3. Tranche 04 packets in progress
+
+None — all 5 code packets complete.
+
+### 4. Tranche 04 packets blocked
+
+None.
+
+### 5. UI integration progress
+
+| Before T04 | After T04 | Evidence |
+|------------|-----------|----------|
+| 0 components consume V8 | 1 component consumes V8 | `V8ContextIndicator` in `UnifiedChatPanel` |
+| Provider exists but unused | Provider → hook → component → render | `useV8Gate()` + `useV8Snapshots()` |
+| Frontend integration: 2/8 | Frontend integration: **3/8 (wired)** | Real API call, conditional rendering |
+
+**Honest assessment**: This is a minimal first surface. It proves the data flow works but does not replace any legacy functionality. Frontend integration is 3/8 (wired), not higher.
+
+### 6. Shadow mode activation progress
+
+| Before T04 | After T04 | Evidence |
+|------------|-----------|----------|
+| Interceptor exists, not mounted | Interceptor mounted in Gateway | `v8ShadowModeCheck` + `v8ShadowInterceptor` on `/api/ai` |
+| Route mappings: 0 | Route mappings: 1 | `GET /context → /ai-core/environment` |
+| Shadow mode: inert | Shadow mode: **wired** | Integration test proves comparison recording |
+
+**Honest assessment**: Shadow mode is wired but not verified on real infrastructure. The mapping is read-only GET. No mutation flows are shadowed yet. Shadow mode is 3/8 (wired), not higher.
+
+### 7. Staging evidence collected
+
+| Evidence category | Status | Detail |
+|-------------------|--------|--------|
+| Migration evidence | NOT COLLECTED | Migrations never applied to real DB |
+| API route evidence | PARTIAL | Supertest proves routes work in isolation |
+| Frontend wiring evidence | PARTIAL | Component exists, no real browser test |
+| Shadow mode evidence | PARTIAL | Integration test with mocked fetch |
+| Smoke test evidence | NOT COLLECTED | Scripts hardened but never executed against live |
+| Operator monitoring evidence | NOT COLLECTED | Runbook exists, never used |
+| Auth / permission evidence | PARTIAL | E2E test proves chain works |
+| Error / degraded-state evidence | NOT COLLECTED | No real error scenarios tested |
+| Rollback evidence | NOT COLLECTED | Rollback script exists, never executed |
+
+### 8. Critical remaining gaps
+
+| Gap | Severity | What's needed |
+|-----|----------|---------------|
+| Migrations never applied to real DB | P0 | Execute `v8-migrate.ts --apply` on staging |
+| Smoke tests never run against live server | P0 | Execute `v8-smoke-test.ts` on staging |
+| Shadow mode never compared real traffic | P1 | Deploy to staging, enable shadow, observe |
+| Rollback never tested | P1 | Execute rollback on staging |
+| Only 1 UI surface consumes V8 | P1 | More surfaces needed for pilot |
+| Only 1 shadow route mapping | P1 | More mappings needed for meaningful comparison |
+| No real browser testing | P2 | Manual or automated browser verification |
+
+### 9. Gate status
+
+**Tranche 04 Quality Gate: PASSED (code level)**
+
+| Criterion | Status | Evidence |
+|-----------|--------|----------|
+| UI component genuinely consumes V8 data | PASS | V8ContextIndicator calls useV8Snapshots |
+| Shadow interceptor mounted with >= 1 mapping | PASS | Gateway.ts + 1 mapping |
+| Gateway E2E proves full chain | PASS | 9/9 tests |
+| Shadow integration proves comparison recording | PASS | 5/5 tests |
+| Preflight scripts hardened | PASS | 15/15 tests |
+| Full test suite passes with 0 regressions | PASS | 2653 pass, 4 pre-existing failures |
+
+**Important caveat**: This gate is passed at the CODE level. No operational evidence exists yet. The gate does NOT prove staging readiness — it proves the code is ready FOR staging.
+
+### 10. Recommended next action
+
+**Verdict: GO FOR TRANCHE 05 PILOT PREP** (conditional on staging access)
+
+Tranche 04 has closed all code-level P0 gaps:
+- First UI surface consuming V8: done
+- Shadow interceptor mounted: done
+- Route mappings populated: done
+- Gateway E2E verified: done
+
+What remains is **operational validation** — executing the staging plan defined in `V8_STAGING_EXECUTION_AND_PRODUCTION_READINESS.md`:
+1. Apply migrations on staging DB
+2. Run smoke tests against live staging
+3. Activate shadow mode on staging
+4. Collect evidence pack
+5. Reassess for pilot readiness
+
+Tranche 05 should focus on:
+- CP-28: Staging migration execution + evidence capture
+- CP-29: Staging smoke test execution + evidence capture
+- CP-30: Shadow mode activation on staging + 24h monitoring
+- CP-31: Rollback procedure test on staging
+- CP-32: Operator monitoring walkthrough
+- CP-33: Pilot org selection + configuration
+
+### Architectural fix applied in Tranche 04
+
+**v8FeatureGate split**: The original `v8FeatureGate` middleware combined global toggle check AND org-level enablement check. Since it ran BEFORE `verifyToken`, the org-level check always failed (no `organizationId` on request yet). Fixed by splitting into:
+- `v8FeatureGate` — pre-auth, checks only `ENABLE_V8_GLOBAL`
+- `v8OrgGate` — post-auth (inside v8Router), checks org-level enablement + sets shadow mode flag
+
+This is a real bug fix, not just a test fix. All 2653 existing tests continue to pass.

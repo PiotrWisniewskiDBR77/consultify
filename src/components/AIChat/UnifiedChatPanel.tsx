@@ -77,6 +77,7 @@ import { MessageRenderer } from './MessageRenderer';
 import { PendingActionsIndicator } from './PendingActionsIndicator';
 import { detectTableIntent } from './tableIntentDetector';
 import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
+import { V8ContextIndicator } from './V8ContextIndicator';
 
 // ============================================================================
 // Types
@@ -2802,6 +2803,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         </div>
 
         <div className="flex items-center gap-0.5">
+          <V8ContextIndicator conversationId={activeConversationId} />
           {isPrivateMode && (
             <div
               className="mr-1 inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-800/70 dark:bg-violet-900/25 dark:text-violet-300"

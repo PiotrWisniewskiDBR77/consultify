@@ -14,12 +14,15 @@ interface ShadowRouteMapping {
 
 /**
  * Legacy API path → V8 path under `/api/v8`.
- * Phase 0: intentionally empty; add entries as V8 routes are verified (see CP-18 doc).
+ * Phase 1 (Tranche 04): first real mappings — read-only GET endpoints only.
+ * POST/mutation mappings will be added after shadow pass proves stability.
  */
 const SHADOW_ROUTE_MAPPINGS: ShadowRouteMapping[] = [
-  // Chat-related shadow comparisons
-  // When legacy chat endpoints are hit, we also call V8 chat endpoints
-  // Add mappings as V8 routes are proven stable
+  {
+    legacyPattern: /^\/context$/,
+    v8Path: '/ai-core/environment',
+    method: 'GET',
+  },
 ];
 
 /**

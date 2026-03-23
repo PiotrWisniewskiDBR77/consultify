@@ -249,6 +249,8 @@ import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
 import v8Router from './routes/v8/index.js';
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
+import { v8ShadowInterceptor } from './middleware/v8ShadowInterceptor.middleware.js';
+import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js';
 import logger from './utils/Logger.js';
 
 export class ApiGateway {
@@ -292,6 +294,9 @@ export class ApiGateway {
       app.use('/api/billing', billingRoutes);
       app.use('/api/superadmin/billing', billingAdminRoutes);
       app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
+      // V8 shadow mode: check flag and intercept legacy AI routes for comparison
+      app.use('/api/ai', v8ShadowModeCheck, v8ShadowInterceptor);
+
       console.log('[ApiGateway] Mounting /api/ai');
       app.use('/api/ai', aiRoutes);
       // Aggregated AI sub-routes (reduces drift & duplication)
