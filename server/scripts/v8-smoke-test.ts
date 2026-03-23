@@ -1,0 +1,148 @@
+#!/usr/bin/env npx tsx
+/**
+ * V8 Smoke Test Runner
+ * CP-17: Verifies V8 endpoints are healthy after deployment.
+ *
+ * Usage:
+ *   npx tsx scripts/v8-smoke-test.ts --url https://staging.example.com --token $JWT_TOKEN
+ *   npx tsx scripts/v8-smoke-test.ts --url http://localhost:3000 --token $JWT_TOKEN
+ */
+
+interface SmokeTestResult {
+  name: string;
+  endpoint: string;
+  method: string;
+  passed: boolean;
+  statusCode: number | null;
+  responseTime: number;
+  error?: string;
+}
+
+function parseArgs(): { baseUrl: string; token: string } {
+  const args = process.argv.slice(2);
+  const urlIdx = args.indexOf('--url');
+  const tokenIdx = args.indexOf('--token');
+
+  if (urlIdx === -1 || tokenIdx === -1) {
+    console.error(
+      'Usage: npx tsx scripts/v8-smoke-test.ts --url <base-url> --token <jwt-token>',
+    );
+    process.exit(1);
+  }
+
+  const baseUrlArg = args[urlIdx + 1];
+  const tokenArg = args[tokenIdx + 1];
+  if (!baseUrlArg || !tokenArg) {
+    console.error(
+      'Usage: npx tsx scripts/v8-smoke-test.ts --url <base-url> --token <jwt-token>',
+    );
+    process.exit(1);
+  }
+
+  return {
+    baseUrl: baseUrlArg.replace(/\/$/, ''),
+    token: tokenArg,
+  };
+}
+
+async function runSmokeTest(
+  name: string,
+  baseUrl: string,
+  token: string,
+  endpoint: string,
+  method: string = 'GET',
+  expectedStatus: number = 200,
+): Promise<SmokeTestResult> {
+  const url = `${baseUrl}/api/v8${endpoint}`;
+  const start = Date.now();
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const responseTime = Date.now() - start;
+    const passed = res.status === expectedStatus;
+
+    return {
+      name,
+      endpoint,
+      method,
+      passed,
+      statusCode: res.status,
+      responseTime,
+      error: passed ? undefined : `Expected ${expectedStatus}, got ${res.status}`,
+    };
+  } catch (err: unknown) {
+    return {
+      name,
+      endpoint,
+      method,
+      passed: false,
+      statusCode: null,
+      responseTime: Date.now() - start,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+async function main(): Promise<void> {
+  const { baseUrl, token } = parseArgs();
+
+  console.log(`\n=== V8 Smoke Tests ===`);
+  console.log(`Target: ${baseUrl}`);
+  console.log(`Time: ${new Date().toISOString()}\n`);
+
+  const tests: SmokeTestResult[] = [];
+
+  // Core health
+  tests.push(await runSmokeTest('Health endpoint', baseUrl, token, '/health'));
+  tests.push(await runSmokeTest('Health readiness', baseUrl, token, '/health/readiness'));
+
+  // Admin endpoints
+  tests.push(await runSmokeTest('Feature flags', baseUrl, token, '/admin/flags'));
+  tests.push(await runSmokeTest('Admin health', baseUrl, token, '/admin/health'));
+  tests.push(await runSmokeTest('Admin metrics', baseUrl, token, '/admin/metrics'));
+  tests.push(await runSmokeTest('Shadow stats', baseUrl, token, '/admin/shadow/stats'));
+
+  // Chat endpoints (expect 400 without params — proves route exists)
+  tests.push(
+    await runSmokeTest('Chat snapshots (no params)', baseUrl, token, '/chat/snapshots', 'GET', 400),
+  );
+  tests.push(
+    await runSmokeTest('Chat handoffs (no params)', baseUrl, token, '/chat/handoffs', 'GET', 400),
+  );
+
+  // AI Core endpoints
+  tests.push(await runSmokeTest('AI Core environment', baseUrl, token, '/ai-core/environment'));
+  tests.push(await runSmokeTest('AI Core tools', baseUrl, token, '/ai-core/tools'));
+
+  // Print results
+  console.log('Results:\n');
+  let passed = 0;
+  for (const t of tests) {
+    const icon = t.passed ? '✅' : '❌';
+    console.log(`${icon} ${t.name}`);
+    console.log(`   ${t.method} ${t.endpoint} → ${t.statusCode ?? 'N/A'} (${t.responseTime}ms)`);
+    if (t.error) console.log(`   Error: ${t.error}`);
+    if (t.passed) passed++;
+  }
+
+  console.log(`\n${passed}/${tests.length} smoke tests passed.`);
+
+  if (passed < tests.length) {
+    console.error('\n⚠️  Some smoke tests failed. Check the results above.');
+    process.exit(1);
+  } else {
+    console.log('\n✅ All smoke tests passed. V8 deployment is healthy.');
+  }
+}
+
+main().catch((err: unknown) => {
+  console.error('Smoke test error:', err instanceof Error ? err.message : String(err));
+  process.exit(1);
+});
