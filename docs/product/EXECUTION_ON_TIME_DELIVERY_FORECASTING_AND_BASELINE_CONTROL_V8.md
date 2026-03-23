@@ -91,6 +91,14 @@ Forecasts should carry explicit confidence states such as:
 - low_confidence
 - insufficient_data
 
+### 3.6 Forecast confidence capping
+
+> V8 Decision W3-11 applied — 2026-03-23
+
+Forecast confidence is auto-capped when critical-path capacity data is unreliable, stale, or missing. The system must not present high-confidence schedule claims on weak capacity truth.
+
+Rule: `confidence cannot exceed data reliability on the critical path`
+
 ---
 
 ## 4. Critical path doctrine
@@ -150,6 +158,14 @@ When timeliness degrades, the system should support:
 - escalation to missing decision owners
 - balancing proposals when overload is the root cause
 - explicit recommendation to rebaseline when reality has structurally changed
+
+### 7.1 Rebaseline approval path
+
+> V8 Decision W3-10 applied — 2026-03-23
+
+Rebaseline uses the shared proposal/approval spine (WP-W1-AI-03). No separate local rebaseline approval path exists.
+
+Rule: `rebaseline is a governed proposal, not a side workflow`
 
 ---
 

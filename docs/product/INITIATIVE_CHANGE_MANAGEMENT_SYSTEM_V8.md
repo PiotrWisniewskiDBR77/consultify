@@ -54,6 +54,8 @@ Rule:
 Initiatives should preserve:
 
 - source context
+- KPI and expected-outcome definition
+- optional initiative-level financial impact inputs
 - gate readiness
 - planning baseline
 - current execution state
@@ -85,6 +87,23 @@ The system should distinguish:
 
 Not every change needs the same approval path.
 
+### 5.1 Material change threshold
+
+> V8 Decision W3-5 applied — 2026-03-23
+
+Post-approval task changes above a materiality threshold must trigger initiative change management. A change is material when it significantly affects any of:
+
+- scope
+- committed timeline or baseline
+- critical-path logic
+- capacity or staffing
+- cost/economics
+- external dependency or vendor commitment
+- quality/acceptance promise
+- expected benefit or KPI linkage
+
+Exact numeric thresholds are refined later; the product rule is: business-meaningful change must not bypass change management.
+
 ---
 
 ## 6. Baseline and execution change rule
@@ -113,6 +132,9 @@ Closure should preserve:
 - delivery completion evidence
 - open risks or exceptions
 - unresolved decisions
+- KPI handoff into post-delivery tracking
+- ROI handoff into realized tracking where economic analysis exists
+- finance-model linkage where initiative economics was linked to governed Finance scenarios or models
 - owner sign-off
 - benefits-tracking handoff where required
 
@@ -130,6 +152,9 @@ Closure should preserve:
 ## 9. Related canonical docs
 
 - `PROJECT_MANAGEMENT_V8_BENCHMARK.md`
+- `RESULTS_KPI_OPERATING_MODEL_AND_OKR_FUNCTIONS_V8.md`
+- `RESULTS_ROI_REGISTRY_AND_REALIZATION_TRACKING_RUNTIME_V8.md`
+- `FINANCE_INITIATIVE_ECONOMICS_AND_MODEL_LINKAGE_RUNTIME_V8.md`
 - `TASK_AND_DECISION_RUNTIME_CONTRACT_V8.md`
 - `TASK_AUTOMATION_AND_EVENTING_V8.md`
 - `INITIATIVE_TIMELINE_CAPACITY_AND_CRITICAL_PATH_V8.md`

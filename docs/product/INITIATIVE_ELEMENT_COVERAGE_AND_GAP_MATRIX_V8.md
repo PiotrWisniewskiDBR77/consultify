@@ -39,6 +39,16 @@ It also now covers:
 - technology advisory
 - skill-gap and capability planning
 - role resolution and team permissions
+- quality, acceptance and handover
+- communication, stakeholder and adoption runtime
+- vendor, procurement and external delivery runtime
+- assumptions and constraints register
+
+### 2.1 Cross-initiative dependency model
+
+> V8 Decision W3-6 applied — 2026-03-23
+
+Dependency modeling is formally extended for cross-initiative links. `InitiativeDependency` supports explicit `source_initiative_id` and `target_initiative_id` references. Initiative-level cross-link is in scope now; optional lower-level task/milestone references may follow.
 
 ---
 
@@ -52,20 +62,29 @@ This should become a clearly governed initiative surface, not only an implied te
 
 ### 3.2 Quality and acceptance management
 
-The package still lacks one explicit initiative-level doctrine for:
+This area is now covered by:
 
-- quality plan
-- validation approach
-- acceptance logic
-- handover readiness
+- `INITIATIVE_QUALITY_ACCEPTANCE_AND_HANDOVER_RUNTIME_V8.md`
+
+Main remaining risk:
+
+- the package now has doctrine, but still needs later runtime parity and section-level implementation discipline
 
 ### 3.3 Communications and engagement plan
 
-Stakeholders and RACI exist, but initiative-level communication planning is still under-specified.
+This area is now covered by:
+
+- `INITIATIVE_COMMUNICATION_STAKEHOLDER_AND_ADOPTION_RUNTIME_V8.md`
+
+Main remaining risk:
+
+- initiative communication must later be made operationally visible, not left as documentation-only doctrine
 
 ### 3.4 Procurement, vendor and external delivery readiness
 
-Where initiatives depend on external vendors, tools or contracts, the package does not yet have one explicit initiative domain for that operating reality.
+This area is now covered by:
+
+- `INITIATIVE_VENDOR_PROCUREMENT_AND_EXTERNAL_DELIVERY_RUNTIME_V8.md`
 
 ### 3.5 Benefits lifecycle beyond KPI rows
 
@@ -73,16 +92,16 @@ KPIs exist, but benefits realization still risks being narrower than a full busi
 
 ### 3.6 Assumptions and constraints as governed object
 
-Assumptions appear in fields and related docs, but are still not a clearly hardened initiative-level register.
+This area is now covered by:
+
+- `INITIATIVE_ASSUMPTIONS_AND_CONSTRAINTS_REGISTER_RUNTIME_V8.md`
 
 ### 3.7 Closure and handover pack
 
-The package needs clearer initiative-level doctrine for:
+This area is now substantially hardened by:
 
-- handover
-- hypercare
-- transition to operational ownership
-- closure evidence beyond task completion
+- `INITIATIVE_QUALITY_ACCEPTANCE_AND_HANDOVER_RUNTIME_V8.md`
+- `INITIATIVE_CHANGE_MANAGEMENT_SYSTEM_V8.md`
 
 ---
 
@@ -115,6 +134,10 @@ Main current risks:
 ## 6. Related canonical docs
 
 - `INITIATIVE_CHANGE_MANAGEMENT_SYSTEM_V8.md`
+- `INITIATIVE_QUALITY_ACCEPTANCE_AND_HANDOVER_RUNTIME_V8.md`
+- `INITIATIVE_COMMUNICATION_STAKEHOLDER_AND_ADOPTION_RUNTIME_V8.md`
+- `INITIATIVE_VENDOR_PROCUREMENT_AND_EXTERNAL_DELIVERY_RUNTIME_V8.md`
+- `INITIATIVE_ASSUMPTIONS_AND_CONSTRAINTS_REGISTER_RUNTIME_V8.md`
 - `INITIATIVE_TECHNOLOGY_ADVISORY_AND_ARCHITECTURE_RUNTIME_V8.md`
 - `INITIATIVE_SKILL_GAP_AND_CAPABILITY_DEVELOPMENT_V8.md`
 - `INITIATIVE_ANALYSIS_QUALITY_LOGIC_AND_CAPACITY_RUNTIME_V8.md`

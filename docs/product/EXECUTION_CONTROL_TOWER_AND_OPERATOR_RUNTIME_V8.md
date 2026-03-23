@@ -184,6 +184,16 @@ Execution should support at least these levels:
 
 The same runtime logic should scale across these scopes.
 
+### 6.1 Signal aggregation model
+
+> V8 Decision W3-8 applied — 2026-03-23
+
+Execution signals aggregate hierarchically: task/decision/work item → initiative → project/program → PMO/operator layer.
+
+Aggregation preserves lineage and severity. Blockers and critical risks roll up explicitly, not averaged away.
+
+Rule: `summary up, traceability down`
+
 ---
 
 ## 7. Data doctrine
@@ -222,6 +232,20 @@ Minimum execution signals:
 - critical_path_slip_count
 - forecast_low_confidence_count
 - rollover_pressure_count
+
+### 8.1 Results handoff event contract
+
+> V8 Decision W3-9 applied — 2026-03-23
+
+The execution layer must emit a minimal canonical event family for handoff to Results and downstream consumers:
+
+- `initiative_baseline_confirmed`
+- `execution_progress_updated`
+- `milestone_completed`
+- `delivery_risk_changed`
+- `rebaseline_approved`
+- `handover_completed`
+- `realization_tracking_started`
 
 ---
 

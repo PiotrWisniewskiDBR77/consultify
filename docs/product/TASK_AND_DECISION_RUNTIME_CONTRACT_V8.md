@@ -44,6 +44,12 @@ The package should distinguish:
 - `InitiativeDependency`
 - `InitiativeExecutionSignal`
 
+### 3.1 Cross-initiative dependency model
+
+> V8 Decision W3-6 applied — 2026-03-23
+
+`InitiativeDependency` is formally extended for cross-initiative links. Dependencies support explicit `source_initiative_id` and `target_initiative_id` references. Optional lower-level task/milestone references may exist later; initiative-level cross-link is in scope now.
+
 ---
 
 ## 4. Task doctrine
@@ -76,6 +82,16 @@ Tasks should also support:
 - automation and escalation triggers
 - reporting-safe custom metadata without breaking canonical execution truth
 
+### 4.1 WBS depth model
+
+> V8 Decision W3-4 applied — 2026-03-23
+
+Canonical V8 depth: Initiative → Workstream/Phase → Task → Subtask.
+
+This is the default maximum structured hierarchy. Anything deeper becomes: checklist, dependency-linked sibling task, or separate initiative/workstream decomposition.
+
+Rule: `keep hierarchy shallow enough to remain governable`
+
 ---
 
 ## 5. Decision doctrine
@@ -104,6 +120,18 @@ Where needed, the system should also support:
 - delegated decision handling
 - approval chains or committee-style review
 - conditional decisions and required follow-up actions
+
+### 5.1 Decision chain model
+
+> V8 Decision W3-7 applied — 2026-03-23
+
+A minimal formal decision-chain model is in scope for V8. Supported chain types:
+
+- `sequential` — A then B
+- `parallel` — A and B concurrently
+- `delegated` — A delegates to C
+
+Rule: `formal enough for governance, not yet BPMN-grade`
 
 Important:
 
