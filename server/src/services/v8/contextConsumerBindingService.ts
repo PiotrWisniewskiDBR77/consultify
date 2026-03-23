@@ -99,6 +99,7 @@ export async function captureForChat(
     initiatorUserId: params.initiatorUserId,
     consumerClass: 'chat',
     sourceContextRefs: params.sourceContextRefs ?? [],
+    parentSnapshotId: parentSnapshotId ?? undefined,
   });
 
   logger.info(
@@ -130,6 +131,7 @@ export async function captureForExecution(
     initiatorUserId: params.initiatorUserId,
     consumerClass: 'execution',
     sourceContextRefs: [],
+    parentSnapshotId: params.chatSnapshotId,
   });
 
   logger.info(
@@ -161,6 +163,7 @@ export async function captureForRetrieval(
     initiatorUserId: params.initiatorUserId,
     consumerClass: 'retrieval',
     sourceContextRefs: params.sourceContextRefs ?? [],
+    parentSnapshotId: params.activeSnapshotId,
   });
 
   logger.info(

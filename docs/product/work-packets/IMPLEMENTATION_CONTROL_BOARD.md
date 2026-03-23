@@ -380,6 +380,77 @@ Critical path: W2 → W4 → W5 → W6. Parallel track: W3 alongside W4.
 
 ---
 
+## Report #14 — 2026-03-23 (WAVE 2 CLOSED — Identity Spine)
+
+### 1. Wave 2 packets — ALL COMPLETE
+
+| Packet | Deliverable | Status |
+|--------|-------------|--------|
+| WP-20W2-01 | Control: closure scope + acceptance criteria | **COMPLETE** |
+| WP-20W2-02 | Production ContextSnapshot wiring (identity chain, drift, versioning, archival) | **COMPLETE** |
+| WP-20W2-03 | Consumer integration (Chat, Execution, Knowledge binding) | **COMPLETE** |
+| WP-20W2-04 | Verification: identity spine integration proof (9 tests) | **COMPLETE** |
+
+### 2. Implementation delivered
+
+**Types enhanced:**
+- `contextSnapshot.ts` — added `parentSnapshotId` to ContextSnapshot, schema, and params
+
+**New service functions (contextSnapshotService.ts):**
+- `getSnapshotChain()` — walk parent chain root→leaf (100-hop safety)
+- `getLatestSnapshotForSession()` — latest snapshot per conversation
+- `getDriftEventsByOrg()` — drift audit query by org + date range
+- `markForArchival()` — retention enforcement (30-day baseline per D3)
+- Auto-drift detection on capture with parent
+- Auto-version increment on parent chain
+
+**New service (contextConsumerBindingService.ts):**
+- `captureForChat()` — chat consumer snapshot with session chaining
+- `captureForExecution()` — execution inherits chat snapshot via parentSnapshotId
+- `captureForRetrieval()` — retrieval binds to active snapshot
+- `validateConsumerClass()` — runtime consumer class enforcement
+- `getInheritanceChain()` — full chat→execution→retrieval lineage
+
+**New migrations:**
+- `20260323_v8_context_snapshot_identity_chain.sql` — parent_snapshot_id FK + archived_at
+- `20260323_v8_execution_spine_context_binding.sql` — context_snapshot_id on execution runs
+
+### 3. Test results
+
+| Suite | Tests | Status |
+|-------|------:|--------|
+| contextSnapshotService (existing) | 24 | **PASS** |
+| contextSnapshotIdentityChain (new) | 22 | **PASS** |
+| contextConsumerBindingService (new) | 14 | **PASS** |
+| identitySpineFlow integration (new) | 9 | **PASS** |
+| **Total** | **69** | **ALL GREEN** |
+
+### 4. Updated program totals
+
+| Metric | Count |
+|---|---|
+| **Total V8 code files** | **112** (+4: 1 service, 2 test files, 1 migration) |
+| **Total integration test files** | **13** (+1: identitySpineFlow) |
+| **Total V8 DB tables** | **103** (no new tables, 2 columns added) |
+| **Total passing tests** | **1,980** (+69 Wave 2) |
+
+### 5. 20-wave implementation status
+
+| Wave | Status |
+|---|---|
+| **W1** | **CLOSED** |
+| **W2** | **CLOSED** |
+| W3 | **GREEN — ready to start** (retrieval, ACL, freshness) |
+| W4 | **GREEN — ready to start** (execution proposal/approval) |
+| W5 | YELLOW — after W4 |
+| W6 | YELLOW — after W5 |
+
+### 6. Recommended next action
+
+**Start Wave 3 and Wave 4 in parallel.** Both depend only on W2 (now closed), not on each other.
+
+---
+
 ## Report #12 — 2026-03-23 (INTEGRATION GATE PASSED)
 
 ### 1. Integration Test Program — ALL TIERS GREEN
