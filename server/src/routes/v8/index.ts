@@ -6,6 +6,7 @@ import { v8MetricsMiddleware } from '../../middleware/v8Metrics.middleware.js';
 import featureFlagRoutes from './admin/feature-flags.routes.js';
 import adminHealthRoutes from './admin/health.routes.js';
 import adminMetricsRoutes from './admin/metrics.routes.js';
+import shadowRoutes from './admin/shadow.routes.js';
 import aiCoreRoutes from './ai-core.routes.js';
 import chatRoutes from './chat.routes.js';
 import healthRoutes from './health.routes.js';
@@ -21,6 +22,7 @@ v8Router.use('/health', healthRoutes);
 v8Router.use('/admin/flags', featureFlagRoutes);
 v8Router.use('/admin/health', adminHealthRoutes);
 v8Router.use('/admin/metrics', adminMetricsRoutes);
+v8Router.use('/admin/shadow', shadowRoutes);
 v8Router.use('/chat', chatRoutes);
 v8Router.use('/ai-core', aiCoreRoutes);
 
