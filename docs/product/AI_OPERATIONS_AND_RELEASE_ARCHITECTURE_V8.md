@@ -73,8 +73,8 @@ To reach production-grade AI operations, this architecture must also define:
 
 - release bundle contents for model, prompt, policy, workload class and feature flags,
 - eval gates with explicit thresholds for quality, latency, cost, citation/trust and failure rate,
-- canary dimensions by organization, purpose, workload class, provider and surface,
-- rollback triggers and operator authority model,
+- canary dimensions by organization, purpose, workload class, provider and surface (see W2-11 below),
+- rollback triggers and operator authority model (see W2-12 below),
 - deprecation lifecycle from notice through replacement mapping to org migration completion,
 - release observability tied to support-visible run traces.
 
@@ -90,6 +90,14 @@ Minimum release metadata should include:
 - `status`
 - `promoted_at`
 - `rolled_back_at?`
+
+> V8 Decision W2-11 applied — 2026-03-23
+>
+> Exact canary percentages and cohort math are deferred to a later wave. The architecture must support from day one: org-scoped targeting, purpose-family targeting, preset/version targeting, and fast rollback. Canary must be selectable, observable, and reversible.
+
+> V8 Decision W2-12 applied — 2026-03-23
+>
+> Multi-key coordinated release rollback is a required capability. Rollback must work at the coordinated release-bundle level, not only per single key. Model, prompt, policy, and runtime-config changes must be rollback-aware as one release family where coupled. Exact implementation strategy to be validated in a later wave.
 
 ---
 

@@ -278,6 +278,10 @@ Responsibilities:
 - retrieve candidates,
 - log source usage eligibility.
 
+> V8 Decision W2-4 applied — 2026-03-23
+>
+> The retrieval request contract includes an explicit `working_memory_context_ref` field. The orchestrator passes this to the gateway so the gateway can avoid re-retrieving chunks already in the active document set, prefer sources from the same document family as currently pinned evidence, and respect the orchestrator's budget constraints. This field must be explicit in the request — not inferred only from conversation state.
+
 #### D. Working Set Selector
 
 Selects the minimal active subset from retrieved candidates.
@@ -587,6 +591,10 @@ Only through policy-aware write paths:
 - auditable derived facts.
 
 Working memory is not itself the durable memory layer.
+
+> V8 Decision W2-6 applied — 2026-03-23
+>
+> Compacted working memory CAN be promoted to durable knowledge, but NOT as silent durable truth. It must go through the governed promotion path as derived knowledge with provenance. Raw source material remains a stronger evidence class. Rule: compacted memory may become durable only with provenance and promotion workflow; no direct promotion as if it were original source evidence.
 
 ---
 

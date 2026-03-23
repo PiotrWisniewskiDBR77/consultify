@@ -79,7 +79,7 @@ Canonical retrieval rule:
 To reach mature enterprise-search quality, this architecture must also define:
 
 - connector auth lifecycle including token refresh, revocation and secret ownership,
-- exact ACL projection rules from external systems into internal retrieval policy,
+- exact ACL projection rules from external systems into internal retrieval policy (see W2-5 below),
 - hybrid retrieval strategy for keyword, semantic and rerank stages where source class requires it,
 - source freshness and drift states with clear user and operator semantics,
 - ingestion-time classification and redaction before sensitive content reaches chunks or embeddings,
@@ -98,6 +98,10 @@ Minimum connector metadata should include:
 - `last_verified_at`
 - `index_version`
 - `drift_state`
+
+> V8 Decision W2-5 applied — 2026-03-23
+>
+> ACL staleness windows (from Wave 1 Decision 10) apply specifically to connector-backed external sources governed by this document. Internal memory stores (user-private, organization knowledge) resolve ACL at request time against the current ContextSnapshot and are NOT subject to the same staleness window semantics. Internal memory uses its own freshness and governance checks, not connector ACL lag semantics.
 
 ---
 

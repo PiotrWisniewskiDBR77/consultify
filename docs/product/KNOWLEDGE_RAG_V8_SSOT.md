@@ -220,6 +220,10 @@ Write rules:
 Promotion rule:
 - private user knowledge may be promoted to org scope only through explicit user or admin flow with review.
 
+> V8 Decision W2-6 applied — 2026-03-23
+>
+> Compacted working memory may be promoted to durable knowledge, but NOT as silent durable truth. Promotion must go through the governed promotion path as derived knowledge. Raw source material remains a stronger evidence class than compacted summaries. Rule: compacted memory may become durable only with provenance and promotion workflow; no direct promotion as if it were original source evidence.
+
 ## 6.2 Organization-shared RAG method
 
 Purpose:
@@ -284,6 +288,10 @@ Canonical sequence:
 4. retrieve per scope
 5. merge and rerank
 6. log actual used sources
+
+> V8 Decision W2-5 applied — 2026-03-23
+>
+> ACL staleness windows (from Wave 1 Decision 10) apply specifically to connector-backed external sources. Internal memory stores (user-private, organization knowledge) resolve ACL at request time against the current ContextSnapshot and are NOT subject to the same staleness window semantics. Internal memory uses its own freshness and governance checks.
 
 ### 8.1 Why pre-filter matters
 
@@ -388,6 +396,14 @@ All consumers should use one orchestrated retrieval service that:
 - enforces policy,
 - merges results,
 - logs usage.
+
+> V8 Decision W2-4 applied — 2026-03-23
+>
+> The retrieval request contract includes an explicit `working_memory_context_ref` field. This reference allows the working memory orchestrator to inform the gateway about the current working memory state (active document refs, active evidence pin refs). The gateway uses this for optimization (avoiding redundant retrieval, preferring same document family). The field must be explicit — it must NOT be inferred only from conversation state.
+
+> V8 Decision W2-7 applied — 2026-03-23
+>
+> The retrieval request contract includes an advisory `budget_hint` field. For Wave 2, an advisory hint from the orchestrator is sufficient for gateway coordination. The architecture must preserve an upgrade path to a stronger budget negotiation protocol in later waves.
 
 ---
 

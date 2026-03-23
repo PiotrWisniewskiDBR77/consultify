@@ -183,6 +183,10 @@ Rozszerzenia tej sciezki:
 - `entry -> deep research confirm -> stream -> review -> save or act`,
 - `split workspace -> ask contextual question -> approve action -> continue working`.
 
+> V8 Decision W2-1 applied — 2026-03-23
+>
+> Intent classification at the chat intake boundary uses a hybrid approach. The system uses LLM classification first. Borderline cases require user confirmation. Safe rule: clear conversational ask → stay in chat; clear governed work request → enter execution/proposal path; ambiguous ask → ask user whether this should become governed work.
+
 ---
 
 ## 6. Model domenowy
@@ -233,6 +237,10 @@ Wiadomosc ma:
 - `actions?`
 - `createdAt`
 
+> V8 Decision W2-3 applied — 2026-03-23
+>
+> `messageType` must include a dedicated type for governed proposals (e.g. `execution_proposal`). Governed proposals render as first-class proposal messages in the conversation thread — they must NOT be hidden inside the generic `actions` field. The `actions` field may still carry lightweight conversational actions.
+
 ### 6.4 Encja `ChatActionProposal`
 
 Akcja AI ma:
@@ -245,6 +253,10 @@ Akcja AI ma:
 - `auditRef`
 - `createdAt`
 - `resolvedAt?`
+
+> V8 Decision W2-2 applied — 2026-03-23
+>
+> Wave 2 target: facade alignment — one user-visible proposal family. `ChatActionProposal` and `ActionProposal` (from Execution Agent) present as one proposal experience to the user. Full data-model unification into one canonical underlying proposal model is the Wave 3 merge target. Wave 2 must NOT be blocked on that full unification.
 
 ### 6.5 Encja `AttachmentContext`
 
