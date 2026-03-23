@@ -46,3 +46,12 @@
   - `V8_INTEGRATION_TEST_PROGRAM.md` — 3-tier test program (contracts, flows, migrations)
   - `V8_DEPLOYMENT_READINESS_PLAN.md` — migrations, rollback, feature flags, rollout phases, support readiness
   - `V8_UI_WIRING_QUEUE.md` — 23 bounded slices across 6 priority levels
+
+## Decision PC-5 — 20-wave program authority (2026-03-23)
+
+- **`V8_FINAL_20_WAVE_IMPLEMENTATION_CLOSURE_PROGRAM.md` is the primary operational authority** for all forward execution.
+- The prior 7-wave structure from `V8_IMPLEMENTATION_MASTER_PROGRAM.md` is superseded for wave numbering and closure criteria.
+- All work completed under the prior 7-wave cycle (108 V8 files, 103 DB tables, 1,911 tests, 74 integration tests, 3 build-phase deliverables) maps as **foundational input** to the 20-wave program.
+- No prior wave is automatically considered "closed" under the 20-wave closure criteria — each must be assessed against the new 5-dimension closure scale (platform/core, integration, UI/product surface, operator/support, content/seed).
+- Forward work packets use `WP-20WX-NN` numbering (20-wave program).
+- Rule: `the 20-wave program defines what closure means; the prior 7-wave work defines what foundation exists`.

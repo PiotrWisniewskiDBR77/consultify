@@ -320,6 +320,66 @@ These are integration-layer packets that wire Wave 1 primitives together.
 
 ---
 
+## Report #13 — 2026-03-23 (20-WAVE PROGRAM INITIALIZED — WAVE 1 CLOSED)
+
+### 1. Program authority transition
+
+Per Decision PC-5: `V8_FINAL_20_WAVE_IMPLEMENTATION_CLOSURE_PROGRAM.md` is now the primary operational authority. The prior 7-wave cycle is superseded for wave numbering and closure criteria. All prior work (108 V8 files, 103 DB tables, 1,911 tests) maps as foundational input.
+
+### 2. Wave 1 (20-wave) — CLOSED
+
+| Packet | Deliverable | Status |
+|--------|-------------|--------|
+| WP-20W1-01 | Program state reconciliation — mapped 161 assets to 20 waves | **COMPLETE** |
+| WP-20W1-02 | Truth hierarchy freeze — 5-tier precedence system frozen | **COMPLETE** |
+| WP-20W1-03 | Decision log consolidation — 99/99 decisions validated, 0 superseded, 11 deferred items tracked | **COMPLETE** |
+| WP-20W1-04 | Wave 2-6 readiness assessment — 21 packets proposed, execution plan defined | **COMPLETE** |
+
+### 3. Key findings from reconciliation
+
+| 20-Wave | Foundation | Gap severity | Notes |
+|---------|-----------|-------------|-------|
+| W2-W12 | EXISTS | Medium | Types, schemas, migrations, services, tests all present. Gap = production wiring. |
+| W13-W16 | PARTIAL | **HIGH** | Only generic collaboration adapters. No per-tool specialization. |
+| W17-W20 | EXISTS | Medium | Foundation present. Gap = production wiring + roof closure. |
+
+### 4. Updated program totals
+
+| Metric | Count |
+|---|---|
+| **Total V8 code files** | **108** (27 types + 27 migrations + 27 services + 27 unit tests) |
+| **Total integration test files** | **12** |
+| **Total V8 DB tables** | **103** |
+| **Total passing tests** | **1,911** (1,837 unit + 74 integration) |
+| **Total work packets (prior 7-wave)** | **29** |
+| **Total work packets (20-wave W1)** | **4** |
+| **Total decisions** | **99** (94 wave + 5 program control) |
+| **Build-phase deliverables** | **3** (integration test program, deployment plan, UI wiring queue) |
+
+### 5. 20-wave implementation status
+
+| Wave | Scope | Status |
+|---|---|---|
+| **W1** | Registry, decision, packet convergence | **CLOSED** |
+| W2 | Context/identity spine | **GREEN — ready to start** |
+| W3 | Governed retrieval | YELLOW — after W2 |
+| W4 | Execution proposal/approval | YELLOW — after W2, parallel with W3 |
+| W5 | Tool governance, HITL | YELLOW — after W4 |
+| W6 | Trust, provenance, observability | YELLOW — after W5 |
+| W7-W20 | Multiplayer → Roof closure | Pending — assessed after W6 |
+
+### 6. Recommended next action
+
+**Start Wave 2 immediately.** Deploy 4 packets:
+1. `WP-20W2-01` — Control: Context identity spine closure scope
+2. `WP-20W2-02` — Implementation: Production ContextSnapshot wiring
+3. `WP-20W2-03` — Implementation: Consumer integration (Chat, Execution, Knowledge)
+4. `WP-20W2-04` — Verification: Identity spine integration proof
+
+Critical path: W2 → W4 → W5 → W6. Parallel track: W3 alongside W4.
+
+---
+
 ## Report #12 — 2026-03-23 (INTEGRATION GATE PASSED)
 
 ### 1. Integration Test Program — ALL TIERS GREEN
