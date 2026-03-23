@@ -2181,3 +2181,85 @@ Pilot gate criteria documented in: `docs/product/work-packets/V8_LIVE_STAGING_EX
 6. Confirmation that env vars can be set on staging deployment
 
 Once these are provided, execution begins immediately with Step 1 (Pre-flight).
+
+---
+
+## Operational Input Blocked Board — Report #10
+
+> Date: 2026-03-23
+> Phase: AWAITING OPERATIONAL INPUTS
+> Authority: docs/product/work-packets/V8_OPERATIONAL_HANDOFF_PACK.md
+
+### 1. Blocking inputs
+
+| # | Input | Status |
+|---|-------|--------|
+| 1 | `DATABASE_PUBLIC_URL` | NOT PROVIDED |
+| 2 | Staging server URL | NOT PROVIDED |
+| 3 | JWT token (test org) | NOT PROVIDED |
+| 4 | Superadmin JWT token | NOT PROVIDED |
+| 5 | Test org ID | NOT PROVIDED |
+| 6 | Env var access confirmation | NOT PROVIDED |
+
+**0/6 inputs provided. Execution cannot begin.**
+
+### 2. What is already ready
+
+| Item | Status |
+|------|--------|
+| Code + tests | 2713 tests, 0 regressions |
+| Execution plan (8 steps) | COMPLETE |
+| Console sheet (copy-paste commands) | COMPLETE |
+| Evidence pack definition (10 categories) | COMPLETE |
+| Evidence directory + templates | CREATED |
+| Pilot readiness gate | COMPLETE |
+| Operator runbook | COMPLETE |
+| Contingency packets (5 defined) | COMPLETE |
+| Handoff pack (6 inputs documented) | COMPLETE |
+| Trigger protocol (6 phases, checkpoints) | COMPLETE |
+| Emergency stop commands | DOCUMENTED |
+
+### 3. What was prepared while waiting
+
+- Operational handoff pack: exact input requirements, formats, owners, blockers
+- Execution console sheet: copy-paste commands for all 8 steps
+- Pre-execution gate: mandatory/nice-to-have/no-go criteria
+- Live execution trigger protocol: 6 phases with checkpoint rules
+- Evidence directory (`evidence/`) with `.gitignore` and README
+- Evidence artifact naming convention
+
+### 4. Dry-run validations completed (no secrets needed)
+
+| Check | Result |
+|-------|--------|
+| Node version >= 18 | PASS — v24.12.0 |
+| V8 migration files present | PASS — 47 files found |
+| `v8-deploy.ts --check` script runs | PASS — parses correctly, fails on DB as expected |
+| Evidence directory created | PASS |
+
+### 5. What can start immediately once inputs arrive
+
+| Phase | Estimated time | Automatic? |
+|-------|---------------|------------|
+| Phase 1: Preflight | 5 min | YES |
+| Phase 2: Migration | 15 min | NO — checkpoint after |
+| Phase 3: Activation | 10 min | NO — checkpoint after |
+| Phase 4: Smoke + flags | 15 min | YES if smoke passes |
+| Phase 5: 24h observation | 24h | Checkpoints at 1h/6h/24h |
+| Phase 6: Pilot gate | 30 min | NO — final verdict |
+
+**Total: ~45 min active + 24h observation**
+
+### 6. Remaining execution risks
+
+| Risk | Severity | Mitigation |
+|------|----------|------------|
+| Staging DB schema conflicts | P1 | Verify step detects; rollback available |
+| SQL transformation fails on real Postgres | P1 | Dry-run first; 10 offline tests passed |
+| JWT claims mismatch | P1 | Decode and verify before execution |
+| Shadow interceptor silent | P1 | Check stats after 1h |
+| Env vars cannot be changed on staging | P0 | Must be confirmed before start |
+
+### 7. Recommended next action from source-of-truth
+
+**Provide the 6 operational inputs listed above. No additional planning or code changes are needed. The program is fully prepared for immediate live staging execution.**
