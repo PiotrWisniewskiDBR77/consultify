@@ -17,7 +17,7 @@
 | Canon doc updates done | **19 / 19 (100%)** |
 | Canon doc updates pending | **0** |
 | New canonical docs mandated | **4 / 4 created** |
-| Implementation started | **17 packets** (Waves 1-4 complete) |
+| Implementation started | **20 packets** (Waves 1-5 complete) |
 
 ---
 
@@ -317,6 +317,61 @@ Wave 1 code is complete. Next: Wave 2 implementation (3 packets):
 3. `WP-W2-AI-03` → Prompt OS runtime discipline
 
 These are integration-layer packets that wire Wave 1 primitives together.
+
+---
+
+## Report #9 — 2026-03-23 (Wave 5 code closure)
+
+### 1. Completed this cycle
+
+| # | Packet | Files | Tests | Status |
+|---|---|---|---|---|
+| 18 | WP-W5-EXT-01-IMPL — PM Sync Auth Baseline | 4 files | 74 passing | **done** |
+| 19 | WP-W5-EXT-02-IMPL — Replay/Dead-Letter/Edge Reliability | 4 files | 78 passing | **done** |
+| 20 | WP-W5-EXT-03-IMPL — Operator/Admin Surfaces | 4 files | 95 passing | **done** |
+
+**Cycle total**: 12 new files, 247 new tests.
+
+### 2. Wave 5 implementation — COMPLETE
+
+| Packet | Integration proof | Tests | Status |
+|---|---|---|---|
+| WP-W5-EXT-01 Auth Baseline | Credential lifecycle, failure discrimination, escalation ladder, admin re-bind | 74 | **complete** |
+| WP-W5-EXT-02 Replay/Dead-Letter | Dead-letter queue, retry policies, bulk replay, provider health, schema drift | 78 | **complete** |
+| WP-W5-EXT-03 Operator/Admin | Fleet health, connector packages, tenant install, support notes, emergency pause | 95 | **complete** |
+
+### 3. Program totals (cumulative)
+
+| Metric | Count |
+|---|---|
+| V8 type files | 20 |
+| V8 migrations | 20 |
+| V8 services | 20 |
+| V8 test files | 20 |
+| **Total V8 files** | **80** |
+| **Total V8 DB tables** | **70** |
+| **Total passing tests** | **1,245** |
+| **Waves with code** | **Waves 1-5** |
+
+### 4. Implementation status by wave
+
+| Wave | Analysis | Canon docs | Code | Status |
+|---|---|---|---|---|
+| Wave 1 | 10/10 | 19/19 applied | 8/8 done | **CLOSED** |
+| Wave 2 | 3/3 | applied | 3/3 done | **CLOSED** |
+| Wave 3 | 3/3 | applied | 3/3 done | **CLOSED** |
+| Wave 4 | 3/3 | applied | 3/3 done | **CLOSED** |
+| Wave 5 | 3/3 | applied | 3/3 done | **CLOSED** |
+| Wave 6 | 4/4 | applied | 0/4 | Next |
+| Wave 7 | 3/3 | applied | 0/3 | Pending |
+
+### 5. Recommended next actions
+
+Wave 6 implementation (output surfaces):
+1. `WP-W6-OUT-01` → Reports/Presentations operating model
+2. `WP-W6-OUT-02` → Template/generator runtime
+3. `WP-W6-OUT-03` → AI operations and governance for outputs
+4. `WP-W6-OUT-04` → Delivery/export runtime
 
 ---
 
