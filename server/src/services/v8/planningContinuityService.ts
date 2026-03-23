@@ -528,3 +528,164 @@ export async function getDecisionChainsByInitiative(
 
   return (rows || []).map(rowToDecisionChain);
 }
+
+// ==========================================
+// WBS TREE, COMPLETENESS, CRITICAL PATH, PENDING DECISIONS (Wave 11)
+// ==========================================
+
+const NON_LEAF_WBS_LEVELS: ReadonlySet<WBSLevel> = new Set([
+  'initiative',
+  'workstream_phase',
+  'task',
+]);
+
+export interface WBSCompletenessGap {
+  nodeId: string;
+  level: WBSLevel;
+  reason: string;
+}
+
+export interface WBSCompletenessResult {
+  complete: boolean;
+  gaps: WBSCompletenessGap[];
+}
+
+/**
+ * Full WBS decomposition tree for an initiative (all levels).
+ * Alias of getDecompositionTree with (initiativeId, organizationId) parameter order.
+ */
+export async function getWBSByInitiative(
+  initiativeId: string,
+  organizationId: string,
+): Promise<InitiativeDecomposition[]> {
+  return getDecompositionTree(initiativeId, organizationId);
+}
+
+/**
+ * Detect structural gaps: non-leaf WBS nodes (initiative, workstream_phase, task)
+ * that have no child decompositions.
+ */
+export async function validateWBSCompleteness(
+  initiativeId: string,
+  organizationId: string,
+): Promise<WBSCompletenessResult> {
+  const nodes = await getDecompositionTree(initiativeId, organizationId);
+  const byParent = new Map<string | null, InitiativeDecomposition[]>();
+
+  for (const n of nodes) {
+    const key = n.parentId;
+    const list = byParent.get(key) ?? [];
+    list.push(n);
+    byParent.set(key, list);
+  }
+
+  const gaps: WBSCompletenessGap[] = [];
+
+  for (const node of nodes) {
+    if (!NON_LEAF_WBS_LEVELS.has(node.wbsLevel)) {
+      continue;
+    }
+    const children = byParent.get(node.decompositionId) ?? [];
+    if (children.length === 0) {
+      gaps.push({
+        nodeId: node.decompositionId,
+        level: node.wbsLevel,
+        reason: 'non_leaf_without_children',
+      });
+    }
+  }
+
+  return {
+    complete: gaps.length === 0,
+    gaps,
+  };
+}
+
+/**
+ * Longest root-to-leaf chain in the WBS tree (proxy critical path when no explicit
+ * task dependency graph exists in v8 schema).
+ */
+export async function getCriticalPath(
+  initiativeId: string,
+  organizationId: string,
+): Promise<InitiativeDecomposition[]> {
+  const nodes = await getDecompositionTree(initiativeId, organizationId);
+  if (nodes.length === 0) {
+    return [];
+  }
+
+  const byParent = new Map<string | null, InitiativeDecomposition[]>();
+  for (const n of nodes) {
+    const key = n.parentId;
+    const list = byParent.get(key) ?? [];
+    list.push(n);
+    byParent.set(key, list);
+  }
+
+  const memo = new Map<string, InitiativeDecomposition[]>();
+
+  function longestFrom(node: InitiativeDecomposition): InitiativeDecomposition[] {
+    const cached = memo.get(node.decompositionId);
+    if (cached) {
+      return cached;
+    }
+    const children = byParent.get(node.decompositionId) ?? [];
+    if (children.length === 0) {
+      const path = [node];
+      memo.set(node.decompositionId, path);
+      return path;
+    }
+    let best: InitiativeDecomposition[] = [node];
+    for (const child of children) {
+      const sub = longestFrom(child);
+      const candidate = [node, ...sub];
+      if (candidate.length > best.length) {
+        best = candidate;
+      } else if (candidate.length === best.length && best.length > 1) {
+        const bestTip = best[best.length - 1]!.decompositionId;
+        const candTip = candidate[candidate.length - 1]!.decompositionId;
+        if (candTip.localeCompare(bestTip) < 0) {
+          best = candidate;
+        }
+      }
+    }
+    memo.set(node.decompositionId, best);
+    return best;
+  }
+
+  const idSet = new Set(nodes.map((n) => n.decompositionId));
+  const roots = nodes.filter((n) => n.parentId === null || !idSet.has(n.parentId));
+  const startNodes = roots.length > 0 ? roots : nodes;
+
+  let bestPath: InitiativeDecomposition[] = [];
+  for (const root of startNodes) {
+    const path = longestFrom(root);
+    if (path.length > bestPath.length) {
+      bestPath = path;
+    } else if (path.length === bestPath.length && path.length > 0 && bestPath.length > 0) {
+      const bestTip = bestPath[bestPath.length - 1]!.decompositionId;
+      const candTip = path[path.length - 1]!.decompositionId;
+      if (candTip.localeCompare(bestTip) < 0) {
+        bestPath = path;
+      }
+    }
+  }
+
+  return bestPath;
+}
+
+/**
+ * Decision chains in the organization that still have at least one pending decision.
+ */
+export async function getPendingDecisions(organizationId: string): Promise<DecisionChain[]> {
+  const rows = await dbAll<DecisionChainRow>(
+    `SELECT * FROM v8_decision_chains
+     WHERE organization_id = ?
+     ORDER BY updated_at DESC`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const chains = (rows || []).map(rowToDecisionChain);
+  return chains.filter((c) => c.decisions.some((d) => d.status === 'pending'));
+}

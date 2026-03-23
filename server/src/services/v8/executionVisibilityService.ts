@@ -25,7 +25,6 @@ import type {
   AssessForecastConfidenceParams,
   SignalSeverity,
   ForecastConfidenceLevel,
-  ConfidenceCapReason,
   SourceObjectType,
 } from '../../types/executionVisibility.js';
 import {
@@ -496,5 +495,220 @@ export async function assessForecastConfidence(
     confidenceLevel,
     cappedBy: null,
     dataReliabilityScore,
+  };
+}
+
+// ==========================================
+// DASHBOARD, BLOCKERS, REBASELINE HISTORY, ROLLUP (Wave 11)
+// ==========================================
+
+export type ExecutionDashboardHealth = 'healthy' | 'at_risk' | 'blocked';
+
+export interface ExecutionDashboardView {
+  signals: ExecutionSignal[];
+  handoffs: ResultsHandoffEvent[];
+  forecasts: ForecastConfidence;
+  overallHealth: ExecutionDashboardHealth;
+}
+
+export interface ExecutionBlockerItem {
+  kind: 'signal_severity_blocker' | 'low_forecast_confidence';
+  signal?: ExecutionSignal;
+  dataReliabilityScore?: number;
+  message: string;
+}
+
+function deriveAssessParamsFromSignals(
+  signals: ExecutionSignal[],
+): AssessForecastConfidenceParams {
+  let dataReliabilityScore = 0.92;
+  for (const s of signals) {
+    if (s.severity === 'blocker') {
+      dataReliabilityScore -= 0.4;
+    } else if (s.severity === 'critical') {
+      dataReliabilityScore -= 0.22;
+    } else if (s.severity === 'warning') {
+      dataReliabilityScore -= 0.07;
+    }
+    if (s.signalType === 'forecast_low_confidence_count') {
+      dataReliabilityScore -= 0.18;
+    }
+    if (s.signalType === 'missing_baseline_count' || s.signalType === 'missing_estimate_count') {
+      dataReliabilityScore -= 0.08;
+    }
+  }
+  dataReliabilityScore = Math.max(0, Math.min(1, dataReliabilityScore));
+
+  const hasCapacityGap = signals.some(
+    (s) =>
+      s.signalType === 'owners_over_capacity_count' &&
+      s.severity !== 'info',
+  );
+
+  const criticalPathKnown = !signals.some(
+    (s) =>
+      s.signalType === 'critical_path_slip_count' &&
+      (s.severity === 'critical' || s.severity === 'blocker'),
+  );
+
+  return { dataReliabilityScore, hasCapacityGap, criticalPathKnown };
+}
+
+function overallHealthFromSignalsAndForecast(
+  signals: ExecutionSignal[],
+  forecast: ForecastConfidence,
+): ExecutionDashboardHealth {
+  if (signals.some((s) => s.severity === 'blocker')) {
+    return 'blocked';
+  }
+  if (forecast.dataReliabilityScore < 0.3) {
+    return 'at_risk';
+  }
+  if (signals.some((s) => s.severity === 'critical')) {
+    return 'at_risk';
+  }
+  if (signals.some((s) => s.severity === 'warning')) {
+    return 'at_risk';
+  }
+  return 'healthy';
+}
+
+/**
+ * Initiative-scoped execution view: signals, handoffs, derived forecast confidence, health.
+ */
+export async function getExecutionDashboard(
+  initiativeId: string,
+  organizationId: string,
+): Promise<ExecutionDashboardView> {
+  const signalRows = await dbAll<SignalRow>(
+    `SELECT * FROM v8_execution_signals
+     WHERE organization_id = ?
+       AND source_object_type = 'initiative'
+       AND source_object_id = ?
+     ORDER BY timestamp DESC`,
+    [organizationId, initiativeId],
+    { fallback: true },
+  );
+
+  const signals = (signalRows || []).map(rowToSignal);
+
+  const handoffRows = await dbAll<HandoffEventRow>(
+    `SELECT * FROM v8_results_handoff_events
+     WHERE initiative_id = ? AND organization_id = ?
+     ORDER BY timestamp DESC`,
+    [initiativeId, organizationId],
+    { fallback: true },
+  );
+
+  const handoffs = (handoffRows || []).map(rowToHandoffEvent);
+
+  const assessParams = deriveAssessParamsFromSignals(signals);
+  const forecasts = await assessForecastConfidence(assessParams);
+
+  const overallHealth = overallHealthFromSignalsAndForecast(signals, forecasts);
+
+  return {
+    signals,
+    handoffs,
+    forecasts,
+    overallHealth,
+  };
+}
+
+/**
+ * Blockers: severity === 'blocker', or derived forecast data reliability below 0.3.
+ * (Canonical model uses severity `blocker`, not signal_type `blocker`.)
+ */
+export async function detectBlockers(
+  initiativeId: string,
+  organizationId: string,
+): Promise<ExecutionBlockerItem[]> {
+  const dashboard = await getExecutionDashboard(initiativeId, organizationId);
+  const out: ExecutionBlockerItem[] = [];
+
+  for (const s of dashboard.signals) {
+    if (s.severity === 'blocker') {
+      out.push({
+        kind: 'signal_severity_blocker',
+        signal: s,
+        message: `Execution signal ${s.signalType} is marked as blocker`,
+      });
+    }
+  }
+
+  if (dashboard.forecasts.dataReliabilityScore < 0.3) {
+    out.push({
+      kind: 'low_forecast_confidence',
+      dataReliabilityScore: dashboard.forecasts.dataReliabilityScore,
+      message: 'Forecast confidence capped: data reliability score below 0.3',
+    });
+  }
+
+  return out;
+}
+
+/**
+ * Rebaseline proposals for an initiative, newest first.
+ */
+export async function getRebaselineHistory(
+  initiativeId: string,
+  organizationId: string,
+): Promise<RebaselineProposal[]> {
+  const rows = await dbAll<RebaselineRow>(
+    `SELECT * FROM v8_rebaseline_proposals
+     WHERE initiative_id = ? AND organization_id = ?
+     ORDER BY created_at DESC`,
+    [initiativeId, organizationId],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToRebaseline);
+}
+
+export interface SignalRollupResult {
+  byType: Map<string, number>;
+  byInitiative: Map<string, number>;
+  total: number;
+}
+
+/**
+ * Count execution signals in a time window for an organization.
+ * Initiative bucket uses source_object_id when source_object_type is initiative; other sources roll into __non_initiative__.
+ */
+export async function rollupSignals(
+  organizationId: string,
+  fromDate: string,
+  toDate: string,
+): Promise<SignalRollupResult> {
+  const rows = await dbAll<SignalRow>(
+    `SELECT * FROM v8_execution_signals
+     WHERE organization_id = ?
+       AND timestamp >= ?
+       AND timestamp <= ?
+     ORDER BY timestamp ASC`,
+    [organizationId, fromDate, toDate],
+    { fallback: true },
+  );
+
+  const signals = (rows || []).map(rowToSignal);
+  const byType = new Map<string, number>();
+  const byInitiative = new Map<string, number>();
+
+  for (const s of signals) {
+    byType.set(s.signalType, (byType.get(s.signalType) ?? 0) + 1);
+
+    if (s.sourceObjectType === 'initiative') {
+      const k = s.sourceObjectId;
+      byInitiative.set(k, (byInitiative.get(k) ?? 0) + 1);
+    } else {
+      const k = '__non_initiative__';
+      byInitiative.set(k, (byInitiative.get(k) ?? 0) + 1);
+    }
+  }
+
+  return {
+    byType,
+    byInitiative,
+    total: signals.length,
   };
 }
