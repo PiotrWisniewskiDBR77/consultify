@@ -19,6 +19,8 @@ export const IngestionReadinessStateValues = [
   'confidence_assessed',
   'ready',
   'review_required',
+  'failed',
+  'rejected',
 ] as const;
 export type IngestionReadinessState = (typeof IngestionReadinessStateValues)[number];
 
@@ -105,6 +107,9 @@ export interface UnreconciledDeltaEscalation {
   escalatedToCFO: boolean;
   thresholdBreached: boolean;
   createdAt: string;
+  resolvedAt?: string | null;
+  resolvedBy?: string | null;
+  resolution?: string | null;
 }
 
 export interface CloudLinkedSourceRefresh {
@@ -168,6 +173,9 @@ export const UnreconciledDeltaEscalationSchema = z.object({
   escalatedToCFO: z.boolean(),
   thresholdBreached: z.boolean(),
   createdAt: z.string().min(1),
+  resolvedAt: z.string().min(1).nullable().optional(),
+  resolvedBy: z.string().min(1).nullable().optional(),
+  resolution: z.string().min(1).nullable().optional(),
 });
 
 export const CloudLinkedSourceRefreshSchema = z.object({
@@ -290,12 +298,45 @@ export const RecordSourceRefreshParamsSchema = z.object({
  * Key = current state, Value = set of allowed target states.
  */
 export const INGESTION_STATE_TRANSITIONS: Record<IngestionReadinessState, readonly IngestionReadinessState[]> = {
-  uploaded: ['recognized', 'review_required'],
-  recognized: ['confidence_assessed', 'review_required'],
-  confidence_assessed: ['ready', 'review_required'],
-  ready: ['review_required'],
-  review_required: ['recognized', 'confidence_assessed', 'ready'],
+  uploaded: ['recognized', 'review_required', 'failed', 'rejected'],
+  recognized: ['confidence_assessed', 'review_required', 'failed', 'rejected'],
+  confidence_assessed: ['ready', 'review_required', 'failed', 'rejected'],
+  ready: ['review_required', 'failed', 'rejected'],
+  review_required: ['recognized', 'confidence_assessed', 'ready', 'failed', 'rejected'],
+  failed: [],
+  rejected: [],
 } as const;
+
+// ==========================================
+// FINANCE RUNTIME SUMMARIES (Wave 18)
+// ==========================================
+
+export interface FinanceIngestionPipelineSummary {
+  totalCount: number;
+  byState: Partial<Record<IngestionReadinessState, number>>;
+  confidenceBands: {
+    high: number;
+    medium: number;
+    low: number;
+    unknown: number;
+  };
+  averageConfidence: number | null;
+}
+
+export interface LinkageHealthSummary {
+  totalLinkages: number;
+  byLinkageType: Partial<Record<LinkageType, number>>;
+  unlinkedInitiativesCount: number;
+}
+
+export interface FinanceRuntimeDashboard {
+  ingestionPipeline: FinanceIngestionPipelineSummary;
+  linkageHealth: LinkageHealthSummary;
+  unresolvedEscalationsCount: number;
+  staleSourceRefreshesCount: number;
+  /** Share of gates with overall_result = approved; null when there are no gates. */
+  promotionGatePassRate: number | null;
+}
 
 // ==========================================
 // PROMOTION GATE LOGIC (Decision W6-8)

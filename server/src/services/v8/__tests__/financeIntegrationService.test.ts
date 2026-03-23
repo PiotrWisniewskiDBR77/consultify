@@ -251,23 +251,36 @@ describe('isValidIngestionTransition', () => {
 });
 
 describe('INGESTION_STATE_TRANSITIONS completeness', () => {
-  it('defines transitions for all 5 readiness states', () => {
+  it('defines transitions for all readiness states', () => {
     for (const state of IngestionReadinessStateValues) {
       expect(INGESTION_STATE_TRANSITIONS).toHaveProperty(state);
     }
   });
 
-  it('uploaded has exactly 2 outgoing transitions', () => {
-    expect(INGESTION_STATE_TRANSITIONS.uploaded).toHaveLength(2);
+  it('uploaded allows recognized, review, and terminal failure paths', () => {
+    expect(INGESTION_STATE_TRANSITIONS.uploaded).toEqual([
+      'recognized',
+      'review_required',
+      'failed',
+      'rejected',
+    ]);
   });
 
-  it('ready has exactly 1 outgoing transition (review_required)', () => {
-    expect(INGESTION_STATE_TRANSITIONS.ready).toHaveLength(1);
+  it('ready allows review_required and terminal failure paths', () => {
     expect(INGESTION_STATE_TRANSITIONS.ready).toContain('review_required');
+    expect(INGESTION_STATE_TRANSITIONS.ready).toContain('failed');
+    expect(INGESTION_STATE_TRANSITIONS.ready).toContain('rejected');
   });
 
-  it('review_required has 3 outgoing transitions', () => {
-    expect(INGESTION_STATE_TRANSITIONS.review_required).toHaveLength(3);
+  it('review_required allows re-processing and terminal failure paths', () => {
+    expect(INGESTION_STATE_TRANSITIONS.review_required).toContain('recognized');
+    expect(INGESTION_STATE_TRANSITIONS.review_required).toContain('failed');
+    expect(INGESTION_STATE_TRANSITIONS.review_required).toContain('rejected');
+  });
+
+  it('failed and rejected are terminal for the state machine', () => {
+    expect(INGESTION_STATE_TRANSITIONS.failed).toHaveLength(0);
+    expect(INGESTION_STATE_TRANSITIONS.rejected).toHaveLength(0);
   });
 });
 
@@ -998,8 +1011,8 @@ describe('Zod schema validation', () => {
     ).toThrow(ZodError);
   });
 
-  it('validates all 5 ingestion readiness states are defined', () => {
-    expect(IngestionReadinessStateValues).toHaveLength(5);
+  it('validates all ingestion readiness states are defined', () => {
+    expect(IngestionReadinessStateValues).toHaveLength(7);
   });
 
   it('validates all 4 linkage types are defined', () => {

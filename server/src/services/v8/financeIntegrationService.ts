@@ -22,6 +22,10 @@ import type {
   EvaluatePromotionGateParams,
   RecordDeltaEscalationParams,
   RecordSourceRefreshParams,
+  LinkageType,
+  FinanceIngestionPipelineSummary,
+  LinkageHealthSummary,
+  FinanceRuntimeDashboard,
 } from '../../types/financeIntegrationPromotion.js';
 import {
   INGESTION_STATE_TRANSITIONS,
@@ -134,6 +138,9 @@ interface EscalationRow {
   escalated_to_cfo: number;
   threshold_breached: number;
   created_at: string;
+  resolved_at?: string | null;
+  resolved_by?: string | null;
+  resolution?: string | null;
 }
 
 function rowToEscalation(row: EscalationRow): UnreconciledDeltaEscalation {
@@ -148,6 +155,9 @@ function rowToEscalation(row: EscalationRow): UnreconciledDeltaEscalation {
     escalatedToCFO: row.escalated_to_cfo === 1,
     thresholdBreached: row.threshold_breached === 1,
     createdAt: row.created_at,
+    resolvedAt: row.resolved_at ?? null,
+    resolvedBy: row.resolved_by ?? null,
+    resolution: row.resolution ?? null,
   };
 }
 
@@ -534,4 +544,312 @@ export async function getSourceRefreshes(
   );
 
   return (rows || []).map(rowToSourceRefresh);
+}
+
+// ==========================================
+// FINANCE RUNTIME — PIPELINE, LINKAGE, DASHBOARD (Wave 18)
+// ==========================================
+
+const DEFAULT_FAILED_INGESTION_LIMIT = 100;
+const DEFAULT_STALE_REFRESH_MAX_AGE_HOURS = 24;
+
+interface IngestionStateCountRow {
+  state: string;
+  cnt: number;
+}
+
+interface IngestionConfidenceAggRow {
+  total: number;
+  unknown_cnt: number;
+  high_cnt: number;
+  medium_cnt: number;
+  low_cnt: number;
+  avg_conf: number | null;
+}
+
+interface LinkageTypeCountRow {
+  linkage_type: string;
+  cnt: number;
+}
+
+interface PromotionGateAggRow {
+  total: number;
+  approved: number | null;
+}
+
+/** Summary of document ingestions: counts by readiness state and confidence band, plus average confidence. */
+export async function getIngestionPipeline(
+  organizationId: string,
+): Promise<FinanceIngestionPipelineSummary> {
+  const stateRows = await dbAll<IngestionStateCountRow>(
+    `SELECT readiness_state AS state, COUNT(*) AS cnt
+     FROM v8_finance_document_ingestions
+     WHERE organization_id = ?
+     GROUP BY readiness_state`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const agg = await dbGet<IngestionConfidenceAggRow>(
+    `SELECT
+       COUNT(*) AS total,
+       SUM(CASE WHEN recognition_confidence IS NULL THEN 1 ELSE 0 END) AS unknown_cnt,
+       SUM(CASE WHEN recognition_confidence > 0.8 THEN 1 ELSE 0 END) AS high_cnt,
+       SUM(CASE WHEN recognition_confidence IS NOT NULL
+                AND recognition_confidence >= 0.5
+                AND recognition_confidence <= 0.8 THEN 1 ELSE 0 END) AS medium_cnt,
+       SUM(CASE WHEN recognition_confidence IS NOT NULL
+                AND recognition_confidence < 0.5 THEN 1 ELSE 0 END) AS low_cnt,
+       AVG(recognition_confidence) AS avg_conf
+     FROM v8_finance_document_ingestions
+     WHERE organization_id = ?`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const byState: Partial<Record<IngestionReadinessState, number>> = {};
+  for (const r of stateRows || []) {
+    byState[r.state as IngestionReadinessState] = r.cnt;
+  }
+
+  const totalCount = agg?.total ?? 0;
+  const unknown = Number(agg?.unknown_cnt ?? 0);
+  const high = Number(agg?.high_cnt ?? 0);
+  const medium = Number(agg?.medium_cnt ?? 0);
+  const low = Number(agg?.low_cnt ?? 0);
+  const averageConfidence =
+    agg?.avg_conf !== null && agg?.avg_conf !== undefined ? Number(agg.avg_conf) : null;
+
+  return {
+    totalCount,
+    byState,
+    confidenceBands: { high, medium, low, unknown },
+    averageConfidence,
+  };
+}
+
+/** Ingestions in terminal failure states (`failed`, `rejected`). */
+export async function getFailedIngestions(
+  organizationId: string,
+  limit: number = DEFAULT_FAILED_INGESTION_LIMIT,
+): Promise<FinanceDocumentIngestion[]> {
+  const cap = Math.max(1, Math.min(limit, 500));
+  const rows = await dbAll<IngestionRow>(
+    `SELECT * FROM v8_finance_document_ingestions
+     WHERE organization_id = ?
+       AND readiness_state IN ('failed', 'rejected')
+     ORDER BY updated_at DESC
+     LIMIT ?`,
+    [organizationId, cap],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToIngestion);
+}
+
+/**
+ * Reset a failed/rejected ingestion to `uploaded` for reprocessing (bypasses the normal state machine).
+ */
+export async function retryIngestion(
+  ingestionId: string,
+  organizationId: string,
+): Promise<FinanceDocumentIngestion> {
+  const row = await dbGet<IngestionRow>(
+    `SELECT * FROM v8_finance_document_ingestions
+     WHERE ingestion_id = ? AND organization_id = ?`,
+    [ingestionId, organizationId],
+    { fallback: true },
+  );
+
+  if (!row) {
+    throw new Error(`Ingestion ${ingestionId} not found`);
+  }
+
+  const state = row.readiness_state as IngestionReadinessState;
+  if (state !== 'failed' && state !== 'rejected') {
+    throw new Error(`Ingestion ${ingestionId} is not in a retryable state (got ${state})`);
+  }
+
+  const now = new Date().toISOString();
+  await dbRun(
+    `UPDATE v8_finance_document_ingestions
+     SET readiness_state = 'uploaded', updated_at = ?
+     WHERE ingestion_id = ? AND organization_id = ?`,
+    [now, ingestionId, organizationId],
+  );
+
+  logger.info(`${LOG_PREFIX} Retry ingestion ${ingestionId}: ${state} → uploaded`);
+
+  return {
+    ...rowToIngestion(row),
+    readinessState: 'uploaded',
+    updatedAt: now,
+  };
+}
+
+/** Economics linkage coverage and initiatives in the org without any linkage row. */
+export async function getLinkageHealth(organizationId: string): Promise<LinkageHealthSummary> {
+  const typeRows = await dbAll<LinkageTypeCountRow>(
+    `SELECT linkage_type, COUNT(*) AS cnt
+     FROM v8_initiative_economics_linkages
+     WHERE organization_id = ?
+     GROUP BY linkage_type`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const byLinkageType: Partial<Record<LinkageType, number>> = {};
+  let totalLinkages = 0;
+  for (const r of typeRows || []) {
+    const n = r.cnt;
+    totalLinkages += n;
+    byLinkageType[r.linkage_type as LinkageType] = n;
+  }
+
+  const unlinkedRow = await dbGet<{ c: number }>(
+    `SELECT COUNT(*) AS c
+     FROM initiatives i
+     WHERE i.organization_id = ?
+       AND NOT EXISTS (
+         SELECT 1 FROM v8_initiative_economics_linkages l
+         WHERE l.organization_id = i.organization_id
+           AND l.initiative_id = i.id
+       )`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  return {
+    totalLinkages,
+    byLinkageType,
+    unlinkedInitiativesCount: Number(unlinkedRow?.c ?? 0),
+  };
+}
+
+/** Delta escalations that are not yet resolved. */
+export async function getUnresolvedEscalations(
+  organizationId: string,
+): Promise<UnreconciledDeltaEscalation[]> {
+  const rows = await dbAll<EscalationRow>(
+    `SELECT * FROM v8_unreconciled_delta_escalations
+     WHERE organization_id = ?
+       AND resolved_at IS NULL
+     ORDER BY created_at DESC`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToEscalation);
+}
+
+/** Mark an escalation resolved (idempotent when already resolved: returns null). */
+export async function resolveEscalation(
+  escalationId: string,
+  organizationId: string,
+  resolution: string,
+  resolvedBy: string,
+): Promise<UnreconciledDeltaEscalation | null> {
+  if (!resolution.trim()) {
+    throw new Error('resolution is required');
+  }
+  if (!resolvedBy.trim()) {
+    throw new Error('resolvedBy is required');
+  }
+
+  const now = new Date().toISOString();
+  const result = await dbRun(
+    `UPDATE v8_unreconciled_delta_escalations
+     SET resolved_at = ?, resolved_by = ?, resolution = ?
+     WHERE escalation_id = ? AND organization_id = ? AND resolved_at IS NULL`,
+    [now, resolvedBy, resolution, escalationId, organizationId],
+  );
+
+  if (!result.success || (result.changes ?? 0) < 1) {
+    const existing = await dbGet<EscalationRow>(
+      `SELECT * FROM v8_unreconciled_delta_escalations
+       WHERE escalation_id = ? AND organization_id = ?`,
+      [escalationId, organizationId],
+      { fallback: true },
+    );
+    if (!existing) {
+      return null;
+    }
+    return rowToEscalation(existing);
+  }
+
+  const row = await dbGet<EscalationRow>(
+    `SELECT * FROM v8_unreconciled_delta_escalations
+     WHERE escalation_id = ? AND organization_id = ?`,
+    [escalationId, organizationId],
+    { fallback: true },
+  );
+
+  if (!row) return null;
+
+  logger.info(`${LOG_PREFIX} Resolved escalation ${escalationId}`);
+  return rowToEscalation(row);
+}
+
+/** Source refresh records whose `created_at` is older than the age threshold (stale tracking). */
+export async function getStaleSourceRefreshes(
+  organizationId: string,
+  maxAgeHours: number = DEFAULT_STALE_REFRESH_MAX_AGE_HOURS,
+): Promise<CloudLinkedSourceRefresh[]> {
+  const hours = Math.max(1, Math.min(maxAgeHours, 24 * 365));
+  const cutoff = new Date(Date.now() - hours * 3600 * 1000).toISOString();
+
+  const rows = await dbAll<SourceRefreshRow>(
+    `SELECT * FROM v8_cloud_linked_source_refreshes
+     WHERE organization_id = ?
+       AND created_at < ?
+     ORDER BY created_at ASC`,
+    [organizationId, cutoff],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToSourceRefresh);
+}
+
+async function getPromotionGatePassRate(organizationId: string): Promise<number | null> {
+  const row = await dbGet<PromotionGateAggRow>(
+    `SELECT
+       COUNT(*) AS total,
+       SUM(CASE WHEN overall_result = 'approved' THEN 1 ELSE 0 END) AS approved
+     FROM v8_promotion_gates
+     WHERE organization_id = ?`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  const total = row?.total ?? 0;
+  if (total === 0) return null;
+  const approved = Number(row?.approved ?? 0);
+  return approved / total;
+}
+
+/** Aggregated finance runtime view for dashboards. */
+export async function getFinanceDashboard(
+  organizationId: string,
+): Promise<FinanceRuntimeDashboard> {
+  const [
+    ingestionPipeline,
+    linkageHealth,
+    unresolvedEscalations,
+    staleSourceRefreshes,
+    promotionGatePassRate,
+  ] = await Promise.all([
+    getIngestionPipeline(organizationId),
+    getLinkageHealth(organizationId),
+    getUnresolvedEscalations(organizationId),
+    getStaleSourceRefreshes(organizationId),
+    getPromotionGatePassRate(organizationId),
+  ]);
+
+  return {
+    ingestionPipeline,
+    linkageHealth,
+    unresolvedEscalationsCount: unresolvedEscalations.length,
+    staleSourceRefreshesCount: staleSourceRefreshes.length,
+    promotionGatePassRate,
+  };
 }
