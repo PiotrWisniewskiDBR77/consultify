@@ -320,6 +320,62 @@ These are integration-layer packets that wire Wave 1 primitives together.
 
 ---
 
+## Report #12 — 2026-03-23 (INTEGRATION GATE PASSED)
+
+### 1. Integration Test Program — ALL TIERS GREEN
+
+| Tier | Tests | Passing | Failing | Status |
+|---|---|---|---|---|
+| **T1 — Contract** | 36 | 36 | 0 | **GREEN** |
+| **T2 — Flow** | 20 | 20 | 0 | **GREEN** |
+| **T3 — Migration** | 18 | 18 | 0 | **GREEN** |
+| **Total** | **74** | **74** | **0** | **ALL GREEN** |
+
+### 2. Failure classes: none
+
+| Class | Count |
+|---|---|
+| Contract-level drift | 0 |
+| Migration-level collision | 0 |
+| Naming/schema drift | 0 |
+| Runtime integration drift | 0 |
+| FK consistency issues | 0 |
+
+### 3. Issues found and resolved during T2
+
+All issues were caught and fixed during test implementation (not in production):
+- Zod enum strictness: test data corrected to match canonical enum values
+- UUID format enforcement: test data corrected to use valid UUIDs
+- State machine transitions: publish lifecycle enforces sequential steps (no skipping)
+
+### 4. Updated program totals
+
+| Metric | Count |
+|---|---|
+| **Total V8 files** | **108** (types + migrations + services + unit tests) |
+| **Total integration test files** | **12** (1 contract + 10 flow + 1 migration) |
+| **Total V8 DB tables** | **103** |
+| **Total unit tests** | **1,837** |
+| **Total integration tests** | **74** |
+| **Total passing tests** | **1,911** |
+
+### 5. Gate status
+
+| Gate | Status | Unblocks |
+|---|---|---|
+| T1 Contract | **PASSED** | T2 execution |
+| T3 Migration | **PASSED** | Production deployment |
+| T2 Flow | **PASSED** | UI wiring (feature-flagged slices) |
+| **Full integration gate** | **PASSED** | Deployment rollout phase R0 (staging) |
+
+### 6. Recommended next actions
+
+Per Decision PC-4:
+1. **Deployment**: proceed to R0 (staging) per `V8_DEPLOYMENT_READINESS_PLAN.md`
+2. **UI wiring**: begin Priority 1 slices (operator surfaces) per `V8_UI_WIRING_QUEUE.md`
+
+---
+
 ## Report #11 — 2026-03-23 (PROGRAM COMPLETE — All Waves Implemented)
 
 ### 1. Completed this cycle (final)
