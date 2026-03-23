@@ -34,6 +34,7 @@ __tmp_ai_agent__
 .env.local
 .env.production
 .env.staging.local
+.env.staging.secrets
 server/.env
 
 # Auth tokens and session files

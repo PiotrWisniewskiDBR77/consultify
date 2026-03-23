@@ -472,7 +472,7 @@ export async function getDomainReadiness(
   if (aiResult.ok) {
     aiChecks.push({
       name: 'all_layers_active',
-      passed: Object.values(aiResult.data.layers).every((l) => l === 'active'),
+      passed: Object.values(aiResult.data.layers).every((l) => l === 'healthy' || l === 'active'),
     });
   }
   domains.push({
