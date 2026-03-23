@@ -14,9 +14,9 @@
 | Binding decisions | 94 |
 | Decision logs | 7 (Waves 1-7, all closed) |
 | Canon doc updates required | 19 packets |
-| Canon doc updates done | 3 packets (Wave 1 PM-Sync cluster) |
-| Canon doc updates pending | 16 packets |
-| New canonical docs mandated | 4 files (not yet created) |
+| Canon doc updates done | **19 / 19 (100%)** |
+| Canon doc updates pending | **0** |
+| New canonical docs mandated | **4 / 4 created** |
 | Implementation started | 0 packets |
 
 ---
@@ -84,6 +84,74 @@ Based on dependency analysis and architectural priority:
 2. **Immediate**: Create 4 mandated canonical docs (minimal viable versions).
 3. **Next cycle**: Begin implementation of ContextSnapshot (WP-W1-AI-01), CollaborationRoom (WP-W1-MP-01), and Execution/Approval Spine (WP-W1-AI-03) as the first code packets.
 4. **Decision needed**: Wave 8 scope — approve, defer, or close.
+
+---
+
+## Report #2 — 2026-03-23 (same day, execution readiness cycle)
+
+### 1. Completed this cycle
+
+| # | Action | Files touched | Status |
+|---|---|---|---|
+| 1 | Canon doc sweep — Wave 2 (12 decisions) | 8 canonical docs | **done** |
+| 2 | Canon doc sweep — Wave 3 (11 decisions) | 7 canonical docs | **done** |
+| 3 | Canon doc sweep — Wave 5 (11 decisions) | 6 canonical docs | **done** |
+| 4 | Canon doc sweep — Wave 6 (13 decisions) | 10 canonical docs | **done** |
+| 5 | Canon doc sweep — Wave 7 (8 decisions to existing docs) | 8 canonical docs | **done** |
+| 6 | Create `TOOLS_V8_SSOT.md` | 1 new file | **done** |
+| 7 | Create `SUPERADMIN_V8_SSOT.md` | 1 new file | **done** |
+| 8 | Create `LANDING_V8_SSOT.md` | 1 new file | **done** |
+| 9 | Create `ANNA_LP_ASSISTANT_CONTRACT_V8.md` | 1 new file | **done** |
+
+**Total**: 55 decisions applied to ~39 canonical doc files + 4 new canonical docs created.
+
+### 2. Canon doc debt status
+
+| Wave | Before sweep | After sweep |
+|---|---|---|
+| Wave 1 | 3/3 done (PM-Sync) | 3/3 done |
+| Wave 2 | 0/2 done | **2/2 done** |
+| Wave 3 | 0/3 done | **3/3 done** |
+| Wave 4 | 0/0 (no updates needed) | 0/0 |
+| Wave 5 | 0/3 done | **3/3 done** |
+| Wave 6 | 0/4 done | **4/4 done** |
+| Wave 7 | 0/3 done | **3/3 done** (+ 3 skipped → new docs created) |
+| **Total** | **3/19** | **19/19 (100%)** |
+
+### 3. New canonical docs status
+
+| File | Status |
+|---|---|
+| `TOOLS_V8_SSOT.md` | **Created** — bridging V3→V8 with 9 sections |
+| `SUPERADMIN_V8_SSOT.md` | **Created** — horizontal IA with 11 domains mapped |
+| `LANDING_V8_SSOT.md` | **Created** — minimal viable with onboarding flow |
+| `ANNA_LP_ASSISTANT_CONTRACT_V8.md` | **Created** — minimal contract with 7 sections |
+
+### 4. Risk burn-down update
+
+| Risk | Previous | Now | Trend |
+|---|---|---|---|
+| Architectural chaos | Low | Low | Stable |
+| Decision debt | Low | Low | Stable |
+| Canon doc staleness | **High** | **Resolved** | 19/19 applied + 4 new docs |
+| Implementation gap | High | **High** | Still 0 packets in code |
+| Cross-wave integration debt | Medium | **Low** | All decisions now in canonical docs |
+
+### 5. Blockers remaining
+
+| Blocker | Impact | Owner |
+|---|---|---|
+| Wave 8 scope not decided | Mobile, Edukacja remain unscoped | Source-of-truth chat |
+| Implementation not started | 0/29 packets have code deliverables | Engineering |
+
+### 6. Recommended next actions
+
+1. **Begin code implementation** — top 3 foundation packets:
+   - `WP-W1-AI-01` → ContextSnapshot (universal spine, everything depends on it)
+   - `WP-W1-MP-01` → CollaborationRoom (multiplayer foundation, Wave 4 depends on it)
+   - `WP-W1-AI-03` → Execution/Approval Spine (used by rebaseline, tool governance, publish/review)
+2. **Decision needed**: Wave 8 scope — approve, defer, or formally close.
+3. **Decision needed**: Implementation sequencing — confirm the 3 foundation packets as first code targets, or adjust priority.
 
 ---
 
