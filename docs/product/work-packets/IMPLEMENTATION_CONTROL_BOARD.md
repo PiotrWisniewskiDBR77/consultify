@@ -19,54 +19,67 @@ Maturity scale used in all reports:
 
 ## Closure Execution Report #1 — 2026-03-23 (Baseline)
 
+> Archived. See Report #2 below for current state.
+
+---
+
+## Closure Execution Report #2 — 2026-03-23 (Decisions Locked, Tranche 01 Launched)
+
 ### 1. Current maturity position
 
-| Domain | Status | Level |
-|--------|--------|-------|
-| AI Core (7 services, 79 functions) | `implemented` | 2/8 |
-| Chat execution (1 service, 6 functions) | `implemented` | 2/8 |
-| Prompt OS (1 service, 11 functions) | `implemented` | 2/8 |
-| Knowledge RAG (1 service, 6 functions) | `implemented` | 2/8 |
-| Multiplayer (5 services, 73 functions) | `implemented` | 2/8 |
-| Workspace (4 services, 45 functions) | `implemented` | 2/8 |
-| Lifecycle (3 services, 39 functions) | `implemented` | 2/8 |
-| PM Sync (4 services, 52 functions) | `implemented` | 2/8 |
-| Outputs (2 services, 30 functions) | `implemented` | 2/8 |
-| Finance (1 service, 19 functions) | `implemented` | 2/8 |
-| Results/KPI (1 service, 20 functions) | `implemented` | 2/8 |
-| Tools/Org (2 services, 20 functions) | `implemented` | 2/8 |
-| Platform Health (1 service, 5 functions) | `implemented` | 2/8 |
-| Landing/Superadmin (1 service, 10 functions) | `implemented` | 2/8 |
-| **API Layer** | `not started` | 0/8 |
-| **Frontend Integration** | `not started` | 0/8 |
-| **Feature Flags** | `not started` | 0/8 |
-| **Auth Integration** | `not started` | 0/8 |
-| **Operator UI** | `not started` | 0/8 |
-| **Monitoring/Observability** | `not started` | 0/8 |
+| Domain | Status | Level | Change |
+|--------|--------|-------|--------|
+| AI Core (7 services, 79 functions) | `implemented` | 2/8 | — |
+| Chat execution (1 service, 6 functions) | `implemented` | 2/8 | — |
+| Prompt OS (1 service, 11 functions) | `implemented` | 2/8 | — |
+| Knowledge RAG (1 service, 6 functions) | `implemented` | 2/8 | — |
+| Multiplayer (5 services, 73 functions) | `implemented` | 2/8 | — |
+| Workspace (4 services, 45 functions) | `implemented` | 2/8 | — |
+| Lifecycle (3 services, 39 functions) | `implemented` | 2/8 | — |
+| PM Sync (4 services, 52 functions) | `implemented` | 2/8 | — |
+| Outputs (2 services, 30 functions) | `implemented` | 2/8 | — |
+| Finance (1 service, 19 functions) | `implemented` | 2/8 | — |
+| Results/KPI (1 service, 20 functions) | `implemented` | 2/8 | — |
+| Tools/Org (2 services, 20 functions) | `implemented` | 2/8 | — |
+| Platform Health (1 service, 5 functions) | `implemented` | 2/8 | — |
+| Landing/Superadmin (1 service, 10 functions) | `implemented` | 2/8 | — |
+| **DB Foundation** | `in progress` | 1/8 | NEW — CP-01 assigned |
+| **API Layer** | `in progress` | 1/8 | NEW — CP-03 assigned |
+| **Feature Flags** | `in progress` | 1/8 | NEW — CP-05 assigned |
+| **Auth Integration** | `not started` | 0/8 | Gated by CP-03 |
+| **Frontend Integration** | `not started` | 0/8 | Gated by CP-05 + CP-06 |
+| **Operator UI** | `not started` | 0/8 | — |
+| **Monitoring/Observability** | `not started` | 0/8 | — |
 
 ### 2. Packets completed
 
 | Packet | Status |
 |--------|--------|
-| (none yet — first tranche just defined) | — |
+| (none yet — execution just started) | — |
 
 ### 3. Packets in progress
 
-| Packet | Status |
-|--------|--------|
-| (none yet — awaiting decision approval) | — |
+| Packet | Worker | Started | ETA |
+|--------|--------|---------|-----|
+| CP-01: V8 Migration Runner | Worker 1 | 2026-03-23 | Day 3 |
+| CP-03: API Router Foundation | Worker 2 | 2026-03-23 | Day 3 |
+| CP-05: Feature Flag System | Worker 3 | 2026-03-24 | Day 5 |
 
 ### 4. Packets blocked
 
-| Packet | Blocked by |
-|--------|-----------|
-| CP-06 (Chat API Routes) | CP-03 (Router Foundation) + CP-04 (Auth) |
-| CP-07 (Frontend Client) | CP-03 (Router Foundation) + CP-05 (Feature Flags) |
-| CP-08 (Shadow Mode) | CP-05 (Feature Flags) + CP-06 (Chat Routes) |
+| Packet | Blocked by | Unblocks when |
+|--------|-----------|---------------|
+| CP-02 (Real-DB Tests) | CP-01 | CP-01 quality gate passed |
+| CP-04 (Auth Integration) | CP-03 | CP-03 quality gate passed |
+| CP-06 (Chat API Routes) | CP-03 + CP-04 | Both quality gates passed |
+| CP-07 (Frontend Client) | CP-05 + CP-06 | Both quality gates passed |
+| CP-08 (Shadow Mode) | CP-03 + CP-05 | Both quality gates passed |
+| CP-09 (Observability) | CP-01 + CP-03 partial | Partial completion of both |
+| CP-11 (Postgres Fixes) | CP-02 | CP-02 compatibility report |
 
 ### 5. What moved from implemented → wired
 
-Nothing. Zero API routes exist.
+Nothing yet. CP-01/CP-03/CP-05 are in progress but not complete.
 
 ### 6. What moved from wired → integrated
 
@@ -78,7 +91,7 @@ Nothing. Zero real-infrastructure verification exists.
 
 ### 8. Operator / rollout readiness progress
 
-- Feature flags: `not started`
+- Feature flags: `in progress` (CP-05 assigned)
 - Monitoring: `not started`
 - Rollback procedure: `not started`
 - Operator dashboard: `not started`
@@ -86,22 +99,34 @@ Nothing. Zero real-infrastructure verification exists.
 
 ### 9. Critical unresolved gaps
 
-| Gap | Status | Blocks |
-|-----|--------|--------|
-| G-01: No API routes | `not started` | Everything |
-| G-03: No DB migration execution | `not started` | All verification |
-| G-05: No auth integration | `not started` | All API exposure |
-| G-06: No feature flags | `not started` | All controlled rollout |
-| G-07: No WebSocket transport | `not started` | Multiplayer |
-| G-08: No legacy cutover plan | `needs decision` | Production switch |
+| Gap | Status | Blocks | Addressed by |
+|-----|--------|--------|-------------|
+| G-01: No API routes | `in progress` | Everything | CP-03 |
+| G-03: No DB migration execution | `in progress` | All verification | CP-01 |
+| G-05: No auth integration | `not started` | All API exposure | CP-04 (gated) |
+| G-06: No feature flags | `in progress` | All controlled rollout | CP-05 |
+| G-07: No WebSocket transport | `not started` | Multiplayer | Deferred (D5: transitional) |
+| G-08: No legacy cutover plan | `needs decision` | Production switch | Later tranche |
 
 ### 10. Next packet set
 
-Awaiting source-of-truth approval of decision package (6 decisions).
-Once approved, recommended first assignments:
-- **Worker 1 → CP-01** (Migration Runner)
-- **Worker 2 → CP-03** (API Router Foundation)
-- **Worker 3 → CP-05** (Feature Flags)
+After CP-01/CP-03/CP-05 quality gates pass:
+- **Worker 1 → CP-02** (Real-DB Test Harness)
+- **Worker 2 → CP-04** (Auth Integration)
+- **Worker 3 → CP-09** (Observability)
+
+---
+
+## Decision lock register
+
+| Decision | Value | Locked | Impact |
+|----------|-------|--------|--------|
+| D1 | Chat + AI Core first | 2026-03-23 | CP-06 targets Chat services |
+| D2 | Phased replacement with shadow mode | 2026-03-23 | CP-08 in scope |
+| D3 | 8-week conditional target | 2026-03-23 | Deadline ~2026-05-18 |
+| D4 | Interview/Help/Partner deferred | 2026-03-23 | Not in Tranche 01 |
+| D5 | Extend Socket.io (transitional) | 2026-03-23 | Multiplayer later |
+| D6 | Separate v8 schema | 2026-03-23 | CP-01 creates v8 schema |
 
 ---
 
@@ -113,6 +138,7 @@ Once approved, recommended first assignments:
 | `V8_DECISION_PACKAGE_POST_AUDIT.md` | 6 decisions requiring source-of-truth approval |
 | `V8_POST_20_WAVE_CLOSURE_PROGRAM.md` | Full 8-phase closure program |
 | `CP_TRANCHE_01_POST_WAVE_20_CLOSURE.md` | 11 bounded execution packets for first tranche |
+| `TRANCHE_01_EXECUTION_ORDER.md` | Execution order, worker briefs, quality gates |
 
 ---
 
