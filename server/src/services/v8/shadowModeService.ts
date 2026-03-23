@@ -140,11 +140,12 @@ export async function getShadowStats(organizationId: string): Promise<ShadowMode
   const total = parseInt(stats?.total ?? '0', 10);
   const matches = parseInt(stats?.matches ?? '0', 10);
 
+  const cutoff24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const recentMismatches = await dbGet(
     `SELECT COUNT(*) as count FROM v8_shadow_comparisons
      WHERE organization_id = $1 AND responses_match = 0
-     AND created_at > datetime('now', '-24 hours')`,
-    [organizationId],
+     AND created_at > $2`,
+    [organizationId, cutoff24h],
   ) as any;
 
   return {

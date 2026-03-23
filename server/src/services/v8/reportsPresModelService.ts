@@ -841,11 +841,11 @@ export async function getDeliveryPipeline(organizationId: string): Promise<Deliv
   );
 
   const avgRow = await dbGet<AvgQualityRow>(
-    `SELECT AVG(CAST(json_extract(quality_scores, '$.overallScore') AS REAL)) as avg
+    `SELECT AVG(CAST(quality_scores::jsonb->>'overallScore' AS DOUBLE PRECISION)) as avg
      FROM v8_output_artifacts
      WHERE organization_id = ?
        AND quality_scores IS NOT NULL
-       AND json_extract(quality_scores, '$.overallScore') IS NOT NULL`,
+       AND quality_scores::jsonb->>'overallScore' IS NOT NULL`,
     [organizationId],
     { fallback: true },
   );
