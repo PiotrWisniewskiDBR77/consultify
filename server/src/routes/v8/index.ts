@@ -16,15 +16,20 @@ const v8Router = Router();
 
 v8Router.use(verifyToken);
 v8Router.use(requireV8OrgContext);
+
+// Admin routes bypass v8OrgGate — superadmins must be able to manage flags
+// and monitor health even before V8 is enabled for their org.
+v8Router.use('/admin/flags', featureFlagRoutes);
+v8Router.use('/admin/health', adminHealthRoutes);
+v8Router.use('/admin/metrics', adminMetricsRoutes);
+v8Router.use('/admin/shadow', shadowRoutes);
+
+// Non-admin routes require org-level V8 enablement
 v8Router.use(v8OrgGate);
 v8Router.use(attachV8Context);
 v8Router.use(v8MetricsMiddleware);
 
 v8Router.use('/health', healthRoutes);
-v8Router.use('/admin/flags', featureFlagRoutes);
-v8Router.use('/admin/health', adminHealthRoutes);
-v8Router.use('/admin/metrics', adminMetricsRoutes);
-v8Router.use('/admin/shadow', shadowRoutes);
 v8Router.use('/chat', chatRoutes);
 v8Router.use('/ai-core', aiCoreRoutes);
 

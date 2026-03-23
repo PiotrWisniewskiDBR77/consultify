@@ -11,6 +11,6 @@ CREATE TABLE IF NOT EXISTS v8_output_exports (
   completed_at TEXT
 );
 
-ALTER TABLE v8_output_artifacts ADD COLUMN quality_scores TEXT;
+ALTER TABLE v8_output_artifacts ADD COLUMN IF NOT EXISTS quality_scores TEXT;
 CREATE INDEX IF NOT EXISTS idx_v8_artifacts_org_type ON v8_output_artifacts(organization_id, output_type);
 CREATE INDEX IF NOT EXISTS idx_v8_exports_artifact ON v8_output_exports(artifact_id, organization_id);
