@@ -142,6 +142,7 @@ describe('C01: ContextSnapshot → ChatExecution', () => {
     initiatorUserId: uuid(),
     consumerClass: 'chat' as const,
     privacyMode: false,
+    parentSnapshotId: uuid(),
     sourceContextRefs: [],
     driftEvents: [],
   };
@@ -385,6 +386,7 @@ describe('C07: ContextSnapshot → SourceTruth', () => {
     initiatorUserId: uuid(),
     consumerClass: 'execution' as const,
     privacyMode: false,
+    parentSnapshotId: uuid(),
     sourceContextRefs: [],
     driftEvents: [],
   };

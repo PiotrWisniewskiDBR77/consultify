@@ -47,6 +47,8 @@
     { "file": "20260323_v8_workspace_ai_facilitation.sql", "order": 42 },
     { "file": "20260323_v8_workspace_collaboration.sql", "order": 43 },
     { "file": "20260323_v8_workspace_cross_module.sql", "order": 44 },
-    { "file": "20260323_v8_workspace_governance.sql", "order": 45 }
+    { "file": "20260323_v8_workspace_governance.sql", "order": 45 },
+    { "file": "20260324_v8_feature_flags.sql", "order": 46 },
+    { "file": "20260324_v8_shadow_comparisons.sql", "order": 47 }
   ]
 }

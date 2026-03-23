@@ -21,7 +21,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const MIGRATIONS_DIR = path.resolve(__dirname, '..', 'migrations');
-const MIGRATION_GLOB_PREFIX = '20260323_v8_';
+const MIGRATION_FILE_PATTERN = /^2026\d{4}_v8_.*\.sql$/;
 const SCHEMA_NAME = 'v8';
 
 // ---------------------------------------------------------------------------
@@ -50,11 +50,11 @@ function parseMode(): Mode {
 function discoverMigrationFiles(): string[] {
   const allFiles = fs.readdirSync(MIGRATIONS_DIR);
   const v8Files = allFiles
-    .filter((f) => f.startsWith(MIGRATION_GLOB_PREFIX) && f.endsWith('.sql'))
+    .filter((f) => MIGRATION_FILE_PATTERN.test(f))
     .sort();
 
   if (v8Files.length === 0) {
-    console.error(`No migration files found matching ${MIGRATION_GLOB_PREFIX}*.sql in ${MIGRATIONS_DIR}`);
+    console.error(`No V8 migration files found in ${MIGRATIONS_DIR}`);
     process.exit(1);
   }
 

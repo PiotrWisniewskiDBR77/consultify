@@ -1,7 +1,7 @@
 /**
  * T3 — Migration Safety Gate Tests
  *
- * HARD SAFETY GATE: All 27 V8 SQL migrations must form a consistent,
+ * HARD SAFETY GATE: All 47 V8 SQL migrations must form a consistent,
  * collision-free schema. Failures here block production deployment.
  *
  * Tests M01–M06 per V8_INTEGRATION_TEST_PROGRAM.md §5.
@@ -16,7 +16,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 // ---------------------------------------------------------------------------
 
 const MIGRATIONS_DIR = path.resolve(__dirname, '../../../../../../migrations');
-const MIGRATION_GLOB_PREFIX = '20260323_v8_';
+const MIGRATION_FILE_PATTERN = /^2026\d{4}_v8_.*\.sql$/;
 
 interface MigrationFile {
   filename: string;
@@ -26,7 +26,7 @@ interface MigrationFile {
 function loadMigrationFiles(): MigrationFile[] {
   const allFiles = fs.readdirSync(MIGRATIONS_DIR).sort();
   const v8Files = allFiles.filter(
-    (f) => f.startsWith(MIGRATION_GLOB_PREFIX) && f.endsWith('.sql'),
+    (f) => MIGRATION_FILE_PATTERN.test(f),
   );
   return v8Files.map((filename) => ({
     filename,
@@ -92,8 +92,8 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
   // M01 — Sequential migration run (structural validation)
   // =========================================================================
   describe('M01 — Sequential migration run', () => {
-    it('should find exactly 27 V8 migration files', () => {
-      expect(migrations.length).toBe(27);
+    it('should find exactly 47 V8 migration files', () => {
+      expect(migrations.length).toBe(47);
     });
 
     it('should have files sorted alphabetically matching deployment order', () => {
@@ -152,13 +152,13 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
       }
     });
 
-    it('should create exactly 104 tables across all migrations', () => {
+    it('should create exactly 120 tables across all migrations', () => {
       const allTables: string[] = [];
       for (const mig of migrations) {
         allTables.push(...extractCreateTableNames(mig.sql));
       }
       console.log(`\n=== V8 Total Tables: ${allTables.length} ===\n`);
-      expect(allTables.length).toBe(103);
+      expect(allTables.length).toBe(120);
     });
 
     it('cross-file FK references must target tables defined in earlier or same migration', () => {
@@ -214,7 +214,7 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
   // M02 — Table collision check
   // =========================================================================
   describe('M02 — Table collision check', () => {
-    it('should have no duplicate table names across all 27 migration files', () => {
+    it('should have no duplicate table names across all 47 migration files', () => {
       const tableRegistry = new Map<string, string[]>();
 
       for (const mig of migrations) {
@@ -272,7 +272,7 @@ describe('T3 — Migration Safety Gate (M01–M06)', () => {
   // M03 — Index collision check
   // =========================================================================
   describe('M03 — Index collision check', () => {
-    it('should have no duplicate index names across all 27 migration files', () => {
+    it('should have no duplicate index names across all 47 migration files', () => {
       const indexRegistry = new Map<string, string[]>();
 
       for (const mig of migrations) {
