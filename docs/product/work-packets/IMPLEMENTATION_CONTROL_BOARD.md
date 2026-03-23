@@ -511,6 +511,76 @@ New functions: `submitForReview` (72h SLA per D13), `approveRun`, `rejectRun` (D
 
 ---
 
+## Report #16 — 2026-03-23 (WAVE 5 + WAVE 6 CLOSED — AI Core Platform Complete)
+
+### 1. Wave 5 — Tool Governance — CLOSED
+
+| Deliverable | Status |
+|-------------|--------|
+| Consumer class enforcement runtime (D20 most-restrictive, D22 background→deferred) | **COMPLETE** |
+| Effective policy resolution (org + project merge, tighten-only) | **COMPLETE** |
+| Deferred approval queue (getDeferredApprovals, processDeferredApproval) | **COMPLETE** |
+| Subagent governance (D21: block critical tools, require applying state) | **COMPLETE** |
+| Tool usage by run (invocations + traces) | **COMPLETE** |
+| 26 unit tests | **ALL PASS** |
+
+### 2. Wave 6 — Trust/Provenance — CLOSED
+
+| Deliverable | Status |
+|-------------|--------|
+| Provenance ledger (buildProvenanceLedger, assessTrustClass, getProvenanceByOrg) | **COMPLETE** |
+| User explanation (D25: concise summary) | **COMPLETE** |
+| Operator explanation (D25: full trace with provenance, conditions, health) | **COMPLETE** |
+| Degraded-state runtime (D26: active conditions, resolve, health dashboard) | **COMPLETE** |
+| 30 unit tests | **ALL PASS** |
+
+### 3. Test results
+
+| Suite | Tests | Status |
+|-------|------:|--------|
+| Wave 5 unit (enforcement) | 26 | **PASS** |
+| Wave 6 unit (provenance) | 30 | **PASS** |
+| **Wave 5+6 total** | **56** | **ALL GREEN** |
+
+### 4. MILESTONE: AI Core Platform (Waves 2-6) COMPLETE
+
+All 5 foundational AI platform waves are now closed:
+
+| Wave | Domain | Status |
+|------|--------|--------|
+| W2 | Context/identity spine | **CLOSED** |
+| W3 | Governed retrieval | **CLOSED** |
+| W4 | Execution proposal/approval | **CLOSED** |
+| W5 | Tool governance/HITL | **CLOSED** |
+| W6 | Trust/provenance/observability | **CLOSED** |
+
+The AI runtime spine is production-wired: identity chain → retrieval governance → execution approval → tool governance → trust observability.
+
+### 5. Updated program totals
+
+| Metric | Count |
+|---|---|
+| **Total V8 code files** | **120** |
+| **Total integration test files** | **15** |
+| **Total passing tests** | **2,115** |
+| **Waves closed (20-wave)** | **6 / 20** |
+
+### 6. 20-wave implementation status
+
+| Wave | Status |
+|---|---|
+| **W1-W6** | **ALL CLOSED** |
+| W7 | **GREEN — ready to start** (multiplayer platform baseline) |
+| W8 | YELLOW — after W7 (version/replay/audit) |
+| W9 | YELLOW — after W7+W8 (Chat+PromptOS+Knowledge integration proof) |
+| W10-W20 | Pending |
+
+### 7. Recommended next action
+
+**Start Wave 7** (multiplayer platform baseline). Then W8 (version/replay) and W9 (integration proof) sequentially.
+
+---
+
 ## Report #12 — 2026-03-23 (INTEGRATION GATE PASSED)
 
 ### 1. Integration Test Program — ALL TIERS GREEN
