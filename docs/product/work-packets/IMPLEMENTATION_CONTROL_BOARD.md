@@ -2095,3 +2095,89 @@ All code-level and offline validation is complete. The V8 program is now in a st
 6. Make final pilot/production readiness assessment
 
 No further code changes are needed for staging execution. The next step is an operational decision, not a development task.
+
+---
+
+## Operational Staging Execution Board — Report #9 (Live Staging Execution Plan)
+
+> Date: 2026-03-23
+> Phase: LIVE STAGING EXECUTION + PILOT READINESS GATE
+> Authority: docs/product/work-packets/V8_LIVE_STAGING_EXECUTION_PLAN.md
+
+### 1. Current live readiness
+
+| Dimension | Status | Detail |
+|-----------|--------|--------|
+| Code readiness | COMPLETE | 2713 tests, 0 regressions |
+| Offline validation | COMPLETE | All 6 Tranche 05 packets passed |
+| Live staging execution | NOT STARTED | Awaiting operational inputs |
+| Pilot readiness | NOT ASSESSED | No live evidence |
+| Production readiness | NOT ASSESSED | Pilot must pass first |
+
+### 2. Execution step completed
+
+None — live execution has not started.
+
+### 3. Execution step blocked
+
+| Step | Blocker | Owner |
+|------|---------|-------|
+| Step 1: Pre-flight | `DATABASE_PUBLIC_URL` not yet provided | Platform ops |
+| Step 4: Enable V8 | Staging env var access not yet confirmed | Platform ops |
+| Step 5: Smoke tests | Staging URL + JWT not yet provided | Platform ops |
+
+### 4. Evidence collected
+
+| Category | Status |
+|----------|--------|
+| Migration evidence | OFFLINE ONLY |
+| Schema / table evidence | OFFLINE ONLY |
+| API route evidence | OFFLINE ONLY |
+| Smoke test evidence | OFFLINE ONLY |
+| Shadow mode evidence | OFFLINE ONLY |
+| Flag behavior evidence | OFFLINE ONLY |
+| Operator monitoring evidence | OFFLINE ONLY |
+| Error / degraded-state evidence | OFFLINE ONLY |
+| Rollback readiness evidence | OFFLINE ONLY |
+| 24h observation evidence | NOT STARTED |
+
+### 5. Failures or anomalies
+
+None — no live execution performed.
+
+### 6. Shadow mode status
+
+**NOT ACTIVE** — `ENABLE_V8_GLOBAL` and `ENABLE_V8_SHADOW_MODE` are not set on staging.
+
+### 7. Operator observation status
+
+**NOT STARTED** — no live system to observe.
+
+### 8. Pilot gate status
+
+**NOT ASSESSED** — requires live evidence from all 10 categories.
+
+Pilot gate criteria documented in: `docs/product/work-packets/V8_LIVE_STAGING_EXECUTION_PLAN.md` § 6.
+
+### 9. Residual risks
+
+| Risk | Severity | Mitigation |
+|------|----------|------------|
+| Real Postgres rejects transformed SQL | P1 | Dry-run first; rollback ready |
+| JWT claims differ from test mocks | P1 | Verify token structure before smoke tests |
+| Shadow interceptor silent on real middleware chain | P1 | Monitor shadow stats after 1h |
+| Staging DB has conflicting schema | P2 | Verify step checks for conflicts |
+| 24h observation reveals memory leak | P2 | Monitor server metrics; restart if needed |
+
+### 10. Recommended next action
+
+**Provide the following to begin live staging execution:**
+
+1. `DATABASE_PUBLIC_URL` — public Postgres URL pointing to staging DB
+2. Staging server URL (e.g., `https://staging.consultify.example.com`)
+3. Valid JWT token for a test organization
+4. Superadmin JWT token for flag management
+5. Test organization ID
+6. Confirmation that env vars can be set on staging deployment
+
+Once these are provided, execution begins immediately with Step 1 (Pre-flight).
