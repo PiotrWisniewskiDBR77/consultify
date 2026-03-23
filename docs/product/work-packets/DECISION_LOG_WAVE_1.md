@@ -3,7 +3,7 @@
 > Status: Active
 > Authority: Source-of-truth chat decisions
 > Date: 2026-03-23
-> Scope: binding decisions for Wave 1 escalation items from packets WP-W1-AI-01, WP-W1-MP-01, WP-W1-PMSYNC-01
+> Scope: binding decisions for Wave 1 escalation items from all Wave 1 packets
 
 ---
 
@@ -78,6 +78,85 @@
 
 ---
 
+## AI retrieval
+
+### Decision 10 — ACL staleness window
+
+- Three sensitivity levels with maximum ACL refresh lag:
+  - `high sensitivity`: `0-5 min`
+  - `medium sensitivity`: `<= 15 min`
+  - `low sensitivity`: `<= 60 min`
+- If a connector does not meet the window for a given sensitivity class, the result must be treated as `stale_acl` / degraded, not as fully trusted retrieval.
+- Rule: the higher the sensitivity, the closer to runtime-check, not cache-only.
+
+### Decision 11 — Custom search presets
+
+- Org admin may create custom presets, but only as tenant-scoped extensions.
+- Platform-defined presets remain the canonical baseline.
+- Admin may: clone a platform preset, override fields allowed by policy, create a custom preset within permitted scope/tool/source policy.
+- Admin may not: bypass ACL, change trust vocabulary, change core source-governance semantics.
+
+### Decision 12 — Web search in governed pipeline
+
+- Web search is treated as a separate `external scope` path, not as a regular enterprise pseudo-connector.
+- Must be visible as a separate external source with its own trust and freshness semantics.
+- May be wrapped in connector-like runtime, but the product must not pretend it is the same governance class as tenant connectors.
+
+---
+
+## Execution spine (continued)
+
+### Decision 13 — Review expiration threshold
+
+- Default for `waiting_for_review`: `72h`.
+- After expiration, state transitions to `review_expired`.
+- Run is not auto-cancelled; it remains resumable or re-plannable depending on policy.
+- Shorter SLAs may exist later per workload/risk class, but Wave 1 baseline = `72h`.
+
+### Decision 14 — Re-planning after rejection
+
+- Re-planning creates a new plan version within the same run.
+- A new run is created only when context boundary, target scope, or execution intent changes fundamentally.
+- Canonical rule: `same objective + same effective context => same run, new plan version`.
+
+### Decision 15 — Batched approval granularity
+
+- Default: mixed mode.
+- Reviewer may reject or accept items individually within a batch.
+- System may offer quick action `approve all / reject all` as a UX shortcut, not as a canonical model constraint.
+- Reason: all-or-nothing is too rigid for real proposal bundles.
+
+---
+
+## Multiplayer version / replay (continued)
+
+### Decision 16 — Snapshot compaction policy
+
+- Wave 1 / early production baseline: retain full event stream, create periodic snapshots, compact old intermediate snapshots without destroying replay/audit truth.
+- Exact numeric thresholds not closed yet without engineering + ops alignment.
+- Product decision now: replay and audit fidelity wins over storage neatness. Compaction cannot destroy restore points required for support and review.
+
+### Decision 17 — Restore UX during active collaboration
+
+- Restore during active collaboration requires an explicit confirmation dialog.
+- Restore must not be silent.
+- Displaced editors must see an explicit state transition: object restored, local editing state is stale, rejoin / refresh / compare.
+- Rule: restore is a room-visible event, not a local action.
+
+---
+
+## PM sync cross-check (continued)
+
+### Decision 18 — SYNC_MODES doc update
+
+- Update existing canonical sync/conflict docs (not a new parallel document).
+- Add conflict classes: `field_authority_conflict`, `stale_snapshot_conflict`.
+- Add resolution paths: `replay_after_fix`, `escalate`.
+- Introduce 3-level severity model: `low`, `medium`, `high`.
+- Add explicit reference to dead-letter doctrine and operator recovery path.
+
+---
+
 ## Additional implementation rules
 
 - If these decisions require a wave-order change, escalate separately.
@@ -88,5 +167,9 @@
 ## Related packets
 
 - `WP-W1-AI-01_CONTEXT_IDENTITY_BASELINE.md`
+- `WP-W1-AI-02_GOVERNED_RETRIEVAL_BASELINE.md`
+- `WP-W1-AI-03_EXECUTION_PROPOSAL_APPROVAL_SPINE.md`
 - `WP-W1-MP-01_MULTIPLAYER_PLATFORM_BASELINE.md`
+- `WP-W1-MP-02_VERSION_REPLAY_AUDIT_SPINE.md`
 - `WP-W1-PMSYNC-01_PM_SYNC_PLATFORM_TRUTH.md`
+- `WP-W1-PMSYNC-02_CONFLICT_CROSSCHECK_AND_RATIFICATION.md`
