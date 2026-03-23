@@ -180,8 +180,11 @@ function getPool(): Pool {
       logger.error('[Postgres] Unexpected error on idle client:', err.message);
     });
 
-    pool.on('connect', (_client: PoolClient) => {
+    pool.on('connect', (client: PoolClient) => {
       logger.info('[Postgres] Client connected');
+      client.query('SET search_path TO public, v8').catch((err: Error) => {
+        logger.warn('[Postgres] Failed to set search_path:', err.message);
+      });
     });
 
     // Initialize schema lazily if needed - must complete before first query
@@ -235,6 +238,11 @@ function getReadPool(): Pool {
 
       readPool.on('error', (err: Error) => {
         logger.error('[Postgres] Unexpected error on READ REPLICA client:', err.message);
+      });
+      readPool.on('connect', (client: PoolClient) => {
+        client.query('SET search_path TO public, v8').catch((err: Error) => {
+          logger.warn('[Postgres] Failed to set read replica search_path:', err.message);
+        });
       });
     }
     return readPool;
