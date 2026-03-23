@@ -426,3 +426,29 @@ Current implementation source of truth for Radar behavior:
 - `server/src/services/radar/radarTypes.ts`
 - `src/components/MyWork/Home/HomeView.tsx`
 - `src/components/MyWork/Home/useRadarData.ts`
+
+---
+
+## 13. V8 Program Decisions
+
+### 13.1 Cross-surface state propagation
+
+> V8 Decision W7-1 applied — 2026-03-23
+
+One object keeps one canonical state across Home, Calendar, and Inbox. Surfaces may show different projections, not different truths. Deduplication by canonical object identity; state updates propagate to all surfaces. Surface-local UI state may differ; object state may not. Inbox may hold pre-materialized intake state, but once promoted, canonical object truth wins.
+
+Home blocks that consume execution objects (e.g. `executionCurrent`, `decisionTemperature`) must reflect the same canonical state that Calendar and Inbox show for those objects.
+
+### 13.2 Non-Radar Home block classification
+
+> V8 Decision W7-2 applied — 2026-03-23
+
+All 8 Home blocks must be explicitly classified into one of three maturity tiers:
+
+| Tier | Definition |
+|---|---|
+| `backed by real service` | Block has a dedicated backend service, defined data contract, and real-time data feed |
+| `partial / stitched` | Block has some backend support but relies on aggregation, stitching, or incomplete data contracts |
+| `placeholder / non-canonical` | Block is defined in the UI model but has no verified backend service or canonical data source |
+
+Rule: `Home may stay heterogeneous temporarily, but truth labels must be explicit`. Placeholder blocks must not be presented as equal to Radar-grade blocks.

@@ -324,3 +324,15 @@ Not baseline for `v8`:
 - Radar can nudge the user toward knowledge-base use and AI conversation without becoming pushy
 - the product tone remains encouraging, light and developmental rather than heavy or depressing
 - Radar clearly encourages creation of ideas, notes and lightweight transformation artifacts rather than ending at passive consumption
+
+---
+
+## 14. V8 Program Decisions
+
+### 14.1 Cross-surface state propagation
+
+> V8 Decision W7-1 applied — 2026-03-23
+
+One object keeps one canonical state across Home, Calendar, and Inbox. Surfaces may show different projections, not different truths. Deduplication by canonical object identity; state updates propagate to all surfaces.
+
+Radar signals that are promoted to tasks, decisions, or other canonical objects must reflect the canonical state of those objects. If a promoted object is triaged in Inbox or rescheduled in Calendar, Radar's view of that object must update accordingly.

@@ -560,3 +560,30 @@ This SSOT is designed to be converted into tasks without ambiguity. Minimum task
   - DRD as benchmark
   - SIRI and ADMA parity (methodology guidance + summary surfaces)
 
+---
+
+## 11) V8 Program Decisions
+
+### 11.1 Classic framework templates registry
+
+> V8 Decision W7-5 applied — 2026-03-23
+
+The Known Tools table is the primary shared registry. Classic framework templates live as a typed family/subtype inside the shared tools registry. Do not create a disconnected parallel registry.
+
+Rule: `one shared registry, typed families`.
+
+### 11.2 Consulting tool AI governance granularity
+
+> V8 Decision W7-6 applied — 2026-03-23
+
+Consulting tool AI governance operates at two levels:
+
+| Level | Scope |
+|---|---|
+| **Session-level** | Defines broad mode, permissions, and context boundaries for the tool session |
+| **Action-level** | Decides whether a specific AI action within the session can execute, propose, or requires approval |
+
+Rule: `session sets the sandbox, action decides the gate`.
+
+The session-level governance binds the tool session to a `ContextSnapshot` and applies consumer class policy. Within that sandbox, each AI action (propose inputs, draft summaries, generate outputs, finalize) is individually gated by its risk class and approval path as defined in the tool governance model (WP-W1-AI-04).
+

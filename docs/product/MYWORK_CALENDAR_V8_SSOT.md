@@ -221,3 +221,28 @@ Each time item must define:
 - `MYWORK_CALENDAR_V8_GAP_MATRIX.md`
 - `MYWORK_CALENDAR_V8_IMPLEMENTATION_PLAN.md`
 - `CONNECTOR_SYNC_MODES_AND_CONFLICT_RESOLUTION_V8.md`
+
+---
+
+## 13. V8 Program Decisions
+
+### 13.1 Cross-surface state propagation
+
+> V8 Decision W7-1 applied — 2026-03-23
+
+One object keeps one canonical state across Home, Calendar, and Inbox. Surfaces may show different projections, not different truths. Deduplication by canonical object identity; state updates propagate to all surfaces. Surface-local UI state may differ; object state may not.
+
+Calendar time items that also appear in Inbox (e.g. overdue tasks, SLA-breached decisions) must reflect the same canonical state. If a triage action in Inbox changes state, Calendar must reflect the change.
+
+### 13.2 Calendar hardening phasing
+
+> V8 Decision W7-4 applied — 2026-03-23
+
+Calendar hardening is formally split into two phases:
+
+| Phase | Scope | Timing |
+|---|---|---|
+| **Phase A** | Internal-only Calendar hardening (PMO items, workload, conflict model, internal aggregation) | Wave 7 |
+| **Phase B** | External sync hardening (Google Calendar, Outlook/M365, external event merge, bidirectional sync) | After Wave 5 connector foundations are ready |
+
+Rule: `do not block internal Calendar quality on external sync readiness`. Phase A proceeds independently in Wave 7. Phase B is sequenced after Wave 5 connector platform delivery.
