@@ -12,7 +12,14 @@ const V8_FLAG_QUERY_KEY = ['v8', 'flags'] as const;
 export function useV8FeatureFlag(module?: string) {
   const { data: flags, isLoading, error } = useQuery({
     queryKey: V8_FLAG_QUERY_KEY,
-    queryFn: () => V8AdminApi.getFlags(),
+    queryFn: async () => {
+      try {
+        return await V8AdminApi.getFlags();
+      } catch {
+        // V8 disabled globally (e.g. 404) or network failure — degrade without throwing
+        return {} as Record<string, boolean>;
+      }
+    },
     staleTime: 60_000,
     retry: false,
   });

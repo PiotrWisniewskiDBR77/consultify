@@ -12,6 +12,7 @@ import { FeatureFlagsProvider } from '../contexts/FeatureFlagsContext';
 import { HelpProvider } from '../contexts/HelpContext';
 import { TrialProvider } from '../contexts/TrialContext';
 import { useAppStore } from '../store/useAppStore';
+import { V8Provider } from '@/providers/V8Provider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,20 +78,22 @@ export const AppProviders: React.FC<AppProvidersProps> = ({ children }) => {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <FeatureFlagsProvider>
-            <AutoSaveProvider>
-              <TrialProvider>
-                <AccessPolicyProvider>
-                  <AIProvider>
-                    <HelpProvider>
-                      <TourProvider>
-                        {children}
-                        <Toaster position="bottom-right" />
-                      </TourProvider>
-                    </HelpProvider>
-                  </AIProvider>
-                </AccessPolicyProvider>
-              </TrialProvider>
-            </AutoSaveProvider>
+            <V8Provider>
+              <AutoSaveProvider>
+                <TrialProvider>
+                  <AccessPolicyProvider>
+                    <AIProvider>
+                      <HelpProvider>
+                        <TourProvider>
+                          {children}
+                          <Toaster position="bottom-right" />
+                        </TourProvider>
+                      </HelpProvider>
+                    </AIProvider>
+                  </AccessPolicyProvider>
+                </TrialProvider>
+              </AutoSaveProvider>
+            </V8Provider>
           </FeatureFlagsProvider>
         </BrowserRouter>
       </QueryClientProvider>

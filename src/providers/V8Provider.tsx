@@ -18,18 +18,19 @@ interface V8ContextValue {
 const V8Context = createContext<V8ContextValue | null>(null);
 
 export function V8Provider({ children }: { children: React.ReactNode }) {
-  const { flags, isLoading } = useV8FeatureFlag();
+  const { flags: rawFlags, isLoading, error } = useV8FeatureFlag();
 
-  const value = useMemo<V8ContextValue>(
-    () => ({
-      isV8Enabled: Object.values(flags ?? {}).some(Boolean),
-      isV8ChatEnabled: flags?.chat === true,
-      isV8AICoreEnabled: flags?.ai_core === true,
+  const value = useMemo<V8ContextValue>(() => {
+    const flags = error ? undefined : rawFlags;
+    const safe = flags ?? {};
+    return {
+      isV8Enabled: Object.values(safe).some(Boolean),
+      isV8ChatEnabled: safe.chat === true,
+      isV8AICoreEnabled: safe.ai_core === true,
       isLoading,
       flags,
-    }),
-    [flags, isLoading]
-  );
+    };
+  }, [rawFlags, isLoading, error]);
 
   return <V8Context.Provider value={value}>{children}</V8Context.Provider>;
 }
