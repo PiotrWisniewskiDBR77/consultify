@@ -471,6 +471,273 @@ export async function checkRunExpiration(
 }
 
 // ==========================================
+// APPROVAL FLOW ORCHESTRATION
+// ==========================================
+
+const REVIEW_WAIT_SLA_HOURS = 72;
+
+/**
+ * Submit a run for review: proposals_ready → waiting_for_review.
+ * Sets expiresAt to 72h from now (Decision D13) and promotes draft proposals to pending_review.
+ */
+export async function submitForReview(
+  runId: string,
+  organizationId: string,
+  triggeredBy: string,
+): Promise<ExecutionAgentRun> {
+  const updatedRun = await transitionRunState(
+    runId,
+    organizationId,
+    'waiting_for_review',
+    triggeredBy,
+    'Submitted for review',
+  );
+
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + REVIEW_WAIT_SLA_HOURS * 60 * 60 * 1000).toISOString();
+  const reviewSubmittedAt = now.toISOString();
+
+  await dbRun(
+    `UPDATE v8_execution_runs
+     SET expires_at = ?, review_submitted_at = ?
+     WHERE run_id = ? AND organization_id = ?`,
+    [expiresAt, reviewSubmittedAt, runId, organizationId],
+  );
+
+  await dbRun(
+    `UPDATE v8_action_proposals
+     SET status = 'pending_review'
+     WHERE execution_run_id = ? AND status = 'draft'`,
+    [runId],
+  );
+
+  logger.info(`${LOG_PREFIX} Run ${runId} submitted for review, expires at ${expiresAt}`);
+
+  return {
+    ...updatedRun,
+    expiresAt,
+  };
+}
+
+/**
+ * Approve a run: waiting_for_review → approved_for_apply.
+ * Resolves all pending_review proposals as approved.
+ */
+export async function approveRun(
+  runId: string,
+  organizationId: string,
+  approvedBy: string,
+  reason?: string,
+): Promise<ExecutionAgentRun> {
+  const updatedRun = await transitionRunState(
+    runId,
+    organizationId,
+    'approved_for_apply',
+    approvedBy,
+    reason ?? 'Run approved',
+  );
+
+  const now = new Date().toISOString();
+
+  await dbRun(
+    `UPDATE v8_action_proposals
+     SET status = 'approved', resolved_at = ?, resolved_by = ?
+     WHERE execution_run_id = ? AND status = 'pending_review'`,
+    [now, approvedBy, runId],
+  );
+
+  await dbRun(
+    `UPDATE v8_execution_runs
+     SET review_completed_at = ?, review_completed_by = ?
+     WHERE run_id = ? AND organization_id = ?`,
+    [now, approvedBy, runId, organizationId],
+  );
+
+  logger.info(`${LOG_PREFIX} Run ${runId} approved by ${approvedBy}`);
+  return updatedRun;
+}
+
+/**
+ * Reject a run: waiting_for_review → rejected.
+ * Resolves all pending_review proposals as rejected. (Decision D14)
+ */
+export async function rejectRun(
+  runId: string,
+  organizationId: string,
+  rejectedBy: string,
+  reason: string,
+): Promise<ExecutionAgentRun> {
+  const updatedRun = await transitionRunState(
+    runId,
+    organizationId,
+    'rejected',
+    rejectedBy,
+    reason,
+  );
+
+  const now = new Date().toISOString();
+
+  await dbRun(
+    `UPDATE v8_action_proposals
+     SET status = 'rejected', resolved_at = ?, resolved_by = ?
+     WHERE execution_run_id = ? AND status = 'pending_review'`,
+    [now, rejectedBy, runId],
+  );
+
+  await dbRun(
+    `UPDATE v8_execution_runs
+     SET review_completed_at = ?, review_completed_by = ?
+     WHERE run_id = ? AND organization_id = ?`,
+    [now, rejectedBy, runId, organizationId],
+  );
+
+  logger.info(`${LOG_PREFIX} Run ${runId} rejected by ${rejectedBy}: ${reason}`);
+  return updatedRun;
+}
+
+/**
+ * Apply a run: approved_for_apply → applying.
+ */
+export async function applyRun(
+  runId: string,
+  organizationId: string,
+  triggeredBy: string,
+): Promise<ExecutionAgentRun> {
+  return transitionRunState(
+    runId,
+    organizationId,
+    'applying',
+    triggeredBy,
+    'Applying approved mutations',
+  );
+}
+
+/**
+ * Complete a run: applying → completed.
+ */
+export async function completeRun(
+  runId: string,
+  organizationId: string,
+  triggeredBy: string,
+): Promise<ExecutionAgentRun> {
+  return transitionRunState(
+    runId,
+    organizationId,
+    'completed',
+    triggeredBy,
+    'All mutations applied successfully',
+  );
+}
+
+// ==========================================
+// REBASELINE SUPPORT (Decision W3-10)
+// ==========================================
+
+/**
+ * Re-plan from rejection: rejected → planning.
+ * Auto-increments planVersion (handled by transitionRunState).
+ * Expires all proposals from the previous plan version.
+ */
+export async function replanFromRejection(
+  runId: string,
+  organizationId: string,
+  triggeredBy: string,
+): Promise<ExecutionAgentRun> {
+  const now = new Date().toISOString();
+
+  await dbRun(
+    `UPDATE v8_action_proposals
+     SET status = 'expired', resolved_at = ?, resolved_by = 'system'
+     WHERE execution_run_id = ? AND status IN ('draft', 'pending_review', 'rejected')`,
+    [now, runId],
+  );
+
+  const updatedRun = await transitionRunState(
+    runId,
+    organizationId,
+    'planning',
+    triggeredBy,
+    'Re-planning after rejection',
+  );
+
+  logger.info(
+    `${LOG_PREFIX} Run ${runId} re-planning (v${updatedRun.planVersion}) by ${triggeredBy}`,
+  );
+  return updatedRun;
+}
+
+/**
+ * Query runs for an organization, optionally filtered by state.
+ */
+export async function getRunsByOrg(
+  organizationId: string,
+  stateFilter?: RunState,
+  limit: number = 50,
+): Promise<ExecutionAgentRun[]> {
+  let sql: string;
+  let params: unknown[];
+
+  if (stateFilter) {
+    sql = `SELECT * FROM v8_execution_runs
+           WHERE organization_id = ? AND state = ?
+           ORDER BY updated_at DESC
+           LIMIT ?`;
+    params = [organizationId, stateFilter, limit];
+  } else {
+    sql = `SELECT * FROM v8_execution_runs
+           WHERE organization_id = ?
+           ORDER BY updated_at DESC
+           LIMIT ?`;
+    params = [organizationId, limit];
+  }
+
+  const rows = await dbAll<RunRow>(sql, params, { fallback: true });
+  return (rows || []).map(rowToRun);
+}
+
+/**
+ * Return all runs NOT in terminal states for an organization.
+ */
+export async function getActiveRuns(organizationId: string): Promise<ExecutionAgentRun[]> {
+  const rows = await dbAll<RunRow>(
+    `SELECT * FROM v8_execution_runs
+     WHERE organization_id = ?
+       AND state NOT IN ('completed', 'cancelled', 'expired')
+     ORDER BY created_at DESC`,
+    [organizationId],
+    { fallback: true },
+  );
+
+  return (rows || []).map(rowToRun);
+}
+
+// ==========================================
+// BATCH APPROVAL SUPPORT (Decision D15)
+// ==========================================
+
+/**
+ * Resolve multiple proposals at once (mixed per-item default).
+ * Each proposal must be in draft or pending_review state.
+ */
+export async function resolveProposalsBatch(
+  proposalIds: string[],
+  status: ProposalStatus,
+  resolvedBy: string,
+): Promise<ActionProposal[]> {
+  const results: ActionProposal[] = [];
+
+  for (const proposalId of proposalIds) {
+    const resolved = await resolveProposal(proposalId, status, resolvedBy);
+    results.push(resolved);
+  }
+
+  logger.info(
+    `${LOG_PREFIX} Batch-resolved ${results.length} proposals as ${status} by ${resolvedBy}`,
+  );
+  return results;
+}
+
+// ==========================================
 // INTERNAL HELPERS
 // ==========================================
 
