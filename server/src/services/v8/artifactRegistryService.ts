@@ -1021,23 +1021,31 @@ export async function listMyWorkArtifacts(params: {
   review: ArtifactListItem[];
   recent: ArtifactListItem[];
 }> {
-  const items = await listArtifactsForUser({
-    organizationId: params.organizationId,
-    userId: params.userId,
-    roleKey: params.roleKey,
-    allowDemo: params.allowDemo,
-    filters: { limit: params.limit || 50 },
-  });
+  const laneLimit = Math.max(1, params.limit || 8);
 
-  const mine = items.filter((item) => item.ownerUserId === params.userId).slice(0, 8);
-  const review = items
-    .filter(
-      (item) =>
-        item.publishReviewers.includes(params.userId) ||
-        item.visibilityScope === 'review_shared',
-    )
-    .slice(0, 8);
-  const recent = items.slice(0, 8);
+  const [mine, review, recent] = await Promise.all([
+    listArtifactsForUser({
+      organizationId: params.organizationId,
+      userId: params.userId,
+      roleKey: params.roleKey,
+      allowDemo: params.allowDemo,
+      filters: { onlyMine: true, limit: laneLimit },
+    }),
+    listArtifactsForUser({
+      organizationId: params.organizationId,
+      userId: params.userId,
+      roleKey: params.roleKey,
+      allowDemo: params.allowDemo,
+      filters: { reviewSharedForUserId: params.userId, limit: laneLimit },
+    }),
+    listArtifactsForUser({
+      organizationId: params.organizationId,
+      userId: params.userId,
+      roleKey: params.roleKey,
+      allowDemo: params.allowDemo,
+      filters: { limit: laneLimit },
+    }),
+  ]);
 
   return { mine, review, recent };
 }

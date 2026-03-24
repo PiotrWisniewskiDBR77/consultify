@@ -93,4 +93,49 @@ describe('artifact-runs routes (HTTP contract; artifactRegistryService mocked)',
       }),
     );
   });
+
+  it('GET /api/artifact-runs/:runId returns persisted run when present', async () => {
+    getArtifactRunMock.mockResolvedValue({
+      runId: 'ar-1',
+      runStatus: 'planned',
+      executionRunId: 'exec-1',
+    });
+
+    const res = await request(app).get('/api/artifact-runs/ar-1');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual(
+      expect.objectContaining({
+        runId: 'ar-1',
+        runStatus: 'planned',
+      }),
+    );
+  });
+
+  it('GET /api/artifact-runs/:runId returns 404 when missing', async () => {
+    getArtifactRunMock.mockResolvedValue(null);
+
+    const res = await request(app).get('/api/artifact-runs/ar-missing');
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual(expect.objectContaining({ error: 'ArtifactRun not found' }));
+  });
+
+  it('POST /api/artifact-runs/:runId/retry returns a new persisted retry envelope', async () => {
+    retryArtifactRunMock.mockResolvedValue({
+      runId: 'ar-2',
+      runStatus: 'planned',
+      retryOfRunId: 'ar-1',
+    });
+
+    const res = await request(app).post('/api/artifact-runs/ar-1/retry').send({});
+
+    expect(res.status).toBe(201);
+    expect(res.body.data).toEqual(
+      expect.objectContaining({
+        runId: 'ar-2',
+        retryOfRunId: 'ar-1',
+      }),
+    );
+  });
 });

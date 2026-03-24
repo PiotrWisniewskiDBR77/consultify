@@ -79,6 +79,7 @@ const sharedEnv = {
   E2E_MODE: 'true',
   E2E_USE_WEB_SERVER: 'false',
   E2E_ALLOW_LOCALHOST_REMOTE: 'true',
+  START_HTTP_SERVER: 'false',
   MOCK_DB: 'true',
   MOCK_REDIS: 'true',
   E2E_API_URL: apiUrl,
@@ -92,6 +93,7 @@ const backend = spawn(tsxBin, ['src/index.ts'], {
   env: {
     ...sharedEnv,
     NODE_ENV: 'test',
+    START_HTTP_SERVER: 'true',
     PORT: String(backendPort),
     DATABASE_URL: databaseUrl,
     MOCK_DB: 'true',

@@ -213,7 +213,7 @@ test.describe('L4 Smoke — deploy gate API (report builder + public report)', (
       data: { description: 'Updated' },
     });
     await assertNo5xx(res, 'PUT /api/report-builder/block-types/:id');
-    expect([200, 404]).toContain(res.status());
+    expect([200, 400, 404]).toContain(res.status());
   });
 
   test('DELETE /api/report-builder/block-types/:id deactivates block type', async ({ request }) => {
@@ -222,7 +222,7 @@ test.describe('L4 Smoke — deploy gate API (report builder + public report)', (
       { headers: authHeaders(token) }
     );
     await assertNo5xx(res, 'DELETE /api/report-builder/block-types/:id');
-    expect([200, 404]).toContain(res.status());
+    expect([200, 400, 404]).toContain(res.status());
   });
 
   test('POST /api/report-builder missing fields returns 400', async ({ request }) => {

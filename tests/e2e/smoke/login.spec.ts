@@ -38,7 +38,7 @@ test.describe('L4 Smoke [@module:auth]', () => {
     await dismissTourModal(page);
 
     // Minimal "did the app render?" checks
-    await expect(page).toHaveTitle(/Consultinity/i);
+    await expect(page).toHaveTitle(/Consultify|Consultinity/i);
     // Some presentation modes temporarily hide `#root` during boot; avoid brittle visibility checks.
     await expect(page.locator('#root')).toBeAttached();
     await expect(page.locator('#root')).toContainText(/./, { timeout: 30000 });

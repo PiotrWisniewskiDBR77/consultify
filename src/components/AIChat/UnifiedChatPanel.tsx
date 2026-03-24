@@ -77,6 +77,7 @@ import { MessageRenderer } from './MessageRenderer';
 import { PendingActionsIndicator } from './PendingActionsIndicator';
 import { detectTableIntent } from './tableIntentDetector';
 import { ChatToSchemaPanel } from '@/components/MyWork/table/ChatToSchemaPanel';
+import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
 
 // ============================================================================
@@ -1132,6 +1133,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     researchProgress,
     researchVisibility,
   ]);
+
+  const latestUserGoalHint = useMemo(() => {
+    const latestUserMessage = [...displayMessages]
+      .reverse()
+      .find((message) => message.role === 'user' && String(message.content || '').trim().length > 0);
+    return String(latestUserMessage?.content || '').trim();
+  }, [displayMessages]);
 
   // ========================================================================
   // V3-B01: Contextual smart suggestions (shown below input after first exchange)
@@ -2803,6 +2811,10 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         </div>
 
         <div className="flex items-center gap-0.5">
+          <V8ArtifactRunControl
+            conversationId={activeConversationId}
+            defaultGoal={latestUserGoalHint}
+          />
           <V8ContextIndicator conversationId={activeConversationId} />
           {isPrivateMode && (
             <div

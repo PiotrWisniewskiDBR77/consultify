@@ -398,6 +398,18 @@ Treat suffixed local copies such as ` 2.md` and ` 3.md` as non-authoritative sna
   - **Scope**: safe execution brief for the implementation agent building `v8.1`, including guardrails, sequencing, compatibility rules and required evidence against the stabilized `v8` baseline
   - **Authority**: Highest for v8.1 delivery guardrails and implementation-safe startup context
 
+### Final closure of frozen V8.0 + V8.1
+
+- `docs/product/V8_V81_FINAL_COMPLETION_PROGRAM.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: final closure doctrine for the frozen combined `V8.0 + V8.1` package, including scope freeze, completion criteria, 4-track parallel execution model, and required final evidence before sign-off
+  - **Authority**: Highest for final package-completion governance across product truth, execution truth, runtime truth, and evidence truth
+
+- `docs/product/V8_V81_MANAGER_4_AGENT_ORCHESTRATION_PROMPT.md`
+  - **Owner**: Product + Engineering
+  - **Scope**: ready-to-use operating brief for the manager agent supervising 4 parallel workers across canon closure, runtime closure, surface closure, and evidence closure
+  - **Authority**: Highest for manager-agent startup context and orchestration rules during final package completion
+
 ### Interview (v3 as-is + v6 redesign target)
 
 - `docs/product/INTERVIEW_V8_READINESS_AUDIT.md`

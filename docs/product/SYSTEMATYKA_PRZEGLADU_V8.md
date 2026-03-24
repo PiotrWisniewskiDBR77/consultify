@@ -273,3 +273,34 @@ Rola `V8.1`:
 Twarda zasada:
 
 `V8.1 ma budowac na ustabilizowanym V8, a nie rozbijac istniejace runtime'y Reports/Presentations, approval spine ani storage truth`
+
+---
+
+## 10. Finalna faza domkniecia zamrozonego pakietu `V8.0 + V8.1`
+
+Po decyzji o zamrozeniu scope, `V8` i `V8.1` nie powinny byc juz prowadzone jako dwa osobne programy delivery.
+
+Na finalnym etapie operacyjnym nalezy traktowac je jako **jeden pakiet domkniecia**:
+
+- z jednym frozen scope,
+- z jednym closure ledger,
+- z jednym manager agentem,
+- i z rownolegla praca bounded worker agentow nad:
+  - domknieciem prawdy dokumentacyjnej,
+  - domknieciem runtime i integracji,
+  - domknieciem surface/UI,
+  - oraz finalnym evidence packiem.
+
+Kanoniczne dokumenty tej finalnej fazy:
+
+- `docs/product/V8_V81_FINAL_COMPLETION_PROGRAM.md`
+- `docs/product/V8_V81_MANAGER_4_AGENT_ORCHESTRATION_PROMPT.md`
+
+Rola tych dokumentow:
+
+- `V8_V81_FINAL_COMPLETION_PROGRAM.md` - finalna definicja `100% closure` dla zamrozonego pakietu `V8.0 + V8.1`
+- `V8_V81_MANAGER_4_AGENT_ORCHESTRATION_PROMPT.md` - gotowy prompt dla manager agenta nadzorujacego 4 worker agentow rownolegle
+
+Zasada:
+
+`na tym etapie nie planujemy juz kolejnych galezi; domykamy jeden zamrozony pakiet do finalnego sign-off`

@@ -12,6 +12,14 @@ interface AuthRequest extends Request {
   user?: { id: string };
 }
 
+const defaultAvailability = {
+  status: 'available',
+  workingHours: { start: '09:00', end: '17:00' },
+  timezone: 'UTC',
+  autoReply: false,
+  vacationMode: false,
+};
+
 router.get(
   '/',
   verifyToken,
@@ -20,17 +28,16 @@ router.get(
     const avail = (await dbGet('SELECT settings FROM user_availability WHERE user_id = ?', [
       req.user?.id,
     ])) as { settings: string } | null;
-    res.json(
-      avail?.settings
-        ? JSON.parse(avail.settings)
-        : {
-            status: 'available',
-            workingHours: { start: '09:00', end: '17:00' },
-            timezone: 'UTC',
-            autoReply: false,
-            vacationMode: false,
-          }
-    );
+    if (!avail?.settings) {
+      res.json(defaultAvailability);
+      return;
+    }
+
+    try {
+      res.json(JSON.parse(avail.settings));
+    } catch {
+      res.json(defaultAvailability);
+    }
   })
 );
 

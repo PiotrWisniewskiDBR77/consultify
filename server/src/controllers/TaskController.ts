@@ -50,6 +50,31 @@ const ESCALATION_TRIGGERS = {
   PRIORITY_CHANGE: 'PRIORITY_CHANGE',
 } as const;
 
+function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function createNotificationSafely(payload: Record<string, unknown>) {
+  const service = NotificationService as any;
+  const notifier =
+    typeof service?.send === 'function'
+      ? service.send.bind(service)
+      : typeof service?.create === 'function'
+        ? service.create.bind(service)
+        : null;
+
+  if (!notifier) {
+    return Promise.resolve();
+  }
+
+  return Promise.resolve(notifier(payload));
+}
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -729,9 +754,9 @@ export class TaskController {
         dueDate: t.due_date,
         startedAt: t.started_at,
         estimatedHours: t.estimated_hours,
-        checklist: t.checklist ? JSON.parse(t.checklist) : [],
-        attachments: t.attachments ? JSON.parse(t.attachments) : [],
-        tags: t.tags ? JSON.parse(t.tags) : [],
+        checklist: safeJsonParse(t.checklist, []),
+        attachments: safeJsonParse(t.attachments, []),
+        tags: safeJsonParse(t.tags, []),
         customStatusId: t.custom_status_id,
         createdAt: t.created_at,
         updatedAt: t.updated_at,
@@ -753,7 +778,7 @@ export class TaskController {
         roadmapInitiativeId: t.roadmap_initiative_id,
         kpiId: t.kpi_id,
         raidItemId: t.raid_item_id,
-        assignees: t.assignees ? JSON.parse(t.assignees) : [],
+        assignees: safeJsonParse(t.assignees, []),
         programId: t.program_id || t.project_id || null,
         initiativeId: t.initiative_id,
         initiativeName: getMultilingualText(t.initiative_name, lang),
@@ -1034,9 +1059,9 @@ export class TaskController {
         dueDate: t.due_date,
         startedAt: t.started_at,
         estimatedHours: t.estimated_hours,
-        checklist: t.checklist ? JSON.parse(t.checklist) : [],
-        attachments: t.attachments ? JSON.parse(t.attachments) : [],
-        tags: t.tags ? JSON.parse(t.tags) : [],
+        checklist: safeJsonParse(t.checklist, []),
+        attachments: safeJsonParse(t.attachments, []),
+        tags: safeJsonParse(t.tags, []),
         customStatusId: t.custom_status_id,
         createdAt: t.created_at,
         updatedAt: t.updated_at,
@@ -1058,7 +1083,7 @@ export class TaskController {
         roadmapInitiativeId: t.roadmap_initiative_id,
         kpiId: t.kpi_id,
         raidItemId: t.raid_item_id,
-        assignees: t.assignees ? JSON.parse(t.assignees) : [],
+        assignees: safeJsonParse(t.assignees, []),
         programId: t.program_id || t.project_id || null,
         initiativeId: t.initiative_id,
         initiativeName: getMultilingualText(t.initiative_name, lang),
@@ -1278,8 +1303,7 @@ export class TaskController {
 
       // Notifications
       if (assigneeId && assigneeId !== userId) {
-        (NotificationService as any)
-          .create({
+        createNotificationSafely({
             userId: assigneeId,
             organizationId: orgId,
             projectId: effectiveProjectId,
@@ -1830,8 +1854,7 @@ export class TaskController {
       // Notifications
       const affectedUserId = (updates as any).assigneeId || currentTask.assignee_id;
       if (affectedUserId && affectedUserId !== userId) {
-        (NotificationService as any)
-          .create({
+        createNotificationSafely({
             userId: affectedUserId,
             organizationId: orgId,
             type: 'task_updated',
@@ -1886,8 +1909,7 @@ export class TaskController {
           if (isOverdue && canNotify(row.last_overdue_notified_at)) {
             const recipients = recipientsUnique([assignee, owner, backup]);
             for (const rid of recipients) {
-              (NotificationService as any)
-                .create({
+              createNotificationSafely({
                   userId: rid,
                   organizationId: orgId,
                   type: 'task_overdue',
@@ -1917,8 +1939,7 @@ export class TaskController {
           (row.status === 'review' || enteredReview) &&
           canNotify(row.last_acceptance_notified_at)
         ) {
-          (NotificationService as any)
-            .create({
+          createNotificationSafely({
               userId: acceptor,
               organizationId: orgId,
               type: 'task_pending_approval',
@@ -1946,8 +1967,7 @@ export class TaskController {
         ) {
           const target = backup || owner;
           if (target) {
-            (NotificationService as any)
-              .create({
+            createNotificationSafely({
                 userId: target,
                 organizationId: orgId,
                 type: 'task_unassigned',
@@ -1972,8 +1992,7 @@ export class TaskController {
         if (blockedEnabled && becameBlocked && canNotify(row.last_blocked_notified_at)) {
           const recipients = recipientsUnique([assignee, owner, backup]);
           for (const rid of recipients) {
-            (NotificationService as any)
-              .create({
+            createNotificationSafely({
                 userId: rid,
                 organizationId: orgId,
                 type: 'task_blocked',

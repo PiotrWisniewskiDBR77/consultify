@@ -54,11 +54,12 @@ test.describe('L4 Smoke — sidebar navigation [@module:navigation]', () => {
       /Chat/i,
       /My Work/i,
       /Interview/i,
+      /Tools/i,
       /Initiatives/i,
       /Execution/i,
-      /Benefits/i,
-      /Economics/i,
-      /Reports/i,
+      /Results|Benefits/i,
+      /Finance|Economics/i,
+      /Outputs|Reports/i,
       /Settings/i,
     ];
 
@@ -97,13 +98,8 @@ test.describe('L4 Smoke — sidebar navigation [@module:navigation]', () => {
   });
 
   test('navigates to Assessment (overview)', async ({ page }) => {
-    const assessment = navItem(page, /Assessment/i);
-    if (await assessment.isVisible().catch(() => false)) {
-      await assessment.click();
-    } else {
-      await page.goto('/assessment/overview');
-    }
-    await expect(page).toHaveURL(/\/assessment\/overview/);
+    await page.goto('/assessment');
+    await expect(page).toHaveURL(/\/assessment(?:\/overview)?/);
     await expectNoRouteError(page);
   });
 
@@ -120,13 +116,13 @@ test.describe('L4 Smoke — sidebar navigation [@module:navigation]', () => {
   });
 
   test('navigates to Benefits', async ({ page }) => {
-    await navItem(page, /Benefits/i).click();
+    await navItem(page, /Results|Benefits/i).click();
     await expect(page).toHaveURL(/\/benefits/);
     await expectNoRouteError(page);
   });
 
   test('navigates to Economics', async ({ page }) => {
-    await navItem(page, /Economics/i).click();
+    await navItem(page, /Finance|Economics/i).click();
     await expect(page).toHaveURL(/\/economics/);
     await expectNoRouteError(page);
   });

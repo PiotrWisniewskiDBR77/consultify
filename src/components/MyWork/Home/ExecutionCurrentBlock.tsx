@@ -16,10 +16,43 @@ const STATUS_META = {
   blocked: { icon: <Lock size={14} />, className: 'bg-amber-500/15 text-amber-200' },
 };
 
+const VISIBILITY_META = {
+  private: {
+    labelEn: 'Private',
+    labelPl: 'Prywatne',
+    className: 'border-slate-500/30 bg-slate-500/10 text-slate-200',
+  },
+  project: {
+    labelEn: 'Project',
+    labelPl: 'Projekt',
+    className: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200',
+  },
+  organization: {
+    labelEn: 'Organization',
+    labelPl: 'Organizacja',
+    className: 'border-violet-500/30 bg-violet-500/10 text-violet-200',
+  },
+  review_shared: {
+    labelEn: 'Needs review',
+    labelPl: 'Do przegladu',
+    className: 'border-amber-500/30 bg-amber-500/10 text-amber-200',
+  },
+  demo: {
+    labelEn: 'Demo',
+    labelPl: 'Demo',
+    className: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200',
+  },
+} as const;
+
 export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({ block, onAction }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
   const payload = block.payload;
+  const orderedArtifactOutputs = [...(payload.artifactOutputs || [])].sort((left, right) => {
+    const leftScore = left.visibilityScope === 'review_shared' ? 0 : 1;
+    const rightScore = right.visibilityScope === 'review_shared' ? 0 : 1;
+    return leftScore - rightScore;
+  });
 
   return (
     <HomeBlockShell block={block}>
@@ -58,18 +91,19 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({ bl
             );
           })}
         </div>
-        {Array.isArray(payload.artifactOutputs) && payload.artifactOutputs.length > 0 ? (
+        {orderedArtifactOutputs.length > 0 ? (
           <div className="space-y-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
             <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">
-              {isPolish ? 'Output flow' : 'Output flow'}
+              {isPolish ? 'Strumień outputów' : 'Output flow'}
             </div>
-            {payload.artifactOutputs.map((artifact) => {
+            {orderedArtifactOutputs.map((artifact) => {
               const openTarget =
                 artifact.originRuntime === 'presentation'
                   ? ('presentation' as const)
                   : artifact.originRuntime === 'sheet'
                     ? ('sheet' as const)
                     : ('report' as const);
+              const visibilityMeta = VISIBILITY_META[artifact.visibilityScope];
               return (
                 <button
                   key={artifact.artifactId}
@@ -92,7 +126,14 @@ export const ExecutionCurrentBlock: React.FC<ExecutionCurrentBlockProps> = ({ bl
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-white">{artifact.title}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-medium text-white">{artifact.title}</div>
+                      <span
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] ${visibilityMeta.className}`}
+                      >
+                        {isPolish ? visibilityMeta.labelPl : visibilityMeta.labelEn}
+                      </span>
+                    </div>
                     <div className="mt-1 text-xs text-slate-300/70">
                       {artifact.originRuntime === 'presentation'
                         ? isPolish

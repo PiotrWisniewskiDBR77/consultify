@@ -13,6 +13,15 @@ import logger from '../utils/Logger.js';
 
 const router = Router();
 
+function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 // Apply rate limiting and auth
 router.use(apiAuthRateLimiter);
 router.use(verifyToken);
@@ -74,7 +83,7 @@ router.get(
       );
 
       if (settings?.settings_data) {
-        const data = JSON.parse(settings.settings_data);
+        const data = safeJsonParse<{ features?: unknown[] }>(settings.settings_data, {});
         return res.json({
           enabled: !!settings.enabled,
           features: data.features || [],
@@ -190,7 +199,7 @@ router.get(
       );
 
       if (settings?.settings_data) {
-        const data = JSON.parse(settings.settings_data);
+        const data = safeJsonParse<Record<string, unknown>>(settings.settings_data, {});
         return res.json({
           ...data,
           enabled: !!settings.enabled,
@@ -306,7 +315,15 @@ router.get(
       );
 
       if (settings?.settings_data) {
-        return res.json(JSON.parse(settings.settings_data));
+        return res.json(
+          safeJsonParse(settings.settings_data, {
+            userDataRetentionDays: 365,
+            auditLogRetentionDays: 730,
+            backupRetentionDays: 90,
+            anonymizeInactiveUsers: false,
+            inactiveUserDays: 365,
+          })
+        );
       }
 
       // Return defaults

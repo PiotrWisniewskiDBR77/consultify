@@ -248,6 +248,80 @@ describe('artifactRegistryService (sqlite-backed integration)', () => {
     expect(grants.some((g) => g.grantId === grant.grantId && g.userId === 'user-grantee')).toBe(true);
   });
 
+  it('listMyWorkArtifacts builds mine and review lanes from dedicated filtered queries', async () => {
+    const owned = await artifactRegistryService.registerArtifactOrigin({
+      organizationId: 'org-a',
+      outputType: 'report',
+      artifactFamily: 'document',
+      originRuntime: 'report',
+      originRecordId: 'rep-owned-1',
+      titleSnapshot: 'Owned draft',
+      ownerUserId: 'user-owner',
+      createdBy: 'user-owner',
+      deliveryState: 'draft',
+      visibilityScope: 'private',
+    });
+
+    const reviewShared = await artifactRegistryService.registerArtifactOrigin({
+      organizationId: 'org-a',
+      outputType: 'presentation',
+      artifactFamily: 'presentation',
+      originRuntime: 'presentation',
+      originRecordId: 'deck-review-1',
+      titleSnapshot: 'Review deck',
+      ownerUserId: 'user-reviewer',
+      createdBy: 'user-reviewer',
+      deliveryState: 'review',
+      visibilityScope: 'review_shared',
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      sqliteCtx.db.run(
+        `INSERT INTO v8_publish_records (
+          record_id, artifact_id, artifact_type, organization_id, current_state, published_by, reviewers
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          'pub-review-1',
+          reviewShared.artifactId,
+          'presentation',
+          'org-a',
+          'in_review',
+          'user-reviewer',
+          JSON.stringify(['user-owner']),
+        ],
+        (err) => (err ? reject(err) : resolve()),
+      );
+    });
+
+    for (let index = 0; index < 10; index += 1) {
+      await artifactRegistryService.registerArtifactOrigin({
+        organizationId: 'org-a',
+        outputType: 'report',
+        artifactFamily: 'document',
+        originRuntime: 'report',
+        originRecordId: `rep-recent-${index}`,
+        titleSnapshot: `Recent ${index}`,
+        ownerUserId: `user-${index}`,
+        createdBy: `user-${index}`,
+        deliveryState: 'draft',
+        visibilityScope: 'organization',
+      });
+    }
+
+    const outputs = await artifactRegistryService.listMyWorkArtifacts({
+      organizationId: 'org-a',
+      userId: 'user-owner',
+      roleKey: null,
+      limit: 8,
+    });
+
+    expect(outputs.mine.some((item) => item.artifactId === owned.artifactId)).toBe(true);
+    expect(outputs.review.some((item) => item.artifactId === reviewShared.artifactId)).toBe(true);
+    expect(outputs.recent).toHaveLength(8);
+    expect(outputs.recent.some((item) => item.artifactId === owned.artifactId)).toBe(false);
+    expect(outputs.recent.some((item) => item.artifactId === reviewShared.artifactId)).toBe(false);
+  });
+
   it('createArtifactRunFromChat persists plan_json and returns run envelope (spine mocked)', async () => {
     spineMocks.initiateHandoff.mockResolvedValue({ executionRunId: 'exec-run-1' });
 
@@ -411,5 +485,32 @@ describe('artifactRegistryService (sqlite-backed integration)', () => {
     expect(accepted.runStatus).toBe('proposal_created');
     expect(accepted.proposalId).toBe('proposal-xyz');
     expect(spineMocks.createProposal).toHaveBeenCalled();
+  });
+
+  it('retryArtifactRun persists retry lineage and returns a fresh planned run (spine mocked)', async () => {
+    spineMocks.initiateHandoff
+      .mockResolvedValueOnce({ executionRunId: 'exec-run-3' })
+      .mockResolvedValueOnce({ executionRunId: 'exec-run-4' });
+
+    const created = await artifactRegistryService.createArtifactRunFromChat({
+      organizationId: 'org-a',
+      userId: 'user-owner',
+      conversationId: 'conv-3',
+      contextSnapshotId: 'snap-3',
+      goal: 'Executive board deck',
+      requestedArtifactFamily: 'presentation',
+      requestedOutputType: 'presentation',
+    });
+
+    const retried = await artifactRegistryService.retryArtifactRun({
+      runId: created.artifactRunId,
+      organizationId: 'org-a',
+      actorUserId: 'user-owner',
+    });
+
+    expect(retried.runId).not.toBe(created.artifactRunId);
+    expect(retried.retryOfRunId).toBe(created.artifactRunId);
+    expect(retried.executionRunId).toBe('exec-run-4');
+    expect(retried.runStatus).toBe('planned');
   });
 });
