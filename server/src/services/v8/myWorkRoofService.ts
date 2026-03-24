@@ -96,12 +96,12 @@ interface CalendarPhaseRow {
 }
 
 interface AvgLatencyRow {
-  avg_latency: number | null;
+  avg_latency: number | string | null;
 }
 
 interface BandCountRow {
   latency_band: string;
-  cnt: number;
+  cnt: number | string;
 }
 
 // ==========================================
@@ -432,12 +432,12 @@ export async function getInboxMaterializationStats(
   for (const row of bandRows || []) {
     const band = row.latency_band as LatencyBand;
     if (band in distribution) {
-      distribution[band] = row.cnt;
+      distribution[band] = Number(row.cnt ?? 0);
     }
   }
 
   return {
-    avgLatencyMs: avgRow?.avg_latency ?? 0,
+    avgLatencyMs: Number(avgRow?.avg_latency ?? 0),
     latencyBandDistribution: distribution,
   };
 }

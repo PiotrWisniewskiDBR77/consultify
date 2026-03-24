@@ -1,0 +1,256 @@
+{
+  "capturedAt": "2026-03-24T21:06:19.308Z",
+  "base": "https://stage.consultinity.ai",
+  "objectId": "a6b3d6d8-9f7d-4bb2-8df5-2d4b0ea2c201",
+  "attempt": 1,
+  "putObject": {
+    "status": 200,
+    "body": {
+      "data": {
+        "objectId": "a6b3d6d8-9f7d-4bb2-8df5-2d4b0ea2c201",
+        "objectType": "task",
+        "organizationId": "15f69780-675c-4f32-9230-82a4646f15d8",
+        "canonicalState": "needs_review",
+        "lastUpdatedAt": "2026-03-24T21:06:18.441Z",
+        "surfaceProjections": {}
+      },
+      "meta": {
+        "version": "v8"
+      }
+    }
+  },
+  "getObject": {
+    "status": 200,
+    "body": {
+      "data": {
+        "objectId": "a6b3d6d8-9f7d-4bb2-8df5-2d4b0ea2c201",
+        "objectType": "task",
+        "organizationId": "15f69780-675c-4f32-9230-82a4646f15d8",
+        "canonicalState": "needs_review",
+        "lastUpdatedAt": "2026-03-24T21:06:18.441Z",
+        "surfaceProjections": {}
+      },
+      "meta": {
+        "version": "v8"
+      }
+    }
+  },
+  "putProjection": {
+    "status": 200,
+    "body": {
+      "data": {
+        "objectId": "a6b3d6d8-9f7d-4bb2-8df5-2d4b0ea2c201",
+        "objectType": "task",
+        "organizationId": "15f69780-675c-4f32-9230-82a4646f15d8",
+        "canonicalState": "needs_review",
+        "lastUpdatedAt": "2026-03-24T21:06:18.793Z",
+        "surfaceProjections": {
+          "inbox": {
+            "surface": "inbox",
+            "displayState": "needs_review",
+            "isStale": false,
+            "lastRefreshedAt": "2026-03-24T21:06:18.793Z"
+          }
+        }
+      },
+      "meta": {
+        "version": "v8"
+      }
+    }
+  },
+  "getProjection": {
+    "status": 200,
+    "body": {
+      "data": {
+        "surface": "inbox",
+        "displayState": "needs_review",
+        "isStale": false,
+        "lastRefreshedAt": "2026-03-24T21:06:18.793Z"
+      },
+      "meta": {
+        "version": "v8"
+      }
+    }
+  },
+  "recordInbox": {
+    "status": 201,
+    "body": {
+      "data": {
+        "materializationId": "8c10b9b5-b2ed-4bac-b41b-79a74b5314de",
+        "eventSourceRef": "execution_signal:c02bplus:1774386378863",
+        "inboxItemId": "c02bplus-inbox-001",
+        "userId": "11111111-1111-4111-8111-111111111111",
+        "organizationId": "15f69780-675c-4f32-9230-82a4646f15d8",
+        "materializedAt": "2026-03-24T21:06:18.941Z",
+        "latencyMs": 1200,
+        "latencyBand": "near_realtime"
+      },
+      "meta": {
+        "version": "v8"
+      }
+    }
+  },
+  "inboxStats": {
+    "status": 200,
+    "body": {
+      "data": {
+        "avgLatencyMs": "1200.0000000000000000",
+        "latencyBandDistribution": {
+          "near_realtime": "1",
+          "operational": 0,
+          "degraded": 0
+        }
+      },
+      "meta": {
+        "version": "v8"
+      }
+    }
+  },
+  "putCalendar": {
+    "status": 200,
+    "body": {
+      "data": {
+        "phaseId": "f206b76f-17de-44a2-9186-c0aac3fda386",
+        "phaseName": "phase_a_internal",
+        "organizationId": "15f69780-675c-4f32-9230-82a4646f15d8",
+        "status": "active",
+        "blockedBy": null
+      },
+      "meta": {
+        "version": "v8"
+      }
+    }
+  },
+  "getCalendar": {
+    "status": 200,
+    "body": {
+      "data": [
+        {
+          "phaseId": "f206b76f-17de-44a2-9186-c0aac3fda386",
+          "phaseName": "phase_a_internal",
+          "organizationId": "15f69780-675c-4f32-9230-82a4646f15d8",
+          "status": "active",
+          "blockedBy": null
+        }
+      ],
+      "meta": {
+        "version": "v8"
+      }
+    }
+  },
+  "summary": {
+    "status": 200,
+    "body": {
+      "data": {
+        "generatedAt": "2026-03-24T21:06:19.299Z",
+        "overallStatus": "mixed_truth",
+        "surfaceMode": "radar_overlay_with_outputs_bridge",
+        "contracts": {
+          "homeV2Endpoint": true,
+          "radarEndpoint": true,
+          "homeViewUsesAggregatedContract": false,
+          "outputsBridgeVisible": true
+        },
+        "homeBlocks": [
+          {
+            "blockName": "aiPulseCore",
+            "maturityLevel": "backed_by_real_service",
+            "serviceRef": "radarService",
+            "lastAuditedAt": "2026-03-24T21:06:19.299Z",
+            "source": "derived",
+            "rationale": "Hero briefing is live and backed by governed Radar runtime."
+          },
+          {
+            "blockName": "momentum",
+            "maturityLevel": "placeholder_non_canonical",
+            "serviceRef": "/api/my-work/home/v2",
+            "lastAuditedAt": "2026-03-24T21:06:19.299Z",
+            "source": "derived",
+            "rationale": "Declared in Home V2, but the current Home surface does not render this canonical block contract."
+          },
+          {
+            "blockName": "sparkField",
+            "maturityLevel": "placeholder_non_canonical",
+            "serviceRef": "/api/my-work/home/v2",
+            "lastAuditedAt": "2026-03-24T21:06:19.299Z",
+            "source": "derived",
+            "rationale": "Ideas and notes exist in runtime, but the current Home surface does not expose the block as a canonical roof contract."
+          },
+          {
+            "blockName": "decisionTemperature",
+            "maturityLevel": "placeholder_non_canonical",
+            "serviceRef": "/api/my-work/home/v2",
+            "lastAuditedAt": "2026-03-24T21:06:19.299Z",
+            "source": "derived",
+            "rationale": "Decision signals are aggregated in Home V2, but not surfaced as a live canonical block in the current roof."
+          },
+          {
+            "blockName": "industryLens",
+            "maturityLevel": "backed_by_real_service",
+            "serviceRef": "radarService",
+            "lastAuditedAt": "2026-03-24T21:06:19.299Z",
+            "source": "derived",
+            "rationale": "External transformation signals are live through Radar-backed Home sections."
+          },
+          {
+            "blockName": "executionCurrent",
+            "maturityLevel": "partial_stitched",
+            "serviceRef": "/api/my-work/home/v2 + artifactRegistryService",
+            "lastAuditedAt": "2026-03-24T21:06:19.299Z",
+            "source": "derived",
+            "rationale": "Execution context is partially present through aggregated Home V2 data and outputs bridge, but not as the frozen canonical block."
+          },
+          {
+            "blockName": "teamSignal",
+            "maturityLevel": "placeholder_non_canonical",
+            "serviceRef": "/api/my-work/home/v2",
+            "lastAuditedAt": "2026-03-24T21:06:19.299Z",
+            "source": "derived",
+            "rationale": "The block is specified canonically, but the current Home surface does not present a dedicated team-signal truth layer."
+          },
+          {
+            "blockName": "commandDock",
+            "maturityLevel": "partial_stitched",
+            "serviceRef": "HomeView actions + outputs bridge",
+            "lastAuditedAt": "2026-03-24T21:06:19.299Z",
+            "source": "derived",
+            "rationale": "Home exposes real jump actions and governed outputs entry points, but not yet as the frozen command-dock block contract."
+          }
+        ],
+        "counts": {
+          "backed_by_real_service": 2,
+          "partial_stitched": 2,
+          "placeholder_non_canonical": 4
+        },
+        "inboxMaterialization": {
+          "avgLatencyMs": "1200.0000000000000000",
+          "latencyBandDistribution": {
+            "near_realtime": "1",
+            "operational": 0,
+            "degraded": 0
+          },
+          "status": "observed"
+        },
+        "calendar": [
+          {
+            "phaseName": "phase_a_internal",
+            "status": "active",
+            "blockedBy": null,
+            "source": "persisted",
+            "rationale": "Internal MyWork calendar hardening can proceed independently of connector delivery."
+          },
+          {
+            "phaseName": "phase_b_external_sync",
+            "status": "blocked",
+            "blockedBy": "wave5_connector_platform",
+            "source": "derived",
+            "rationale": "External Google/Outlook sync remains blocked on Wave 5 connector delivery."
+          }
+        ]
+      },
+      "meta": {
+        "version": "v8"
+      }
+    }
+  }
+}

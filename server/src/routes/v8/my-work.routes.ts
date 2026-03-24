@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import type { Response } from 'express';
+import { ZodError } from 'zod';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
@@ -13,6 +14,25 @@ import type {
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
+
+function handleMyWorkRoofError(err: unknown, res: Response, fallbackMessage: string): Response | null {
+  if (err instanceof ZodError) {
+    return res.status(400).json({
+      error: fallbackMessage,
+      code: 'VALIDATION_ERROR',
+      details: err.issues,
+    });
+  }
+
+  if (err instanceof Error && err.message.toLowerCase().includes('not found')) {
+    return res.status(404).json({
+      error: err.message,
+      code: 'RESOURCE_NOT_FOUND',
+    });
+  }
+
+  return null;
+}
 
 type DerivedHomeBlockTruth = {
   blockName: HomeBlockName;
@@ -109,6 +129,151 @@ function buildSummaryCounts(
     },
   );
 }
+
+router.put(
+  '/objects/:objectId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+
+    try {
+      const data = await myWorkRoofService.setCanonicalObjectState({
+        ...req.body,
+        objectId: req.params.objectId,
+        organizationId,
+      });
+      return res.json({ data, meta: { version: 'v8' } });
+    } catch (err) {
+      const handled = handleMyWorkRoofError(err, res, 'Invalid canonical object state parameters');
+      if (handled) return handled;
+      throw err;
+    }
+  }),
+);
+
+router.get(
+  '/objects/:objectId',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const data = await myWorkRoofService.getCanonicalObjectState(req.params.objectId, organizationId);
+
+    if (!data) {
+      return res.status(404).json({
+        error: `Canonical object ${req.params.objectId} not found`,
+        code: 'OBJECT_NOT_FOUND',
+      });
+    }
+
+    return res.json({ data, meta: { version: 'v8' } });
+  }),
+);
+
+router.put(
+  '/objects/:objectId/projections/:surface',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+
+    try {
+      const data = await myWorkRoofService.updateSurfaceProjection({
+        ...req.body,
+        objectId: req.params.objectId,
+        organizationId,
+        surface: req.params.surface as any,
+      });
+
+      if (!data) {
+        return res.status(404).json({
+          error: `Canonical object ${req.params.objectId} not found`,
+          code: 'OBJECT_NOT_FOUND',
+        });
+      }
+
+      return res.json({ data, meta: { version: 'v8' } });
+    } catch (err) {
+      const handled = handleMyWorkRoofError(err, res, 'Invalid surface projection parameters');
+      if (handled) return handled;
+      throw err;
+    }
+  }),
+);
+
+router.get(
+  '/objects/:objectId/projections/:surface',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const data = await myWorkRoofService.getSurfaceProjection(
+      req.params.objectId,
+      req.params.surface as any,
+      organizationId,
+    );
+
+    if (!data) {
+      return res.status(404).json({
+        error: `Projection ${req.params.surface} for object ${req.params.objectId} not found`,
+        code: 'PROJECTION_NOT_FOUND',
+      });
+    }
+
+    return res.json({ data, meta: { version: 'v8' } });
+  }),
+);
+
+router.post(
+  '/inbox/materializations',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+
+    try {
+      const data = await myWorkRoofService.recordInboxMaterialization({
+        ...req.body,
+        organizationId,
+        userId,
+      });
+      return res.status(201).json({ data, meta: { version: 'v8' } });
+    } catch (err) {
+      const handled = handleMyWorkRoofError(err, res, 'Invalid inbox materialization parameters');
+      if (handled) return handled;
+      throw err;
+    }
+  }),
+);
+
+router.get(
+  '/inbox/materializations/stats',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const data = await myWorkRoofService.getInboxMaterializationStats(userId, organizationId);
+    return res.json({ data, meta: { version: 'v8' } });
+  }),
+);
+
+router.put(
+  '/calendar/phases/:phaseName',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+
+    try {
+      const data = await myWorkRoofService.setCalendarPhase({
+        ...req.body,
+        phaseName: req.params.phaseName as any,
+        organizationId,
+      });
+      return res.json({ data, meta: { version: 'v8' } });
+    } catch (err) {
+      const handled = handleMyWorkRoofError(err, res, 'Invalid calendar phase parameters');
+      if (handled) return handled;
+      throw err;
+    }
+  }),
+);
+
+router.get(
+  '/calendar/phases',
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const data = await myWorkRoofService.getCalendarPhases(organizationId);
+    return res.json({ data, meta: { version: 'v8' } });
+  }),
+);
 
 router.get(
   '/roof/summary',

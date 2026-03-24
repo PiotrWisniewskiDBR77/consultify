@@ -715,6 +715,16 @@ describe('MyWork Roof — Inbox Materialization (Decision W7-3)', () => {
     expect(stats.latencyBandDistribution.degraded).toBe(0);
   });
 
+  it('T48b: getInboxMaterializationStats coerces numeric strings from Postgres', async () => {
+    mockDbGet.mockResolvedValueOnce({ avg_latency: '1200.0000000000000000' });
+    mockDbAll.mockResolvedValueOnce([{ latency_band: 'near_realtime', cnt: '2' }]);
+
+    const stats = await getInboxMaterializationStats(USER_ID, ORG_ID);
+
+    expect(stats.avgLatencyMs).toBe(1200);
+    expect(stats.latencyBandDistribution.near_realtime).toBe(2);
+  });
+
   it('T49: recordInboxMaterialization rejects negative latency', async () => {
     await expect(
       recordInboxMaterialization(makeMaterializationParams({ latencyMs: -1 })),
