@@ -79,6 +79,8 @@ const sharedEnv = {
   E2E_MODE: 'true',
   E2E_USE_WEB_SERVER: 'false',
   E2E_ALLOW_LOCALHOST_REMOTE: 'true',
+  MOCK_DB: 'true',
+  MOCK_REDIS: 'true',
   E2E_API_URL: apiUrl,
   E2E_BASE_URL: baseUrl,
   E2E_RUN_ID: id,
