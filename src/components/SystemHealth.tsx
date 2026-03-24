@@ -68,6 +68,10 @@ export const SystemHealth = () => {
         // Avoid showing a misleading Offline badge; auth recovery/logout will handle it.
         const statusCode = err?.status;
         if (statusCode === 401 || statusCode === 403) return;
+        if (statusCode === 429 || statusCode === 503) {
+          setStatus('degraded');
+          return;
+        }
 
         setStatus('offline');
         setBuild({});

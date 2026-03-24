@@ -909,6 +909,422 @@ router.get(
 );
 
 /**
+ * GET /api/ai-operations/analytics/llm-observatory
+ * Unified historical LLM analytics for SuperAdmin.
+ */
+router.get(
+  '/analytics/llm-observatory',
+  verifyToken,
+  requireRole('super_admin', 'admin'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { period = '30d' } = req.query;
+
+      let requestTimeFilter: string;
+      let eventTimeFilter: string;
+      let groupBy: string;
+
+      switch (period) {
+        case '24h':
+          requestTimeFilter = "datetime('now', '-24 hours')";
+          eventTimeFilter = "datetime('now', '-24 hours')";
+          groupBy = "strftime('%Y-%m-%d %H:00', created_at)";
+          break;
+        case '7d':
+          requestTimeFilter = "datetime('now', '-7 days')";
+          eventTimeFilter = "datetime('now', '-7 days')";
+          groupBy = "strftime('%Y-%m-%d', created_at)";
+          break;
+        case '90d':
+          requestTimeFilter = "datetime('now', '-90 days')";
+          eventTimeFilter = "datetime('now', '-90 days')";
+          groupBy = "strftime('%Y-%m-%d', created_at)";
+          break;
+        case '30d':
+        default:
+          requestTimeFilter = "datetime('now', '-30 days')";
+          eventTimeFilter = "datetime('now', '-30 days')";
+          groupBy = "strftime('%Y-%m-%d', created_at)";
+          break;
+      }
+
+      const [
+        summary,
+        timelineRows,
+        providerRequestRows,
+        providerHealthRows,
+        activeProviderRows,
+        modelRows,
+        errorRows,
+        healthEventRows,
+      ] = await Promise.all([
+        dbGet(`
+          SELECT
+            COUNT(*) as total_requests,
+            SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful_requests,
+            SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as failed_requests,
+            AVG(latency_ms) as avg_latency_ms,
+            SUM(tokens_used) as total_tokens,
+            SUM(cost_usd) as total_cost,
+            COUNT(DISTINCT provider) as providers_used,
+            COUNT(DISTINCT model) as models_used
+          FROM ai_request_log
+          WHERE created_at > ${requestTimeFilter}
+        `).catch(() => ({
+          total_requests: 0,
+          successful_requests: 0,
+          failed_requests: 0,
+          avg_latency_ms: 0,
+          total_tokens: 0,
+          total_cost: 0,
+          providers_used: 0,
+          models_used: 0,
+        })),
+        dbAll(`
+          SELECT
+            ${groupBy} as bucket,
+            COUNT(*) as requests,
+            SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful,
+            SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as failed,
+            AVG(latency_ms) as avg_latency_ms,
+            SUM(tokens_used) as tokens,
+            SUM(cost_usd) as cost
+          FROM ai_request_log
+          WHERE created_at > ${requestTimeFilter}
+          GROUP BY ${groupBy}
+          ORDER BY bucket ASC
+        `).catch(() => []),
+        dbAll(`
+          SELECT
+            provider,
+            COUNT(*) as requests,
+            SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as successful,
+            SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as failed,
+            AVG(latency_ms) as avg_latency_ms,
+            SUM(tokens_used) as tokens,
+            SUM(cost_usd) as cost
+          FROM ai_request_log
+          WHERE created_at > ${requestTimeFilter}
+          GROUP BY provider
+          ORDER BY requests DESC
+        `).catch(() => []),
+        dbAll(`
+          SELECT
+            provider,
+            COUNT(*) as samples,
+            SUM(CASE WHEN available = 1 THEN 1 ELSE 0 END) as available_samples,
+            SUM(CASE WHEN available = 0 THEN 1 ELSE 0 END) as unavailable_samples,
+            AVG(latency_ms) as avg_latency_ms,
+            MAX(timestamp) as last_event_at
+          FROM llm_health_events
+          WHERE timestamp > ${eventTimeFilter}
+          GROUP BY provider
+        `).catch(() => []),
+        dbAll(`
+          SELECT
+            provider,
+            name,
+            is_active,
+            health_status,
+            last_health_check,
+            avg_latency_ms,
+            model_id
+          FROM llm_providers
+          ORDER BY provider ASC, name ASC
+        `).catch(() => []),
+        dbAll(`
+          SELECT
+            provider,
+            model,
+            COUNT(*) as requests,
+            SUM(tokens_used) as tokens,
+            SUM(cost_usd) as cost,
+            AVG(latency_ms) as avg_latency_ms
+          FROM ai_request_log
+          WHERE created_at > ${requestTimeFilter}
+          GROUP BY provider, model
+          ORDER BY requests DESC
+          LIMIT 15
+        `).catch(() => []),
+        dbAll(`
+          SELECT
+            provider,
+            COALESCE(NULLIF(error_message, ''), 'Unknown error') as error_message,
+            COUNT(*) as occurrences
+          FROM ai_request_log
+          WHERE created_at > ${requestTimeFilter}
+            AND status = 'error'
+          GROUP BY provider, COALESCE(NULLIF(error_message, ''), 'Unknown error')
+          ORDER BY occurrences DESC
+          LIMIT 20
+        `).catch(() => []),
+        dbAll(`
+          SELECT
+            provider,
+            model,
+            status,
+            available,
+            latency_ms,
+            error_message,
+            timestamp
+          FROM llm_health_events
+          WHERE timestamp > ${eventTimeFilter}
+          ORDER BY provider ASC, timestamp ASC
+        `).catch(() => []),
+      ]);
+
+      const activeProviders = Array.isArray(activeProviderRows)
+        ? (activeProviderRows as Array<{
+            provider?: string;
+            name?: string;
+            is_active?: number | boolean;
+            health_status?: string;
+            last_health_check?: string;
+            avg_latency_ms?: number;
+            model_id?: string;
+          }>)
+        : [];
+
+      const providerHealthMap = new Map<
+        string,
+        {
+          samples: number;
+          availableSamples: number;
+          unavailableSamples: number;
+          avgLatencyMs: number;
+          lastEventAt: string | null;
+        }
+      >(
+        ((providerHealthRows as Array<any>) || []).map((row) => [
+          String(row.provider || '').toLowerCase(),
+          {
+            samples: Number(row.samples || 0),
+            availableSamples: Number(row.available_samples || 0),
+            unavailableSamples: Number(row.unavailable_samples || 0),
+            avgLatencyMs: Math.round(Number(row.avg_latency_ms || 0)),
+            lastEventAt: row.last_event_at ? String(row.last_event_at) : null,
+          },
+        ])
+      );
+
+      const providerRequestMap = new Map<
+        string,
+        {
+          requests: number;
+          successful: number;
+          failed: number;
+          avgLatencyMs: number;
+          tokens: number;
+          cost: number;
+        }
+      >(
+        ((providerRequestRows as Array<any>) || []).map((row) => [
+          String(row.provider || '').toLowerCase(),
+          {
+            requests: Number(row.requests || 0),
+            successful: Number(row.successful || 0),
+            failed: Number(row.failed || 0),
+            avgLatencyMs: Math.round(Number(row.avg_latency_ms || 0)),
+            tokens: Number(row.tokens || 0),
+            cost: Number(row.cost || 0),
+          },
+        ])
+      );
+
+      const allProviderKeys = new Set<string>();
+      activeProviders.forEach((row) => allProviderKeys.add(String(row.provider || '').toLowerCase()));
+      providerHealthMap.forEach((_value, key) => allProviderKeys.add(key));
+      providerRequestMap.forEach((_value, key) => allProviderKeys.add(key));
+
+      const providers = Array.from(allProviderKeys)
+        .map((providerKey) => {
+          const providerMeta = activeProviders.find(
+            (row) => String(row.provider || '').toLowerCase() === providerKey
+          );
+          const requestData = providerRequestMap.get(providerKey);
+          const healthData = providerHealthMap.get(providerKey);
+          const samples = healthData?.samples || 0;
+          const uptimePct =
+            samples > 0
+              ? Number((((healthData?.availableSamples || 0) / samples) * 100).toFixed(1))
+              : null;
+          const requestCount = requestData?.requests || 0;
+          const successRate =
+            requestCount > 0
+              ? Number((((requestData?.successful || 0) / requestCount) * 100).toFixed(1))
+              : null;
+          const errorRate =
+            requestCount > 0
+              ? Number((((requestData?.failed || 0) / requestCount) * 100).toFixed(1))
+              : null;
+
+          return {
+            provider: providerKey,
+            name: providerMeta?.name || providerKey,
+            active: Boolean(providerMeta?.is_active),
+            currentStatus: String(providerMeta?.health_status || 'unknown'),
+            lastHealthCheck: providerMeta?.last_health_check || healthData?.lastEventAt || null,
+            requestCount,
+            successRate,
+            errorRate,
+            avgLatencyMs:
+              requestData?.avgLatencyMs || providerMeta?.avg_latency_ms || healthData?.avgLatencyMs || 0,
+            totalTokens: requestData?.tokens || 0,
+            totalCost: Number((requestData?.cost || 0).toFixed(4)),
+            uptimePct,
+            healthSamples: samples,
+            unavailableSamples: healthData?.unavailableSamples || 0,
+            modelId: providerMeta?.model_id || null,
+          };
+        })
+        .sort((a, b) => {
+          const requestDiff = (b.requestCount || 0) - (a.requestCount || 0);
+          if (requestDiff !== 0) return requestDiff;
+          return String(a.provider).localeCompare(String(b.provider));
+        });
+
+      const incidents: Array<{
+        provider: string;
+        start: string;
+        end: string | null;
+        durationMs: number;
+        samples: number;
+        lastError: string | null;
+      }> = [];
+
+      const currentIncidentByProvider = new Map<
+        string,
+        {
+          startTs: number;
+          samples: number;
+          lastError: string | null;
+        }
+      >();
+
+      for (const row of (healthEventRows as Array<any>) || []) {
+        const providerKey = String(row.provider || '').toLowerCase();
+        const ts = new Date(String(row.timestamp || '')).getTime();
+        if (!Number.isFinite(ts) || !providerKey) continue;
+
+        const isAvailable =
+          row.available === true ||
+          row.available === 1 ||
+          String(row.status || '').toLowerCase() === 'healthy' ||
+          String(row.status || '').toLowerCase() === 'degraded';
+
+        const currentIncident = currentIncidentByProvider.get(providerKey);
+        if (!isAvailable) {
+          if (!currentIncident) {
+            currentIncidentByProvider.set(providerKey, {
+              startTs: ts,
+              samples: 1,
+              lastError: row.error_message ? String(row.error_message) : null,
+            });
+          } else {
+            currentIncident.samples += 1;
+            if (row.error_message) currentIncident.lastError = String(row.error_message);
+          }
+          continue;
+        }
+
+        if (currentIncident) {
+          incidents.push({
+            provider: providerKey,
+            start: new Date(currentIncident.startTs).toISOString(),
+            end: new Date(ts).toISOString(),
+            durationMs: Math.max(0, ts - currentIncident.startTs),
+            samples: currentIncident.samples,
+            lastError: currentIncident.lastError,
+          });
+          currentIncidentByProvider.delete(providerKey);
+        }
+      }
+
+      const nowTs = Date.now();
+      currentIncidentByProvider.forEach((incident, providerKey) => {
+        incidents.push({
+          provider: providerKey,
+          start: new Date(incident.startTs).toISOString(),
+          end: null,
+          durationMs: Math.max(0, nowTs - incident.startTs),
+          samples: incident.samples,
+          lastError: incident.lastError,
+        });
+      });
+
+      incidents.sort((a, b) => {
+        const aTs = new Date(a.start).getTime();
+        const bTs = new Date(b.start).getTime();
+        return bTs - aTs;
+      });
+
+      const totalRequests = Number((summary as any)?.total_requests || 0);
+      const successfulRequests = Number((summary as any)?.successful_requests || 0);
+      const failedRequests = Number((summary as any)?.failed_requests || 0);
+      const successRate =
+        totalRequests > 0 ? Number(((successfulRequests / totalRequests) * 100).toFixed(1)) : 100;
+      const errorRate =
+        totalRequests > 0 ? Number(((failedRequests / totalRequests) * 100).toFixed(1)) : 0;
+
+      return res.json({
+        success: true,
+        data: {
+          period,
+          summary: {
+            totalRequests,
+            successfulRequests,
+            failedRequests,
+            successRate,
+            errorRate,
+            avgLatencyMs: Math.round(Number((summary as any)?.avg_latency_ms || 0)),
+            totalTokens: Number((summary as any)?.total_tokens || 0),
+            totalCost: Number(Number((summary as any)?.total_cost || 0).toFixed(4)),
+            providersUsed: Number((summary as any)?.providers_used || 0),
+            modelsUsed: Number((summary as any)?.models_used || 0),
+            incidents: incidents.length,
+            activeIncidents: incidents.filter((incident) => incident.end === null).length,
+          },
+          timeline: ((timelineRows as Array<any>) || []).map((row) => ({
+            bucket: row.bucket,
+            requests: Number(row.requests || 0),
+            successful: Number(row.successful || 0),
+            failed: Number(row.failed || 0),
+            successRate:
+              Number(row.requests || 0) > 0
+                ? Number(((Number(row.successful || 0) / Number(row.requests || 0)) * 100).toFixed(1))
+                : 100,
+            avgLatencyMs: Math.round(Number(row.avg_latency_ms || 0)),
+            tokens: Number(row.tokens || 0),
+            cost: Number(Number(row.cost || 0).toFixed(4)),
+          })),
+          providers,
+          models: ((modelRows as Array<any>) || []).map((row) => ({
+            provider: row.provider,
+            model: row.model || 'unknown',
+            requests: Number(row.requests || 0),
+            tokens: Number(row.tokens || 0),
+            cost: Number(Number(row.cost || 0).toFixed(4)),
+            avgLatencyMs: Math.round(Number(row.avg_latency_ms || 0)),
+          })),
+          errorCategories: ((errorRows as Array<any>) || []).map((row) => ({
+            provider: row.provider,
+            error: row.error_message,
+            occurrences: Number(row.occurrences || 0),
+          })),
+          incidents: incidents.slice(0, 50),
+        },
+      });
+    } catch (error: unknown) {
+      logger.error('[AI Operations] Error getting LLM observatory analytics:', error);
+      return res.status(500).json({
+        error: 'Failed to get LLM observatory analytics',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  })
+);
+
+/**
  * GET /api/ai-operations/analytics/insights
  * Get AI usage insights
  */

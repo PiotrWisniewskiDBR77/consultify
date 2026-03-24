@@ -45,6 +45,7 @@ import { ModelRegistryHub } from '../../../components/SuperAdmin/ModelRegistry';
 import { useHelpSidePanel } from '../../../contexts/HelpContext';
 import { CostAnalyticsTab } from './Analytics/CostAnalyticsTab';
 import { CustomReportsTab } from './Analytics/CustomReportsTab';
+import { LLMObservatoryTab } from './Analytics/LLMObservatoryTab';
 import { PerformanceMetricsTab } from './Analytics/PerformanceMetricsTab';
 import { PricingRegistryTab } from './Analytics/PricingRegistryTab';
 // Analytics Tab Components
@@ -142,6 +143,7 @@ const AI_PLATFORM_TABS: MainTab[] = [
     icon: <BarChart2 size={20} />,
     description: 'Usage, costs, performance metrics, and reports',
     subTabs: [
+      { id: 'llm-observatory', label: 'LLM Observatory', icon: <BarChart2 size={16} /> },
       { id: 'usage-analytics', label: 'Usage Analytics', icon: <TrendingUp size={16} /> },
       { id: 'cost-analytics', label: 'Cost Analytics', icon: <DollarSign size={16} /> },
       { id: 'pricing-registry', label: 'Pricing Registry', icon: <DollarSign size={16} /> },
@@ -228,6 +230,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       'operations/performance-dashboard': 'superadmin_ai_operations_performance',
       'operations/sla-management': 'superadmin_ai_operations_sla',
       'operations/market-inbox': 'superadmin_ai_operations_market_inbox',
+      'analytics/llm-observatory': 'superadmin_ai_analytics_llm_observatory',
       'analytics/usage-analytics': 'superadmin_ai_analytics_usage',
       'analytics/cost-analytics': 'superadmin_ai_analytics_cost',
       'analytics/pricing-registry': 'superadmin_ai_analytics_pricing_registry',
@@ -307,6 +310,8 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
         return <MarketInboxTab />;
 
       // Analytics
+      case 'analytics/llm-observatory':
+        return <LLMObservatoryTab />;
       case 'analytics/usage-analytics':
         return <UsageAnalyticsTab />;
       case 'analytics/cost-analytics':
@@ -364,6 +369,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
       'development/prompt-builder': 'superadmin-ai-intelligence',
       'development/experiments': 'superadmin-ai-ab-testing',
       'development/model-registry': 'superadmin-ai-model-registry',
+      'analytics/llm-observatory': 'superadmin-ai-operations',
 
       // Security (reuse existing Settings docs where applicable)
       'security/api-keys': 'settings-api-keys',

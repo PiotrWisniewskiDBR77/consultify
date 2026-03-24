@@ -2333,6 +2333,14 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch performance trends');
   },
 
+  getAIOperationsLLMObservatory: async (period: string): Promise<any> => {
+    const res = await fetchWithRetry(
+      `${API_URL}/ai-operations/analytics/llm-observatory?period=${encodeURIComponent(period)}`,
+      { headers: getHeaders() }
+    );
+    return handleResponse(res, 'Failed to fetch LLM observatory analytics');
+  },
+
   getSuperAdminAISettings: async (): Promise<any> => {
     const res = await fetchWithRetry(`${API_URL}/ai-settings/superadmin`, {
       headers: getHeaders(),
@@ -2910,8 +2918,7 @@ export const Api = {
     const res = await fetchWithRetry(`${API_URL}/llm/providers/health?timeoutMs=1200`, {
       headers: getHeaders(),
     });
-    if (!res.ok) throw new Error('Health check failed');
-    return res.json();
+    return handleResponse(res, 'Health check failed');
   },
 
   // LLM Incidents Timeline - downtime analysis based on health events

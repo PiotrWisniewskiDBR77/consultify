@@ -65,13 +65,17 @@ interface LLMSelectorProps {
   compact?: boolean;
 }
 
+type AIAvailabilityState = 'available' | 'degraded' | 'unavailable' | 'unknown';
+type AIAvailabilityReason = 'network' | 'rate_limited' | 'server' | 'unknown' | null;
+
 export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => {
   const { t } = useTranslation();
   const { aiConfig, setAIConfig } = useAppStore();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [activeModelName, setActiveModelName] = useState<string>('');
-  const [isAIAvailable, setIsAIAvailable] = useState<boolean>(true);
+  const [availabilityState, setAvailabilityState] = useState<AIAvailabilityState>('unknown');
+  const [availabilityReason, setAvailabilityReason] = useState<AIAvailabilityReason>(null);
   const [isNetworkOnline, setIsNetworkOnline] = useState<boolean>(
     typeof navigator === 'undefined' ? true : navigator.onLine
   );
@@ -138,10 +142,38 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
       const hasAvailable = providers.some(
         (p: any) => p?.available === true || p?.status === 'healthy'
       );
-      const isOverallHealthy = health?.overall === 'healthy';
-      setIsAIAvailable(hasAvailable || isOverallHealthy);
-    } catch {
-      setIsAIAvailable(false);
+      const hasDegraded = providers.some((p: any) => p?.status === 'degraded');
+      const overall = String(health?.overall || '').toLowerCase();
+
+      if (hasAvailable || overall === 'healthy') {
+        setAvailabilityState('available');
+        setAvailabilityReason(null);
+        return;
+      }
+
+      if (hasDegraded || overall === 'degraded') {
+        setAvailabilityState('degraded');
+        setAvailabilityReason('server');
+        return;
+      }
+
+      setAvailabilityState('unavailable');
+      setAvailabilityReason('unknown');
+    } catch (err: any) {
+      const statusCode = err?.status;
+      if (statusCode === 401 || statusCode === 403) return;
+      if (statusCode === 429) {
+        setAvailabilityState('degraded');
+        setAvailabilityReason('rate_limited');
+        return;
+      }
+      if (statusCode === 503) {
+        setAvailabilityState('degraded');
+        setAvailabilityReason('server');
+        return;
+      }
+      setAvailabilityState('unknown');
+      setAvailabilityReason('unknown');
     }
   }, []);
 
@@ -152,8 +184,14 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
   }, [checkAIAvailability]);
 
   useEffect(() => {
-    const handleOnline = () => setIsNetworkOnline(true);
-    const handleOffline = () => setIsNetworkOnline(false);
+    const handleOnline = () => {
+      setIsNetworkOnline(true);
+      setAvailabilityReason(null);
+    };
+    const handleOffline = () => {
+      setIsNetworkOnline(false);
+      setAvailabilityReason('network');
+    };
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     return () => {
@@ -162,17 +200,29 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
     };
   }, []);
 
-  const isDisconnected = !isNetworkOnline || !isAIAvailable;
+  const isUnavailable = !isNetworkOnline || availabilityState === 'unavailable';
+  const isDegraded = isNetworkOnline && (availabilityState === 'degraded' || availabilityState === 'unknown');
+  const buttonTitle = !isNetworkOnline
+    ? 'AI unavailable - network offline'
+    : availabilityState === 'available'
+      ? 'AI providers available'
+      : availabilityReason === 'rate_limited'
+        ? 'AI status delayed due to rate limiting'
+        : availabilityState === 'unavailable'
+          ? 'AI currently unavailable'
+          : 'AI status temporarily degraded';
 
   return (
     <div className="relative z-50" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         data-testid="llm-tier-selector"
-        title={isDisconnected ? 'AI currently unavailable' : 'AI providers available'}
+        title={buttonTitle}
         className={`inline-flex items-center gap-2 h-9 ${compact ? 'px-2' : 'px-3'} rounded-full border transition-colors duration-150 ${
-          isDisconnected
+          isUnavailable
             ? 'bg-red-50/70 dark:bg-red-500/10 border-red-400/50 dark:border-red-500/40 hover:bg-red-100/70 dark:hover:bg-red-500/15'
+            : isDegraded
+              ? 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/40 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
             : isOpen
               ? 'bg-slate-100/70 dark:bg-white/[0.06] border-slate-200/70 dark:border-white/[0.10]'
               : 'bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.06]'
@@ -180,7 +230,9 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
       >
         {/* Status Dot / Icon */}
         <div
-          className={`w-2 h-2 rounded-full animate-pulse ${!isDisconnected ? activeTier.color : 'bg-red-500'}`}
+          className={`w-2 h-2 rounded-full animate-pulse ${
+            isUnavailable ? 'bg-red-500' : isDegraded ? 'bg-amber-500' : activeTier.color
+          }`}
         />
 
         {!compact && <span>{t('llm.model', 'Model')}</span>}
@@ -199,13 +251,29 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
             <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase mb-2">
               {t('llm.title', 'Model Routing per Tier')}
             </div>
-            {isDisconnected && (
-              <div className="mb-2 flex items-center gap-1.5 text-[10px] text-red-600 dark:text-red-400">
+            {(isUnavailable || isDegraded) && (
+              <div
+                className={`mb-2 flex items-center gap-1.5 text-[10px] ${
+                  isUnavailable
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-amber-700 dark:text-amber-400'
+                }`}
+              >
                 <AlertTriangle size={11} />
                 <span>
                   {!isNetworkOnline
                     ? t('llm.offlineMessage', 'Offline - check network connection')
-                    : t('llm.unavailableMessage', 'AI unavailable - check provider health')}
+                    : availabilityReason === 'rate_limited'
+                      ? t(
+                          'llm.rateLimitedMessage',
+                          'AI status delayed by rate limiting - using last known state'
+                        )
+                      : isUnavailable
+                        ? t('llm.unavailableMessage', 'AI unavailable - check provider health')
+                        : t(
+                            'llm.degradedMessage',
+                            'AI status temporarily degraded - check provider health'
+                          )}
                 </span>
               </div>
             )}
