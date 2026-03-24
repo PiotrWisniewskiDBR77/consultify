@@ -49,7 +49,13 @@ export type ModuleTab =
   // V3-Phase10 — Unified Report Builder Hub
   | 'my_reports'
   | 'r1_r4'
-  | 'schedules';
+  | 'schedules'
+  // V8.1 — Outputs Library (unified hub; route remains /presentations)
+  | 'outputs_all'
+  | 'outputs_mine'
+  | 'outputs_review'
+  | 'outputs_documents'
+  | 'outputs_sheets';
 
 export type ViewMode = 'table' | 'grid' | 'kanban' | 'timeline' | 'calendar' | 'matrix';
 

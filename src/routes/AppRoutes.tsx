@@ -1375,7 +1375,9 @@ export const AppRoutes: React.FC = () => {
           path={ROUTES.PRESENTATIONS}
           element={
             <MainLayout
-              breadcrumbs={breadcrumbs || [t('sidebar.presentations', 'Presentations')]}
+              breadcrumbs={
+                breadcrumbs || [t('sidebar.outputsLibrary', 'Outputs'), t('rap.outputs.breadcrumb.library', 'Library')]
+              }
               noPadding
             >
               <RouteErrorBoundary>

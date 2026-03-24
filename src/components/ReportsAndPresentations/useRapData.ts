@@ -13,7 +13,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { API_URL, getHeaders, shouldAllowDemoData } from '../../services/api';
-import type { PresentationItem, ReportItem, TemplateItem } from './types';
+import type { PresentationItem, ReportItem, TemplateItem, UnifiedOutputRow } from './types';
 
 const DEMO_REPORTS: ReportItem[] = [
   { id: 'demo-r1', title: 'Weekly Execution Report – Sprint 14', reportType: 'R1', status: 'ready', owner: 'Anna Kowalska', goal: 'Stakeholder update', periodFrom: '2026-03-04', periodTo: '2026-03-10', createdAt: '2026-03-10T09:00:00Z', updatedAt: '2026-03-10T14:30:00Z', exportFormats: ['pdf', 'pptx'], sourceRefs: [] },
@@ -78,6 +78,42 @@ function mapReport(raw: any): ReportItem {
   };
 }
 
+function mapArtifactReport(raw: any): ReportItem {
+  const delivery = String(raw.originStatus || raw.deliveryState || 'draft').toLowerCase();
+  const reportStatus: ReportItem['status'] =
+    delivery === 'ready' ? 'ready' :
+    delivery === 'archived' ? 'archived' :
+    delivery === 'shared' || delivery === 'exported' ? 'exported' :
+    'draft';
+
+  return {
+    id: raw.originRecordId || raw.origin_record_id || raw.id,
+    artifactId: raw.artifactId || raw.artifact_id,
+    title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
+    reportType: raw.reportType || 'custom',
+    status: reportStatus,
+    owner: raw.ownerUserId || raw.createdBy || '—',
+    goal: raw.goal || undefined,
+    communicationRegister: raw.communicationRegister || undefined,
+    confidentiality: raw.confidentiality || undefined,
+    periodFrom: raw.periodFrom || undefined,
+    periodTo: raw.periodTo || undefined,
+    createdAt: raw.createdAt || new Date().toISOString(),
+    updatedAt: raw.lastTransitionAt || raw.updatedAt || new Date().toISOString(),
+    exportFormats: raw.exportFormat ? [raw.exportFormat] : [],
+    sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
+    governance: {
+      visibilityScope: raw.visibilityScope,
+      publishState: raw.publishState,
+      publishReviewers: Array.isArray(raw.publishReviewers) ? raw.publishReviewers : [],
+      reviewGateCount: typeof raw.reviewGateCount === 'number' ? raw.reviewGateCount : 0,
+      projectId: raw.projectId || null,
+    },
+    sourceType: raw.originRuntime,
+    sourceId: raw.originRecordId || undefined,
+  };
+}
+
 export function useReports() {
   const [reports, setReports] = useState<ReportItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,6 +123,26 @@ export function useReports() {
   const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
+      const artifactRes = await fetch(`${API_URL}/artifacts?outputType=report&limit=200`, {
+        headers: getHeaders(),
+      });
+      if (artifactRes.ok) {
+        const artifactData = await artifactRes.json();
+        const list = artifactData.data || [];
+        const mapped = list
+          .filter((item: any) => item.originRuntime === 'report' && item.originRecordId)
+          .map(mapArtifactReport);
+        setReports(mapped);
+        setError(null);
+        return;
+      }
+
+      if (artifactRes.status !== 404 && artifactRes.status !== 501) {
+        setReports([]);
+        setError('Canonical artifact registry failed to load reports.');
+        return;
+      }
+
       const res = await fetch(`${API_URL}/report-builder`, { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
@@ -100,7 +156,7 @@ export function useReports() {
       }
     } catch {
       setReports([]);
-      setError('Failed to load real reports from the active data source.');
+      setError('Canonical artifact registry failed to load reports.');
     } finally {
       setLoading(false);
     }
@@ -159,6 +215,143 @@ function mapDeck(raw: any): PresentationItem {
   };
 }
 
+function mapArtifactPresentation(raw: any): PresentationItem {
+  return {
+    id: raw.originRecordId || raw.origin_record_id || raw.id,
+    artifactId: raw.artifactId || raw.artifact_id,
+    title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
+    sourceType: (raw.sourceType || 'tool') as PresentationItem['sourceType'],
+    owner: raw.ownerUserId || raw.createdBy || '—',
+    status: (raw.originStatus || raw.deliveryState || 'draft').toLowerCase() as PresentationItem['status'],
+    presentationMode: raw.presentationMode || 'briefing',
+    createdAt: raw.createdAt || new Date().toISOString(),
+    updatedAt: raw.lastTransitionAt || raw.updatedAt || new Date().toISOString(),
+    slideCount: raw.slideCount || 0,
+    exportFormats: raw.exportFormat ? [raw.exportFormat] : [],
+    sourceId: raw.originRecordId || undefined,
+    thumbnailUrl: raw.thumbnailUrl,
+    sourceRefs: Array.isArray(raw.sourceRefs) ? raw.sourceRefs : [],
+    governance: {
+      visibilityScope: raw.visibilityScope,
+      publishState: raw.publishState,
+      publishReviewers: Array.isArray(raw.publishReviewers) ? raw.publishReviewers : [],
+      reviewGateCount: typeof raw.reviewGateCount === 'number' ? raw.reviewGateCount : 0,
+      projectId: raw.projectId || null,
+    },
+  };
+}
+
+function mapRegistryItemToUnified(raw: any): UnifiedOutputRow | null {
+  const runtime = raw?.originRuntime || raw?.origin_runtime;
+  const originId = raw?.originRecordId || raw?.origin_record_id;
+  if (!runtime || !originId) return null;
+
+  const baseGov = {
+    visibilityScope: raw.visibilityScope,
+    publishState: raw.publishState,
+    publishReviewers: Array.isArray(raw.publishReviewers) ? raw.publishReviewers : [],
+    reviewGateCount: typeof raw.reviewGateCount === 'number' ? raw.reviewGateCount : 0,
+    projectId: raw.projectId || null,
+  };
+
+  if (runtime === 'report') {
+    const r = mapArtifactReport(raw);
+    return {
+      kind: 'document',
+      originRecordId: r.id,
+      artifactId: r.artifactId,
+      title: r.title,
+      statusKey: r.status,
+      owner: r.owner,
+      updatedAt: r.updatedAt,
+      reportType: r.reportType,
+      exportFormats: r.exportFormats,
+      governance: r.governance || baseGov,
+    };
+  }
+
+  if (runtime === 'presentation') {
+    const p = mapArtifactPresentation(raw);
+    return {
+      kind: 'presentation',
+      originRecordId: p.id,
+      artifactId: p.artifactId,
+      title: p.title,
+      statusKey: p.status,
+      owner: p.owner,
+      updatedAt: p.updatedAt,
+      sourceType: p.sourceType,
+      slideCount: p.slideCount,
+      exportFormats: p.exportFormats,
+      governance: p.governance || baseGov,
+    };
+  }
+
+  if (runtime === 'sheet') {
+    const delivery = String(raw.originStatus || raw.deliveryState || 'draft').toLowerCase();
+    return {
+      kind: 'sheet',
+      originRecordId: String(originId),
+      artifactId: raw.artifactId || raw.artifact_id,
+      title: raw.resolvedTitle || raw.titleSnapshot || raw.title || 'Untitled',
+      statusKey: delivery,
+      owner: raw.ownerUserId || raw.createdBy || '—',
+      updatedAt: raw.lastTransitionAt || raw.updatedAt || raw.createdAt || new Date().toISOString(),
+      exportFormats: raw.exportFormat ? [raw.exportFormat] : [],
+      governance: baseGov,
+    };
+  }
+
+  return null;
+}
+
+export type ArtifactOutputsRegistryView = 'all' | 'mine' | 'review';
+
+export function useArtifactOutputsList(view: ArtifactOutputsRegistryView | null) {
+  const [rows, setRows] = useState<UnifiedOutputRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchOutputs = useCallback(async () => {
+    if (!view) {
+      setRows([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+    setLoading(true);
+    try {
+      const qs = new URLSearchParams({ limit: '200' });
+      if (view === 'mine') qs.set('view', 'mine');
+      if (view === 'review') qs.set('view', 'review');
+      const res = await fetch(`${API_URL}/artifacts?${qs.toString()}`, { headers: getHeaders() });
+      if (!res.ok) {
+        setRows([]);
+        setError('Canonical artifact registry failed to load outputs.');
+        return;
+      }
+      const data = await res.json();
+      const list = data.data || [];
+      const mapped = list
+        .map(mapRegistryItemToUnified)
+        .filter((x: UnifiedOutputRow | null): x is UnifiedOutputRow => !!x);
+      setRows(mapped);
+      setError(null);
+    } catch {
+      setRows([]);
+      setError('Canonical artifact registry failed to load outputs.');
+    } finally {
+      setLoading(false);
+    }
+  }, [view]);
+
+  useEffect(() => {
+    void fetchOutputs();
+  }, [fetchOutputs]);
+
+  return { rows, loading, error, refetch: fetchOutputs };
+}
+
 export function usePresentations() {
   const [presentations, setPresentations] = useState<PresentationItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -168,6 +361,26 @@ export function usePresentations() {
   const fetchPresentations = useCallback(async () => {
     setLoading(true);
     try {
+      const artifactRes = await fetch(`${API_URL}/artifacts?outputType=presentation&limit=200`, {
+        headers: getHeaders(),
+      });
+      if (artifactRes.ok) {
+        const artifactData = await artifactRes.json();
+        const list = artifactData.data || [];
+        const mapped = list
+          .filter((item: any) => item.originRuntime === 'presentation' && item.originRecordId)
+          .map(mapArtifactPresentation);
+        setPresentations(mapped);
+        setError(null);
+        return;
+      }
+
+      if (artifactRes.status !== 404 && artifactRes.status !== 501) {
+        setPresentations([]);
+        setError('Canonical artifact registry failed to load presentations.');
+        return;
+      }
+
       const res = await fetch(`${API_URL}/presentations/decks`, { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
@@ -181,7 +394,7 @@ export function usePresentations() {
       }
     } catch {
       setPresentations([]);
-      setError('Failed to load real presentations from the active data source.');
+      setError('Canonical artifact registry failed to load presentations.');
     } finally {
       setLoading(false);
     }
@@ -391,5 +604,29 @@ export function useRapActions() {
     [t]
   );
 
-  return { exportReportPdf, exportDeckPptx, archiveReport, archiveDeck };
+  const startArtifactReview = useCallback(
+    async (artifactId: string) => {
+      try {
+        const res = await fetch(`${API_URL}/artifacts/${artifactId}/start-review`, {
+          method: 'POST',
+          headers: {
+            ...getHeaders(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ reviewers: [] }),
+        });
+        if (res.ok) {
+          toast.success(t('rap.toast.reviewStarted', 'Review started'));
+          return true;
+        }
+      } catch {
+        /* noop */
+      }
+      toast.error(t('rap.toast.reviewFailed', 'Failed to start review'));
+      return false;
+    },
+    [t]
+  );
+
+  return { exportReportPdf, exportDeckPptx, archiveReport, archiveDeck, startArtifactReview };
 }

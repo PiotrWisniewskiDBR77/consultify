@@ -5,10 +5,11 @@
  */
 
 import { Archive, Download, ExternalLink, FileText, Loader2, Share2 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { API_URL, getHeaders } from '../../services/api';
 import {
   FilterableTable,
   type FilterChip,
@@ -50,6 +51,8 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
   const isPolish = i18n.language?.startsWith('pl');
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedGovernance, setSelectedGovernance] = useState<ReportItem['governance'] | null>(null);
+  const [reviewBusyArtifactId, setReviewBusyArtifactId] = useState<string | null>(null);
 
   const filteredData = useMemo(() => {
     let data = reports;
@@ -243,8 +246,59 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
   ];
 
   const selectedItem = selectedId ? filteredData.find((i) => i.id === selectedId) || null : null;
-  const previewItem = selectedItem ? { ...selectedItem, title: selectedItem.title } : null;
+  const previewItem = selectedItem
+    ? {
+        ...selectedItem,
+        title: selectedItem.title,
+        governance: selectedGovernance || selectedItem.governance,
+      }
+    : null;
   const itemIds = filteredData.map((i) => i.id);
+  const reviewDisabled =
+    !previewItem?.artifactId ||
+    reviewBusyArtifactId === previewItem?.artifactId ||
+    (!!previewItem?.governance?.publishState &&
+      previewItem.governance.publishState !== 'private_draft');
+
+  useEffect(() => {
+    let isMounted = true;
+    setSelectedGovernance(selectedItem?.governance || null);
+
+    async function fetchGovernance() {
+      if (!selectedItem?.artifactId) {
+        setSelectedGovernance(selectedItem?.governance || null);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/artifacts/${selectedItem.artifactId}/access`, {
+          headers: getHeaders(),
+        });
+        if (!res.ok) {
+          if (isMounted) setSelectedGovernance(selectedItem.governance || null);
+          return;
+        }
+        const data = await res.json();
+        if (!isMounted) return;
+        setSelectedGovernance({
+          ...(selectedItem.governance || {}),
+          visibilityScope: data.visibilityScope,
+          publishState: data.publishState,
+          publishReviewers: Array.isArray(data.reviewers) ? data.reviewers : [],
+          projectId: data.projectId || null,
+          accessGrants: Array.isArray(data.accessGrants) ? data.accessGrants : [],
+          originLinks: Array.isArray(data.originLinks) ? data.originLinks : [],
+        });
+      } catch {
+        if (isMounted) setSelectedGovernance(selectedItem.governance || null);
+      }
+    }
+
+    void fetchGovernance();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedItem?.artifactId, selectedItem?.governance]);
 
   if (loading) {
     return (
@@ -367,6 +421,18 @@ export const ReportsTabContent: React.FC<ReportsTabContentProps> = ({
         renderPreviewFooter={(item) => (
           <ReportPreviewFooter
             report={item}
+            onStartReview={
+              item.artifactId
+                ? async () => {
+                    const aid = item.artifactId as string;
+                    setReviewBusyArtifactId(aid);
+                    const ok = await actions.startArtifactReview(aid);
+                    setReviewBusyArtifactId(null);
+                    if (ok) onRefresh();
+                  }
+                : undefined
+            }
+            reviewActionDisabled={item.id === previewItem?.id ? reviewDisabled : !item.artifactId}
             onOpen={() => navigate(`/reports/builder/${item.id}`)}
             onExport={() => actions.exportReportPdf(item.id)}
           />

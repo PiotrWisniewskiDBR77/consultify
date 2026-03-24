@@ -1,20 +1,30 @@
 /**
- * ReportsAndPresentationsHub — V3 Unified Module
+ * ReportsAndPresentationsHub — V8.1 Outputs Library (route alias /presentations)
  *
- * Three tabs: Biblioteka wzorców | Raporty | Prezentacje
- * Uses ModuleHub + FilterableTable + GridView + TableWithPreviewLayout (golden standard).
- * Connected to backend: /api/report-builder, /api/presentations
+ * Taxonomy: All | Mine | Needs review | Documents | Presentations | Sheets | Templates
+ * Uses ModuleHub + registry-backed lists (GET /api/artifacts, view=mine|review).
  */
 
-import { BookTemplate, FileText, Filter, Presentation } from 'lucide-react';
+import {
+  BookTemplate,
+  FileText,
+  Filter,
+  Inbox,
+  LayoutGrid,
+  Presentation,
+  Table2,
+  User,
+} from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
+import { SheetsTabContent } from './SheetsTabContent';
 import { TemplatesTabContent } from './TemplatesTabContent';
 import type {
   PresentationSourceType,
@@ -24,7 +34,40 @@ import type {
   TemplateStatus,
 } from './types';
 import { PRESENTATION_STATUS_META, REPORT_STATUS_META, SOURCE_TYPE_META } from './types';
-import { usePresentations, useRapActions, useReports, useTemplates } from './useRapData';
+import {
+  useArtifactOutputsList,
+  usePresentations,
+  useRapActions,
+  useReports,
+  useTemplates,
+} from './useRapData';
+
+const TAB_TO_QUERY: Record<RapTab, string> = {
+  outputs_all: 'all',
+  outputs_mine: 'mine',
+  outputs_review: 'needs_review',
+  outputs_documents: 'documents',
+  presentations: 'presentations',
+  outputs_sheets: 'sheets',
+  templates: 'templates',
+};
+
+function parseRapTabFromQuery(raw: string | null): RapTab | null {
+  if (!raw) return null;
+  const n = raw.trim().toLowerCase();
+  const map: Record<string, RapTab> = {
+    all: 'outputs_all',
+    mine: 'outputs_mine',
+    needs_review: 'outputs_review',
+    review: 'outputs_review',
+    documents: 'outputs_documents',
+    reports: 'outputs_documents',
+    presentations: 'presentations',
+    sheets: 'outputs_sheets',
+    templates: 'templates',
+  };
+  return map[n] ?? null;
+}
 
 export const ReportsAndPresentationsHub: React.FC = () => {
   const { t } = useTranslation();
@@ -33,13 +76,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
   const initialTab = useMemo<RapTab>(() => {
     const params = new URLSearchParams(location.search || '');
-    const fromQuery = (params.get('tab') || '').toLowerCase();
-    if (fromQuery === 'templates' || fromQuery === 'reports' || fromQuery === 'presentations') {
-      return fromQuery as RapTab;
-    }
-    if (location.pathname.startsWith('/presentations')) return 'presentations';
-    if (location.pathname.startsWith('/reports')) return 'reports';
-    return 'templates';
+    const fromQuery = parseRapTabFromQuery(params.get('tab'));
+    if (fromQuery) return fromQuery;
+    if (location.pathname.startsWith('/reports')) return 'outputs_documents';
+    if (location.pathname.startsWith('/presentations')) return 'outputs_all';
+    return 'outputs_all';
   }, [location.pathname, location.search]);
 
   const [activeTab, setActiveTab] = useState<RapTab>(initialTab);
@@ -60,44 +101,80 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const { templates, loading: templatesLoading, error: templatesError } = useTemplates();
   const actions = useRapActions();
 
+  const libraryView =
+    activeTab === 'outputs_all'
+      ? 'all'
+      : activeTab === 'outputs_mine'
+        ? 'mine'
+        : activeTab === 'outputs_review'
+          ? 'review'
+          : null;
+  const {
+    rows: artifactOutputRows,
+    loading: artifactOutputsLoading,
+    error: artifactOutputsError,
+    refetch: refetchArtifactOutputs,
+  } = useArtifactOutputsList(libraryView);
+
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const tabs = useMemo(
     () => [
       {
-        id: 'templates' as ModuleTab,
-        label: t('rap.tabs.templates', 'Biblioteka wzorców'),
-        icon: <BookTemplate size={16} />,
-        count: templates.length,
+        id: 'outputs_all' as ModuleTab,
+        label: t('rap.outputs.tabs.all', 'All'),
+        icon: <LayoutGrid size={16} />,
       },
       {
-        id: 'reports' as ModuleTab,
-        label: t('rap.tabs.reports', 'Raporty'),
+        id: 'outputs_mine' as ModuleTab,
+        label: t('rap.outputs.tabs.mine', 'Mine'),
+        icon: <User size={16} />,
+      },
+      {
+        id: 'outputs_review' as ModuleTab,
+        label: t('rap.outputs.tabs.review', 'Needs review'),
+        icon: <Inbox size={16} />,
+      },
+      {
+        id: 'outputs_documents' as ModuleTab,
+        label: t('rap.outputs.tabs.documents', 'Documents'),
         icon: <FileText size={16} />,
-        count: reports.length,
       },
       {
         id: 'presentations' as ModuleTab,
         label: t('rap.tabs.presentations', 'Prezentacje'),
         icon: <Presentation size={16} />,
-        count: presentations.length,
+      },
+      {
+        id: 'outputs_sheets' as ModuleTab,
+        label: t('rap.outputs.tabs.sheets', 'Sheets'),
+        icon: <Table2 size={16} />,
+      },
+      {
+        id: 'templates' as ModuleTab,
+        label: t('rap.tabs.templates', 'Biblioteka wzorców'),
+        icon: <BookTemplate size={16} />,
       },
     ],
-    [t, templates.length, reports.length, presentations.length]
+    [t]
   );
 
   const ctaLabels: Record<RapTab, string> = useMemo(
     () => ({
-      templates: `+ ${t('rap.actions.newTemplate', 'Nowy wzorzec')}`,
-      reports: `+ ${t('rap.actions.newReport', 'Nowy raport')}`,
+      outputs_all: `+ ${t('rap.outputs.cta.new', 'New output')}`,
+      outputs_mine: `+ ${t('rap.outputs.cta.new', 'New output')}`,
+      outputs_review: `+ ${t('rap.outputs.cta.new', 'New output')}`,
+      outputs_documents: `+ ${t('rap.actions.newReport', 'Nowy raport')}`,
       presentations: `+ ${t('rap.actions.newPresentation', 'Nowa prezentacja')}`,
+      outputs_sheets: '',
+      templates: `+ ${t('rap.actions.newTemplate', 'Nowy wzorzec')}`,
     }),
     [t]
   );
 
   const handleNewItem = useCallback(() => {
     switch (activeTab) {
-      case 'reports':
+      case 'outputs_documents':
         navigate('/reports/builder');
         break;
       case 'presentations':
@@ -105,6 +182,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         break;
       case 'templates':
         navigate('/reports/builder?tab=templates');
+        break;
+      case 'outputs_all':
+      case 'outputs_mine':
+      case 'outputs_review':
+        navigate('/presentations?tab=templates');
+        break;
+      default:
         break;
     }
   }, [activeTab, navigate]);
@@ -156,6 +240,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
     const activeCount = activeFilters.length;
 
+    if (activeTab === 'outputs_sheets') {
+      return <div className="relative flex items-center" />;
+    }
+
+    const isAggregateTab =
+      activeTab === 'outputs_all' || activeTab === 'outputs_mine' || activeTab === 'outputs_review';
+
     const statusOptions =
       activeTab === 'templates'
         ? ([
@@ -175,17 +266,57 @@ export const ReportsAndPresentationsHub: React.FC = () => {
               dotColor: 'bg-slate-500',
             },
           ] as Array<{ value: TemplateStatus; label: string; dotColor: string }>)
-        : activeTab === 'reports'
+        : activeTab === 'outputs_documents'
           ? (Object.entries(REPORT_STATUS_META).map(([value, meta]) => ({
               value: value as ReportStatus,
               label: meta.labelPl || meta.label,
               dotColor: meta.dotColor,
             })) as Array<{ value: ReportStatus; label: string; dotColor: string }>)
-          : (Object.entries(PRESENTATION_STATUS_META).map(([value, meta]) => ({
-              value: value as PresentationStatus,
-              label: meta.labelPl || meta.label,
-              dotColor: meta.dotColor,
-            })) as Array<{ value: PresentationStatus; label: string; dotColor: string }>);
+          : activeTab === 'presentations'
+            ? (Object.entries(PRESENTATION_STATUS_META).map(([value, meta]) => ({
+                value: value as PresentationStatus,
+                label: meta.labelPl || meta.label,
+                dotColor: meta.dotColor,
+              })) as Array<{ value: PresentationStatus; label: string; dotColor: string }>)
+            : isAggregateTab
+              ? ([
+                  {
+                    value: 'draft',
+                    label: t('rap.filters.status.draft', 'Draft'),
+                    dotColor: 'bg-slate-400',
+                  },
+                  {
+                    value: 'generated',
+                    label: t('rap.filters.status.generated', 'Generated'),
+                    dotColor: 'bg-blue-400',
+                  },
+                  {
+                    value: 'editing',
+                    label: t('rap.filters.status.editing', 'Editing'),
+                    dotColor: 'bg-amber-400',
+                  },
+                  {
+                    value: 'ready',
+                    label: REPORT_STATUS_META.ready.labelPl || REPORT_STATUS_META.ready.label,
+                    dotColor: 'bg-emerald-400',
+                  },
+                  {
+                    value: 'exported',
+                    label: t('rap.filters.status.exported', 'Exported'),
+                    dotColor: 'bg-blue-400',
+                  },
+                  {
+                    value: 'shared',
+                    label: t('rap.filters.status.shared', 'Shared'),
+                    dotColor: 'bg-purple-400',
+                  },
+                  {
+                    value: 'archived',
+                    label: t('rap.filters.status.archived', 'Archived'),
+                    dotColor: 'bg-slate-500',
+                  },
+                ] as Array<{ value: string; label: string; dotColor: string }>)
+              : [];
 
     const sourceOptions =
       activeTab === 'presentations'
@@ -196,8 +327,28 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           })) as Array<{ value: PresentationSourceType; label: string; color: string }>)
         : [];
 
+    const kindOptions = isAggregateTab
+      ? ([
+          {
+            value: 'document',
+            label: t('rap.outputs.kind.document', 'Document'),
+            color: 'text-blue-400',
+          },
+          {
+            value: 'presentation',
+            label: t('rap.outputs.kind.presentation', 'Presentation'),
+            color: 'text-purple-400',
+          },
+          {
+            value: 'sheet',
+            label: t('rap.outputs.kind.sheet', 'Sheet'),
+            color: 'text-emerald-400',
+          },
+        ] as Array<{ value: string; label: string; color: string }>)
+      : [];
+
     const reportCanon =
-      activeTab === 'reports' ? (
+      activeTab === 'outputs_documents' ? (
         <div className="mr-2 hidden xl:flex items-center gap-2">
           {[
             ['R1', t('rap.reportCanon.r1', 'Weekly Execution')],
@@ -276,33 +427,61 @@ export const ReportsAndPresentationsHub: React.FC = () => {
               </div>
 
               <div className="p-3 space-y-4 max-h-[360px] overflow-y-auto">
-                <div>
-                  <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-2">
-                    {t('rap.filters.status', 'Status')}
+                {statusOptions.length > 0 ? (
+                  <div>
+                    <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                      {t('rap.filters.status', 'Status')}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {statusOptions.map((o) => {
+                        const checked = activeFilters.some(
+                          (f) => f.column === 'status' && f.value === o.value
+                        );
+                        return (
+                          <button
+                            key={o.value}
+                            type="button"
+                            onClick={() => toggleFilter('status', o.value, o.label, o.dotColor)}
+                            className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
+                              checked
+                                ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
+                                : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
+                            }`}
+                          >
+                            <span className={`w-2 h-2 rounded-full ${o.dotColor}`} />
+                            <span className="truncate">{o.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {statusOptions.map((o) => {
-                      const checked = activeFilters.some(
-                        (f) => f.column === 'status' && f.value === o.value
-                      );
-                      return (
+                ) : null}
+
+                {kindOptions.length > 0 ? (
+                  <div>
+                    <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                      {t('rap.outputs.filters.kind', 'Output type')}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {kindOptions.map((o) => (
                         <button
                           key={o.value}
                           type="button"
-                          onClick={() => toggleFilter('status', o.value, o.label, o.dotColor)}
+                          onClick={() => toggleFilter('outputKind', o.value, o.label)}
                           className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
-                            checked
+                            activeFilters.some(
+                              (f) => f.column === 'outputKind' && f.value === o.value
+                            )
                               ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
                               : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06] hover:bg-slate-100/70 dark:hover:bg-white/[0.05]'
                           }`}
                         >
-                          <span className={`w-2 h-2 rounded-full ${o.dotColor}`} />
-                          <span className="truncate">{o.label}</span>
+                          <span className={`text-[11px] font-semibold ${o.color}`}>{o.label}</span>
                         </button>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : null}
 
                 {sourceOptions.length > 0 ? (
                   <div>
@@ -365,15 +544,108 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     const badgeBase =
       'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
 
-    const items =
-      activeTab === 'templates' ? templates : activeTab === 'reports' ? reports : presentations;
+    if (
+      activeTab === 'outputs_all' ||
+      activeTab === 'outputs_mine' ||
+      activeTab === 'outputs_review'
+    ) {
+      const kindCounts = artifactOutputRows.reduce(
+        (acc, r) => {
+          acc[r.kind] = (acc[r.kind] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+      const kindChips = [
+        {
+          value: 'document',
+          label: t('rap.outputs.kind.document', 'Document'),
+          dot: 'bg-blue-400',
+        },
+        {
+          value: 'presentation',
+          label: t('rap.outputs.kind.presentation', 'Presentation'),
+          dot: 'bg-purple-400',
+        },
+        {
+          value: 'sheet',
+          label: t('rap.outputs.kind.sheet', 'Sheet'),
+          dot: 'bg-emerald-400',
+        },
+      ];
+      const kindActive = (v: string) =>
+        activeFilters.some((f) => f.column === 'outputKind' && f.value === v);
 
-    const statusKey =
+      return (
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setSinglePreset('outputKind', null)}
+            className={`${chipBase} ${
+              !activeFilters.some((f) => f.column === 'outputKind')
+                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            }`}
+            title={t('common.all', 'All')}
+          >
+            <span>{t('common.all', 'All')}</span>
+            <span
+              className={`${badgeBase} ${
+                !activeFilters.some((f) => f.column === 'outputKind')
+                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              {artifactOutputRows.length}
+            </span>
+          </button>
+          {kindChips.map((c) => {
+            const active = kindActive(c.value);
+            const count = kindCounts[c.value] || 0;
+            return (
+              <button
+                key={c.value}
+                type="button"
+                onClick={() =>
+                  setSinglePreset('outputKind', active ? null : c.value, c.label, c.dot)
+                }
+                className={`${chipBase} ${
+                  active
+                    ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+                }`}
+                title={c.label}
+              >
+                <span className={`w-2 h-2 rounded-full ${c.dot}`} />
+                <span>{c.label}</span>
+                <span
+                  className={`${badgeBase} ${
+                    active
+                      ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+                      : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
+    if (activeTab === 'outputs_sheets') {
+      return null;
+    }
+
+    const items =
       activeTab === 'templates'
-        ? ('status' as const)
-        : activeTab === 'reports'
-          ? ('status' as const)
-          : ('status' as const);
+        ? templates
+        : activeTab === 'outputs_documents'
+          ? reports
+          : presentations;
+
+    const statusKey = 'status' as const;
 
     const counts = (items || []).reduce(
       (acc, it: any) => {
@@ -400,7 +672,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
               dot: 'bg-slate-500',
             },
           ] as Array<{ value: string; label: string; dot: string }>)
-        : activeTab === 'reports'
+        : activeTab === 'outputs_documents'
           ? (Object.entries(REPORT_STATUS_META).map(([value, meta]) => ({
               value,
               label: meta.labelPl || meta.label,
@@ -471,7 +743,16 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         })}
       </div>
     );
-  }, [activeFilters, activeTab, presentations, reports, setSinglePreset, t, templates]);
+  }, [
+    activeFilters,
+    activeTab,
+    artifactOutputRows,
+    presentations,
+    reports,
+    setSinglePreset,
+    t,
+    templates,
+  ]);
 
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
@@ -487,6 +768,22 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'outputs_all':
+      case 'outputs_mine':
+      case 'outputs_review':
+        return (
+          <OutputsAggregateTabContent
+            viewMode={viewMode}
+            searchQuery={searchQuery}
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            rows={artifactOutputRows}
+            loading={artifactOutputsLoading}
+            error={artifactOutputsError}
+            onRefresh={refetchArtifactOutputs}
+            actions={actions}
+          />
+        );
       case 'templates':
         return (
           <TemplatesTabContent
@@ -499,7 +796,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             error={templatesError}
           />
         );
-      case 'reports':
+      case 'outputs_documents':
         return (
           <ReportsTabContent
             viewMode={viewMode}
@@ -527,6 +824,8 @@ export const ReportsAndPresentationsHub: React.FC = () => {
             actions={actions}
           />
         );
+      case 'outputs_sheets':
+        return <SheetsTabContent />;
       default:
         return null;
     }
@@ -539,10 +838,14 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         tabs={tabs}
         activeTab={activeTab as ModuleTab}
         onTabChange={(tab) => {
-          setActiveTab(tab as RapTab);
+          const next = tab as RapTab;
+          setActiveTab(next);
           setActiveFilters([]);
           setFiltersOpen(false);
+          const q = TAB_TO_QUERY[next];
+          navigate(`${location.pathname}?tab=${encodeURIComponent(q)}`, { replace: true });
         }}
+        showTabCounts={false}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         onSearch={setSearchQuery}
@@ -554,7 +857,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         activeFilters={activeFilters}
         onRemoveFilter={handleRemoveFilter}
         onClearFilters={handleClearFilters}
-        onNewItem={handleNewItem}
+        onNewItem={activeTab === 'outputs_sheets' ? undefined : handleNewItem}
         newItemLabel={ctaLabels[activeTab]}
         availableViewModes={['table', 'grid']}
         rightControls={rightControls}

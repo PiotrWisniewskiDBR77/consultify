@@ -1,9 +1,33 @@
 /**
  * Reports & Presentations Hub — Types
- * V3 unified module: Templates (library) + Reports + Presentations
+ * V8.1 Outputs Library taxonomy (same shell; route alias /presentations).
  */
 
-export type RapTab = 'templates' | 'reports' | 'presentations';
+export type RapTab =
+  | 'outputs_all'
+  | 'outputs_mine'
+  | 'outputs_review'
+  | 'outputs_documents'
+  | 'presentations'
+  | 'outputs_sheets'
+  | 'templates';
+
+/** Canonical registry row flattened for All / Mine / Needs review tabs */
+export interface UnifiedOutputRow {
+  kind: 'document' | 'presentation' | 'sheet';
+  originRecordId: string;
+  artifactId?: string;
+  title: string;
+  /** Normalized for command-row chips (draft | ready | shared | archived | …) */
+  statusKey: string;
+  owner: string;
+  updatedAt: string;
+  reportType?: string;
+  sourceType?: string;
+  slideCount?: number;
+  exportFormats: string[];
+  governance?: ArtifactGovernanceSummary;
+}
 
 export type TemplateType = 'report' | 'presentation';
 export type TemplateCategory =
@@ -38,6 +62,37 @@ export interface ArtifactSourceRef {
   artifact_name: string;
 }
 
+export interface ArtifactOriginLinkItem {
+  linkId: string;
+  artifactId: string;
+  organizationId: string;
+  originRuntime: 'report' | 'presentation' | 'sheet' | 'native_artifact';
+  originRecordId: string;
+  isPrimaryOrigin: boolean;
+  createdAt: string;
+}
+
+export interface ArtifactAccessGrantItem {
+  grantId: string;
+  artifactId: string;
+  organizationId: string;
+  grantKind: 'user' | 'role';
+  userId: string | null;
+  roleKey: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface ArtifactGovernanceSummary {
+  visibilityScope?: 'private' | 'project' | 'organization' | 'review_shared' | 'demo';
+  publishState?: string | null;
+  publishReviewers?: string[];
+  reviewGateCount?: number;
+  projectId?: string | null;
+  accessGrants?: ArtifactAccessGrantItem[];
+  originLinks?: ArtifactOriginLinkItem[];
+}
+
 export interface TemplateItem {
   id: string;
   title: string;
@@ -55,6 +110,7 @@ export interface TemplateItem {
 
 export interface ReportItem {
   id: string;
+  artifactId?: string;
   title: string;
   reportType: ReportType;
   status: ReportStatus;
@@ -68,11 +124,13 @@ export interface ReportItem {
   updatedAt: string;
   exportFormats: string[];
   sourceRefs?: Array<string | ArtifactSourceRef>;
+  governance?: ArtifactGovernanceSummary;
   [key: string]: unknown;
 }
 
 export interface PresentationItem {
   id: string;
+  artifactId?: string;
   title: string;
   sourceType: PresentationSourceType;
   owner: string;
@@ -85,6 +143,7 @@ export interface PresentationItem {
   exportFormats: string[];
   sourceId?: string;
   sourceRefs?: ArtifactSourceRef[];
+  governance?: ArtifactGovernanceSummary;
   [key: string]: unknown;
 }
 
