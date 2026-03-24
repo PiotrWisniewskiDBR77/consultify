@@ -135,6 +135,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   }, [pl, roofSummary.data, roofSummary.isError, roofSummary.isLoading]);
 
   const roofTruthTone = roofSummary.data?.overallStatus ?? 'mixed_truth';
+  const alignedHomeBlocks = useMemo(() => {
+    const blocks = roofSummary.data?.homeBlocks;
+    if (!blocks) return [];
+
+    return blocks.filter((block) => block.maturityLevel !== 'placeholder_non_canonical');
+  }, [roofSummary.data?.homeBlocks]);
 
   const openOutput = useCallback(
     (row: UnifiedOutputRow) => {
@@ -323,6 +329,18 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
               <span className="truncate">{roofTruthStrip}</span>
             </div>
           ) : null}
+          {alignedHomeBlocks.length ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {alignedHomeBlocks.map((block) => (
+                <span
+                  key={block.blockName}
+                  className="rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-400"
+                >
+                  {getHomeBlockLabel(block.blockName, pl)}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
         <span className="text-[12px] text-slate-400 dark:text-slate-500">
           {new Date(data.generatedAt).toLocaleTimeString(pl ? 'pl-PL' : 'en-US', {
@@ -346,11 +364,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
           <div className="space-y-4">
             <SignalListSection
               pl={pl}
-              title={pl ? 'Co się zmieniło' : 'What changed'}
+              title={pl ? 'Industry Lens · Co się zmieniło' : 'Industry Lens · What changed'}
               subtitle={
                 pl
-                  ? 'Najmocniejsze sygnały z rynku, technologii i wykonania.'
-                  : 'Strongest signals across market, technology, and execution.'
+                  ? 'Kanoniczny blok Home dla sygnałów z rynku, technologii i wykonania.'
+                  : 'Canonical Home block for market, technology, and execution signals.'
               }
               signals={data.whatChanged}
               selectedSignalId={selectedSignalId}
@@ -362,11 +380,11 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
             />
             <SignalListSection
               pl={pl}
-              title={pl ? 'Co ma znaczenie dla mnie' : 'Why it matters to me'}
+              title={pl ? 'Industry Lens · Co ma znaczenie dla mnie' : 'Industry Lens · Why it matters to me'}
               subtitle={
                 pl
-                  ? 'Sygnały dopasowane do roli, projektów i bieżącej pracy.'
-                  : 'Signals tailored to role, projects, and live work context.'
+                  ? 'Interpretacja dopasowana do roli, projektów i bieżącej pracy.'
+                  : 'Interpretation tailored to role, projects, and live work context.'
               }
               signals={data.whyItMattersToMe}
               selectedSignalId={selectedSignalId}
@@ -410,7 +428,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
             />
             <SignalListSection
               pl={pl}
-              title={pl ? 'Edukacja i porady' : 'Learn / improve'}
+              title={pl ? 'Radar · Edukacja i porady' : 'Radar · Learn / improve'}
               subtitle={
                 pl
                   ? 'Playbooki, how-to i guidance do podniesienia jakości pracy.'
@@ -427,7 +445,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
             />
             <SignalListSection
               pl={pl}
-              title={pl ? 'Watchlist' : 'Watchlist'}
+              title={pl ? 'Radar · Watchlist' : 'Radar · Watchlist'}
               subtitle={
                 pl
                   ? 'Słabsze sygnały i rzeczy warte dalszego śledzenia.'
@@ -480,7 +498,7 @@ const BriefingPanel: React.FC<{
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-violet-700/80 dark:text-violet-300/75">
           <Sparkles size={13} />
-          {pl ? 'Briefing dnia' : 'Daily briefing'}
+          {pl ? 'AI Pulse Core' : 'AI Pulse Core'}
         </div>
         <div className="flex items-center gap-2">
           {briefing.keySignals.length > 1 && (
@@ -507,7 +525,7 @@ const BriefingPanel: React.FC<{
             </div>
           )}
           <div className="rounded-full border border-violet-200 bg-white/70 px-3 py-1 text-[11px] text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400">
-            {pl ? 'Najważniejsze na teraz' : 'What matters now'}
+            {pl ? 'Briefing dnia' : 'Daily briefing'}
           </div>
         </div>
       </div>
@@ -728,7 +746,7 @@ const SelectedSignalPanel: React.FC<{
   onLessLikeThis,
 }) => (
   <SectionShell
-    title={pl ? 'Wybrany sygnał' : 'Selected signal'}
+    title={pl ? 'Industry Lens · aktywna interpretacja' : 'Industry Lens · active interpretation'}
     subtitle={pl ? 'Znaczenie, uzasadnienie i akcje.' : 'Meaning, rationale, and actions.'}
   >
     {signal ? (
@@ -823,8 +841,12 @@ const RecommendationsPanel: React.FC<{
   onSelectSignal: (signalId?: string) => void;
 }> = ({ pl, recommendations, onSelectSignal }) => (
   <SectionShell
-    title={pl ? 'Co warto zrobić' : 'What to do next'}
-    subtitle={pl ? 'Ruchy, pytania, ryzyka i szanse.' : 'Moves, questions, risks, and opportunities.'}
+    title={pl ? 'Command Dock · co warto zrobić' : 'Command Dock · what to do next'}
+    subtitle={
+      pl
+        ? 'Ruchy, pytania, ryzyka i szanse gotowe do przełożenia na działanie.'
+        : 'Moves, questions, risks, and opportunities ready for action.'
+    }
   >
     <div className="space-y-2">
       {recommendations.map((item) => (
@@ -881,11 +903,11 @@ const OutputsQueuePanel: React.FC<{
   onOpenLibrary: (target: 'outputs_all' | 'outputs_mine' | 'outputs_review') => void;
 }> = ({ pl, reviewOutputs, myOutputs, recentOutputs, loading, error, onOpenOutput, onOpenLibrary }) => (
   <SectionShell
-    title={pl ? 'Moje outputy' : 'My outputs'}
+    title={pl ? 'Execution Current · moje outputy' : 'Execution Current · my outputs'}
     subtitle={
       pl
-        ? 'Osobisty widok artefaktów z tej samej biblioteki outputów.'
-        : 'Personal artifact view over the same outputs library.'
+        ? 'Governed outputy i handoffy widoczne z tego samego dachu My Work.'
+        : 'Governed outputs and handoffs visible from the same My Work roof.'
     }
   >
     {loading ? (
@@ -1032,6 +1054,29 @@ const MetricPill: React.FC<{ label: string; value: string }> = ({ label, value }
     <div className="mt-1 text-[16px] font-semibold text-slate-900 dark:text-slate-100">{value}</div>
   </div>
 );
+
+function getHomeBlockLabel(blockName: string, pl: boolean): string {
+  switch (blockName) {
+    case 'aiPulseCore':
+      return pl ? 'AI Pulse Core' : 'AI Pulse Core';
+    case 'industryLens':
+      return pl ? 'Industry Lens' : 'Industry Lens';
+    case 'executionCurrent':
+      return pl ? 'Execution Current' : 'Execution Current';
+    case 'commandDock':
+      return pl ? 'Command Dock' : 'Command Dock';
+    case 'sparkField':
+      return pl ? 'Spark Field' : 'Spark Field';
+    case 'decisionTemperature':
+      return pl ? 'Decision Temperature' : 'Decision Temperature';
+    case 'teamSignal':
+      return pl ? 'Team Signal' : 'Team Signal';
+    case 'momentum':
+      return pl ? 'Momentum' : 'Momentum';
+    default:
+      return blockName;
+  }
+}
 
 const GhostButton: React.FC<{
   label: string;

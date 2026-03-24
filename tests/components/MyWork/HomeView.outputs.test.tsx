@@ -159,6 +159,12 @@ describe('HomeView outputs integration', () => {
           partial_stitched: 2,
           placeholder_non_canonical: 4,
         },
+        homeBlocks: [
+          { blockName: 'aiPulseCore', maturityLevel: 'backed_by_real_service' },
+          { blockName: 'industryLens', maturityLevel: 'backed_by_real_service' },
+          { blockName: 'executionCurrent', maturityLevel: 'partial_stitched' },
+          { blockName: 'commandDock', maturityLevel: 'partial_stitched' },
+        ],
       },
       isLoading: false,
       isError: false,
@@ -170,7 +176,13 @@ describe('HomeView outputs integration', () => {
 
     expect(screen.getByText(/Roof truth:/)).toBeInTheDocument();
     expect(screen.getByText(/Radar overlay \+ outputs bridge/)).toBeInTheDocument();
-    expect(screen.getByText('My outputs')).toBeInTheDocument();
+    expect(screen.getAllByText('AI Pulse Core').length).toBeGreaterThan(0);
+    expect(screen.getByText('Industry Lens')).toBeInTheDocument();
+    expect(screen.getByText('Execution Current')).toBeInTheDocument();
+    expect(screen.getByText('Command Dock')).toBeInTheDocument();
+    expect(screen.getByText('Industry Lens · What changed')).toBeInTheDocument();
+    expect(screen.getByText('Command Dock · what to do next')).toBeInTheDocument();
+    expect(screen.getByText('Execution Current · my outputs')).toBeInTheDocument();
     expect(screen.getByText('Needs review')).toBeInTheDocument();
     expect(screen.getByText('Recent mine')).toBeInTheDocument();
     expect(screen.getByText('Recent outputs')).toBeInTheDocument();
