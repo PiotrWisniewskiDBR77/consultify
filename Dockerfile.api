@@ -27,6 +27,13 @@ RUN npm install --save --omit=dev --ignore-scripts cookie-parser@^1.4.7 || true
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 
+# Expose public AI keys to the Vite build so live voice code
+# can be compiled with the same provider config as production runtime.
+ARG NEXT_PUBLIC_GEMINI_API_KEY
+ARG GEMINI_API_KEY
+ENV NEXT_PUBLIC_GEMINI_API_KEY=${NEXT_PUBLIC_GEMINI_API_KEY}
+ENV GEMINI_API_KEY=${GEMINI_API_KEY}
+
 # Copy package files and workspace structure for npm workspaces
 COPY package.json package-lock.json ./
 COPY packages/ ./packages/
